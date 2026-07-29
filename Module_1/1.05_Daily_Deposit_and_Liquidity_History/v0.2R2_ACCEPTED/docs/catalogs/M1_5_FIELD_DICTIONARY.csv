@@ -1,0 +1,35 @@
+object_name,field_name,data_type,field_class,business_definition,calculation_or_use
+merchant_deposit_daily_base,population_id,text,Physical,Accepted population identifier.,Lineage and unique grain.
+merchant_deposit_daily_base,merchant_id,text,Physical,Stable synthetic merchant identifier.,Lineage and unique grain.
+merchant_deposit_daily_base,observation_date,date,Physical,Calendar date of operating-account history.,Temporal grain and no-future-data control.
+merchant_deposit_daily_base,opening_balance,"numeric(18,2)",Physical,Beginning-of-day synthetic operating-account balance.,Prior-day closing roll-forward; initial day from merchant liquidity profile.
+merchant_deposit_daily_base,deposit_amount,"numeric(18,2)",Physical,Total posted deposits for the day.,Captured POS proceeds plus bounded non-POS support deposits.
+merchant_deposit_daily_base,withdrawal_amount,"numeric(18,2)",Physical,Total posted withdrawals for the day.,"Operating withdrawals, bounded stress withdrawal, and active existing-financing remittance."
+merchant_deposit_daily_base,closing_balance,"numeric(18,2)",Physical,End-of-day ledger balance.,opening + deposit − withdrawal.
+merchant_deposit_daily_base,available_balance,"numeric(18,2)",Physical,Balance available after deterministic temporary holds.,closing balance − temporary hold amount.
+merchant_deposit_daily_base,minimum_balance,"numeric(18,2)",Physical,"Lowest of opening, closing, and available balance for the day.",Liquidity stress and negative-balance evidence.
+merchant_deposit_daily_base,nsf_count,smallint,Physical,Synthetic daily count of NSF events.,"Rare deterministic event, bounded to 0–2."
+merchant_deposit_daily_base,negative_balance_flag,boolean,Physical,Indicates minimum daily balance below zero.,Derived exactly from minimum_balance < 0.
+merchant_deposit_daily_base,source_contract_id,bigint,Physical,Frozen DEPOSIT_DAILY source contract.,Source lineage.
+merchant_deposit_daily_base,generated_by_run_id,bigint,Physical,Accepted analytical run identifier.,Run lineage.
+merchant_deposit_daily_base,row_hash,text,Physical,Canonical deterministic hash of persisted fields.,Row-level reproduction and set hash.
+m1_5_blueprint,industry_code,text,Diagnostic,Primary merchant industry.,Industry-conditioned capture and liquidity diagnostics.
+m1_5_blueprint,cashflow_archetype_code,text,Diagnostic,Accepted M1.4 merchant operating archetype.,Liquidity diagnostics by operating behavior.
+m1_5_blueprint,relationship_stage,text,Diagnostic,Accepted merchant relationship stage.,"Buffer, withdrawal, and financing-pressure differentiation."
+m1_5_blueprint,liquidity_risk_tier,smallint,Diagnostic,Provisional synthetic liquidity-risk tier.,Maps governed NSF and negative-balance probabilities; not a calibrated credit tier.
+m1_5_blueprint,deposit_relationship_flag,boolean,Diagnostic,Indicates an existing synthetic deposit relationship.,Direct capture-rate adjustment.
+m1_5_blueprint,deposit_source_available_flag,boolean,Diagnostic,Latent observability indicator for deposit-history source.,Reserved for M1.7 source-confidence treatment; does not suppress physical truth rows.
+m1_5_blueprint,daily_capture_rate,"numeric(12,8)",Diagnostic,Daily share of net merchant proceeds captured as POS deposit.,"Industry center + merchant/day variation, bounded to 0.25–1.00."
+m1_5_blueprint,base_pos_deposit_amount,"numeric(18,2)",Diagnostic,Deposit derived from accepted M1.4 net merchant proceeds.,net merchant proceeds × daily capture rate.
+m1_5_blueprint,non_pos_support_deposit_amount,"numeric(18,2)",Diagnostic,Bounded synthetic non-POS liquidity support.,Maintains governed lower closing-balance floor.
+m1_5_blueprint,existing_financing_remittance_amount,"numeric(18,2)",Diagnostic,Daily withdrawal for a bounded pre-existing financing obligation.,Applied only to active deterministic financing windows.
+m1_5_blueprint,daily_withdrawal_rate,"numeric(12,8)",Diagnostic,Total withdrawals relative to base captured POS deposit.,Diagnostic only; may be zero when base deposit is zero.
+m1_5_blueprint,temporary_hold_amount,"numeric(18,2)",Diagnostic,"Deterministic hold tied to refunds, chargebacks, and reversals.",Reduces available but not closing balance.
+m1_5_blueprint,target_buffer_amount,"numeric(18,2)",Diagnostic,Target merchant liquidity buffer.,"Average eligible sales × governed merchant buffer days, minimum $1,000."
+m1_5_blueprint,lower_balance_floor,"numeric(18,2)",Diagnostic,Governed lower bound for closing balance.,Allows bounded negative liquidity while preventing runaway synthetic overdrafts.
+m1_5_blueprint,liquidity_event_code,text,Diagnostic,Dominant synthetic liquidity event for the merchant-day.,"PRE_OPEN, NORMAL, LOW_LIQUIDITY, stress, outage, disruption, or support."
+m1_5_blueprint,adjusted_nsf_probability,"numeric(12,8)",Diagnostic,Daily NSF propensity after available-balance pressure.,Bounded to 0.25.
+m1_5_profile,active_financing_flag,boolean,Diagnostic,Merchant assigned a bounded pre-existing financing obligation.,Creates observable existing-remittance pressure.
+m1_5_profile,financing_start_date,date,Diagnostic,Start date of existing financing-remittance window.,"Deterministic, inside accepted history window."
+m1_5_profile,financing_end_date,date,Diagnostic,End date of existing financing-remittance window.,"30-, 60-, or 90-day bounded duration, capped at history end."
+m1_5_profile,financing_daily_remittance,"numeric(18,2)",Diagnostic,Assigned daily existing-financing remittance.,2.5%–6.0% of average daily net merchant proceeds for active cohort.

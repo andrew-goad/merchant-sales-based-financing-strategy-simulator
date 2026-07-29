@@ -1,0 +1,33 @@
+# M1.9 Parameter Dictionary
+
+All M1.9 parameters are synthetic governed assumptions. Changes to `MODEL_LOGIC` parameters require matched-comparison and regression evidence before acceptance.
+
+| Parameter | Type | Baseline value | Purpose | Change class |
+|---|---|---|---|---|
+| `generation_enabled` | BOOLEAN | `true` | Governed M1.9 feature-engineering policy control. | STANDARD |
+| `methodology_version` | TEXT | `M1_9_METHOD_V1` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `baseline_scenario_code` | TEXT | `BASELINE` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `stress_scenario_code` | TEXT | `RECESSION_ENERGY` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `window_days` | JSON | `[7, 30, 60, 90, 180]` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `annualization_days` | NUMERIC | `365` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `minimum_core_pos_days` | NUMERIC | `30` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `minimum_full_pos_days` | NUMERIC | `90` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `minimum_deposit_days` | NUMERIC | `30` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `minimum_seasonality_days` | NUMERIC | `120` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `mean_sales_epsilon` | NUMERIC | `0.01` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `delta_denominator_floor` | NUMERIC | `1.0` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `cv_cap` | NUMERIC | `10.0` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `growth_floor` | NUMERIC | `-1.0` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `growth_cap` | NUMERIC | `5.0` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `ratio_cap` | NUMERIC | `10.0` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `seasonality_cap` | NUMERIC | `5.0` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `buffer_days_cap` | NUMERIC | `365.0` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `data_confidence_high_threshold` | NUMERIC | `0.9` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `data_confidence_medium_threshold` | NUMERIC | `0.75` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `data_confidence_low_threshold` | NUMERIC | `0.6` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `feature_count_per_snapshot` | NUMERIC | `36` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+| `source_weights` | JSON | `{"BUSINESS_CREDIT": 0.1, "COLLATERAL_AVAILABILITY": 0.05, "DEPOSIT_DAILY": 0.2, "OBLIGATIONS": 0.07, "OWNER_CREDIT": 0.08, "POS_DAILY": 0.35, "VERIFICATION": 0.15}` | Governed M1.9 feature-engineering policy control. | MODEL_LOGIC |
+
+## Resolution and freeze
+
+The approved M1.9 policy profile is effective-dated, versioned, and selected before generation. Script 62 freezes the resolved policy inside the run transaction; validation and reporting read persisted outputs rather than reinterpreting parameters.

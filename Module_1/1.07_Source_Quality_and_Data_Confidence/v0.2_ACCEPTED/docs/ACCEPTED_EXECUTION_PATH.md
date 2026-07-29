@@ -1,0 +1,13 @@
+# Accepted M1.7 Execution Path
+
+```text
+45_msbf_m1_7_preflight_validation_v0_2.sql
+46_msbf_m1_7_source_quality_data_confidence_generation_v0_2.sql
+47_msbf_m1_7_source_quality_data_confidence_validation_v0_2.sql
+48_msbf_m1_7_negative_control_tests_v0_2.sql
+49_msbf_m1_7_acceptance_finalize_v0_2.sql
+50_MSBF_M1_7_Source_Quality_Data_Confidence_Master_Report_v0_2.sql
+51_MSBF_M1_7_Source_Quality_Data_Confidence_Detail_Report_v0_2.sql
+```
+
+`46A_msbf_m1_7_generation_reconciliation_reconstructed_v0_2.sql` is contingency-only and was not required for the accepted normal execution path.

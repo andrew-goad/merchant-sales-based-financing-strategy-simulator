@@ -1,0 +1,108 @@
+# Table Grain and Key Catalog
+## Merchant Sales-Based Financing Strategy Simulator v0.1R1
+
+The catalog is logical, not final physical DDL. `archive` means persistent, versioned history. Latest-run access should be implemented through views or replaceable derivative tables rather than weakening archive uniqueness.
+
+| Schema | Table | Priority | Grain | Primary key | Principal foreign keys | Temporal key | Owner | Persistence |
+|---|---|---:|---|---|---|---|---|---|
+| control | product_legal_structure_profile | P0 | one structure/version/effective period | product_structure_profile_id | supersedes_profile_id | effective_start_date | Control plane | archive |
+| control | operating_model_profile | P0 | one entity-role model/version | operating_model_profile_id | supersedes_profile_id | effective_start_date | Control plane | archive |
+| control | third_party_relationship_profile | P0 | one provider/service/role/version/effective period | third_party_relationship_profile_id | operating_model_profile_id + supersedes_profile_id | effective_start_date | Control plane | archive |
+| control | parameter_set | P0 | one parameter set/version | parameter_set_id | supersedes_parameter_set_id | effective_start_date | Control plane | archive |
+| control | parameter_value | P0 | one parameter set/name/scope | parameter_set_id + parameter_name + scope_key | parameter_set_id | effective_start_date | Control plane | archive |
+| control | policy_profile | P0 | one policy/version/effective period | policy_profile_id | supersedes_policy_profile_id | effective_start_date | Control plane | archive |
+| control | strategy_profile | P0 | one strategy/version | strategy_profile_id | policy_profile_id | effective_start_date | Control plane | archive |
+| control | experiment_registry | P0 | one experiment/generation | experiment_id | strategy_profile_id | start_date | Control plane | archive |
+| control | experiment_cell | P0 | one experiment/cell | experiment_id + cell_id | experiment_id | start_date | Control plane | archive |
+| control | scenario_registry | P0 | one scenario/version | scenario_id | scenario_set_id | effective_start_date | Control plane | archive |
+| control | risk_appetite_limit | P0 | one limit/scope/version | limit_id | policy_profile_id | effective_start_date | Control plane | archive |
+| control | jurisdiction_profile | P0 | one jurisdiction/product/model/version | jurisdiction_profile_id | operating_model_profile_id + product_structure_profile_id | effective_start_date | Control plane | archive |
+| control | regulatory_requirement | P0 | one requirement/version | regulatory_requirement_id | source_reference_id | effective_start_date | Control plane | archive |
+| control | regulatory_applicability_rule | P0 | one requirement/rule version | requirement_id + rule_version | regulatory_requirement_id | effective_start_date | Control plane | archive |
+| control | disclosure_template | P0 | one template/version | disclosure_template_id | regulatory_requirement_id | effective_start_date | Control plane | archive |
+| control | calculation_profile | P0 | one calculation method/version | calculation_profile_id | regulatory_requirement_id | effective_start_date | Control plane | archive |
+| control | license_registration_requirement | P0 | one entity-role/jurisdiction/product/version | license_requirement_id | jurisdiction_profile_id | effective_start_date | Control plane | archive |
+| control | reporting_requirement | P0 | one reporting program/version | reporting_requirement_id | regulatory_requirement_id | effective_start_date | Control plane | archive |
+| control | data_segregation_requirement | P0 | one data-control profile/version | data_segregation_profile_id | reporting_requirement_id | effective_start_date | Control plane | archive |
+| control | financial_crime_role_profile | P0 | one operating model/version | financial_crime_profile_id | operating_model_profile_id | effective_start_date | Control plane | archive |
+| control | payment_data_scope_profile | P0 | one integration/version | payment_data_scope_id | operating_model_profile_id | effective_start_date | Control plane | archive |
+| control | run_registry | P0 | one technical module run | run_id | parent_run_id | run_as_of_date | Control plane | archive |
+| control | comparison_registry | P0 | one governed comparison | comparison_id | baseline_run_id + challenger_run_id | created_at | Control plane | archive |
+| control | reason_code_catalog | P0 | one reason/version | reason_code + version | policy_profile_id | effective_start_date | Control plane | archive |
+| control | run_evidence | P0 | one run/metric/gate | run_id + evidence_code + segment_key | run_id | created_at | Control plane | archive |
+| control | acceptance_gate_result | P0 | one run/gate/review | run_id + gate_id + review_version | run_id | reviewed_at | Control plane | archive |
+| m1 | merchant_master | P0 | one merchant | merchant_id |  | created_date | Module 1 | master/archive |
+| m1 | merchant_owner_guarantor | P0 | one merchant/person/role/effective period | merchant_id + party_id + role + effective_start | merchant_id | effective_start_date | Module 1 | archive |
+| m1 | merchant_industry_assignment | P0 | one merchant/industry/effective period | merchant_id + industry_id + effective_start | merchant_id | effective_start_date | Module 1 | archive |
+| m1 | merchant_relationship_snapshot | P0 | one merchant/as-of date | merchant_id + as_of_date | merchant_id | as_of_date | Module 1 | archive |
+| m1 | partner_channel | P0 | one partner/channel | partner_channel_id |  | effective_start_date | Module 1 | master/archive |
+| m1 | processor_account | P0 | one merchant/processor account/effective period | processor_account_id | merchant_id + partner_channel_id | effective_start_date | Module 1 | archive |
+| m1 | merchant_application | P0 | one application | merchant_application_id | merchant_id + processor_account_id | application_date | Module 1 | archive |
+| m1 | merchant_pos_daily_base | P0 | one merchant/date | population_id + merchant_id + observation_date | merchant_id | observation_date | Module 1 | base fact |
+| m1 | merchant_pos_daily_scenario | P0 | one scenario/merchant/date | scenario_id + population_id + merchant_id + observation_date | merchant_id + scenario_id | observation_date | Module 1 | archive fact |
+| m1 | merchant_deposit_daily_base | P0 | one merchant/date | population_id + merchant_id + observation_date | merchant_id | observation_date | Module 1 | base fact |
+| m1 | source_snapshot | P0 | one application/source/as-of | merchant_application_id + source_code + as_of_date | merchant_application_id | as_of_date | Module 1 | archive |
+| m1 | verification_result | P0 | one application/check/version | merchant_application_id + check_code + check_version | merchant_application_id | checked_at | Module 1 | archive |
+| m1 | merchant_feature_snapshot | P0 | one M1 scenario/application | module1_run_id + merchant_application_id | merchant_application_id + run_id | as_of_date | Module 1 | archive |
+| m1 | merchant_risk_snapshot | P0 | one M1 scenario/application | module1_run_id + merchant_application_id | merchant_feature_snapshot | as_of_date | Module 1 | archive |
+| m1 | risk_component_detail | P0 | one M1 application/component | module1_run_id + merchant_application_id + component_code | merchant_risk_snapshot | as_of_date | Module 1 | archive |
+| m1 | ead_path_snapshot | P0 | one application/relative day | module1_run_id + merchant_application_id + relative_day | merchant_risk_snapshot | as_of_date | Module 1 | archive |
+| m2 | experiment_assignment | P0 | one application/experiment | merchant_application_id + experiment_id | merchant_application_id + experiment_id | assigned_at | Module 2 | archive |
+| m2 | application_segment_snapshot | P0 | one strategy/application | module2_run_id + merchant_application_id | merchant_risk_snapshot | as_of_date | Module 2 | archive |
+| m2 | offer_candidate | P0 | one strategy/application/candidate | module2_run_id + merchant_application_id + candidate_id | merchant_risk_snapshot | as_of_date | Module 2 | archive |
+| m2 | candidate_collateral_requirement | P0 | one candidate/collateral requirement | offer_candidate_key + collateral_requirement_id | offer_candidate | as_of_date | Module 2 | archive |
+| m2 | candidate_covenant_requirement | P0 | one candidate/covenant requirement | offer_candidate_key + covenant_requirement_id | offer_candidate | as_of_date | Module 2 | archive |
+| m2 | candidate_risk_economics | P0 | one offer candidate | offer_candidate_key | offer_candidate | as_of_date | Module 2 | archive |
+| m2 | elasticity_result | P0 | one offer candidate/model version | offer_candidate_key + elasticity_version | offer_candidate | as_of_date | Module 2 | archive |
+| m2 | regulatory_applicability_snapshot | P0 | one final offer/requirement | final_offer_id + requirement_id | offer_decision + regulatory_requirement | decision_date | Module 2 | archive |
+| m2 | offer_compliance_package | P0 | one final offer/package version | final_offer_id + package_version | offer_decision | decision_date | Module 2 | archive |
+| m2 | offer_decision | P0 | one strategy/application | module2_run_id + merchant_application_id | offer_candidate | decision_date | Module 2 | archive |
+| m2 | offer_reason_code | P0 | one decision/reason/rank | offer_decision_key + reason_rank | offer_decision | decision_date | Module 2 | archive |
+| m2 | portfolio_allocation_result | P0 | one allocation run/final offer | allocation_run_id + final_offer_id | offer_decision | allocation_date | Module 2 | archive |
+| m2 | credit_facility | P0 | one facility | facility_id | merchant_id + final_offer_id | open_date | Module 2 | archive |
+| m2 | facility_limit_snapshot | P0 | one facility/effective date | facility_id + effective_start_date | facility_id | effective_start_date | Module 2 | archive |
+| m2 | financing_advance | P0 | one booked advance | advance_id | facility_id + final_offer_id | funding_date | Module 2 | archive |
+| m2 | advance_balance_schedule | P0 | one advance/relative day | advance_id + relative_day | advance_id | funding_date | Module 2 | archive |
+| m2 | collateral_asset | P0 | one collateral asset/pool | collateral_asset_id | merchant_id | created_date | Module 2 | archive |
+| m2 | collateral_valuation_snapshot | P0 | one asset/valuation date | collateral_asset_id + valuation_date | collateral_asset_id | valuation_date | Module 2 | archive |
+| m2 | guarantee | P0 | one guarantee/version | guarantee_id | facility_id + party_id | effective_start_date | Module 2 | archive |
+| m2 | advance_collateral_link | P0 | one advance/collateral/effective period | advance_id + collateral_asset_id + effective_start | advance_id + collateral_asset_id | effective_start_date | Module 2 | archive |
+| m2 | covenant_definition | P0 | one covenant/version | covenant_definition_id | policy_profile_id | effective_start_date | Module 2 | archive |
+| m2 | advance_covenant | P0 | one advance/covenant/effective period | advance_id + covenant_definition_id + effective_start | advance_id + covenant_definition_id | effective_start_date | Module 2 | archive |
+| m3 | daily_remittance_performance | P0 | one advance/date | advance_id + performance_date | advance_id | performance_date | Module 3 | archive fact |
+| m3 | minimum_progress_checkpoint_result | P0 | one advance/checkpoint | advance_id + checkpoint_id | advance_id | checkpoint_date | Module 3 | archive |
+| m3 | processor_continuity_event | P0 | one processor event | processor_event_id | processor_account_id + advance_id | event_date | Module 3 | archive |
+| m3 | covenant_test_result | P0 | one advance/covenant/test date | advance_id + covenant_id + test_date | advance_covenant | test_date | Module 3 | archive |
+| m3 | merchant_health_snapshot | P0 | one facility/review date | facility_id + review_date | facility_id | review_date | Module 3 | archive |
+| m3 | early_warning_event | P0 | one event | early_warning_event_id | facility_id + advance_id | event_date | Module 3 | archive |
+| m3 | line_management_candidate | P0 | one facility/review/candidate | facility_id + review_date + candidate_id | merchant_health_snapshot | review_date | Module 3 | archive |
+| m3 | line_management_action | P0 | one facility/review/action version | facility_id + review_date + action_version | merchant_health_snapshot | review_date | Module 3 | archive |
+| m3 | loss_mitigation_candidate | P0 | one advance/review/treatment | advance_id + review_date + treatment_id | advance_id | review_date | Module 3 | archive |
+| m3 | performance_state_transition | P0 | one advance/transition timestamp | advance_id + transition_timestamp | advance_id | transition_timestamp | Module 3 | archive |
+| m3 | renewal_candidate | P1 | one facility/review/candidate | facility_id + review_date + renewal_candidate_id | merchant_health_snapshot | review_date | Module 3 | archive |
+| m3 | workout_action | P1 | one advance/action event | workout_action_id | advance_id + treatment_id | action_date | Module 3 | archive |
+| m4 | economic_scenario | P0 | one scenario/version | economic_scenario_id | scenario_registry | effective_start_date | Module 4 | archive |
+| m4 | scenario_factor_shock | P0 | one scenario/factor/period | economic_scenario_id + factor_code + period | economic_scenario_id | scenario_date | Module 4 | archive |
+| m4 | industry_dependency | P0 | one source/dependent/channel/version | dependency_id | source_industry_id + dependent_industry_id | effective_start_date | Module 4 | archive |
+| m4 | scenario_industry_shock | P0 | one scenario/industry/period | economic_scenario_id + industry_id + period | economic_scenario_id + industry_id | scenario_date | Module 4 | archive |
+| m4 | stress_merchant_result | P0 | one stress run/merchant | stress_run_id + merchant_id | merchant_id + economic_scenario_id | as_of_date | Module 4 | archive |
+| m4 | portfolio_segment_snapshot | P0 | one run/segment level/key | run_id + segment_level + segment_key | run_id | as_of_date | Module 4 | archive |
+| m4 | portfolio_limit_status | P0 | one run/limit/segment | run_id + limit_id + segment_key | risk_appetite_limit | as_of_date | Module 4 | archive |
+| m4 | strategy_frontier_result | P0 | one portfolio/strategy/scenario | portfolio_snapshot_id + strategy_id + scenario_id | strategy_profile + economic_scenario | as_of_date | Module 4 | archive |
+| m4 | strategy_robustness_result | P0 | one portfolio/strategy | portfolio_snapshot_id + strategy_id | strategy_profile | as_of_date | Module 4 | archive |
+| m4 | capacity_allocation_result | P1 | one allocation run/segment | allocation_run_id + segment_key | portfolio_segment_snapshot | allocation_date | Module 4 | archive |
+
+# Key standards
+
+1. Surrogate IDs are stable and immutable.
+2. Natural/composite uniqueness is enforced separately where a surrogate ID is used.
+3. Every archive output includes run ID, contract version, source snapshot, profile snapshot, and created timestamp.
+4. Effective-dated tables prevent overlapping active periods for the same natural scope.
+5. Daily fact tables prohibit duplicate merchant/account/date rows within population/scenario.
+6. Candidate and final decision keys include strategy/run identity.
+7. Timestamps are audit fields and never substitute for matched comparison keys.
+8. Regulatory and policy profiles cannot be physically overwritten; changes create new versions.
+
+## M1.16 TABLE-GRAIN ADDENDUM
+
+See `18_M1_16/catalogs/M1_16_TABLE_GRAIN_CATALOG.csv` for the authoritative ready-for-execution table, grain, and cardinality catalog.
