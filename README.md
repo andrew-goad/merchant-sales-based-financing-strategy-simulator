@@ -2,6 +2,10 @@
 
 ## A Governed Enterprise Platform for Merchant Acquisition, Operating Intelligence, Risk, Economics, and Portfolio Learning
 
+[![Enterprise Merchant Sales-Based Financing Platform](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform.png)](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform.png)
+
+[Open the enterprise architecture full size](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform.png) | [Open the PDF](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform.pdf)
+
 How do you design, test, evidence, and certify a merchant sales-based financing platform before allowing strategy logic to make an offer?
 
 I built this project as a deterministic, synthetic, PostgreSQL-based enterprise simulator for merchant financing tied to daily point-of-sale activity and sales-linked repayment. The platform connects merchant identity, acquisition source, POS and deposit behavior, source confidence, verification and fraud evidence, capacity, resilience, integrated risk, exposure, recovery, comparative loss, unit economics, immutable contracts, and end-to-end assurance - without using PII or production credit policy.
@@ -9,31 +13,6 @@ I built this project as a deterministic, synthetic, PostgreSQL-based enterprise 
 This is not a dashboard-only project and it is not a single opaque score. The core system is a governed evidence chain with explicit stage boundaries, target-typed hashes, positive and negative controls, immutable archives, fail-closed recovery, and formal acceptance.
 
 > **Module 1 is complete. `G2_M1_CONTRACT = PASS`. Module 2 - Strategy and Offer Decisioning is authorized.**
-
----
-
-## Repository Navigation
-
-- [`RELEASE_NOTES.md`](./RELEASE_NOTES.md) - Module 1 G2 v1.0.0 release summary and boundaries.
-- [`PROJECT_ARTIFACT_MAP.md`](./PROJECT_ARTIFACT_MAP.md) - curated file map and reviewer paths.
-- [`MODULE_AND_RELEASE_INDEX.md`](./MODULE_AND_RELEASE_INDEX.md) - accepted versions, outputs, and hashes.
-- [`GOVERNANCE_AND_VALIDATION.md`](./GOVERNANCE_AND_VALIDATION.md) - deterministic evidence, controls, recovery, and G2 assurance.
-- [`SAMPLE_DATA_AND_EVIDENCE_POLICY.md`](./SAMPLE_DATA_AND_EVIDENCE_POLICY.md) - synthetic samples and the Controlled 50-Application Public Review Cohort.
-- [`REPRODUCIBILITY_AND_EXECUTION.md`](./REPRODUCIBILITY_AND_EXECUTION.md) - PostgreSQL 15 and DBeaver execution model.
-
----
-
-## Enterprise Architecture
-
-[![Enterprise Merchant Sales-Based Financing Platform](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform.png)](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform.png)
-
-[Open the enterprise architecture full size](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform.png) | [Open the PDF](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform.pdf)
-
-The flagship architecture shows the enterprise capability chain from governance and merchant foundations through daily operating intelligence, risk and economics, acquisition evidence, governed consumption contracts, G2 assurance, and the next authorized strategy layer.
-
-For the complete stage-by-stage technical chain, open the [Module 1 Governed Evidence, Contract & Acceptance Lineage](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png).
-
----
 
 ## Executive Release Snapshot
 
@@ -56,7 +35,20 @@ For the complete stage-by-stage technical chain, open the [Module 1 Governed Evi
 
 The accepted source packages represent **110 designed parent/control/reference tables and 2,138 designed columns** at the final Module 1 boundary. These are source-derived design counts; the historical G0 baseline remains 70 parent tables and 1,041 designed columns.
 
----
+## Repository Navigation
+
+- [`RELEASE_NOTES.md`](./RELEASE_NOTES.md) - Module 1 G2 v1.0.0 release summary and boundaries.
+- [`PROJECT_ARTIFACT_MAP.md`](./PROJECT_ARTIFACT_MAP.md) - curated file map and reviewer paths.
+- [`MODULE_AND_RELEASE_INDEX.md`](./MODULE_AND_RELEASE_INDEX.md) - accepted versions, outputs, and hashes.
+- [`GOVERNANCE_AND_VALIDATION.md`](./GOVERNANCE_AND_VALIDATION.md) - deterministic evidence, controls, recovery, and G2 assurance.
+- [`SAMPLE_DATA_AND_EVIDENCE_POLICY.md`](./SAMPLE_DATA_AND_EVIDENCE_POLICY.md) - synthetic samples and the Controlled 50-Application Public Review Cohort.
+- [`REPRODUCIBILITY_AND_EXECUTION.md`](./REPRODUCIBILITY_AND_EXECUTION.md) - PostgreSQL 15 and DBeaver execution model.
+
+## Enterprise Architecture
+
+The flagship architecture shows the enterprise capability chain from governance and merchant foundations through daily operating intelligence, risk and economics, acquisition evidence, governed consumption contracts, G2 assurance, and the next authorized strategy layer.
+
+For the complete stage-by-stage technical chain, open the [Module 1 Governed Evidence, Contract & Acceptance Lineage](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png).
 
 ## End-to-End Evidence Chain
 
@@ -100,8 +92,6 @@ Data confidence
 != pricing or final strategy decisions
 ```
 
----
-
 ## Accepted Stage Progression
 
 | Stage | Capability | Accepted revision | Status | Principal output |
@@ -126,8 +116,6 @@ Data confidence
 | [M1.17](./Module_1/1.17_End_to_End_QA_and_G2_Acceptance/README.md) | End-to-End QA, Evidence & G2 Contract Acceptance | v0.2R8 | **ACCEPTED** | 18 hash-chain rows + 48 assurance records + one latest/archive/registry bundle; 69 canonical entities. |
 
 The non-executable [`1.01 Module 1 Charter, Architecture & Requirements`](./Module_1/1.01_Charter_Architecture_and_Requirements/README.md) package provides the enterprise design context but is not represented as a separate accepted database milestone.
-
----
 
 ## Acquisition Source, Marketing Attribution & Merchant CAC
 
@@ -174,8 +162,6 @@ Unknown acquisition cost is not converted to zero. Twenty-seven blocked records 
 
 [Open the M1.16 stage package](./Module_1/1.16_Acquisition_Attribution_and_CAC/README.md)
 
----
-
 ## G2 Contract Certification
 
 M1.17 certifies two accepted contract families without rewriting them:
@@ -194,19 +180,15 @@ The final integrated interface contains exactly 750 `BASELINE` rows and 750 `REC
 
 [Open the M1.17 G2 assurance package](./Module_1/1.17_End_to_End_QA_and_G2_Acceptance/README.md) | [Review the complete hash chain](./docs/project_lineage/MODULE_1_ACCEPTED_HASH_CHAIN.md)
 
----
-
 ## From First Advance to Intelligent Portfolio
 
 [![From First Advance to Intelligent Portfolio cover](./docs/executive_strategy/from_first_advance_to_intelligent_portfolio_cover.png)](./docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio.pdf)
 
-[Open the eight-page strategic brief](./docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio.pdf) | [Open the contact sheet](./docs/executive_strategy/from_first_advance_to_intelligent_portfolio_contact_sheet.png)
+[Open the eight-page strategic brief](./docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio.pdf) | [Open the contact sheet](./docs/executive_strategy/from_first_advance_to_intelligent_portfolio_contact_sheet.png) | [Open the page gallery](./docs/executive_strategy/pages/README.md)
 
 > **The first advance is not the destination. It is the beginning of a learning system.**
 
 The refreshed brief connects controlled acquisition, merchant operating evidence, governed strategy, relationship development, portfolio learning, and acquisition-to-lifetime-value intelligence.
-
----
 
 ## Technical Rigor
 
@@ -218,65 +200,3 @@ The refreshed brief connects controlled acquisition, merchant operating evidence
 - **Visible-component reconciliation** - published composites reconcile to persisted visible components.
 - **Evidence gating** - `COMPLETE`, `PARTIAL`, and `BLOCKED` states remain explicit.
 - **Immutable archives** - database triggers protect M1.15, M1.16, and G2 archive rows.
-- **Fail-closed recovery** - defects are classified, bounded, preserved as evidence, and corrected from the latest safe state.
-- **No accepted-stage regeneration for reporting defects** - committed business evidence is preserved when the defect is validation- or report-only.
-
-Power BI remains a planned executive and portfolio-intelligence layer. No placeholder PBIX or unsupported reporting claim is included in this release.
-
----
-
-## Suggested Reviewer Paths
-
-### Fast Executive Review
-
-1. Read this README.
-2. Open the [flagship enterprise architecture](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform.png).
-3. Review [From First Advance to Intelligent Portfolio](./docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio.pdf).
-4. Read the [M1.16 acquisition economics overview](./Module_1/1.16_Acquisition_Attribution_and_CAC/README.md).
-5. Review the [M1.17 G2 assurance summary](./Module_1/1.17_End_to_End_QA_and_G2_Acceptance/README.md).
-
-### Technical / Architecture Review
-
-1. Open the [detailed Module 1 lineage map](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png).
-2. Review the [Module 1 charter and architecture package](./Module_1/1.01_Charter_Architecture_and_Requirements/README.md).
-3. Follow the stage READMEs from M1.2 through M1.17.
-4. Inspect accepted SQL under each stage's versioned `src/` directory.
-5. Review M1.15 and M1.16 contract documentation and the M1.17 assurance evidence.
-
-### Governance / Validation Review
-
-1. Read [`GOVERNANCE_AND_VALIDATION.md`](./GOVERNANCE_AND_VALIDATION.md).
-2. Review the [complete accepted hash chain](./docs/project_lineage/MODULE_1_ACCEPTED_HASH_CHAIN.md).
-3. Open M1.17 positive, negative, archive, and mismatch evidence.
-4. Review each stage's formal sign-off and correction history.
-5. Inspect [`PUBLIC_REVIEW_COHORT_REGISTRY.csv`](./docs/project_lineage/public_review_cohort/PUBLIC_REVIEW_COHORT_REGISTRY.csv) for cross-stage public navigation.
-
----
-
-## Data, Privacy & Interpretation Boundaries
-
-All data are deterministic and synthetic. The repository contains no PII, real merchant data, production underwriting rules, customer communications, or operational decisions.
-
-This project does not claim:
-
-- calibrated probability of default;
-- production EAD or LGD;
-- CECL, reserves, or regulatory capital;
-- approved pricing or funding amounts;
-- realized customer acquisition cost, CAC payback, or lifetime value;
-- approval, counteroffer, decline, or adverse-action output;
-- legal, fair-lending, accounting, regulatory, or model-risk approval;
-- production readiness or operational deployment authorization.
-
----
-
-## License & Author
-
-Released under the [MIT License](./LICENSE).
-
-**Andrew R. Goad**  
-[GitHub](https://github.com/andrew-goad) | [LinkedIn](https://linkedin.com/in/andrewrgoad)
-
-For professional inquiries, connect through LinkedIn.
-
-*Built by Andrew R. Goad as a governed merchant-financing architecture, analytics, economics, and evidence portfolio artifact.*

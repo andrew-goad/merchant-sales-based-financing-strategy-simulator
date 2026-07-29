@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Polished the public GitHub presentation before the first formal GitHub Release.
+- Moved the flagship enterprise architecture directly below the repository title and subtitle in the root README.
+- Replaced the earlier architecture with the approved Governed Build Edition v2.0 flagship visual package.
+- Replaced the strategic brief with the corrected Governed Build Edition v2.0 PDF, corrected cover, and regenerated contact sheet.
+- Added a browser-native eight-page gallery under `docs/executive_strategy/pages/`.
+- Regenerated `MANIFEST.csv`, `manifest.json`, and `SHA256SUMS.txt` for the final publication patch.
+
 ## [1.0.0] - 2026-07-28
 
 ### Added

@@ -41,6 +41,15 @@ G0 + G1
 | Combined G2 canonical set | `7d9e466da28cad2551aa99c4c40c912b` |
 | Final gate | **`G2_M1_CONTRACT — PASS`** |
 
+## Publication polish included in the final release commit
+
+- Root README reordered so the flagship architecture appears immediately below the repository title and subtitle.
+- Approved Governed Build Edition v2.0 enterprise architecture installed as the flagship visual package.
+- Corrected Governed Build Edition v2.0 executive strategy brief installed as the canonical PDF.
+- Corrected brief cover and regenerated eight-page contact sheet published under `docs/executive_strategy/`.
+- Browser-native page gallery published under `docs/executive_strategy/pages/`.
+- Release inventories and checksums regenerated.
+
 ## Major Public Capabilities
 
 - Governed PostgreSQL 15 foundation with deterministic generation and explicit stage boundaries.
@@ -50,7 +59,7 @@ G0 + G1
 - Accepted M1.16 acquisition-source, campaign, funnel, attribution, cost, overlap, and merchant-CAC companion contract.
 - Accepted M1.17 end-to-end assurance over both contract families and the final 1,500-row integrated interface.
 - Controlled 50-application public review cohort for readable cross-stage navigation without replacing full-population evidence.
-- Executive flagship architecture, detailed Module 1 lineage map, and refreshed eight-page strategic brief.
+- Executive flagship architecture, detailed Module 1 lineage map, corrected eight-page strategic brief, and page gallery.
 
 ## Public Repository Design
 
@@ -77,6 +86,7 @@ Power BI remains a planned executive and portfolio-intelligence layer and is not
 - [Enterprise architecture](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform.png)
 - [Detailed Module 1 lineage](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png)
 - [Strategic brief](./docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio.pdf)
+- [Strategic brief page gallery](./docs/executive_strategy/pages/README.md)
 - [M1.16 acquisition and CAC package](./Module_1/1.16_Acquisition_Attribution_and_CAC/README.md)
 - [M1.17 G2 assurance package](./Module_1/1.17_End_to_End_QA_and_G2_Acceptance/README.md)
 - [Publication guide](./GITHUB_PUBLICATION_GUIDE.md)
