@@ -10,6 +10,8 @@
 - Replaced the strategic brief with the corrected Governed Build Edition v2.0 PDF, corrected cover, and regenerated contact sheet.
 - Added a browser-native eight-page gallery under `docs/executive_strategy/pages/`.
 - Regenerated `MANIFEST.csv`, `manifest.json`, and `SHA256SUMS.txt` for the final publication patch.
+- Added documentation and release metadata for the optional 110-table full synthetic data snapshot.
+- Added release-asset guidance for 1,042,591 table rows in CSV and PostgreSQL INSERT formats.
 
 ## [1.0.0] - 2026-07-28
 

@@ -37,3 +37,17 @@ Accepted deterministic-mismatch and blocking-error exports retain headers and co
 ## Archive Scope
 
 The public repository excludes the complete raw DBeaver export history, every superseded SQL revision, and full operational-scale archives. Those remain in the private canonical repository. The public release preserves accepted source, selected evidence, formal sign-offs, aggregate results, and correction-history summaries.
+
+## Optional Full Synthetic Table-Data Release Asset
+
+The first formal GitHub Release provides an optional [full synthetic table-data snapshot](./docs/data_snapshot/README.md) for reviewers who need complete table-level access.
+
+```text
+110 designed tables
+1,042,591 total table rows
+110 CSV exports
+110 PostgreSQL INSERT exports
+0 potential prohibited-PII header findings
+```
+
+The large snapshot is distributed as a GitHub Release asset rather than committed to normal Git history. It does not replace the Controlled 50-Application Public Review Cohort, and it is not a one-command database backup. The accepted source repository remains authoritative for schema creation, database objects, and governed execution.

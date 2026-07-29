@@ -61,6 +61,23 @@ G0 + G1
 - Controlled 50-application public review cohort for readable cross-stage navigation without replacing full-population evidence.
 - Executive flagship architecture, detailed Module 1 lineage map, corrected eight-page strategic brief, and page gallery.
 
+
+## Optional Full Synthetic Data Asset
+
+The release includes a separate large-data attachment for deeper technical review:
+
+```text
+MSBF_Module_1_G2_Full_Synthetic_Table_Data_v1.0.0.zip
+SHA-256: 5a1cec08cb0bbd1b28fa0c04800802746159b6b40d105f2db2c0cecfeea5d26d
+Tables: 110
+Rows: 1,042,591
+Formats: CSV and PostgreSQL INSERT statements
+```
+
+The data attachment is synthetic and contains zero potential prohibited-PII header findings. It is a table-data snapshot, not a complete PostgreSQL backup; schema and database-object definitions remain governed by the accepted repository source.
+
+[Review the data snapshot documentation](./docs/data_snapshot/README.md)
+
 ## Public Repository Design
 
 The public repository is a curated derivative of the private canonical audit repository. It includes final accepted clean-build source where exact retained source exists, selected execution and validation evidence, formal sign-offs, correction histories, deterministic samples, release metadata, and SHA-256 inventories.

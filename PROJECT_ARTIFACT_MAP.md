@@ -11,6 +11,7 @@
 7. [`M1.17 README`](./Module_1/1.17_End_to_End_QA_and_G2_Acceptance/README.md) - end-to-end assurance and G2 acceptance.
 8. [`GOVERNANCE_AND_VALIDATION.md`](./GOVERNANCE_AND_VALIDATION.md) - control philosophy, recovery standard, and final certification.
 9. [`PUBLIC_REVIEW_COHORT_REGISTRY.csv`](./docs/project_lineage/public_review_cohort/PUBLIC_REVIEW_COHORT_REGISTRY.csv) - stable public IDs for 50 synthetic applications.
+10. [`Full Synthetic Table-Data Snapshot`](./docs/data_snapshot/README.md) - optional Release asset containing all 110 accepted table exports in CSV and PostgreSQL INSERT formats.
 
 ## Repository Structure
 
@@ -82,7 +83,9 @@ M1.17 has one explicit source-provenance limitation: exact standalone v0.2R2 sou
 
 ## Sample Data and Evidence
 
-The public repository does not upload every full-population operational extract. It publishes accepted aggregate evidence, selected G2 integrated records, zero-row exception outputs with headers, and a deterministic 50-application review cohort. Full-population counts, hashes, and acceptance controls remain the governing evidence.
+The normal Git tree does not upload every full-population operational extract. It publishes accepted aggregate evidence, selected G2 integrated records, zero-row exception outputs with headers, and a deterministic 50-application review cohort. Full-population counts, hashes, and acceptance controls remain the governing evidence.
+
+The first formal Release also offers an optional [Full Synthetic Table-Data Snapshot](./docs/data_snapshot/README.md) containing 110 table exports and 1,042,591 rows in CSV and PostgreSQL INSERT formats.
 
 See [`SAMPLE_DATA_AND_EVIDENCE_POLICY.md`](./SAMPLE_DATA_AND_EVIDENCE_POLICY.md).
 
