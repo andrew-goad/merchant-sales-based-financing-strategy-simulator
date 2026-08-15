@@ -40,7 +40,7 @@ validation, evidence, controls, and governed handoffs.
 <td width="50%" valign="top">
 
 <a href="./docs/executive_strategy/pages_v2/02_launch_with_discipline.png">
-<img src="./docs/executive_strategy/pages_v2/02_launch_with_discipline.png" alt="Launch With Discipline">
+<img src="./docs/executive_strategy/pages_v2/02_launch_with_discipline.png" alt="Launch With Discipline" width="100%">
 </a>
 
 <strong>Launch With Discipline</strong>
@@ -52,7 +52,7 @@ and contract-certified.
 <td width="50%" valign="top">
 
 <a href="./docs/executive_strategy/pages_v2/05_from_decision_to_enterprise_certification.png">
-<img src="./docs/executive_strategy/pages_v2/05_from_decision_to_enterprise_certification.png" alt="From Decision to Enterprise Certification">
+<img src="./docs/executive_strategy/pages_v2/05_from_decision_to_enterprise_certification.png" alt="From Decision to Enterprise Certification" width="100%">
 </a>
 
 <strong>From Decision to Enterprise Certification</strong>
@@ -66,7 +66,7 @@ operations, portfolio strategy, and an accepted G3 consumption boundary.
 <td width="50%" valign="top">
 
 <a href="./docs/executive_strategy/pages_v2/08_proof_before_scale.png">
-<img src="./docs/executive_strategy/pages_v2/08_proof_before_scale.png" alt="Proof Before Scale">
+<img src="./docs/executive_strategy/pages_v2/08_proof_before_scale.png" alt="Proof Before Scale" width="100%">
 </a>
 
 <strong>Proof Before Scale</strong>
@@ -78,7 +78,7 @@ the enterprise boundary advances.
 <td width="50%" valign="top">
 
 <a href="./docs/executive_strategy/pages_v2/10_the_opportunity_ahead.png">
-<img src="./docs/executive_strategy/pages_v2/10_the_opportunity_ahead.png" alt="The Opportunity Ahead">
+<img src="./docs/executive_strategy/pages_v2/10_the_opportunity_ahead.png" alt="The Opportunity Ahead" width="100%">
 </a>
 
 <strong>The Opportunity Ahead</strong>
@@ -179,6 +179,96 @@ Acquisition Source, Campaign & Attribution
 
 ---
 
+## Module 1 / G2 Accepted Stage Chain
+
+Module 1 is not a summarized upstream black box. Its accepted progression begins
+with the shared physical and run-control foundations, advances through sixteen
+executable evidence stages, and terminates in the accepted G2 consumption
+boundary.
+
+G0 and G1 reside under `Module_0/` because they establish reusable physical and
+governed-run foundations. They are included here because they are part of the
+accepted Module 1 progression. M1.17 then certifies the 18 ordered accepted
+physical identities carried into G2.
+
+| Stage | Governed capability | Accepted revision |
+|---|---|---|
+| [G0](./Module_0/0.01_G0_Physical_Data_Foundation/) | Physical data foundation | `v0.2_ACCEPTED` |
+| [G1](./Module_0/0.02_G1_Governed_Run_Control/) | Governed run control | `v0.2_ACCEPTED` |
+| [M1.2](./Module_1/1.02_Deterministic_Merchant_Population/) | Deterministic merchant population | `v0.2R2_ACCEPTED` |
+| [M1.3](./Module_1/1.03_Application_and_Requested_Structure/) | Application and requested sales-linked structure | `v0.2R1_ACCEPTED` |
+| [M1.4](./Module_1/1.04_Daily_POS_Settlement_and_Ecosystem/) | Daily POS, settlement, and merchant ecosystem | `v0.2_ACCEPTED` |
+| [M1.5](./Module_1/1.05_Daily_Deposit_and_Liquidity_History/) | Daily deposit and liquidity history | `v0.2R2_ACCEPTED` |
+| [M1.6](./Module_1/1.06_Matched_POS_and_Deposit_Scenarios/) | Matched POS and deposit scenario overlays | `v0.2R3_ACCEPTED` |
+| [M1.7](./Module_1/1.07_Source_Quality_and_Data_Confidence/) | Source quality and data confidence | `v0.2_ACCEPTED` |
+| [M1.8](./Module_1/1.08_Verification_Fraud_and_Continuity/) | Verification, fraud, and processor continuity | `v0.2R1_ACCEPTED` |
+| [M1.9](./Module_1/1.09_As_Of_Cash_Flow_Features/) | As-of cash-flow feature engineering | `v0.2R5_ACCEPTED` |
+| [M1.10](./Module_1/1.10_Obligations_Liquidity_and_Capacity/) | Obligations, liquidity, and residual cash flow | `v0.2R2_ACCEPTED` |
+| [M1.11](./Module_1/1.11_Cash_Flow_Archetypes_and_Resilience/) | Cash-flow archetypes and operating resilience | `v0.2R2_ACCEPTED` |
+| [M1.12](./Module_1/1.12_Merchant_Risk_and_Integrated_Proxy/) | Merchant risk components and integrated risk proxy | `v0.2R1_ACCEPTED` |
+| [M1.13](./Module_1/1.13_Exposure_Recovery_and_Expected_Loss/) | Exposure, recovery, and expected-loss foundations | `v0.2R1_ACCEPTED` |
+| [M1.14](./Module_1/1.14_Unit_Economics_and_Contribution/) | Unit economics and risk-adjusted contribution | `v0.2R4_ACCEPTED` |
+| [M1.15](./Module_1/1.15_Latest_Archive_Comparison_and_Contract/) | Latest, archive, comparison, and consumption contract | `v0.2R3_ACCEPTED` |
+| [M1.16](./Module_1/1.16_Acquisition_Attribution_and_CAC/) | Acquisition source, marketing attribution, and merchant CAC | `v0.2R3_ACCEPTED` |
+| [M1.17](./Module_1/1.17_End_to_End_QA_and_G2_Acceptance/) | End-to-end QA, evidence, and G2 contract acceptance | `v0.2R8_ACCEPTED` |
+
+The non-executable [Module 1 Charter, Architecture, and Requirements](./Module_1/1.01_Charter_Architecture_and_Requirements/)
+package provides the governing design context. It is not represented as a
+separate accepted database milestone.
+
+Each accepted foundation or stage package preserves a stage README, exact
+accepted revision, documentation, source, outputs, validation evidence,
+formal sign-off, manifests, and SHA-256 identities.
+
+[Open the Module 1 charter and architecture](./Module_1/1.01_Charter_Architecture_and_Requirements/) ·
+[Review M1.17 G2 assurance](./Module_1/1.17_End_to_End_QA_and_G2_Acceptance/) ·
+[Review the complete accepted Module 1 hash chain](./docs/project_lineage/MODULE_1_ACCEPTED_HASH_CHAIN.md)
+
+---
+
+## Module 2 / G3 Accepted Stage Chain
+
+| Stage | Governed capability | Accepted revision |
+|---|---|---|
+| [M2.1](./Module_2/2.01_Eligibility_Policy_Gates_and_Decision_Routing/) | Eligibility, policy gates, and decision routing | `v0.2R7_ACCEPTED` |
+| [M2.2](./Module_2/2.02_Pricing_Structure_and_Counteroffer/) | Pricing, structure, and counteroffers | `v0.2R2_ACCEPTED` |
+| [M2.3](./Module_2/2.03_Final_Offer_and_Decision_Authorization/) | Final-offer and decision authorization | `v0.2R2_ACCEPTED` |
+| [M2.4](./Module_2/2.04_Booking_Funding_and_Portfolio_Activation/) | Booking, funding, and portfolio activation | `v0.2_ACCEPTED` |
+| [M2.5](./Module_2/2.05_Daily_Remittance_Exposure_and_Portfolio_Monitoring/) | Daily remittance, exposure, and portfolio monitoring | `v0.2R5_ACCEPTED` |
+| [M2.6](./Module_2/2.06_Early_Warning_Intervention_and_Servicing_Strategy/) | Early warning, intervention, and servicing strategy | `v0.2R1_ACCEPTED` |
+| [M2.7](./Module_2/2.07_Operational_Activation_and_Account_Setup/) | Operational activation and account setup | `v0.2R1_ACCEPTED` |
+| [M2.8](./Module_2/2.08_Servicing_Execution_Payment_and_Lifecycle_Control/) | Servicing execution, payment, and lifecycle control | `v0.2_ACCEPTED` |
+| [M2.9](./Module_2/2.09_Payment_Reconciliation_and_Account_State_Certification/) | Payment reconciliation and account-state certification | `v0.2R1_ACCEPTED` |
+| [M2.10](./Module_2/2.10_Portfolio_Performance_KPI_and_Servicing_Analytics/) | Portfolio performance, KPIs, and servicing analytics | `v0.2R5_ACCEPTED` |
+| [M2.11](./Module_2/2.11_Portfolio_Optimization_and_Strategy_Simulation/) | Portfolio optimization and strategy simulation | `v0.2R13_ACCEPTED` |
+| [M2.12](./Module_2/2.12_Enterprise_Portfolio_Certification_and_G3_Contract/) | Enterprise portfolio certification and G3 contract | `v1_ACCEPTED` |
+
+> **Simulation boundary:** Public Module 2 operating, activation, servicing,
+> and portfolio states are deterministic synthetic simulation outputs. They
+> are not evidence of live account processing or production deployment.
+
+Each stage provides a governed public projection containing:
+
+```text
+README
+→ BRD
+→ architecture
+→ validation and acceptance
+→ source provenance
+→ correction history
+→ catalogs
+→ current source
+→ reporting source
+→ recovery-only source
+→ final sign-off
+→ manifests and SHA-256 evidence
+```
+
+[Open the complete Module 2 stage index](./Module_2/README.md) ·
+[Open the BRD and validation index](./docs/BRD_AND_VALIDATION_INDEX.md)
+
+---
+
 ## Governed Evidence, Contract, and Acceptance Lineage
 
 The platform is governed across two accepted and connected certification
@@ -249,49 +339,6 @@ Campaign Scale Certification
 > non-production evidence and contract boundaries. They do not represent live
 > account processing, deployed credit policy, causal optimization, or
 > autonomous decisioning.
-
----
-
-## Module 2 Accepted Stage Chain
-
-| Stage | Governed capability | Accepted revision |
-|---|---|---|
-| [M2.1](./Module_2/2.01_Eligibility_Policy_Gates_and_Decision_Routing/) | Eligibility, policy gates, and decision routing | `v0.2R7_ACCEPTED` |
-| [M2.2](./Module_2/2.02_Pricing_Structure_and_Counteroffer/) | Pricing, structure, and counteroffers | `v0.2R2_ACCEPTED` |
-| [M2.3](./Module_2/2.03_Final_Offer_and_Decision_Authorization/) | Final-offer and decision authorization | `v0.2R2_ACCEPTED` |
-| [M2.4](./Module_2/2.04_Booking_Funding_and_Portfolio_Activation/) | Booking, funding, and portfolio activation | `v0.2_ACCEPTED` |
-| [M2.5](./Module_2/2.05_Daily_Remittance_Exposure_and_Portfolio_Monitoring/) | Daily remittance, exposure, and portfolio monitoring | `v0.2R5_ACCEPTED` |
-| [M2.6](./Module_2/2.06_Early_Warning_Intervention_and_Servicing_Strategy/) | Early warning, intervention, and servicing strategy | `v0.2R1_ACCEPTED` |
-| [M2.7](./Module_2/2.07_Operational_Activation_and_Account_Setup/) | Operational activation and account setup | `v0.2R1_ACCEPTED` |
-| [M2.8](./Module_2/2.08_Servicing_Execution_Payment_and_Lifecycle_Control/) | Servicing execution, payment, and lifecycle control | `v0.2_ACCEPTED` |
-| [M2.9](./Module_2/2.09_Payment_Reconciliation_and_Account_State_Certification/) | Payment reconciliation and account-state certification | `v0.2R1_ACCEPTED` |
-| [M2.10](./Module_2/2.10_Portfolio_Performance_KPI_and_Servicing_Analytics/) | Portfolio performance, KPIs, and servicing analytics | `v0.2R5_ACCEPTED` |
-| [M2.11](./Module_2/2.11_Portfolio_Optimization_and_Strategy_Simulation/) | Portfolio optimization and strategy simulation | `v0.2R13_ACCEPTED` |
-| [M2.12](./Module_2/2.12_Enterprise_Portfolio_Certification_and_G3_Contract/) | Enterprise portfolio certification and G3 contract | `v1_ACCEPTED` |
-
-> **Simulation boundary:** Public Module 2 operating, activation, servicing,
-> and portfolio states are deterministic synthetic simulation outputs. They
-> are not evidence of live account processing or production deployment.
-
-Each stage provides a governed public projection containing:
-
-```text
-README
-→ BRD
-→ architecture
-→ validation and acceptance
-→ source provenance
-→ correction history
-→ catalogs
-→ current source
-→ reporting source
-→ recovery-only source
-→ final sign-off
-→ manifests and SHA-256 evidence
-```
-
-[Open the complete Module 2 stage index](./Module_2/README.md) ·
-[Open the BRD and validation index](./docs/BRD_AND_VALIDATION_INDEX.md)
 
 ---
 
@@ -444,7 +491,7 @@ Preparation does not imply:
 Clone the repository and run the publication validator:
 
 ```bash
-git clone https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git
+git clone --branch module-2-g3-v2.0.0 --depth 1 https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git
 cd merchant-sales-based-financing-strategy-simulator
 python tools/validate_public_release.py
 ```
@@ -462,7 +509,17 @@ identities, required Module 2 stage structure, and publication boundaries.
 
 ---
 
-## Source Classification
+## Accepted Source Classification
+
+### Module 1 / G2
+
+Module 1 and its G0/G1 foundations retain accepted source under each exact
+versioned package. Supporting `docs/`, `outputs/`, and `tests/` directories
+preserve requirements, evidence, correction history, validation, and sign-off.
+The stage-level README is the public navigation authority; the versioned
+accepted package is the physical source authority.
+
+### Module 2 / G3
 
 Within each accepted Module 2 stage:
 
@@ -565,3 +622,7 @@ visuals—not a production dashboard deployment.
 The repository demonstrates transferable methodology, system architecture,
 governed simulation, validation discipline, evidence design, release
 governance, and executive communication.
+
+---
+
+Licensed under the [MIT License](./LICENSE).
