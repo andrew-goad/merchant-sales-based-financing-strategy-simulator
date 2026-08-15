@@ -10,6 +10,9 @@
 [Page gallery](./docs/executive_strategy/pages_v2/README.md) ·
 [Module 2 / G3 release](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/releases/tag/module-2-g3-v2.0.0)
 
+[Module 1 / G2 lineage](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png) ·
+[Module 2 / G3 lineage](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png)
+
 > **Current governed position:** Module 1 / G2 accepted · Module 2 / G3 accepted · `G2_M1_CONTRACT = PASS` · `G3_M2_CONTRACT = PASS` · Campaign Scale Certification current
 
 This repository is a deterministic, synthetic PostgreSQL 15 platform for
@@ -176,6 +179,79 @@ Acquisition Source, Campaign & Attribution
 
 ---
 
+## Governed Evidence, Contract, and Acceptance Lineage
+
+The platform is governed across two accepted and connected certification
+boundaries.
+
+Module 1 establishes the deterministic merchant, application, operating,
+risk, economics, acquisition, and consumption evidence required by downstream
+strategy. Module 2 consumes that accepted foundation and extends it through
+decisioning, simulated operating states, portfolio analytics, strategy
+comparison, optimization, and G3 enterprise certification.
+
+### Module 1 / G2 — Deterministic Evidence Foundation
+
+[![Module 1 Governed Evidence, Contract and Acceptance Lineage](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png)](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png)
+
+[Open the Module 1 lineage full size](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png) ·
+[PDF](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.pdf) ·
+[Review M1.17 G2 assurance](./Module_1/1.17_End_to_End_QA_and_G2_Acceptance/)
+
+#### What this boundary certifies
+
+- deterministic merchant and application identities;
+- daily POS, settlement, deposit, liquidity, and cash-flow evidence;
+- capacity, resilience, integrated risk, exposure, loss, and unit economics;
+- acquisition source, attribution, confidence, and merchant acquisition cost;
+- latest, archive, comparison, and companion consumption layers;
+- accepted source-to-contract and contract-to-consumption lineage;
+- 18 / 18 accepted physical hash identities;
+- `G2_M1_CONTRACT — PASS`.
+
+### Module 2 / G3 — Decisioning, Operations, Portfolio Strategy, and Enterprise Certification
+
+[![Module 2 Governed Decisioning, Operations, Portfolio and G3 Acceptance Lineage](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png)](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png)
+
+[Open the Module 2 lineage full size](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png) ·
+[PDF](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.pdf) ·
+[Explore the complete Module 2 stage tree](./Module_2/README.md)
+
+#### What this boundary certifies
+
+- eligibility, policy, pricing, structure, counteroffers, and alternatives;
+- final-offer authorization, decision routing, and rationale;
+- deterministic simulated activation and operating states;
+- monitoring, early warning, intervention, servicing, and reconciliation;
+- portfolio KPI and servicing analytics;
+- matched strategy comparison, simulation, optimization, and trade-offs;
+- 12 / 12 accepted Module 2 stages;
+- enterprise-certified G3 consumption;
+- `G3_M2_CONTRACT — PASS`.
+
+```text
+MODULE 1 / G2
+Certified evidence foundation
+        ↓
+MODULE 2 / G3
+Governed decisioning, simulated operations, portfolio strategy,
+and enterprise certification
+        ↓
+CURRENT
+Campaign Scale Certification
+```
+
+> **Connected-boundary principle:** Module 1 proves that the evidence can be
+> trusted. Module 2 proves that trusted evidence can drive governed strategy.
+> G2 and G3 establish the accepted consumption boundaries connecting the two.
+
+> **Authority boundary:** The lineage exhibits summarize accepted synthetic,
+> non-production evidence and contract boundaries. They do not represent live
+> account processing, deployed credit policy, causal optimization, or
+> autonomous decisioning.
+
+---
+
 ## Module 2 Accepted Stage Chain
 
 | Stage | Governed capability | Accepted revision |
@@ -219,26 +295,6 @@ README
 
 ---
 
-## Architecture and Acceptance Lineage
-
-### Module 2 / G3
-
-[![Module 2 Governed Decisioning, Operations, Portfolio and G3 Acceptance Lineage](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png)](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png)
-
-[Open the Module 2 lineage full size](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png) ·
-[PDF](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.pdf)
-
-<details>
-<summary><strong>Open the accepted Module 1 / G2 evidence and contract lineage</strong></summary>
-
-<br>
-
-[![Module 1 Governed Evidence, Contract and Acceptance Lineage](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png)](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png)
-
-</details>
-
----
-
 ## What the Platform Demonstrates
 
 ### 1. Acquire and Establish Evidence
@@ -255,7 +311,7 @@ README
 ### 2. Decide and Structure
 
 - eligibility and policy gates;
-- pricing, terms, factor-rate and remittance design;
+- pricing, terms, factor-rate, and remittance design;
 - configurable counteroffers and alternative structures;
 - final-offer authorization;
 - transparent route, disposition, reason-code, and rationale evidence;
@@ -349,7 +405,7 @@ Preparation does not imply:
 |---|---|
 | Executive or hiring leader | [Architecture](./docs/enterprise_architecture/README.md) → [10-page strategy brief](./docs/executive_strategy/README.md) → [Release notes](./RELEASE_NOTES.md) |
 | Product, pricing, or portfolio leader | [Beyond Underwriting](./docs/executive_strategy/pages_v2/03_beyond_underwriting.png) → [Strategy Engine](./docs/executive_strategy/pages_v2/06_the_strategy_engine.png) → [Opportunity Ahead](./docs/executive_strategy/pages_v2/10_the_opportunity_ahead.png) |
-| Technical or architecture reviewer | [Module and release index](./MODULE_AND_RELEASE_INDEX.md) → [Module 2 stage tree](./Module_2/README.md) → accepted stage source |
+| Technical or architecture reviewer | [Module and release index](./MODULE_AND_RELEASE_INDEX.md) → [Module 1 lineage](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png) → [Module 2 stage tree](./Module_2/README.md) |
 | Governance or validation reviewer | [Governance guide](./GOVERNANCE_AND_VALIDATION.md) → [BRD and validation index](./docs/BRD_AND_VALIDATION_INDEX.md) → [M2.12 acceptance](./Module_2/2.12_Enterprise_Portfolio_Certification_and_G3_Contract/) |
 | Campaign-scale reviewer | [Campaign Scale Certification](./docs/campaign_scale/README.md) → governance boundary → pre-750 roadmap |
 | Development-history reviewer | [Project history](./docs/project_history/README.md) → sanitized transcript archive |
