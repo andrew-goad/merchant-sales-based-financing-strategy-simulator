@@ -31,3 +31,9 @@ The exact standalone v0.2R2 source files for Programs 124C-128 were not present 
 ## Read-Only Public Review Cohort
 
 The cohort selection SQL is read-only and does not alter accepted database objects. Use the published cohort registry as the immutable public ID map when extracting stage-specific review records.
+
+## Campaign-scale reproducibility boundary
+
+The accepted certification database must not be used as a campaign target. Future replay and scale work must use a disposable PostgreSQL environment, exact source identities, frozen parameters, retained checkpoint/report evidence, and separate authorization for each scale gate.
+
+See [Campaign Scale Certification](docs/campaign_scale/README.md).

@@ -1,108 +1,57 @@
 # Project Artifact Map
 
-## Start Here
+## Start here
 
-1. [`README.md`](./README.md) - executive overview, accepted release facts, and reviewer paths.
-2. [`Enterprise_Merchant_Sales_Based_Financing_Platform.png`](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform.png) - flagship enterprise architecture.
-3. [`From_First_Advance_to_Intelligent_Portfolio.pdf`](./docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio.pdf) - eight-page executive strategy brief.
-4. [`Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png`](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png) - detailed stage and contract lineage.
-5. [`MODULE_AND_RELEASE_INDEX.md`](./MODULE_AND_RELEASE_INDEX.md) - accepted revision and hash index.
-6. [`M1.16 README`](./Module_1/1.16_Acquisition_Attribution_and_CAC/README.md) - acquisition source, attribution, and merchant CAC foundations.
-7. [`M1.17 README`](./Module_1/1.17_End_to_End_QA_and_G2_Acceptance/README.md) - end-to-end assurance and G2 acceptance.
-8. [`GOVERNANCE_AND_VALIDATION.md`](./GOVERNANCE_AND_VALIDATION.md) - control philosophy, recovery standard, and final certification.
-9. [`PUBLIC_REVIEW_COHORT_REGISTRY.csv`](./docs/project_lineage/public_review_cohort/PUBLIC_REVIEW_COHORT_REGISTRY.csv) - stable public IDs for 50 synthetic applications.
-10. [`Full Synthetic Table-Data Snapshot`](./docs/data_snapshot/README.md) - optional Release asset containing all 110 accepted table exports in CSV and PostgreSQL INSERT formats.
-
-## Repository Structure
-
-```text
-merchant-sales-based-financing-strategy-simulator/
-├── README.md
-├── PROJECT_ARTIFACT_MAP.md
-├── MODULE_AND_RELEASE_INDEX.md
-├── PROJECT_ROADMAP.md
-├── SAMPLE_DATA_AND_EVIDENCE_POLICY.md
-├── REPRODUCIBILITY_AND_EXECUTION.md
-├── GOVERNANCE_AND_VALIDATION.md
-├── docs/
-│   ├── executive_strategy/
-│   ├── enterprise_architecture/
-│   └── project_lineage/
-├── Module_0/
-│   ├── 0.01_G0_Physical_Data_Foundation/
-│   └── 0.02_G1_Governed_Run_Control/
-└── Module_1/
-    ├── 1.01_Charter_Architecture_and_Requirements/
-    ├── 1.02_Deterministic_Merchant_Population/
-    ├── ...
-    ├── 1.16_Acquisition_Attribution_and_CAC/
-    └── 1.17_End_to_End_QA_and_G2_Acceptance/
-```
-
-Every governed stage contains a stage README and an exact accepted-version directory organized into `docs/`, `outputs/`, `src/`, and `tests/`.
-
-## Enterprise-Level Artifacts
-
-| Artifact | Role |
+| Artifact | Purpose |
 |---|---|
-| Flagship enterprise architecture | Executive system map and accepted G2 state |
-| Detailed Module 1 lineage | Technical stage, contract, hash, and acceptance chain |
-| From First Advance to Intelligent Portfolio | Strategic launch, learning, relationship, and long-horizon narrative |
-| Complete accepted hash chain | All 18 G1-through-M1.16 physical identities |
-| Public Review Cohort | Cross-stage navigation for 50 deterministic synthetic applications |
+| [Root README](README.md) | Current release, architecture, metrics, and reviewer paths |
+| [Documentation Center](docs/README.md) | Unified documentation navigation |
+| [Module and Release Index](MODULE_AND_RELEASE_INDEX.md) | Accepted stage and release authorities |
+| [BRD and Validation Index](docs/BRD_AND_VALIDATION_INDEX.md) | Direct M2.1–M2.12 navigation |
+| [Release Notes](RELEASE_NOTES.md) | v2.0.0 release scope and boundary |
 
-## Current vs. Historical Artifacts
+## Executive and visual artifacts
 
-The public repository contains final accepted clean-build source and concise correction histories. The private canonical repository remains the audit-complete source of truth for all raw failures, superseded source, recovery execution, and DBeaver exports.
+- [Enterprise architecture](docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png)
+- [Enterprise architecture PDF](docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.pdf)
+- [Module 1 lineage](docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png)
+- [Module 2 lineage](docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_&_G3_Acceptance_Lineage.png)
+- [Executive strategy brief](docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio_v2.pdf)
+- [Executive strategy page gallery](docs/executive_strategy/pages_v2/README.md)
+- [Executive strategy contact sheet](docs/executive_strategy/from_first_advance_to_intelligent_portfolio_contact_sheet_v2.png)
 
-M1.17 has one explicit source-provenance limitation: exact standalone v0.2R2 source files for Programs 124C-128 were not retained in the active runtime. The public package preserves the accepted execution evidence and original-plus-hotfix source chain and does not label reconstructed code as byte-identical executed source.
+## Governed stage trees
 
-## Module 0
+- [Module 0](Module_0/)
+- [Module 1](Module_1/)
+- [Module 2](Module_2/README.md)
+- [Module 2 machine-readable stage index](Module_2/MODULE_2_STAGE_INDEX.csv)
+- [Module 2 accepted chain](Module_2/MODULE_2_ACCEPTED_CHAIN.json)
+- [Module 2 source classification](Module_2/MODULE_2_SOURCE_CLASSIFICATION.csv)
 
-- [`G0 Physical Data Foundation`](./Module_0/0.01_G0_Physical_Data_Foundation/README.md)
-- [`G1 Governed Run Control`](./Module_0/0.02_G1_Governed_Run_Control/README.md)
+## Current initiative
 
-## Module 1
+- [Campaign Scale Certification](docs/campaign_scale/README.md)
+- [Campaign readiness rebase](docs/campaign_scale/CAMPAIGN_READINESS_REBASE_REPORT_v0_2.md)
+- [M1.17 clean-build source closure](docs/campaign_scale/M1_17_CAMPAIGN_CLEAN_BUILD_SOURCE_CLOSURE_REPORT.md)
+- [Pre-750 roadmap](docs/campaign_scale/CAMPAIGN_PRE_750_REPLAY_ROADMAP.md)
+- [Campaign governance boundary](docs/campaign_scale/CAMPAIGN_SCALE_GOVERNANCE_BOUNDARY.md)
 
-- [`M1.2 - Deterministic Merchant Population`](./Module_1/1.02_Deterministic_Merchant_Population/README.md)
-- [`M1.3 - Application & Requested Sales-Linked Structure`](./Module_1/1.03_Application_and_Requested_Structure/README.md)
-- [`M1.4 - Daily POS, Settlement & Merchant Ecosystem`](./Module_1/1.04_Daily_POS_Settlement_and_Ecosystem/README.md)
-- [`M1.5 - Daily Deposit & Liquidity History`](./Module_1/1.05_Daily_Deposit_and_Liquidity_History/README.md)
-- [`M1.6 - Matched POS & Deposit Scenario Overlays`](./Module_1/1.06_Matched_POS_and_Deposit_Scenarios/README.md)
-- [`M1.7 - Source Quality & Data Confidence`](./Module_1/1.07_Source_Quality_and_Data_Confidence/README.md)
-- [`M1.8 - Verification, Fraud & Processor Continuity`](./Module_1/1.08_Verification_Fraud_and_Continuity/README.md)
-- [`M1.9 - As-of Cash-Flow Feature Engineering`](./Module_1/1.09_As_Of_Cash_Flow_Features/README.md)
-- [`M1.10 - Obligations, Liquidity & Residual Cash Flow`](./Module_1/1.10_Obligations_Liquidity_and_Capacity/README.md)
-- [`M1.11 - Cash-Flow Archetypes & Operating Resilience`](./Module_1/1.11_Cash_Flow_Archetypes_and_Resilience/README.md)
-- [`M1.12 - Merchant Risk Components & Integrated Risk Proxy`](./Module_1/1.12_Merchant_Risk_and_Integrated_Proxy/README.md)
-- [`M1.13 - Exposure, Recovery & Expected Loss Foundations`](./Module_1/1.13_Exposure_Recovery_and_Expected_Loss/README.md)
-- [`M1.14 - Unit Economics & Risk-Adjusted Contribution`](./Module_1/1.14_Unit_Economics_and_Contribution/README.md)
-- [`M1.15 - Latest, Archive, Comparison & Consumption Contract`](./Module_1/1.15_Latest_Archive_Comparison_and_Contract/README.md)
-- [`M1.16 - Acquisition Source, Marketing Attribution & Merchant CAC`](./Module_1/1.16_Acquisition_Attribution_and_CAC/README.md)
-- [`M1.17 - End-to-End QA, Evidence & G2 Contract Acceptance`](./Module_1/1.17_End_to_End_QA_and_G2_Acceptance/README.md)
+## Transparency and provenance
 
-## Sample Data and Evidence
+- [Project history](docs/project_history/README.md)
+- [ChatGPT development record through 2026-08-12](docs/project_history/chatgpt_logs_through_2026-08-12/README.md)
+- [Project lineage](docs/project_lineage/)
+- [Synthetic data snapshot documentation](docs/data_snapshot/README.md)
 
-The normal Git tree does not upload every full-population operational extract. It publishes accepted aggregate evidence, selected G2 integrated records, zero-row exception outputs with headers, and a deterministic 50-application review cohort. Full-population counts, hashes, and acceptance controls remain the governing evidence.
+## Governance and execution
 
-The first formal Release also offers an optional [Full Synthetic Table-Data Snapshot](./docs/data_snapshot/README.md) containing 110 table exports and 1,042,591 rows in CSV and PostgreSQL INSERT formats.
+- [Governance and Validation](GOVERNANCE_AND_VALIDATION.md)
+- [Reproducibility and Execution](REPRODUCIBILITY_AND_EXECUTION.md)
+- [Sample Data and Evidence Policy](SAMPLE_DATA_AND_EVIDENCE_POLICY.md)
+- [Disclaimer](DISCLAIMER.md)
+- [GitHub Publication Guide](GITHUB_PUBLICATION_GUIDE.md)
 
-See [`SAMPLE_DATA_AND_EVIDENCE_POLICY.md`](./SAMPLE_DATA_AND_EVIDENCE_POLICY.md).
+## Current-versus-historical rule
 
-## Suggested Reviewer Paths
-
-### Fast Executive Review
-
-`README -> Flagship Architecture -> Strategy Brief -> M1.16 -> M1.17 G2`
-
-### Technical / Architecture Review
-
-`Detailed Lineage -> Charter -> Stage SQL -> M1.15 Contract -> M1.16 Companion Contract -> Integrated G2 Interface`
-
-### Governance / Validation Review
-
-`Governance Guide -> Hash Chain -> Positive / Negative Controls -> Archive Triggers -> Zero-Row Exceptions -> Formal Sign-Off`
-
-## Documentation Status
-
-All public `main` branch artifacts in this release are accepted or are clearly labeled GitHub-derived publication documents. There are no “coming soon” placeholders in the v1.0.0 release. Power BI remains planned and is not represented as implemented.
+Use `_v2` enterprise architecture and executive strategy assets as the current Module 2/G3 release visuals. Unsuffixed visual assets and the eight-page `pages/` gallery are retained as historical Module 1/G2 publication evidence. Within stage folders, use the accepted revision named in `MODULE_2_STAGE_INDEX.csv`; recovery source is contingency-only.
