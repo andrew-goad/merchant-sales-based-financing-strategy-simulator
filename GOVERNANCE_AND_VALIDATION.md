@@ -74,3 +74,9 @@ M1.17 proved:
 - `G2_M1_CONTRACT = PASS`.
 
 G2 certifies a synthetic Module 1 consumption boundary. It is not production or regulatory approval.
+
+## Module 2 / G3 release addendum
+
+The current release includes twelve accepted Module 2 stages. M2.11 demonstrates governed strategy comparison and M2.12 certifies the enterprise consumption boundary. Recovery programs remain isolated from normal execution. Campaign Scale Certification is a separate future execution boundary.
+
+See [Module 2](Module_2/README.md) and [Campaign Scale Certification](docs/campaign_scale/README.md).

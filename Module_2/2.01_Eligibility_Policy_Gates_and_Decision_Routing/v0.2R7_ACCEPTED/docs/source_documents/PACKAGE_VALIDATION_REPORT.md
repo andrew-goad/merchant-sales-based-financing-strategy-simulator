@@ -1,0 +1,150 @@
+# M2.1 Complete-Final Package Validation
+
+```json
+{
+  "status": "PASS",
+  "formal_acceptance": true,
+  "accepted_package_revision": "v0.2R7",
+  "accepted_schema_policy_revision": "v0.2",
+  "accepted_preflight_revision": "v0.2R1",
+  "accepted_generation_revision": "v0.2R1",
+  "accepted_positive_validation_revision": "v0.2R6",
+  "accepted_negative_control_revision": "v0.2R6",
+  "accepted_finalizer_revision": "v0.2R7",
+  "accepted_master_report_revision": "v0.2R7",
+  "accepted_detail_report_revision": "v0.2R7",
+  "methodology_version": "M2_1_METHOD_V1",
+  "contract_code": "M2_ELIGIBILITY_ROUTING_CONSUMPTION",
+  "contract_version": 1,
+  "schema_version": "M2_1_ROUTING_SCHEMA_V1",
+  "acceptance_gate": "M2_1_ELIGIBILITY_POLICY_ROUTING",
+  "final_run_status": "M2_1_ACCEPTED",
+  "final_contract_status": "ACCEPTED",
+  "acceptance_gate_status": "PASS",
+  "source_g2_combined_hash": "7d9e466da28cad2551aa99c4c40c912b",
+  "policy_configuration_hash": "f27b4adf927020a84afce915c2be834f",
+  "counts": {
+    "strategy_campaign_rows": 1,
+    "gate_definition_rows": 12,
+    "reason_code_rows": 23,
+    "outcome_definition_rows": 4,
+    "gate_result_rows": 18000,
+    "routing_snapshot_rows": 1500,
+    "latest_rows": 1500,
+    "archive_rows": 1500,
+    "comparison_rows": 750,
+    "canonical_entities": 22541,
+    "eligible_rows": 59,
+    "review_rows": 190,
+    "insufficient_rows": 178,
+    "decline_rows": 1073,
+    "hard_stop_rows": 234,
+    "stress_floor_rows": 186,
+    "stress_improvements": 0,
+    "complete_rows": 0,
+    "partial_rows": 1322,
+    "blocked_rows": 178,
+    "positive_checks": 112,
+    "positive_passes": 112,
+    "negative_checks": 20,
+    "negative_passes": 20,
+    "blocking_errors": 0
+  },
+  "controls": {
+    "positive_controls": 112,
+    "positive_passes": 112,
+    "positive_failures": 0,
+    "negative_controls": 20,
+    "negative_passes": 20,
+    "negative_failures": 0,
+    "detail_result_sets": 24,
+    "deterministic_mismatch_rows": 0,
+    "blocking_stage_boundary_rows": 0,
+    "latest_archive_mismatches": 0,
+    "acceptance_gate_status": "PASS",
+    "overall_status": "PASS"
+  },
+  "hashes": {
+    "campaign_set_hash": "e350b230368a2e85d3b901ab5fac9343",
+    "gate_definition_set_hash": "75b8e6dda76382216af6f83fc10d0826",
+    "reason_code_set_hash": "8a36b6d2dec60c6d1428e32a48072709",
+    "outcome_definition_set_hash": "55e4f8921bbdea6c54d2e210b26d1916",
+    "gate_result_set_hash": "09f8974b92b4ed85f61af475202c150f",
+    "routing_snapshot_set_hash": "c454bb01cde87bdca5434a667eb0848b",
+    "latest_set_hash": "f813d2d8bfa4609f83b2bfd181de3e17",
+    "archive_set_hash": "13d7db24aa254d8efe69b28998d91fd4",
+    "contract_set_hash": "5ce0574b6e27c4b94b8e65997b40f805",
+    "combined_set_hash": "e5ace7f32060ffb191c7bd0f8dd0c863"
+  },
+  "routes": {
+    "BASELINE": {
+      "ELIGIBLE_FOR_OFFER_DESIGN": 44,
+      "MANUAL_REVIEW": 139,
+      "INSUFFICIENT_EVIDENCE": 43,
+      "DECLINE_POLICY": 524
+    },
+    "RECESSION_ENERGY": {
+      "ELIGIBLE_FOR_OFFER_DESIGN": 15,
+      "MANUAL_REVIEW": 51,
+      "INSUFFICIENT_EVIDENCE": 135,
+      "DECLINE_POLICY": 549
+    },
+    "TOTAL": {
+      "ELIGIBLE_FOR_OFFER_DESIGN": 59,
+      "MANUAL_REVIEW": 190,
+      "INSUFFICIENT_EVIDENCE": 178,
+      "DECLINE_POLICY": 1073
+    }
+  },
+  "stress": {
+    "matched_applications": 750,
+    "worsenings": 127,
+    "improvements": 0,
+    "stress_floors": 186
+  },
+  "acquisition_boundary": {
+    "baseline_pass": 723,
+    "baseline_review": 27,
+    "stress_pass": 723,
+    "stress_review": 27,
+    "prohibited_decline_rows": 0
+  },
+  "evidence_summary": [
+    {
+      "evidence_family": "ACCEPTANCE",
+      "status": "PASS",
+      "rows": "1"
+    },
+    {
+      "evidence_family": "GENERATION",
+      "status": "PASS",
+      "rows": "18"
+    },
+    {
+      "evidence_family": "GENERATION",
+      "status": "SUPERSEDED",
+      "rows": "2"
+    },
+    {
+      "evidence_family": "NEGATIVE",
+      "status": "PASS",
+      "rows": "20"
+    },
+    {
+      "evidence_family": "POSITIVE",
+      "status": "PASS",
+      "rows": "112"
+    }
+  ],
+  "audit_check_count": 140,
+  "audit_failed_check_count": 0,
+  "next_stage": "M2.2 \u2014 Pricing, Structure & Counteroffer Foundations",
+  "package_status": "COMPLETE_FINAL",
+  "live_execution_performed": true,
+  "formal_acceptance_issued": true,
+  "evidence_files": 53,
+  "accepted_execution_source_files": 16,
+  "complete_evidence_audit_status": "PASS",
+  "complete_evidence_audit_checks": 140
+}
+```

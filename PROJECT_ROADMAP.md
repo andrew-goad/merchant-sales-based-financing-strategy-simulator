@@ -40,3 +40,17 @@ Portfolio optimization, channel-mix learning, stress propagation, capacity alloc
 ## Reporting Layer
 
 Power BI is planned as a later validated executive and portfolio-intelligence layer. It is not represented as implemented in the Module 1 G2 v1.0.0 release.
+
+## Current roadmap position — Module 2 / G3 complete
+
+```text
+Module 1 / G2 accepted
+→ Module 2 / G3 accepted
+→ Campaign Scale Certification preparation
+→ 750 accepted-fidelity replay
+→ 2,500 performance shakedown
+→ 25,000 full campaign
+→ later separately governed M3–M6 initiatives
+```
+
+Campaign preparation does not authorize execution or Module 3. See [Campaign Scale Certification](docs/campaign_scale/README.md).

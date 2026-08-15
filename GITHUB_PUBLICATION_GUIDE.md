@@ -1,47 +1,46 @@
-# GitHub Publication Guide
+# GitHub Publication Guide — Module 2 / G3 v2.0.0
 
-## Repository Settings
+## Release candidate gate
 
-- Repository name: `merchant-sales-based-financing-strategy-simulator`
-- Visibility: Public
-- Default branch: `main`
-- Issues: Disabled
-- Discussions: Disabled
-- Wiki: Disabled
-- Projects: Disabled
-- GitHub Pages: Disabled for v1.0.0
-- License: MIT
-- Byte preservation: keep the committed `.gitattributes`; do not run `git add --renormalize`.
+Before publication:
 
-## Recommended First Commit
+1. integrate the final repository candidate into a clean local worktree;
+2. inspect `git diff --stat` and the complete diff;
+3. run `python tools/validate_public_release.py`;
+4. verify `MANIFEST.csv`, `manifest.json`, and `SHA256SUMS.txt` against physical bytes;
+5. confirm Markdown links and JSON/CSV parsing;
+6. confirm the accepted source and recovery classifications;
+7. confirm no raw development exports, credentials, local paths, or oversized release assets are committed;
+8. commit the final candidate to `main`;
+9. recreate the annotated release tag at the final commit;
+10. publish large governed packages as GitHub Release assets rather than ordinary Git-tree files.
+
+## Tag correction
+
+If `module-2-g3-v2.0.0` was created before the final release commit, replace it only after the final commit is on `main`:
 
 ```bash
-git init
-git branch -M main
+git tag -d module-2-g3-v2.0.0
+git push origin :refs/tags/module-2-g3-v2.0.0
+git tag -a module-2-g3-v2.0.0 -m "Module 2 G3 v2.0.0"
+git push origin module-2-g3-v2.0.0
+```
+
+## Recommended local sequence
+
+```bash
+git switch main
+git pull --ff-only origin main
+git status
+python tools/validate_public_release.py
+git diff --check
 git add .
-git commit -m "Initial public release: Module 1 G2 v1.0.0"
-git remote add origin https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git
-git push -u origin main
+git commit -m "Publish Module 2 G3 v2.0.0"
+git push origin main
 ```
 
-## Tag and Release
+Then recreate the tag as shown above.
 
-```bash
-git tag -a module-1-g2-v1.0.0 -m "Module 1 G2 v1.0.0"
-git push origin module-1-g2-v1.0.0
-```
+## Release boundary
 
-Create a GitHub Release titled:
-
-> Merchant Sales-Based Financing Strategy Simulator - Module 1 G2 - Governed Merchant Intelligence, Risk, Economics & Acquisition Foundations
-
-Attach the release ZIP and its `.sha256` companion. Do not commit the ZIP inside the repository tree.
-
-## Final Live Checks
-
-1. Confirm the root README renders correctly.
-2. Open both architecture PNGs and PDFs.
-3. Open the strategic brief PDF, cover, and contact sheet.
-4. Test the executive, technical, and governance reviewer paths.
-5. Download the release ZIP and independently re-run SHA-256.
-6. Confirm no Issues, Discussions, Wiki, Projects, or Pages surface is enabled.
+The public release includes accepted source, selected evidence, documentation, and governed transparency records. It does not publish production credentials, raw private exports, operational databases, private correspondence, or claims beyond the deterministic synthetic boundary.

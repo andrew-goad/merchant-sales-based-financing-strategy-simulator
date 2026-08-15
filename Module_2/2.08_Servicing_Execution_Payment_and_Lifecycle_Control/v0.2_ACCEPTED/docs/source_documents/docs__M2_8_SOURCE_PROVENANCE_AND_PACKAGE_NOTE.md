@@ -1,0 +1,8 @@
+# M2.8 Source Provenance
+
+```text
+Accepted baseline: MSBF_Project_v0_2_M2_7_COMPLETE_FINAL_Windows_ACCEPTED_20260803(2).zip
+SHA-256: 747a726ba487046a299772c9abfaf5bb9a53309774f17820341fc7d7b421d8af
+Accepted M2.7 contract: M2_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_CONSUMPTION v1
+Accepted M2.7 combined hash: c8e3a472afd2a16b1183677324e9db98
+```

@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.0] — 2026-08-13
+
+- Published accepted Module 2 stages M2.1–M2.12 and G3 certification.
+- Added complete public BRD, validation, source-provenance, recovery, catalog, and sign-off tree.
+- Updated enterprise architecture and ten-page Governed Build Edition v3.0 executive brief.
+- Added campaign-scale readiness, M1.17 source closure, and pre-750 roadmap documentation.
+- Added sanitized development-transparency archive through 2026-08-12.
+- Reconciled repository navigation and regenerated physical inventories.
+
 ## [Unreleased]
 
 ### Changed
