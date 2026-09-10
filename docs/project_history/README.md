@@ -17,3 +17,7 @@ Development transcripts provide context, not acceptance authority. When records 
 5. conversation history.
 
 Conversation history must never be used to override an accepted source identity, control result, formal sign-off, or current repository boundary.
+
+## Current prepublication successor history
+
+[Sanitized conversation history through the declared September 9 source cutoffs](chatgpt_logs_through_2026-09-09/README.md) contains the 21-conversation successor and actual R20 acceptance. It is a local prepublication freeze, not a stable public release or a complete platform-native export. The August12 archive above is unchanged.

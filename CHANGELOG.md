@@ -1,3 +1,11 @@
+# Current change-control overlay
+
+Final pre-audit integration adds the bounded Route-B Windows qualification and Part 4 pre-audit continuation without changing accepted R26/PBIX business bytes. Qualification chronology preserves the strict Phase-2 comparator STOP, bounded PostgreSQL deparser comparator correction, successful isolated R26 execution, post-execution PowerShell harness correction, 90/90 reconciliation, and original-source/Git nonmutation.
+
+---
+
+## Preserved predecessor content
+
 # Changelog
 
 ## [2.0.0] — 2026-08-13
@@ -10,6 +18,21 @@
 - Reconciled repository navigation and regenerated physical inventories.
 
 ## [Unreleased]
+
+### Candidate — Module 2 / G3 v2.1.0-rc2
+
+- Added the final R22 PBIP and 31/31 PASS physical Desktop evidence adjudication.
+- Preserved accepted P01-P04 and all accepted Module 2 stage directories.
+- Retained rc1 and the complete R20-R22 correction history.
+- Prepared the exact candidate for bounded Independent Audit; publication remains unauthorized.
+
+
+### Candidate — Module 2 / G3 v2.1.0-rc1
+
+- Added an audit-pending successor candidate under `successor_candidates/m2-g3-v2.1.0-rc1`.
+- Preserved accepted v2.0.0 release metadata and stage directories.
+- Added R17/R19 source, evidence, Power BI P05/P06 carrier, controls, and supersession boundaries.
+- Publication remains unauthorized.
 
 ### Changed
 

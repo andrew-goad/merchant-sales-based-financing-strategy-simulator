@@ -1,0 +1,101 @@
+--- accepted/M2_8_SCHEMA__01_188_schema_policy.sql
++++ successor/M2_8_SCHEMA.sql
+@@ -461,7 +461,7 @@
+  OR v.source_latest_name<>'msbf_m2.application_operational_activation_latest' OR v.source_contract_code<>'M2_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_CONSUMPTION'
+  OR v.source_schema_version<>'M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_SCHEMA_V1' OR v.source_methodology_version<>'M2_7_METHOD_V1'
+  OR v.source_policy_code<>'M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_POLICY_V1' OR v.source_acceptance_gate_id<>'M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP'
+- OR v.source_combined_set_hash<>'c8e3a472afd2a16b1183677324e9db98'
++ OR v.source_combined_set_hash<>'84b4555f32a8dfb68c0cce432b8a4a80'
+  OR NOT v.synthetic_data_only_flag OR NOT v.simulated_servicing_execution_only_flag
+  OR NOT v.preserve_m2_7_history_flag OR NOT v.no_real_funds_movement_flag
+  OR NOT v.no_bank_account_data_flag OR NOT v.no_ach_or_network_transmission_flag
+@@ -479,7 +479,7 @@
+ BEGIN
+  PERFORM msbf_ctl.m2_8_assert_configuration(p_run_id);
+  SELECT run_status INTO v_status FROM msbf_ctl.run_registry WHERE run_id=p_run_id;
+- IF v_status<>'M2_7_ACCEPTED' THEN RAISE EXCEPTION 'M2.8 generation requires M2_7_ACCEPTED; observed %.',v_status; END IF;
++ IF v_status<>'M2_7_GENERATED' THEN RAISE EXCEPTION 'M2.8 generation requires M2_7_GENERATED; observed %.',v_status; END IF;
+  IF EXISTS(
+   SELECT 1 FROM msbf_m2.servicing_execution_source_snapshot WHERE module1_run_id=p_run_id UNION ALL
+   SELECT 1 FROM msbf_m2.application_servicing_execution_snapshot WHERE module1_run_id=p_run_id UNION ALL
+@@ -540,7 +540,7 @@
+  'M2_8_METHOD_V1'::text methodology_version,'M2_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONSUMPTION'::text contract_code,1::integer contract_version,'M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_SCHEMA_V1'::text schema_version,
+  'msbf_ctl.m2_7_operational_activation_contract_registry'::text source_registry_name,'msbf_m2.application_operational_activation_latest'::text source_latest_name,'M2_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_CONSUMPTION'::text source_contract_code,
+  1::integer source_contract_version,'M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_SCHEMA_V1'::text source_schema_version,'M2_7_METHOD_V1'::text source_methodology_version,
+- 'M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_POLICY_V1'::text source_policy_code,'M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP'::text source_acceptance_gate_id,'c8e3a472afd2a16b1183677324e9db98'::text source_combined_set_hash,
++ 'M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_POLICY_V1'::text source_policy_code,'M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP'::text source_acceptance_gate_id,'84b4555f32a8dfb68c0cce432b8a4a80'::text source_combined_set_hash,
+  TRUE synthetic_data_only_flag,TRUE simulated_servicing_execution_only_flag,TRUE preserve_m2_7_history_flag,
+  TRUE no_real_funds_movement_flag,TRUE no_bank_account_data_flag,TRUE no_ach_or_network_transmission_flag,
+  TRUE no_external_processor_call_flag,TRUE no_real_merchant_contact_flag,TRUE no_write_off_or_collection_execution_flag,
+@@ -551,12 +551,12 @@
+  59::bigint expected_source_rows,59::bigint expected_execution_rows,7::bigint expected_payment_event_rows,67::bigint expected_lifecycle_transition_rows,
+  2::bigint expected_portfolio_summary_rows,59::bigint expected_latest_rows,59::bigint expected_archive_rows,15::bigint expected_comparison_rows,
+  1::bigint expected_registry_rows,367::bigint expected_canonical_entities,120 expected_positive_controls,20 expected_negative_controls,
+- 24 expected_generation_evidence_rows,24 expected_detail_result_sets,'{"contract":"M2_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONSUMPTION","default_reassessment_interval_days":7,"default_setup_duration_days":14,"default_temporary_payment_factor":0.75,"expected":{"action_rows":7,"active_ending_exposure_amount":"323.79","archive_rows":59,"canonical_entities":367,"checkpoint_transition_rows":1,"comparison_rows":15,"detail_result_sets":24,"execution_rows":59,"generation_evidence_rows":24,"initial_transition_rows":59,"latest_rows":59,"lifecycle_state_rows":7,"lifecycle_transition_rows":67,"negative_controls":20,"no_processing_required_rows":57,"outcome_rows":7,"payment_event_rows":7,"payment_transition_rows":7,"policy_rows":1,"portfolio_ending_exposure_amount":"785.48","portfolio_summary_rows":2,"positive_controls":120,"processed_payment_amount":"194.25","processing_authorized_amount":"518.04","reason_rows":32,"registry_rows":1,"retry_event_rows":1,"retry_payment_amount":"27.75","returned_event_rows":1,"returned_payment_amount":"27.75","review_hold_amount":"461.69","review_hold_rows":1,"scheduled_payment_amount":"194.25","settled_event_rows":5,"source_rows":59,"standard_daily_payment_amount":"37.00","temporary_daily_payment_amount":"27.75","temporary_processing_rows":1},"gate":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONTROL","methodology":"M2_8_METHOD_V1","no_ach_or_network_transmission":true,"no_bank_account_data":true,"no_external_notice_generation":true,"no_external_processor_call":true,"no_production_adverse_action":true,"no_real_funds_movement":true,"no_real_merchant_contact":true,"no_write_off_or_collection_execution":true,"policy":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_POLICY_V1","preserve_m2_7_history":true,"retry_catchup_multiplier":2.0,"run_code":"M1_V0_2_BASELINE_BUILD","run_version":1,"schema":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_SCHEMA_V1","servicing_cycle_days":7,"simulated_servicing_execution_only":true,"source_archive":"msbf_m2.application_operational_activation_archive","source_contract":"M2_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_CONSUMPTION","source_gate":"M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP","source_hash":"c8e3a472afd2a16b1183677324e9db98","source_latest":"msbf_m2.application_operational_activation_latest","source_methodology":"M2_7_METHOD_V1","source_policy":"M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_POLICY_V1","source_registry":"msbf_ctl.m2_7_operational_activation_contract_registry","source_schema":"M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_SCHEMA_V1","synthetic_data_only":true,"synthetic_retry_event_sequence":5,"synthetic_return_event_sequence":4}'::jsonb configuration_payload,
+- msbf_ctl.m2_8_hash_jsonb('{"contract":"M2_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONSUMPTION","default_reassessment_interval_days":7,"default_setup_duration_days":14,"default_temporary_payment_factor":0.75,"expected":{"action_rows":7,"active_ending_exposure_amount":"323.79","archive_rows":59,"canonical_entities":367,"checkpoint_transition_rows":1,"comparison_rows":15,"detail_result_sets":24,"execution_rows":59,"generation_evidence_rows":24,"initial_transition_rows":59,"latest_rows":59,"lifecycle_state_rows":7,"lifecycle_transition_rows":67,"negative_controls":20,"no_processing_required_rows":57,"outcome_rows":7,"payment_event_rows":7,"payment_transition_rows":7,"policy_rows":1,"portfolio_ending_exposure_amount":"785.48","portfolio_summary_rows":2,"positive_controls":120,"processed_payment_amount":"194.25","processing_authorized_amount":"518.04","reason_rows":32,"registry_rows":1,"retry_event_rows":1,"retry_payment_amount":"27.75","returned_event_rows":1,"returned_payment_amount":"27.75","review_hold_amount":"461.69","review_hold_rows":1,"scheduled_payment_amount":"194.25","settled_event_rows":5,"source_rows":59,"standard_daily_payment_amount":"37.00","temporary_daily_payment_amount":"27.75","temporary_processing_rows":1},"gate":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONTROL","methodology":"M2_8_METHOD_V1","no_ach_or_network_transmission":true,"no_bank_account_data":true,"no_external_notice_generation":true,"no_external_processor_call":true,"no_production_adverse_action":true,"no_real_funds_movement":true,"no_real_merchant_contact":true,"no_write_off_or_collection_execution":true,"policy":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_POLICY_V1","preserve_m2_7_history":true,"retry_catchup_multiplier":2.0,"run_code":"M1_V0_2_BASELINE_BUILD","run_version":1,"schema":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_SCHEMA_V1","servicing_cycle_days":7,"simulated_servicing_execution_only":true,"source_archive":"msbf_m2.application_operational_activation_archive","source_contract":"M2_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_CONSUMPTION","source_gate":"M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP","source_hash":"c8e3a472afd2a16b1183677324e9db98","source_latest":"msbf_m2.application_operational_activation_latest","source_methodology":"M2_7_METHOD_V1","source_policy":"M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_POLICY_V1","source_registry":"msbf_ctl.m2_7_operational_activation_contract_registry","source_schema":"M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_SCHEMA_V1","synthetic_data_only":true,"synthetic_retry_event_sequence":5,"synthetic_return_event_sequence":4}'::jsonb) configuration_hash
++ 24 expected_generation_evidence_rows,24 expected_detail_result_sets,'{"contract":"M2_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONSUMPTION","default_reassessment_interval_days":7,"default_setup_duration_days":14,"default_temporary_payment_factor":0.75,"expected":{"action_rows":7,"active_ending_exposure_amount":"323.79","archive_rows":59,"canonical_entities":367,"checkpoint_transition_rows":1,"comparison_rows":15,"detail_result_sets":24,"execution_rows":59,"generation_evidence_rows":24,"initial_transition_rows":59,"latest_rows":59,"lifecycle_state_rows":7,"lifecycle_transition_rows":67,"negative_controls":20,"no_processing_required_rows":57,"outcome_rows":7,"payment_event_rows":7,"payment_transition_rows":7,"policy_rows":1,"portfolio_ending_exposure_amount":"785.48","portfolio_summary_rows":2,"positive_controls":120,"processed_payment_amount":"194.25","processing_authorized_amount":"518.04","reason_rows":32,"registry_rows":1,"retry_event_rows":1,"retry_payment_amount":"27.75","returned_event_rows":1,"returned_payment_amount":"27.75","review_hold_amount":"461.69","review_hold_rows":1,"scheduled_payment_amount":"194.25","settled_event_rows":5,"source_rows":59,"standard_daily_payment_amount":"37.00","temporary_daily_payment_amount":"27.75","temporary_processing_rows":1},"gate":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONTROL","methodology":"M2_8_METHOD_V1","no_ach_or_network_transmission":true,"no_bank_account_data":true,"no_external_notice_generation":true,"no_external_processor_call":true,"no_production_adverse_action":true,"no_real_funds_movement":true,"no_real_merchant_contact":true,"no_write_off_or_collection_execution":true,"policy":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_POLICY_V1","preserve_m2_7_history":true,"retry_catchup_multiplier":2.0,"run_code":"M1_V0_2_BASELINE_BUILD","run_version":1,"schema":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_SCHEMA_V1","servicing_cycle_days":7,"simulated_servicing_execution_only":true,"source_archive":"msbf_m2.application_operational_activation_archive","source_contract":"M2_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_CONSUMPTION","source_gate":"M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP","source_hash":"84b4555f32a8dfb68c0cce432b8a4a80","source_latest":"msbf_m2.application_operational_activation_latest","source_methodology":"M2_7_METHOD_V1","source_policy":"M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_POLICY_V1","source_registry":"msbf_ctl.m2_7_operational_activation_contract_registry","source_schema":"M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_SCHEMA_V1","synthetic_data_only":true,"synthetic_retry_event_sequence":5,"synthetic_return_event_sequence":4}'::jsonb configuration_payload,
++ msbf_ctl.m2_8_hash_jsonb('{"contract":"M2_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONSUMPTION","default_reassessment_interval_days":7,"default_setup_duration_days":14,"default_temporary_payment_factor":0.75,"expected":{"action_rows":7,"active_ending_exposure_amount":"323.79","archive_rows":59,"canonical_entities":367,"checkpoint_transition_rows":1,"comparison_rows":15,"detail_result_sets":24,"execution_rows":59,"generation_evidence_rows":24,"initial_transition_rows":59,"latest_rows":59,"lifecycle_state_rows":7,"lifecycle_transition_rows":67,"negative_controls":20,"no_processing_required_rows":57,"outcome_rows":7,"payment_event_rows":7,"payment_transition_rows":7,"policy_rows":1,"portfolio_ending_exposure_amount":"785.48","portfolio_summary_rows":2,"positive_controls":120,"processed_payment_amount":"194.25","processing_authorized_amount":"518.04","reason_rows":32,"registry_rows":1,"retry_event_rows":1,"retry_payment_amount":"27.75","returned_event_rows":1,"returned_payment_amount":"27.75","review_hold_amount":"461.69","review_hold_rows":1,"scheduled_payment_amount":"194.25","settled_event_rows":5,"source_rows":59,"standard_daily_payment_amount":"37.00","temporary_daily_payment_amount":"27.75","temporary_processing_rows":1},"gate":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONTROL","methodology":"M2_8_METHOD_V1","no_ach_or_network_transmission":true,"no_bank_account_data":true,"no_external_notice_generation":true,"no_external_processor_call":true,"no_production_adverse_action":true,"no_real_funds_movement":true,"no_real_merchant_contact":true,"no_write_off_or_collection_execution":true,"policy":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_POLICY_V1","preserve_m2_7_history":true,"retry_catchup_multiplier":2.0,"run_code":"M1_V0_2_BASELINE_BUILD","run_version":1,"schema":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_SCHEMA_V1","servicing_cycle_days":7,"simulated_servicing_execution_only":true,"source_archive":"msbf_m2.application_operational_activation_archive","source_contract":"M2_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_CONSUMPTION","source_gate":"M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP","source_hash":"84b4555f32a8dfb68c0cce432b8a4a80","source_latest":"msbf_m2.application_operational_activation_latest","source_methodology":"M2_7_METHOD_V1","source_policy":"M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_POLICY_V1","source_registry":"msbf_ctl.m2_7_operational_activation_contract_registry","source_schema":"M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_SCHEMA_V1","synthetic_data_only":true,"synthetic_retry_event_sequence":5,"synthetic_return_event_sequence":4}'::jsonb) configuration_hash
+  FROM msbf_ctl.m2_7_operational_activation_contract_registry registry JOIN msbf_ctl.run_registry run ON run.run_id=registry.module1_run_id
+- WHERE run.run_code='M1_V0_2_BASELINE_BUILD' AND run.run_version=1 AND run.run_status='M2_7_ACCEPTED'
+- AND registry.contract_status='ACCEPTED' AND registry.contract_code='M2_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_CONSUMPTION' AND registry.contract_version=1
+- AND registry.schema_version='M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_SCHEMA_V1' AND registry.combined_set_hash='c8e3a472afd2a16b1183677324e9db98'),
++ WHERE run.run_code='M1_V0_2_BASELINE_BUILD' AND run.run_version=1 AND run.run_status='M2_7_GENERATED'
++ AND registry.contract_status='GENERATED' AND registry.contract_code='M2_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_CONSUMPTION' AND registry.contract_version=1
++ AND registry.schema_version='M2_7_OPERATIONAL_ACTIVATION_ACCOUNT_SETUP_SCHEMA_V1' AND registry.combined_set_hash='84b4555f32a8dfb68c0cce432b8a4a80'),
+ hashed AS(SELECT seed.*,msbf_ctl.m2_8_hash_jsonb(to_jsonb(seed)) row_hash FROM seed)
+ INSERT INTO msbf_ctl.m2_8_policy_profile(
+  module1_run_id,policy_code,policy_version,policy_status,methodology_version,contract_code,contract_version,schema_version,
+@@ -649,24 +649,37 @@
+ Section 6 — Consumption and canonical views
+ ============================================================================ */
+ CREATE OR REPLACE VIEW msbf_m2.v_m2_8_servicing_execution_latest AS SELECT latest.* FROM msbf_m2.application_servicing_execution_latest latest;
++
+ CREATE OR REPLACE VIEW msbf_m2.v_m2_8_matched_scenario_comparison AS
+-WITH p AS(
++WITH paired AS(
+  SELECT module1_run_id,merchant_application_id,
+- max(servicing_execution_outcome_code) FILTER(WHERE scenario_code='BASELINE') baseline_servicing_execution_outcome_code,
+- max(servicing_execution_outcome_code) FILTER(WHERE scenario_code='RECESSION_ENERGY') stress_servicing_execution_outcome_code,
+- max(servicing_execution_priority_rank) FILTER(WHERE scenario_code='BASELINE') baseline_servicing_execution_priority_rank,
+- max(servicing_execution_priority_rank) FILTER(WHERE scenario_code='RECESSION_ENERGY') stress_servicing_execution_priority_rank,
+- bool_or(processing_authorized_flag) FILTER(WHERE scenario_code='BASELINE') baseline_processing_authorized_flag,
+- bool_or(processing_authorized_flag) FILTER(WHERE scenario_code='RECESSION_ENERGY') stress_processing_authorized_flag,
+- max(ending_simulated_exposure_amount) FILTER(WHERE scenario_code='BASELINE') baseline_ending_exposure_amount,
+- max(ending_simulated_exposure_amount) FILTER(WHERE scenario_code='RECESSION_ENERGY') stress_ending_exposure_amount,
+- count(*) FILTER(WHERE scenario_code='BASELINE') baseline_rows,count(*) FILTER(WHERE scenario_code='RECESSION_ENERGY') stress_rows
+- FROM msbf_m2.application_servicing_execution_latest GROUP BY module1_run_id,merchant_application_id)
+-SELECT p.*,
+- (stress_processing_authorized_flag AND NOT baseline_processing_authorized_flag) stress_processing_permission_improvement_flag,
+- (stress_servicing_execution_priority_rank<baseline_servicing_execution_priority_rank) stress_priority_improvement_flag,
+- (stress_ending_exposure_amount<baseline_ending_exposure_amount) stress_exposure_improvement_flag
+-FROM p WHERE baseline_rows=1 AND stress_rows=1;
++  max(servicing_execution_outcome_code) FILTER(WHERE scenario_code='BASELINE') AS baseline_servicing_execution_outcome_code,
++  max(servicing_execution_outcome_code) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_servicing_execution_outcome_code,
++  max(servicing_execution_priority_rank) FILTER(WHERE scenario_code='BASELINE') AS baseline_servicing_execution_priority_rank,
++  max(servicing_execution_priority_rank) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_servicing_execution_priority_rank,
++  bool_or(processing_authorized_flag) FILTER(WHERE scenario_code='BASELINE') AS baseline_processing_authorized_flag,
++  bool_or(processing_authorized_flag) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_processing_authorized_flag,
++  max(ending_simulated_exposure_amount) FILTER(WHERE scenario_code='BASELINE') AS baseline_ending_exposure_amount,
++  max(ending_simulated_exposure_amount) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_ending_exposure_amount,
++  bool_or(no_processing_required_flag) FILTER(WHERE scenario_code='BASELINE') AS baseline_terminal_flag,
++  bool_or(no_processing_required_flag) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_terminal_flag,
++  count(*) FILTER(WHERE scenario_code='BASELINE') AS baseline_rows,
++  count(*) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_rows
++ FROM msbf_m2.application_servicing_execution_latest
++ GROUP BY module1_run_id,merchant_application_id)
++SELECT module1_run_id,merchant_application_id,
++ baseline_servicing_execution_outcome_code,stress_servicing_execution_outcome_code,
++ baseline_servicing_execution_priority_rank,stress_servicing_execution_priority_rank,
++ baseline_processing_authorized_flag,stress_processing_authorized_flag,
++ baseline_ending_exposure_amount,stress_ending_exposure_amount,baseline_rows,stress_rows,
++ (NOT baseline_terminal_flag AND NOT stress_terminal_flag
++  AND stress_processing_authorized_flag AND NOT baseline_processing_authorized_flag) AS stress_processing_permission_improvement_flag,
++ (NOT baseline_terminal_flag AND NOT stress_terminal_flag
++  AND stress_servicing_execution_priority_rank<baseline_servicing_execution_priority_rank) AS stress_priority_improvement_flag,
++ (NOT baseline_terminal_flag AND NOT stress_terminal_flag
++  AND stress_ending_exposure_amount<baseline_ending_exposure_amount) AS stress_exposure_improvement_flag
++FROM paired WHERE baseline_rows=1 AND stress_rows=1;
++
+ CREATE OR REPLACE VIEW msbf_m2.v_m2_8_payment_event_ledger AS SELECT * FROM msbf_m2.synthetic_payment_processing_event;
+ CREATE OR REPLACE VIEW msbf_m2.v_m2_8_power_bi_servicing_execution AS
+ SELECT module1_run_id,scenario_code,merchant_application_id,synthetic_account_id,synthetic_advance_id,

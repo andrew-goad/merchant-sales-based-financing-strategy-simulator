@@ -1,0 +1,875 @@
+[
+  {
+    "title": "MSBF • Control-Party Execution Runbook",
+    "subtitle": "PUB-RUN-001 | Revision R1 | September 4, 2026 | Synthetic / non-production",
+    "blocks": [
+      [
+        "p",
+        "Purpose: give an operator and a separate reviewer a repeatable route from verified inputs to an evidenced conclusion, without relying on the author’s memory or modifying accepted results."
+      ],
+      [
+        "call",
+        "Start with Route A. It re-executes the source-owned M2.11 simulation proof offline. Use Route B only for an explicitly approved checkpoint replay. An empty-database v2.1 build is NOT yet cleared by this runbook."
+      ],
+      [
+        "table",
+        [
+          [
+            "Route",
+            "What it does / readiness"
+          ],
+          [
+            "A — Offline reproduction",
+            "Verify source and evidence, re-execute M2.11 simulation/canonicalization, reconcile the accepted result. Tested in this build. No database or Power BI needed. Pages 3–4."
+          ],
+          [
+            "B — Checkpoint replay",
+            "Run the exact retained-final M2.11/M2.12 launcher against verified R6 and retained R2 checkpoint databases. Source-verified; requires run-specific approval and Windows qualification. Pages 5–7."
+          ],
+          [
+            "C — View Power BI",
+            "Verify the accepted PBIX, open a separate copy and inspect P01–P04 without refresh or save. Identity checks tested; Desktop action remains local. Page 9."
+          ],
+          [
+            "D — Full clean start",
+            "G0 → G1 → Module 1/G2 → corrected Module 2/G3-v2. Roadmap documented; final integrated source/seed/plan and clean Windows qualification remain open. Pages 11–12."
+          ]
+        ]
+      ],
+      [
+        "h",
+        "The seven-step operator roadmap"
+      ],
+      [
+        "p",
+        "1. Record the approved route and identify operator/reviewer.\n2. Check exact input identities and prepare a new evidence folder.\n3. Confirm software and, for Route B, exact source database state.\n4. Execute only the chosen route; stop at the first failed check.\n5. Compare expected results, source identities and nonmutation evidence.\n6. Retain the raw logs, result ZIP, sidecar and evidence seal.\n7. Obtain the reviewer’s scoped conclusion. A successful process exit alone is not acceptance."
+      ],
+      [
+        "h",
+        "Acceptance boundary"
+      ],
+      [
+        "p",
+        "R26 remains accepted under IA-D-R15-M12-001. Power BI R3 remains accepted under IA-D-R17-PBI-001, with handoff authority IA-PBI-PUB-HANDOFF-001. This document does not reopen those gates. It also does not grant Campaign Scale, Module 3, production use, publication or supersession authority. [S13–S15; accepted R17 authority]"
+      ],
+      [
+        "p",
+        "Procedure disposition: prepared and offline-tested for control-party qualification. PUB-RUN-001 remains OPEN until the final release is bound and the claimed Windows execution paths are independently demonstrated. No procedure can honestly guarantee zero errors across every environment or a predetermined audit opinion."
+      ]
+    ]
+  },
+  {
+    "title": "1 • Software and environment",
+    "subtitle": "Install only the tools required for your route; record the exact versions.",
+    "blocks": [
+      [
+        "table",
+        [
+          [
+            "Tool",
+            "Required use and version treatment"
+          ],
+          [
+            "Python",
+            "Routes A/B and evidence checks. The new toolkit uses the standard library; no pip installation is required. Toolkit tested here on Python 3.13.5. Historical owner environment records Python 3.14.7. The frozen launcher needs python or python.exe on PATH; py alone is insufficient."
+          ],
+          [
+            "PowerShell 7",
+            "Windows operator command shell for B/C and qualification. Historical record: 7.6.5. Use pwsh, not PowerShell ISE. Follow organization software policy."
+          ],
+          [
+            "PostgreSQL 17 server + clients",
+            "Route B only. Historical record: 17.9; original launcher uses localhost:5432, user postgres, and C:\\Program Files\\PostgreSQL\\17\\bin. Needed tools: psql, createdb, dropdb, pg_dump, pg_restore. Presence of dropdb does not authorize cleanup."
+          ],
+          [
+            "Power BI Desktop 64-bit",
+            "Route C only. Use an organization-supported version and record it. Opening/saving in another version must not replace accepted bytes. No live-service publication is part of this procedure."
+          ],
+          [
+            "DBeaver",
+            "Optional SQL reader/manual controlled executor, not needed by the frozen Route B launcher. Do not mix GUI and launcher execution within one run."
+          ],
+          [
+            "Git",
+            "Needed later to pin the final repository commit; not required for offline reproduction of the supplied runtime."
+          ]
+        ]
+      ],
+      [
+        "h",
+        "Installation and verification"
+      ],
+      [
+        "p",
+        "Use the official sources in SOFTWARE_AND_SOURCE_REFERENCES.md. Install PostgreSQL with its command-line tools, and confirm that its service is running before Route B. Install Python so the python command resolves to the intended interpreter. Open a new PowerShell 7 session after installation. Do not silently upgrade, downgrade or edit the launcher to make an environment appear equivalent. Record deviations for qualification. [O1–O6]"
+      ],
+      [
+        "code",
+        "python --version\n$PSVersionTable.PSVersion\n& \"C:\\Program Files\\PostgreSQL\\17\\bin\\psql.exe\" --version"
+      ],
+      [
+        "h",
+        "Capacity and access"
+      ],
+      [
+        "p",
+        "Use an isolated, approved local test server, not a production or certification target. Check free space on both the evidence drive and the actual PostgreSQL data volume. Allow for retained databases, a new clone, possible dump/restore fallback, temporary files and evidence. No reliable minimum disk/RAM/run-duration benchmark is established by these sources; the operator must obtain a capacity assessment rather than invent one. Close connections to the source databases before cloning. [S08, S11]"
+      ],
+      [
+        "p",
+        "A fresh PostgreSQL install does not create the R6 or retained R2 checkpoint. Missing checkpoint databases are a STOP, not permission to create empty databases with those names."
+      ]
+    ]
+  },
+  {
+    "title": "2 • Prepare a clean workspace",
+    "subtitle": "Keep inputs, tools, runtime and evidence separate.",
+    "blocks": [
+      [
+        "p",
+        "Place the runbook ZIP and its sidecar in C:\\MSBF\\in. Compare the download to the separately supplied package receipt/sidecar. A matching sidecar proves consistency, not authenticity by itself; resolve the expected hash against the accepted source or controlled delivery channel."
+      ],
+      [
+        "code",
+        "$Zip = \"C:\\MSBF\\in\\MSBF_EXECUTION_RUNBOOK_R1_20260904.zip\"\n$Expected = (Get-Content -Raw -LiteralPath \"$Zip.sha256\").Trim().Split(\" \")[0]\n$Actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $Zip).Hash.ToLowerInvariant()\nif ($Actual -ne $Expected) { throw \"STOP: runbook ZIP hash mismatch\" }"
+      ],
+      [
+        "p",
+        "Extract the archive into C:\\MSBF. Its short internal root is runbook. Do not overwrite an existing runbook folder; retain prior attempts separately. The folder structure after extraction must include C:\\MSBF\\runbook\\tools\\runbook_checks.py."
+      ],
+      [
+        "code",
+        "$ErrorActionPreference = \"Stop\"\n$env:PYTHONDONTWRITEBYTECODE = \"1\"\n$B = \"C:\\MSBF\\runbook\"\n$RunId = \"PUB-RUN-\" + (Get-Date -Format \"yyyyMMdd-HHmmss\")\n$E = Join-Path \"C:\\MSBF\\evidence\" $RunId\nif (Test-Path -LiteralPath $E) { throw \"STOP: evidence folder exists\" }\nNew-Item -ItemType Directory -Path $E | Out-Null\npython -B \"$B\\tools\\runbook_checks.py\" manifest `\n    --root $B `\n    --report \"$E\\01_runbook.json\"\nif ($LASTEXITCODE -ne 0) { throw \"STOP: runbook verification failed\" }"
+      ],
+      [
+        "h",
+        "Expected result"
+      ],
+      [
+        "p",
+        "01_runbook.json reports PASS for manifest and checksum coverage. Copy RUN_RECORD_TEMPLATE.json and CHECKPOINT_RECORD.csv from templates into the new evidence folder; complete route, scope, operator, reviewer and approval reference. Do not put passwords in any record."
+      ],
+      [
+        "call",
+        "Keep this PowerShell session open while following the selected route: $B, $E and $RunId are reused below. Reports are never overwritten. Keep all new logs outside the frozen input directories."
+      ],
+      [
+        "p",
+        "PYTHONDONTWRITEBYTECODE=1 and -B prevent Python from creating __pycache__ inside exact-manifest source packages. Do not delete or normalize genuine historical files to manufacture a passing manifest."
+      ]
+    ]
+  },
+  {
+    "title": "3 • Route A — Reproduce without a database",
+    "subtitle": "This is the shortest independent code-and-evidence route.",
+    "blocks": [
+      [
+        "h",
+        "A1. Verify and extract the exact source runtime"
+      ],
+      [
+        "p",
+        "Required file: MSBF_R26_R3_RETAINED_FINAL_RESUME_RUNTIME_20260902.zip. Put it in C:\\MSBF\\in. COMPONENT_LOCK.json pins it to 39,382,961 bytes and SHA-256 b17d0292…4497746. The full hash is machine checked; do not type a shortened hash as authority."
+      ],
+      [
+        "code",
+        "$RuntimeZip = \"C:\\MSBF\\in\\MSBF_R26_R3_RETAINED_FINAL_RESUME_RUNTIME_20260902.zip\"\npython -B \"$B\\tools\\runbook_checks.py\" verify `\n    --component R26_RESUME_RUNTIME `\n    --file $RuntimeZip `\n    --extract \"C:\\MSBF\\rt\" `\n    --windows-root \"C:\\MSBF\\rt\" `\n    --report \"$E\\02_runtime_zip.json\"\nif ($LASTEXITCODE -ne 0) { throw \"STOP: runtime intake failed\" }\n$R = \"C:\\MSBF\\rt\\R26_R3_RESUME\""
+      ],
+      [
+        "p",
+        "C:\\MSBF\\rt must not already exist. A prior interrupted extraction is retained as evidence and is not reused. This source package carries the R4 input evidence and R2 result needed by the offline calculation; it is not a database backup."
+      ],
+      [
+        "h",
+        "A2. Re-execute source-owned simulation and canonicalization"
+      ],
+      [
+        "code",
+        "python -B \"$B\\tools\\offline_replay.py\" `\n    --runtime $R `\n    --report \"$E\\03_offline_replay.json\"\nif ($LASTEXITCODE -ne 0) { throw \"STOP: offline reproduction failed\" }"
+      ],
+      [
+        "p",
+        "The tool checks the entire frozen runtime, invokes its exact r2_failure_reperformance function, compares compiler/final semantic identities, executes the M2.11 simulation twice from retained CSV evidence, and rechecks source bytes. External process and network calls are blocked in that proof process. No runtime source is patched."
+      ],
+      [
+        "h",
+        "A3. Reconcile the accepted output"
+      ],
+      [
+        "p",
+        "Use the accepted result file msbf_r1_r26_resume_20260902_070655_M2_11_M2_12_G3V2_RESULTS.zip from the controlled evidence handoff; do not substitute the failed R2 result."
+      ],
+      [
+        "code",
+        "$Golden = \"C:\\MSBF\\in\\msbf_r1_r26_resume_20260902_070655_M2_11_M2_12_G3V2_RESULTS.zip\"\npython -B \"$B\\tools\\runbook_checks.py\" verify `\n    --component R26_GOLDEN_RESULT `\n    --file $Golden `\n    --report \"$E\\04_golden_identity.json\"\nif ($LASTEXITCODE -ne 0) { throw \"STOP: golden input mismatch\" }\npython -B \"$B\\tools\\runbook_checks.py\" reconcile `\n    --result $Golden `\n    --report \"$E\\05_reconciliation.json\"\nif ($LASTEXITCODE -ne 0) { throw \"STOP: result mismatch\" }"
+      ],
+      [
+        "p",
+        "Expected: PASS for source-owned offline reproduction and 90/90 accepted-reference checks. This proves the specified offline calculation and reconciles stored evidence. It does not regenerate M2.1–M2.10 or execute M2.12 certification in a database. Proceed to evidence signoff on page 13 unless Route B is specifically required."
+      ]
+    ]
+  },
+  {
+    "title": "4 • Route B — Checkpoint replay entry",
+    "subtitle": "Conditional route: independent re-execution of M2.11/M2.12, not an empty-database build.",
+    "blocks": [
+      [
+        "call",
+        "Do not run this route merely to repeat already-accepted evidence. Use it only when the control party’s approved scope requires a new checkpoint replay, and preserve the accepted source databases and published PBIX."
+      ],
+      [
+        "table",
+        [
+          [
+            "Entry condition",
+            "Required state"
+          ],
+          [
+            "Run-specific approval",
+            "Named approver authorizes this exact retained-final replay on an isolated test server. Historical audit acceptance is not blanket authorization to write to any database."
+          ],
+          [
+            "Immutable source",
+            "msbf_r1_m2_4_r6_20260830_030634 exists and passes the frozen source-control/schema checks."
+          ],
+          [
+            "Retained checkpoint",
+            "msbf_r1_r26_g3v2_20260902_024119 is the exact R2 retained final; completed Wave A evidence matches. The msbf_r1_g3v2_r26 schema must not yet exist there."
+          ],
+          [
+            "Protected accepted final",
+            "msbf_r1_r26_resume_g3v2_20260902_070655 is never a write target. The launcher creates a new timestamped clone."
+          ],
+          [
+            "Source/runtime state",
+            "Use the verified runtime from page 4; no prior results or source drift. Do not rerun interrupted R26 R2 or the abandoned full R3."
+          ],
+          [
+            "Environment/capacity",
+            "PostgreSQL tools, password access, data-volume capacity and all version deviations reviewed. Close DBeaver/other connections to checkpoint databases."
+          ]
+        ]
+      ],
+      [
+        "h",
+        "B1. Record tool and server identity"
+      ],
+      [
+        "code",
+        "python -B \"$B\\tools\\environment_probe.py\" `\n    --pg-bin \"C:\\Program Files\\PostgreSQL\\17\\bin\" `\n    --report \"$E\\06_environment.json\"\nif ($LASTEXITCODE -ne 0) { throw \"STOP: environment requires review\" }\n& \"C:\\Program Files\\PostgreSQL\\17\\bin\\psql.exe\" `\n    -X `\n    -W `\n    -h localhost `\n    -p 5432 `\n    -U postgres `\n    -d postgres `\n    -v ON_ERROR_STOP=1 `\n    -L \"$E\\07_database_metadata.log\" `\n    -f \"$B\\sql\\READ_ONLY_ENVIRONMENT_PREFLIGHT.sql\"\nif ($LASTEXITCODE -ne 0) { throw \"STOP: database preflight failed\" }"
+      ],
+      [
+        "p",
+        "The SQL performs metadata SELECTs inside a read-only transaction. Record the server system identifier, database OIDs, server version, data directory and sizes. Both required source names must be present. The optional accepted-final row is informational, not a target. This metadata check does not replace the launcher’s exact business/source preflight. Check the actual data-volume free space and record capacity approval. [S01, S02, S08, S11; O1]"
+      ]
+    ]
+  },
+  {
+    "title": "5 • Route B — Execute once",
+    "subtitle": "One intact launcher; no manual rearrangement of its SQL steps.",
+    "blocks": [
+      [
+        "h",
+        "B2. Verify the pristine source tree immediately before execution"
+      ],
+      [
+        "code",
+        "python -B \"$B\\tools\\runbook_checks.py\" runtime `\n    --root $R `\n    --report \"$E\\08_runtime_prerun.json\"\nif ($LASTEXITCODE -ne 0) { throw \"STOP: runtime is not pristine\" }"
+      ],
+      [
+        "p",
+        "The original package validator additionally verifies nested evidence, source hashes and package controls. The launcher prompts for the PostgreSQL password only after that validator passes. It passes the password through the process environment and clears it in its normal finally path; never put credentials in command-line arguments, files, screenshots or the run record. [S04–S06]"
+      ],
+      [
+        "h",
+        "B3. Run the original launcher"
+      ],
+      [
+        "code",
+        "# After source verification and run-specific approval only:\nSet-ExecutionPolicy -Scope Process Bypass\nUnblock-File -LiteralPath \"$R\\RUN_R26_RESUME.ps1\"\n& \"$R\\RUN_R26_RESUME.ps1\""
+      ],
+      [
+        "p",
+        "Honor your organization’s policy; a process-scope setting does not authorize bypassing Group Policy. Do not edit the launcher or its database names to resolve a failure. Unblock-File changes Windows download-zone metadata, not the checked file content. [O2]"
+      ],
+      [
+        "h",
+        "What the launcher does, in order"
+      ],
+      [
+        "p",
+        "1. Verify the frozen R4/R2 inputs and the semantic-identity correction.\n2. Check R6, retained R2 identity, policy and absent successor G3 schema.\n3. Export and verify all nine retained Wave A CSVs.\n4. Create a fresh timestamped clone; verify its inherited Wave A bytes.\n5. Run M2.11 simulation and M2.12/G3-v2 persistence/certification.\n6. Require the expected source/simulation identities and 70 passing controls.\n7. Recheck R6 and retained R2 nonmutation; retain new target/results. [S02, S05]"
+      ],
+      [
+        "call",
+        "STOP immediately on a thrown error, nonzero exit, missing result, interrupted process or failed control. Do not select Retry/Skip, rerun the package, drop a database, or run a repair script. A forced termination or power loss may prevent the final result ZIP; preserve the partial work and console evidence instead."
+      ],
+      [
+        "h",
+        "Expected completion"
+      ],
+      [
+        "p",
+        "One new database named msbf_r1_r26_resume_g3v2_<timestamp>, one result ZIP and sidecar under $R\\results, and a COMPLETE/PASS receipt. M2.5–M2.10 are inherited and verified; they are not re-executed. A new database creation or an exit code of zero is not by itself sufficient for acceptance."
+      ]
+    ]
+  },
+  {
+    "title": "6 • Route B — Reconcile and retain",
+    "subtitle": "Use full identities; treat new execution metadata separately from business identity.",
+    "blocks": [
+      [
+        "h",
+        "B4. Identify the one completed result and verify its sidecar"
+      ],
+      [
+        "code",
+        "$Results = @(\n    Get-ChildItem -LiteralPath \"$R\\results\" `\n        -Filter \"*_M2_11_M2_12_G3V2_RESULTS.zip\"\n)\nif ($Results.Count -ne 1) { throw \"STOP: expected exactly one result ZIP\" }\n$Result = $Results[0].FullName\n$ExpectedResult = (Get-Content -Raw -LiteralPath \"$Result.sha256\").Trim().Split(\" \")[0]\n$ActualResult = (Get-FileHash -Algorithm SHA256 -LiteralPath $Result).Hash.ToLowerInvariant()\nif ($ActualResult -ne $ExpectedResult) { throw \"STOP: result sidecar mismatch\" }\npython -B \"$B\\tools\\runbook_checks.py\" reconcile `\n    --result $Result `\n    --report \"$E\\09_result_reconciliation.json\"\nif ($LASTEXITCODE -ne 0) { throw \"STOP: result reconciliation failed\" }\npython -B \"$B\\tools\\runbook_checks.py\" runtime `\n    --root $R `\n    --post-run `\n    --report \"$E\\10_runtime_postrun.json\"\nif ($LASTEXITCODE -ne 0) { throw \"STOP: runtime source changed\" }"
+      ],
+      [
+        "p",
+        "--post-run allows only extra files beneath the original results directory; all original source bytes still must match. Do not rerun the original package validator after results have been written: it is a pristine-package check, not a post-run evidence check."
+      ],
+      [
+        "h",
+        "B5. Check the evidence chain"
+      ],
+      [
+        "table",
+        [
+          [
+            "Result record",
+            "Required result"
+          ],
+          [
+            "R26_RESUME_RECEIPT.json",
+            "PASS; COMPLETE; no failure; new target retained; wave_a_reexecution_performed=false; m2_11_m2_12_resume_performed=true."
+          ],
+          [
+            "01_RETAINED_FINAL_EXACT_PREFLIGHT.json",
+            "Exact database identity, policy controls and absent successor schema; nine Wave A exports match."
+          ],
+          [
+            "03_RESUME_CLONE_WAVE_A_IDENTITY.json",
+            "The clone inherits exact Wave A exports."
+          ],
+          [
+            "04_RESUME_G3_IDENTITY.json / G3 master",
+            "Correct canonical source, simulation, control, report and certification identities."
+          ],
+          [
+            "05_NONMUTATION.json",
+            "R6 source/schema and retained-final identity/exports unchanged."
+          ],
+          [
+            "Result CSVs and log",
+            "Fifteen exact reference CSVs; expected keys, counts and values; full runtime log retained."
+          ]
+        ]
+      ],
+      [
+        "p",
+        "New start/end times, timestamped target name and outer result-ZIP hash are expected to differ from the September 2 golden run. Exact business CSVs and canonical roots must match. Never “fix” raw timestamps or old audit-pending receipt language to force byte equality. Later authority is recorded separately, not edited into historical runtime evidence."
+      ]
+    ]
+  },
+  {
+    "title": "7 • Expected results at a glance",
+    "subtitle": "Detailed checks and exact SHA-256 values are in registers/GOLDEN_R26_REFERENCE.json.",
+    "blocks": [
+      [
+        "table",
+        [
+          [
+            "Checkpoint",
+            "Expected result"
+          ],
+          [
+            "Application-scenario population",
+            "1,500 paths; 750 merchants under Baseline and Recession Energy."
+          ],
+          [
+            "Profile expansion",
+            "8 profiles; 52,152 candidate-profile rows; 12,000 application-profile rows; 1,040 account-profile rows."
+          ],
+          [
+            "Daily monitoring",
+            "15,600 rows; 130 distinct run/scenario/application keys; exactly day indexes 1–120 per key."
+          ],
+          [
+            "Scenario membership",
+            "103 Baseline and 27 Recession Energy funded paths. Do not count these as 130 distinct merchants."
+          ],
+          [
+            "M2.6–M2.10 stage membership",
+            "130 unique keys in every exported stage; exact equality to monitoring membership."
+          ],
+          [
+            "M2.6 intervention",
+            "126 CLOSED_NO_FURTHER_ACTION; 3 TARGETED_MERCHANT_OUTREACH_REVIEW; 1 TEMPORARY_REMITTANCE_ADJUSTMENT_REVIEW."
+          ],
+          [
+            "M2.10 certified exposure",
+            "6,061.03 total; processed amount 1,762.25. Preserve stage ownership; this is not the M2.5 attention-exposure value."
+          ],
+          [
+            "G3-v2",
+            "70 unique exact control IDs; all PASS; zero failures."
+          ],
+          [
+            "Certification ID",
+            "G3V2_R26_C053DC064AB32A4D21864F94"
+          ],
+          [
+            "Source / simulation roots",
+            "618ac7ad…770d41f / 569ea013…5b12ee; compare full locked values automatically."
+          ],
+          [
+            "Protected source state",
+            "source_modified=false; retained_r2_final_modified=false, supported by before/clone/after exports."
+          ]
+        ]
+      ],
+      [
+        "h",
+        "Comparison methods"
+      ],
+      [
+        "p",
+        "The new result checker re-counts rows, checks headers, unique keys, scenario membership, intervention distribution and Decimal-based sums. It compares all fifteen locked CSV byte identities and nine sets of before/clone/after exports. It also verifies required receipt/master values and the exact 70-control population."
+      ],
+      [
+        "p",
+        "This checker reconciles evidence against accepted reference facts. It is not an independent implementation of every SQL business rule. Route A separately executes the source-owned simulation/canonicalization function; Route B separately performs database execution. A complete independent reviewer conclusion states which of those scopes was actually performed."
+      ],
+      [
+        "call",
+        "Do not substitute similarly named files. The runtime m2_5_r26.csv has its own locked export schema (33 columns); it is not interchangeable with the separately curated 47-column Power BI monitoring fact. The historical v_p05/v_p06 source-view names do not authorize adding P05/P06 report pages."
+      ]
+    ]
+  },
+  {
+    "title": "8 • Route C — Inspect the accepted Power BI",
+    "subtitle": "Verify the master; interact with a separate copy; do not refresh or overwrite the master.",
+    "blocks": [
+      [
+        "h",
+        "C1. Verify the accepted R3 component"
+      ],
+      [
+        "code",
+        "$PbiZip = \"C:\\MSBF\\in\\MSBF_MCI_POWER_BI_GITHUB_PUBLICATION_SUPPORT_R3_20260904.zip\"\npython -B \"$B\\tools\\runbook_checks.py\" verify `\n    --component POWER_BI_R3 `\n    --file $PbiZip `\n    --extract \"C:\\MSBF\\pbi_r3\" `\n    --windows-root \"C:\\MSBF\\pbi_r3\" `\n    --report \"$E\\11_pbi_package.json\"\nif ($LASTEXITCODE -ne 0) { throw \"STOP: Power BI package mismatch\" }\n$Master = \"C:\\MSBF\\pbi_r3\\release\\MSBF_Merchant_Credit_Intelligence_M2_v2.1.0-rc2.pbix\"\npython -B \"$B\\tools\\runbook_checks.py\" pbix `\n    --file $Master `\n    --report \"$E\\12_pbix_identity.json\"\nif ($LASTEXITCODE -ne 0) { throw \"STOP: PBIX identity mismatch\" }"
+      ],
+      [
+        "p",
+        "Expected PBIX: 27,635,305 bytes; SHA-256 ca46e855…b5294e4. The checker also verifies the embedded DataModel, page hashes and 96-visual count. Full values are in POWER_BI_LOCK.json. This is an accepted-byte preservation check, not a new Power BI audit."
+      ],
+      [
+        "h",
+        "C2. Open a working copy"
+      ],
+      [
+        "p",
+        "Create a new review folder and copy the PBIX into it. Open that copy in Power BI Desktop. Do not click Refresh, Publish or Save over the master. If prompted for missing original source files, cancel refresh and inspect the imported report state. Close without saving after review; re-hash the untouched master."
+      ],
+      [
+        "table",
+        [
+          [
+            "Page / check",
+            "Expected interpretation"
+          ],
+          [
+            "P01 — Cohort Command Center",
+            "At full-cohort endpoint: Baseline 103 funded / $1,385,300; stress 27 / $344,200. Clear industry/source filters before comparison."
+          ],
+          [
+            "P02 — Cohort Lifecycle",
+            "Selected-scenario KPIs; comparison lines may retain both scenarios by design. Observation filtering does not change decision-time facts."
+          ],
+          [
+            "P03 — Application Journey",
+            "Test the same merchant/scenario pair; merchant 738 is funded in Baseline but not in stress. Do not infer lifecycle for a nonfunded path."
+          ],
+          [
+            "P04 — Servicing & Exceptions",
+            "Baseline endpoint attention: four paths; stress: zero. The accepted R26 attention predicate remains."
+          ],
+          [
+            "Diagnostic and page boundary",
+            "P02-DIAG remains hidden; no P05/P06 public pages. Imported source and synthetic horizon labels remain explicit."
+          ]
+        ]
+      ],
+      [
+        "p",
+        "Refresh is a separate derivative test. It requires the final source catalog, complete CSV set, actual Power Query parameter/source mapping, privacy settings and a qualified environment. The R3 support ZIP deliberately excludes the development PBIP/source tree. Do not invent new source paths or weaken privacy settings. Preserve R17’s closed persistence/no-recapture state for the accepted bytes. [S12; accepted R17 authority; O4]"
+      ]
+    ]
+  },
+  {
+    "title": "9 • Failure, rollback and recovery",
+    "subtitle": "Preserve the first failure and the last proven checkpoint. Never manufacture a PASS.",
+    "blocks": [
+      [
+        "table",
+        [
+          [
+            "Symptom",
+            "Required action"
+          ],
+          [
+            "Hash / CRC / extraction mismatch",
+            "STOP before execution. Preserve the failed download and report. Obtain the exact source through the controlled channel. Do not suppress the mismatch."
+          ],
+          [
+            "Tool missing / wrong version / authentication",
+            "STOP before business execution. Correct installation/access under local policy and record the change. Do not put credentials in scripts."
+          ],
+          [
+            "Missing R6 or retained R2 checkpoint",
+            "STOP Route B. Do not create empty namesakes or substitute the accepted final. Obtain a governed checkpoint carrier/restore procedure or use Route A."
+          ],
+          [
+            "Source-state mismatch / G3 already present",
+            "STOP. Do not drop schemas or reset status flags to make the preflight pass. Preserve and obtain source-owner disposition."
+          ],
+          [
+            "SQL error / failed checkpoint",
+            "Stop at first error, retain SQLSTATE/message, log, exact source hash and last committed stage. Do not retry or skip."
+          ],
+          [
+            "GUI transaction is aborted",
+            "Only in the same failed transaction/session: ROLLBACK; then preserve the result. A rollback cannot undo earlier committed stages."
+          ],
+          [
+            "Launcher error / Ctrl+C / power loss",
+            "Retain every database and partial result directory. Close the interrupted shell to remove process credentials. Do not rerun or assume the current database is pristine."
+          ],
+          [
+            "New output differs from golden",
+            "Classify business-data, canonical-identity, metadata-only or environment variance. Raw execution times may differ; business rows/roots may not silently differ."
+          ],
+          [
+            "Power BI save/refresh changes bytes",
+            "Retain as a separate derivative. Do not replace the accepted master, carry forward its acceptance to changed bytes, or trigger broad QA solely for unchanged source data."
+          ]
+        ]
+      ],
+      [
+        "h",
+        "Recovery authorization"
+      ],
+      [
+        "p",
+        "A recovery action must identify the failed stage, preserved evidence, last committed state, exact bounded repair/resume source and approver. Test and retain the recovery result separately. A successful recovery does not erase the original failed attempt. No automatic database deletion or recovery execution is supplied in this runbook."
+      ],
+      [
+        "h",
+        "Manual SQL control rule"
+      ],
+      [
+        "p",
+        "For a future qualified one-program executor, use explicit host/port/user/database, psql -X and ON_ERROR_STOP=1, and check the native exit code. Do not use --single-transaction around programs that manage their own BEGIN/COMMIT. Session-scoped reports require the session behavior stated in the source. The historical catalog must not be converted into a glob loop. [O1; S09]"
+      ]
+    ]
+  },
+  {
+    "title": "10 • Route D — Full clean-start roadmap",
+    "subtitle": "Documented scope, not a claim that the final empty-database v2.1 path is already qualified.",
+    "blocks": [
+      [
+        "p",
+        "For a new user who has no checkpoint databases, the intended run is a separate clean-build procedure. The retained-final route cannot bootstrap that environment. Do not present a result ZIP, CSV snapshot, source catalog or accepted PBIX as a database backup."
+      ],
+      [
+        "table",
+        [
+          [
+            "Phase",
+            "Purpose and gate"
+          ],
+          [
+            "G0 / G1",
+            "Physical schema and references → controlled run/profile/source snapshots → accepted run-control gate."
+          ],
+          [
+            "M1.2–M1.6",
+            "Merchant population → requested financing → POS/settlement → deposit/liquidity → scenario overlays."
+          ],
+          [
+            "M1.7–M1.11",
+            "Source confidence → verification/continuity → as-of cash flow → obligations/capacity → resilience."
+          ],
+          [
+            "M1.12–M1.14",
+            "Integrated risk → exposure/recovery/comparative loss → unit economics."
+          ],
+          [
+            "M1.15–M1.17",
+            "Application consumption contract + acquisition companion → G2 acceptance."
+          ],
+          [
+            "Corrected M2.1–M2.4",
+            "Governed routing → expanded structure search → seven final decisions → funded/activated 130-path R6 checkpoint."
+          ],
+          [
+            "R26 M2.5–M2.10",
+            "Calibrated monitoring → intervention → setup → execution → account certification → portfolio endpoint."
+          ],
+          [
+            "R26 M2.11–M2.12",
+            "Bounded profile simulation → G3-v2 certification / consumption."
+          ],
+          [
+            "Power BI derivative",
+            "Consume the exact certified source contract in a separate development copy; do not overwrite the frozen accepted PBIX."
+          ]
+        ]
+      ],
+      [
+        "h",
+        "What the inspected repository actually establishes"
+      ],
+      [
+        "p",
+        "The R23 Git bundle reconstructs commit 58b4dbda229d7176431cb09eecd1e3e3ec1feeee. Its historical catalog has 230 normal execution positions and 128 separately classified recovery positions. A read-only hash map locates exact SQL bytes for 224/230 catalog positions in that examined tree; six hashes are unmatched, and no canonical catalog path exists directly in the public projection. This is not the final R26 executable plan."
+      ],
+      [
+        "p",
+        "The unmatched historical positions are M1.17 programs 125–128 and M2.12 reports 226/227. Later variants must be selected by authority—not by filename similarity. M1.17 clean-build source closure is explicitly static; it is not proof of full golden-replay runtime equivalence. [S09, S10]"
+      ],
+      [
+        "p",
+        "Use STAGE_ROADMAP.csv for the stage sequence and HISTORICAL_230_PROGRAM_MAP.csv for exact historical program codes, hashes and mapped paths. These are reading/reconciliation aids only. They are deliberately not supplied to an automatic executor."
+      ]
+    ]
+  },
+  {
+    "title": "11 • Bind the final executable release",
+    "subtitle": "Three substantive closures—not another round of unrelated model or Power BI remediation.",
+    "blocks": [
+      [
+        "table",
+        [
+          [
+            "Closure",
+            "Required evidence before marking PUB-RUN-001 complete"
+          ],
+          [
+            "1. Final runtime/seed binding",
+            "Freeze the final R26-integrated source tree and approved normal execution plan. Include all required source/seed data or a governed checkpoint backup with restore instructions, identity/privilege/collation checks and exact lineage. A CSV output snapshot alone is not enough."
+          ],
+          [
+            "2. Source-path and checkpoint completion",
+            "Resolve normal versus reporting versus recovery paths, selected clean-build variants and every executable checkpoint. Version all source corrections explicitly. Do not replay an intentionally failing historical chain as the normal procedure."
+          ],
+          [
+            "3. Independent clean Windows qualification",
+            "A control party follows the runbook on a clean approved Windows environment, without author-only files or hidden paths. Capture environment, commands, logs, checkpoints, result comparisons, source nonmutation and final reviewer signoff."
+          ]
+        ]
+      ],
+      [
+        "h",
+        "No hidden implementation decisions"
+      ],
+      [
+        "p",
+        "The final run plan must identify exact sequence, source path, SHA-256, predecessor state, target database, transaction/session behavior, expected output, checkpoint query/comparator, failure handling and evidence destination for each step. Approval of a plan cannot be inferred from a manifest alone."
+      ],
+      [
+        "h",
+        "Program execution pattern"
+      ],
+      [
+        "p",
+        "Each stage normally separates schema/policy, preflight, generation, positive controls, negative controls, acceptance and reporting. The exact program catalog wins: early stages differ and some reports need persistent sessions. Execute a complete program, inspect its checkpoint, and advance only on the defined result. Do not sort all SQL files alphabetically or add recovery sources to the normal chain."
+      ],
+      [
+        "h",
+        "What does not need reopening"
+      ],
+      [
+        "p",
+        "No new R26 policy choice, accepted PBIX edit, P03 rerun, duplicate P04 capture, P05/P06 completion, Campaign Scale execution or Module 3 execution is required merely to finish a run procedure. The remaining issue is proving the release’s promised execution entry point, not invalidating already-accepted component evidence."
+      ],
+      [
+        "call",
+        "The final runbook may be integrated once the route is accurately labeled. The repository must not advertise “clone and run end to end” until that exact cold-start claim has passed qualification. Keep the current OPEN entries visible in PUB_RUN_001_CLOSURE_MATRIX.csv."
+      ]
+    ]
+  },
+  {
+    "title": "12 • Evidence and independent signoff",
+    "subtitle": "The run is complete only when another party can trace the conclusion to retained evidence.",
+    "blocks": [
+      [
+        "h",
+        "Minimum evidence record"
+      ],
+      [
+        "p",
+        "Retain the completed run record and checkpoints; approval reference; exact input package/sidecar identities; tool and server fingerprints; capacity decision; command/console evidence; complete source-owned runtime log; original result ZIP and sidecar; result reconciliation; before/after nonmutation records; and any exceptions with disposition. Local paths, machine fingerprints and credentials-related evidence stay private."
+      ],
+      [
+        "h",
+        "Seal after all writes"
+      ],
+      [
+        "code",
+        "# After copying the result ZIP, sidecar and relevant logs into $E:\n$Seal = Join-Path \"C:\\MSBF\\evidence\" ($RunId + \"_seal.json\")\npython -B \"$B\\tools\\runbook_checks.py\" seal `\n    --folder $E `\n    --report $Seal\nif ($LASTEXITCODE -ne 0) { throw \"STOP: evidence inventory failed\" }"
+      ],
+      [
+        "p",
+        "The seal is outside the evidence folder to avoid self-referential hashing. It inventories bytes and SHA-256 values; it is not a digital signature, authenticity guarantee or audit opinion. Seal again under a new filename after any approved addition; retain the prior seal."
+      ],
+      [
+        "h",
+        "Reviewer decision"
+      ],
+      [
+        "table",
+        [
+          [
+            "Question",
+            "Required conclusion"
+          ],
+          [
+            "Was the right route executed?",
+            "State A offline, B checkpoint, C viewer or D qualified clean start. Do not imply a larger scope."
+          ],
+          [
+            "Were inputs and targets correct?",
+            "Package/code identities and database boundaries match the approved run record."
+          ],
+          [
+            "Do outputs reconcile?",
+            "All applicable checkpoints pass. Reconcile row populations, hashes and monetary values; identify tolerated execution metadata explicitly."
+          ],
+          [
+            "Was accepted evidence preserved?",
+            "No accepted source or PBIX overwrite; no hidden normal-path recovery; failed attempts retained."
+          ],
+          [
+            "What remains open?",
+            "Record environment deviations, qualification limits and release-binding gaps; do not replace them with an unqualified PASS."
+          ]
+        ]
+      ],
+      [
+        "p",
+        "Record operator and independent reviewer names, UTC timestamps, scope, exception decisions and final disposition. PASS may be issued for the tested route even while a broader cold-start route remains on HOLD. No post-run cleanup is automatic: retain the new target until evidence archival and deletion are separately approved."
+      ]
+    ]
+  },
+  {
+    "title": "13 • Windows and hosted-asset closure",
+    "subtitle": "Validate what users actually receive, not just the local build directory.",
+    "blocks": [
+      [
+        "p",
+        "After a separately authorized publication action, download each hosted asset to a fresh local folder. Compare exact filename, byte size and SHA-256 with the frozen release register. Never assume the uploaded copy is correct solely because the local source passed."
+      ],
+      [
+        "h",
+        "Windows-native extraction procedure"
+      ],
+      [
+        "p",
+        "On an approved Windows machine, use Windows File Explorer “Extract All” (or the specifically agreed Windows-native method) into a new short destination. Record Windows build, extraction method, start/end time and the unmodified dialog/result. Test the actual hosted ZIP. Linux extraction, Python zipfile, 7-Zip or a simulated path-length pass does not establish this native-extraction requirement."
+      ],
+      [
+        "code",
+        "python -B \"$B\\tools\\runbook_checks.py\" compare-extraction `\n    --file \"C:\\MSBF\\download\\HOSTED_ASSET.zip\" `\n    --folder \"C:\\MSBF\\native_test\" `\n    --report \"$E\\13_native_byte_comparison.json\"\nif ($LASTEXITCODE -ne 0) { throw \"STOP: hosted extraction mismatch\" }"
+      ],
+      [
+        "p",
+        "HOSTED_ASSET.zip is the one explicit release-binding placeholder in this example: replace it with the actual asset name from the final release register. The folder is the exact extraction destination, including any archive-root folder. The tool compares the complete relative file set and bytes; it cannot independently attest which program performed extraction. Keep the native-extraction evidence alongside its comparison receipt."
+      ],
+      [
+        "h",
+        "Closure checklist"
+      ],
+      [
+        "p",
+        "Confirm tag/commit and release identity; all hosted names/sizes/hashes; native clean extraction; working documentation links; report/PDF rendering; accepted PBIX identity; public/private classification; and recorded publication/supersession authority. Preserve historical v2.0.0 assets. Neither a hash check nor this runbook executes supersession."
+      ],
+      [
+        "h",
+        "Packaging and privacy"
+      ],
+      [
+        "p",
+        "The runbook may become a public learning/execution aid after integration and review. Runtime/evidence packages retain their own classifications. Never upload the private cohort carrier, raw owner QA captures, original ChatGPT export, checkpoint backups or workstation logs merely because a procedure references them. Public users need an explicit public-safe executable input path; private archival dependency is an open release-binding issue, not something to hide."
+      ]
+    ]
+  },
+  {
+    "title": "14 • Sources, validation and change control",
+    "subtitle": "Read the exact source when a summary and a physical artifact disagree.",
+    "blocks": [
+      [
+        "h",
+        "Source precedence"
+      ],
+      [
+        "p",
+        "Later bounded formal decisions govern their exact scope; accepted source/contract/manifest evidence governs technical identity; the frozen runtime defines its actual launcher and preflight; this runbook explains the procedure; conversation history is supporting chronology only. Historical candidate/pending strings remain historical when later decisions accept the artifact."
+      ],
+      [
+        "table",
+        [
+          [
+            "Source class",
+            "What it supports"
+          ],
+          [
+            "S01–S08: frozen R26 resume package",
+            "Entry databases, fixed launcher arguments, exact-source validators, before/after checks, offline simulation and clone/persistence architecture. Executable source remains in the original runtime ZIP."
+          ],
+          [
+            "S09–S11: repository/operations records",
+            "Historical 230-program sequence, M1.17 static closure limitation, recorded software environment and retained-database controls."
+          ],
+          [
+            "S12: accepted PBIX release record",
+            "Exact R3 PBIX identity, public page scope and deliberate omission of development sources."
+          ],
+          [
+            "R15 / R17 formal authority",
+            "Technical acceptance, scope of handoff, preserved source history and separately controlled publication."
+          ],
+          [
+            "O1–O6: official product documentation",
+            "psql behavior, installation, supported tools and password-file handling. These do not establish MSBF runtime acceptance."
+          ]
+        ]
+      ],
+      [
+        "h",
+        "Validation performed in this runbook build"
+      ],
+      [
+        "p",
+        "The delivery includes automated toolkit tests (including injected faults), accepted-result re-count/reconciliation, exact-source offline simulation replay with external calls disabled, pristine runtime verification, accepted PBIX byte checks, package checks and document rendering. The validation report distinguishes those results from Windows/PostgreSQL execution that was not performed here."
+      ],
+      [
+        "h",
+        "Change control"
+      ],
+      [
+        "p",
+        "Any changed source package, checkpoint, scenario/profile configuration, PBIX, library dependency or executable sequence must be assessed against its effect on this procedure. Issue a new runbook revision for a changed instruction or lock. Do not overwrite old reports, silently update expected values, or reuse prior acceptance for changed bytes."
+      ],
+      [
+        "call",
+        "Open requirement: PUB-RUN-001 final release binding + independent Windows qualification. This is explicitly not “100% audit-proof.” The assurance comes from a reproducible procedure, exact evidence, controlled failures and an honest, scoped reviewer conclusion."
+      ],
+      [
+        "p",
+        "Companion registers: COMPONENT_LOCK.json; GOLDEN_R26_REFERENCE.json; POWER_BI_LOCK.json; RESUME_RUNTIME_FILE_LOCK.json; SOURCE_REGISTER.csv; STAGE_ROADMAP.csv; HISTORICAL_230_PROGRAM_MAP.csv; PUB_RUN_001_CLOSURE_MATRIX.csv. Official links and retrieval dates are in SOFTWARE_AND_SOURCE_REFERENCES.md."
+      ]
+    ]
+  }
+]

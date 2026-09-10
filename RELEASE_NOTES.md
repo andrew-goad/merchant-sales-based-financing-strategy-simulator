@@ -1,3 +1,11 @@
+# Current release overlay
+
+The v2.1-family integrated candidate now includes the accepted R26 successor, accepted Power BI R3, owner-approved cohort/visual publication components, synchronized repository surfaces and a Windows-qualified checkpoint restore/replay procedure. The release remains **prepublication** pending final Independent Audit. Empty-database Route D remains unqualified and is not advertised.
+
+---
+
+## Preserved predecessor content
+
 # Module 2 / G3 Public Release Notes
 
 ## Merchant Sales-Based Financing Strategy Simulator — v2.0.0

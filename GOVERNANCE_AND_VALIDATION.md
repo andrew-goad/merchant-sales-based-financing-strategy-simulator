@@ -1,3 +1,11 @@
+# Current governance overlay
+
+R26 technical acceptance, Power BI acceptance, cohort/visual publication-component review, Route-B reproducibility qualification, combined integration acceptance, live publication and hosted verification remain distinct gates. Public v2.0.0 remains controlling until explicit supersession. Route-B qualification does not convert Route D into a cold-start claim. See `docs/release_integration/module_2_g3_v2_1/AUTHORITY_AND_SUPERSESSION_MATRIX.csv`.
+
+---
+
+## Preserved predecessor content
+
 # Governance and Validation
 
 ## Governing Principles

@@ -1,3 +1,18 @@
+# Current candidate overlay
+
+- Public predecessor: Module 2/G3 v2.0.0 at `46fb1f9...`.
+- Technical successor: R26, accepted under `IA-D-R15-M12-001`.
+- Integrated candidate: `successor_candidates/m2-g3-v2.1-r26-integration/`.
+- Power BI: accepted R3 / P01–P04.
+- Cohort: owner-approved current public edition R3 PATCH1.
+- Visuals: owner-approved Visual Publication Candidate R1.
+- Reproducibility: Route B Windows-qualified; Route D unqualified.
+- Publication/supersession: pending final combined Independent Audit.
+
+---
+
+## Preserved predecessor content
+
 # Module and Release Index
 
 ## Current release authority
@@ -10,6 +25,11 @@ Module 2 / G3           ACCEPTED
 Campaign Scale          PREPARATION / CURRENT
 Production              NOT AUTHORIZED
 ```
+
+## Successor candidate pending audit
+
+- [Module 2 / G3 v2.1.0-rc2](successor_candidates/m2-g3-v2.1.0-rc2/) — R17 Wave A PASS, R19 Wave B/G3-v2 PASS, R22 Power BI Desktop PASS, bounded Independent Audit ready, accepted authority unchanged.
+- [Module 2 / G3 v2.1.0-rc1](successor_candidates/m2-g3-v2.1.0-rc1/) — retained superseded pre-Desktop candidate.
 
 ## Module 0
 

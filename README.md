@@ -1,628 +1,109 @@
-# Merchant Sales-Based Financing Strategy Simulator
+# MSBF · Merchant Credit Intelligence
 
-## Governed Decisioning, Operating Intelligence, Portfolio Strategy, and Enterprise Certification
+### From merchant evidence to financing decisions—and the account that follows.
 
-[![Enterprise Merchant Sales-Based Financing Platform](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png)](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png)
+**An independent portfolio by Andrew R. Goad** · Merchant Sales-Based Financing Strategy Simulator
 
-[Open the architecture full size](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png) ·
-[Architecture PDF](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.pdf) ·
-[Executive strategy brief](./docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio_v2.pdf) ·
-[Page gallery](./docs/executive_strategy/pages_v2/README.md) ·
-[Module 2 / G3 release](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/releases/tag/module-2-g3-v2.0.0)
+A merchant's sales can be strong while its requested financing is unsupportable. MSBF connects cash-flow evidence, permissible financing structures, explicit decision authority and account-level results—so a reviewer can understand not only the outcome, but the reasoning and records behind it.
 
-[Module 1 / G2 lineage](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png) ·
-[Module 2 / G3 lineage](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png)
+[![Executive brief: understand the merchant business, find permissible terms, follow the funded account and explain the portfolio.](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/pages/01_Cover.png)](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/pages/01_Cover.png)
 
-> **Current governed position:** Module 1 / G2 accepted · Module 2 / G3 accepted · `G2_M1_CONTRACT = PASS` · `G3_M2_CONTRACT = PASS` · Campaign Scale Certification current
+**Start with the business story.** The frozen ten-page executive brief introduces financing for the merchant business—not credit for its shoppers.
 
-This repository is a deterministic, synthetic PostgreSQL 15 platform for
-merchant sales-based financing tied to daily point-of-sale activity and
-sales-linked repayment.
+[Read the ten-page executive brief](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/From_First_Advance_to_Intelligent_Portfolio.pdf) · [Explore the documentation](docs/README.md) · [What you can use now](docs/guide/CURRENT_USE.md)
 
-The platform governs the complete analytical and strategy path from
-acquisition-source evidence and merchant applications through cash-flow,
-capacity, risk, economics, eligibility, pricing, counteroffers, final-offer
-authorization, simulated activation and operating states, servicing,
-reconciliation, portfolio analytics, strategy comparison, optimization, and
-enterprise G3 certification.
+> **Scope:** deterministic synthetic demonstration · non-production · no real funds. Technical acceptance is documented at its recorded scope; [publication and supersession remain separate release actions](docs/release_integration/module_2_g3_v2_1/CURRENT_STATE.md).
 
-It is not a production lending system, deployed decision service, calibrated
-causal model, or autonomous strategy engine. Its purpose is to demonstrate
-enterprise-grade architecture, analytical discipline, reproducibility,
-validation, evidence, controls, and governed handoffs.
+## Three distinctions worth inspecting
 
----
+**Sales are not capacity.** Existing commitments, usable evidence, operating-margin assumptions and liquidity change what a merchant can support. [Read the cash-flow calculation](docs/guide/stages/M1_10.md).
 
-## Executive Visual Story
+**A supportable structure is not funding permission.** The system can find a reviewable alternative without authorizing it. Construction and testing belong to M2.2; final authority belongs to M2.3. [Follow the structure-search explanation](docs/guide/stages/M2_02.md).
 
-<table>
-<tr>
-<td width="50%" valign="top">
+**A recommendation is not an executed action.** The funded-account chain separates intervention, setup permissions, permitted synthetic servicing and reconciliation. [Inspect the operating boundary](docs/guide/stages/M2_07.md).
 
-<a href="./docs/executive_strategy/pages_v2/02_launch_with_discipline.png">
-<img src="./docs/executive_strategy/pages_v2/02_launch_with_discipline.png" alt="Launch With Discipline" width="100%">
-</a>
+## One connected system, explicit ownership
 
-<strong>Launch With Discipline</strong>
+[![Enterprise architecture: G0/G1 controls; Module 1 merchant evidence and contracts; Module 2 structure, authority and lifecycle; G3-v2 source certification; Power BI consumption.](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/architecture/png/Enterprise_Merchant_Sales_Based_Financing_Platform_v2_1.png)](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/architecture/png/Enterprise_Merchant_Sales_Based_Financing_Platform_v2_1.png)
 
-Capability advances only after the preceding boundary is validated, evidenced,
-and contract-certified.
+**Read the handoffs, not just the boxes.** Module 1 establishes evidence; Module 2 tests structures, resolves authority and follows funded paths. Power BI consumes the resulting facts; financing decisions remain in the source engine.
 
-</td>
-<td width="50%" valign="top">
+[Open the architecture at full resolution](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/architecture/png/Enterprise_Merchant_Sales_Based_Financing_Platform_v2_1.png) · [Read its vector/text PDF](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/architecture/pdf/Enterprise_Merchant_Sales_Based_Financing_Platform_v2_1.pdf) · [Browse all stages](docs/README.md#stage-map)
 
-<a href="./docs/executive_strategy/pages_v2/05_from_decision_to_enterprise_certification.png">
-<img src="./docs/executive_strategy/pages_v2/05_from_decision_to_enterprise_certification.png" alt="From Decision to Enterprise Certification" width="100%">
-</a>
-
-<strong>From Decision to Enterprise Certification</strong>
-
-Module 2 converts accepted G2 evidence into governed offers, simulated
-operations, portfolio strategy, and an accepted G3 consumption boundary.
-
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-
-<a href="./docs/executive_strategy/pages_v2/08_proof_before_scale.png">
-<img src="./docs/executive_strategy/pages_v2/08_proof_before_scale.png" alt="Proof Before Scale" width="100%">
-</a>
-
-<strong>Proof Before Scale</strong>
-
-Every stage must generate, validate, challenge, reconcile, and certify before
-the enterprise boundary advances.
-
-</td>
-<td width="50%" valign="top">
-
-<a href="./docs/executive_strategy/pages_v2/10_the_opportunity_ahead.png">
-<img src="./docs/executive_strategy/pages_v2/10_the_opportunity_ahead.png" alt="The Opportunity Ahead" width="100%">
-</a>
-
-<strong>The Opportunity Ahead</strong>
-
-The next governed proof expands accepted-fidelity replay through performance
-shakedown and full-campaign certification.
-
-</td>
-</tr>
-</table>
-
-[Open the complete ten-page executive strategy brief](./docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio_v2.pdf) ·
-[View the ten-page contact sheet](./docs/executive_strategy/from_first_advance_to_intelligent_portfolio_contact_sheet_v2.png)
-
----
-
-## Release Position
-
-| Governed boundary | Current status |
-|---|---|
-| Module 0 physical foundation and run control | **ACCEPTED** |
-| Module 1 deterministic evidence | **COMPLETE** |
-| `G2_M1_CONTRACT` | **PASS** |
-| Module 2 stages M2.1–M2.12 | **12 / 12 ACCEPTED** |
-| `G3_M2_CONTRACT` | **PASS** |
-| Campaign Scale Certification | **CURRENT — PREPARATION** |
-| 750 accepted-fidelity replay | **NOT YET AUTHORIZED** |
-| 2,500 performance shakedown | **NOT YET AUTHORIZED** |
-| 25,000 full campaign | **NOT YET AUTHORIZED** |
-| Production deployment | **NOT AUTHORIZED** |
-| Module 3 execution | **NOT AUTHORIZED** |
-
----
-
-## End-to-End Platform
-
-```text
-Acquisition Source, Campaign & Attribution
-→ Application & Requested Structure
-→ POS, Settlement, Deposit & Liquidity Evidence
-→ Cash-Flow, Capacity & Operating Resilience
-→ Integrated Risk, Exposure, Recovery & Comparative Loss
-→ Unit Economics & Merchant Acquisition Cost
-→ G2 Certified Consumption
-→ Eligibility & Policy Gates
-→ Pricing, Structure & Counteroffers
-→ Final-Offer Authorization
-→ Simulated Booking, Funding & Activation
-→ Remittance, Exposure & Portfolio Monitoring
-→ Early Warning, Servicing & Intervention
-→ Payment Reconciliation & Account-State Certification
-→ Portfolio KPI & Servicing Analytics
-→ Strategy Comparison, Simulation & Optimization
-→ G3 Enterprise Portfolio Certification
-→ Campaign Scale Certification
-```
-
----
-
-## Accepted Release Evidence
-
-### Module 1 / G2
-
-| Measure | Accepted result |
-|---|---:|
-| Governed progression | G0, G1, and M1.2–M1.17 |
-| Designed data foundation | 110 parent/control/reference tables |
-| Designed columns | 2,138 |
-| Deterministic applications | 750 |
-| Matched scenarios | `BASELINE` and `RECESSION_ENERGY` |
-| Integrated application-scenario rows | 1,500 |
-| Accepted physical hash identities | 18 / 18 PASS |
-| Final positive controls | 128 / 128 PASS |
-| Final negative controls | 20 / 20 PASS |
-| Deterministic or archive mismatches | 0 |
-| Final contract | **`G2_M1_CONTRACT — PASS`** |
-
-### Module 2 / G3
-
-| Measure | Accepted result |
-|---|---:|
-| Accepted Module 2 stages | 12 / 12 |
-| Integrated application/origination rows | 1,500 |
-| Operational-account rows | 59 |
-| Strategy/scope rows | 24 |
-| M2.11 positive controls | 120 / 120 PASS |
-| M2.11 negative controls | 20 / 20 PASS |
-| M2.11 acceptance prerequisites | 45 / 45 PASS |
-| M2.11 matched strategy groups | 20 |
-| M2.11 risk scenarios | 19 |
-| M2.12 positive controls | 128 / 128 PASS |
-| M2.12 negative controls | 20 / 20 PASS |
-| M2.12 acceptance requirements | 48 / 48 PASS |
-| M2.12 governed report sets | 24 / 24 PASS |
-| Latest-versus-archive reconciliation | PASS |
-| Final contract | **`G3_M2_CONTRACT — PASS`** |
-| Governed publication manifest | 1,930 files |
-
----
-
-## Module 1 / G2 Accepted Stage Chain
-
-Module 1 is not a summarized upstream black box. Its accepted progression begins
-with the shared physical and run-control foundations, advances through sixteen
-executable evidence stages, and terminates in the accepted G2 consumption
-boundary.
-
-G0 and G1 reside under `Module_0/` because they establish reusable physical and
-governed-run foundations. They are included here because they are part of the
-accepted Module 1 progression. M1.17 then certifies the 18 ordered accepted
-physical identities carried into G2.
-
-| Stage | Governed capability | Accepted revision |
-|---|---|---|
-| [G0](./Module_0/0.01_G0_Physical_Data_Foundation/) | Physical data foundation | `v0.2_ACCEPTED` |
-| [G1](./Module_0/0.02_G1_Governed_Run_Control/) | Governed run control | `v0.2_ACCEPTED` |
-| [M1.2](./Module_1/1.02_Deterministic_Merchant_Population/) | Deterministic merchant population | `v0.2R2_ACCEPTED` |
-| [M1.3](./Module_1/1.03_Application_and_Requested_Structure/) | Application and requested sales-linked structure | `v0.2R1_ACCEPTED` |
-| [M1.4](./Module_1/1.04_Daily_POS_Settlement_and_Ecosystem/) | Daily POS, settlement, and merchant ecosystem | `v0.2_ACCEPTED` |
-| [M1.5](./Module_1/1.05_Daily_Deposit_and_Liquidity_History/) | Daily deposit and liquidity history | `v0.2R2_ACCEPTED` |
-| [M1.6](./Module_1/1.06_Matched_POS_and_Deposit_Scenarios/) | Matched POS and deposit scenario overlays | `v0.2R3_ACCEPTED` |
-| [M1.7](./Module_1/1.07_Source_Quality_and_Data_Confidence/) | Source quality and data confidence | `v0.2_ACCEPTED` |
-| [M1.8](./Module_1/1.08_Verification_Fraud_and_Continuity/) | Verification, fraud, and processor continuity | `v0.2R1_ACCEPTED` |
-| [M1.9](./Module_1/1.09_As_Of_Cash_Flow_Features/) | As-of cash-flow feature engineering | `v0.2R5_ACCEPTED` |
-| [M1.10](./Module_1/1.10_Obligations_Liquidity_and_Capacity/) | Obligations, liquidity, and residual cash flow | `v0.2R2_ACCEPTED` |
-| [M1.11](./Module_1/1.11_Cash_Flow_Archetypes_and_Resilience/) | Cash-flow archetypes and operating resilience | `v0.2R2_ACCEPTED` |
-| [M1.12](./Module_1/1.12_Merchant_Risk_and_Integrated_Proxy/) | Merchant risk components and integrated risk proxy | `v0.2R1_ACCEPTED` |
-| [M1.13](./Module_1/1.13_Exposure_Recovery_and_Expected_Loss/) | Exposure, recovery, and expected-loss foundations | `v0.2R1_ACCEPTED` |
-| [M1.14](./Module_1/1.14_Unit_Economics_and_Contribution/) | Unit economics and risk-adjusted contribution | `v0.2R4_ACCEPTED` |
-| [M1.15](./Module_1/1.15_Latest_Archive_Comparison_and_Contract/) | Latest, archive, comparison, and consumption contract | `v0.2R3_ACCEPTED` |
-| [M1.16](./Module_1/1.16_Acquisition_Attribution_and_CAC/) | Acquisition source, marketing attribution, and merchant CAC | `v0.2R3_ACCEPTED` |
-| [M1.17](./Module_1/1.17_End_to_End_QA_and_G2_Acceptance/) | End-to-end QA, evidence, and G2 contract acceptance | `v0.2R8_ACCEPTED` |
-
-The non-executable [Module 1 Charter, Architecture, and Requirements](./Module_1/1.01_Charter_Architecture_and_Requirements/)
-package provides the governing design context. It is not represented as a
-separate accepted database milestone.
-
-Each accepted foundation or stage package preserves a stage README, exact
-accepted revision, documentation, source, outputs, validation evidence,
-formal sign-off, manifests, and SHA-256 identities.
-
-[Open the Module 1 charter and architecture](./Module_1/1.01_Charter_Architecture_and_Requirements/) ·
-[Review M1.17 G2 assurance](./Module_1/1.17_End_to_End_QA_and_G2_Acceptance/) ·
-[Review the complete accepted Module 1 hash chain](./docs/project_lineage/MODULE_1_ACCEPTED_HASH_CHAIN.md)
-
----
-
-## Module 2 / G3 Accepted Stage Chain
-
-| Stage | Governed capability | Accepted revision |
-|---|---|---|
-| [M2.1](./Module_2/2.01_Eligibility_Policy_Gates_and_Decision_Routing/) | Eligibility, policy gates, and decision routing | `v0.2R7_ACCEPTED` |
-| [M2.2](./Module_2/2.02_Pricing_Structure_and_Counteroffer/) | Pricing, structure, and counteroffers | `v0.2R2_ACCEPTED` |
-| [M2.3](./Module_2/2.03_Final_Offer_and_Decision_Authorization/) | Final-offer and decision authorization | `v0.2R2_ACCEPTED` |
-| [M2.4](./Module_2/2.04_Booking_Funding_and_Portfolio_Activation/) | Booking, funding, and portfolio activation | `v0.2_ACCEPTED` |
-| [M2.5](./Module_2/2.05_Daily_Remittance_Exposure_and_Portfolio_Monitoring/) | Daily remittance, exposure, and portfolio monitoring | `v0.2R5_ACCEPTED` |
-| [M2.6](./Module_2/2.06_Early_Warning_Intervention_and_Servicing_Strategy/) | Early warning, intervention, and servicing strategy | `v0.2R1_ACCEPTED` |
-| [M2.7](./Module_2/2.07_Operational_Activation_and_Account_Setup/) | Operational activation and account setup | `v0.2R1_ACCEPTED` |
-| [M2.8](./Module_2/2.08_Servicing_Execution_Payment_and_Lifecycle_Control/) | Servicing execution, payment, and lifecycle control | `v0.2_ACCEPTED` |
-| [M2.9](./Module_2/2.09_Payment_Reconciliation_and_Account_State_Certification/) | Payment reconciliation and account-state certification | `v0.2R1_ACCEPTED` |
-| [M2.10](./Module_2/2.10_Portfolio_Performance_KPI_and_Servicing_Analytics/) | Portfolio performance, KPIs, and servicing analytics | `v0.2R5_ACCEPTED` |
-| [M2.11](./Module_2/2.11_Portfolio_Optimization_and_Strategy_Simulation/) | Portfolio optimization and strategy simulation | `v0.2R13_ACCEPTED` |
-| [M2.12](./Module_2/2.12_Enterprise_Portfolio_Certification_and_G3_Contract/) | Enterprise portfolio certification and G3 contract | `v1_ACCEPTED` |
-
-> **Simulation boundary:** Public Module 2 operating, activation, servicing,
-> and portfolio states are deterministic synthetic simulation outputs. They
-> are not evidence of live account processing or production deployment.
-
-Each stage provides a governed public projection containing:
-
-```text
-README
-→ BRD
-→ architecture
-→ validation and acceptance
-→ source provenance
-→ correction history
-→ catalogs
-→ current source
-→ reporting source
-→ recovery-only source
-→ final sign-off
-→ manifests and SHA-256 evidence
-```
-
-[Open the complete Module 2 stage index](./Module_2/README.md) ·
-[Open the BRD and validation index](./docs/BRD_AND_VALIDATION_INDEX.md)
-
----
-
-## Governed Evidence, Contract, and Acceptance Lineage
-
-The platform is governed across two accepted and connected certification
-boundaries.
-
-Module 1 establishes the deterministic merchant, application, operating,
-risk, economics, acquisition, and consumption evidence required by downstream
-strategy. Module 2 consumes that accepted foundation and extends it through
-decisioning, simulated operating states, portfolio analytics, strategy
-comparison, optimization, and G3 enterprise certification.
-
-### Module 1 / G2 — Deterministic Evidence Foundation
-
-[![Module 1 Governed Evidence, Contract and Acceptance Lineage](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png)](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png)
-
-[Open the Module 1 lineage full size](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png) ·
-[PDF](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.pdf) ·
-[Review M1.17 G2 assurance](./Module_1/1.17_End_to_End_QA_and_G2_Acceptance/)
-
-#### What this boundary certifies
-
-- deterministic merchant and application identities;
-- daily POS, settlement, deposit, liquidity, and cash-flow evidence;
-- capacity, resilience, integrated risk, exposure, loss, and unit economics;
-- acquisition source, attribution, confidence, and merchant acquisition cost;
-- latest, archive, comparison, and companion consumption layers;
-- accepted source-to-contract and contract-to-consumption lineage;
-- 18 / 18 accepted physical hash identities;
-- `G2_M1_CONTRACT — PASS`.
-
-### Module 2 / G3 — Decisioning, Operations, Portfolio Strategy, and Enterprise Certification
-
-[![Module 2 Governed Decisioning, Operations, Portfolio and G3 Acceptance Lineage](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png)](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png)
-
-[Open the Module 2 lineage full size](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png) ·
-[PDF](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.pdf) ·
-[Explore the complete Module 2 stage tree](./Module_2/README.md)
-
-#### What this boundary certifies
-
-- eligibility, policy, pricing, structure, counteroffers, and alternatives;
-- final-offer authorization, decision routing, and rationale;
-- deterministic simulated activation and operating states;
-- monitoring, early warning, intervention, servicing, and reconciliation;
-- portfolio KPI and servicing analytics;
-- matched strategy comparison, simulation, optimization, and trade-offs;
-- 12 / 12 accepted Module 2 stages;
-- enterprise-certified G3 consumption;
-- `G3_M2_CONTRACT — PASS`.
-
-```text
-MODULE 1 / G2
-Certified evidence foundation
-        ↓
-MODULE 2 / G3
-Governed decisioning, simulated operations, portfolio strategy,
-and enterprise certification
-        ↓
-CURRENT
-Campaign Scale Certification
-```
-
-> **Connected-boundary principle:** Module 1 proves that the evidence can be
-> trusted. Module 2 proves that trusted evidence can drive governed strategy.
-> G2 and G3 establish the accepted consumption boundaries connecting the two.
-
-> **Authority boundary:** The lineage exhibits summarize accepted synthetic,
-> non-production evidence and contract boundaries. They do not represent live
-> account processing, deployed credit policy, causal optimization, or
-> autonomous decisioning.
-
----
-
-## What the Platform Demonstrates
-
-### 1. Acquire and Establish Evidence
-
-- deterministic merchant, owner, processor, application, POS, settlement,
-  deposit, and liquidity foundations;
-- acquisition-source taxonomy, campaign funnels, application touchpoints,
-  deterministic attribution, and merchant-acquisition cost;
-- source confidence, verification evidence, fraud indicators, and processor
-  continuity;
-- matched baseline and adverse scenarios using the same governed merchant and
-  application identities.
-
-### 2. Decide and Structure
-
-- eligibility and policy gates;
-- pricing, terms, factor-rate, and remittance design;
-- configurable counteroffers and alternative structures;
-- final-offer authorization;
-- transparent route, disposition, reason-code, and rationale evidence;
-- governed lineage from certified G2 input to merchant-level decision output.
-
-### 3. Operate and Service
-
-- deterministic simulated booking, funding, activation, and initial-limit
-  states;
-- simulated daily remittance, exposure, and performance monitoring;
-- early-warning indicators and intervention triggers;
-- servicing, restructures, collections, and lifecycle-control evidence;
-- payment-event reconciliation;
-- account-state certification;
-- complete source-to-operating-state lineage.
-
-### 4. Analyze, Compare, Optimize, and Certify
-
-- portfolio KPI and servicing analytics;
-- vintage, exposure, concentration, return, and risk-adjusted evidence;
-- matched baseline and challenger strategy comparison;
-- strategy simulation across governed scenarios and objectives;
-- portfolio optimization and trade-off analysis;
-- certified G3 enterprise consumption;
-- controlled preparation for the next governed campaign cycle.
-
----
-
-## Proof Before Scale
-
-```text
-GENERATE
-→ VALIDATE
-→ CHALLENGE
-→ RECONCILE
-→ CERTIFY
-```
-
-The repository advances only after:
-
-- expected outcomes are explicitly defined;
-- positive controls prove intended behavior;
-- negative controls prove failure boundaries;
-- counts, grains, identities, hashes, and contracts reconcile;
-- recovery programs are isolated from normal execution;
-- accepted outputs are sealed through governed consumption contracts;
-- manifests and SHA-256 identities reproduce the physical release.
-
-```text
-Evidence first.
-Challenge everything.
-Reconcile all grains.
-Certify the contract.
-Scale only after proof.
-```
-
----
-
-## Campaign Scale Certification
-
-The current governed initiative is preparation for deterministic scale
-verification:
-
-```text
-750 accepted-fidelity replay
-→ 2,500 performance shakedown
-→ 25,000 full campaign
-```
-
-Each scale step requires a separate fail-closed readiness and authorization
-gate.
-
-Preparation does not imply:
-
-- execution authorization;
-- production fitness;
-- causal inference;
-- calibrated credit performance;
-- autonomous decisioning;
-- Module 3 authorization.
-
-[Open the campaign-scale documentation](./docs/campaign_scale/README.md) ·
-[Read the governance boundary](./docs/campaign_scale/CAMPAIGN_SCALE_GOVERNANCE_BOUNDARY.md) ·
-[Read the pre-750 roadmap](./docs/campaign_scale/CAMPAIGN_PRE_750_REPLAY_ROADMAP.md)
-
----
-
-## Choose a Review Path
-
-| Reviewer | Recommended path |
-|---|---|
-| Executive or hiring leader | [Architecture](./docs/enterprise_architecture/README.md) → [10-page strategy brief](./docs/executive_strategy/README.md) → [Release notes](./RELEASE_NOTES.md) |
-| Product, pricing, or portfolio leader | [Beyond Underwriting](./docs/executive_strategy/pages_v2/03_beyond_underwriting.png) → [Strategy Engine](./docs/executive_strategy/pages_v2/06_the_strategy_engine.png) → [Opportunity Ahead](./docs/executive_strategy/pages_v2/10_the_opportunity_ahead.png) |
-| Technical or architecture reviewer | [Module and release index](./MODULE_AND_RELEASE_INDEX.md) → [Module 1 lineage](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png) → [Module 2 stage tree](./Module_2/README.md) |
-| Governance or validation reviewer | [Governance guide](./GOVERNANCE_AND_VALIDATION.md) → [BRD and validation index](./docs/BRD_AND_VALIDATION_INDEX.md) → [M2.12 acceptance](./Module_2/2.12_Enterprise_Portfolio_Certification_and_G3_Contract/) |
-| Campaign-scale reviewer | [Campaign Scale Certification](./docs/campaign_scale/README.md) → governance boundary → pre-750 roadmap |
-| Development-history reviewer | [Project history](./docs/project_history/README.md) → sanitized transcript archive |
-| Repository navigator | [Project artifact map](./PROJECT_ARTIFACT_MAP.md) |
-
----
-
-## Repository Map
-
-- [`Module_0/`](./Module_0/) — physical data foundation and governed run
-  control.
-- [`Module_1/`](./Module_1/) — deterministic merchant, application, operating,
-  risk, economics, acquisition, contract, and G2-assurance foundation.
-- [`Module_2/`](./Module_2/README.md) — twelve accepted decisioning, operating,
-  servicing, portfolio, strategy, and G3-certification stages.
-- [`docs/enterprise_architecture/`](./docs/enterprise_architecture/README.md) —
-  current enterprise architecture and Module 1/Module 2 lineage exhibits.
-- [`docs/executive_strategy/`](./docs/executive_strategy/README.md) — Governed
-  Build Edition v3.0 ten-page executive brief.
-- [`docs/campaign_scale/`](./docs/campaign_scale/README.md) — campaign
-  readiness, clean-build source closure, governance boundary, and pre-750
-  roadmap.
-- [`docs/project_history/`](./docs/project_history/README.md) — sanitized and
-  searchable development-transparency archive.
-- [`docs/BRD_AND_VALIDATION_INDEX.md`](./docs/BRD_AND_VALIDATION_INDEX.md) —
-  direct stage-level BRD, validation, and source navigation.
-- [`PROJECT_ARTIFACT_MAP.md`](./PROJECT_ARTIFACT_MAP.md) — repository-wide
-  artifact map.
-- [`MODULE_AND_RELEASE_INDEX.md`](./MODULE_AND_RELEASE_INDEX.md) — governed
-  module and release index.
-
----
-
-## Validate the Public Release
-
-Clone the repository and run the publication validator:
-
-```bash
-git clone --branch module-2-g3-v2.0.0 --depth 1 https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git
-cd merchant-sales-based-financing-strategy-simulator
-python tools/validate_public_release.py
-```
-
-Expected result for Module 2 / G3 v2.0.0:
-
-```text
-Public release validation PASS
-Governed manifest files: 1930
-Module 2 stage folders: 12
-```
-
-The validator checks repository navigation, manifests, governed file
-identities, required Module 2 stage structure, and publication boundaries.
-
----
-
-## Accepted Source Classification
-
-### Module 1 / G2
-
-Module 1 and its G0/G1 foundations retain accepted source under each exact
-versioned package. Supporting `docs/`, `outputs/`, and `tests/` directories
-preserve requirements, evidence, correction history, validation, and sign-off.
-The stage-level README is the public navigation authority; the versioned
-accepted package is the physical source authority.
-
-### Module 2 / G3
-
-Within each accepted Module 2 stage:
-
-| Source area | Classification |
-|---|---|
-| `src/current/` | Accepted normal-chain source |
-| `src/reporting/` | Reporting, detail-report, and evidence-export source |
-| `src/recovery/` | Contingency-only recovery source; excluded from normal execution |
-
-Recovery SQL is retained for provenance, reproducibility, and failure-mode
-transparency. It is not part of the normal execution chain.
-
----
-
-## Transparency and Provenance
-
-The repository includes a sanitized, searchable development-history archive
-through August 12, 2026.
-
-It provides:
-
-- date-ordered Markdown transcripts;
-- machine-readable JSONL records;
-- project chronology;
-- milestone and decision indexes;
-- source-export identities;
-- duplicate-format classification;
-- deterministic redaction reporting;
-- an explicit authority hierarchy distinguishing working discussion from
-  accepted source and formal sign-off.
-
-[Open the project-history guide](./docs/project_history/README.md)
-
-Discussion history is supporting transparency evidence. Accepted SQL,
-manifests, BRDs, validation records, and formal sign-offs remain the governing
-authorities.
-
----
-
-## Governance Principles
-
-```text
-Governed
-Deterministic
-Auditable
-Parameter-driven
-Evidence-based
-Reproducible
-Contract-certified
-Strategy-enabled
-```
-
-The governing philosophy is:
-
-> **Logic, controls, validation, evidence, interpretation, and ownership travel together.**
-
----
-
-## Release and Publication
-
-| Release element | Authority |
-|---|---|
-| Public release | **Module 2 / G3 v2.0.0** |
-| Release title | **Merchant Sales-Based Financing Strategy Simulator — Module 2 G3 — Governed Decisioning, Operations, Portfolio Strategy & Enterprise Certification** |
-| Git tag | **`module-2-g3-v2.0.0`** |
-| Visual edition | **Governed Build Edition v3.0** |
-| Release date | **2026-08-13** |
-| Module 1 contract | **`G2_M1_CONTRACT — PASS`** |
-| Module 2 contract | **`G3_M2_CONTRACT — PASS`** |
-| Current initiative | **Campaign Scale Certification** |
-
-See:
-
-- [Release Notes](./RELEASE_NOTES.md)
-- [GitHub Publication Guide](./GITHUB_PUBLICATION_GUIDE.md)
-- [Governance and Validation](./GOVERNANCE_AND_VALIDATION.md)
-- [Reproducibility and Execution](./REPRODUCIBILITY_AND_EXECUTION.md)
-- [Citation metadata](./CITATION.cff)
-
----
-
-## Interpretation Boundary
-
-All data are synthetic.
-
-This repository is not:
-
-- a financing offer;
-- a production underwriting system;
-- a deployed servicing platform;
-- a calibrated probability-of-default model;
-- a CECL or regulatory-capital model;
-- legal or accounting advice;
-- a causal optimization engine;
-- an autonomous decision service.
-
-Power BI references describe governed, Power BI-ready views and publication
-visuals—not a production dashboard deployment.
-
-The repository demonstrates transferable methodology, system architecture,
-governed simulation, validation discipline, evidence design, release
-governance, and executive communication.
-
----
-
-Licensed under the [MIT License](./LICENSE).
+The demonstration has **750 synthetic merchants**, two alternative scenarios and **1,500 application-scenario paths**. Its funded lifecycle spans **130 scenario paths × 120 days = 15,600 monitoring rows**—not 130 distinct real customers or one live lending book. [Population and change evidence](docs/release_change_control/module_2_g3_v2_1/reports/02_DETAILED_CHANGE_LOG_AND_DATA_RECONCILIATION_REPORT.md).
+
+## Search the structure—not just the verdict
+
+[![Governed structure search and synthetic merchant 098: a 5200 dollar request in each alternative; 5200 dollars authorized in Baseline and a 2500 dollar counteroffer authorized in Recession Energy.](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/pages/04_Structure_Search.png)](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/pages/04_Structure_Search.png)
+
+**An unsuitable request does not rule out every alternative.** Construct terms together, reassess capacity and economics, then determine final authority separately.
+
+Search respects a **40% minimum amount**, **60% maximum reduction**, **30/60/90-day horizons**, an economic hurdle and matched-scenario constraints. The **6,519 reportable structures** span the demonstration—not merchant 098 alone. Illustrated outcomes are scenario alternatives, not sequential offers or a before/after customer story. [Inspect the strategy change and guardrails](docs/release_change_control/module_2_g3_v2_1/reports/02_DETAILED_CHANGE_LOG_AND_DATA_RECONCILIATION_REPORT.md).
+
+Synthetic merchant **082** provides the counterexample: its selected **$31,200** structure still requires review. [See why support does not confer authority](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/pages/05_Structure_and_Authority.png) · [Trace requirements, source and evidence](docs/guide/stages/M2_02.md).
+
+## Explain the decision, not just the outcome
+
+[![Accepted P03 Application Journey for synthetic merchant 738, Baseline: merchant evidence, risk and economics, final decision and the funded lifecycle.](docs/power_bi/m2_v2_1/assets/power_bi/core/p03_application_journey_738_baseline.png)](docs/power_bi/m2_v2_1/assets/power_bi/core/p03_application_journey_738_baseline.png)
+
+**Read the evidence and authority together.** The accepted P03 Application Journey connects both. [Open the original view at full resolution](docs/power_bi/m2_v2_1/assets/power_bi/core/p03_application_journey_738_baseline.png).
+
+P03 translates source-owned merchant evidence, risk/economics, structure assessment and final authority into three business-facing layers: **Merchant operating evidence → Risk & economics assessment → Decision**. Technical rationale remains underneath; Power BI explains rather than makes the decision. Retained accepted narrative QA covers all **1,500 application-scenario paths**, not just the four curated cases.
+
+**Terms cannot repair missing evidence. Terms can repair a structure problem.** Merchant **738** is authorized in Baseline but receives an evidence decline in Recession Energy, where the required 30-day POS window has only 28 usable days. Merchant **098** keeps access under that scenario through a governed **$2,500 counteroffer** on a $5,200 request. These are alternative deterministic synthetic assessments—not customer outcomes, forecasts or a claim of measured inclusion benefits.
+
+[Explore the curated 738 / 098 / 082 / 749 decision cases](docs/guide/EXPLAINABILITY.md) · [Open the actual 738 evidence-decline view](docs/power_bi/m2_v2_1/assets/power_bi/core/p03_application_journey_738_recession_energy.png) · [Inspect the retained full-population narrative QA](docs/power_bi/m2_v2_1/docs/POWER_BI_VALIDATION_REPORT.md).
+
+## Ask a portfolio question; follow the evidence
+
+[![Frozen executive-intelligence page with genuine Power BI P01 source placements: funding by acquisition source and reconciled endpoint evidence with nonzero remaining exposure.](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/pages/07_Executive_Intelligence.png)](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/pages/07_Executive_Intelligence.png)
+
+**Where is funding concentrated? What remains at the endpoint?** Read the retained Power BI evidence: zero reconciliation exceptions does not mean zero receivable.
+
+This **P01 / Baseline** exhibit shows the synthetic-forward endpoint **22 November 2026**, with an observed-source cutoff of **23 July 2026**. Four visible experiences cover command center, cohort lifecycle, application journey and servicing/exceptions. G3-v2 source certification and Power BI implementation acceptance remain separate. [Report scope and source context](docs/power_bi/m2_v2_1/README.md).
+
+[Open the original P01 screenshot](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/power_bi_reference/p01_command_center_baseline.png) · [View the accepted PBIX without changing it](docs/guide/CURRENT_USE.md#view-power-bi) · [Read the scenario comparison](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/pages/08_Scenario_Comparison.png)
+
+The **53-page cohort report** traces decisions, segments, lifecycle results and merchant cases. **236 of 750 matched pairs (31.5%)** differ in final decision category between Baseline and Recession Energy—not a software-improvement rate or a count of lost approvals. [Cohort edition and calculation context](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/cohort/MSBF_Merchant_Credit_Intelligence_Initial_750_Cohort_Overview_R3_PATCH1_20260908_REVIEW.pdf).
+
+## Choose your next level of detail
+
+### Understand the evidence foundation
+
+<a href="docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/architecture/png/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage_v2_1.png"><img src="docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/previews/m1.jpg" alt="Navigation preview of the detailed Module 1 evidence, contract and acceptance lineage." width="420"></a>
+
+**Module 1:** merchant and request, daily evidence, quality, capacity, resilience, risk and economics. The application contract, acquisition-attribution companion and G2 acceptance are distinct finishing responsibilities.
+
+[Explore Module 1](docs/guide/MODULE_1.md) · [Open full-size Module 1 lineage](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/architecture/png/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage_v2_1.png) · [Work through capacity](docs/guide/stages/M1_10.md)
+
+### Follow decisioning into operations
+
+<a href="docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/architecture/png/Module_2_Governed_Decisioning_Operations_and_G3v2_Lineage_v2_1.png"><img src="docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/previews/m2.jpg" alt="Navigation preview of the detailed twelve-stage Module 2 decision, operations and G3-v2 lineage." width="420"></a>
+
+**Module 2:** eligibility, structure search and final authority lead into funding, monitoring, intervention, setup, servicing, reconciliation, portfolio analysis and certification. Open the full-size lineage for detailed stage fields.
+
+[Explore Module 2](docs/guide/MODULE_2.md) · [Open full-size Module 2 lineage](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/architecture/png/Module_2_Governed_Decisioning_Operations_and_G3v2_Lineage_v2_1.png) · [Follow setup into servicing](docs/guide/stages/M2_07.md)
+
+### Learn, explain or challenge the result
+
+The **23-page masterclass** opens calculations and binding reasons through four acts, worked merchant cases and visible exercise answers. Engineering, executive, analytical and teaching views serve different reading tasks—not copies of one layout.
+
+[Masterclass and answer key](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/teaching/companion/LEARNING_GUIDE.md) · [How the decision engine works](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/posters/MSBF_MCI_How_the_Governed_Decision_Engine_Works_v2_1_COPYFIX_R1.png) · [What happens after the decision](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/posters/MSBF_MCI_What_Happens_After_the_Decision_v2_1_COPYFIX_R1.png) · [All five visual families](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/GALLERY.md)
+
+**Two end-to-end explainers.** [How the Governed Decision Engine Works](docs/guide/LEARNING.md#how-the-governed-decision-engine-works) connects merchant evidence, eligibility, search and final authority. [What Happens After the Decision](docs/guide/LEARNING.md#what-happens-after-the-decision) follows authorized paths through monitoring, permission, servicing and certification. Read each portrait separately at full resolution.
+
+## What this portfolio makes inspectable
+
+Built by Andrew R. Goad as an end-to-end demonstration of credit strategy, analytical engineering, risk governance, portfolio intelligence and executive decision support.
+
+Inspect that synthesis through the [complete stage-reading map](docs/README.md#stage-map), [change-control reports](docs/release_change_control/module_2_g3_v2_1/README.md), analytical report and teaching material: cash-flow tests, authority boundaries and relational contracts that make the reasoning traceable.
+
+**Development and assurance:** AI-assisted development and a documented project assurance workstream. [Read the provenance and history](docs/guide/SOURCE_VERSIONS.md#development-and-project-assurance).
+
+## Current use and release boundary
+
+Read the source and explanations, inspect retained analytical views, verify files, or consult the qualified **portable checkpoint restore plus isolated M2.11/M2.12/G3-v2 replay** procedure. Route B requires private retained checkpoints; Route D is unqualified, and no generalized fresh-campaign launcher is provided. [Choose a supported activity](docs/guide/CURRENT_USE.md).
+
+This is a local editorial candidate, not a live release. [Current authority and remaining release gates](docs/release_integration/module_2_g3_v2_1/CURRENT_STATE.md).
+
+Campaign Scale and Module 3 remain separately gated development. Arbitrary new campaigns, planned 2,500/25,000 progression and autonomous operation are not delivered capabilities. [Read the scoped roadmap](docs/README.md#future-work-and-release-records).

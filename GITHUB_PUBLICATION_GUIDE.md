@@ -1,3 +1,11 @@
+# Current publication overlay
+
+This tree is a **final pre-audit candidate**, not a live release. Final Independent Audit must adjudicate the exact candidate/release assets and issue bounded supersession/publication authority before any commit/tag/push/release action. `PUB-RUN-001` Route B is Windows-qualified; Route D remains unqualified. After publication, download the actual hosted assets and verify filename, size, SHA-256 and Windows-native clean extraction before release closure.
+
+---
+
+## Preserved predecessor content
+
 # GitHub Publication Guide — Module 2 / G3 v2.0.0
 
 ## Release candidate gate

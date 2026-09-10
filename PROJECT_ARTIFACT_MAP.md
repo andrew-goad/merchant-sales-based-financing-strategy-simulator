@@ -1,3 +1,11 @@
+# Current artifact overlay
+
+The v2.1-family publication candidate is organized across technical successor source, Power BI, cohort, visual gallery, change control, reproducibility, and history. The full qualification evidence and checkpoint carriers are control/audit artifacts rather than ordinary Git-tree content; the public tree carries a bounded qualification summary and exact hashes. Final Independent Audit decides publication/supersession; hosted verification is downstream.
+
+---
+
+## Preserved predecessor content
+
 # Project Artifact Map
 
 ## Start here

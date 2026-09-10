@@ -1,3 +1,11 @@
+# Current reproducibility overlay
+
+`PUB-RUN-001` governs the v2.1-family publication. Route A is an offline M2.11 proof; **Route B is Windows-qualified checkpoint restore/replay** with isolated M2.11/M2.12/G3-v2 execution and 90/90 accepted-reference reconciliation; Route C is immutable Power BI viewing; Route D empty-database build remains unqualified. Do not describe Route A/B as a G0→G3-v2 cold start. Qualification summary: `docs/reproducibility/m2_v2_1/PUB_RUN_001_ROUTE_B_QUALIFICATION_R1.md`.
+
+---
+
+## Preserved predecessor content
+
 # Reproducibility and Execution
 
 ## Environment

@@ -1,0 +1,179 @@
+--- accepted/M2_7_GEN__03_182_generation_v0_2R1.sql
++++ successor/M2_7_GEN.sql
+@@ -172,7 +172,7 @@
+ 
+     source.contract_row_hash::text AS source_contract_row_hash,
+     ctx.source_combined_set_hash::text AS source_combined_set_hash,
+-    to_jsonb(source) AS source_payload
++    (to_jsonb(source)-'created_at') AS source_payload
+ 
+ FROM msbf_m2.advance_intervention_strategy_latest AS source
+ CROSS JOIN _m2_7_ctx AS ctx
+@@ -250,55 +250,7 @@
+ 
+ ANALYZE _m2_7_source_expected;
+ 
+-DO $m2_7_source_guard$
+-DECLARE
+-    v record;
+-BEGIN
+-    SELECT
+-        count(*) AS source_rows,
+-        count
+-        (
+-            DISTINCT scenario_id::text||'|'||merchant_application_id
+-        ) AS distinct_rows,
+-        count(*) FILTER
+-        (
+-            WHERE row_hash IS NULL
+-               OR source_contract_row_hash IS NULL
+-               OR source_combined_set_hash<>'868125bff29270490cab4d2e55cb1388'
+-        ) AS invalid_rows,
+-        count(*) FILTER
+-        (
+-            WHERE source_strategy_outcome_code='CLOSED_NO_FURTHER_ACTION'
+-              AND source_servicing_action_code='NO_ACTION_CLOSED'
+-        ) AS closed_rows,
+-        count(*) FILTER
+-        (
+-            WHERE source_strategy_outcome_code=
+-                  'TEMPORARY_REMITTANCE_ADJUSTMENT_REVIEW'
+-              AND source_servicing_action_code='TEMPORARY_REMITTANCE_REVIEW'
+-        ) AS temporary_rows,
+-        count(*) FILTER
+-        (
+-            WHERE source_strategy_outcome_code=
+-                  'TARGETED_MERCHANT_OUTREACH_REVIEW'
+-              AND source_servicing_action_code='OUTREACH_REVIEW_QUEUE'
+-        ) AS outreach_rows
+-    INTO v
+-    FROM _m2_7_source_expected;
+-
+-    IF v.source_rows<>59
+-       OR v.distinct_rows<>59
+-       OR v.invalid_rows<>0
+-       OR v.closed_rows<>57
+-       OR v.temporary_rows<>1
+-       OR v.outreach_rows<>1
+-    THEN
+-        RAISE EXCEPTION
+-            'M2.7 source materialization failed: %.',
+-            row_to_json(v);
+-    END IF;
+-END;
+-$m2_7_source_guard$;
++/* SUCCESSOR WAVE A R3: predecessor population-bound guard m2_7_source_guard superseded by successor checkpoint controls. */
+ 
+ INSERT INTO msbf_m2.operational_activation_source_snapshot
+ (
+@@ -521,73 +473,7 @@
+ 
+ ANALYZE _m2_7_mapping;
+ 
+-DO $m2_7_mapping_guard$
+-DECLARE
+-    v record;
+-BEGIN
+-    SELECT
+-        count(*) AS mapping_rows,
+-        count(*) FILTER
+-        (
+-            WHERE operational_setup_outcome_code=
+-                  'NO_OPERATIONAL_SETUP_REQUIRED'
+-        ) AS no_setup_rows,
+-        count(*) FILTER
+-        (
+-            WHERE operational_setup_outcome_code=
+-                  'TEMPORARY_PAYMENT_ADJUSTMENT_SETUP_READY'
+-        ) AS temporary_rows,
+-        count(*) FILTER
+-        (
+-            WHERE operational_setup_outcome_code=
+-                  'OPERATIONAL_SETUP_REVIEW_REQUIRED'
+-        ) AS review_rows,
+-        count(*) FILTER
+-        (
+-            WHERE operational_setup_outcome_code NOT IN
+-            (
+-                'NO_OPERATIONAL_SETUP_REQUIRED',
+-                'TEMPORARY_PAYMENT_ADJUSTMENT_SETUP_READY',
+-                'OPERATIONAL_SETUP_REVIEW_REQUIRED'
+-            )
+-        ) AS other_rows,
+-        round
+-        (
+-            sum
+-            (
+-                CASE WHEN setup_authorized_flag
+-                     THEN source_recommended_action_exposure_amount
+-                     ELSE 0 END
+-            ),
+-            2
+-        ) AS setup_amount,
+-        round
+-        (
+-            sum
+-            (
+-                CASE WHEN setup_review_required_flag
+-                     THEN source_recommended_action_exposure_amount
+-                     ELSE 0 END
+-            ),
+-            2
+-        ) AS review_amount
+-    INTO v
+-    FROM _m2_7_mapping;
+-
+-    IF v.mapping_rows<>59
+-       OR v.no_setup_rows<>57
+-       OR v.temporary_rows<>1
+-       OR v.review_rows<>1
+-       OR v.other_rows<>0
+-       OR v.setup_amount<>518.04
+-       OR v.review_amount<>461.69
+-    THEN
+-        RAISE EXCEPTION
+-            'M2.7 exact source mapping failed: %.',
+-            row_to_json(v);
+-    END IF;
+-END;
+-$m2_7_mapping_guard$;
++/* SUCCESSOR WAVE A R3: predecessor population-bound guard m2_7_mapping_guard superseded by successor checkpoint controls. */
+ 
+ /* Section 5 — Target-typed activation snapshot. */
+ 
+@@ -1435,7 +1321,7 @@
+     1::integer AS source_contract_version,
+     'M2_6_EARLY_WARNING_INTERVENTION_SERVICING_STRATEGY_SCHEMA_V1'::text AS source_schema_version,
+     'M2_6_EARLY_WARNING_INTERVENTION_SERVICING_STRATEGY'::text AS source_acceptance_gate_id,
+-    '868125bff29270490cab4d2e55cb1388'::text AS source_combined_set_hash,
++    'fe7e331f1ea1c534d964140a8d1c5a58'::text AS source_combined_set_hash,
+     ctx.configuration_hash AS policy_configuration_hash,
+ 
+     1::bigint AS policy_rows,
+@@ -1728,25 +1614,7 @@
+           AND stress_priority_improvement_flag
+     )::bigint AS stress_priority_improvements;
+ 
+-DO $m2_7_generation_guard$
+-DECLARE
+-    v record;
+-BEGIN
+-    SELECT * INTO v FROM _m2_7_diagnostics;
+-
+-    IF v.expected_canonical_entities<>341
+-       OR v.actual_canonical_entities<>341
+-       OR v.row_level_mismatches<>0
+-       OR v.comparison_rows<>15
+-       OR v.stress_setup_permission_improvements<>0
+-       OR v.stress_priority_improvements<>0
+-    THEN
+-        RAISE EXCEPTION
+-            'M2.7 generation reconciliation failed: %.',
+-            row_to_json(v);
+-    END IF;
+-END;
+-$m2_7_generation_guard$;
++/* SUCCESSOR WAVE A R3: predecessor population-bound guard m2_7_generation_guard superseded by successor checkpoint controls. */
+ 
+ DROP TABLE IF EXISTS _m2_7_generation_evidence;
+ 

@@ -1,0 +1,113 @@
+--- accepted/M2_9_SCHEMA__01_196_schema_policy.sql
++++ successor/M2_9_SCHEMA.sql
+@@ -551,7 +551,7 @@
+  OR v.source_payment_name<>'msbf_m2.synthetic_payment_processing_event' OR v.source_transition_name<>'msbf_m2.account_lifecycle_transition_snapshot'
+  OR v.source_contract_code<>'M2_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONSUMPTION' OR v.source_schema_version<>'M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_SCHEMA_V1'
+  OR v.source_methodology_version<>'M2_8_METHOD_V1' OR v.source_policy_code<>'M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_POLICY_V1'
+- OR v.source_acceptance_gate_id<>'M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONTROL' OR v.source_combined_set_hash<>'ab32d80ba20c2c8f0a6ec9ec97c2ed26'
++ OR v.source_acceptance_gate_id<>'M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONTROL' OR v.source_combined_set_hash<>'e267cc6589209696ca7302c3c2e1fe8b'
+  OR NOT v.synthetic_data_only_flag OR NOT v.reconciliation_certification_only_flag
+  OR NOT v.preserve_m2_8_history_flag OR NOT v.no_real_funds_movement_flag
+  OR NOT v.no_bank_account_data_flag OR NOT v.no_ach_or_network_transmission_flag
+@@ -569,7 +569,7 @@
+ BEGIN
+  PERFORM msbf_ctl.m2_9_assert_configuration(p_run_id);
+  SELECT run_status INTO v_status FROM msbf_ctl.run_registry WHERE run_id=p_run_id;
+- IF v_status<>'M2_8_ACCEPTED' THEN RAISE EXCEPTION 'M2.9 generation requires M2_8_ACCEPTED; observed %.',v_status; END IF;
++ IF v_status<>'M2_8_GENERATED' THEN RAISE EXCEPTION 'M2.9 generation requires M2_8_GENERATED; observed %.',v_status; END IF;
+  IF EXISTS(
+   SELECT 1 FROM msbf_m2.account_reconciliation_source_snapshot WHERE module1_run_id=p_run_id UNION ALL
+   SELECT 1 FROM msbf_m2.payment_reconciliation_source_event WHERE module1_run_id=p_run_id UNION ALL
+@@ -640,7 +640,7 @@
+  'msbf_m2.synthetic_payment_processing_event'::text AS source_payment_name,'msbf_m2.account_lifecycle_transition_snapshot'::text AS source_transition_name,
+  'M2_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONSUMPTION'::text AS source_contract_code,1::integer AS source_contract_version,
+  'M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_SCHEMA_V1'::text AS source_schema_version,'M2_8_METHOD_V1'::text AS source_methodology_version,
+- 'M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_POLICY_V1'::text AS source_policy_code,'M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONTROL'::text AS source_acceptance_gate_id,'ab32d80ba20c2c8f0a6ec9ec97c2ed26'::text AS source_combined_set_hash,
++ 'M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_POLICY_V1'::text AS source_policy_code,'M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONTROL'::text AS source_acceptance_gate_id,'e267cc6589209696ca7302c3c2e1fe8b'::text AS source_combined_set_hash,
+  TRUE::boolean AS synthetic_data_only_flag,TRUE::boolean AS reconciliation_certification_only_flag,
+  TRUE::boolean AS preserve_m2_8_history_flag,TRUE::boolean AS no_real_funds_movement_flag,
+  TRUE::boolean AS no_bank_account_data_flag,TRUE::boolean AS no_ach_or_network_transmission_flag,
+@@ -658,11 +658,11 @@
+  15::bigint AS expected_comparison_rows,1::bigint AS expected_registry_rows,438::bigint AS expected_canonical_entities,
+  120::integer AS expected_positive_controls,20::integer AS expected_negative_controls,
+  24::integer AS expected_generation_evidence_rows,24::integer AS expected_detail_result_sets,
+- '{"acceptance_gate":"M2_9_PAYMENT_RECONCILIATION_EXCEPTION_RESOLUTION_ACCOUNT_STATE_CERTIFICATION","contract_code":"M2_PAYMENT_RECONCILIATION_ACCOUNT_CERTIFICATION_CONSUMPTION","contract_version":1,"expected":{"account_reconciliation_rows":59,"account_source_rows":59,"active_certified_exposure_amount":"323.79","archive_rows":59,"canonical_entities":438,"certification_state_rows":7,"certified_closed_rows":57,"certified_reassessment_rows":1,"certified_review_hold_rows":1,"comparison_rows":15,"detail_result_sets":24,"exception_amount":"27.75","exception_case_rows":1,"exception_opened_rows":1,"exception_resolved_rows":1,"exposure_variance_amount":"0.00","generation_evidence_rows":24,"latest_rows":59,"negative_controls":20,"no_payment_activity_rows":57,"payment_reconciliation_rows":7,"payment_source_rows":7,"policy_rows":1,"portfolio_certified_exposure_amount":"785.48","portfolio_summary_rows":2,"positive_controls":120,"processed_payment_amount":"194.25","reason_rows":36,"reconciled_after_retry_rows":1,"reconciliation_outcome_rows":7,"reconciliation_variance_amount":"0.00","registry_rows":1,"resolution_action_rows":7,"retry_event_rows":1,"retry_payment_amount":"27.75","returned_event_rows":1,"returned_payment_amount":"27.75","review_hold_exposure_amount":"461.69","review_hold_rows":1,"scheduled_payment_amount":"194.25","settled_event_rows":5,"state_certification_rows":59,"transition_source_rows":67,"unresolved_exception_rows":0},"exposure_tolerance_amount":0.0,"maximum_exception_resolution_days":1,"methodology":"M2_9_METHOD_V1","no_ach_or_network_transmission":true,"no_bank_account_data":true,"no_external_notice_generation":true,"no_external_processor_call":true,"no_production_adverse_action":true,"no_real_funds_movement":true,"no_real_merchant_contact":true,"no_write_off_or_collection_execution":true,"policy_code":"M2_9_PAYMENT_RECONCILIATION_ACCOUNT_CERTIFICATION_POLICY_V1","preserve_m2_8_history":true,"reconciliation_certification_only":true,"reconciliation_tolerance_amount":0.0,"schema_version":"M2_9_PAYMENT_RECONCILIATION_ACCOUNT_CERTIFICATION_SCHEMA_V1","source_contract":"M2_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONSUMPTION","source_gate":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONTROL","source_hash":"ab32d80ba20c2c8f0a6ec9ec97c2ed26","source_latest":"msbf_m2.application_servicing_execution_latest","source_methodology":"M2_8_METHOD_V1","source_payment":"msbf_m2.synthetic_payment_processing_event","source_policy":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_POLICY_V1","source_registry":"msbf_ctl.m2_8_servicing_execution_contract_registry","source_schema":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_SCHEMA_V1","source_transition":"msbf_m2.account_lifecycle_transition_snapshot","synthetic_data_only":true}'::jsonb AS configuration_payload,msbf_ctl.m2_9_hash_jsonb('{"acceptance_gate":"M2_9_PAYMENT_RECONCILIATION_EXCEPTION_RESOLUTION_ACCOUNT_STATE_CERTIFICATION","contract_code":"M2_PAYMENT_RECONCILIATION_ACCOUNT_CERTIFICATION_CONSUMPTION","contract_version":1,"expected":{"account_reconciliation_rows":59,"account_source_rows":59,"active_certified_exposure_amount":"323.79","archive_rows":59,"canonical_entities":438,"certification_state_rows":7,"certified_closed_rows":57,"certified_reassessment_rows":1,"certified_review_hold_rows":1,"comparison_rows":15,"detail_result_sets":24,"exception_amount":"27.75","exception_case_rows":1,"exception_opened_rows":1,"exception_resolved_rows":1,"exposure_variance_amount":"0.00","generation_evidence_rows":24,"latest_rows":59,"negative_controls":20,"no_payment_activity_rows":57,"payment_reconciliation_rows":7,"payment_source_rows":7,"policy_rows":1,"portfolio_certified_exposure_amount":"785.48","portfolio_summary_rows":2,"positive_controls":120,"processed_payment_amount":"194.25","reason_rows":36,"reconciled_after_retry_rows":1,"reconciliation_outcome_rows":7,"reconciliation_variance_amount":"0.00","registry_rows":1,"resolution_action_rows":7,"retry_event_rows":1,"retry_payment_amount":"27.75","returned_event_rows":1,"returned_payment_amount":"27.75","review_hold_exposure_amount":"461.69","review_hold_rows":1,"scheduled_payment_amount":"194.25","settled_event_rows":5,"state_certification_rows":59,"transition_source_rows":67,"unresolved_exception_rows":0},"exposure_tolerance_amount":0.0,"maximum_exception_resolution_days":1,"methodology":"M2_9_METHOD_V1","no_ach_or_network_transmission":true,"no_bank_account_data":true,"no_external_notice_generation":true,"no_external_processor_call":true,"no_production_adverse_action":true,"no_real_funds_movement":true,"no_real_merchant_contact":true,"no_write_off_or_collection_execution":true,"policy_code":"M2_9_PAYMENT_RECONCILIATION_ACCOUNT_CERTIFICATION_POLICY_V1","preserve_m2_8_history":true,"reconciliation_certification_only":true,"reconciliation_tolerance_amount":0.0,"schema_version":"M2_9_PAYMENT_RECONCILIATION_ACCOUNT_CERTIFICATION_SCHEMA_V1","source_contract":"M2_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONSUMPTION","source_gate":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONTROL","source_hash":"ab32d80ba20c2c8f0a6ec9ec97c2ed26","source_latest":"msbf_m2.application_servicing_execution_latest","source_methodology":"M2_8_METHOD_V1","source_payment":"msbf_m2.synthetic_payment_processing_event","source_policy":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_POLICY_V1","source_registry":"msbf_ctl.m2_8_servicing_execution_contract_registry","source_schema":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_SCHEMA_V1","source_transition":"msbf_m2.account_lifecycle_transition_snapshot","synthetic_data_only":true}'::jsonb) AS configuration_hash
++ '{"acceptance_gate":"M2_9_PAYMENT_RECONCILIATION_EXCEPTION_RESOLUTION_ACCOUNT_STATE_CERTIFICATION","contract_code":"M2_PAYMENT_RECONCILIATION_ACCOUNT_CERTIFICATION_CONSUMPTION","contract_version":1,"expected":{"account_reconciliation_rows":59,"account_source_rows":59,"active_certified_exposure_amount":"323.79","archive_rows":59,"canonical_entities":438,"certification_state_rows":7,"certified_closed_rows":57,"certified_reassessment_rows":1,"certified_review_hold_rows":1,"comparison_rows":15,"detail_result_sets":24,"exception_amount":"27.75","exception_case_rows":1,"exception_opened_rows":1,"exception_resolved_rows":1,"exposure_variance_amount":"0.00","generation_evidence_rows":24,"latest_rows":59,"negative_controls":20,"no_payment_activity_rows":57,"payment_reconciliation_rows":7,"payment_source_rows":7,"policy_rows":1,"portfolio_certified_exposure_amount":"785.48","portfolio_summary_rows":2,"positive_controls":120,"processed_payment_amount":"194.25","reason_rows":36,"reconciled_after_retry_rows":1,"reconciliation_outcome_rows":7,"reconciliation_variance_amount":"0.00","registry_rows":1,"resolution_action_rows":7,"retry_event_rows":1,"retry_payment_amount":"27.75","returned_event_rows":1,"returned_payment_amount":"27.75","review_hold_exposure_amount":"461.69","review_hold_rows":1,"scheduled_payment_amount":"194.25","settled_event_rows":5,"state_certification_rows":59,"transition_source_rows":67,"unresolved_exception_rows":0},"exposure_tolerance_amount":0.0,"maximum_exception_resolution_days":1,"methodology":"M2_9_METHOD_V1","no_ach_or_network_transmission":true,"no_bank_account_data":true,"no_external_notice_generation":true,"no_external_processor_call":true,"no_production_adverse_action":true,"no_real_funds_movement":true,"no_real_merchant_contact":true,"no_write_off_or_collection_execution":true,"policy_code":"M2_9_PAYMENT_RECONCILIATION_ACCOUNT_CERTIFICATION_POLICY_V1","preserve_m2_8_history":true,"reconciliation_certification_only":true,"reconciliation_tolerance_amount":0.0,"schema_version":"M2_9_PAYMENT_RECONCILIATION_ACCOUNT_CERTIFICATION_SCHEMA_V1","source_contract":"M2_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONSUMPTION","source_gate":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONTROL","source_hash":"e267cc6589209696ca7302c3c2e1fe8b","source_latest":"msbf_m2.application_servicing_execution_latest","source_methodology":"M2_8_METHOD_V1","source_payment":"msbf_m2.synthetic_payment_processing_event","source_policy":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_POLICY_V1","source_registry":"msbf_ctl.m2_8_servicing_execution_contract_registry","source_schema":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_SCHEMA_V1","source_transition":"msbf_m2.account_lifecycle_transition_snapshot","synthetic_data_only":true}'::jsonb AS configuration_payload,msbf_ctl.m2_9_hash_jsonb('{"acceptance_gate":"M2_9_PAYMENT_RECONCILIATION_EXCEPTION_RESOLUTION_ACCOUNT_STATE_CERTIFICATION","contract_code":"M2_PAYMENT_RECONCILIATION_ACCOUNT_CERTIFICATION_CONSUMPTION","contract_version":1,"expected":{"account_reconciliation_rows":59,"account_source_rows":59,"active_certified_exposure_amount":"323.79","archive_rows":59,"canonical_entities":438,"certification_state_rows":7,"certified_closed_rows":57,"certified_reassessment_rows":1,"certified_review_hold_rows":1,"comparison_rows":15,"detail_result_sets":24,"exception_amount":"27.75","exception_case_rows":1,"exception_opened_rows":1,"exception_resolved_rows":1,"exposure_variance_amount":"0.00","generation_evidence_rows":24,"latest_rows":59,"negative_controls":20,"no_payment_activity_rows":57,"payment_reconciliation_rows":7,"payment_source_rows":7,"policy_rows":1,"portfolio_certified_exposure_amount":"785.48","portfolio_summary_rows":2,"positive_controls":120,"processed_payment_amount":"194.25","reason_rows":36,"reconciled_after_retry_rows":1,"reconciliation_outcome_rows":7,"reconciliation_variance_amount":"0.00","registry_rows":1,"resolution_action_rows":7,"retry_event_rows":1,"retry_payment_amount":"27.75","returned_event_rows":1,"returned_payment_amount":"27.75","review_hold_exposure_amount":"461.69","review_hold_rows":1,"scheduled_payment_amount":"194.25","settled_event_rows":5,"state_certification_rows":59,"transition_source_rows":67,"unresolved_exception_rows":0},"exposure_tolerance_amount":0.0,"maximum_exception_resolution_days":1,"methodology":"M2_9_METHOD_V1","no_ach_or_network_transmission":true,"no_bank_account_data":true,"no_external_notice_generation":true,"no_external_processor_call":true,"no_production_adverse_action":true,"no_real_funds_movement":true,"no_real_merchant_contact":true,"no_write_off_or_collection_execution":true,"policy_code":"M2_9_PAYMENT_RECONCILIATION_ACCOUNT_CERTIFICATION_POLICY_V1","preserve_m2_8_history":true,"reconciliation_certification_only":true,"reconciliation_tolerance_amount":0.0,"schema_version":"M2_9_PAYMENT_RECONCILIATION_ACCOUNT_CERTIFICATION_SCHEMA_V1","source_contract":"M2_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONSUMPTION","source_gate":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONTROL","source_hash":"e267cc6589209696ca7302c3c2e1fe8b","source_latest":"msbf_m2.application_servicing_execution_latest","source_methodology":"M2_8_METHOD_V1","source_payment":"msbf_m2.synthetic_payment_processing_event","source_policy":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_POLICY_V1","source_registry":"msbf_ctl.m2_8_servicing_execution_contract_registry","source_schema":"M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_SCHEMA_V1","source_transition":"msbf_m2.account_lifecycle_transition_snapshot","synthetic_data_only":true}'::jsonb) AS configuration_hash
+  FROM msbf_ctl.m2_8_servicing_execution_contract_registry AS registry JOIN msbf_ctl.run_registry AS run ON run.run_id=registry.module1_run_id
+- WHERE run.run_code='M1_V0_2_BASELINE_BUILD' AND run.run_version=1 AND run.run_status='M2_8_ACCEPTED'
+- AND registry.contract_status='ACCEPTED' AND registry.contract_code='M2_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONSUMPTION' AND registry.contract_version=1
+- AND registry.schema_version='M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_SCHEMA_V1' AND registry.combined_set_hash='ab32d80ba20c2c8f0a6ec9ec97c2ed26'
++ WHERE run.run_code='M1_V0_2_BASELINE_BUILD' AND run.run_version=1 AND run.run_status='M2_8_GENERATED'
++ AND registry.contract_status='GENERATED' AND registry.contract_code='M2_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_CONSUMPTION' AND registry.contract_version=1
++ AND registry.schema_version='M2_8_SERVICING_EXECUTION_PAYMENT_LIFECYCLE_SCHEMA_V1' AND registry.combined_set_hash='e267cc6589209696ca7302c3c2e1fe8b'
+ ), hashed AS(SELECT seed.*,msbf_ctl.m2_9_hash_jsonb(to_jsonb(seed)) AS row_hash FROM seed)
+ INSERT INTO msbf_ctl.m2_9_policy_profile
+ (module1_run_id,policy_code,policy_version,policy_status,methodology_version,contract_code,contract_version,schema_version,
+@@ -811,36 +811,45 @@
+ CREATE OR REPLACE VIEW msbf_m2.v_m2_9_reconciliation_certification_latest AS
+ SELECT latest.* FROM msbf_m2.application_payment_reconciliation_certification_latest AS latest;
+ 
++
+ CREATE OR REPLACE VIEW msbf_m2.v_m2_9_matched_scenario_comparison AS
+ WITH paired AS(
+  SELECT module1_run_id,merchant_application_id,
+- max(reconciliation_outcome_code) FILTER(WHERE scenario_code='BASELINE') AS baseline_reconciliation_outcome_code,
+- max(reconciliation_outcome_code) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_reconciliation_outcome_code,
+- max(certified_state_code) FILTER(WHERE scenario_code='BASELINE') AS baseline_certified_state_code,
+- max(certified_state_code) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_certified_state_code,
+- max(certified_exposure_amount) FILTER(WHERE scenario_code='BASELINE') AS baseline_certified_exposure_amount,
+- max(certified_exposure_amount) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_certified_exposure_amount,
+- bool_or(state_certified_flag) FILTER(WHERE scenario_code='BASELINE') AS baseline_state_certified_flag,
+- bool_or(state_certified_flag) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_state_certified_flag,
+- count(*) FILTER(WHERE scenario_code='BASELINE') AS baseline_rows,
+- count(*) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_rows
++  max(reconciliation_outcome_code) FILTER(WHERE scenario_code='BASELINE') AS baseline_reconciliation_outcome_code,
++  max(reconciliation_outcome_code) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_reconciliation_outcome_code,
++  max(certified_state_code) FILTER(WHERE scenario_code='BASELINE') AS baseline_certified_state_code,
++  max(certified_state_code) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_certified_state_code,
++  max(certified_exposure_amount) FILTER(WHERE scenario_code='BASELINE') AS baseline_certified_exposure_amount,
++  max(certified_exposure_amount) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_certified_exposure_amount,
++  bool_or(state_certified_flag) FILTER(WHERE scenario_code='BASELINE') AS baseline_state_certified_flag,
++  bool_or(state_certified_flag) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_state_certified_flag,
++  bool_or(closed_state_flag) FILTER(WHERE scenario_code='BASELINE') AS baseline_terminal_flag,
++  bool_or(closed_state_flag) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_terminal_flag,
++  count(*) FILTER(WHERE scenario_code='BASELINE') AS baseline_rows,
++  count(*) FILTER(WHERE scenario_code='RECESSION_ENERGY') AS stress_rows
+  FROM msbf_m2.application_payment_reconciliation_certification_latest
+- GROUP BY module1_run_id,merchant_application_id
+-), ranked AS(
++ GROUP BY module1_run_id,merchant_application_id),ranked AS(
+  SELECT paired.*,
+- b.certification_state_rank AS baseline_certification_rank,
+- s.certification_state_rank AS stress_certification_rank
++  b.certification_state_rank AS baseline_certification_rank,
++  s.certification_state_rank AS stress_certification_rank
+  FROM paired
+- JOIN msbf_m2.account_state_certification_definition AS b
++ JOIN msbf_m2.account_state_certification_definition b
+   ON b.module1_run_id=paired.module1_run_id AND b.certification_state_code=paired.baseline_certified_state_code
+- JOIN msbf_m2.account_state_certification_definition AS s
++ JOIN msbf_m2.account_state_certification_definition s
+   ON s.module1_run_id=paired.module1_run_id AND s.certification_state_code=paired.stress_certified_state_code
+- WHERE paired.baseline_rows=1 AND paired.stress_rows=1
+-)
+-SELECT ranked.*,
+- (stress_state_certified_flag AND NOT baseline_state_certified_flag) AS stress_certification_permission_improvement_flag,
+- (stress_certification_rank<baseline_certification_rank) AS stress_certification_rank_improvement_flag,
+- (stress_certified_exposure_amount<baseline_certified_exposure_amount) AS stress_exposure_improvement_flag
++ WHERE paired.baseline_rows=1 AND paired.stress_rows=1)
++SELECT module1_run_id,merchant_application_id,
++ baseline_reconciliation_outcome_code,stress_reconciliation_outcome_code,
++ baseline_certified_state_code,stress_certified_state_code,
++ baseline_certified_exposure_amount,stress_certified_exposure_amount,
++ baseline_state_certified_flag,stress_state_certified_flag,baseline_rows,stress_rows,
++ baseline_certification_rank,stress_certification_rank,
++ (NOT baseline_terminal_flag AND NOT stress_terminal_flag
++  AND stress_state_certified_flag AND NOT baseline_state_certified_flag) AS stress_certification_permission_improvement_flag,
++ (NOT baseline_terminal_flag AND NOT stress_terminal_flag
++  AND stress_certification_rank<baseline_certification_rank) AS stress_certification_rank_improvement_flag,
++ (NOT baseline_terminal_flag AND NOT stress_terminal_flag
++  AND stress_certified_exposure_amount<baseline_certified_exposure_amount) AS stress_exposure_improvement_flag
+ FROM ranked;
+ 
+ CREATE OR REPLACE VIEW msbf_m2.v_m2_9_exception_resolution_ledger AS

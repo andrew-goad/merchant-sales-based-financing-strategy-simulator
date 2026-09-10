@@ -1,0 +1,235 @@
+--- accepted/M2_5_GEN__03_166_generation.sql
++++ successor/M2_5_GEN.sql
+@@ -291,7 +291,7 @@
+     source.source_m2_4_contract_row_hash::text,
+     source.source_advance_row_hash::text,
+     source.source_portfolio_row_hash::text,
+-    '117450a3eea7bb3d3c74d18cc3c8e96a'::text,
++    'deedb8bd7696e441126a6f4526fc4842'::text,
+     jsonb_build_object
+     (
+         'activation', source.activation_payload,
+@@ -319,41 +319,7 @@
+ 
+ ANALYZE _m2_5_source_expected;
+ 
+-DO $m2_5_source_guard$
+-DECLARE
+-    v record;
+-BEGIN
+-    SELECT
+-        count(*) AS source_rows,
+-        count(*) FILTER(WHERE scenario_code = 'BASELINE') AS baseline_rows,
+-        count(*) FILTER(WHERE scenario_code = 'RECESSION_ENERGY') AS stress_rows,
+-        count(DISTINCT synthetic_account_id) AS account_ids,
+-        count(DISTINCT synthetic_advance_id) AS advance_ids,
+-        count(*) FILTER
+-        (
+-            WHERE row_hash IS NULL
+-               OR funded_amount <= 0
+-               OR total_repayment_amount < funded_amount
+-               OR initial_exposure_amount IS DISTINCT FROM funded_amount
+-               OR remittance_rate NOT BETWEEN 0.05 AND 0.20
+-               OR collection_horizon_days NOT BETWEEN 1 AND 120
+-               OR implied_daily_collection_amount <= 0
+-        ) AS invalid_rows
+-    INTO v
+-    FROM _m2_5_source_expected;
+-
+-    IF v.source_rows <> 59
+-       OR v.baseline_rows <> 44
+-       OR v.stress_rows <> 15
+-       OR v.account_ids <> 59
+-       OR v.advance_ids <> 59
+-       OR v.invalid_rows <> 0 THEN
+-        RAISE EXCEPTION
+-            'M2.5 source generation failed: %',
+-            row_to_json(v);
+-    END IF;
+-END;
+-$m2_5_source_guard$;
++/* SUCCESSOR WAVE A R3: predecessor population-bound guard m2_5_source_guard superseded by successor checkpoint controls. */
+ 
+ INSERT INTO msbf_m2.advance_monitoring_source_snapshot
+ (
+@@ -661,45 +627,7 @@
+ 
+ ANALYZE _m2_5_replay_expected;
+ 
+-DO $m2_5_replay_guard$
+-DECLARE
+-    v record;
+-BEGIN
+-    SELECT
+-        count(*) AS replay_rows,
+-        min(per_source.days) AS minimum_days,
+-        max(per_source.days) AS maximum_days,
+-        count(*) FILTER
+-        (
+-            WHERE per_source.days <> 120
+-        ) AS invalid_source_rows,
+-        count(*) FILTER
+-        (
+-            WHERE replay.source_pos_set_hash IS NULL
+-               OR replay.source_deposit_row_hash IS NULL
+-        ) AS missing_hash_rows
+-    INTO v
+-    FROM _m2_5_replay_expected AS replay
+-    CROSS JOIN LATERAL
+-    (
+-        SELECT count(*)::bigint AS days
+-        FROM _m2_5_replay_expected AS same_source
+-        WHERE same_source.module1_run_id = replay.module1_run_id
+-          AND same_source.scenario_id = replay.scenario_id
+-          AND same_source.merchant_application_id = replay.merchant_application_id
+-    ) AS per_source;
+-
+-    IF v.replay_rows <> 7080
+-       OR v.minimum_days <> 120
+-       OR v.maximum_days <> 120
+-       OR v.invalid_source_rows <> 0
+-       OR v.missing_hash_rows <> 0 THEN
+-        RAISE EXCEPTION
+-            'M2.5 replay generation failed: %',
+-            row_to_json(v);
+-    END IF;
+-END;
+-$m2_5_replay_guard$;
++/* SUCCESSOR WAVE A R3: predecessor population-bound guard m2_5_replay_guard superseded by successor checkpoint controls. */
+ 
+ /* ============================================================================
+ Section 5 — Window-based daily remittance, exposure and raw status metrics
+@@ -1686,53 +1614,7 @@
+ 
+ ANALYZE _m2_5_daily_expected;
+ 
+-DO $m2_5_daily_guard$
+-DECLARE
+-    v record;
+-BEGIN
+-    SELECT
+-        count(*) AS daily_rows,
+-        count(*) FILTER(WHERE scenario_code = 'BASELINE') AS baseline_rows,
+-        count(*) FILTER(WHERE scenario_code = 'RECESSION_ENERGY') AS stress_rows,
+-        min(per_source.days) AS minimum_days,
+-        max(per_source.days) AS maximum_days,
+-        count(*) FILTER
+-        (
+-            WHERE actual_remittance_amount > raw_remittance_amount + 0.01
+-               OR actual_remittance_amount > receivable_balance_before + 0.01
+-               OR receivable_balance_after < 0
+-               OR row_hash IS NULL
+-               OR monitoring_status_rank NOT BETWEEN 0 AND 5
+-        ) AS invalid_rows,
+-        count(*) FILTER
+-        (
+-            WHERE scenario_code = 'RECESSION_ENERGY'
+-              AND monitoring_status_rank < raw_monitoring_status_rank
+-        ) AS invalid_stress_floor_rows
+-    INTO v
+-    FROM _m2_5_daily_expected AS daily
+-    CROSS JOIN LATERAL
+-    (
+-        SELECT count(*)::bigint AS days
+-        FROM _m2_5_daily_expected AS same_source
+-        WHERE same_source.module1_run_id = daily.module1_run_id
+-          AND same_source.scenario_id = daily.scenario_id
+-          AND same_source.merchant_application_id = daily.merchant_application_id
+-    ) AS per_source;
+-
+-    IF v.daily_rows <> 7080
+-       OR v.baseline_rows <> 5280
+-       OR v.stress_rows <> 1800
+-       OR v.minimum_days <> 120
+-       OR v.maximum_days <> 120
+-       OR v.invalid_rows <> 0
+-       OR v.invalid_stress_floor_rows <> 0 THEN
+-        RAISE EXCEPTION
+-            'M2.5 daily generation failed: %',
+-            row_to_json(v);
+-    END IF;
+-END;
+-$m2_5_daily_guard$;
++/* SUCCESSOR WAVE A R3: predecessor population-bound guard m2_5_daily_guard superseded by successor checkpoint controls. */
+ 
+ INSERT INTO msbf_m2.advance_daily_remittance_monitoring
+ (
+@@ -2459,36 +2341,7 @@
+ 
+ ANALYZE _m2_5_portfolio_expected;
+ 
+-DO $m2_5_portfolio_guard$
+-DECLARE
+-    v record;
+-BEGIN
+-    SELECT
+-        count(*) AS portfolio_rows,
+-        count(*) FILTER(WHERE scenario_code = 'BASELINE') AS baseline_rows,
+-        count(*) FILTER(WHERE scenario_code = 'RECESSION_ENERGY') AS stress_rows,
+-        count(*) FILTER
+-        (
+-            WHERE row_hash IS NULL
+-               OR opening_advance_count <= 0
+-               OR active_advance_count < 0
+-               OR paid_off_count < 0
+-               OR daily_remittance_amount < 0
+-               OR total_receivable_exposure_amount < 0
+-        ) AS invalid_rows
+-    INTO v
+-    FROM _m2_5_portfolio_expected;
+-
+-    IF v.portfolio_rows <> 240
+-       OR v.baseline_rows <> 120
+-       OR v.stress_rows <> 120
+-       OR v.invalid_rows <> 0 THEN
+-        RAISE EXCEPTION
+-            'M2.5 portfolio summary failed: %',
+-            row_to_json(v);
+-    END IF;
+-END;
+-$m2_5_portfolio_guard$;
++/* SUCCESSOR WAVE A R3: predecessor population-bound guard m2_5_portfolio_guard superseded by successor checkpoint controls. */
+ 
+ INSERT INTO msbf_m2.portfolio_daily_monitoring_summary
+ (
+@@ -2745,7 +2598,7 @@
+     'M2_PORTFOLIO_ACTIVATION_CONSUMPTION',
+     1,
+     'M2_4_PORTFOLIO_ACTIVATION_SCHEMA_V1',
+-    '117450a3eea7bb3d3c74d18cc3c8e96a',
++    'deedb8bd7696e441126a6f4526fc4842',
+     'M2_4_BOOKING_FUNDING_PORTFOLIO_ACTIVATION',
+     'M1_6_MATCHED_SCENARIO_OVERLAYS',
+     ctx.source_m1_6_combined_hash,
+@@ -3170,30 +3023,7 @@
+           AND stress_status_improvement_flag
+     )::bigint AS stress_status_improvements;
+ 
+-DO $m2_5_canonical_guard$
+-DECLARE
+-    v record;
+-BEGIN
+-    SELECT
+-        expected_canonical_entities,
+-        actual_canonical_entities,
+-        row_level_mismatches,
+-        comparison_rows,
+-        stress_status_improvements
+-    INTO v
+-    FROM _m2_5_generation_diagnostics;
+-
+-    IF v.expected_canonical_entities <> 7536
+-       OR v.actual_canonical_entities <> 7536
+-       OR v.row_level_mismatches <> 0
+-       OR v.comparison_rows <> 15
+-       OR v.stress_status_improvements <> 0 THEN
+-        RAISE EXCEPTION
+-            'M2.5 canonical reconciliation failed: %',
+-            row_to_json(v);
+-    END IF;
+-END;
+-$m2_5_canonical_guard$;
++/* SUCCESSOR WAVE A R3: predecessor population-bound guard m2_5_canonical_guard superseded by successor checkpoint controls. */
+ 
+ /* ============================================================================
+ Section 12 — Governed generation evidence

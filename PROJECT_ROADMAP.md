@@ -1,3 +1,11 @@
+# Current roadmap overlay
+
+Immediate boundary: final combined Independent Audit → append/freeze final history → owner-assisted Git publication only if authorized → hosted-download/hash/Windows extraction closure. Campaign Scale and Module 3 remain separate downstream authorities. No additional R26 or Power BI development is a prerequisite absent a concrete regression.
+
+---
+
+## Preserved predecessor content
+
 # Project Roadmap
 
 ## Current Release - Module 1 G2
