@@ -14,6 +14,7 @@ This guide points to existing tools and procedures; it does not replace them or 
 | --- | --- |
 | Read the code, guides, cohort and visuals | Available in this repository snapshot; no database needed. |
 | Check retained repository files | Complete local tree, Python and its existing manifests/validators. |
+| Read the Tableau scenario-review companion | PDF and PNGs are available without Tableau; the authoring `.twb` needs its original data or a separately packaged workbook. |
 | View the accepted Power BI report | Exact PBIX plus Power BI Desktop; open a separate copy, without refresh or save. |
 | Route A · offline M2.11 reproduction | Documented but prerequisite-dependent: exact runtime and accepted output/reference inputs. |
 | Route B · checkpoint restore and replay | Qualified within its specific retained-checkpoint scope; private checkpoint carriers, exact runtime and approved isolated environment required. |
@@ -40,6 +41,14 @@ The retained file is [MSBF_Merchant_Credit_Intelligence_M2_v2.1.0-rc2.pbix](../p
 P01–P04 are the visible command-center, cohort, application-journey and servicing experiences. P02-DIAG is hidden; P05/P06 are outside this report's public scope. The observed-source cutoff is **23 July 2026** and the synthetic-forward endpoint **22 November 2026**. [Exact report identity and viewing scope](../power_bi/m2_v2_1/README.md) · [Route C and identity-check instructions](../reproducibility/m2_v2_1/runbook/REPRODUCIBILITY_AND_EXECUTION.md).
 
 The stored report can be viewed; opening it is not permission to reconnect sources or create a fresh analytical run.
+
+## View the Tableau companion
+
+Start with the [Tableau overview](../tableau/README.md) and [13-page carousel](../tableau/docs/MCI_Risk_Decision_Scenario_Review_Carousel.pdf). The dashboard investigates 750 matched applications across the two alternative scenarios, with portfolio controls, a decision matrix, two segment modes and source-backed application explanations.
+
+The retained [Tableau authoring definition](../tableau/release/MCI_Risk_Decision_Scenario_Review.twb) is not a self-contained `.twbx`. Its CSV and temporary extract are not bundled; see [dependencies and reference checks](../tableau/docs/WORKBOOK_AND_EVIDENCE_NOTES.md). Opening this companion does not require or authorize a new database replay.
+
+This viewing addition is not a new qualified execution route, technical release or supersession of Power BI or accepted source records.
 
 ## Route A · offline proof, with exact inputs
 

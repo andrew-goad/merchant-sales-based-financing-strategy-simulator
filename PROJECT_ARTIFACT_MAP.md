@@ -1,3 +1,19 @@
+# Tableau analytical companion · documentation addition
+
+[Merchant Credit Intelligence in Tableau](docs/tableau/README.md) adds a matched-scenario investigation dashboard alongside the existing Power BI, cohort and teaching material.
+
+| Artifact | Purpose |
+| --- | --- |
+| [Tableau landing page](docs/tableau/README.md) | Capabilities, controls, examples and navigation. |
+| [Tableau authoring definition](docs/tableau/release/MCI_Risk_Decision_Scenario_Review.twb) | Original workbook; separate data dependencies apply. |
+| [13-page carousel](docs/tableau/docs/MCI_Risk_Decision_Scenario_Review_Carousel.pdf) | Evidence-first walkthrough with matching page images. |
+| [Workbook and evidence notes](docs/tableau/docs/WORKBOOK_AND_EVIDENCE_NOTES.md) | Viewing prerequisites, interpretation and inspection scope. |
+| [Tableau asset manifest](docs/tableau/manifests/ASSET_MANIFEST.json) | Exact asset identities and corrected page-name mapping. |
+
+This addition does not change any simulator version, release tag, accepted-source authority or historical artifact record.
+
+---
+
 # Current artifact overlay
 
 The v2.1-family publication candidate is organized across technical successor source, Power BI, cohort, visual gallery, change control, reproducibility, and history. The full qualification evidence and checkpoint carriers are control/audit artifacts rather than ordinary Git-tree content; the public tree carries a bounded qualification summary and exact hashes. Final Independent Audit decides publication/supersession; hosted verification is downstream.

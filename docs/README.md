@@ -16,7 +16,7 @@
 
 [Module 0 · foundations](guide/MODULE_0.md) · [Module 1 · evidence](guide/MODULE_1.md) · [Module 2 · decisions and accounts](guide/MODULE_2.md)
 
-[Explainability and P03 cases](guide/EXPLAINABILITY.md) · [Power BI and cohort analysis](guide/ANALYTICS.md) · [Visual portfolio](guide/VISUALS.md) · [Learn the mechanism](guide/LEARNING.md)
+[Explainability and P03 cases](guide/EXPLAINABILITY.md) · [Power BI, Tableau and cohort analysis](guide/ANALYTICS.md) · [Tableau scenario review](tableau/README.md) · [Visual portfolio](guide/VISUALS.md) · [Learn the mechanism](guide/LEARNING.md)
 
 [Requirements and validation](guide/REQUIREMENTS_AND_VALIDATION.md) · [Source versions and provenance](guide/SOURCE_VERSIONS.md) · [Current use](guide/CURRENT_USE.md)
 
@@ -127,6 +127,8 @@ For cross-stage changes, consult the [detailed reconciliation report](release_ch
 **Executive:** [ten-page frozen pitch](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/From_First_Advance_to_Intelligent_Portfolio.pdf) and [page descriptions](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/accessibility/PITCH_PAGE_DESCRIPTIONS.md). The current pitch is an image-only PDF with exact PNGs, not a newly editable PowerPoint.
 
 **Analytical:** [53-page cohort report](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/cohort/MSBF_Merchant_Credit_Intelligence_Initial_750_Cohort_Overview_R3_PATCH1_20260908_REVIEW.pdf); begin at page 2 for the overview, page 14 for matched-scenario transitions, or pages 39–43 for cases. [Power BI requirements](power_bi/m2_v2_1/docs/POWER_BI_BUSINESS_REQUIREMENTS.md) and [implementation validation](power_bi/m2_v2_1/docs/POWER_BI_VALIDATION_REPORT.md) support P01–P04. The hidden diagnostic page is not a fifth executive experience.
+
+**Tableau:** [Risk Decision & Scenario Review](tableau/README.md) connects matched-scenario decisions, portfolio-filtered indicators, segment concentration and source-backed merchant explanations. [Read the 13-page carousel](tableau/docs/MCI_Risk_Decision_Scenario_Review_Carousel.pdf) or [inspect workbook dependencies](tableau/docs/WORKBOOK_AND_EVIDENCE_NOTES.md). This analytical companion does not create a new project version or release.
 
 **Teaching:** [23-page masterclass](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/teaching/MSBF_MCI_Merchant_POS_Lending_Masterclass_v2_1.pdf), [learning guide](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/teaching/companion/LEARNING_GUIDE.md) and [read-only code map](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/teaching/companion/READ_ONLY_CODE_MAP.md). There are 22 lessons plus a closing synthesis; a code map is not an execution recipe.
 

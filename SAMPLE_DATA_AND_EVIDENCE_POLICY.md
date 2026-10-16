@@ -1,3 +1,13 @@
+# Tableau companion evidence
+
+The [Tableau companion](docs/tableau/README.md) publishes an authoring definition, a 13-page carousel and matching PNGs. Its displayed analysis covers the complete 750-application matched-scenario cohort; the selected screenshots illustrate cases and are not the entire underlying dataset.
+
+The supplied folder does not bundle a CSV, Hyper extract or packaged workbook. Its `.twb` retains author-local connection references and software-generated authoring metadata; it contains no embedded data and is disclosed as a definition requiring reconnection, not a portable data carrier. A separately packaged workbook would require its own data/public-disclosure review.
+
+Carousel and workbook identities are recorded in the [asset manifest](docs/tableau/manifests/ASSET_MANIFEST.json). Exact image bytes are preserved, with filenames corrected against the PDF subjects. This companion does not replace the separately defined 50-application public review cohort or the historical full-table snapshot.
+
+---
+
 # Sample Data and Evidence Policy
 
 ## Synthetic Data Boundary

@@ -31,6 +31,16 @@ P02-DIAG remains hidden. P05/P06 are excluded from this current client-facing sc
 
 [Open the actual P02 lifecycle view](../power_bi/m2_v2_1/assets/power_bi/core/p02_cohort_lifecycle_baseline.png) · [Read P03 as an explainability capability](EXPLAINABILITY.md) · [Open the actual P04 servicing view](../power_bi/m2_v2_1/assets/power_bi/core/p04_servicing_exceptions_baseline.png) · [View the immutable PBIX](CURRENT_USE.md#view-power-bi).
 
+## Investigate the paired scenarios in Tableau
+
+[Merchant Credit Intelligence · Risk Decision & Scenario Review](../tableau/README.md) adds a focused Tableau investigation surface over the same 750 matched synthetic applications. It supplements the accepted Power BI experiences; it is not a fifth Power BI page or a new financing engine.
+
+Compare portfolio authorization rates, select a decision pairing, inspect its within-segment incidence, and select an application for side-by-side Decision, Evidence, Structure or Source rationale. Pairing selection uses parameter actions for the concentration numerator while preserving the full portfolio-filtered segment denominator. Selecting one application must not replace the portfolio KPIs with that application's counts.
+
+[Tableau carousel](../tableau/docs/MCI_Risk_Decision_Scenario_Review_Carousel.pdf) · [Workbook and viewing limits](../tableau/docs/WORKBOOK_AND_EVIDENCE_NOTES.md)
+
+The source engine remains responsible for decisions and governed terms. Existing Power BI acceptance and G3-v2 source certification do not automatically validate the Tableau implementation. No new release or supersession is created by this companion.
+
 ## Read the cohort, not just the dashboard
 
 The accepted R3 PATCH1 cohort is a **53-page analytical read-ahead**, with an executive overview, matched-scenario outcomes, channel/industry views, lifecycle and monitoring evidence, account cases and a facts sheet. It is not a 53-control validation suite or a short pitch deck.

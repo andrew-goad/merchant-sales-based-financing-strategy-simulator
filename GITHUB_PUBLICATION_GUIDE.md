@@ -1,3 +1,17 @@
+# Owner-directed Tableau documentation update · no release
+
+For the owner's 16 October 2026 request, add the [Tableau analytical companion](docs/tableau/README.md), its existing authored workbook/carousel/page images and related navigation. This instruction is limited to a documentation/portfolio commit and ordinary branch publication. It does not authorize a simulator version bump, new GitHub Release, tag creation/replacement, technical supersession, source-data changes or database execution.
+
+Keep accepted Module 0/1/2, successor, Power BI and historical audit artifacts unchanged. Keep `release_metadata.json`, `RELEASE_NOTES.md`, `CHANGELOG.md`, citation version fields and historical overlay indexes unchanged. Update only the applicable documentation and current root file inventories; unchanged file records must retain their hashes.
+
+The retained Tableau `.twb` is an explicitly disclosed authoring definition with local connection references, not a portable data package. Do not claim a native cross-machine opening test, bundled extract or verified live Share URL unless separately established. No credentials or private data may be added.
+
+Before committing, verify the intended paths, run the unchanged repository validator, inspect `git diff --check` and the full diff, and stage only the documentation/companion paths. Publish only the intended branch commit. Do not use blanket staging, force push, tag commands or the historical release procedure below for this update.
+
+The following candidate and predecessor instructions are preserved historical release guidance, not the procedure for this documentation-only change.
+
+---
+
 # Current publication overlay
 
 This tree is a **final pre-audit candidate**, not a live release. Final Independent Audit must adjudicate the exact candidate/release assets and issue bounded supersession/publication authority before any commit/tag/push/release action. `PUB-RUN-001` Route B is Windows-qualified; Route D remains unqualified. After publication, download the actual hosted assets and verify filename, size, SHA-256 and Windows-native clean extraction before release closure.

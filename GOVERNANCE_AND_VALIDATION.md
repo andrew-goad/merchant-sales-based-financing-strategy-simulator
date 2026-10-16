@@ -1,3 +1,11 @@
+# Tableau documentation scope
+
+The [Tableau analytical companion](docs/tableau/README.md) explains existing synthetic decision outputs. Repository file checks and workbook-definition inspection do not transfer the Power BI report's acceptance, constitute a new simulator audit, or authorize production use.
+
+Portfolio filter scope, pairing-incidence denominators, application selection and narrative interpretation are documented in the [Tableau evidence notes](docs/tableau/docs/WORKBOOK_AND_EVIDENCE_NOTES.md). Existing accepted source, Power BI bytes, historical audit decisions and release identities remain unchanged. This is an owner-directed documentation/portfolio update, not a new release.
+
+---
+
 # Current governance overlay
 
 R26 technical acceptance, Power BI acceptance, cohort/visual publication-component review, Route-B reproducibility qualification, combined integration acceptance, live publication and hosted verification remain distinct gates. Public v2.0.0 remains controlling until explicit supersession. Route-B qualification does not convert Route D into a cold-start claim. See `docs/release_integration/module_2_g3_v2_1/AUTHORITY_AND_SUPERSESSION_MATRIX.csv`.

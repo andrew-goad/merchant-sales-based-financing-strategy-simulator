@@ -1,3 +1,11 @@
+# Tableau companion · no new release
+
+The [Tableau Risk Decision & Scenario Review](docs/tableau/README.md) is an additive analytical/documentation product. Its workbook is retained under `docs/tableau/release/` using the owner's directory convention; this is not a GitHub Release, a new module, a version increment or a supersession event.
+
+All release and accepted-stage identities below remain unchanged. [Tableau artifact identities and viewing scope](docs/tableau/docs/WORKBOOK_AND_EVIDENCE_NOTES.md).
+
+---
+
 # Current candidate overlay
 
 - Public predecessor: Module 2/G3 v2.0.0 at `46fb1f9...`.

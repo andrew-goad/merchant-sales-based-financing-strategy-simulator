@@ -10,7 +10,7 @@ A merchant's sales can be strong while its requested financing is unsupportable.
 
 **Start with the business story.** The frozen ten-page executive brief introduces financing for the merchant business—not credit for its shoppers.
 
-[Read the ten-page executive brief](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/From_First_Advance_to_Intelligent_Portfolio.pdf) · [Explore the documentation](docs/README.md) · [What you can use now](docs/guide/CURRENT_USE.md)
+[Read the ten-page executive brief](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/From_First_Advance_to_Intelligent_Portfolio.pdf) · [Explore the documentation](docs/README.md) · [What you can use now](docs/guide/CURRENT_USE.md) · [Explore Tableau](docs/tableau/README.md)
 
 > **Scope:** deterministic synthetic demonstration · non-production · no real funds. Technical acceptance is documented at its recorded scope; [publication and supersession remain separate release actions](docs/release_integration/module_2_g3_v2_1/CURRENT_STATE.md).
 
@@ -65,6 +65,20 @@ This **P01 / Baseline** exhibit shows the synthetic-forward endpoint **22 Novemb
 [Open the original P01 screenshot](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/power_bi_reference/p01_command_center_baseline.png) · [View the accepted PBIX without changing it](docs/guide/CURRENT_USE.md#view-power-bi) · [Read the scenario comparison](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/pages/08_Scenario_Comparison.png)
 
 The **53-page cohort report** traces decisions, segments, lifecycle results and merchant cases. **236 of 750 matched pairs (31.5%)** differ in final decision category between Baseline and Recession Energy—not a software-improvement rate or a count of lost approvals. [Cohort edition and calculation context](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/cohort/MSBF_Merchant_Credit_Intelligence_Initial_750_Cohort_Overview_R3_PATCH1_20260908_REVIEW.pdf).
+
+## Investigate matched scenarios in Tableau
+
+**[Merchant Credit Intelligence · Risk Decision & Scenario Review](docs/tableau/README.md)** adds an interactive Tableau review layer over the existing synthetic decision outputs. Compare **750 matched applications**, inspect the **236 category differences (31.5%)**, and follow a selected pairing into industry/channel concentration and merchant-level evidence.
+
+**[Open the interactive Tableau Public dashboard](https://public.tableau.com/app/profile/andrew.goad/viz/MCI_Risk_Decision_Scenario_Review/RiskDecisionScenarioReview)**
+
+[![Tableau risk decision and scenario review: portfolio indicators, matched decision matrix, segment sensitivity and source-backed narrative interpretation.](docs/tableau/docs/MCI_Risk_Decision_Scenario_Review_Carousel_PNGs/01_portfolio_overview.png)](docs/tableau/README.md)
+
+**Identify → investigate → explain.** Portfolio filters update the indicators and interpretation. Matrix selections identify affected applications and their within-segment incidence. Merchant selections expose Decision, Evidence, Structure and Source rationale without reducing the portfolio indicators to a single application.
+
+[Explore the Tableau companion](docs/tableau/README.md) · [Read the 13-page carousel](docs/tableau/docs/MCI_Risk_Decision_Scenario_Review_Carousel.pdf) · [Workbook and evidence notes](docs/tableau/docs/WORKBOOK_AND_EVIDENCE_NOTES.md)
+
+This companion supplements Power BI rather than replacing it. The scenarios are alternatives, not sequential account outcomes; review is not authorization, and authorization does not establish funding. This is a documentation/portfolio addition, not a new simulator version or release.
 
 ## Choose your next level of detail
 
