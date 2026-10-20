@@ -1,0 +1,1386 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Merchant POS Lending Simulator — part 20 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>Merchant POS Lending Simulator — part 20</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-19.html">Previous part</a><a href="part-21.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-01887322-bfa0-4aa8-9444-f35a8aac89d7" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00271 · 2026-07-26T12:36:17.877646-04:00 · active path</p><div class="bubble"><h1>Diagnosis: program 70 passed; program 71 has a validation-source syntax defect</h1>
+<p>Your M1.10 generation completed successfully and committed:</p>
+<pre><code class="language-text">Run status                 M1_10_GENERATED
+Obligation rows                       906
+Capacity rows                       1,500
+Applications                          750
+Scenarios                                2
+Canonical entities                  2,406
+Row-level mismatches                    0
+Generation status                    PASS
+</code></pre>
+<p>The program 71 error occurs during validation compilation, not during generation. The reported character position maps to the semicolon ending:</p>
+<pre><code class="language-text">M1_10_POS_56_STRESS_NONIMPROVEMENT
+</code></pre>
+<p>The R1 check used this pass expression:</p>
+<pre><code class="language-sql">(SELECT count(*) = 0
+ FROM _m1_10_vcap
+ WHERE scenario_code = &#39;RECESSION_ENERGY&#39;
+   AND capacity_tier &lt; baseline_capacity_tier)
+</code></pre>
+<p>R2 replaces it with a direct <code>NOT EXISTS</code> condition, PostgreSQL’s standard Boolean subquery form for confirming that no matching rows exist. [export reference: cite | turn466811search1]</p>
+<h2>Consolidated downstream audit findings</h2>
+<p>I reviewed programs 71 onward rather than patching only the first visible error. The audit found and corrected three defect classes:</p>
+<ol>
+<li><strong>Program 71, control 56:</strong> replaced the parser-sensitive scalar aggregate comparison with <code>NOT EXISTS</code>.</li>
+<li><strong>Program 71, control 67:</strong> found a second, previously unreached missing closing parenthesis in the no-future-data check. R2 rewrites that control with a fully bounded observed-count expression and two explicit <code>NOT EXISTS</code> tests.</li>
+<li><strong>Programs 73 and 70A:</strong> corrected latent aggregate <code>FILTER</code> syntax where the cast appeared before <code>FILTER</code>:</li>
+</ol>
+<pre><code class="language-sql">-- Invalid
+max(metric_value_numeric)::bigint FILTER (...)
+
+-- Corrected
+(max(metric_value_numeric) FILTER (...))::bigint
+</code></pre>
+<p>No obligation row, capacity row, feature, scenario treatment, tier, formula, business threshold, or generation hash is changed.</p>
+<h1>M1.10 v0.2R2 hotfix</h1>
+<p>Download the complete M1.10 v0.2R2 Validation Syntax Hotfix (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R2_Validation_Syntax_Hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download the ZIP SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R2_Validation_Syntax_Hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+8fc1d74ac4964045819da532d45d5fd17d4983efae552341e2c7e3a2e986b232
+</code></pre>
+<p>Key files:</p>
+<ul>
+<li>68C — recovery and generation-reconciliation check (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R2_Validation_Syntax_Hotfix/tests/68C_msbf_m1_10_failed_validation_syntax_recovery_check_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>71 — corrected positive validation (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R2_Validation_Syntax_Hotfix/sql/71_msbf_m1_10_obligations_liquidity_capacity_validation_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>72 — negative controls (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R2_Validation_Syntax_Hotfix/sql/72_msbf_m1_10_negative_control_tests_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>73 — corrected acceptance finalizer (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R2_Validation_Syntax_Hotfix/sql/73_msbf_m1_10_acceptance_finalize_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>74 — master report (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R2_Validation_Syntax_Hotfix/tests/74_MSBF_M1_10_Obligations_Liquidity_Capacity_Master_Report_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>75 — detailed report (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R2_Validation_Syntax_Hotfix/tests/75_MSBF_M1_10_Obligations_Liquidity_Capacity_Detail_Report_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>Execution guide (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R2_Validation_Syntax_Hotfix/docs/M1_10_v0_2R2_EXECUTION_GUIDE.md</code>; referenced bytes not established here)</li>
+<li>Technical correction notes (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R2_Validation_Syntax_Hotfix/HOTFIX_NOTES_v0_2R2.md</code>; referenced bytes not established here)</li>
+<li>Package-validation report (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R2_Validation_Syntax_Hotfix/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+</ul>
+<p>The package passed:</p>
+<pre><code class="language-text">SQL files checked                         10
+Positive-control inventory                70
+Negative-control inventory                 6
+Detailed-report result sets               18
+Parenthesis-balance issues                 0
+Legacy POS56 expression present            0
+Latent POS67 parenthesis defect present    0
+Invalid cast-before-FILTER patterns        0
+ZIP CRC validation                       PASS
+Complete extraction                      PASS
+Extracted-file hash comparison           PASS
+</code></pre>
+<h1>Exact recovery sequence</h1>
+<h2>1. Stop and roll back program 71</h2>
+<p>In the failed DBeaver window, click <strong>Stop</strong>. Do not select Retry or Skip.</p>
+<p>Then execute:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>The failed validation transaction may have created temporary working tables, but it did not commit positive-validation evidence or change the persisted M1.10 generation.</p>
+<h2>2. Run the R2 recovery check</h2>
+<p>Execute:</p>
+<pre><code class="language-text">68C_msbf_m1_10_failed_validation_syntax_recovery_check_v0_2R2.sql
+</code></pre>
+<p>Required result:</p>
+<pre><code class="language-text">run_status                    M1_10_GENERATED
+obligation_rows                         906
+capacity_rows                         1,500
+applications                            750
+scenarios                                  2
+canonical_entities                    2,406
+stored_mismatches                         0
+generation_evidence_rows                  9
+positive_evidence_rows                    0
+negative_evidence_rows                    0
+gate_rows                                 0
+blocking_errors                           0
+
+stored hashes = recomputed hashes
+
+recovery_state_status                  PASS
+</code></pre>
+<p>Stop if this does not return <code>PASS</code>.</p>
+<h2>3. Run corrected positive validation</h2>
+<p>Execute:</p>
+<pre><code class="language-text">71_msbf_m1_10_obligations_liquidity_capacity_validation_v0_2R2.sql
+</code></pre>
+<p>Required result:</p>
+<pre><code class="language-text">70 checks
+70 PASS
+0 FAIL
+run_status = M1_10_VALIDATED
+</code></pre>
+<p>The validation table uses:</p>
+<pre><code class="language-sql">ON COMMIT PRESERVE ROWS
+</code></pre>
+<p>so the result grid remains sortable and filterable after commit within the same DBeaver session.</p>
+<h2>4. Continue the R2 sequence</h2>
+<pre><code class="language-text">72_msbf_m1_10_negative_control_tests_v0_2R2.sql
+73_msbf_m1_10_acceptance_finalize_v0_2R2.sql
+74_MSBF_M1_10_Obligations_Liquidity_Capacity_Master_Report_v0_2R2.sql
+75_MSBF_M1_10_Obligations_Liquidity_Capacity_Detail_Report_v0_2R2.sql
+</code></pre>
+<p>Required final results:</p>
+<pre><code class="language-text">Positive validations       70 / 70 PASS
+Negative controls            6 / 6 PASS
+Deterministic mismatches             0
+Blocking errors                      0
+Acceptance gate                    PASS
+Run status                M1_10_ACCEPTED
+Master report                       PASS
+</code></pre>
+<p>Program 75 should return 18 result sets. These must contain headers and zero data rows:</p>
+<pre><code class="language-text">17 — Row-Level Deterministic Mismatches
+18 — Blocking Resolution Errors
+</code></pre>
+<h1>Do not rerun</h1>
+<p>Do <strong>not</strong> rerun:</p>
+<pre><code class="language-text">68 — schema and policy extension
+69 — preflight
+70 — generation
+</code></pre>
+<p>Your program-70 output is preserved and authoritative. Program <code>70A</code> is contingency-only and is unnecessary because you retained the generation result.</p>
+</div></article><article id="m-58793b3b-11c4-4502-b046-41c6c764275f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00272 · 2026-07-26T13:00:50.942000-04:00 · active path</p><p class="note">Attachment references: MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Master_Report_v0_2R2_20260726.csv; 73_msbf_m1_10_acceptance_finalize_v0_2R2_results_20260726.csv; 72_msbf_m1_10_negative_control_tests_v0_2R2_results_20260726.csv; 71_msbf_m1_10_obligations_liquidity_capacity_validation_v0_2R2_results_20260726.csv; 68C_msbf_m1_10_failed_validation_syntax_recovery_check_v0_2R2_results_20260726.csv; 70_msbf_m1_10_obligations_liquidity_capacity_generation_v0_2R1_results_20260726(1).csv; 69_msbf_m1_10_preflight_validation_v0_2R1_results_20260726(1).csv; 68B_msbf_m1_10_pre_generation_recovery_check_v0_2R1_results_20260726(1).csv; 69_msbf_m1_10_preflight_validation_v0_2_results_20260726(2).csv; 68_msbf_m1_10_schema_policy_extension_v0_2_results_20260726(2).csv</p><div class="bubble"><p>Here is the batch 1 of 2 for M1.10 execution evidence. Do not do anything but intake at this point until after I issue batch 2 of 2 and further instructions.</p>
+</div></article><article id="m-d50c9c55-3f3d-485e-b9d7-b0014ab38593" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00273 · 2026-07-26T13:01:41.528850-04:00 · active path</p><div class="bubble"><p>Received batch 1 of 2 for the M1.10 execution evidence, including:</p>
+<ul>
+<li>Original schema and policy extension</li>
+<li>Original preflight result</li>
+<li>R1 pre-generation recovery check</li>
+<li>R1 corrected preflight</li>
+<li>R1 generation checkpoint</li>
+<li>R2 failed-validation recovery/reconciliation check</li>
+<li>R2 positive-validation results</li>
+<li>R2 negative-control results</li>
+<li>R2 acceptance-finalizer result</li>
+<li>R2 master report</li>
+</ul>
+<p>I will not analyze the evidence, determine acceptance, or update the repository until you provide batch 2 of 2 and further instructions.</p>
+</div></article><article id="m-64dbdc77-175f-4a17-9a97-abd5d0e2044c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00274 · 2026-07-26T13:03:09.006000-04:00 · active path</p><p class="note">Attachment references: MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Fallback_Reason_And_Review_Diagnostics_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Merchant_Size_And_Relationship_Diagnostics_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Industry_Diagnostics_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Matched_Scenario_Capacity_Migration_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Capacity_Tier_And_Affordability_Summary_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Post_Financing_Liquidity_Diagnostics_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Residual_Cash_Flow_Diagnostics_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Coverage_And_Burden_Rate_Diagnostics_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Requested_Burden_Diagnostics_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Existing_Burden_And_Stacking_Diagnostics_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Obligation_Availability_And_Quality_Diagnostics_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Obligation_Type_And_Payment_Diagnostics_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Entity_And_Stage_Boundary_Row_Counts_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Run_And_Acceptance_State_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Blocking_Resolution_Errors_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Row_Level_Deterministic_Mismatches_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_M1_10_Evidence_20260726.csv; MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_Detail_Report_v0_2R2_Sample_Matched_Application_Profiles_20260726.csv</p><div class="bubble"><p>Remainder of M1.10 evidence. Validate M1.10 is a success. If it is approved, sign off M1.10 and update full project zip.</p>
+</div></article><article id="m-a6d0562d-d9b6-4833-8cda-724986376f65" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00275 · 2026-07-26T13:27:54.137585-04:00 · active path</p><div class="bubble"><h1>M1.10 final determination: <strong>Passed and accepted</strong></h1>
+<p>I reviewed the complete M1.10 evidence set, including:</p>
+<ul>
+<li>schema and governed-policy extension;</li>
+<li>the original preflight finding;</li>
+<li>v0.2R1 recovery and corrected preflight;</li>
+<li>v0.2R1 generation;</li>
+<li>v0.2R2 generation-reconciliation recovery;</li>
+<li>70 positive-validation controls;</li>
+<li>six negative controls;</li>
+<li>acceptance finalizer;</li>
+<li>master report;</li>
+<li>all 18 detailed-report exports;</li>
+<li>the zero-row deterministic-mismatch and blocking-error outputs.</li>
+</ul>
+<p>The evidence supports formal acceptance of:</p>
+<blockquote>
+<p><strong>M1.10 — Obligations, Liquidity &amp; Residual Cash Flow</strong><br><strong>Accepted package revision:</strong> <code>v0.2R2</code><br><strong>Accepted generation revision:</strong> <code>v0.2R1</code><br><strong>Accepted validation/reporting revision:</strong> <code>v0.2R2</code><br><strong>Methodology:</strong> <code>M1_10_METHOD_V1</code></p>
+</blockquote>
+<h2>Acceptance results</h2>
+<table>
+<thead>
+<tr>
+<th>Validation area</th>
+<th align="right">Final result</th>
+<th>Disposition</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Final run status</td>
+<td align="right"><code>M1_10_ACCEPTED</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Acceptance gate</td>
+<td align="right"><code>M1_10_OBLIGATIONS_LIQUIDITY_CAPACITY — PASS</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Applications</td>
+<td align="right">750</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Matched scenarios</td>
+<td align="right">2</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Atomic obligation rows</td>
+<td align="right">906</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Applications with obligations</td>
+<td align="right">595</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Short-term obligation rows</td>
+<td align="right">631</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Scenario-aware capacity rows</td>
+<td align="right">1,500</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Canonical entities</td>
+<td align="right">2,406</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Positive validations</td>
+<td align="right">70 of 70 PASS</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Negative controls</td>
+<td align="right">6 of 6 PASS</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Deterministic mismatches</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Stress-tier improvements</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Failed final evidence records</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Blocking resolution errors</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Downstream analytical rows</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Master-report result</td>
+<td align="right"><code>overall_m1_10_status = PASS</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Detailed-report result sets</td>
+<td align="right">18 complete</td>
+<td>Pass</td>
+</tr>
+</tbody></table>
+<p>The deterministic-mismatch and blocking-resolution-error exports contain their required headers and zero data rows.</p>
+<h2>Deterministic reconciliation</h2>
+<p>The stored and independently reconstructed M1.10 hashes match exactly:</p>
+<pre><code class="language-text">Obligation set
+35e5213accfe23a023c3eb80921843a2
+
+Capacity set
+5d479523a0f74b56a14e18e72e8c2e44
+
+Combined M1.10 set
+a91e82a315305a98953d013043a17d9a
+</code></pre>
+<p>All previously accepted upstream identities remained unchanged through M1.10.</p>
+<h2>Accepted synthetic portfolio evidence</h2>
+<pre><code class="language-text">Total outstanding obligation balance     $15,495,550.47
+Total daily existing payment burden          $191,381.24
+
+Affordable capacity rows                             133
+Marginal capacity rows                               119
+Unaffordable capacity rows                           650
+Insufficient-evidence rows                           598
+
+Average payment coverage                        0.833012
+Average total burden-to-sales rate              0.347881
+Average residual daily cash flow                -$338.77
+Average post-financing liquidity buffer       $52,701.37
+</code></pre>
+<p>The matched adverse scenario produced:</p>
+<pre><code class="language-text">Capacity-tier worsenings     319 applications
+Capacity-tier improvements     0 applications
+</code></pre>
+<p>The governed stress non-improvement floor therefore operated correctly.</p>
+<h3>Manual-review result</h3>
+<p>M1.10 produced manual-review recommendations on 1,483 of 1,500 matched scenario rows. That high incidence is preserved transparently rather than tuned away. It reflects the combined effects of source-quality limitations, verification routing, stacking, insufficient obligation evidence, and capacity results. It is a material downstream calibration consideration, but it is not a structural acceptance defect in this synthetic evidence module.</p>
+<h2>Correction history</h2>
+<p>The accepted repository preserves the complete audit trail:</p>
+<ol>
+<li><strong>Initial v0.2 preflight:</strong> the module incorrectly searched for a nonexistent M1.2 run-evidence code. The accepted population identity is maintained in <code>msbf_m1.population_registry.population_hash</code>.</li>
+<li><strong>DBeaver safety warning:</strong> intended full-row hash calculations on temporary expected tables were bounded with <code>WHERE row_hash IS NULL</code>.</li>
+<li><strong>v0.2R1 generation:</strong> produced all 906 obligation rows and 1,500 capacity rows with zero canonical mismatches.</li>
+<li><strong>v0.2R1 validation compilation:</strong> exposed a parser-sensitive expression and a latent parenthesis defect.</li>
+<li><strong>v0.2R2 validation/reporting:</strong> corrected those expressions and the downstream aggregate <code>FILTER</code> syntax. No generated business row, calculation, or hash changed after the successful v0.2R1 generation.</li>
+</ol>
+<h2>Stage-boundary confirmation</h2>
+<p>M1.10 did not create:</p>
+<ul>
+<li>merchant credit-risk components;</li>
+<li>PD, EAD, or LGD;</li>
+<li>Expected Loss;</li>
+<li>pricing or approved-offer outputs;</li>
+<li>approval, counteroffer, review, or decline decisions;</li>
+<li>Module 1 latest or archive contract rows.</li>
+</ul>
+<blockquote>
+<p><strong>M1.10 is formally passed and accepted. M1.11 — Cash-Flow Archetypes &amp; Operating Resilience is authorized.</strong></p>
+</blockquote>
+<hr>
+<h1>Updated full project repository</h1>
+<h2>Recommended Windows-compatible delivery</h2>
+<p>Download MSBF Project v0.2 — M1.10 Complete FINAL (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_10_COMPLETE_FINAL_Windows.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_10_COMPLETE_FINAL_Windows.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+b1275aa6f539fba397ffe3a35e23d2095ce35e510154eb6871a1f1decf58bd05
+
+Archive size
+7,576,258 bytes
+
+Files
+1,073
+
+Longest internal path
+191 characters
+</code></pre>
+<p>The full repository passed:</p>
+<pre><code class="language-text">CRC validation                       PASS
+Complete extraction                  PASS
+Source / ZIP inventory match         1,073 / 1,073
+Missing or extra files               0
+Extracted-file hash mismatches       0
+Windows/DOS ZIP metadata             PASS
+ZIP64                                Not used
+</code></pre>
+<p>Extract near the drive root, preferably:</p>
+<pre><code class="language-text">C:\MSBF\
+</code></pre>
+<h2>Canonical full-project filename</h2>
+<p>Download the canonical M1.10-complete project ZIP (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_10_COMPLETE_FINAL.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_10_COMPLETE_FINAL.zip.sha256</code>; referenced bytes not established here)</p>
+<p>The canonical and Windows-compatible project ZIPs contain identical bytes and share the same SHA-256 hash.</p>
+<h2>Standalone accepted M1.10 package</h2>
+<p>Download the standalone M1.10 v0.2R2 Complete package (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R2_COMPLETE_FINAL.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R2_COMPLETE_FINAL.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+ad1a1d156e47af63e40b78ea49c8cad45aa25b0bd7737753076edf8ce47e85a3
+
+Files
+155
+</code></pre>
+<hr>
+<h1>Key acceptance records</h1>
+<ul>
+<li>Formal M1.10 evidence review and sign-off (historical reference: <code>sandbox:[session]/M1_10_LIVE_EXECUTION_EVIDENCE_REVIEW_AND_SIGNOFF.md</code>; referenced bytes not established here)</li>
+<li>Completed M1.10 acceptance milestone (historical reference: <code>sandbox:[session]/MSBF_M1_10_Obligations_Liquidity_Capacity_Build_Acceptance_Milestone_v0_2R2.txt</code>; referenced bytes not established here)</li>
+<li>Machine-readable validation summary (historical reference: <code>sandbox:[session]/M1_10_LIVE_EXECUTION_VALIDATION_SUMMARY_v0_2R2.json</code>; referenced bytes not established here)</li>
+<li>M1.10 evidence index (historical reference: <code>sandbox:[session]/M1_10_EVIDENCE_INDEX.md</code>; referenced bytes not established here)</li>
+<li>M1.10 validation and correction history (historical reference: <code>sandbox:[session]/M1_10_VALIDATION_HISTORY.md</code>; referenced bytes not established here)</li>
+<li>Updated project status (historical reference: <code>sandbox:[session]/PROJECT_STATUS_M1_10_COMPLETE.md</code>; referenced bytes not established here)</li>
+<li>M1.11 next-stage handoff (historical reference: <code>sandbox:[session]/CURRENT_NEXT_STEP_M1_11_CASH_FLOW_ARCHETYPES_OPERATING_RESILIENCE.md</code>; referenced bytes not established here)</li>
+<li>Final package build report (historical reference: <code>sandbox:[session]/MSBF_M1_10_COMPLETE_BUILD_REPORT.json</code>; referenced bytes not established here)</li>
+</ul>
+<p>The accepted project progression is now:</p>
+<pre><code class="language-text">G0 Physical Foundation
+PASS
+
+→
+
+G1 Governed Run Control
+PASS
+
+→
+
+M1.2–M1.9
+PASS
+
+→
+
+M1.10 Obligations, Liquidity &amp; Residual Cash Flow
+PASS
+
+→
+
+M1.11 Cash-Flow Archetypes &amp; Operating Resilience
+AUTHORIZED
+</code></pre>
+</div></article><article id="m-88c61a94-976a-48c8-90aa-6562facd27f0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00276 · 2026-07-26T13:30:51.290000-04:00 · active path</p><div class="bubble"><p>Build M1.11 — Cash-Flow Archetypes &amp; Operating Resilience as a complete governed module. Use the accepted M1.10 repository as the baseline. Produce architecture, schema changes, parameter dictionary, preflight, generation, validation, negative controls, acceptance, master report, detail reports, documentation, manifest, SHA-256, and updated full-project ZIP. Apply the error resolution lessons and performance lessons from prior modules proactively: no unnecessary blueprint regeneration, materialize expensive intermediates once, avoid self-joins where window functions suffice, index and ANALYZE before downstream joins, separate persisted generation from read-only validation, and include recovery behavior. Do not stop for interim design approval unless a material ambiguity would change the module’s business purpose.</p>
+</div></article><article id="m-b116847d-c6bd-4e99-b369-aeefa70132b4" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00277 · 2026-07-26T14:24:43.009650-04:00 · active path</p><div class="bubble"><h1>M1.11 — Cash-Flow Archetypes &amp; Operating Resilience</h1>
+<p>The complete <strong>M1.11 v0.2 governed module</strong> is built, statically validated, integrated into the accepted M1.10 repository, and ready for controlled PostgreSQL execution.</p>
+<p>M1.11 is <strong>not yet live-executed or accepted</strong>. Formal acceptance requires successful execution, structured evidence export, and independent evidence review.</p>
+<h2>Primary deliveries</h2>
+<h3>Standalone M1.11 package</h3>
+<p>Download MSBF M1.11 v0.2 (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2.zip</code>; referenced bytes not established here)</p>
+<p>Download the standalone SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+33cd1b4e1a90f02ed7b656c0ebb9013fb4ab6a0ca7407efc5adf416f4d5f4409
+
+Archive size
+100,026 bytes
+
+Files
+43
+</code></pre>
+<p>Canonical long-form copy:</p>
+<p>Download the canonical M1.11 package (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m1_11_cash_flow_archetypes_operating_resilience_v0_2.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m1_11_cash_flow_archetypes_operating_resilience_v0_2.zip.sha256</code>; referenced bytes not established here)</p>
+<h3>Updated full project repository</h3>
+<p>This repository preserves every accepted artifact through M1.10 and adds M1.11 under <code>13_M1_11</code> in <strong>Ready for Live Execution</strong> status.</p>
+<p>Download MSBF Project v0.2 — M1.11 Ready for Execution (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_11_READY_FOR_EXECUTION_Windows.zip</code>; referenced bytes not established here)</p>
+<p>Download the full-project SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_11_READY_FOR_EXECUTION_Windows.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+336b1b4808958905e88b7d4a37d1e083252ff56a4af790bb3a6d035afc15d54f
+
+Archive size
+7,676,524 bytes
+
+Files
+1,119
+
+Longest internal path
+191 characters
+</code></pre>
+<p>Canonical full-project copy:</p>
+<p>Download the canonical M1.11-ready project repository (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_11_READY_FOR_EXECUTION.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_11_READY_FOR_EXECUTION.zip.sha256</code>; referenced bytes not established here)</p>
+<p>The canonical and Windows-compatible project ZIPs contain identical content. Extract close to the drive root, preferably:</p>
+<pre><code class="language-text">C:\MSBF\
+</code></pre>
+<hr>
+<h1>What M1.11 creates</h1>
+<p>M1.11 consumes the accepted M1.9 cash-flow features and M1.10 capacity evidence without rebuilding any upstream business blueprint.</p>
+<pre><code class="language-text">750 applications
+×
+2 matched scenarios
+=
+1,500 operating-resilience snapshots
+</code></pre>
+<p>Each snapshot receives five long-form resilience components:</p>
+<pre><code class="language-text">1,500 snapshots
+×
+5 components
+=
+7,500 component-evidence rows
+</code></pre>
+<p>Combined deterministic reconciliation universe:</p>
+<pre><code class="language-text">1,500 resilience snapshots
++
+7,500 component rows
+=
+9,000 canonical entities
+</code></pre>
+<h2>Physical outputs</h2>
+<h3>Scenario-aware operating-resilience snapshot</h3>
+<pre><code class="language-text">msbf_m1.application_operating_resilience_snapshot
+</code></pre>
+<p>Governed grain:</p>
+<pre><code class="language-text">module1_run_id
++ scenario_id
++ merchant_application_id
+</code></pre>
+<h3>Long-form component evidence</h3>
+<pre><code class="language-text">msbf_m1.operating_resilience_component_value
+</code></pre>
+<p>Governed grain:</p>
+<pre><code class="language-text">module1_run_id
++ scenario_id
++ merchant_application_id
++ component_code
++ component_version
+</code></pre>
+<hr>
+<h1>Five transparent resilience components</h1>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th align="right">Weight</th>
+<th>Primary evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Revenue resilience</td>
+<td align="right">30%</td>
+<td>Growth, volatility, zero-sales frequency, revenue concentration</td>
+</tr>
+<tr>
+<td>Liquidity resilience</td>
+<td align="right">25%</td>
+<td>Post-financing buffer, negative balances, NSF events, cash-flow buffer</td>
+</tr>
+<tr>
+<td>Burden resilience</td>
+<td align="right">25%</td>
+<td>Payment coverage, obligation burden, residual cash flow, stacking</td>
+</tr>
+<tr>
+<td>Processor continuity</td>
+<td align="right">10%</td>
+<td>Outage rate, degradation rate, continuity tier</td>
+</tr>
+<tr>
+<td>Data confidence</td>
+<td align="right">10%</td>
+<td>Source confidence and feature completeness</td>
+</tr>
+</tbody></table>
+<p>The composite score is:</p>
+<pre><code class="language-text">Operating Resilience Score
+=
+30% Revenue
++
+25% Liquidity
++
+25% Burden
++
+10% Processor Continuity
++
+10% Data Confidence
+</code></pre>
+<p>All components and the composite are bounded from zero through 100.</p>
+<p>These are transparent synthetic indicators—not calibrated credit-risk or probability-of-default models.</p>
+<hr>
+<h1>Governed cash-flow archetypes</h1>
+<p>M1.11 assigns one operating archetype using a controlled precedence sequence:</p>
+<ol>
+<li><code>INSUFFICIENT_EVIDENCE</code></li>
+<li><code>THIN_HISTORY</code></li>
+<li><code>DISRUPTED</code></li>
+<li><code>DECLINING</code></li>
+<li><code>VOLATILE</code></li>
+<li><code>SEASONAL</code></li>
+<li><code>GROWING</code></li>
+<li><code>STABLE</code></li>
+</ol>
+<p>The precedence prevents a serious evidence limitation or operating disruption from being overridden by a favorable secondary characteristic.</p>
+<h2>Archetype risk ranks</h2>
+<pre><code class="language-text">Rank 1 — GROWING / STABLE
+Rank 2 — SEASONAL
+Rank 3 — VOLATILE
+Rank 4 — DECLINING / DISRUPTED
+Rank 5 — THIN_HISTORY / INSUFFICIENT_EVIDENCE
+</code></pre>
+<h2>Resilience tiers</h2>
+<pre><code class="language-text">Tier 1 — score ≥ 80
+Tier 2 — score ≥ 65
+Tier 3 — score ≥ 50
+Tier 4 — score ≥ 35
+Tier 5 — score &lt; 35 or insufficient composite evidence
+</code></pre>
+<hr>
+<h1>Matched stress treatment</h1>
+<p>M1.11 preserves the same 750 merchants under:</p>
+<pre><code class="language-text">BASELINE
+RECESSION_ENERGY
+</code></pre>
+<p>The adverse scenario applies two governed interpretation floors:</p>
+<pre><code class="language-text">Final Stress Resilience Tier
+=
+greatest(
+    Baseline Resilience Tier,
+    Independent Stress Resilience Tier
+)
+</code></pre>
+<pre><code class="language-text">Final Stress Archetype Risk Rank
+=
+greatest(
+    Baseline Archetype Risk Rank,
+    Independent Stress Archetype Risk Rank
+)
+</code></pre>
+<p>The underlying observed metrics are not overwritten. The controls prevent an adverse scenario from producing an improved interpreted resilience tier or archetype risk rank.</p>
+<hr>
+<h1>Controlled evidence routing</h1>
+<p>M1.11 preserves explicit distinctions among:</p>
+<pre><code class="language-text">Observed cash-flow behavior
+≠
+Data confidence
+≠
+Verification / fraud evidence
+≠
+Capacity evidence
+≠
+Future calibrated credit risk
+</code></pre>
+<p>Controlled fallback paths include:</p>
+<pre><code class="language-text">NONE
+DATA_REFRESH
+INSUFFICIENT_CASHFLOW_EVIDENCE
+PROCESSOR_CONTINUITY_REVIEW
+CAPACITY_STRUCTURE_REVIEW
+MANUAL_RESILIENCE_REVIEW
+VERIFICATION_REVIEW
+SOURCE_CONFLICT_REVIEW
+</code></pre>
+<p>Blocked evidence remains <code>INSUFFICIENT_EVIDENCE</code>; it is not transformed into weak merchant performance.</p>
+<hr>
+<h1>Physical schema extension</h1>
+<p>M1.11 adds:</p>
+<pre><code class="language-text">2 designed parent tables
+76 designed columns
+1 governed lineage view
+8 active operating-resilience feature definitions
+</code></pre>
+<p>Projected design totals after migration:</p>
+<pre><code class="language-text">76 designed parent/non-child tables
+1,293 designed table columns
+</code></pre>
+<p>The historical G0 milestone remains unchanged:</p>
+<pre><code class="language-text">70 physical parent tables
+1,041 designed columns
+</code></pre>
+<p>M1.11 is a controlled post-G0 extension, not a rewrite of the original physical-foundation acceptance.</p>
+<p>Download script 76 — schema and policy extension (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/sql/76_msbf_m1_11_schema_policy_extension_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Open the schema-extension table catalog (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/catalogs/M1_11_SCHEMA_EXTENSION_TABLES.csv</code>; referenced bytes not established here)</p>
+<p>Open the schema-extension column catalog (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/catalogs/M1_11_SCHEMA_EXTENSION_COLUMNS.csv</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Performance and error-resolution design</h1>
+<p>The prior-module lessons were applied before release.</p>
+<h2>No upstream blueprint regeneration</h2>
+<p>M1.11 does not rebuild:</p>
+<pre><code class="language-text">M1.4 POS histories
+M1.5 liquidity histories
+M1.6 scenario overlays
+M1.7 source-quality logic
+M1.8 verification/fraud logic
+M1.9 feature-engineering logic
+M1.10 obligation/capacity logic
+</code></pre>
+<h2>Bounded processing path</h2>
+<pre><code class="language-text">Accepted M1.9 feature snapshots
++
+Accepted M1.10 capacity snapshots
+        ↓
+Materialize 1,500 matched inputs once
+        ↓
+Calculate five components and archetype
+        ↓
+Apply matched stress interpretation
+        ↓
+Persist 1,500 snapshots and 7,500 components
+        ↓
+Index and ANALYZE
+        ↓
+Reconcile 9,000 canonical entities once
+</code></pre>
+<h2>Runtime controls</h2>
+<p>Generation uses:</p>
+<pre><code class="language-sql">SET LOCAL work_mem = &#39;64MB&#39;;
+SET LOCAL jit = off;
+SET LOCAL lock_timeout = &#39;10s&#39;;
+SET LOCAL statement_timeout = &#39;15min&#39;;
+</code></pre>
+<h2>Canonical-hash safeguards</h2>
+<ul>
+<li>Expected tables use the physical target data types before hashing.</li>
+<li>Expected-row updates are bounded by a pending-hash condition.</li>
+<li>Persistent INSERT and SELECT shapes reconcile exactly.</li>
+<li>Actual hashes are independently reconstructed from persisted physical fields.</li>
+<li>Generation fails before commit unless all 9,000 expected and actual entities reconcile with zero mismatches.</li>
+</ul>
+<h2>Filterable DBeaver output</h2>
+<p>Programs 79 and 80 use session-scoped temporary result tables with:</p>
+<pre><code class="language-sql">ON COMMIT PRESERVE ROWS
+</code></pre>
+<p>Their result grids remain sortable and filterable after commit within the same DBeaver session.</p>
+<p>Validation helper functions are invoked with <code>PERFORM</code>, preventing dozens of one-row null result tabs.</p>
+<hr>
+<h1>Exact execution order</h1>
+<p>Run these scripts in DBeaver against the accepted <code>msbf_strategy</code> database.</p>
+<table>
+<thead>
+<tr>
+<th align="right">Order</th>
+<th>Script</th>
+<th>Required checkpoint</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td>76 — Schema and policy extension (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/sql/76_msbf_m1_11_schema_policy_extension_v0_2.sql</code>; referenced bytes not established here)</td>
+<td><code>schema_policy_extension_status = PASS</code></td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td>77 — Preflight validation (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/tests/77_msbf_m1_11_preflight_validation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td><code>preflight_status = PASS</code></td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td>78 — Archetype and resilience generation (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/sql/78_msbf_m1_11_cashflow_archetype_resilience_generation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>1,500 + 7,500 rows; zero mismatches</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td>79 — Positive validation (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/sql/79_msbf_m1_11_cashflow_archetype_resilience_validation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>72 of 72 <code>PASS</code></td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td>80 — Negative controls (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/sql/80_msbf_m1_11_negative_control_tests_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>6 of 6 <code>PASS</code></td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td>81 — Acceptance finalizer (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/sql/81_msbf_m1_11_acceptance_finalize_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>Gate <code>PASS</code>; run <code>M1_11_ACCEPTED</code></td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td>82 — Master report (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/tests/82_MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Master_Report_v0_2.sql</code>; referenced bytes not established here)</td>
+<td><code>overall_m1_11_status = PASS</code></td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td>83 — Detailed report (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/tests/83_MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>19 result sets; mismatch/error sets empty</td>
+</tr>
+</tbody></table>
+<p>Open the complete execution and validation guide (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/docs/M1_11_EXECUTION_AND_VALIDATION_GUIDE.md</code>; referenced bytes not established here)</p>
+<h2>Required program-78 checkpoint</h2>
+<pre><code class="language-text">run_status               M1_11_GENERATED
+snapshot rows            1,500
+component rows           7,500
+applications               750
+scenarios                    2
+canonical entities        9,000
+row-level mismatches          0
+snapshot set hash         non-null
+component set hash        non-null
+combined set hash         non-null
+generation_status         PASS
+</code></pre>
+<p>After program 78 commits successfully, do not rerun it.</p>
+<hr>
+<h1>Contingency scripts</h1>
+<p>These are not part of the normal execution order.</p>
+<h2>Failed-generation recovery</h2>
+<p>Download program 76A (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/tests/76A_msbf_m1_11_failed_generation_recovery_check_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Use it only after program 78 fails or is cancelled and after executing:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>Required result:</p>
+<pre><code class="language-text">run_status             M1_10_ACCEPTED
+snapshot rows          0
+component rows         0
+M1.11 evidence rows    0
+M1.11 gate rows        0
+blocking errors        0
+recovery_state_status  PASS
+</code></pre>
+<h2>Lost generation-result reconstruction</h2>
+<p>Download program 78A (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/tests/78A_msbf_m1_11_generation_reconciliation_reconstructed_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Use it only if program 78 commits successfully but DBeaver loses or closes the generation result tab.</p>
+<p>Required:</p>
+<pre><code class="language-text">generation_reconciliation_status = PASS
+</code></pre>
+<hr>
+<h1>Validation framework</h1>
+<p>M1.11 contains:</p>
+<pre><code class="language-text">72 positive controls
+6 negative controls
+19 detailed evidence result sets
+</code></pre>
+<p>The positive controls cover:</p>
+<ul>
+<li>all predecessor gates and hashes;</li>
+<li>exact snapshot and component cardinalities;</li>
+<li>unique grains;</li>
+<li>five components per scenario/application snapshot;</li>
+<li>complete matched baseline/stress coverage;</li>
+<li>M1.9/M1.10 row-hash lineage;</li>
+<li>source-field reproduction;</li>
+<li>component bounds and governed weights;</li>
+<li>wide-versus-long component reconciliation;</li>
+<li>weighted composite identity;</li>
+<li>tier and status mapping;</li>
+<li>archetype domain and risk-rank mapping;</li>
+<li>thin-history, disruption, declining, volatile, seasonal, growing, and stable evidence;</li>
+<li>stress-tier and stress-archetype non-improvement;</li>
+<li>fallback and manual-review routing;</li>
+<li>physical row hashes;</li>
+<li>snapshot, component, and combined set hashes;</li>
+<li>generation-evidence completeness;</li>
+<li>strict downstream boundaries;</li>
+<li>zero blocking configuration errors.</li>
+</ul>
+<p>The negative controls prove fail-closed rejection of:</p>
+<pre><code class="language-text">Disabled M1.11 generation
+Invalid component-weight sum
+Invalid tier-threshold ordering
+Unapproved policy profile
+Prerequisite run-status drift
+Attempted post-generation rerun
+</code></pre>
+<p>Open the validation matrix (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/docs/M1_11_VALIDATION_MATRIX.md</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Evidence to retain</h1>
+<p>Structured CSV exports are sufficient. Execution logs are optional unless diagnosing a defect.</p>
+<p>Retain:</p>
+<pre><code class="language-text">76 schema/policy checkpoint
+77 preflight result
+78 generation checkpoint
+79 positive-validation result
+80 negative-control result
+81 acceptance-finalizer result
+82 master report
+83 all nineteen detailed-report result sets
+completed M1.11 acceptance milestone
+</code></pre>
+<p>Detailed result sets:</p>
+<pre><code class="language-text">17 — Row-Level Deterministic Mismatches
+19 — Blocking Resolution Errors
+</code></pre>
+<p>must preserve their headers and contain zero data rows.</p>
+<p>Open the evidence instructions (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/evidence/README.md</code>; referenced bytes not established here)</p>
+<p>Open the acceptance-milestone template (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/evidence/templates/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Build_Acceptance_Milestone_v0_2_template.txt</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Documentation and catalogs</h1>
+<ul>
+<li>Architecture diagram (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/diagrams/M1_11_ARCHITECTURE.png</code>; referenced bytes not established here)</li>
+<li>Architecture specification (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/docs/M1_11_ARCHITECTURE.md</code>; referenced bytes not established here)</li>
+<li>Design and generation specification (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/docs/M1_11_DESIGN_AND_GENERATION_SPECIFICATION.md</code>; referenced bytes not established here)</li>
+<li>Parameter dictionary — Markdown (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/docs/M1_11_PARAMETER_DICTIONARY.md</code>; referenced bytes not established here)</li>
+<li>Parameter dictionary — CSV (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/catalogs/M1_11_PARAMETER_DICTIONARY.csv</code>; referenced bytes not established here)</li>
+<li>Governed parameter values (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/catalogs/M1_11_PARAMETER_VALUES.csv</code>; referenced bytes not established here)</li>
+<li>Archetype matrix (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/catalogs/M1_11_ARCHETYPE_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Component matrix (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/catalogs/M1_11_COMPONENT_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Field dictionary (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/catalogs/M1_11_FIELD_DICTIONARY.csv</code>; referenced bytes not established here)</li>
+<li>Expected results (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/catalogs/M1_11_EXPECTED_RESULTS.json</code>; referenced bytes not established here)</li>
+<li>Execution-order catalog (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/catalogs/M1_11_EXECUTION_ORDER.csv</code>; referenced bytes not established here)</li>
+<li>Release notes (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/RELEASE_NOTES.md</code>; referenced bytes not established here)</li>
+<li>Package-validation report (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Machine-readable static validation (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/catalogs/M1_11_STATIC_VALIDATION.json</code>; referenced bytes not established here)</li>
+<li>Final module build report (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/M1_11_FINAL_BUILD_REPORT.json</code>; referenced bytes not established here)</li>
+<li>Final package build report (historical reference: <code>sandbox:[session]/MSBF_M1_11_PACKAGE_BUILD_REPORT.json</code>; referenced bytes not established here)</li>
+</ul>
+<hr>
+<h1>Static package validation</h1>
+<p>The completed module passed all defined static controls:</p>
+<pre><code class="language-text">Controlled SQL files                       10
+SQL source lines                        1,157
+Positive validation controls               72
+Negative controls                            6
+Detailed-report result sets                 19
+
+Expected resilience snapshots            1,500
+Expected component rows                  7,500
+Expected canonical entities             9,000
+
+Snapshot expected INSERT/SELECT          62 / 62
+Snapshot physical INSERT/SELECT          61 / 61
+Component expected INSERT/SELECT         14 / 14
+Component physical INSERT/SELECT         13 / 13
+
+Session-level random() calls                 0
+Destructive accepted M1 deletes              0
+Standalone validation-helper SELECTs         0
+Upstream blueprint-regeneration paths        0
+Manifest hash mismatches                     0
+Static status                              PASS
+</code></pre>
+<h2>Archive validation</h2>
+<h3>Standalone package</h3>
+<pre><code class="language-text">Files                              43
+CRC validation                     PASS
+Complete extraction                PASS
+Manifest reconciliation            PASS
+ZIP64                              Not used
+Longest internal path              132 characters
+</code></pre>
+<h3>Full project repository</h3>
+<pre><code class="language-text">Files                           1,119
+CRC validation                     PASS
+Complete extraction                PASS
+Manifest reconciliation            PASS
+ZIP64                              Not used
+Longest internal path              191 characters
+</code></pre>
+<p>A live PostgreSQL server was unavailable in the build environment. Static validation cannot establish live runtime, planner behavior, transactional execution, actual archetype distributions, or formal acceptance.</p>
+<hr>
+<h1>Next stage after M1.11 acceptance</h1>
+<p>The planned next module is:</p>
+<blockquote>
+<p><strong>M1.12 — Merchant Risk Components &amp; Integrated Risk Proxy</strong></p>
+</blockquote>
+<p>M1.12 will combine accepted operating resilience, capacity, source confidence, verification/fraud, relationship, and industry evidence into transparent risk components and a synthetic integrated merchant-risk proxy.</p>
+<p>It will remain distinct from a calibrated PD model and will not yet create:</p>
+<ul>
+<li>EAD or LGD;</li>
+<li>Expected Loss;</li>
+<li>pricing;</li>
+<li>an approved offer;</li>
+<li>approval, counteroffer, review, or decline outcomes.</li>
+</ul>
+<p>Open the M1.12 handoff plan (historical reference: <code>sandbox:[session]/MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_v0_2/NEXT_STEP_M1_12_MERCHANT_RISK_COMPONENTS_INTEGRATED_RISK_PROXY.md</code>; referenced bytes not established here)</p>
+<p>The controlled progression is now:</p>
+<pre><code class="language-text">G0 Physical Foundation
+PASS
+
+→
+
+G1 Governed Run Control
+PASS
+
+→
+
+M1.2–M1.10
+PASS
+
+→
+
+M1.11 Cash-Flow Archetypes &amp; Operating Resilience
+READY FOR LIVE EXECUTION
+
+→
+
+M1.12 Merchant Risk Components &amp; Integrated Risk Proxy
+PENDING M1.11 ACCEPTANCE
+</code></pre>
+</div></article><article id="m-f2a8d13b-143d-4347-9c04-ad4db3a66e9b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00278 · 2026-07-26T14:32:50.537000-04:00 · active path</p><p class="note">Attachment references: 79_msbf_m1_11_cashflow_archetype_resilience_validation_v0_2_results_20260726.csv; 78_msbf_m1_11_cashflow_archetype_resilience_generation_v0_2_results_20260726.csv; 77_msbf_m1_11_preflight_validation_v0_2_results_20260726.csv; 76_msbf_m1_11_schema_policy_extension_v0_2_results_20260726.csv</p><div class="bubble"><p>errors exist in 79_msbf_m1_11_cashflow_archetype_resilience_validation_v0_2.sql : M1_11_POS_05_SOURCE_HASH &amp; M1_11_POS_39_COMPOSITE_IDENTITY</p>
+</div></article><article id="m-40c424d0-39f8-4cc6-9eaf-f50a5237ce19" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00279 · 2026-07-26T15:16:21.577871-04:00 · active path</p><div class="bubble"><h1>M1.11 review: two defects confirmed</h1>
+<p>The committed M1.11 generation remains valid:</p>
+<pre><code class="language-text">Resilience snapshots      1,500
+Component rows            7,500
+Applications                750
+Scenarios                     2
+Canonical entities         9,000
+Generation mismatches          0
+Generation status           PASS
+</code></pre>
+<p>Positive validation returned:</p>
+<pre><code class="language-text">70 of 72 PASS
+2 FAIL
+</code></pre>
+<p>M1.11 is therefore <strong>not yet accepted</strong>, but both failures are isolated and can be corrected without regenerating M1.9/M1.10 inputs or the 7,500 component rows.</p>
+<h2>Failure 1 — <code>M1_11_POS_05_SOURCE_HASH</code></h2>
+<p>This is a validation literal typo.</p>
+<pre><code class="language-text">Accepted source hash
+93c3d1368fb2450ab4a08e2b721f92d3
+
+Original validation threshold
+93c3d1368fb2450ab4a08e2b721f92d
+</code></pre>
+<p>The threshold omitted the final <code>3</code>. The accepted source snapshot did not change, and no business data requires remediation.</p>
+<h2>Failure 2 — <code>M1_11_POS_39_COMPOSITE_IDENTITY</code></h2>
+<p>This is a genuine visible-identity defect caused by two different rounding sequences.</p>
+<p>The wide resilience score was generated as:</p>
+<pre><code class="language-text">round(
+    Revenue Score × Weight
+  + Liquidity Score × Weight
+  + Burden Score × Weight
+  + Continuity Score × Weight
+  + Data Confidence Score × Weight,
+  6
+)
+</code></pre>
+<p>The long-form evidence stores each weighted component as:</p>
+<pre><code class="language-text">round(Component Score × Weight, 6)
+</code></pre>
+<p>Validation then sums those five persisted weighted values. Because rounding each component before summing is not always identical to rounding only the final sum, <strong>313 snapshots</strong> did not reconcile exactly.</p>
+<p>The controlled methodology is now:</p>
+<pre><code class="language-text">Operating Resilience Score
+=
+sum of the five persisted six-decimal weighted component values
+</code></pre>
+<p>This is the preferable governed definition because the visible composite now reconciles exactly to the visible component evidence. The validation is not being weakened.</p>
+<hr>
+<h1>M1.11 v0.2R1 consolidated hotfix</h1>
+<p>Download the complete M1.11 v0.2R1 hotfix (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R1_Source_Hash_Composite_Identity_Hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download the ZIP SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R1_Source_Hash_Composite_Identity_Hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+bb3760417c468633aa553a919c2e6b7f0de5f15cfc5f8f2f916bab4605c54b4b
+
+Archive size
+65,980 bytes
+
+Files
+24
+</code></pre>
+<p>Canonical long-form copy:</p>
+<p>Download the canonical M1.11 v0.2R1 hotfix (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m1_11_v0_2R1_source_hash_composite_identity_hotfix.zip</code>; referenced bytes not established here)</p>
+<p>The archive passed:</p>
+<pre><code class="language-text">CRC validation                              PASS
+Complete extraction                         PASS
+Source / ZIP inventory reconciliation       PASS
+Extracted-file SHA-256 reconciliation       PASS
+SQL delimiter and lexical checks            PASS
+Positive-control inventory                  72
+Negative-control inventory                   6
+Detailed-report result sets                 19
+Operational truncated source hashes          0
+Cast-before-FILTER defects                   0
+Stale operational methodology references     0
+</code></pre>
+<hr>
+<h1>What the remediation changes</h1>
+<p>The accepted methodology advances from:</p>
+<pre><code class="language-text">M1_11_METHOD_V1
+</code></pre>
+<p>to:</p>
+<pre><code class="language-text">M1_11_METHOD_V1_1
+</code></pre>
+<p>with the governed policy:</p>
+<pre><code class="language-text">composite_score_basis
+=
+SUM_PERSISTED_WEIGHTED_COMPONENTS
+</code></pre>
+<p>The remediation:</p>
+<ol>
+<li>Confirms that the only failed controls are POS05 and POS39.</li>
+<li>Confirms the original wide score reconciles to the original unrounded-product formula.</li>
+<li>Confirms exactly 313 failures against the persisted weighted-component identity.</li>
+<li>Preserves the original findings as governed audit evidence.</li>
+<li>Corrects the source-hash validation threshold.</li>
+<li>Recalculates the 313 affected wide composite scores.</li>
+<li>Recalculates any dependent baseline/stress tiers, statuses, review flags, reason codes, and stress-worsening flags if a rounded score crosses a governed threshold.</li>
+<li>Recomputes affected wide snapshot row hashes.</li>
+<li>Rebuilds the snapshot and combined set hashes.</li>
+<li>Confirms that the 7,500 component rows and component-set hash remain unchanged.</li>
+<li>Removes the stale positive-validation records.</li>
+<li>Returns the run to <code>M1_11_GENERATED</code> for a clean validation rerun.</li>
+</ol>
+<p>The total number of updated snapshot rows may be slightly greater than 313 if a corrected baseline tier also affects its matched stress interpretation. The number of directly corrected composite scores must equal exactly 313.</p>
+<hr>
+<h1>Exact recovery sequence</h1>
+<p>Do <strong>not</strong> rerun:</p>
+<pre><code class="language-text">76 — schema and policy extension
+77 — preflight
+78 — original generation
+</code></pre>
+<p>The original generation population is committed and should be preserved.</p>
+<h2>1. Run the fail-closed recovery diagnosis</h2>
+<p>Download program 76B (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R1_Source_Hash_Composite_Identity_Hotfix/tests/76B_msbf_m1_11_failed_source_hash_composite_identity_recovery_check_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>Required final field:</p>
+<pre><code class="language-text">recovery_state_status = PASS
+</code></pre>
+<p>It should confirm:</p>
+<pre><code class="language-text">run_status                              M1_11_FAILED
+positive checks                         72
+positive passes                         70
+positive failures                        2
+
+failed codes
+M1_11_POS_05_SOURCE_HASH
+M1_11_POS_39_COMPOSITE_IDENTITY
+
+accepted source hash
+93c3d1368fb2450ab4a08e2b721f92d3
+
+reported composite violations          313
+original-formula violations              0
+persisted-component identity violations 313
+
+snapshot rows                         1,500
+component rows                        7,500
+canonical entities                    9,000
+stored generation mismatches              0
+
+stored hashes = independently recomputed hashes
+negative evidence rows                    0
+acceptance gate rows                      0
+downstream rows                           0
+blocking errors                           0
+</code></pre>
+<p>Stop if this does not return <code>PASS</code>.</p>
+<h2>2. Apply the controlled remediation</h2>
+<p>Download program 78B (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R1_Source_Hash_Composite_Identity_Hotfix/sql/78B_msbf_m1_11_source_hash_composite_identity_remediation_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>Required result:</p>
+<pre><code class="language-text">run_status                         M1_11_GENERATED
+original identity violations      313
+score_changed_rows                313
+changed_snapshot_rows             at least 313
+remaining_identity_violations       0
+methodology_version               M1_11_METHOD_V1_1
+composite_score_basis             SUM_PERSISTED_WEIGHTED_COMPONENTS
+snapshot_hash                     non-null
+component_hash                    unchanged
+combined_hash                     non-null
+remediation_status                PASS
+</code></pre>
+<p>The remediation result source uses a session-scoped temporary table that survives commit, so the DBeaver result remains sortable and filterable within the same database session.</p>
+<p>After 78B commits successfully, do not rerun it.</p>
+<h2>3. Run revised positive validation</h2>
+<p>Download revised program 79 (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R1_Source_Hash_Composite_Identity_Hotfix/sql/79_msbf_m1_11_cashflow_archetype_resilience_validation_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>Required:</p>
+<pre><code class="language-text">72 checks
+72 PASS
+0 FAIL
+run_status = M1_11_VALIDATED
+</code></pre>
+<p>The revised checks require:</p>
+<pre><code class="language-text">POS05 source hash
+93c3d1368fb2450ab4a08e2b721f92d3
+
+POS39 composite identity violations
+0
+
+Methodology
+M1_11_METHOD_V1_1
+
+Composite basis
+SUM_PERSISTED_WEIGHTED_COMPONENTS
+</code></pre>
+<p>Program 79 continues to use <code>ON COMMIT PRESERVE ROWS</code>, so its result grid remains filterable after commit within the same DBeaver session.</p>
+<h2>4. Run revised negative controls</h2>
+<p>Download revised program 80 (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R1_Source_Hash_Composite_Identity_Hotfix/sql/80_msbf_m1_11_negative_control_tests_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>Required:</p>
+<pre><code class="language-text">6 / 6 PASS
+run_status = M1_11_VALIDATED
+</code></pre>
+<h2>5. Finalize acceptance</h2>
+<p>Download revised program 81 (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R1_Source_Hash_Composite_Identity_Hotfix/sql/81_msbf_m1_11_acceptance_finalize_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>Acceptance requires:</p>
+<pre><code class="language-text">72 / 72 positive checks PASS
+6 / 6 negative controls PASS
+1,500 snapshots
+7,500 components
+9,000 canonical entities
+0 row-hash mismatches
+0 composite-identity violations
+0 stress-tier improvements
+0 stress-archetype improvements
+component hash preserved
+snapshot and combined hashes reconciled
+0 downstream rows
+0 blocking errors
+</code></pre>
+<p>Required final state:</p>
+<pre><code class="language-text">gate_id        M1_11_CASHFLOW_ARCHETYPE_RESILIENCE
+result_status  PASS
+run_status     M1_11_ACCEPTED
+</code></pre>
+<h2>6. Run the master report</h2>
+<p>Download revised program 82 (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R1_Source_Hash_Composite_Identity_Hotfix/tests/82_MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Master_Report_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>Required:</p>
+<pre><code class="language-text">overall_m1_11_status = PASS
+</code></pre>
+<p>The revised master explicitly checks both:</p>
+<pre><code class="language-text">stress tier improvements      0
+stress archetype improvements 0
+</code></pre>
+<h2>7. Run the detailed report</h2>
+<p>Download revised program 83 (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R1_Source_Hash_Composite_Identity_Hotfix/tests/83_MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>It produces 19 result sets.</p>
+<p>These must contain headers and zero data rows:</p>
+<pre><code class="language-text">17 — Row-Level Deterministic Mismatches
+19 — Blocking Resolution Errors
+</code></pre>
+<p>Result set 2 now also displays:</p>
+<pre><code class="language-text">composite_identity_violations = 0
+</code></pre>
+<hr>
+<h1>Contingency only</h1>
+<p>Download program 78C (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R1_Source_Hash_Composite_Identity_Hotfix/tests/78C_msbf_m1_11_composite_identity_remediation_reconstructed_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>Do not run 78C during the normal sequence.</p>
+<p>Use it only if 78B commits successfully but its DBeaver result tab is lost or closed. It reconstructs:</p>
+<ul>
+<li>original and corrected identity counts;</li>
+<li>final policy version and basis;</li>
+<li>snapshot, component, and combined hashes;</li>
+<li>canonical entity count;</li>
+<li>remaining identity violations.</li>
+</ul>
+<p>Required:</p>
+<pre><code class="language-text">remediation_reconciliation_status = PASS
+</code></pre>
+<hr>
+<h1>Clean-build prevention</h1>
+<p>The hotfix also contains corrected future clean-build replacements for programs 76–83. These are repository source replacements and should <strong>not</strong> be run during the current recovery sequence.</p>
+<p>They ensure future clean execution:</p>
+<ul>
+<li>creates the V1.1 policy and composite basis directly;</li>
+<li>calculates the wide composite as the sum of individually rounded weighted components;</li>
+<li>uses the full accepted source hash;</li>
+<li>validates the visible wide/long identity;</li>
+<li>requires the corrected methodology through acceptance and reporting.</li>
+</ul>
+<p>Open the hotfix notes (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R1_Source_Hash_Composite_Identity_Hotfix/HOTFIX_NOTES_v0_2R1.md</code>; referenced bytes not established here)</p>
+<p>Open the execution guide (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R1_Source_Hash_Composite_Identity_Hotfix/docs/M1_11_v0_2R1_EXECUTION_GUIDE.md</code>; referenced bytes not established here)</p>
+<p>Open the package-validation report (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R1_Source_Hash_Composite_Identity_Hotfix/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<p>Retain the original 70-of-72 validation export alongside the R1 recovery, remediation, final validation, negative-control, acceptance, master, and detailed-report evidence. This preserves the full defect-detection and controlled-remediation history.</p>
+</div></article><article id="m-918fb7a7-d091-483b-abb9-8641dbdf98ad" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00280 · 2026-07-26T15:21:08.961000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(159).png; 76B_msbf_m1_11_failed_source_hash_composite_identity_recovery_check_v0_2R1_results_20260726.csv</p><div class="bubble"><p>error running 78B_msbf_m1_11_source_hash_composite_identity_remediation_v0_2R1.sql:</p>
+</div></article><article id="m-76b0040d-bfe1-40c7-8784-4378fa06ee95" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00281 · 2026-07-26T15:40:17.878340-04:00 · active path</p><div class="bubble"><h2>Diagnosis</h2>
+<p>The error is in the <strong>v0.2R1 hotfix precondition</strong>, not in your committed M1.11 data.</p>
+<p>I incorrectly treated all <strong>313</strong> original <code>M1_11_POS_39_COMPOSITE_IDENTITY</code> findings as rounding-identity differences. Your recovery evidence proves the actual structure is:</p>
+<pre><code class="language-text">Original POS39 findings                         313
+Evidence-gated original-formula violations        0
+Non-BLOCKED persisted-component differences     237
+Maximum difference                          0.000001
+</code></pre>
+<p>The remaining expected <strong>76 rows</strong> are governed <code>BLOCKED</code> snapshots:</p>
+<pre><code class="language-text">313 total findings
+− 237 non-BLOCKED rounding differences
+=
+76 BLOCKED rows
+</code></pre>
+<p>Those rows can retain transparent component evidence while intentionally suppressing the wide composite score. The original validation counted them because it did not honor the <code>BLOCKED</code> evidence gate.</p>
+<p>The failed R1 guard raised before its first write. Therefore, it did <strong>not</strong> change:</p>
+<ul>
+<li>any of the 1,500 resilience snapshots;</li>
+<li>any of the 7,500 component rows;</li>
+<li>the policy profile;</li>
+<li>any row or set hash;</li>
+<li>run status;</li>
+<li>validation evidence.</li>
+</ul>
+<h2>Immediate recovery</h2>
+<p>In the failed DBeaver session, click <strong>Stop</strong>, then execute:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>Do not use Retry, Skip, or Skip All.</p>
+<p>Do not rerun the previous R1 remediation.</p>
+<h1>M1.11 v0.2R2 consolidated hotfix</h1>
+<p>Download the complete M1.11 v0.2R2 hotfix (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R2_Blocked_Gate_Composite_Identity_Hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download the ZIP SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R2_Blocked_Gate_Composite_Identity_Hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+e7a9f21ca33c94949a88a87e51a439674833e0aae47a0f189d88dc8012feb6bd
+</code></pre>
+<p>Canonical long-form copy:</p>
+<p>Download the canonical R2 hotfix (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m1_11_v0_2R2_blocked_gate_composite_identity_hotfix.zip</code>; referenced bytes not established here)</p>
+<h2>What R2 corrects</h2>
+<p>R2 separates the two issues correctly:</p>
+<ol>
+<li><strong>Validation-specification correction:</strong> exclude the 76 <code>BLOCKED</code> snapshots from composite-identity failures.</li>
+<li><strong>Visible wide/long identity correction:</strong> align only the 237 non-BLOCKED wide composite scores with the sum of the five persisted six-decimal weighted components.</li>
+<li><strong>Source-hash correction:</strong> replace the truncated validation threshold with the unchanged accepted hash:</li>
+</ol>
+<pre><code class="language-text">93c3d1368fb2450ab4a08e2b721f92d3
+</code></pre>
+<p>The 7,500 component records and their component-set hash remain unchanged.</p>
+<h1>Exact execution sequence</h1>
+<h2>1. Run the R2 recovery diagnosis</h2>
+<p>Download program 76C (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R2_Blocked_Gate_Composite_Identity_Hotfix/tests/76C_msbf_m1_11_failed_r1_precondition_recovery_check_v0_2R2.sql</code>; referenced bytes not established here)</p>
+<p>Required final field:</p>
+<pre><code class="language-text">recovery_state_status = PASS
+</code></pre>
+<p>Expected decomposition:</p>
+<pre><code class="language-text">reported_composite_violations                  313
+legacy_ungated_violations                      313
+evidence_gated_original_formula_violations       0
+evidence_gated_persisted_identity_violations   237
+nonblocked_rounding_identity_violations        237
+blocked_complete_component_rows                 76
+blocked_nonnull_composites                       0
+maximum_absolute_difference               0.000001
+
+snapshot_rows                                1,500
+component_rows                               7,500
+canonical_entities                           9,000
+stored_mismatches                                0
+</code></pre>
+<p>This program is fail-closed. It will not permit remediation unless the live database confirms the exact <strong>237 + 76 = 313</strong> decomposition.</p>
+<h2>2. Apply the corrected remediation</h2>
+<p>Download program 78D (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R2_Blocked_Gate_Composite_Identity_Hotfix/sql/78D_msbf_m1_11_blocked_gate_composite_identity_remediation_v0_2R2.sql</code>; referenced bytes not established here)</p>
+<p>It will:</p>
+<ul>
+<li>preserve all 7,500 component rows;</li>
+<li>preserve the 76 <code>BLOCKED</code> wide composite values as <code>NULL</code>;</li>
+<li>correct the 237 non-BLOCKED composites;</li>
+<li>recalculate any dependent baseline/stress tiers and routing fields;</li>
+<li>recompute affected snapshot row hashes;</li>
+<li>rebuild the snapshot and combined hashes;</li>
+<li>preserve the component-set hash;</li>
+<li>advance the methodology to:</li>
+</ul>
+<pre><code class="language-text">M1_11_METHOD_V1_1
+
+composite_score_basis
+SUM_PERSISTED_WEIGHTED_COMPONENTS
+</code></pre>
+<p>Required output:</p>
+<pre><code class="language-text">run_status                                 M1_11_GENERATED
+original_reported_composite_findings       313
+blocked_gate_rows                           76
+nonblocked_rounding_identity_corrections   237
+score_changed_rows                         237
+remaining_identity_violations                0
+remaining_legacy_ungated_findings           76
+blocked_nonnull_composites                   0
+remediation_status                         PASS
+</code></pre>
+<p>The <code>76</code> remaining <strong>legacy ungated</strong> findings are expected: they are the governed blocked rows. The corrected evidence-gated identity must be zero.</p>
+<p>After 78D commits successfully, do not rerun it.</p>
+<h2>3. Run revised positive validation</h2>
+<p>Download program 79 (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R2_Blocked_Gate_Composite_Identity_Hotfix/sql/79_msbf_m1_11_cashflow_archetype_resilience_validation_v0_2R2.sql</code>; referenced bytes not established here)</p>
+<p>Required:</p>
+<pre><code class="language-text">72 checks
+72 PASS
+0 FAIL
+run_status = M1_11_VALIDATED
+</code></pre>
+<p>The result source uses <code>ON COMMIT PRESERVE ROWS</code>, so it remains sortable and filterable in the same DBeaver session after commit.</p>
+<h2>4. Complete the R2 sequence</h2>
+<p>Run:</p>
+<pre><code class="language-text">80_msbf_m1_11_negative_control_tests_v0_2R2.sql
+
+81_msbf_m1_11_acceptance_finalize_v0_2R2.sql
+
+82_MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Master_Report_v0_2R2.sql
+
+83_MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2.sql
+</code></pre>
+<p>Direct links:</p>
+<ul>
+<li>Program 80 — negative controls (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R2_Blocked_Gate_Composite_Identity_Hotfix/sql/80_msbf_m1_11_negative_control_tests_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>Program 81 — acceptance finalizer (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R2_Blocked_Gate_Composite_Identity_Hotfix/sql/81_msbf_m1_11_acceptance_finalize_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>Program 82 — master report (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R2_Blocked_Gate_Composite_Identity_Hotfix/tests/82_MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Master_Report_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>Program 83 — detailed report (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R2_Blocked_Gate_Composite_Identity_Hotfix/tests/83_MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2.sql</code>; referenced bytes not established here)</li>
+</ul>
+<p>Required final results:</p>
+<pre><code class="language-text">Positive controls       72 / 72 PASS
+Negative controls         6 / 6 PASS
+Composite violations            0
+Stress-tier improvements         0
+Stress-archetype improvements    0
+Deterministic mismatches         0
+Blocking errors                  0
+Acceptance gate               PASS
+Run status            M1_11_ACCEPTED
+Master report                  PASS
+</code></pre>
+<p>Program 83 returns 19 result sets. These two must contain headers and zero data rows:</p>
+<pre><code class="language-text">17 — Row-Level Deterministic Mismatches
+19 — Blocking Resolution Errors
+</code></pre>
+<h2>Contingency only</h2>
+<p>Download program 78E (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R2_Blocked_Gate_Composite_Identity_Hotfix/tests/78E_msbf_m1_11_composite_identity_remediation_reconstructed_v0_2R2.sql</code>; referenced bytes not established here)</p>
+<p>Do not run it in the normal sequence. Use it only if 78D commits successfully but DBeaver loses its result tab.</p>
+<h2>Supporting documentation</h2>
+<ul>
+<li>R2 execution guide (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R2_Blocked_Gate_Composite_Identity_Hotfix/docs/M1_11_v0_2R2_EXECUTION_GUIDE.md</code>; referenced bytes not established here)</li>
+<li>R2 technical hotfix notes (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R2_Blocked_Gate_Composite_Identity_Hotfix/HOTFIX_NOTES_v0_2R2.md</code>; referenced bytes not established here)</li>
+<li>Package-validation report (historical reference: <code>sandbox:[session]/MSBF_M1_11_v0_2R2_Blocked_Gate_Composite_Identity_Hotfix/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+</ul>
+<p>The package also contains corrected clean-build replacements for programs 76–83 so this defect does not recur in the final repository.</p>
+<h2>Static package QA</h2>
+<pre><code class="language-text">SQL files checked                         16
+SQL source lines                       2,482
+Positive controls                         72
+Negative controls                           6
+Detailed-report result sets                19
+Session random() calls                       0
+Standalone helper SELECT result sets         0
+Parenthesis and lexical findings             0
+ZIP CRC validation                         PASS
+Complete extraction                        PASS
+Extracted-file hash reconciliation         PASS
+</code></pre>
+<p>Retain the original 70-of-72 validation export, the unsuccessful 76B output, and the 78B error screenshot. They document that the first remediation assumption was rejected before any data change and that R2 correctly separated the validation-gate issue from the 237 true visible-identity differences.</p>
+</div></article><article id="m-a048ec7b-1254-469b-a4b7-f01553a77bc5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00282 · 2026-07-26T16:10:31.349000-04:00 · active path</p><p class="note">Attachment references: 81_msbf_m1_11_acceptance_finalize_v0_2R2_results_20260726.csv; 80_msbf_m1_11_negative_control_tests_v0_2R2_results_20260726.csv; 79_msbf_m1_11_cashflow_archetype_resilience_validation_v0_2R2_results_20260726.csv; 78D_msbf_m1_11_blocked_gate_composite_identity_remediation_v0_2R2_results_20260726.csv; 76C_msbf_m1_11_failed_r1_precondition_recovery_check_v0_2R2_results_20260726.csv; 76B_msbf_m1_11_failed_source_hash_composite_identity_recovery_check_v0_2R1_results_20260726(1).csv; 79_msbf_m1_11_cashflow_archetype_resilience_validation_v0_2_results_20260726(1).csv; 78_msbf_m1_11_cashflow_archetype_resilience_generation_v0_2_results_20260726(1).csv; 77_msbf_m1_11_preflight_validation_v0_2_results_20260726(1).csv; 76_msbf_m1_11_schema_policy_extension_v0_2_results_20260726(1).csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Master_Report_v0_2R2_20260726.csv</p><div class="bubble"><p>Here is the batch 1 of 2 for M1.11 execution evidence. Do not do anything but intake at this point until after I issue batch 2 of 2 and further instructions. </p>
+</div></article><article id="m-c4835f6d-1ab5-4cbf-9440-59b910d43a9a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00283 · 2026-07-26T16:11:25.963117-04:00 · active path</p><div class="bubble"><p>Received batch 1 of 2 for the M1.11 execution evidence:</p>
+<ul>
+<li>Original schema and policy extension</li>
+<li>Original preflight validation</li>
+<li>Original generation checkpoint</li>
+<li>Original 70-of-72 positive-validation result</li>
+<li>v0.2R1 recovery-diagnosis evidence</li>
+<li>v0.2R2 corrected recovery diagnosis</li>
+<li>v0.2R2 controlled composite-identity remediation</li>
+<li>v0.2R2 final positive validation</li>
+<li>v0.2R2 negative controls</li>
+<li>v0.2R2 acceptance finalizer</li>
+<li>v0.2R2 master report</li>
+</ul>
+<p>I will not analyze the evidence, determine M1.11 acceptance, or update the repository until you provide batch 2 of 2 and further instructions.</p>
+</div></article><article id="m-d19e1519-125a-419e-b104-abb0d3a365ce" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00284 · 2026-07-26T16:14:44.040000-04:00 · active path</p><p class="note">Attachment references: MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Industry_Diagnostics_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Data_Confidence_Diagnostics_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Processor_Continuity_Diagnostics_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Burden_Diagnostics_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Liquidity_Diagnostics_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Revenue_Diagnostics_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Component_Score_Summary_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Resilience_Tier_And_Status_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Matched_Archetype_Migration_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Archetype_Distribution_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Entity_And_Stage_Boundary_Row_Counts_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Run_And_Acceptance_State_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Blocking_Resolution_Errors_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_M1_11_Evidence_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Row_Level_Deterministic_Mismatches_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Sample_Matched_Application_Profiles_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Fallback_And_Reason_Diagnostics_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Relationship_Stage_Diagnostics_20260726.csv; MSBF_M1_11_Cash_Flow_Archetypes_Operating_Resilience_Detail_Report_v0_2R2_Merchant_Size_Diagnostics_20260726.csv</p><div class="bubble"><p>Remainder of M1.11 evidence. Validate M1.11 is a success. If it is approved, sign off M1.11 and update full project zip. Please note, I found a noticeable decline in headers and comments in M1_11 (at least the final hot fix version). The Master Report code in particular was one big jumble. It runs, but it&#39;s not very pretty. If you could find a way to clean that up and make it more professional prior to putting together the final updated zip, I&#39;d appreciate it. Do not change logic (if approved), just beef up the comments/headers/format/professionalism. No need to have me approve anything - use your best judgement and MOST IMPORTANT OF ALL - do not change any logic when adding this commentary. I am not going to re-test this, so we need to make sure you do not introduce errors. run a comparison to make sure you haven&#39;t changed logic.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

@@ -1,0 +1,1671 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WP3 Build Protocol — part 09 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>WP3 Build Protocol — part 09</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-08.html">Previous part</a><a href="part-10.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-fe0bab97-9f95-4e97-b582-c6f46c019888" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00151 · 2026-08-12T07:40:43.953202-04:00 · active path</p><div class="bubble"><h1>M2.12 Program 227 HF26 — Hotfix Complete</h1>
+<p>The attached pre-execution evidence confirms that the accepted M2.12 state was exact before the HF25 failure:</p>
+<ul>
+<li><code>M2_12_ACCEPTED / ACCEPTED</code>, exact G3 gate and hashes, 19/19 source edges, 12/12 stage boundaries, 70/70 physical controls, 9 canonical families, 134 canonical entities, and zero deterministic or boundary findings. [export reference: filecite | turn32file0 | L9-L11]</li>
+<li>Positive, negative, generation, and acceptance evidence all reconciled, with zero non-PASS M2.12 evidence. [export reference: filecite | turn32file1 | L21-L23]</li>
+<li>All 12 governed hash reconstructions matched their stored values. [export reference: filecite | turn32file2 | L33-L46]</li>
+<li>Every stage-boundary and source-graph row was <code>PASS</code>. [export reference: filecite | turn32file3 | L56-L69] [export reference: filecite | turn32file4 | L79-L99]</li>
+</ul>
+<p>The failure was therefore confined to HF25’s Result Set 10 content gate. <strong>No recovery source is indicated. Do not rerun HF25.</strong></p>
+<h2>Downloads</h2>
+<h3>Controlled continuation package</h3>
+<ul>
+<li>Download M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_226_HF26.zip (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_226_HF26.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching ZIP SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_226_HF26.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Program 227 HF26</h3>
+<ul>
+<li>Download Program 227 HF26 SQL (historical reference: <code>sandbox:[session]/227_msbf_m2_12_detailed_report_24_result_sets_v1_HF26.sql</code>; referenced bytes not established here)</li>
+<li>Download the Program 227 HF26 SQL sidecar (historical reference: <code>sandbox:[session]/227_msbf_m2_12_detailed_report_24_result_sets_v1_HF26.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Mandatory narrow diagnostic</h3>
+<ul>
+<li>Download the HF26 application-summary diagnostic (historical reference: <code>sandbox:[session]/227_HF26_pre_execution_application_summary_diagnostic.sql</code>; referenced bytes not established here)</li>
+<li>Download the diagnostic sidecar (historical reference: <code>sandbox:[session]/227_HF26_pre_execution_application_summary_diagnostic.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Full accepted-checkpoint verifier</h3>
+<ul>
+<li>Download the HF26 accepted-checkpoint verifier (historical reference: <code>sandbox:[session]/227_HF26_pre_execution_accepted_checkpoint_verification.sql</code>; referenced bytes not established here)</li>
+<li>Download the verifier sidecar (historical reference: <code>sandbox:[session]/227_HF26_pre_execution_accepted_checkpoint_verification.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Review and operating records</h3>
+<ul>
+<li>Root-cause and correction record (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF26_ROOT_CAUSE_AND_CORRECTION.md</code>; referenced bytes not established here)</li>
+<li>Operator protocol (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF26_OPERATOR_PROTOCOL.md</code>; referenced bytes not established here)</li>
+<li>Source authority (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF26_SOURCE_AUTHORITY.md</code>; referenced bytes not established here)</li>
+<li>Validation report (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF26_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Final physical release validation (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF26_FINAL_INDEPENDENT_RELEASE_VALIDATION.md</code>; referenced bytes not established here)</li>
+<li>Result-content review for all 24 result sets (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF26_RESULT_CONTENT_REVIEW.csv</code>; referenced bytes not established here)</li>
+<li>Application evidence-status domain (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF26_APPLICATION_EVIDENCE_STATUS_DOMAIN.csv</code>; referenced bytes not established here)</li>
+<li>Exact evidence-capture filenames (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF26_EVIDENCE_CAPTURE_CATALOG.csv</code>; referenced bytes not established here)</li>
+<li>HF25-to-HF26 source patch (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF25_TO_HF26.patch</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Root cause</h1>
+<p>HF25 calculated Result Set 10’s <code>blocked_evidence_count</code> using:</p>
+<pre><code class="language-sql">v.evidence_status &lt;&gt; &#39;PASS&#39;
+</code></pre>
+<p>But the installed application-consumption view does not use <code>PASS</code> as its evidence-status domain. It produces:</p>
+<pre><code class="language-text">COMPLETE
+PARTIAL
+BLOCKED
+</code></pre>
+<p>Consequently, HF25 classified <strong>every application row</strong> as blocked because every valid value is different from <code>PASS</code>. It then treated any nonzero <code>blocked_evidence_count</code> as a content failure.</p>
+<p>That combination caused all three scope rows to fail:</p>
+<pre><code class="language-text">BASELINE
+RECESSION_ENERGY
+ALL
+</code></pre>
+<p>and produced:</p>
+<pre><code class="language-text">rs10_fail=3
+</code></pre>
+<p>A nonzero <code>blocked_evidence_count</code> is not inherently erroneous. It is a governed Result Set 10 reporting field and must remain visible as part of the accepted evidence posture.</p>
+<h1>HF26 correction</h1>
+<p>HF26 now calculates the application evidence-status distribution explicitly:</p>
+<pre><code class="language-sql">evidence_status = &#39;COMPLETE&#39;
+evidence_status = &#39;PARTIAL&#39;
+evidence_status = &#39;BLOCKED&#39;
+</code></pre>
+<p>The frozen Result Set 10 projection remains unchanged:</p>
+<pre><code class="language-text">reporting_scope_code
+row_count
+distinct_application_count
+orphan_count
+multiplicity_error_count
+source_contract_count
+blocked_evidence_count
+</code></pre>
+<p>Its three-row cardinality and ordering also remain unchanged.</p>
+<p>The corrected content gate now requires:</p>
+<pre><code class="language-text">BASELINE rows/applications            750 / 750
+RECESSION_ENERGY rows/applications    750 / 750
+ALL rows/applications                1500 / 750
+
+Orphan rows                                  0
+Business-grain multiplication errors         0
+Invalid evidence-status rows                 0
+Missing lineage rows                         0
+</code></pre>
+<p>For each scope:</p>
+<pre><code class="language-text">COMPLETE + PARTIAL + BLOCKED = row_count
+</code></pre>
+<p>Legitimate <code>BLOCKED</code> rows are <strong>reported but not rejected</strong>.</p>
+<p>HF26 also adds a proactive Result Set 17 gate requiring all six actual improvement or burden <strong>violation counters</strong> to remain zero. Reportable restriction and workload metrics are not incorrectly treated as violations.</p>
+<h2>Change scope</h2>
+<table>
+<thead>
+<tr>
+<th>Change class</th>
+<th align="right">Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Frozen result sets retained</td>
+<td align="right"><strong>24</strong></td>
+</tr>
+<tr>
+<td>Result Set 10 projection changed</td>
+<td align="right"><strong>No</strong></td>
+</tr>
+<tr>
+<td>Result Set 10 cardinality changed</td>
+<td align="right"><strong>No</strong></td>
+</tr>
+<tr>
+<td>Result Set 10 ordering changed</td>
+<td align="right"><strong>No</strong></td>
+</tr>
+<tr>
+<td>Semantic RS10 corrections</td>
+<td align="right"><strong>2</strong></td>
+</tr>
+<tr>
+<td>Proactive RS17 hardening</td>
+<td align="right"><strong>1</strong></td>
+</tr>
+<tr>
+<td>Persistent mutations added</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Program 228+ source added</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Recovery SQL added</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<h1>Physical delivery ledger</h1>
+<h2>Continuation ZIP</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filename</td>
+<td align="right"><code>M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_226_HF26.zip</code></td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td align="right"><strong>111,750</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>82223990ceecffeb9d377d946cd3976461677a5df9c964ad4977b40da58649b7</code></td>
+</tr>
+<tr>
+<td>ZIP entries</td>
+<td align="right"><strong>40</strong></td>
+</tr>
+<tr>
+<td>Total uncompressed bytes</td>
+<td align="right"><strong>621,341</strong></td>
+</tr>
+<tr>
+<td>ZIP CRC</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Complete separate extraction</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Case-insensitive duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Unsafe paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Path mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Size mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>SHA-256 mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Manifest mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>The sidecar contains exactly:</p>
+<pre><code class="language-text">82223990ceecffeb9d377d946cd3976461677a5df9c964ad4977b40da58649b7  M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_226_HF26.zip
+</code></pre>
+<h2>Program 227 HF26</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>243,000</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>7b7fa0103fda0f1e1bd043aa14e926fa748db291dcb63873ca576d34ea54ab11</code></td>
+</tr>
+<tr>
+<td>Top-level statements</td>
+<td align="right"><strong>164</strong></td>
+</tr>
+<tr>
+<td>Governed result sets</td>
+<td align="right"><strong>24</strong></td>
+</tr>
+<tr>
+<td>Final result grids</td>
+<td align="right"><strong>24</strong></td>
+</tr>
+<tr>
+<td>Intermediate result grids</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td><code>ON COMMIT PRESERVE ROWS</code> output tables</td>
+<td align="right"><strong>24</strong></td>
+</tr>
+<tr>
+<td>Persistent mutations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<h2>Full verifier</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>161,149</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>412376c0ad3f1375168cd02a576abde39e3c70d585de51f1d99482a2b36461c8</code></td>
+</tr>
+<tr>
+<td>Result grids</td>
+<td align="right"><strong>5</strong></td>
+</tr>
+<tr>
+<td>Persistent mutations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Final action</td>
+<td align="right"><strong>ROLLBACK</strong></td>
+</tr>
+</tbody></table>
+<h2>Narrow application diagnostic</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>8,834</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>8b408e64c9af7339f1cd6345d8b788bba709b7e62ccd0849b6f2f132bc06c0f9</code></td>
+</tr>
+<tr>
+<td>Result grids</td>
+<td align="right"><strong>3</strong></td>
+</tr>
+<tr>
+<td>Persistent mutations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Final action</td>
+<td align="right"><strong>ROLLBACK</strong></td>
+</tr>
+</tbody></table>
+<p>Validation results:</p>
+<pre><code class="language-text">Pre-seal controls                 19 / 19 PASS
+Main statements                  164 / 164 reviewed
+Verifier statements               49 / 49 reviewed
+Narrow diagnostic statements      16 / 16 reviewed
+Result-set reconciliation         24 / 24 PASS
+Result-content review             24 / 24 PASS
+Persistent mutations               0
+Blocking findings                  0
+</code></pre>
+<p>HF26 has not been executed against PostgreSQL here.</p>
+<h1>Mandatory execution sequence</h1>
+<h2>1. Close the failed HF25 transaction</h2>
+<p>If the originating DBeaver connection is still in an aborted transaction state, execute only:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>Do not rerun HF25 and do not execute a recovery source.</p>
+<p>Preserve the HF25 transcript containing:</p>
+<pre><code class="language-text">rs10_fail=3
+</code></pre>
+<p>as the historical failed-attempt record.</p>
+<h2>2. Run the narrow HF26 diagnostic</h2>
+<p>Execute:</p>
+<pre><code class="language-text">227_HF26_pre_execution_application_summary_diagnostic.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">8b408e64c9af7339f1cd6345d8b788bba709b7e62ccd0849b6f2f132bc06c0f9
+</code></pre>
+<p>Export its three grids as:</p>
+<pre><code class="language-text">227_HF26_pre_execution_application_summary_detail_20260812.csv
+
+227_HF26_pre_execution_application_summary_failures_20260812.csv
+
+227_HF26_pre_execution_application_summary_diagnostic_summary_20260812.csv
+</code></pre>
+<h3>Grid 1 — application-summary detail</h3>
+<p>Require exactly three rows:</p>
+<pre><code class="language-text">BASELINE
+RECESSION_ENERGY
+ALL
+</code></pre>
+<p>With:</p>
+<pre><code class="language-text">BASELINE                   750 rows / 750 applications
+RECESSION_ENERGY           750 rows / 750 applications
+ALL                       1500 rows / 750 applications
+
+orphan_count                          0 for every scope
+multiplicity_error_count              0 for every scope
+invalid_evidence_status_count         0 for every scope
+missing_lineage_count                 0 for every scope
+scope_status                       PASS for every scope
+</code></pre>
+<p>For each scope:</p>
+<pre><code class="language-text">complete_evidence_count
++ partial_evidence_count
++ blocked_evidence_count
+= row_count
+</code></pre>
+<p><code>blocked_evidence_count</code> may legitimately be greater than zero.</p>
+<h3>Grid 2 — failure-only detail</h3>
+<p>Require:</p>
+<pre><code class="language-text">Governed headers present
+Data rows             0
+</code></pre>
+<h3>Grid 3 — diagnostic summary</h3>
+<p>Require:</p>
+<pre><code class="language-text">scope_rows                          3
+scope_pass_rows                     3
+failure_rows                        0
+scope_row_count_sum              3000
+invalid_evidence_status_count_sum   0
+missing_lineage_count_sum           0
+diagnostic_status                 PASS
+disposition                       READY_TO_EXECUTE_PROGRAM_227_HF26
+</code></pre>
+<p>The <code>scope_row_count_sum</code> is 3,000 because the summary contains both 750-row scenario scopes plus the 1,500-row <code>ALL</code> scope.</p>
+<h2>3. Run the full HF26 accepted-checkpoint verifier</h2>
+<p>Execute:</p>
+<pre><code class="language-text">227_HF26_pre_execution_accepted_checkpoint_verification.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">412376c0ad3f1375168cd02a576abde39e3c70d585de51f1d99482a2b36461c8
+</code></pre>
+<p>Export:</p>
+<pre><code class="language-text">227_HF26_pre_execution_source_graph_detail_20260812.csv
+227_HF26_pre_execution_stage_boundary_detail_20260812.csv
+227_HF26_pre_execution_hash_detail_20260812.csv
+227_HF26_pre_execution_evidence_summary_20260812.csv
+227_HF26_pre_execution_state_summary_20260812.csv
+</code></pre>
+<p>Require the same accepted state already demonstrated by the HF25 evidence:</p>
+<pre><code class="language-text">source graph                 19 / 19 PASS
+stage boundaries             12 / 12 PASS
+physical controls            70 / 70
+hash rows                    12 / 12 exact
+positive evidence           128 / 128 / 128
+negative evidence            20 / 20 / 20
+generation evidence          24 / 24 / 24
+acceptance evidence           1 / 1
+G3 gate                       1 exact PASS
+non-PASS evidence             0
+run status                   M2_12_ACCEPTED
+contract status              ACCEPTED
+verification status          PASS
+disposition                  READY_TO_EXECUTE_PROGRAM_227_HF26
+</code></pre>
+<h2>4. Execute Program 227 HF26 once</h2>
+<p>Execute:</p>
+<pre><code class="language-text">227_msbf_m2_12_detailed_report_24_result_sets_v1_HF26.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">7b7fa0103fda0f1e1bd043aa14e926fa748db291dcb63873ca576d34ea54ab11
+</code></pre>
+<p>Execution boundaries:</p>
+<pre><code class="language-text">one complete physical file
+one invocation
+first-error stop configured in DBeaver
+no outer transaction
+no ad hoc SQL
+no recovery execution
+</code></pre>
+<p>HF26 must produce exactly this cardinality vector:</p>
+<pre><code class="language-text">1, 1, 1, 12, 13, 19, 72, 13, 13, 3, 1500, 3,
+59, 24, 24, 3, 8, 20, 1, 1, 12, 6, 0, 0
+</code></pre>
+<p>For every result-grid export:</p>
+<pre><code class="language-text">Use fetched rows       ON
+Query the database     OFF
+Open new connection    OFF
+</code></pre>
+<p>Use the filenames in the HF26 evidence-capture catalog (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF26_EVIDENCE_CAPTURE_CATALOG.csv</code>; referenced bytes not established here).</p>
+<p>Result Sets 23 and 24 must retain their headers and contain zero data rows.</p>
+<h2>5. Stop after Program 227</h2>
+<p>After all 24 grids are exported:</p>
+<pre><code class="language-text">STOP
+</code></pre>
+<p>Do not create accepted/full-project packaging, stage <code>31_M2_12</code>, Module 3 artifacts, or production/deployment artifacts. The complete live-execution evidence must next undergo independent post-chain audit.</p>
+</div></article><article id="m-103879f6-55f9-4e04-9ba7-e24a69fcfe3e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C085-M00152 · 2026-08-12T07:45:33.158000-04:00 · active path</p><div class="bubble"><p>error in your pre_execution_application_summary_diagnostic.sql: SQL Error [25006]: ERROR: cannot execute CREATE TABLE AS in a read-only transaction
+  ERROR: cannot execute CREATE TABLE AS in a read-only transaction   create hotfix and do not wait on my approval.</p>
+</div></article><article id="m-1ef12f16-38c9-4554-bfcc-907cbde29737" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00153 · 2026-08-12T08:01:03.953119-04:00 · active path</p><div class="bubble"><h1>M2.12 Program 227 HF27 — Diagnostic Hotfix Complete</h1>
+<p>The failure is confirmed as a <strong>transaction-mode defect in the narrow diagnostic</strong>, not a defect in the accepted database checkpoint or in Program 227 HF26 itself.</p>
+<p>Your attached pre-execution evidence still shows the exact accepted state: <code>M2_12_ACCEPTED / ACCEPTED</code>, 19/19 source edges, 12/12 stage boundaries, 70/70 physical controls, 128 positive controls, 20 negative controls, 24 generation-evidence rows, one acceptance row, zero non-PASS evidence, and zero deterministic findings. [export reference: filecite | turn32file0 | L9-L11] [export reference: filecite | turn32file1 | L21-L23] All 12 stored hashes also reconstructed exactly. [export reference: filecite | turn32file2 | L33-L46]</p>
+<h2>Downloads</h2>
+<h3>Complete corrected continuation package</h3>
+<ul>
+<li>Download M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_226_HF27.zip (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_226_HF27.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching ZIP sidecar (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_226_HF27.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Corrected narrow diagnostic</h3>
+<ul>
+<li>Download 227_HF27_pre_execution_application_summary_diagnostic.sql (historical reference: <code>sandbox:[session]/227_HF27_pre_execution_application_summary_diagnostic.sql</code>; referenced bytes not established here)</li>
+<li>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/227_HF27_pre_execution_application_summary_diagnostic.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Validation and operating records</h3>
+<ul>
+<li>Download the HF27 operator protocol (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF27_OPERATOR_PROTOCOL.md</code>; referenced bytes not established here)</li>
+<li>Download the transaction-mode correction record (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF27_TRANSACTION_MODE_CORRECTION.md</code>; referenced bytes not established here)</li>
+<li>Download the current source authority (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF27_SOURCE_AUTHORITY.md</code>; referenced bytes not established here)</li>
+<li>Download the final independent release validation (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF27_FINAL_INDEPENDENT_RELEASE_VALIDATION.md</code>; referenced bytes not established here)</li>
+<li>Download the 45-control release ledger (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF27_FINAL_INDEPENDENT_RELEASE_CONTROLS.csv</code>; referenced bytes not established here)</li>
+<li>Download the HF26-to-HF27 source patch (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_227_HF26_TO_HF27_DIAGNOSTIC.patch</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Root cause</h2>
+<p>HF26 declared:</p>
+<pre><code class="language-sql">SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY;
+</code></pre>
+<p>and then attempted:</p>
+<pre><code class="language-sql">CREATE TEMP TABLE ... AS
+</code></pre>
+<p>PostgreSQL rejected the first CTAS with:</p>
+<pre><code class="language-text">SQLSTATE 25006
+cannot execute CREATE TABLE AS in a read-only transaction
+</code></pre>
+<p>The transaction was declared SQL-level read-only even though the diagnostic needed to create and populate four temporary tables.</p>
+<h2>HF27 correction</h2>
+<p>HF27 now uses:</p>
+<pre><code class="language-sql">SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+</code></pre>
+<p>The diagnostic remains <strong>persistent-state read-only</strong>:</p>
+<pre><code class="language-text">Persistent INSERTs      0
+Persistent UPDATEs      0
+Persistent DELETEs      0
+Persistent DDL          0
+Sequence mutations      0
+Temporary CTAS          4
+Final result grids      3
+COMMIT statements       0
+Final action            ROLLBACK
+</code></pre>
+<p>The transaction is write-capable only so PostgreSQL can create the temporary diagnostic relations.</p>
+<p>The application-summary business logic was not changed:</p>
+<ul>
+<li><code>BASELINE</code>: 750 rows and 750 applications.</li>
+<li><code>RECESSION_ENERGY</code>: 750 rows and 750 applications.</li>
+<li><code>ALL</code>: 1,500 rows and 750 applications.</li>
+<li>Valid evidence statuses remain <code>COMPLETE</code>, <code>PARTIAL</code>, and <code>BLOCKED</code>.</li>
+<li>Legitimate <code>BLOCKED</code> rows remain reportable rather than being treated as failures.</li>
+<li>Invalid statuses, missing lineage, or grain discrepancies remain blockers.</li>
+</ul>
+<h2>Current source identities</h2>
+<h3>Corrected diagnostic</h3>
+<pre><code class="language-text">Filename
+227_HF27_pre_execution_application_summary_diagnostic.sql
+
+Bytes
+8,952
+
+SHA-256
+08089fc3a8c8a5f21d9bed9fcf12faffcde106828d6551f9961232aba79487c8
+</code></pre>
+<h3>Program 227 executable — unchanged</h3>
+<pre><code class="language-text">Filename
+227_msbf_m2_12_detailed_report_24_result_sets_v1_HF26.sql
+
+Bytes
+243,000
+
+SHA-256
+7b7fa0103fda0f1e1bd043aa14e926fa748db291dcb63873ca576d34ea54ab11
+</code></pre>
+<h3>Full accepted-checkpoint verifier — unchanged</h3>
+<pre><code class="language-text">Filename
+227_HF26_pre_execution_accepted_checkpoint_verification.sql
+
+Bytes
+161,149
+
+SHA-256
+412376c0ad3f1375168cd02a576abde39e3c70d585de51f1d99482a2b36461c8
+</code></pre>
+<p>There was no reason to alter the main Program 227 source or full verifier. Only the defective narrow diagnostic was superseded.</p>
+<h2>Physical release ledger</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ZIP filename</td>
+<td align="right"><code>M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_226_HF27.zip</code></td>
+</tr>
+<tr>
+<td>ZIP bytes</td>
+<td align="right"><strong>105,188</strong></td>
+</tr>
+<tr>
+<td>ZIP SHA-256</td>
+<td align="right"><code>992a76977cb5d96193657ee0f84985a6d5d0b275b27e0067bbe5143ff2f03774</code></td>
+</tr>
+<tr>
+<td>ZIP entries</td>
+<td align="right"><strong>42</strong></td>
+</tr>
+<tr>
+<td>Total uncompressed bytes</td>
+<td align="right"><strong>564,889</strong></td>
+</tr>
+<tr>
+<td>ZIP CRC</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Complete independent extraction</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Independent controls</td>
+<td align="right"><strong>45/45 PASS</strong></td>
+</tr>
+<tr>
+<td>Path mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Size mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>SHA-256 mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Case-insensitive duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Unsafe paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Manifest mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Package-inventory mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Unauthorized SQL files</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Superseded HF26 diagnostic inside ZIP</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Sidecar pairing</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+</tbody></table>
+<h2>Next execution sequence</h2>
+<h3>1. Clear the failed transaction</h3>
+<p>If the same DBeaver connection remains in an aborted transaction state, execute only:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>Do not run recovery SQL. The HF26 diagnostic failed at its first temporary CTAS and made no persistent change.</p>
+<h3>2. Run the HF27 narrow diagnostic</h3>
+<p>Execute:</p>
+<pre><code class="language-text">227_HF27_pre_execution_application_summary_diagnostic.sql
+</code></pre>
+<p>Require:</p>
+<pre><code class="language-text">SHA-256
+08089fc3a8c8a5f21d9bed9fcf12faffcde106828d6551f9961232aba79487c8
+</code></pre>
+<p>Export its three result grids as:</p>
+<pre><code class="language-text">227_HF27_pre_execution_application_summary_detail_20260812.csv
+
+227_HF27_pre_execution_application_summary_failures_20260812.csv
+
+227_HF27_pre_execution_application_summary_diagnostic_summary_20260812.csv
+</code></pre>
+<p>For every export:</p>
+<pre><code class="language-text">Use fetched rows       ON
+Query the database     OFF
+Open new connection    OFF
+</code></pre>
+<p>Required detail:</p>
+<pre><code class="language-text">BASELINE             750 rows / 750 applications / PASS
+RECESSION_ENERGY     750 rows / 750 applications / PASS
+ALL                 1500 rows / 750 applications / PASS
+
+orphan_count                         0 for all scopes
+multiplicity_error_count             0 for all scopes
+invalid_evidence_status_count        0 for all scopes
+missing_lineage_count                0 for all scopes
+</code></pre>
+<p>For each scope:</p>
+<pre><code class="language-text">complete_evidence_count
++ partial_evidence_count
++ blocked_evidence_count
+= row_count
+</code></pre>
+<p>The failure-only grid must retain headers and contain zero rows.</p>
+<p>Required summary:</p>
+<pre><code class="language-text">scope_rows                          3
+scope_pass_rows                     3
+failure_rows                        0
+scope_row_count_sum              3000
+invalid_evidence_status_count_sum   0
+missing_lineage_count_sum           0
+diagnostic_status                 PASS
+disposition                       READY_TO_EXECUTE_PROGRAM_227_HF26
+</code></pre>
+<h3>3. Execute Program 227 HF26 after the diagnostic passes</h3>
+<p>The existing full accepted-checkpoint evidence remains valid because the failed diagnostic made no persistent change. A fresh run of the unchanged HF26 full verifier is optional for an immediate same-session checkpoint.</p>
+<p>Then execute:</p>
+<pre><code class="language-text">227_msbf_m2_12_detailed_report_24_result_sets_v1_HF26.sql
+</code></pre>
+<p>Require:</p>
+<pre><code class="language-text">SHA-256
+7b7fa0103fda0f1e1bd043aa14e926fa748db291dcb63873ca576d34ea54ab11
+</code></pre>
+<p>After all 24 result sets are captured, stop for independent post-chain audit.</p>
+</div></article><article id="m-3f6c5566-3988-4e9b-8ac0-478b4291262a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C085-M00154 · 2026-08-12T08:33:07.858000-04:00 · active path</p><p class="note">Attachment references: module_M2_12_evidence.zip</p><div class="bubble"><p>Full M2_12 evidence is attached. Please package M2_12 nicely, including a prompt detailing our validation history, to send to the independent audit chat.</p>
+</div></article><article id="m-deacb9d7-1471-47fe-8b0b-20b7330a4178" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00155 · 2026-08-12T08:57:25.515105-04:00 · active path</p><div class="bubble"><h1>M2.12 independent-audit handoff package</h1>
+<h2>Downloads</h2>
+<ul>
+<li>Download the canonical M2.12 independent-audit submission ZIP (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_INDEPENDENT_AUDIT_SUBMISSION_R1.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching ZIP SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_INDEPENDENT_AUDIT_SUBMISSION_R1.zip.sha256</code>; referenced bytes not established here)</li>
+<li>Download the independent-audit opening prompt separately (historical reference: <code>sandbox:[session]/M2_12_INDEPENDENT_LIVE_EXECUTION_AUDIT_OPENING_PROMPT.md</code>; referenced bytes not established here)</li>
+<li>Download the physical delivery ledger (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_AUDIT_SUBMISSION_PHYSICAL_DELIVERY_LEDGER.md</code>; referenced bytes not established here)</li>
+</ul>
+<p>The opening prompt is also inside the ZIP under:</p>
+<pre><code class="language-text">00_START_HERE/
+M2_12_INDEPENDENT_LIVE_EXECUTION_AUDIT_OPENING_PROMPT.md
+</code></pre>
+<h2>Physical delivery ledger</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filename</td>
+<td align="right"><code>M2_12_LIVE_EXECUTION_INDEPENDENT_AUDIT_SUBMISSION_R1.zip</code></td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td align="right"><strong>2,921,970</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>a341a4a70cf02cb6c7baf91ea103a6bc1dc8b98507df46d1e2d2e94e51a02ba1</code></td>
+</tr>
+<tr>
+<td>ZIP entries</td>
+<td align="right"><strong>279</strong></td>
+</tr>
+<tr>
+<td>Total uncompressed bytes</td>
+<td align="right"><strong>8,816,845</strong></td>
+</tr>
+<tr>
+<td>ZIP CRC</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Complete independent extraction</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Build/extraction path mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Byte-size mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>SHA-256 mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Case-insensitive duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Unsafe paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Manifest mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>The sidecar contains exactly:</p>
+<pre><code class="language-text">a341a4a70cf02cb6c7baf91ea103a6bc1dc8b98507df46d1e2d2e94e51a02ba1  M2_12_LIVE_EXECUTION_INDEPENDENT_AUDIT_SUBMISSION_R1.zip
+</code></pre>
+<h2>What the package contains</h2>
+<p>The package is organized so the independent audit chat can distinguish current authority from superseded diagnostics:</p>
+<pre><code class="language-text">00_START_HERE
+    Opening audit prompt
+    README
+    Post-chain audit-readiness status
+    Current source identities
+    Current continuation-package identities
+    Complete validation and hotfix history
+
+01_GOVERNING_AUTHORITY
+    Approved WP5 standalone baseline
+    Sidecar
+    WP5 independent audit and live-execution authorization
+
+02_EXECUTED_SOURCE_AUTHORITY
+    Final executed SQL for Programs 220–227
+    Directed Recovery 222A
+    Final pre-execution verifiers and diagnostics
+    Final continuation/recovery ZIPs
+    Source validation and physical-readback records
+
+03_FINAL_RUNTIME_EVIDENCE
+    Final successful evidence organized by program
+    Program 227 outputs normalized as RS01–RS24
+    Program 221 corrected filename/content copies
+
+04_HISTORICAL_DIAGNOSTIC_EVIDENCE
+    Failed and superseded diagnostic outputs
+    Preserved separately so they cannot be mistaken for final evidence
+
+05_RAW_SUBMISSION
+    Original module_M2_12_evidence.zip preserved byte-identically
+    Matching newly calculated sidecar
+
+06_AUDIT_LEDGERS
+    Complete hotfix chronology
+    Evidence classification
+    Per-file CSV profile
+    Program 227 result-set reconciliation
+    Known audit findings
+    Builder validation report
+
+99_PACKAGE_METADATA
+    MANIFEST.csv
+    manifest.json
+    SHA256SUMS.txt
+    PACKAGE_INVENTORY.csv
+</code></pre>
+<p>The package includes the actual final execution sources:</p>
+<table>
+<thead>
+<tr>
+<th>Program</th>
+<th>Executed revision</th>
+<th>SHA-256</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>220</td>
+<td>HF4</td>
+<td><code>efc49c1f2c02587e03a84b46ab8c5c0b097ca28cd2682cd6f4eb477e29f508e8</code></td>
+</tr>
+<tr>
+<td>221</td>
+<td>HF6</td>
+<td><code>97387aca692d676b74c89ab298e4e284bd862feaf289f98eba5fd91c336877d7</code></td>
+</tr>
+<tr>
+<td>222</td>
+<td>HF9</td>
+<td><code>3674c53f4bc46222a45db8d3afa75337af921b2492485ebd2745d77ada220cab</code></td>
+</tr>
+<tr>
+<td>222A</td>
+<td>Recovery R1</td>
+<td><code>8087d51cd6d1dbcf89371d4219e787b53221ddf3a5959053af1306fef0967627</code></td>
+</tr>
+<tr>
+<td>223</td>
+<td>HF12</td>
+<td><code>a52a2ea1fe423fae840c21a3bba6dda7ca45dea1c29531134e823a96635411fe</code></td>
+</tr>
+<tr>
+<td>224</td>
+<td>HF14</td>
+<td><code>d549f90da4ec3d9364d4f1e5bd1b8fc8a9e5e65d1c3d6af646bf48689ee9146e</code></td>
+</tr>
+<tr>
+<td>225</td>
+<td>HF23</td>
+<td><code>e5ac10c9c15512878361d080a4435fa70eac68004f8dfbabeeddaa052d51055b</code></td>
+</tr>
+<tr>
+<td>226</td>
+<td>HF24</td>
+<td><code>e7ab6bdf4ae660f5a051b43c9e0b039fb5495e8b8c6259a5ca8cccc9d06e83a7</code></td>
+</tr>
+<tr>
+<td>227</td>
+<td>HF26</td>
+<td><code>7b7fa0103fda0f1e1bd043aa14e926fa748db291dcb63873ca576d34ea54ab11</code></td>
+</tr>
+</tbody></table>
+<p>The submitted results support that the governed database lifecycle reached <code>M2_12_ACCEPTED / ACCEPTED</code>, Program 225 completed 48/48 acceptance requirements, and Program 226 produced a PASS master report with exact counts, hashes, and nonauthorization boundaries. [export reference: filecite | turn29file0 | L9-L11] [export reference: filecite | turn30file4 | L97-L99] Program 227’s pre-execution state also reconciled the accepted lifecycle, all evidence families, 19 source edges, 12 stage boundaries, 70 physical controls, and zero deterministic findings. [export reference: filecite | turn32file0 | L9-L11]</p>
+<h1>Important audit posture</h1>
+<p>I found two evidence-completeness issues and explicitly built them into the opening prompt and findings ledger. The package therefore states:</p>
+<pre><code class="language-text">Package physical validation        PASS
+Database accepted lifecycle        ESTABLISHED BY SUBMITTED RESULTS
+Independent audit approval         NOT CLAIMED
+Evidence completeness              HOLD
+</code></pre>
+<h2>AUDIT-HOLD-001 — Program 227 Result Set 11 is incomplete</h2>
+<p>The governed cardinality for the full application-detail result set is:</p>
+<pre><code class="language-text">1,500 rows
+</code></pre>
+<p>The physical CSV supplied in <code>module_M2_12_evidence.zip</code> contains:</p>
+<pre><code class="language-text">200 data rows
+</code></pre>
+<p>The filename says <code>Full_1500_Row_Application_Detail</code>, but 1,300 rows are absent from the physical file. This is consistent with a possible DBeaver fetched-row limit, but the package does not assume a cause.</p>
+<p>The Program 227 reconciliation included in the ZIP records:</p>
+<pre><code class="language-text">Result sets present       24 / 24
+Cardinalities passing     23 / 24
+RS11 expected             1,500
+RS11 observed               200
+RS11 status               FAIL
+</code></pre>
+<p>The independent audit prompt instructs the auditor to treat this as blocking unless a complete governed export or explicitly authorized exact reconstruction is supplied.</p>
+<h2>AUDIT-HOLD-002 — runtime transcripts are absent</h2>
+<p>The original evidence ZIP physically contains:</p>
+<pre><code class="language-text">123 files
+All files are CSV
+Console transcripts              0
+Client exit-status records       0
+Execution-environment records    0
+Backup/restore checkpoint logs   0
+Package-verification logs        0
+</code></pre>
+<p>The package includes the full conversation-derived validation chronology, source identities, correction packages, and runtime result evidence. It clearly labels that chronology as an audit-navigation aid—not a substitute for original console or process records.</p>
+<h2>Program 221 filename advisory</h2>
+<p>The two HF6 pre-rerun files were named opposite to their physical contents:</p>
+<pre><code class="language-text">source_graph_detail filename → contains the one-row state summary
+state_summary filename       → contains the 19-row source graph
+</code></pre>
+<p>The raw files are preserved unchanged. The final-evidence directory also contains byte-identical normalized copies and an explicit mapping ledger.</p>
+<h1>Using the package</h1>
+<p>In the independent audit chat:</p>
+<ol>
+<li>Paste the contents of the opening prompt (historical reference: <code>sandbox:[session]/M2_12_INDEPENDENT_LIVE_EXECUTION_AUDIT_OPENING_PROMPT.md</code>; referenced bytes not established here).</li>
+<li>Attach the canonical audit ZIP (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_INDEPENDENT_AUDIT_SUBMISSION_R1.zip</code>; referenced bytes not established here) and its sidecar (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_INDEPENDENT_AUDIT_SUBMISSION_R1.zip.sha256</code>; referenced bytes not established here).</li>
+<li>Require the auditor to independently return <code>APPROVED</code>, <code>HOLD</code>, or <code>FAIL</code>, with a control ledger, findings ledger, package validation, and exact remediation for every blocker.</li>
+</ol>
+<p>This package does not create accepted/full-project packaging, stage <code>31_M2_12</code>, Module 3 authority, or production/deployment authority.</p>
+</div></article><article id="m-e10b2d75-8832-4a65-8f86-be1c88527dae" class="message user"><p class="meta"><strong>Andrew / user</strong> · C085-M00156 · 2026-08-12T09:05:05.258000-04:00 · active path</p><p class="note">Attachment references: MSBF_M2_12_Enterprise_Portfolio_Certification_&amp;_Consumption_Contract_Detail_Report_v1_Full_1500_Row_Application_Detail_20260812.csv</p><div class="bubble"><p>Corrected result set attached. please update audit handoff.</p>
+</div></article><article id="m-6226db47-f506-4e5d-ad6e-eec467947bed" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00157 · 2026-08-12T09:20:56.255087-04:00 · active path</p><div class="bubble"><h1>M2.12 independent-audit handoff updated to R2</h1>
+<p>The corrected Result Set 11 has been incorporated into a new canonical audit-submission package. The original R1 package remains historical and is superseded by R2.</p>
+<h2>Downloads</h2>
+<ul>
+<li>Download the updated M2.12 independent-audit submission R2 (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_INDEPENDENT_AUDIT_SUBMISSION_R2.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching R2 SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_INDEPENDENT_AUDIT_SUBMISSION_R2.zip.sha256</code>; referenced bytes not established here)</li>
+<li>Download the updated independent-audit opening prompt (historical reference: <code>sandbox:[session]/M2_12_INDEPENDENT_LIVE_EXECUTION_AUDIT_OPENING_PROMPT_R2.md</code>; referenced bytes not established here)</li>
+<li>Download the R2 physical delivery ledger (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_AUDIT_SUBMISSION_R2_PHYSICAL_DELIVERY_LEDGER.md</code>; referenced bytes not established here)</li>
+<li>Download the independent R2 release-validation report (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_AUDIT_SUBMISSION_R2_RELEASE_VALIDATION.md</code>; referenced bytes not established here)</li>
+<li>Download the Result Set 11 correction-validation report (historical reference: <code>sandbox:[session]/M2_12_RS11_POST_SUBMISSION_CORRECTION_VALIDATION.md</code>; referenced bytes not established here)</li>
+<li>Download the Result Set 11 correction-reconciliation ledger (historical reference: <code>sandbox:[session]/M2_12_RS11_POST_SUBMISSION_CORRECTION_RECONCILIATION.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Canonical R2 package identity</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filename</td>
+<td align="right"><code>M2_12_LIVE_EXECUTION_INDEPENDENT_AUDIT_SUBMISSION_R2.zip</code></td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td align="right"><strong>3,420,690</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>d8fb5d749838a4c60f590766856d3faa472a4555670e8797cdb0ae683df9bffa</code></td>
+</tr>
+<tr>
+<td>ZIP entries</td>
+<td align="right"><strong>290</strong></td>
+</tr>
+<tr>
+<td>Total uncompressed bytes</td>
+<td align="right"><strong>10,633,655</strong></td>
+</tr>
+<tr>
+<td>ZIP CRC</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Complete independent extraction</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Path mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Size mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>SHA-256 mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Case-insensitive duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Unsafe paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Manifest mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>The sidecar contains exactly:</p>
+<pre><code class="language-text">d8fb5d749838a4c60f590766856d3faa472a4555670e8797cdb0ae683df9bffa  M2_12_LIVE_EXECUTION_INDEPENDENT_AUDIT_SUBMISSION_R2.zip
+</code></pre>
+<h2>Corrected Result Set 11 validation</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Corrected result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Data rows</td>
+<td align="right"><strong>1,500</strong></td>
+</tr>
+<tr>
+<td>Columns</td>
+<td align="right"><strong>18</strong></td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td align="right"><strong>607,719</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>bd81106ace62fece19f86c528478a672dc0500cb77a72f5f3409bef10338fc7c</code></td>
+</tr>
+<tr>
+<td>Physical/content controls</td>
+<td align="right"><strong>16/16 PASS</strong></td>
+</tr>
+<tr>
+<td>BASELINE rows</td>
+<td align="right"><strong>750</strong></td>
+</tr>
+<tr>
+<td>RECESSION_ENERGY rows</td>
+<td align="right"><strong>750</strong></td>
+</tr>
+<tr>
+<td>Distinct applications</td>
+<td align="right"><strong>750</strong></td>
+</tr>
+<tr>
+<td>Distinct merchants</td>
+<td align="right"><strong>750</strong></td>
+</tr>
+<tr>
+<td>Unique scenario/application keys</td>
+<td align="right"><strong>1,500</strong></td>
+</tr>
+<tr>
+<td>Missing lineage rows</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Invalid 32-character hash rows</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Frozen ordering</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Result Set 10 reconciliation</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+</tbody></table>
+<p>The corrected file’s first <strong>200 data rows match the prior incomplete export exactly</strong>, after which the corrected file supplies the remaining 1,300 rows.</p>
+<p>Program 227’s complete result-set reconciliation is now:</p>
+<pre><code class="language-text">Result sets present       24 / 24
+Cardinalities passing     24 / 24
+Header checks passing     24 / 24
+RS11 expected rows         1,500
+RS11 observed rows         1,500
+RS11 status                PASS
+</code></pre>
+<h2>Provenance treatment</h2>
+<p>The audit package does not rewrite history:</p>
+<ul>
+<li>The original <code>module_M2_12_evidence.zip</code> remains byte-identical.</li>
+<li>That original raw ZIP still contains the initial 200-row RS11 export.</li>
+<li>The corrected 1,500-row file is promoted under the current final-runtime-evidence paths.</li>
+<li>The initial 200-row file is preserved under historical/superseded evidence.</li>
+<li>A separate post-submission-correction folder contains the corrected file, sidecar, and provenance note.</li>
+<li>The raw-submission profile still describes the original ZIP; a new final-evidence profile describes the corrected logical evidence set.</li>
+</ul>
+<h2>Updated audit posture</h2>
+<pre><code class="language-text">Package physical validation        PASS
+Program 227 cardinalities          24 / 24 PASS
+AUDIT-HOLD-001                     RESOLVED PENDING INDEPENDENT CONFIRMATION
+AUDIT-HOLD-002                     OPEN — TRANSCRIPT/PROCESS EVIDENCE
+Independent audit approval         NOT CLAIMED
+Accepted/full-project packaging    NOT AUTHORIZED
+Stage 31_M2_12                     NOT AUTHORIZED
+Module 3                           NOT AUTHORIZED
+Production/deployment              NOT AUTHORIZED
+</code></pre>
+<p>The remaining open issue is unchanged: the original evidence ZIP contains CSV results but no console transcripts, client exit-status records, execution-environment capture, backup-checkpoint evidence, or package-verification logs. The independent auditor must determine the governance effect of that absence.</p>
+<p>For the independent audit chat, attach the <strong>R2 ZIP and sidecar</strong>, then use the updated R2 opening prompt.</p>
+</div></article><article id="m-bbb2140d-60ba-402f-92ff-881df09f4965" class="message user"><p class="meta"><strong>Andrew / user</strong> · C085-M00158 · 2026-08-12T10:33:29.166160-04:00 · active path</p><p class="note">Attachment references: M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_PACKAGE.zip; M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_PACKAGE.zip.sha256; M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_REPORT.md; M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_CONTROLS.csv; M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_FINDINGS.csv; M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_SUMMARY.json; M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_PACKAGE_VALIDATION_REPORT.md; M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_HOLD_AND_REMEDIATION.md; M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_EXECUTED_SOURCE_AUDIT.csv; M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_RUNTIME_CHECKPOINT_AUDIT.csv</p><div class="bubble"><h1>M2.12 independent post-chain audit determination</h1>
+<h2><strong>HOLD</strong></h2>
+<p>The submitted runtime evidence is <strong>substantively consistent with a successful M2.12 execution</strong>, but it does not contain the complete contemporaneous execution-process evidence required by the approved live-execution protocol.</p>
+<pre><code class="language-text">Independent controls                         619 / 632 PASS
+Failed controls                               13
+Substantive physical-evidence failures         0
+Open governance blockers                       1
+
+Database/result checkpoint posture            RECONCILED
+Database lifecycle                            M2_12_ACCEPTED / ACCEPTED
+Audit-approved M2.12 acceptance               NO
+Accepted/full-project packaging               NOT AUTHORIZED
+Stage 31_M2_12                                NOT AUTHORIZED
+Module 3                                      NOT AUTHORIZED
+Production/deployment                         NOT AUTHORIZED
+</code></pre>
+<p>This is a <strong>HOLD rather than a FAIL</strong> because no material contradiction was found in the database-state evidence, final executed source identities, control results, hashes, report contents, or corrected Result Set 11. The missing evidence affects proof of the controlled execution process, not the apparent final database result.</p>
+<p>The submitted physical-release validation confirms package integrity and corrected RS11 completeness, but expressly states that it does not replace the independent governance audit. </p>
+<h1>What independently passed</h1>
+<h2>Submission package</h2>
+<pre><code class="language-text">Package
+M2_12_LIVE_EXECUTION_INDEPENDENT_AUDIT_SUBMISSION_R2.zip
+
+Bytes
+3,420,690
+
+SHA-256
+d8fb5d749838a4c60f590766856d3faa472a4555670e8797cdb0ae683df9bffa
+
+ZIP entries
+290
+
+Total uncompressed bytes
+10,633,655
+
+ZIP CRC
+PASS
+</code></pre>
+<p>Independent package reconciliation found:</p>
+<pre><code class="language-text">MANIFEST.csv records                         286 / 286 PASS
+manifest.json records                       286 / 286 PASS
+SHA256SUMS.txt records                      288 / 288 PASS
+PACKAGE_INVENTORY.csv records              289 / 289 PASS
+
+Unsafe paths                                           0
+Exact duplicate paths                                  0
+Case-insensitive duplicate groups                      0
+Symbolic links                                         0
+Path, byte-size or SHA-256 mismatches                  0
+</code></pre>
+<p>These figures reproduce the submitted physical-delivery ledger. </p>
+<h2>Raw evidence archive</h2>
+<pre><code class="language-text">Filename
+module_M2_12_evidence.zip
+
+Bytes
+194,250
+
+SHA-256
+174e5ede6b6389a37770896aae4954a604d40ad48515d9e08f4b5f64771e2588
+
+ZIP entries
+123
+
+Total uncompressed bytes
+669,760
+
+ZIP CRC
+PASS
+</code></pre>
+<p>All 123 raw files were independently extracted and reconciled to the raw-evidence profile. The original archive remains unchanged and retains the superseded 200-row RS11 export, while the current final-evidence tree contains the corrected file. </p>
+<h2>Final executed SQL authority</h2>
+<p>All nine current executed sources matched their governing bytes, SHA-256 sidecars, and final-revision classifications:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Program</th>
+<th>Final revision</th>
+<th>Independent result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">220</td>
+<td>HF4</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td align="right">221</td>
+<td>HF6</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td align="right">222</td>
+<td>HF9</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td align="right">222A</td>
+<td>R1 recovery</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td align="right">223</td>
+<td>HF12</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td align="right">224</td>
+<td>HF14</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td align="right">225</td>
+<td>HF23</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td align="right">226</td>
+<td>HF24</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td align="right">227</td>
+<td>HF26 main</td>
+<td><strong>PASS</strong></td>
+</tr>
+</tbody></table>
+<p>Independent results also confirmed:</p>
+<pre><code class="language-text">Current executed sources                       9 / 9
+Auxiliary diagnostic/export sources           17 / 17
+Continuation/recovery packages                 9 / 9
+Unclassified executable SQL files                  0
+Current SQL-sidecar mismatches                     0
+Superseded source promoted as current              0
+</code></pre>
+<p>The 32-row validation and correction history is internally sequential and reconciles to:</p>
+<pre><code class="language-text">SUPERSEDED                              20
+EXECUTED_SUCCESS                         9
+RECOVERY_REQUIRED                        1
+RESOLVED_POST_SUBMISSION                 1
+AUDIT_SUBMISSION_CURRENT                 1
+</code></pre>
+<h1>Runtime checkpoint reconciliation</h1>
+<table>
+<thead>
+<tr>
+<th>Checkpoint</th>
+<th>Independent result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Program 220 installation</td>
+<td><strong>PASS</strong> — 21 installed objects, 26 DDL statements, exact policy row and sequence</td>
+</tr>
+<tr>
+<td>Program 221 preflight</td>
+<td><strong>PASS</strong> — 48 assertions, 19 edges, 13 components, 12 nodes, 72 evidence cells, 20 capabilities</td>
+</tr>
+<tr>
+<td>Recovery 222A</td>
+<td><strong>PASS_RECOVERED</strong> — exact approved pre-state, mutation and pristine post-state</td>
+</tr>
+<tr>
+<td>Program 222 generation</td>
+<td><strong>PASS</strong> — 9 families, 134 entities, 24 generation-evidence rows</td>
+</tr>
+<tr>
+<td>Program 223</td>
+<td><strong>128 / 128 PASS</strong> — lifecycle advanced to <code>M2_12_VALIDATED / VALIDATED</code></td>
+</tr>
+<tr>
+<td>Program 224</td>
+<td><strong>20 / 20 PASS</strong> — isolated controls, fingerprints unchanged, lifecycle remained validated</td>
+</tr>
+<tr>
+<td>Program 225</td>
+<td><strong>48 / 48 PASS</strong> — one gate, one acceptance-evidence row, accepted lifecycle</td>
+</tr>
+<tr>
+<td>Program 226</td>
+<td><strong>PASS</strong> — one row, 92 fields, read-only fingerprint exact</td>
+</tr>
+<tr>
+<td>Program 227</td>
+<td><strong>24 / 24 PASS</strong> — projections, ordering and cardinalities reconcile</td>
+</tr>
+</tbody></table>
+<p>The final identities independently reconcile across generation, validation, acceptance, master reporting and detailed reporting:</p>
+<pre><code class="language-text">Combined set hash
+28d832719a63d5669a18016f15ba43fb
+
+Contract set hash
+38e76e3e05f19064f2f1de41b7c33d52
+
+Registry row hash
+16268274b151eeab60f4423ec094f4b5
+</code></pre>
+<p>Recovery 222A was the only recovery evidenced as executed. Its pre-recovery state matched the approved <code>RESTORE_FAILED_GENERATION_SEQUENCES</code> decision, its result was <code>PASS_RECOVERED</code>, and its post-state restored archive and registry sequences to <code>1|false</code> while leaving the policy sequence at <code>1|true</code>.</p>
+<h1>AUDIT-HOLD-001 — Result Set 11</h1>
+<h2><strong>RESOLVED</strong></h2>
+<p>The corrected RS11 file independently passed:</p>
+<pre><code class="language-text">Data rows                                  1,500
+Columns                                       18
+Bytes                                    607,719
+SHA-256
+bd81106ace62fece19f86c528478a672dc0500cb77a72f5f3409bef10338fc7c
+
+BASELINE rows                                750
+RECESSION_ENERGY rows                        750
+Distinct merchant applications               750
+Unique scenario/application keys           1,500
+Missing lineage rows                           0
+Malformed hash rows                            0
+Ordering failures                              0
+</code></pre>
+<p>The first 200 corrected rows are row-for-row identical to the preserved superseded 200-row export. RS11 also reconciles exactly to Result Set 10’s summary counts and blocked-evidence posture.</p>
+<p>These physical characteristics reproduce the delivery ledger’s corrected-RS11 claims. </p>
+<h1>AUDIT-HOLD-002 — execution-process evidence</h1>
+<h2><strong>OPEN BLOCKER</strong></h2>
+<p>The approved WP5 protocol required:</p>
+<ul>
+<li>one complete SQL file per invocation;</li>
+<li>complete console and result-set capture;</li>
+<li>stop-on-error behavior;</li>
+<li>checkpoint reconciliation before releasing the next program;</li>
+<li>immediate stopping on errors or evidence ambiguity.</li>
+</ul>
+<p>Its evidence catalog identified 44 mandatory future captures, including package/environment/predecessor records, eight program transcripts and 33 program outputs. </p>
+<p>All 33 governed output captures are present. The following process evidence is not:</p>
+<pre><code class="language-text">1. Pre-execution package-verification capture
+2. Execution-environment capture
+3. M2.11 predecessor-checkpoint capture
+4. Program 220 console transcript and exit/commit outcome
+5. Program 221 console transcript and exit/commit outcome
+6. Program 222 console transcript and exit/commit outcome
+7. Program 223 console transcript and exit/commit outcome
+8. Program 224 console transcript and exit/commit outcome
+9. Program 225 console transcript and exit/commit outcome
+10. Program 226 console transcript and exit/commit outcome
+11. Program 227 console transcript and exit/commit outcome
+12. Recovery 222A console/process transcript
+13. Database backup or approved restore-checkpoint evidence
+</code></pre>
+<p>The submission itself correctly disclosed this as open and did not claim audit approval or accepted packaging. </p>
+<h2>Why this is blocking</h2>
+<p>CSV outputs and final database-state exports prove a great deal about the <strong>result</strong>, but they cannot independently prove:</p>
+<ul>
+<li>which physical SQL bytes were invoked;</li>
+<li>the actual client/server session and environment;</li>
+<li>the execution timestamp and session continuity;</li>
+<li>complete errors and notices;</li>
+<li>client or server exit outcome;</li>
+<li>whether <code>COMMIT</code> or <code>ROLLBACK</code> occurred as represented;</li>
+<li>whether each checkpoint was reviewed before the next program was released;</li>
+<li>whether Recovery 222A was executed only after the approved diagnostic state;</li>
+<li>whether the required backup/restore checkpoint existed.</li>
+</ul>
+<p>The narrative 32-step chronology is a useful navigation and provenance record. It is not a substitute for contemporaneous execution transcripts.</p>
+<h1>Required remediation</h1>
+<p>Do <strong>not</strong> rerun successfully committed programs merely to manufacture missing evidence, and do not reconstruct or fabricate console transcripts.</p>
+<p>Supply the strongest available contemporaneous records from:</p>
+<ul>
+<li>DBeaver Query Manager or SQL history;</li>
+<li>saved DBeaver output tabs or exports;</li>
+<li>PostgreSQL server logs;</li>
+<li>client log files;</li>
+<li>operating-system or job-run records;</li>
+<li>database audit logs;</li>
+<li>contemporaneous backup records;</li>
+<li>timestamped checkpoint-review records.</li>
+</ul>
+<p>For each Program 220–227 execution and Recovery 222A, the evidence should establish, to the extent available:</p>
+<pre><code class="language-text">physical source filename
+physical source SHA-256
+execution timestamp
+database/server/user/client identity
+session or connection identity
+complete notices/errors/result messages
+statement or process outcome
+COMMIT or ROLLBACK outcome
+checkpoint review and release decision
+</code></pre>
+<p>Available records for the superseded and failed attempts should also be supplied where they exist, but absence of every historical failed-attempt transcript is less significant than absence of the final successful-chain and directed-recovery process evidence.</p>
+<p>A bounded re-audit should follow. No SQL correction or database mutation is presently authorized by this HOLD.</p>
+<h1>Governance disposition</h1>
+<pre><code class="language-text">Database lifecycle                         M2_12_ACCEPTED / ACCEPTED
+Physical result evidence                   PASS
+Corrected RS11                             PASS
+Execution-process evidence                 INCOMPLETE
+
+Independent audit determination            HOLD
+Audit-approved M2.12 acceptance            NO
+Accepted standalone packaging              NOT AUTHORIZED
+Accepted full-project packaging            NOT AUTHORIZED
+Stage 31_M2_12                              NOT AUTHORIZED
+Module 3 planning                           NOT AUTHORIZED
+Production/deployment                       NOT AUTHORIZED
+</code></pre>
+<p>The governing design permits accepted/full-project packaging only after successful live execution, evidence review and formal M2.12 acceptance. </p>
+<h1>Independent audit deliverables</h1>
+<h2>Primary records</h2>
+<ul>
+<li>Independent audit report (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Complete 632-control ledger (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_CONTROLS.csv</code>; referenced bytes not established here)</li>
+<li>Findings and disposition ledger (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_FINDINGS.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable audit summary (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_SUMMARY.json</code>; referenced bytes not established here)</li>
+<li>Submission package-validation report (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>HOLD and remediation authority (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_HOLD_AND_REMEDIATION.md</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Detailed evidence audits</h2>
+<ul>
+<li>Executed-source and continuation-package audit (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_EXECUTED_SOURCE_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Runtime checkpoint audit (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_RUNTIME_CHECKPOINT_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Program 227 result-set audit (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_PROGRAM_227_RESULT_SET_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Corrected RS11 audit (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_RS11_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Execution-evidence protocol completeness audit (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_EVIDENCE_PROTOCOL_COMPLETENESS_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>History and provenance audit (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_HISTORY_PROVENANCE_AUDIT.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Complete audit package</h2>
+<ul>
+<li>Independent audit package (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_PACKAGE.zip</code>; referenced bytes not established here)</li>
+<li>Audit-package SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_PACKAGE.zip.sha256</code>; referenced bytes not established here)</li>
+<li>Audit-package manifest (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_PACKAGE_MANIFEST.csv</code>; referenced bytes not established here)</li>
+<li>Audit-package validation report (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_AUDIT_PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Final audit delivery index (historical reference: <code>sandbox:[session]/M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_DELIVERY_INDEX.md</code>; referenced bytes not established here)</li>
+</ul>
+<pre><code class="language-text">Independent audit package
+M2_12_POST_CHAIN_R2_FINAL_INDEPENDENT_AUDIT_20260812_PACKAGE.zip
+
+Bytes
+52,839
+
+SHA-256
+5467687c304cc7e0d2ce814e69c46ad3c9e146150ffb1b56cb601f3c0a526df1
+
+ZIP entries
+13
+
+ZIP CRC
+PASS
+
+Manifest mismatches
+0
+</code></pre>
+</div></article><article id="m-ea9dac6c-7e9b-4b35-bb11-809eeb3c3df4" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00159 · 2026-08-12T10:40:50.741000-04:00 · active path</p><div class="bubble"><h2>Assessment</h2>
+<p>This is a <strong>narrow, defensible HOLD—not a failed M2.12 build or failed database execution</strong>. The independent audit reconciled Programs 220–227, Recovery 222A, all final SQL identities, all runtime checkpoints, 128 positive controls, 20 negative controls, 48 acceptance requirements, the Program 226 master report, all 24 Program 227 result sets, and corrected RS11. The 13 failed audit controls all roll up to <strong>one governance blocker: missing contemporaneous process evidence</strong>. [export reference: filecite | turn33file0 | L5-L31]</p>
+<p>The database must remain untouched. The HOLD authorizes only collection of existing evidence and a bounded re-audit; it does <strong>not</strong> authorize rerunning SQL, changing the database, creating accepted packaging, building stage <code>31_M2_12</code>, or beginning Module 3. [export reference: filecite | turn33file3 | L5-L17]</p>
+<h2>Immediate priority: preserve DBeaver evidence before another restart</h2>
+<p><strong>Do not close or restart DBeaver again until you inspect Query Manager and preserve anything still visible.</strong></p>
+<p>DBeaver Query Manager records executed SQL, execution time, duration, affected rows, errors, sessions, and transactions. However, DBeaver’s current documentation states that query history survives restart only in Lite, Enterprise, Ultimate, and Team editions; in Community Edition it is automatically deleted after restart. [export reference: cite | turn314288view0]</p>
+<p>In DBeaver, open:</p>
+<pre><code class="language-text">Window
+→ Show View
+→ Query Manager
+</code></pre>
+<p>Then ensure these categories are visible:</p>
+<pre><code class="language-text">User queries
+User scripts
+Sessions
+Transactions
+Queries
+</code></pre>
+<p>Filter to:</p>
+<pre><code class="language-text">Date range: August 10–12, 2026
+Connection: msbf_strategy
+Database: msbf_strategy
+</code></pre>
+<p>Capture everything still present for:</p>
+<pre><code class="language-text">Program 220 HF4
+Program 221 HF6
+Recovery 222A
+Program 222 HF9
+Program 223 HF12
+Program 224 HF14
+Program 225 HF23
+Program 226 HF24
+Program 227 HF26
+</code></pre>
+<p>Also preserve available failed-attempt records, but prioritize the final successful chain and Recovery 222A.</p>
+<p>For each relevant Query Manager entry, retain as much of the following as is visible:</p>
+<pre><code class="language-text">SQL text
+execution timestamp
+duration
+connection/database
+statement type
+affected-row count
+error/status
+session or transaction record
+</code></pre>
+<p>Use screenshots, copied rows, CSV export, or other native capture available in your edition. Do not rewrite the entries manually.</p>
+<h2>Preserve the raw DBeaver workspace</h2>
+<p>DBeaver documents the default Windows workspace root as:</p>
+<pre><code class="language-text">%APPDATA%\DBeaverData\
+</code></pre>
+<p>with the active workspace normally under:</p>
+<pre><code class="language-text">%APPDATA%\DBeaverData\workspace6\
+</code></pre>
+<p>[export reference: cite | turn314288view2]</p>
+<p>After first capturing anything visible in Query Manager, preserve a complete copy of:</p>
+<pre><code class="language-text">%APPDATA%\DBeaverData\workspace6\
+</code></pre>
+<p>Pay particular attention to:</p>
+<pre><code class="language-text">workspace6\.metadata\.log
+workspace6\.metadata\dbeaver-debug.log
+workspace6\.metadata\dbeaver-debug*.log
+workspace6\General\Scripts\
+</code></pre>
+<p>Also inspect:</p>
+<pre><code class="language-text">Window
+→ Preferences
+→ Query Manager
+→ SQL History Database
+</code></pre>
+<p>If a <code>qmdb</code> path is shown, preserve the complete database file and related files without opening, modifying, or converting them. DBeaver identifies the <code>qmdb</code> H2 database as the store containing logged queries, execution times, and related metadata. [export reference: cite | turn314288view0]</p>
+<p>DBeaver’s standard runtime logs are under the workspace <code>.metadata</code> directory. Its debug log is size-limited and a new file is generated when DBeaver restarts, so copying all current and rotated log files now is important. The application also provides <strong>Help → Collect Diagnostic info</strong>, which should be saved as supplemental evidence. [export reference: cite | turn314288view1]</p>
+<p>Do not treat ordinary DBeaver error logs as equivalent to the complete SQL execution transcript. They are supplemental unless they actually contain the SQL, timestamp, connection, and outcome needed by the auditor.</p>
+<h2>Preserve PostgreSQL server logs</h2>
+<p>Locate and copy the existing PostgreSQL logs covering the complete execution window. Do not change logging settings and then represent newly generated logs as historical evidence.</p>
+<p>If the log location is unknown, these read-only commands can identify the current configuration:</p>
+<pre><code class="language-sql">SHOW data_directory;
+SHOW log_directory;
+SHOW log_filename;
+SHOW log_destination;
+SHOW logging_collector;
+SHOW log_statement;
+SHOW log_min_duration_statement;
+SHOW log_min_error_statement;
+SHOW log_line_prefix;
+SHOW log_timezone;
+</code></pre>
+<p>Label their output clearly as <strong>post-chain evidence-location/configuration collection</strong>, not as contemporaneous execution-environment evidence.</p>
+<p>Copy the full original log files for the relevant dates, together with:</p>
+<pre><code class="language-text">postgresql.conf
+postgresql.auto.conf
+PostgreSQL service configuration
+file creation/modification timestamps
+</code></pre>
+<p>Calculate SHA-256 for every copied file.</p>
+<p>Depending on the logging configuration, PostgreSQL logs may preserve timestamps, user, database, process ID, session ID, transaction ID, SQLSTATE, messages, query text, application name, and other session information. PostgreSQL recommends including process or session identifiers in the log prefix so related statements and duration messages can be correlated. Its CSV log format can carry the session and query metadata needed for a bounded equivalence review. [export reference: cite | turn314288view3]</p>
+<p>The actual configuration matters. PostgreSQL’s default <code>log_statement</code> setting is <code>none</code>, so the existence of useful historical statement logs must be verified rather than assumed. Error statements may still exist depending on <code>log_min_error_statement</code> and related settings. [export reference: cite | turn314288view3]</p>
+<h2>Locate backup or restore-checkpoint evidence</h2>
+<p>Search the system and any backup location for contemporaneous artifacts such as:</p>
+<pre><code class="language-text">*.backup
+*.dump
+*.tar
+pg_dump output
+DBeaver backup task records
+PowerShell or command-shell output
+Windows Task Scheduler history
+backup-software logs
+cloud-sync version history
+file-system snapshots
+</code></pre>
+<p>Preserve the original file, its timestamps, full path, size, and SHA-256.</p>
+<p>A backup file created now does not remediate the historical requirement. The evidence must demonstrate that a backup or approved restore checkpoint existed <strong>before Program 220</strong>. If no such evidence exists, state that plainly.</p>
+<h2>Preserve the current ChatGPT conversation as supplemental checkpoint evidence</h2>
+<p>This conversation is contemporaneous with:</p>
+<ul>
+<li>every reported runtime failure;</li>
+<li>each stop-and-rollback decision;</li>
+<li>every bounded hotfix;</li>
+<li>Recovery 222A authorization;</li>
+<li>each supplied checkpoint result;</li>
+<li>each release decision for the next program.</li>
+</ul>
+<p>A native ChatGPT data export may therefore materially support the missing <strong>checkpoint review and release-decision</strong> evidence, although it cannot by itself prove SQL execution, process exit status, or database commit. OpenAI’s official export process is available under <strong>Settings → Data Controls → Export data</strong>, and the downloaded ZIP includes chat history and relevant account data. [export reference: cite | turn671927search0]</p>
+<p>Preserve:</p>
+<pre><code class="language-text">the original ChatGPT export ZIP
+conversations.json or numbered conversation JSON files
+the specific M2.12 conversation record
+original export email timestamp
+ZIP size and SHA-256
+</code></pre>
+<p>Do not replace the native export with a rewritten summary. The existing 32-step chronology remains useful as an index, but the native timestamped conversation is stronger supplemental evidence.</p>
+<h2>Recommended remediation evidence structure</h2>
+<pre><code class="language-text">M2_12_PROCESS_EVIDENCE_REMEDIATION_R1/
+├── 00_PRESERVATION_RECORD/
+│   ├── preservation_timestamp.txt
+│   ├── source_device_and_user.txt
+│   └── SHA256SUMS.txt
+├── 01_DBEAVER_QUERY_MANAGER/
+│   ├── raw_qmdb/
+│   ├── query_manager_exports/
+│   ├── screenshots/
+│   └── query_manager_settings/
+├── 02_DBEAVER_WORKSPACE_AND_LOGS/
+│   ├── workspace6_raw_copy/
+│   ├── error_logs/
+│   └── diagnostic_info/
+├── 03_POSTGRESQL_SERVER_LOGS/
+│   ├── original_logs/
+│   ├── logging_configuration/
+│   └── service_configuration/
+├── 04_BACKUP_RESTORE_EVIDENCE/
+├── 05_CHAT_CHECKPOINT_RELEASE_EVIDENCE/
+│   ├── original_chatgpt_export/
+│   └── m2_12_conversation_extract/
+├── 06_PROGRAM_PROCESS_MAPPING/
+│   ├── program_execution_equivalence_matrix.csv
+│   ├── recovery_222a_equivalence_matrix.csv
+│   └── checkpoint_release_matrix.csv
+└── 99_PACKAGE_METADATA/
+    ├── MANIFEST.csv
+    ├── SHA256SUMS.txt
+    └── PACKAGE_INVENTORY.csv
+</code></pre>
+<h2>What the eventual equivalence matrix must establish</h2>
+<p>For every final successful program and Recovery 222A:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Governed step</td>
+<td><code>220</code>, <code>221</code>, <code>222A</code>, <code>222</code>, <code>223</code>, <code>224</code>, <code>225</code>, <code>226</code>, or <code>227</code></td>
+</tr>
+<tr>
+<td>Final source</td>
+<td>Exact physical filename and revision</td>
+</tr>
+<tr>
+<td>Source identity</td>
+<td>Exact SHA-256</td>
+</tr>
+<tr>
+<td>Execution time</td>
+<td>Contemporaneous timestamp</td>
+</tr>
+<tr>
+<td>Connection</td>
+<td>Database, server, user, and client</td>
+</tr>
+<tr>
+<td>Session</td>
+<td>Session ID, PID, connection ID, or equivalent</td>
+</tr>
+<tr>
+<td>SQL evidence</td>
+<td>Logged full script, statements, or defensible exact equivalence</td>
+</tr>
+<tr>
+<td>Outcome</td>
+<td>Success/error and client/server status</td>
+</tr>
+<tr>
+<td>Transaction</td>
+<td>Commit or rollback evidence</td>
+</tr>
+<tr>
+<td>Runtime output</td>
+<td>Existing governed CSV result</td>
+</tr>
+<tr>
+<td>Release</td>
+<td>Evidence that the checkpoint was reviewed before the next step</td>
+</tr>
+</tbody></table>
+<p>The current audit does not require perfect recovery of every failed-attempt transcript before considering a re-audit. It expressly prioritizes the final successful chain and Recovery 222A, while asking for failed-attempt records where they still exist. [export reference: filecite | turn33file0 | L104-L123]</p>
+<h2>Realistic disposition</h2>
+<p>The strongest possible remediation would combine:</p>
+<pre><code class="language-text">DBeaver Query Manager/raw qmdb
++ PostgreSQL server logs
++ DBeaver workspace and runtime logs
++ contemporaneous backup evidence
++ native ChatGPT conversation export
++ the already-approved runtime CSV evidence
+</code></pre>
+<p>That combination may allow the auditor to perform a <strong>bounded equivalence review</strong> rather than demand original console-text files in precisely the originally prescribed format. The audit explicitly allows DBeaver Query Manager, PostgreSQL server logs, and other contemporaneous immutable records to be submitted for such a review. [export reference: filecite | turn33file0 | L120-L123]</p>
+<p>If no contemporaneous DBeaver history, server logs, backup record, or equivalent process artifacts remain, the HOLD may not be fully resolvable without violating the prohibition against manufactured evidence. In that event, the accepted database result remains substantively reconciled, but formal audit-approved M2.12 acceptance and downstream packaging remain blocked.</p>
+<p><strong>The next action is to preserve the currently open DBeaver Query Manager evidence and the entire DBeaver workspace before another restart, then collect the PostgreSQL logs and native ChatGPT export.</strong></p>
+</div></article><article id="m-53e366df-465b-44ce-adf0-54e3cf54465f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C085-M00160 · 2026-08-12T10:45:53.015000-04:00 · active path</p><p class="note">Attachment references: module_M2_12_evidence(1).zip</p><div class="bubble"><p>I have preserved every query output here: what am I missing that the audit called out? i have said all along i am not saving logs, etc. we do not need to preserve logs.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

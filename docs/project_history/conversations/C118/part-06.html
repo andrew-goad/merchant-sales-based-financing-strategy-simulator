@@ -1,0 +1,1291 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 3 — part 06 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 3 — part 06</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-05.html">Previous part</a><a href="part-07.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-538eb794-c161-446d-8a71-7899ec761cba" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00095 · 2026-09-03T23:01:57.415437-04:00 · active path</p><div class="bubble"><p>Correct — I should have provided it.</p>
+<p>Create a second calculated column on <code>DimServicingQueue</code> for the full business-facing wording:</p>
+<pre><code class="language-DAX">P04 Servicing Queue Full Label =
+VAR _Value =
+    UPPER (
+        TRIM (
+            COALESCE (
+                &#39;DimServicingQueue&#39;[servicing_queue_code],
+                &quot;&quot;
+            )
+        )
+    )
+VAR _Fallback =
+    SUBSTITUTE ( LOWER ( _Value ), &quot;_&quot;, &quot; &quot; )
+RETURN
+    SWITCH (
+        _Value,
+        &quot;&quot;, BLANK (),
+        &quot;NO_SERVICING_REQUIRED&quot;, &quot;No servicing required&quot;,
+        &quot;ACTIVE_REASSESSMENT&quot;, &quot;Active reassessment&quot;,
+        &quot;GOVERNANCE_REVIEW_HOLD&quot;, &quot;Governance review hold&quot;,
+        UPPER ( LEFT ( _Fallback, 1 ) )
+            &amp; MID ( _Fallback, 2, LEN ( _Fallback ) )
+    )
+</code></pre>
+<p>Then use the two columns for different purposes:</p>
+<ul>
+<li><p><strong>Y-axis:</strong> <code>DimServicingQueue[P04 Servicing Queue Label]</code></p>
+<ul>
+<li>No servicing</li>
+<li>Reassessment</li>
+<li>Review hold</li>
+</ul>
+</li>
+<li><p><strong>Tooltip:</strong> <code>DimServicingQueue[P04 Servicing Queue Full Label]</code></p>
+<ul>
+<li>No servicing required</li>
+<li>Active reassessment</li>
+<li>Governance review hold</li>
+</ul>
+</li>
+</ul>
+<p>That keeps the axis compact while preserving the full operational meaning on hover.</p>
+</div></article><article id="m-0becfdc2-862c-4ff9-8ec5-69385f62627c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00096 · 2026-09-03T23:08:52.675000-04:00 · active path</p><div class="bubble"><p>The full label cannot be added to a tooltip. we need to create a measure.</p>
+</div></article><article id="m-dfc16854-b2df-4556-9b3a-57838b581fa5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00097 · 2026-09-03T23:08:59.557720-04:00 · active path</p><div class="bubble"><p>Correct. For a tooltip field well, use a <strong>measure</strong>, not the calculated column.</p>
+<p>Create this in <code>R1Measures</code> and place it in the single:</p>
+<pre><code class="language-text">P04 | Servicing &amp; Exceptions
+</code></pre>
+<p>folder:</p>
+<pre><code class="language-DAX">R26 P04 Servicing Queue Tooltip =
+VAR _Queue =
+    SELECTEDVALUE (
+        &#39;DimServicingQueue&#39;[servicing_queue_code]
+    )
+
+VAR _Fallback =
+    SUBSTITUTE (
+        LOWER ( _Queue ),
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+
+RETURN
+    SWITCH (
+        _Queue,
+
+        &quot;NO_SERVICING_REQUIRED&quot;,
+            &quot;No servicing required&quot;,
+
+        &quot;ACTIVE_REASSESSMENT&quot;,
+            &quot;Active reassessment&quot;,
+
+        &quot;GOVERNANCE_REVIEW_HOLD&quot;,
+            &quot;Governance review hold&quot;,
+
+        IF (
+            ISBLANK ( _Queue ),
+            BLANK (),
+            UPPER ( LEFT ( _Fallback, 1 ) )
+                &amp; MID (
+                    _Fallback,
+                    2,
+                    LEN ( _Fallback )
+                )
+        )
+    )
+</code></pre>
+<p>Then use:</p>
+<ul>
+<li><strong>Y-axis:</strong> <code>DimServicingQueue[P04 Servicing Queue Label]</code></li>
+<li><strong>Tooltip:</strong> <code>[R26 P04 Servicing Queue Tooltip]</code></li>
+</ul>
+<p>I would also keep the other two tooltip fields we established:</p>
+<pre><code class="language-text">R26 P04 Servicing Exposure
+R26 P04 Servicing Burden by Queue
+</code></pre>
+<p>So the final Servicing disposition tooltip stack is:</p>
+<pre><code class="language-text">Servicing queue
+Certified exposure
+Servicing burden
+</code></pre>
+<p>with the first value coming from <code>[R26 P04 Servicing Queue Tooltip]</code>.</p>
+</div></article><article id="m-0fb4c96f-3415-46c3-8afd-a263d2476ec4" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00098 · 2026-09-04T00:19:24.403000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 6bd05315-f0fd-4fce-8413-b80eca80f343.png</p><div class="bubble"><p>thoughts. one thing that seems to stick out to me is servicing burden. that 17 just sticks out like what is this and the user has no context.  also, i need alt text please for title/kpi/tables/charts</p>
+</div></article><article id="m-c2f8b3d6-3491-4f24-9a6d-93ceef9552d1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00099 · 2026-09-04T00:19:27.607898-04:00 · active path</p><div class="bubble"><p>Yes. The page is now telling the intended P04 story well. The <strong>99 / 4 endpoint split</strong>, <strong>1 / 3 servicing disposition</strong>, four-account workbench, and downstream certification detail form a coherent progression.</p>
+<p>I agree completely about <strong>Servicing burden = 17</strong>. As presented, it is the weakest KPI because the reader has no natural unit of interpretation. The source defines it as <code>servicing_burden_units</code>, and the queue definitions themselves carry burden-unit weights, so 17 is a governed workload index—not 17 accounts, actions, cases, or dollars. [export reference: filecite | turn130file10 | L630-L635]</p>
+<h2>I would change “Servicing burden”</h2>
+<p>I would <strong>not remove the metric</strong>, because it adds something genuinely different: operational workload intensity.</p>
+<p>Rename the visible KPI:</p>
+<blockquote>
+<p><strong>Servicing workload</strong></p>
+</blockquote>
+<p>and show:</p>
+<blockquote>
+<p><strong>17 units</strong></p>
+</blockquote>
+<p>rather than simply <code>17</code>.</p>
+<p>That immediately makes it interpretable as an index/weighted workload measure rather than a count.</p>
+<p>If the card lets you use a subtitle, add:</p>
+<blockquote>
+<p><strong>Weighted workload</strong></p>
+</blockquote>
+<p>So visually:</p>
+<p><strong>Servicing workload</strong><br><strong>17 units</strong><br><em>Weighted workload</em></p>
+<p>I would also make the tooltip explanatory:</p>
+<blockquote>
+<p><strong>Weighted servicing workload based on the governed burden assigned to each endpoint servicing queue.</strong></p>
+</blockquote>
+<p>This is defensible because <code>DimServicingQueue</code> contains an explicit <code>burden_units</code> field alongside queue rank and manual-review status. [export reference: filecite | turn132file1 | L26-L32]</p>
+<p>I prefer this over replacing it with another KPI. P04 already has counts, exposure, active servicing, holds, certification, and exceptions. Workload adds a different management dimension.</p>
+<h3>One other thing I caught</h3>
+<p>Your screenshot shows:</p>
+<blockquote>
+<p><strong>Attention exposure: $0.00</strong></p>
+</blockquote>
+<p>while the four workbench rows clearly contain positive attention exposures totaling <strong>$7,823.28</strong>.</p>
+<p>That KPI is therefore <strong>not correct yet</strong>. Do not sign off P04 with <code>$0.00</code>. The row-level values demonstrate that the underlying successor data is there; the page-level aggregation measure is losing context. We should correct <code>R26 P04 Attention Exposure</code> next.</p>
+<p>Everything else visible is directionally coherent.</p>
+<hr>
+<h1>P04 alt text</h1>
+<p>I would use static purpose-oriented alt text for most visuals rather than mechanically reading every visible value. For the KPI stack, a dynamic summary is worthwhile.</p>
+<h3>Page title / introductory text</h3>
+<blockquote>
+<p><strong>Merchant Servicing and Exceptions. Endpoint operational view of funded synthetic accounts requiring attention, including monitoring posture, servicing disposition, intervention, payment reconciliation, and certification outcomes.</strong></p>
+</blockquote>
+<h3>Scenario slicer</h3>
+<blockquote>
+<p><strong>Scenario selector. Filters the P04 servicing and exceptions view between governed synthetic scenarios.</strong></p>
+</blockquote>
+<h3>KPI stack</h3>
+<p>I recommend a dynamic measure because these values change with Scenario. Create <code>R26 P04 KPI Alt Text</code> in your single P04 measures folder:</p>
+<pre><code class="language-DAX">R26 P04 KPI Alt Text =
+&quot;Operational summary. &quot;
+    &amp; FORMAT (
+        COALESCE ( [R26 P04 Requiring Attention], 0 ),
+        &quot;0&quot;
+    )
+    &amp; &quot; funded accounts require attention, representing &quot;
+    &amp; FORMAT (
+        COALESCE ( [R26 P04 Attention Exposure], 0 ),
+        &quot;$#,0.00&quot;
+    )
+    &amp; &quot; in attention exposure. &quot;
+    &amp; FORMAT (
+        COALESCE ( [R26 P04 Active Servicing], 0 ),
+        &quot;0&quot;
+    )
+    &amp; &quot; accounts are in active servicing and &quot;
+    &amp; FORMAT (
+        COALESCE ( [R26 P04 Review Holds], 0 ),
+        &quot;0&quot;
+    )
+    &amp; &quot; are on review hold. Certified exposure is &quot;
+    &amp; FORMAT (
+        COALESCE ( [R26 P04 Certified Exposure], 0 ),
+        &quot;$#,0.00&quot;
+    )
+    &amp; &quot;. Weighted servicing workload is &quot;
+    &amp; FORMAT (
+        COALESCE ( [R26 P04 Servicing Burden], 0 ),
+        &quot;0.##&quot;
+    )
+    &amp; &quot; units. Unresolved exceptions: &quot;
+    &amp; FORMAT (
+        COALESCE ( [R26 P04 Unresolved Exceptions], 0 ),
+        &quot;0&quot;
+    )
+    &amp; &quot;.&quot;
+</code></pre>
+<p>Bind the KPI card/container alt text to that measure.</p>
+<p>Once Attention Exposure is corrected, your current Baseline result should read approximately:</p>
+<blockquote>
+<p>Operational summary. 4 funded accounts require attention, representing $7,823.28 in attention exposure. 1 account is in active servicing and 3 are on review hold. Certified exposure is $6,061.03. Weighted servicing workload is 17 units. Unresolved exceptions: 0.</p>
+</blockquote>
+<p>That is much more informative than six independent card labels to a screen-reader user.</p>
+<h3>Endpoint monitoring posture</h3>
+<blockquote>
+<p><strong>Endpoint monitoring posture. Shows funded-account counts by governed monitoring status at the November 22, 2026 synthetic endpoint, from dormant and severe shortfall through paid off.</strong></p>
+</blockquote>
+<p>I would keep this static. The chart&#39;s categories and values themselves remain accessible.</p>
+<h3>Servicing disposition</h3>
+<blockquote>
+<p><strong>Servicing disposition. Shows funded-account counts by governed endpoint servicing queue, including reassessment and review hold. Tooltips provide the full queue description, certified exposure, and weighted servicing workload.</strong></p>
+</blockquote>
+<p>This nicely explains why the abbreviated axis labels are intentional.</p>
+<h3>Account attention workbench</h3>
+<blockquote>
+<p><strong>Account attention workbench. Lists funded accounts requiring operational attention with endpoint monitoring status, remittance pace, attention exposure, recommended intervention, operational setup state, servicing execution state, and final endpoint state.</strong></p>
+</blockquote>
+<p>That captures the M2.5 → M2.6 → M2.7 → M2.8 → M2.10 progression without reading every row aloud.</p>
+<h3>Payment &amp; certification detail</h3>
+<blockquote>
+<p><strong>Payment and certification detail. Shows servicing execution, payment-event activity, processed payments, return and retry activity, reconciliation outcome, certification date, and certified exposure for funded accounts requiring attention.</strong></p>
+</blockquote>
+<p>Once we set interactions so a selected workbench row filters this table, I would slightly strengthen it to:</p>
+<blockquote>
+<p><strong>Payment and certification detail for the selected attention account. Shows servicing execution, payment-event activity, processed payments, return and retry activity, reconciliation outcome, certification date, and certified exposure.</strong></p>
+</blockquote>
+<p>Use the second version <strong>only if selection is actually required/meaningful</strong>. Your current screenshot shows all four rows simultaneously, so the first version is presently more accurate.</p>
+<hr>
+<h2>Where I think P04 stands visually</h2>
+<p>The page hierarchy is much stronger now than the predecessor version. In particular:</p>
+<p><strong>Endpoint monitoring posture</strong> answers <em>who needs attention?</em><br><strong>Servicing disposition</strong> answers <em>where are those accounts operationally?</em><br><strong>Account attention workbench</strong> answers <em>which accounts, why, and what happened through the servicing chain?</em><br><strong>Payment &amp; certification detail</strong> answers <em>did the downstream payment/control state reconcile and certify?</em></p>
+<p>That is a legitimate client-facing operating view rather than a collection of servicing metrics.</p>
+<p>Before we move into final formatting/evidence, I would make only two substantive changes:</p>
+<ol>
+<li><strong>Rename <code>Servicing burden</code> → <code>Servicing workload</code> and display <code>17 units</code>.</strong></li>
+<li><strong>Fix Attention exposure</strong>, because <code>$0.00</code> is currently inconsistent with the four underlying workbench rows and should be <strong>$7,823.28</strong> in the displayed Baseline state.</li>
+</ol>
+<p>The second one is the only actual semantic defect I see in this screenshot.</p>
+</div></article><article id="m-716f750c-d4f7-4e6f-abf5-8147df143e8c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00100 · 2026-09-04T00:22:48.687000-04:00 · active path</p><div class="bubble"><p>but what is a unit. even knowing it is 17 weighted units. i have no context anywhere else to know what that relates to. there is also no other part of the entire power bi presentation where we dive into that. it just seems like an out of left field metric thrown in.</p>
+</div></article><article id="m-a34aad40-f2e0-4fc2-ab4a-9024dda9a91f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00101 · 2026-09-04T00:22:51.651452-04:00 · active path</p><div class="bubble"><p>I agree. <strong>Remove it from the KPI stack.</strong></p>
+<p>My attempt to rescue it as “Servicing workload — 17 units” doesn&#39;t solve the underlying presentation problem. A client seeing <strong>17 units</strong> still reasonably asks: <em>17 units of what? How is that calculated? Is 17 high or low? What should I do with it?</em> P04 provides none of that context.</p>
+<p>The source metric is legitimate, but <strong>a legitimate model metric is not automatically a useful executive KPI</strong>. <code>servicing_burden_units</code> is an internally governed weighted construct, with burden weights attached to servicing queues. [export reference: filecite | turn132file1 | L26-L32] Without a benchmark, scale, trend, target, or comparative interpretation elsewhere in the report, putting <code>17</code> prominently in the KPI rail makes the page less intuitive.</p>
+<h3>What should replace it?</h3>
+<p>I would <strong>not force a replacement just to preserve seven KPIs</strong>. Six strong, immediately interpretable KPIs are better:</p>
+<blockquote>
+<p><strong>Requiring attention</strong> — 4<br><strong>Attention exposure</strong> — $7.82K<br><strong>Active servicing</strong> — 1<br><strong>Review holds</strong> — 3<br><strong>Certified exposure</strong> — $6.06K<br><strong>Unresolved exceptions</strong> — 0</p>
+</blockquote>
+<p>Those form a coherent operational story:</p>
+<p><strong>How many need attention? → How much exposure? → What&#39;s actively being worked? → What&#39;s held for review? → What&#39;s the certified residual exposure? → Is anything unresolved?</strong></p>
+<p>That is much stronger.</p>
+<p>I would retain <code>R26 P04 Servicing Burden</code> and <code>R26 P04 Servicing Burden by Queue</code> <strong>in the semantic model</strong> because they preserve the accepted M2.10 metric and could be useful in later technical analysis. But I would remove servicing burden from:</p>
+<ul>
+<li>the visible KPI stack;</li>
+<li>the Servicing disposition tooltip;</li>
+<li>the P04 KPI alt text.</li>
+</ul>
+<p>For the <strong>Servicing disposition tooltip</strong>, I&#39;d now use just:</p>
+<blockquote>
+<p><strong>Full servicing queue</strong><br><strong>Certified exposure</strong></p>
+</blockquote>
+<p>That&#39;s enough.</p>
+<p>And the revised KPI alt text should be:</p>
+<pre><code class="language-DAX">R26 P04 KPI Alt Text =
+&quot;Operational summary. &quot;
+    &amp; FORMAT (
+        COALESCE ( [R26 P04 Requiring Attention], 0 ),
+        &quot;0&quot;
+    )
+    &amp; &quot; funded accounts require attention, representing &quot;
+    &amp; FORMAT (
+        COALESCE ( [R26 P04 Attention Exposure], 0 ),
+        &quot;$#,0.00&quot;
+    )
+    &amp; &quot; in attention exposure. &quot;
+    &amp; FORMAT (
+        COALESCE ( [R26 P04 Active Servicing], 0 ),
+        &quot;0&quot;
+    )
+    &amp; &quot; accounts are in active servicing and &quot;
+    &amp; FORMAT (
+        COALESCE ( [R26 P04 Review Holds], 0 ),
+        &quot;0&quot;
+    )
+    &amp; &quot; are on review hold. Certified exposure is &quot;
+    &amp; FORMAT (
+        COALESCE ( [R26 P04 Certified Exposure], 0 ),
+        &quot;$#,0.00&quot;
+    )
+    &amp; &quot;. Unresolved exceptions: &quot;
+    &amp; FORMAT (
+        COALESCE ( [R26 P04 Unresolved Exceptions], 0 ),
+        &quot;0&quot;
+    )
+    &amp; &quot;.&quot;
+</code></pre>
+<p>So yes: <strong>your instinct is correct. Drop servicing burden from the visible P04 story rather than trying to explain an isolated metric the report has no reason to teach the user how to interpret.</strong></p>
+<p>We should still fix the <code>$0.00</code> Attention exposure next; that&#39;s a genuine calculation/context issue.</p>
+</div></article><article id="m-11c994b4-56a8-43b3-90b9-bdfd1a2216fa" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00102 · 2026-09-04T00:25:28.377000-04:00 · active path</p><div class="bubble"><p>why is my KPI attention exposure = $0?</p>
+</div></article><article id="m-ee784275-9736-4b54-ba16-6efd67aa7fd1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00103 · 2026-09-04T00:25:34.278292-04:00 · active path</p><div class="bubble"><p>The most likely reason is the same issue we just found with the servicing chart: <strong>the KPI card is probably still bound to the old predecessor <code>P04 Attention Exposure</code> measure, not the new <code>R26 P04 Attention Exposure</code>.</strong></p>
+<p>Your own page proves the successor calculation is working at row level. The workbench shows:</p>
+<ul>
+<li>000098: <strong>$1,720.89</strong></li>
+<li>000112: <strong>$763.89</strong></li>
+<li>000312: <strong>$639.13</strong></li>
+<li>000749: <strong>$4,699.37</strong></li>
+</ul>
+<p>Those sum to <strong>$7,823.28</strong>. So the R26 attention population and exposure values are present and coherent.</p>
+<p>Select the <strong>Attention exposure</strong> KPI card and inspect its Value field. It should be exactly:</p>
+<pre><code class="language-text">R1Measures[R26 P04 Attention Exposure]
+</code></pre>
+<p>not:</p>
+<pre><code class="language-text">P04 Attention Exposure
+</code></pre>
+<p>or another predecessor measure.</p>
+<p>This is especially plausible because the P04 page began as an existing predecessor page, and we are rebinding visuals in place. We already found exactly that problem on <strong>Servicing disposition</strong>, where the old measure produced the nonsensical <code>44 / 44 / 44</code> result until the visual was pointed to the R26 measure.</p>
+<p>If the card <strong>already is</strong> using <code>[R26 P04 Attention Exposure]</code>, then we have a measure-total-context defect and I will correct the DAX. But first check the card binding; based on the evidence visible on your page, I strongly suspect it is simply still using the old measure.</p>
+<p>The expected Baseline KPI is:</p>
+<blockquote>
+<p><strong>Attention exposure: $7.82K</strong><br>exact value <strong>$7,823.28</strong>.</p>
+</blockquote>
+</div></article><article id="m-385ab234-f062-422f-a1a2-3d2780c9b611" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00104 · 2026-09-04T00:26:55.094000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: c61621d0-3cad-474d-8e83-e1d1da7c8d43.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-bccf2057-8175-42f3-a795-028a80ba869d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00105 · 2026-09-04T00:26:58.092650-04:00 · active path</p><div class="bubble"><p>Yes—the screenshot confirms the card is already using <strong><code>R1Measures[R26 P04 Attention Exposure]</code></strong>. So my binding hypothesis was wrong.</p>
+<p>The defect is in the <strong>measure&#39;s total-context logic</strong>.</p>
+<p>The workbench proves the correct Baseline population and values:</p>
+<ul>
+<li>000098 — $1,720.89</li>
+<li>000112 — $763.89</li>
+<li>000312 — $639.13</li>
+<li>000749 — $4,699.37</li>
+<li><strong>Total — $7,823.28</strong></li>
+</ul>
+<p>The issue in the DAX I supplied is that it iterates <code>R1DimApplicationScenario[ApplicationScenarioKey]</code>, but then evaluates the endpoint monitoring row through a combination of existing relationship context plus <code>TREATAS</code>. At individual workbench-row grain that resolves correctly; at portfolio/card grain it is not reliably isolating each R1 monitoring path before summing.</p>
+<p>We don&#39;t need that complexity. The attention exposure is directly defined by the <strong>endpoint rows of <code>R1FactDailyMonitoring</code> whose governed endpoint monitoring status is adverse</strong>.</p>
+<p>Replace <code>R26 P04 Attention Exposure</code> with this:</p>
+<pre><code class="language-DAX">R26 P04 Attention Exposure =
+VAR _EndpointDate =
+    [R1 P01 Evidence Max Date]
+
+RETURN
+    IF (
+        ISBLANK ( _EndpointDate ),
+        BLANK (),
+        COALESCE (
+            CALCULATE (
+                SUM (
+                    &#39;R1FactDailyMonitoring&#39;[receivable_balance_after]
+                ),
+
+                REMOVEFILTERS (
+                    &#39;R1FactDailyMonitoring&#39;[monitoring_date]
+                ),
+
+                &#39;R1FactDailyMonitoring&#39;[monitoring_date]
+                    = _EndpointDate,
+
+                &#39;R1FactDailyMonitoring&#39;[monitoring_status_code]
+                    IN {
+                        &quot;UNDERPERFORMING&quot;,
+                        &quot;SEVERE_SHORTFALL&quot;,
+                        &quot;DORMANT_NO_REMITTANCE&quot;
+                    }
+            ),
+            0
+        )
+    )
+</code></pre>
+<h3>Why this is better</h3>
+<p>This calculation now says exactly what the KPI means:</p>
+<blockquote>
+<p><strong>At the governed endpoint date, sum remaining receivable for funded paths in an adverse monitoring state.</strong></p>
+</blockquote>
+<p>There is no need to iterate the application-scenario dimension because <code>R1FactDailyMonitoring</code> itself is already at exact application-scenario × monitoring-day grain, and the endpoint date gives us one row per funded path.</p>
+<p>It also preserves the Scenario filter naturally.</p>
+<h3>Expected regression</h3>
+<p>After replacing the measure:</p>
+<p><strong>Baseline</strong></p>
+<pre><code class="language-text">Requiring attention     4
+Attention exposure      $7,823.28
+</code></pre>
+<p><strong>Recession Energy</strong></p>
+<pre><code class="language-text">Requiring attention     0
+Attention exposure      $0.00
+</code></pre>
+<p>And the four Baseline workbench values should remain exactly unchanged.</p>
+<p>This is a worthwhile correction to the presentation-layer DAX handoff as well: <strong>the original <code>R26 P04 Attention Exposure</code> formula I supplied should be considered superseded by this version.</strong></p>
+</div></article><article id="m-2b8ca852-92e4-441b-b48f-856b4c33a024" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00106 · 2026-09-04T00:35:09.596000-04:00 · active path</p><div class="bubble"><p>ok, last thing is alt text and then we can capture P04 evidence. please advise on alt text</p>
+</div></article><article id="m-a4366157-0acd-4a76-ac91-e23bcaebcb7c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00107 · 2026-09-04T00:35:12.673575-04:00 · active path</p><div class="bubble"><p>Yes. With Attention exposure corrected and Servicing burden removed from the visible story, I would make this the <strong>final P04 accessibility pass</strong>. No additional semantic work is needed for alt text.</p>
+<p>For this page, I recommend mostly <strong>static purpose-oriented alt text</strong>, with a dynamic measure only for the KPI stack. That avoids making a screen reader repeat entire tables while still explaining what each visual represents.</p>
+<table>
+<thead>
+<tr>
+<th>Visual</th>
+<th>Final alt text</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Page title / introductory text</strong></td>
+<td><code>Merchant Servicing and Exceptions. Endpoint operational view of funded synthetic accounts, showing monitoring posture, accounts requiring attention, governed servicing disposition, intervention, payment reconciliation, and certification outcomes.</code></td>
+</tr>
+<tr>
+<td><strong>Scenario slicer</strong></td>
+<td><code>Scenario selector. Filters the servicing and exceptions page to the selected governed synthetic scenario.</code></td>
+</tr>
+<tr>
+<td><strong>KPI stack</strong></td>
+<td>Use the <strong>dynamic measure below</strong>.</td>
+</tr>
+<tr>
+<td><strong>Servicing disposition</strong></td>
+<td><code>Servicing disposition. Shows funded-account counts by governed endpoint servicing queue. Tooltips provide the full servicing-queue description and certified exposure.</code></td>
+</tr>
+<tr>
+<td><strong>Endpoint monitoring posture</strong></td>
+<td><code>Endpoint monitoring posture. Shows funded-account counts by governed monitoring status at the November 22, 2026 synthetic endpoint, from dormant and severe shortfall through paid off.</code></td>
+</tr>
+<tr>
+<td><strong>Account attention workbench</strong></td>
+<td><code>Account attention workbench. Lists funded accounts requiring operational attention with endpoint monitoring status, remittance pace, attention exposure, recommended intervention, operational setup state, servicing execution state, and final endpoint state.</code></td>
+</tr>
+<tr>
+<td><strong>Payment &amp; certification detail</strong></td>
+<td><code>Payment and certification detail. Shows servicing execution, payment-event activity, processed payments, return and retry activity, reconciliation outcome, certification date, and certified exposure for funded accounts requiring attention.</code></td>
+</tr>
+</tbody></table>
+<h3>KPI-stack dynamic alt text</h3>
+<p>Create this measure in:</p>
+<p><code>P04 | Servicing &amp; Exceptions</code></p>
+<pre><code class="language-DAX">R26 P04 KPI Alt Text =
+VAR _Attention =
+    COALESCE ( [R26 P04 Requiring Attention], 0 )
+
+VAR _AttentionExposure =
+    COALESCE ( [R26 P04 Attention Exposure], 0 )
+
+VAR _Active =
+    COALESCE ( [R26 P04 Active Servicing], 0 )
+
+VAR _Review =
+    COALESCE ( [R26 P04 Review Holds], 0 )
+
+VAR _CertifiedExposure =
+    COALESCE ( [R26 P04 Certified Exposure], 0 )
+
+VAR _Exceptions =
+    COALESCE ( [R26 P04 Unresolved Exceptions], 0 )
+
+RETURN
+    &quot;Operational summary. &quot;
+        &amp; FORMAT ( _Attention, &quot;0&quot; )
+        &amp; IF ( _Attention = 1, &quot; funded account requires &quot;, &quot; funded accounts require &quot; )
+        &amp; &quot;attention, representing &quot;
+        &amp; FORMAT ( _AttentionExposure, &quot;$#,0.00&quot; )
+        &amp; &quot; in attention exposure. &quot;
+        &amp; FORMAT ( _Active, &quot;0&quot; )
+        &amp; IF ( _Active = 1, &quot; account is &quot;, &quot; accounts are &quot; )
+        &amp; &quot;in active servicing, and &quot;
+        &amp; FORMAT ( _Review, &quot;0&quot; )
+        &amp; IF ( _Review = 1, &quot; account is &quot;, &quot; accounts are &quot; )
+        &amp; &quot;on review hold. Certified exposure is &quot;
+        &amp; FORMAT ( _CertifiedExposure, &quot;$#,0.00&quot; )
+        &amp; &quot;. Unresolved exceptions: &quot;
+        &amp; FORMAT ( _Exceptions, &quot;0&quot; )
+        &amp; &quot;.&quot;
+</code></pre>
+<p>For the current Baseline state, that should resolve to approximately:</p>
+<blockquote>
+<p>Operational summary. 4 funded accounts require attention, representing $7,823.28 in attention exposure. 1 account is in active servicing, and 3 accounts are on review hold. Certified exposure is $6,061.03. Unresolved exceptions: 0.</p>
+</blockquote>
+<p>Bind the KPI visual&#39;s <strong>Alt text → fx → Field value</strong> to <code>R26 P04 KPI Alt Text</code>.</p>
+<h3>A few deliberate choices</h3>
+<p>I would <strong>not</strong> put all four workbench rows into its alt text. The visual itself exposes the table content; the alt text should explain what the table is and how to interpret its columns.</p>
+<p>Likewise, don&#39;t enumerate all 99 paid-off and four severe-shortfall accounts in the Endpoint monitoring posture alt text. The chart communicates the current values; the alt text establishes what those values mean.</p>
+<p>For <strong>Servicing disposition</strong>, keep the full queue wording in its tooltip via <code>R26 P04 Servicing Queue Tooltip</code>, but the alt text does not need to repeat every queue. This preserves the clean short axis labels while retaining precise terminology on hover.</p>
+<h3>Recommended tab order</h3>
+<p>Since you&#39;re doing the final accessibility pass, I would use:</p>
+<ol>
+<li>Page title / introduction</li>
+<li>Scenario slicer</li>
+<li>KPI stack</li>
+<li>Endpoint monitoring posture</li>
+<li>Servicing disposition</li>
+<li>Account attention workbench</li>
+<li>Payment &amp; certification detail</li>
+<li>Footer/boundary text</li>
+</ol>
+<p>I slightly prefer <strong>Endpoint monitoring posture before Servicing disposition</strong> in keyboard order even though Servicing disposition is physically farther left. Semantically the story is:</p>
+<blockquote>
+<p><strong>What is the endpoint monitoring condition? → What servicing disposition resulted? → Which accounts require attention? → What happened operationally and through certification?</strong></p>
+</blockquote>
+<p>Once those alt texts and tab order are applied, <strong>P04 is ready for evidence capture and QA</strong>.</p>
+</div></article><article id="m-9193c4b6-1843-44d3-84bc-b2c0d24527e5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00108 · 2026-09-04T00:39:12.140000-04:00 · active path</p><div class="bubble"><p>we have not added alt text to slicers yet and probably shouldn&#39;t start now. that also goes for the footnote/run/source release/model version/observed source cutoff</p>
+</div></article><article id="m-0d921819-044f-4dc3-b659-88c21e7a8c8a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00109 · 2026-09-04T00:39:15.225981-04:00 · active path</p><div class="bubble"><p>Agreed. We should <strong>preserve the accessibility convention already established across P01–P03</strong>, rather than introducing a new standard on P04.</p>
+<p>So remove from my prior recommendation:</p>
+<ul>
+<li><strong>Scenario slicer alt text</strong> — do not add.</li>
+<li><strong>Run / Source release / Model version / Observed-source cutoff</strong> — do not add.</li>
+<li><strong>Temporal / Interpretation boundary text</strong> — do not add separate alt text.</li>
+</ul>
+<p>Those elements already contain their own readable text or native control labeling, and consistency across the report matters.</p>
+<h3>Final P04 alt-text scope</h3>
+<p>Add alt text only to these substantive visuals:</p>
+<ol>
+<li><p><strong>Title / introductory visual</strong></p>
+<blockquote>
+<p><code>Merchant Servicing and Exceptions. Endpoint operational view of funded synthetic accounts, showing monitoring posture, accounts requiring attention, governed servicing disposition, intervention, payment reconciliation, and certification outcomes.</code></p>
+</blockquote>
+</li>
+<li><p><strong>KPI stack</strong> — bind to the dynamic <code>R26 P04 KPI Alt Text</code> measure provided above.</p>
+</li>
+<li><p><strong>Endpoint monitoring posture</strong></p>
+<blockquote>
+<p><code>Endpoint monitoring posture. Shows funded-account counts by governed monitoring status at the November 22, 2026 synthetic endpoint, from dormant and severe shortfall through paid off.</code></p>
+</blockquote>
+</li>
+<li><p><strong>Servicing disposition</strong></p>
+<blockquote>
+<p><code>Servicing disposition. Shows funded-account counts by governed endpoint servicing queue. Tooltips provide the full servicing-queue description and certified exposure.</code></p>
+</blockquote>
+</li>
+<li><p><strong>Account attention workbench</strong></p>
+<blockquote>
+<p><code>Account attention workbench. Lists funded accounts requiring operational attention with endpoint monitoring status, remittance pace, attention exposure, recommended intervention, operational setup state, servicing execution state, and final endpoint state.</code></p>
+</blockquote>
+</li>
+<li><p><strong>Payment &amp; certification detail</strong></p>
+<blockquote>
+<p><code>Payment and certification detail. Shows servicing execution, payment-event activity, processed payments, return and retry activity, reconciliation outcome, certification date, and certified exposure for funded accounts requiring attention.</code></p>
+</blockquote>
+</li>
+</ol>
+<p>And <strong>nothing additional</strong> for the slicer, footer identity fields, or boundary text.</p>
+<p>That keeps P04 consistent with the accessibility treatment we&#39;ve established elsewhere rather than expanding scope at this stage.</p>
+</div></article><article id="m-d69b2f84-540d-40a0-8bb7-bae307f4e9f3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00110 · 2026-09-04T00:53:59.996000-04:00 · active path</p><div class="bubble"><p>ok, now i&#39;m about to capture P04 evidence. you mentioned a QA I was supposed to run. can you re-provide that?</p>
+</div></article><article id="m-8a3cb048-2270-439d-baee-010ebfa9f340" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00111 · 2026-09-04T00:54:03.000985-04:00 · active path</p><div class="bubble"><p>Yes. Use the <strong>P04 successor QA R1</strong> that I prepared with the presentation layer.</p>
+<p>Download the P04 successor QA DAX (historical reference: <code>sandbox:[session]/p04_presentation_layer/MSBF_R26_P04_PRESENTATION_QA_R1_20260903.dax</code>; referenced bytes not established here)</p>
+<p>In <strong>DAX Query View</strong>:</p>
+<ol>
+<li>Paste the complete query.</li>
+<li>Click <strong>Run only</strong>.</li>
+<li><strong>Do not click “Update model with changes.”</strong></li>
+<li>It produces <strong>7 result sets</strong>.</li>
+</ol>
+<p>Capture <strong>Result 1 through Result 7</strong>.</p>
+<h3>Expected controls</h3>
+<table>
+<thead>
+<tr>
+<th>Result</th>
+<th>Control</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>1</strong></td>
+<td>M2.6–M2.10 source populations</td>
+<td>Each of Intervention, Setup, Execution, Certification and Performance = <strong>130 rows / 130 unique ApplicationScenarioKeys</strong></td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td>M2.7 setup distribution</td>
+<td><strong>126</strong> no setup / <strong>3</strong> governance-review setup / <strong>1</strong> temporary-adjustment setup</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td>M2.8 execution distribution</td>
+<td><strong>126</strong> no execution / <strong>3</strong> review hold / <strong>1</strong> active temporary processing</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td>M2.9 certification distribution</td>
+<td><strong>126</strong> certified closed / <strong>3</strong> certified review hold / <strong>1</strong> reassessment-after-retry</td>
+</tr>
+<tr>
+<td><strong>5</strong></td>
+<td>M2.10 endpoint posture</td>
+<td><strong>126</strong> closed stable / <strong>3</strong> controlled review / <strong>1</strong> active reconciled; queue mapping should correspond appropriately</td>
+</tr>
+<tr>
+<td><strong>6</strong></td>
+<td>P04 page regression by scenario</td>
+<td>Baseline should show <strong>4 attention / $7,823.28 attention exposure / 1 active servicing / 3 review holds / $6,061.03 certified exposure / 0 unresolved exceptions</strong>. Recession Energy should show <strong>0 / $0 / 0 / 0 / $0 / 0</strong>.</td>
+</tr>
+<tr>
+<td><strong>7</strong></td>
+<td>Representative account-level chain</td>
+<td>Checks <strong>749, 098, 112, 312, and 264 Baseline</strong> across monitoring → intervention → setup → execution → endpoint → payment/reconciliation/certification</td>
+</tr>
+</tbody></table>
+<p>One update since I originally wrote the QA: <strong>Result 6 includes Servicing burden</strong>, because the query predates our decision to remove that metric from the visible P04 story. That&#39;s fine. Leave it in the QA—it remains a legitimate underlying M2.10 control. We simply aren&#39;t presenting it as an executive KPI.</p>
+<p>Also, the corrected <code>R26 P04 Attention Exposure</code> should now make Result 6 return <strong>$7,823.28 for Baseline</strong>. If it doesn&#39;t, stop before evidence capture.</p>
+<p>If all seven results pass, capture them, then capture the finished P04 page in:</p>
+<ul>
+<li><strong>Baseline</strong> — full page, showing the four attention accounts;</li>
+<li><strong>Recession Energy</strong> — demonstrating the zero-attention/no-servicing state;</li>
+<li><strong>749 Baseline</strong> — if useful through workbench selection to demonstrate the active-servicing/retry path;</li>
+<li><strong>one review-hold account</strong>, preferably <strong>098 Baseline</strong>, to demonstrate the governance-review path;</li>
+<li>representative <strong>Endpoint monitoring posture tooltip</strong>;</li>
+<li>representative <strong>Servicing disposition tooltip</strong>;</li>
+<li>alt-text binding and tab-order evidence.</li>
+</ul>
+<p>That will give us a strong P04 sign-off package without excessive screenshots.</p>
+</div></article><article id="m-9d70a30c-cb86-42e7-b269-cfad1a5eea84" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00112 · 2026-09-04T00:57:45.963000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 51dd0f32-1367-4819-a8c5-4628891ba8d2.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-722c7623-61ff-4f0c-a9e6-272b065f4178" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00113 · 2026-09-04T00:58:26.954697-04:00 · active path</p><div class="bubble"><p>The error is in <strong>Result 5 of the QA query</strong>, not in your model.</p>
+<p><code>R1FactPortfolioPerformance</code> does <strong>not</strong> contain an <code>unresolved_exception_count</code> column. The current canonical unresolved-exception logic is instead already defined by <code>R1 P01 Unresolved Exceptions</code>, which counts rows where <code>exception_incident_flag = &quot;t&quot;</code> and <code>exception_resolved_flag &lt;&gt; &quot;t&quot;</code>. [export reference: filecite | turn134file0 | L14-L25]</p>
+<p>So in the QA query, replace this line in <strong>Result 5</strong>:</p>
+<pre><code class="language-DAX">&quot;Unresolved exceptions&quot;,
+    SUM (
+        &#39;R1FactPortfolioPerformance&#39;[unresolved_exception_count]
+    )
+</code></pre>
+<p>with:</p>
+<pre><code class="language-DAX">&quot;Unresolved exceptions&quot;,
+    [R1 P01 Unresolved Exceptions]
+</code></pre>
+<p>That is the correct fix and is preferable to recreating the logic inside the QA.</p>
+<p>The corrected <strong>Result 5 block</strong> should be:</p>
+<pre><code class="language-DAX">// Result 5 — M2.10 endpoint posture and servicing queue.
+// Current R26 expected total:
+// 126 closed stable / 3 controlled review / 1 active reconciled.
+EVALUATE
+SUMMARIZECOLUMNS (
+    &#39;R1FactPortfolioPerformance&#39;[performance_tier_code],
+    &#39;R1FactPortfolioPerformance&#39;[servicing_queue_code],
+
+    &quot;Rows&quot;,
+        COUNTROWS (
+            &#39;R1FactPortfolioPerformance&#39;
+        ),
+
+    &quot;Certified exposure&quot;,
+        SUM (
+            &#39;R1FactPortfolioPerformance&#39;[certified_exposure_amount]
+        ),
+
+    &quot;Servicing burden&quot;,
+        SUM (
+            &#39;R1FactPortfolioPerformance&#39;[servicing_burden_units]
+        ),
+
+    &quot;Unresolved exceptions&quot;,
+        [R1 P01 Unresolved Exceptions]
+)
+ORDER BY
+    &#39;R1FactPortfolioPerformance&#39;[performance_tier_code],
+    &#39;R1FactPortfolioPerformance&#39;[servicing_queue_code]
+</code></pre>
+<p>This was my QA-handoff defect: I referenced a column that exists in some predecessor/endpoint structures but <strong>not in the R1 successor <code>R1FactPortfolioPerformance</code> table</strong>. The canonical register confirms that the R1 measure intentionally derives unresolved exceptions from the incident/resolved flags instead. [export reference: filecite | turn133file1 | L107-L118]</p>
+<p>Make that one replacement and rerun the full query. If another compile error appears, send it before changing anything else.</p>
+</div></article><article id="m-335d304c-f66d-4dff-b128-119b6cb6458a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00114 · 2026-09-04T01:10:57.388000-04:00 · active path</p><p class="note">15 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: P04_Endpoint_Monitoring_Posture_Tooltip_Evidence.png; P04_Baseline_Merchant_098_Filtered.png; P04_Baseline_Merchant_749_Filtered.png; P04_Recession_Energy_Full_Page.png; P04_Baseline_Full_Page.png; P04_Presentation_QA_Result_Set_07.png; P04_Presentation_QA_Result_Set_06.png; P04_Presentation_QA_Result_Set_05.png; P04_Presentation_QA_Result_Set_04.png; P04_Presentation_QA_Result_Set_03.png; P04_Presentation_QA_Result_Set_02.png; P04_Presentation_QA_Result_Set_01.png; P04_Tab_Order.png; P04_Alt_Text.png; P04_Servicing_Disposition_Tooltip_Evidence.png</p><div class="bubble"><p>P04 evidence for final review.</p>
+</div></article><article id="m-efa61c7a-b311-46bf-a31b-b5d34608adc5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00115 · 2026-09-04T01:11:03.836926-04:00 · active path</p><div class="bubble"><p>The P04 evidence is strong and the page is essentially ready for sign-off. The QA suite is clean, the visual story holds under both scenarios, the workbench-to-detail interaction works, and the successor servicing chain is now visible in a way that is much more useful than the original P04.</p>
+<p>I have <strong>one correction before I would freeze P04</strong>.</p>
+<p>Your <strong>Servicing disposition tooltip still contains <code>Servicing burden</code></strong>. In the evidence capture for Reassessment, it shows:</p>
+<blockquote>
+<p>Servicing queue: Reassessment<br>Accounts: 1<br>Full queue: Active reassessment<br>Certified exposure: $2,937.12<br><strong>Servicing burden: 2</strong></p>
+</blockquote>
+<p>We deliberately decided to remove that metric from the visible P04 story because a reader has no contextual basis for interpreting the unit. The same reasoning applies to the tooltip. Remove <code>[R26 P04 Servicing Burden by Queue]</code> from that tooltip. The final tooltip should contain only:</p>
+<blockquote>
+<p><strong>Servicing queue</strong><br><strong>Accounts</strong><br><strong>Full servicing queue</strong><br><strong>Certified exposure</strong></p>
+</blockquote>
+<p>Then recapture <strong>only that tooltip screenshot</strong>. You do not need to recreate the full-page or QA evidence.</p>
+<p>Everything else passes my review.</p>
+<p>The QA results are particularly clean:</p>
+<ul>
+<li><strong>Result 1:</strong> all five successor stages = <strong>130 rows / 130 unique keys</strong>.</li>
+<li><strong>Result 2:</strong> setup = <strong>126 no setup / 3 review required / 1 temporary adjustment ready</strong>.</li>
+<li><strong>Result 3:</strong> execution = <strong>126 none / 3 review hold / 1 active temporary processing</strong>.</li>
+<li><strong>Result 4:</strong> certification = <strong>126 closed / 3 review hold / 1 reassessment after retry</strong>, with the expected exposure split.</li>
+<li><strong>Result 5:</strong> M2.10 endpoint = <strong>126 closed stable / 3 controlled review / 1 active reconciled</strong>, correctly mapped to <strong>No servicing required / Governance review hold / Active reassessment</strong>.</li>
+<li><strong>Result 6:</strong> Baseline = <strong>4 attention / $7,823.28 / 1 active / 3 holds / $6,061.03 certified / 17 underlying burden / 0 unresolved</strong>; Recession Energy = zero across the operational exception measures.</li>
+<li><strong>Result 7:</strong> the representative account chain behaves correctly, including 264 as the paid-off/no-action control and 749 as the active temporary-processing/retry case.</li>
+</ul>
+<p>The full-page evidence also demonstrates the right scenario separation. Baseline has 103 endpoint paths—99 paid off plus four severe-shortfall attention accounts—while Recession Energy shows 27 paid-off paths and no attention population. The empty workbench/detail tables under Recession Energy are therefore useful evidence, not a display defect.</p>
+<p>The 098 and 749 captures are especially valuable because they prove the interaction behavior. Selecting 098 reduces Payment &amp; certification detail to the review-hold account; selecting 749 isolates the active-servicing path with seven payment events, $1,762.25 processed, one return/one retry, reconciliation after retry, and $2,937.12 certified exposure.</p>
+<p>The <strong>Endpoint monitoring posture tooltip</strong> is also good. For Severe shortfall it communicates four accounts, $7,823.28 exposure, and 85.6% average remittance pace. That is concise and interpretable.</p>
+<h3>Tab order</h3>
+<p>Your current order is acceptable:</p>
+<pre><code class="language-text">Title
+Scenario
+KPI stack
+Servicing disposition
+Endpoint monitoring posture
+Account attention workbench
+Payment &amp; certification detail
+footer text
+</code></pre>
+<p>I previously preferred Endpoint posture before Servicing disposition semantically, but I would <strong>not make you change it now</strong>. The current order follows the visual layout from left to right and remains coherent.</p>
+<h3>Accessibility</h3>
+<p>The KPI alt-text evidence confirms the dynamic <code>R26 P04 KPI Alt Text</code> binding. I do not need separate screenshots proving each static alt-text string; we followed the same evidence standard on P03. Likewise, no alt text is needed on the slicer or footer/boundary text.</p>
+<h3>Final P04 disposition</h3>
+<p>Once you remove <strong>Servicing burden</strong> from the Servicing disposition tooltip and recapture that one hover:</p>
+<pre><code class="language-text">P04 — Merchant Servicing &amp; Exceptions
+
+Successor source architecture        PASS
+Endpoint monitoring posture          PASS
+Servicing disposition                PASS
+Attention population                 PASS
+Attention exposure                   PASS
+Account attention workbench          PASS
+Setup / execution / endpoint chain   PASS
+Payment &amp; certification detail       PASS
+Workbench-detail interaction         PASS
+Scenario isolation                   PASS
+P04 presentation QA                  PASS — 7/7
+Tooltips                             PASS after burden removal
+Accessibility                        PASS
+Release identity / boundaries        PASS
+Page presentation                    PASS
+Final persistence                    DEFERRED to portfolio-wide final gate
+
+FINAL STATUS                         PASS / PAGE FROZEN
+</code></pre>
+<p>So this is <strong>not another P04 iteration</strong>. Make that one tooltip cleanup, retain the existing evidence, add the corrected tooltip capture, and P04 can be frozen.</p>
+</div></article><article id="m-9e94094f-b778-4500-9e90-8de0024c4eec" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00116 · 2026-09-04T01:14:11.777000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: P04_Servicing_Disposition_Tooltip_Evidence(1).png</p><div class="bubble"><p>corrected</p>
+</div></article><article id="m-941aa8d7-34e9-432a-9955-cd9f458d9317" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00117 · 2026-09-04T01:14:15.062892-04:00 · active path</p><div class="bubble"><p>Confirmed. The corrected tooltip now contains only:</p>
+<ul>
+<li><strong>Servicing queue:</strong> Reassessment</li>
+<li><strong>Accounts:</strong> 1</li>
+<li><strong>Full queue:</strong> Active reassessment</li>
+<li><strong>Certified exposure:</strong> $2,937.12</li>
+</ul>
+<p>The unexplained servicing-burden metric is gone, while the abbreviated axis label remains backed by the full business-facing queue description on hover. This is the intended final treatment.</p>
+<h3>P04 final disposition</h3>
+<p><strong>P04 — Merchant Servicing &amp; Exceptions: <code>PASS / PAGE FROZEN</code></strong></p>
+<p>All page-level closeout gates are now satisfied:</p>
+<pre><code class="language-text">Successor M2.6–M2.10 architecture     PASS
+130-key stage integrity               PASS
+Endpoint monitoring posture           PASS
+Servicing disposition                 PASS
+Attention population/exposure         PASS
+Account attention workbench           PASS
+Setup → execution → endpoint chain    PASS
+Payment &amp; certification detail        PASS
+Workbench-detail interaction          PASS
+Scenario isolation                    PASS
+Representative-path regression        PASS
+P04 QA                                PASS — 7/7
+Tooltips                              PASS
+Alt text                              PASS
+Tab order                             PASS
+Release identity                      PASS
+Temporal/interpretation boundaries    PASS
+Presentation quality                  PASS
+</code></pre>
+<p>The only deferred control is the <strong>portfolio-wide final persistence/nonregression gate</strong>—refresh/save/close/reopen and final P01–P06 verification—which we intentionally agreed to perform after the entire Power BI report is complete.</p>
+<p>I would make <strong>no further changes to P04</strong> unless P05/P06 integration or that final nonregression gate exposes an actual defect.</p>
+<p><strong>P01–P04 are now complete at the page-production level. P05 is the next production target.</strong></p>
+</div></article><article id="m-7ffae0bd-6f11-4c18-b77a-a85e9158e6e4" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00118 · 2026-09-04T13:57:43.981000-04:00 · active path</p><p class="note">Attachment references: owner_evidence.zip; project(1).zip</p><div class="bubble"><p>I took additional captures and organized the owner evidence folder a bit tighter, including a focused presentation folder. Begin by reviewing the additional captures. I would then like to use the information to build a comprehensive presentation about our initial 750 cohort using the Power BI visuals as evidence. This should be a detailed Cohort Overview. It should be professional (similar to our business requirements or validation artifacts) and focused on everything that our power bi analysis has taught us about this cohort. Also, attached is the project folder with the latest Power BI saved inside (MSBF_Merchant_Credit_Intelligence_M2_v2.1.0-rc2 - only ingest the new items from this project zip. You previously ingested much of this folder already). Use whatever you need from this and the captures to build this comprehensive, professional, elite cohort overview. Leap as far as you can in each prompt, stopping only when it makes sense so as not to overload each prompt and lead to failure. This needs done today and needs to be exceptional.</p>
+</div></article><article id="m-b795f5c0-aac8-4ea8-96e9-3b15dd4dba59" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00119 · 2026-09-04T14:27:53.047108-04:00 · active path</p><div class="bubble"><h2>Evidence review completed</h2>
+<p>The tighter owner-evidence package is materially better organized and is suitable for a formal cohort presentation. I reviewed the extracted package and found <strong>94 clean, presentation-focused Power BI captures</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Evidence area</th>
+<th align="right">Captures</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Cohort Command Center</td>
+<td align="right">32</td>
+<td>Full Baseline and Recession Energy pages, plus all seven acquisition-source cuts and all eight industry cuts under both scenarios</td>
+</tr>
+<tr>
+<td>Cohort Lifecycle</td>
+<td align="right">32</td>
+<td>Full Baseline and Recession Energy pages, plus the same acquisition-source and industry segmentation</td>
+</tr>
+<tr>
+<td>Application &amp; Account Journey</td>
+<td align="right">28</td>
+<td>Representative authorization, review, evidence-decline, no-feasible, policy-hard-stop, stress-floor, funding, monitoring, and servicing situations</td>
+</tr>
+<tr>
+<td>Servicing &amp; Exceptions</td>
+<td align="right">2</td>
+<td>Final Baseline and Recession Energy operating views</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td align="right"><strong>94</strong></td>
+<td>Complete focused presentation set</td>
+</tr>
+</tbody></table>
+<p>The broader owner-evidence package also retains the detailed P01-P04 QA, tooltip, interaction, alt-text, tab-order, and representative-account captures. I found no duplicate hashes within the 94-image focused presentation folder.</p>
+<h2>Latest project delta reviewed</h2>
+<p>I compared the latest project ZIP with the previously ingested project and limited the new project review to the changed items.</p>
+<p>The project delta is tightly bounded:</p>
+<ul>
+<li><strong>One client-facing PBIX was added:</strong><br><code>MSBF_Merchant_Credit_Intelligence_M2_v2.1.0-rc2.pbix</code></li>
+<li><strong>The controlled C2 PBIX was updated.</strong></li>
+<li><strong>No project files were removed.</strong></li>
+<li>The client-facing PBIX is <strong>27,635,325 bytes</strong> with SHA-256:<br><code>d3fd07497e25bb8cb2fed76cd595344dad6f482e8ef61beeac958a493b57ca36</code></li>
+<li>The current PBIX incorporates the named P02 successor and diagnostic queries, P03 performance-monitoring patch and QA, and P04 presentation-layer and QA queries.</li>
+</ul>
+<p>That confirms the new publishable identity and the completed P01-P04 analytical wave without needlessly reprocessing the unchanged project contents.</p>
+<h1>Cohort findings driving the presentation</h1>
+<p>The evidence supports a detailed and cohesive story about the initial cohort.</p>
+<h3>Cohort architecture</h3>
+<p>The population contains <strong>750 fixed synthetic merchants</strong>, evaluated under <strong>Baseline</strong> and <strong>Recession Energy</strong>, producing:</p>
+<ul>
+<li>1,500 application-scenario paths;</li>
+<li>130 physically funded scenario paths;</li>
+<li>15,600 monitoring rows;</li>
+<li>exactly 120 monitoring days per funded path;</li>
+<li>130 exact keys through each intervention, operational-setup, servicing-execution, certification, and portfolio-performance stage.</li>
+</ul>
+<h3>Baseline portfolio</h3>
+<p>Baseline produces:</p>
+<ul>
+<li>103 authorized and funded paths;</li>
+<li>$1,385,300 funded;</li>
+<li>197 additional governed review paths;</li>
+<li>300 supportable paths, or 40.0%;</li>
+<li>13.7% authorized-offer rate;</li>
+<li>9.4% comparative expected-loss rate;</li>
+<li>$147,981 in risk-adjusted contribution;</li>
+<li>99.5% endpoint remittance fulfillment;</li>
+<li>99 paid-off accounts;</li>
+<li>four severe-shortfall accounts;</li>
+<li>$7,823.28 in attention exposure;</li>
+<li>$6,061.03 in certified ending exposure;</li>
+<li>zero unresolved exceptions.</li>
+</ul>
+<h3>Recession Energy portfolio</h3>
+<p>Recession Energy produces:</p>
+<ul>
+<li>27 authorized and funded paths;</li>
+<li>$344,200 funded;</li>
+<li>53 additional governed review paths;</li>
+<li>80 supportable paths, or 10.7%;</li>
+<li>3.6% authorized-offer rate;</li>
+<li>11.4% comparative expected-loss rate;</li>
+<li>$30,032 in risk-adjusted contribution;</li>
+<li>100.0% endpoint remittance fulfillment;</li>
+<li>all 27 funded paths paid off;</li>
+<li>no endpoint attention population;</li>
+<li>no ending exposure;</li>
+<li>no unresolved exceptions.</li>
+</ul>
+<p>The stress scenario therefore reduces:</p>
+<ul>
+<li>authorized-path count by 73.8%;</li>
+<li>funded dollars by 75.2%;</li>
+<li>supportable-path rate by 29.3 percentage points;</li>
+<li>risk-adjusted contribution by 79.7%.</li>
+</ul>
+<p>Comparative expected loss increases by approximately two percentage points.</p>
+<h3>Scenario resilience and governance</h3>
+<p>Of the 750 merchants:</p>
+<ul>
+<li>514, or 68.5%, retain the same governed outcome;</li>
+<li>236, or 31.5%, change outcome;</li>
+<li>all 27 stress authorizations were already authorized in Baseline;</li>
+<li>76 Baseline authorizations are no longer authorized under stress;</li>
+<li>zero merchants become newly authorized only under stress.</li>
+</ul>
+<p>The approved non-improvement floor applies to 169 paths. It changes 166 governed outcomes and 39 candidate selections or reselections. This is a major feature of the cohort story because it demonstrates that the stress design constrains the decision frontier rather than manufacturing favorable stress-side results.</p>
+<h3>Application and evidence profile</h3>
+<p>The population is broad but request sizes are strongly right-skewed:</p>
+<ul>
+<li>median request: $9,900;</li>
+<li>mean request: $25,447;</li>
+<li>maximum request: $150,000;</li>
+<li>44.9% request 60-day structures;</li>
+<li>30.0% request 90-day structures;</li>
+<li>25.1% request 30-day structures.</li>
+</ul>
+<p>Evidence is generally strong:</p>
+<ul>
+<li>83.3% high data confidence;</li>
+<li>81.3% complete feature evidence;</li>
+<li>61.7% stable processor continuity.</li>
+</ul>
+<p>But verification friction is common:</p>
+<ul>
+<li>49.9% have a review verification disposition;</li>
+<li>12.1% have insufficient evidence;</li>
+<li>3.5% have a stop disposition.</li>
+</ul>
+<p>That helps explain why stress evidence declines rise from 43 to 191.</p>
+<h3>Structure search</h3>
+<p>The architecture completed every required governed search:</p>
+<table>
+<thead>
+<tr>
+<th>Measure</th>
+<th align="right">Baseline</th>
+<th align="right">Recession Energy</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Required and completed searches</td>
+<td align="right">495</td>
+<td align="right">285</td>
+</tr>
+<tr>
+<td>Evaluated candidates</td>
+<td align="right">4,120</td>
+<td align="right">2,399</td>
+</tr>
+<tr>
+<td>Median candidates per searched path</td>
+<td align="right">7</td>
+<td align="right">7</td>
+</tr>
+<tr>
+<td>Maximum candidates</td>
+<td align="right">34</td>
+<td align="right">34</td>
+</tr>
+<tr>
+<td>No-feasible outcomes with proof</td>
+<td align="right">290</td>
+<td align="right">362</td>
+</tr>
+</tbody></table>
+<p>Among supportable paths, the system uses multiple remediation forms rather than treating every counteroffer as an amount reduction:</p>
+<table>
+<thead>
+<tr>
+<th>Structure treatment</th>
+<th align="right">Baseline</th>
+<th align="right">Recession Energy</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Requested structure retained</td>
+<td align="right">115</td>
+<td align="right">38</td>
+</tr>
+<tr>
+<td>Amount reduction</td>
+<td align="right">44</td>
+<td align="right">17</td>
+</tr>
+<tr>
+<td>Remittance adjustment</td>
+<td align="right">82</td>
+<td align="right">19</td>
+</tr>
+<tr>
+<td>Combined restructure</td>
+<td align="right">59</td>
+<td align="right">6</td>
+</tr>
+</tbody></table>
+<h3>Segment findings</h3>
+<p>Processor Embedded and Relationship dominate Baseline funding, jointly representing approximately 64% of funded dollars. Strategic Partner becomes the largest stress-funded source and retains a comparatively strong share of its Baseline funded dollars.</p>
+<p>At the industry level:</p>
+<ul>
+<li>Professional Services has the highest Baseline supportable rate at 58.0%.</li>
+<li>Transportation &amp; Logistics has the highest Baseline funded amount and risk-adjusted contribution.</li>
+<li>Healthcare Services has the lowest Baseline comparative expected-loss rate.</li>
+<li>Under stress, Transportation retains the largest funded amount and contribution.</li>
+<li>Energy Services reaches the highest stress comparative expected-loss rate at 21.6%.</li>
+</ul>
+<h3>Lifecycle and servicing</h3>
+<p>Of the 130 funded scenario paths:</p>
+<ul>
+<li>126 close with no further action;</li>
+<li>three require targeted outreach and remain on governed review hold;</li>
+<li>one enters temporary-remittance review and active synthetic servicing.</li>
+</ul>
+<p>The sole active-servicing case, merchant 749, has:</p>
+<ul>
+<li>seven payment events;</li>
+<li>$1,762.25 processed;</li>
+<li>one returned event;</li>
+<li>one retry;</li>
+<li>full return/retry cure;</li>
+<li>$2,937.12 certified ending exposure;</li>
+<li>zero reconciliation variance;</li>
+<li>an Active Reconciled endpoint state.</li>
+</ul>
+<p>The three controlled-review accounts are merchants 098, 112, and 312. Together they carry $3,123.91 of certified review-hold exposure.</p>
+<h1>Working presentation build</h1>
+<p>I completed the first full <strong>53-slide Cohort Overview working build</strong>, including:</p>
+<ul>
+<li>executive readout;</li>
+<li>evidence and project-delta review;</li>
+<li>analytical scope and interpretation boundaries;</li>
+<li>cohort architecture;</li>
+<li>merchant, industry, relationship, and sourcing composition;</li>
+<li>request and evidence profile;</li>
+<li>decision architecture;</li>
+<li>full Baseline and Recession Energy Power BI command-center evidence;</li>
+<li>scenario scorecard;</li>
+<li>outcome distributions and transition matrix;</li>
+<li>stress-floor analysis;</li>
+<li>authorization retention;</li>
+<li>candidate search and structure-treatment analysis;</li>
+<li>acquisition-source and industry sections;</li>
+<li>full lifecycle evidence;</li>
+<li>runoff, fulfillment, monitoring, and payoff analysis;</li>
+<li>servicing and certification;</li>
+<li>merchants 738, 082, 098, and 749 as scenario case studies;</li>
+<li>evidence-decline and policy-hard-stop examples;</li>
+<li>QA and governance;</li>
+<li>management conclusions;</li>
+<li>detailed appendices and definitions.</li>
+</ul>
+<p>Download the working Cohort Overview PowerPoint (historical reference: <code>sandbox:[session]/MSBF_Merchant_Credit_Intelligence_Initial_750_Cohort_Overview_R1_20260904.pptx</code>; referenced bytes not established here)</p>
+<p>Download the slide-level source register (historical reference: <code>sandbox:[session]/MSBF_Merchant_Credit_Intelligence_Initial_750_Cohort_Overview_R1_20260904_SOURCE_REGISTER.csv</code>; referenced bytes not established here)</p>
+<h2>Current completion status</h2>
+<p>The <strong>content architecture, analytical narrative, quantitative exhibits, Power BI evidence selection, and first complete PPTX build are done</strong>.</p>
+<p>The current PPTX is explicitly a <strong>working build</strong>, not the final presentation release. I have not yet completed the mandatory render-and-inspect pass. The automated geometry review flagged several possible text overlaps and table-boundary warnings. Some are expected false positives—such as deliberate image overlays and text inside metric cards—but several slides require rendered inspection and potentially localized resizing. I have therefore not yet exported or represented a PDF as final.</p>
+<p>The remaining production work is bounded to:</p>
+<ol>
+<li>render all 53 slides;</li>
+<li>inspect the montage and high-risk slides;</li>
+<li>correct any real clipping, table overflow, or crowded callouts;</li>
+<li>tighten the deck if any sections are unnecessarily repetitive;</li>
+<li>export and visually verify the final PDF;</li>
+<li>package the PPTX, PDF, source register, and review memorandum as the final Cohort Overview release.</li>
+</ol>
+<p>The substantive cohort analysis itself is complete enough to support that finalization; the remaining work is presentation QA rather than analytical discovery.</p>
+</div></article><article id="m-7b44498b-ae4d-4d38-819e-be165ed2dbcc" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00120 · 2026-09-04T14:49:16.447000-04:00 · active path</p><div class="bubble"><p>please produce a pdf for me to review. This is looking very nice. I will review the pdf for errors.</p>
+</div></article><article id="m-1e9e9ae4-5d7d-4529-b7fd-8e67c609f7e3" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00121 · 2026-09-04T14:54:02.694995-04:00 · active path</p><div class="bubble"><p>The 53-page review PDF has been exported from the PowerPoint and rendered successfully for conversion verification.</p>
+<p>Download the Initial 750-Merchant Cohort Overview — Review PDF (historical reference: <code>sandbox:[session]/MSBF_Merchant_Credit_Intelligence_Initial_750_Cohort_Overview_R1_20260904_REVIEW.pdf</code>; referenced bytes not established here)</p>
+</div></article><article id="m-702e6a39-90af-48c6-9988-d9805b834ab2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00122 · 2026-09-04T15:29:10.281000-04:00 · active path</p><div class="bubble"><p>Please use the zip I provided to update the canonical source of truth and output that as an artifact for our GitHub publication. Also, generate a detailed business requirements document and validation report for our power bi build. It should be detailed and cover all aspects of the build and validation. These need to be high level and ready to support the GitHub publication.</p>
+</div></article><article id="m-cfaa0cf4-3985-47e3-87d9-cff9087f787d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00123 · 2026-09-04T16:29:10.641421-04:00 · active path</p><div class="bubble"><h1>GitHub publication-support package completed</h1>
+<p>I processed the latest project and owner-evidence ZIPs as a controlled update to the prior Power BI baseline. The resulting package preserves the accepted R26 authority, incorporates the current client-facing PBIX and finalized P01–P04 evidence, updates the canonical implementation state, and adds publication-grade business requirements, validation, traceability, and release-control documentation.</p>
+<h2>Primary deliverable</h2>
+<p>Download the complete GitHub publication-support package (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_GITHUB_PUBLICATION_SUPPORT_R1_20260904.zip</code>; referenced bytes not established here)</p>
+<p>Download the package SHA-256 sidecar (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_GITHUB_PUBLICATION_SUPPORT_R1_20260904.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Open the package README (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_GITHUB_PUBLICATION_SUPPORT_R1_20260904/README.md</code>; referenced bytes not established here)</p>
+<p>Open the ZIP validation report (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_GITHUB_PUBLICATION_SUPPORT_R1_20260904_ZIP_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<p>Open the machine-readable ZIP validation report (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_GITHUB_PUBLICATION_SUPPORT_R1_20260904_ZIP_VALIDATION_REPORT.json</code>; referenced bytes not established here)</p>
+<h3>Package identity</h3>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th align="right">Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Package</td>
+<td align="right"><code>MSBF_MCI_POWER_BI_GITHUB_PUBLICATION_SUPPORT_R1_20260904.zip</code></td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td align="right">31,021,709</td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>e83d820e89290beae306fdb2abb784ca054828dc9fce22430cdd1c39bb8574be</code></td>
+</tr>
+<tr>
+<td>ZIP entries</td>
+<td align="right">43</td>
+</tr>
+<tr>
+<td>Payload-manifest rows</td>
+<td align="right">41</td>
+</tr>
+<tr>
+<td>ZIP CRC</td>
+<td align="right">PASS</td>
+</tr>
+<tr>
+<td>Clean extraction</td>
+<td align="right">PASS</td>
+</tr>
+<tr>
+<td>Manifest reconciliation</td>
+<td align="right">PASS</td>
+</tr>
+<tr>
+<td>SHA256SUMS reconciliation</td>
+<td align="right">PASS</td>
+</tr>
+<tr>
+<td>Unsafe paths</td>
+<td align="right">0</td>
+</tr>
+<tr>
+<td>Duplicate paths</td>
+<td align="right">0</td>
+</tr>
+<tr>
+<td>Case-fold collisions</td>
+<td align="right">0</td>
+</tr>
+<tr>
+<td>Symlinks</td>
+<td align="right">0</td>
+</tr>
+<tr>
+<td>Encrypted members</td>
+<td align="right">0</td>
+</tr>
+<tr>
+<td>Maximum archive path</td>
+<td align="right">133 characters</td>
+</tr>
+<tr>
+<td>Client-facing PBIX identity</td>
+<td align="right">PASS</td>
+</tr>
+</tbody></table>
+<p>The package intentionally excludes the raw owner-evidence archive and internal project ZIP. It contains the public-candidate PBIX, publication documents, structured registers, manifests, and a bounded set of curated Power BI evidence.</p>
+<h2>Canonical source of truth — R5</h2>
+<p>The prior canonical implementation register has been advanced to <strong>R5</strong>. It now records:</p>
+<ul>
+<li>the market-facing <code>MSBF Merchant Credit Intelligence</code> identity;</li>
+<li>Module 2 <code>v2.1.0-rc2</code> release scope;</li>
+<li>accepted R26 M2.5–M2.12/G3-v2 authority;</li>
+<li>the four visible report pages and hidden P02 diagnostic page;</li>
+<li>current physical PBIX composition;</li>
+<li>model, page, visual, binding, DAX, interaction, and evidence inventories;</li>
+<li>current R1 successor source populations;</li>
+<li>finalized P01–P04 implementation states;</li>
+<li>all owner-confirmed corrections;</li>
+<li>requirements and validation status;</li>
+<li>publication boundaries and prohibited interpretations;</li>
+<li>remaining persistence and publication gates.</li>
+</ul>
+<h3>Canonical artifacts</h3>
+<p>Download the canonical source-of-truth workbook (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_CANONICAL_SOURCE_OF_TRUTH_R5_20260904.xlsx</code>; referenced bytes not established here)</p>
+<p>Open the canonical source of truth in Markdown (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_CANONICAL_SOURCE_OF_TRUTH_R5_20260904.md</code>; referenced bytes not established here)</p>
+<p>Download the machine-readable current-state record (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_CANONICAL_CURRENT_STATE_R5_20260904.json</code>; referenced bytes not established here)</p>
+<p>The workbook contains the detailed registers and summary views needed for future maintenance, audit, controlled publication, and successor development. Its formula-error scan returned zero errors.</p>
+<h2>Power BI Business Requirements Document</h2>
+<p>The BRD is a detailed, publication-ready description of the product and its governing requirements. It covers:</p>
+<ul>
+<li>business context, objectives, audiences, and success criteria;</li>
+<li>included and excluded release scope;</li>
+<li>authority and deterministic-synthetic-evidence principles;</li>
+<li>scenario and temporal interpretation;</li>
+<li>product and semantic-model architecture;</li>
+<li>source-population and data-quality requirements;</li>
+<li>page-level requirements for P01 through P04;</li>
+<li>interaction and narrative requirements;</li>
+<li>accessibility requirements;</li>
+<li>integrity, maintainability, usability, privacy, and security controls;</li>
+<li>validation and acceptance requirements;</li>
+<li>release and change-management requirements;</li>
+<li>the structured requirements baseline and current release artifacts.</li>
+</ul>
+<h3>BRD downloads</h3>
+<p>Download the Business Requirements Document — PDF (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_BUSINESS_REQUIREMENTS_DOCUMENT_R1_20260904.pdf</code>; referenced bytes not established here)</p>
+<p>Download the editable Business Requirements Document — DOCX (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_BUSINESS_REQUIREMENTS_DOCUMENT_R1_20260904.docx</code>; referenced bytes not established here)</p>
+<p>Open the Business Requirements Document — Markdown (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_BUSINESS_REQUIREMENTS_DOCUMENT_R1_20260904.md</code>; referenced bytes not established here)</p>
+<p>The final BRD PDF is 15 pages and passed document-render and PDF preflight inspection.</p>
+<h2>Power BI Validation Report</h2>
+<p>The validation report is a detailed independent-style assessment of the current release candidate. It covers:</p>
+<ul>
+<li>validation objectives, scope, authority, and evidence hierarchy;</li>
+<li>exact system-under-test identity;</li>
+<li>physical PBIX and package-integrity validation;</li>
+<li>source authority and release-identity validation;</li>
+<li>source-population and exact-key validation;</li>
+<li>semantic-model and report-binding validation;</li>
+<li>page-level P01 and P02 validation;</li>
+<li>P03 narrative, lifecycle, tooltip, scenario-isolation, and operational QA;</li>
+<li>P04 servicing, setup, execution, reconciliation, certification, and interaction QA;</li>
+<li>accessibility and logical tab-order validation;</li>
+<li>temporal and interpretation-boundary controls;</li>
+<li>owner-evidence and publication-package validation;</li>
+<li>findings, observations, remaining gates, and release recommendation;</li>
+<li>the complete control summary and companion-register inventory.</li>
+</ul>
+<h3>Validation-report downloads</h3>
+<p>Download the Power BI Validation Report — PDF (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_VALIDATION_REPORT_R1_20260904.pdf</code>; referenced bytes not established here)</p>
+<p>Download the editable Power BI Validation Report — DOCX (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_VALIDATION_REPORT_R1_20260904.docx</code>; referenced bytes not established here)</p>
+<p>Open the Power BI Validation Report — Markdown (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_VALIDATION_REPORT_R1_20260904.md</code>; referenced bytes not established here)</p>
+<p>The final validation PDF is 23 pages and passed document-render and PDF preflight inspection.</p>
+<h2>Structured requirements, validation, and traceability registers</h2>
+<p>Download the Business Requirements Register (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_BUSINESS_REQUIREMENTS_REGISTER_R1_20260904.csv</code>; referenced bytes not established here)</p>
+<p>Download the Requirements Traceability Matrix (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_REQUIREMENTS_TRACEABILITY_MATRIX_R1_20260904.csv</code>; referenced bytes not established here)</p>
+<p>Download the Validation Control Register (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_VALIDATION_CONTROL_REGISTER_R5_20260904.csv</code>; referenced bytes not established here)</p>
+<p>Download the Release Artifact Register (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_RELEASE_ARTIFACT_REGISTER_R5_20260904.csv</code>; referenced bytes not established here)</p>
+<p>Open the publication-support checksum register (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_PUBLICATION_SUPPORT_SHA256SUMS_20260904.txt</code>; referenced bytes not established here)</p>
+<p>The resulting structured baseline contains:</p>
+<table>
+<thead>
+<tr>
+<th>Register</th>
+<th align="right">Current state</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Business requirements</td>
+<td align="right">142</td>
+</tr>
+<tr>
+<td>Verified requirements</td>
+<td align="right">140</td>
+</tr>
+<tr>
+<td>Deferred requirements</td>
+<td align="right">1</td>
+</tr>
+<tr>
+<td>Pending requirements</td>
+<td align="right">1</td>
+</tr>
+<tr>
+<td>Validation controls</td>
+<td align="right">47</td>
+</tr>
+<tr>
+<td>PASS</td>
+<td align="right">45</td>
+</tr>
+<tr>
+<td>Deferred</td>
+<td align="right">1</td>
+</tr>
+<tr>
+<td>Pending</td>
+<td align="right">1</td>
+</tr>
+</tbody></table>
+<h2>Client-facing Power BI release candidate</h2>
+<p>Download <code>MSBF_Merchant_Credit_Intelligence_M2_v2.1.0-rc2.pbix</code> (historical reference: <code>sandbox:[session]/msbf_github_publication/MSBF_MCI_POWER_BI_GITHUB_PUBLICATION_SUPPORT_R1_20260904/release/MSBF_Merchant_Credit_Intelligence_M2_v2.1.0-rc2.pbix</code>; referenced bytes not established here)</p>
+<table>
+<thead>
+<tr>
+<th>Identity control</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PBIX bytes</td>
+<td>27,635,325</td>
+</tr>
+<tr>
+<td>PBIX SHA-256</td>
+<td><code>d3fd07497e25bb8cb2fed76cd595344dad6f482e8ef61beeac958a493b57ca36</code></td>
+</tr>
+<tr>
+<td>Visible pages</td>
+<td>P01–P04</td>
+</tr>
+<tr>
+<td>Hidden diagnostic page</td>
+<td>P02-DIAG</td>
+</tr>
+<tr>
+<td>Total physical pages</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Visuals</td>
+<td>96</td>
+</tr>
+<tr>
+<td>Report bindings</td>
+<td>221</td>
+</tr>
+<tr>
+<td>Current successor/shared binding coverage</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>Predecessor-fact bindings</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Application-scenario paths</td>
+<td>1,500</td>
+</tr>
+<tr>
+<td>Funded paths</td>
+<td>130</td>
+</tr>
+<tr>
+<td>Monitoring rows</td>
+<td>15,600</td>
+</tr>
+<tr>
+<td>Monitoring days per funded path</td>
+<td>120</td>
+</tr>
+<tr>
+<td>G3-v2 certification</td>
+<td>70 PASS / 0 FAIL</td>
+</tr>
+</tbody></table>
+<h2>Publication position</h2>
+<p>This package is <strong>ready to support GitHub publication</strong>, but it does not itself execute or authorize the public release. Two controlled gates remain open:</p>
+<ol>
+<li>Complete the portfolio-wide Power BI refresh, save, close, reopen, and P01–P04 nonregression check after the report build is finalized.</li>
+<li>Regenerate the final persisted PBIX hash and release manifests if that gate changes the physical file, then perform the separately authorized GitHub publication and public-supersession action.</li>
+</ol>
+<p>Until those gates pass, the correct status is:</p>
+<pre><code class="language-text">Publication-support package       COMPLETE / VALIDATED
+Canonical source of truth         R5 CURRENT
+Business requirements             COMPLETE
+Requirements traceability         COMPLETE
+Validation report                 COMPLETE
+P01–P04 page production           PASS / FROZEN
+Final persistence gate            DEFERRED
+GitHub publication                NOT YET EXECUTED
+Public supersession               NOT YET ACTIVATED
+</code></pre>
+</div></article><article id="m-a93b9d78-ebd5-472b-be54-763fb4c7d724" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00124 · 2026-09-04T16:37:00.150000-04:00 · active path</p><div class="bubble"><p>The latest captures today were after save, close, reopen. Consider that closed and the current package final. If you&#39;d like to add something to the package to that end, please update and re-provide the zip. After this, let&#39;s hand this off to the audit/publication chats.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

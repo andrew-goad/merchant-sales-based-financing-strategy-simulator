@@ -1,0 +1,530 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Module 3 Enterprise Portfolio Intelligence — part 02 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Module 3 Enterprise Portfolio Intelligence — part 02</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-01.html">Previous part</a><a href="part-03.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-404bd984-f129-47fc-9f01-2c99bbff2a05" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00031 · 2026-08-18T15:54:07.787281-04:00 · active path</p><div class="bubble"><p>Assuming the README commits are what triggered the red publish runs, the clean fix is to change the <strong>publish workflow trigger</strong> so documentation-only edits do not launch the publish job.</p>
+<p>In the relevant <code>.github/workflows/&lt;publish-workflow&gt;.yml</code>, add a <code>paths-ignore</code> filter under the <code>push</code> trigger, for example:</p>
+<pre><code class="language-yaml">on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - &#39;README.md&#39;
+      - &#39;**/*.md&#39;
+      - &#39;docs/**&#39;
+</code></pre>
+<p>Then a README-only commit to <code>main</code> will not trigger that publish workflow. GitHub explicitly supports <code>paths-ignore</code> for this purpose. [export reference: cite | turn852054search0 | turn852054search3]</p>
+<p>If you want to be more conservative, I would <strong>only exclude README/documentation files</strong>, not all Markdown:</p>
+<pre><code class="language-yaml">paths-ignore:
+  - &#39;README.md&#39;
+  - &#39;docs/**&#39;
+</code></pre>
+<p>That avoids accidentally suppressing CI when some important Markdown file is actually part of your governed build/package process.</p>
+<p>For occasional one-off manual edits, another option is putting <code>[skip ci]</code> in the commit message, which GitHub recognizes for <code>push</code>-triggered workflows. [export reference: cite | turn852054search2] But I would treat that as a convenience, <strong>not the permanent solution</strong>—it relies on you remembering to use it every time.</p>
+<p>Also, you do <strong>not</strong> need to somehow turn the old red runs green. They are historical records of those commits. Once you fix the workflow trigger, future README-only changes simply won&#39;t produce those failed publish runs.</p>
+<p>For MSBF specifically, I would prefer:</p>
+<pre><code class="language-yaml">paths-ignore:
+  - &#39;README.md&#39;
+</code></pre>
+<p>or, if you have several purely public-facing docs:</p>
+<pre><code class="language-yaml">paths-ignore:
+  - &#39;README.md&#39;
+  - &#39;docs/**&#39;
+</code></pre>
+<p>That preserves CI for actual SQL, Python, manifests, evidence, workflow files, and governed artifacts while preventing a public README touch-up from attempting a release.</p>
+<p>One caveat: if that publish workflow is configured as a <strong>required status check</strong> on pull requests, GitHub warns that path-filtered/skipped workflows can remain pending in some configurations. [export reference: cite | turn852054search0] For direct README edits to <code>main</code>, though, your proposed fix is straightforward.</p>
+<p>If you show me the current <code>publish.yml</code>/GitHub Actions YAML later, I can give you the exact 2–4 line change rather than redesigning anything.</p>
+</div></article><article id="m-5619db23-16c8-4700-a308-0557a633ecc6" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00032 · 2026-08-18T15:54:41.560000-04:00 · active path</p><div class="bubble"><p>what if I just download the current read me to my path and use GIT to correct?</p>
+</div></article><article id="m-8b60e5eb-8c17-4679-a62e-3cdadc3e1313" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00033 · 2026-08-18T15:54:43.946169-04:00 · active path</p><div class="bubble"><p>Yes—you can absolutely do that, and it is a cleaner way to manage the README. But <strong>using local Git instead of editing on GitHub will not by itself prevent the red publish run</strong>.</p>
+<p>If the workflow is configured to run on every push to <code>main</code>, then this sequence:</p>
+<pre><code class="language-text">download/pull current README
+→ edit locally
+→ git add
+→ git commit
+→ git push origin main
+</code></pre>
+<p>still creates a push to <code>main</code>, so the publish CI will trigger again.</p>
+<p>What local Git does give you is better control: you can review the diff, preserve history cleanly, and make sure only the README changed before pushing.</p>
+<p>If you just want to correct the README now and avoid another CI run, the practical approach is to commit it with a GitHub-recognized skip token, for example:</p>
+<pre><code class="language-bash">git add README.md
+git commit -m &quot;Update README [skip ci]&quot;
+git push origin main
+</code></pre>
+<p>That is a good <strong>one-time cleanup</strong>.</p>
+<p>Longer term, I would still change the workflow so <code>README.md</code> changes do not trigger publishing. Then you can update the README normally through Git without having to remember <code>[skip ci]</code>.</p>
+<p>So: <strong>yes, use your local path and Git—but add <code>[skip ci]</code> for this correction if you don&#39;t want another red publish attempt.</strong></p>
+</div></article><article id="m-fe66fc8a-dc38-4f95-a697-e75801cba8ce" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00034 · 2026-08-18T15:57:20.629000-04:00 · active path</p><div class="bubble"><p>i&#39;m pretty sure the last iteration used my local C:\x\m folder - any way i can confirm?</p>
+</div></article><article id="m-41edbe98-adbd-4cec-a611-6641a3aad94e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00035 · 2026-08-18T15:57:21.368114-04:00 · active path</p><div class="bubble"><p>Yes. In <strong>Command Prompt</strong>, run:</p>
+<pre><code class="language-cmd">cd /d C:\x\m
+git status
+</code></pre>
+<p>If <code>C:\x\m</code> is the local repository you used, Git should respond with something like:</p>
+<pre><code class="language-text">On branch main
+Your branch is up to date with &#39;origin/main&#39;.
+</code></pre>
+<p>Then confirm which GitHub repository it points to:</p>
+<pre><code class="language-cmd">git remote -v
+</code></pre>
+<p>That will show the repository associated with <code>C:\x\m</code>.</p>
+<p>For an even stronger confirmation, run:</p>
+<pre><code class="language-cmd">git log -5 --oneline
+</code></pre>
+<p>You should see your recent README commits among the last few commits.</p>
+<p>So I&#39;d do these three in order:</p>
+<pre><code class="language-cmd">cd /d C:\x\m
+git status
+git remote -v
+git log -5 --oneline
+</code></pre>
+<p>If you paste the output here, I can confirm whether <strong><code>C:\x\m</code> is the correct working repository before you change anything</strong>.</p>
+</div></article><article id="m-74bfe5d5-819f-41ac-9164-8b4ffd34504d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00036 · 2026-08-18T16:00:44.579000-04:00 · active path</p><div class="bubble"><p>when I do this, git add README.md
+git commit -m &quot;Update README [skip ci]&quot;
+git push origin main how do I make sure the commit title description still says Publish Module 2 / G3 v2.0.0?</p>
+</div></article><article id="m-69051d24-3fd1-4281-bcea-9fae20bca194" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00037 · 2026-08-18T16:00:45.239537-04:00 · active path</p><div class="bubble"><p>Yes. The text after <code>git commit -m</code> is the <strong>commit title/message</strong>. So instead of <code>&quot;Update README [skip ci]&quot;</code>, use:</p>
+<pre><code class="language-cmd">git add README.md
+git commit -m &quot;Publish Module 2 / G3 v2.0.0 [skip ci]&quot;
+git push origin main
+</code></pre>
+<p>That will make the Git commit display as:</p>
+<blockquote>
+<p><strong>Publish Module 2 / G3 v2.0.0 [skip ci]</strong></p>
+</blockquote>
+<p>If you specifically want the visible title to remain <strong>exactly</strong> <code>Publish Module 2 / G3 v2.0.0</code> without <code>[skip ci]</code> appended, GitHub also recognizes a skip directive in the commit trailer. You can do:</p>
+<pre><code class="language-cmd">git add README.md
+git commit -m &quot;Publish Module 2 / G3 v2.0.0&quot; -m &quot;skip-checks:true&quot;
+git push origin main
+</code></pre>
+<p>That preserves:</p>
+<p><strong>Title</strong></p>
+<blockquote>
+<p>Publish Module 2 / G3 v2.0.0</p>
+</blockquote>
+<p><strong>Description/body</strong></p>
+<blockquote>
+<p>skip-checks:true</p>
+</blockquote>
+<p>For your situation, <strong>I&#39;d use the second version</strong>. It keeps the public-facing commit title clean while still telling GitHub Actions to skip eligible push/pull-request workflows.</p>
+</div></article><article id="m-e50a7c75-b158-46d3-952f-2c8f0c230e02" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00038 · 2026-08-18T16:01:25.140000-04:00 · active path</p><div class="bubble"><p>why say [skip ci]?</p>
+</div></article><article id="m-e39479d1-995a-453e-a004-21a742a19e52" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00039 · 2026-08-18T16:01:25.830798-04:00 · active path</p><div class="bubble"><p><code>[skip ci]</code> is simply an instruction embedded in the Git commit message telling GitHub Actions:</p>
+<blockquote>
+<p><strong>Record this commit, but don&#39;t run the normal CI workflows for it.</strong></p>
+</blockquote>
+<p>I suggested it because we&#39;re assuming your README-only updates are triggering the unwanted red publish runs. The goal is to get your corrected README onto <code>main</code> <strong>without triggering another publish attempt</strong>.</p>
+<p>It has nothing to do with the content of the README or Module 2/G3 itself.</p>
+<p>And given your preference to keep the commit title clean, I <strong>wouldn&#39;t use <code>[skip ci]</code> in the title</strong>. Use:</p>
+<pre><code class="language-cmd">git add README.md
+git commit -m &quot;Publish Module 2 / G3 v2.0.0&quot; -m &quot;skip-checks:true&quot;
+git push origin main
+</code></pre>
+<p>That way GitHub displays the meaningful commit title <strong>“Publish Module 2 / G3 v2.0.0”</strong>, while the skip instruction sits in the commit metadata/body rather than cluttering the title.</p>
+</div></article><article id="m-a5a39846-afaf-4cda-88dd-0610397ed0d5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00040 · 2026-08-18T16:04:30.177000-04:00 · active path</p><div class="bubble"><p>To <a href="https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git">https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git</a></p>
+<p>! [rejected]        main -&gt; main (fetch first)</p>
+<p>error: failed to push some refs to &#39;<a href="https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git">https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git</a>&#39;</p>
+<p>hint: Updates were rejected because the remote contains work that you do not</p>
+<p>hint: have locally. This is usually caused by another repository pushing to</p>
+<p>hint: the same ref. If you want to integrate the remote changes, use</p>
+<p>hint: &#39;git pull&#39; before pushing again.</p>
+<p>hint: See the &#39;Note about fast-forwards&#39; in &#39;git push --help&#39; for details.</p>
+</div></article><article id="m-61b3028f-d653-4a69-80d4-c2b09ff048ba" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00041 · 2026-08-18T16:04:33.156335-04:00 · active path</p><div class="bubble"><p>That error is normal and <strong>you should not force-push</strong>. It means GitHub’s <code>main</code> has one or more commits that your local <code>C:\x\m</code> copy does not yet have.</p>
+<p>Since you already made your local README commit, the clean fix is to <strong>rebase your commit on top of the current GitHub <code>main</code></strong>, then push.</p>
+<p>From <code>C:\x\m</code>, run:</p>
+<pre><code class="language-cmd">git fetch origin
+git status
+git pull --rebase origin main
+</code></pre>
+<p>If the rebase completes successfully, then:</p>
+<pre><code class="language-cmd">git push origin main
+</code></pre>
+<p>This preserves the remote work and places your new commit:</p>
+<blockquote>
+<p><strong>Publish Module 2 / G3 v2.0.0</strong></p>
+</blockquote>
+<p>on top of the latest <code>main</code>.</p>
+<h3>If Git reports a README conflict</h3>
+<p>Because both the remote and your local work may have changed <code>README.md</code>, Git may stop with a conflict. <strong>Don&#39;t choose anything blindly.</strong> Run:</p>
+<pre><code class="language-cmd">git status
+</code></pre>
+<p>and paste the output here. I can walk you through resolving just that conflict without losing either version.</p>
+<h3>What not to do</h3>
+<p>Do <strong>not</strong> use:</p>
+<pre><code class="language-cmd">git push --force
+</code></pre>
+<p>or:</p>
+<pre><code class="language-cmd">git push -f
+</code></pre>
+<p>That could overwrite the work that caused GitHub to reject your push in the first place.</p>
+<p>So right now, your next command should simply be:</p>
+<pre><code class="language-cmd">git fetch origin
+</code></pre>
+<p>then:</p>
+<pre><code class="language-cmd">git status
+</code></pre>
+<p>If you paste those results, I can verify the state before you rebase.</p>
+</div></article><article id="m-7838c5f3-0010-431d-a5df-d52b1ca0664c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00042 · 2026-08-18T16:11:58.728000-04:00 · active path</p><p class="note">3 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 1abb510d-deed-4561-82fd-b320a6c62cb2.png; a02d4f75-18f2-4467-a145-06b4ab630658.png; 1d35465f-8c98-499a-9832-7c3f3cfb5c01.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-c9d57806-1c43-4c9b-8c90-757ce326921f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00043 · 2026-08-18T16:12:08.132525-04:00 · active path</p><div class="bubble"><p>Yes — these screenshots give us the exact cause, and it slightly changes my earlier advice.</p>
+<p>The CI is <strong>not failing merely because the README triggered the workflow</strong>. It is failing because your publication-integrity validator detected that <code>README.md</code> changed but the governed manifest was <strong>not updated to match the new README</strong>.</p>
+<p>The key lines in your screenshot are:</p>
+<pre><code class="language-text">Public release validation FAIL
+- Manifest hash mismatch: README.md
+- Manifest size mismatch: README.md
+</code></pre>
+<p>So the workflow is actually doing what it was designed to do: your README changed, therefore its recorded SHA-256 and byte size in the public-release manifest are stale. The validator correctly refuses to call the release internally consistent.</p>
+<p>That also explains the history perfectly: the merge run was green, and then your three subsequent <code>Publish Module 2 / G3 v2.0.0</code> README updates produced three red runs.</p>
+<h3>What I would do now</h3>
+<p><strong>Do not use <code>[skip ci]</code> for the corrective commit.</strong> In this case, we actually want CI to run once more and turn green. Skipping it would leave the repository with an internally inconsistent manifest while merely hiding the failure.</p>
+<p>First synchronize <code>C:\x\m</code> with GitHub because your earlier push told us local <code>main</code> is behind:</p>
+<pre><code class="language-cmd">cd /d C:\x\m
+git fetch origin
+git pull --rebase origin main
+</code></pre>
+<p>Then we need to update the manifest entry for <code>README.md</code> so its:</p>
+<ul>
+<li>SHA-256 equals the current README&#39;s SHA-256</li>
+<li>byte size equals the current README&#39;s byte size</li>
+</ul>
+<p>Ideally, <strong>use whatever manifest-generation/update utility already exists in this repository rather than editing the hash by hand.</strong> Your screenshot tells us <code>tools/validate_public_release.py</code> is the validator; there may also be a corresponding manifest-generation utility.</p>
+<p>Before doing anything else, from <code>C:\x\m</code> run:</p>
+<pre><code class="language-cmd">dir tools
+</code></pre>
+<p>and:</p>
+<pre><code class="language-cmd">dir /s /b *manifest*
+</code></pre>
+<p>Paste those two outputs here.</p>
+<p>Then I can tell you the exact command to regenerate <strong>only the appropriate publication metadata</strong>, rather than having you manually calculate hashes or guess which manifest to edit.</p>
+<p>Once corrected, the final commit can still have exactly the title you wanted:</p>
+<pre><code class="language-cmd">git add README.md &lt;manifest-file&gt;
+git commit -m &quot;Publish Module 2 / G3 v2.0.0&quot;
+git push origin main
+</code></pre>
+<p>And this time <strong>we want Publication Integrity to execute</strong>. The successful endpoint should be a new green run after the three historical red ones; there&#39;s no need to erase or rewrite those old failed runs.</p>
+<p>So this is actually a better situation than “CI is mysteriously broken”: <strong>your governed-release integrity control caught an out-of-band README modification exactly as designed.</strong> [export reference: cite | turn464242search0]</p>
+</div></article><article id="m-93f9ce01-955a-4e86-a8ef-bf75f5d39fdf" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00044 · 2026-08-18T16:13:06.126000-04:00 · active path</p><div class="bubble"><p>it says already up to date after git fetch origin and git pull --rebase origin main</p>
+</div></article><article id="m-4314ce2c-30af-40a7-aa80-fa0912c13366" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00045 · 2026-08-18T16:13:08.719289-04:00 · active path</p><div class="bubble"><p>Good — that means your local <code>C:\x\m</code> is now synchronized with GitHub, so the earlier push rejection is no longer the issue.</p>
+<p>Now the only remaining problem is the <strong>README manifest mismatch</strong> shown in the failed CI run.</p>
+<p>From <code>C:\x\m</code>, run these two commands next:</p>
+<pre><code class="language-cmd">dir tools
+</code></pre>
+<p>and:</p>
+<pre><code class="language-cmd">dir /s /b *manifest*
+</code></pre>
+<p>Paste the output here. I want to identify the repository’s existing manifest-generation/update mechanism so we can update the README hash and byte size correctly, then make one clean commit and let CI go green.</p>
+</div></article><article id="m-f16f2971-deae-4ced-9fb9-d86bf11eb2ca" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00046 · 2026-08-18T16:13:42.400000-04:00 · active path</p><div class="bubble"><p>Get-ChildItem : A positional parameter cannot be found that accepts argument &#39;<em>manifest</em>&#39;.
+At line:1 char:1</p>
+<ul>
+<li>dir /s /b <em>manifest</em></li>
+<li><pre><code>  + CategoryInfo          : InvalidArgument: (:) [Get-ChildItem], ParameterBindingException
+  + FullyQualifiedErrorId : PositionalParameterNotFound,Microsoft.PowerShell.Commands.GetChildItemCommand
+</code></pre>
+</li>
+</ul>
+</div></article><article id="m-6a0d8c5d-932b-4d54-84a8-8c44226e7d29" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00047 · 2026-08-18T16:13:42.949650-04:00 · active path</p><div class="bubble"><p>You&#39;re in <strong>PowerShell</strong>, not Command Prompt. My <code>/s /b</code> syntax was CMD syntax.</p>
+<p>Use these PowerShell commands instead.</p>
+<p>First:</p>
+<pre><code class="language-powershell">Get-ChildItem .\tools
+</code></pre>
+<p>Then search the repository for anything with <code>manifest</code> in its filename:</p>
+<pre><code class="language-powershell">Get-ChildItem -Recurse -File -Filter &quot;*manifest*&quot; | Select-Object FullName
+</code></pre>
+<p>Since we now know the validator is <code>tools\validate_public_release.py</code>, let&#39;s also see what other Python utilities are alongside it:</p>
+<pre><code class="language-powershell">Get-ChildItem .\tools -File | Select-Object Name
+</code></pre>
+<p>Paste those results here and I&#39;ll tell you the exact next command. No need to make any Git changes yet.</p>
+</div></article><article id="m-c12cb226-3a6e-46f5-9f3a-534cbdde0063" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00048 · 2026-08-18T16:14:14.966000-04:00 · active path</p><div class="bubble"><p>PS C:\x\m&gt; Get-ChildItem .\tools</p>
+<pre><code>Directory: C:\x\m\tools
+</code></pre>
+<p>Mode                 LastWriteTime         Length Name</p>
+<hr>
+<p>-a----         8/15/2026   1:21 AM           4673 validate_public_release.py</p>
+<p>PS C:\x\m&gt;</p>
+</div></article><article id="m-678a16f4-b470-4241-9c3d-d1e78201eb6e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00049 · 2026-08-18T16:14:16.601903-04:00 · active path</p><div class="bubble"><p>That tells us there is <strong>no separate manifest-update utility</strong> in <code>tools</code>; only the validator exists. So the next step is to identify exactly which manifest file the validator reads and what format it expects.</p>
+<p>Run:</p>
+<pre><code class="language-powershell">Get-Content .\tools\validate_public_release.py
+</code></pre>
+<p>If that is too long, use:</p>
+<pre><code class="language-powershell">Select-String -Path .\tools\validate_public_release.py -Pattern &quot;manifest|README|sha|size&quot; -Context 3,3
+</code></pre>
+<p>Paste that output here. From that, I can tell you exactly which manifest entry needs updating and the safest PowerShell commands to recalculate the README hash and size before committing.</p>
+</div></article><article id="m-2ab75a83-4214-4bdd-b6b2-1cc801ea0144" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00050 · 2026-08-18T16:15:09.330000-04:00 · active path</p><div class="bubble"><p>PS C:\x\m&gt; Get-Content .\tools\validate_public_release.py
+#!/usr/bin/env python3
+from pathlib import Path
+from urllib.parse import unquote
+import csv, hashlib, json, re, sys
+root=Path(<strong>file</strong>).resolve().parents[1]
+errors=[]
+exclude_roots={&#39;.git&#39;}
+manifest_authorities={&#39;MANIFEST.csv&#39;,&#39;manifest.json&#39;,&#39;SHA256SUMS.txt&#39;,&#39;PACKAGE_INVENTORY.csv&#39;}</p>
+<p>def governed_files():
+    out=[]
+    for p in root.rglob(&#39;*&#39;):
+        if not p.is_file(): continue
+        rel=p.relative_to(root)
+        if rel.parts and rel.parts[0] in exclude_roots: continue
+        if rel.as_posix() in manifest_authorities: continue
+        out.append(p)
+    return out</p>
+<h1>Parse structured files.</h1>
+<p>for p in governed_files():
+    rel=p.relative_to(root)
+    try:
+        if p.suffix.lower()==&#39;.json&#39;: json.loads(p.read_text(encoding=&#39;utf-8-sig&#39;))
+        elif p.suffix.lower()==&#39;.jsonl&#39;:
+            for i,line in enumerate(p.read_text(encoding=&#39;utf-8-sig&#39;).splitlines(),1):
+                if line.strip(): json.loads(line)
+        elif p.suffix.lower()==&#39;.csv&#39;:
+            with p.open(encoding=&#39;utf-8-sig&#39;,newline=&#39;&#39;) as f: list(csv.reader(f))
+    except Exception as e: errors.append(f&#39;Parse failure: {rel}: {e}&#39;)</p>
+<h1>Placeholders/local-path/secret residue in public text.</h1>
+<p>secret_patterns=[r&#39;(?i)\bsk-[A-Za-z0-9_-]{12,}\b&#39;,r&#39;(?i)\bghp_[A-Za-z0-9]{20,}\b&#39;,r&#39;(?i)\bgithub_pat_[A-Za-z0-9_]{20,}\b&#39;]
+for p in governed_files():
+    if p.suffix.lower() not in {&#39;.md&#39;,&#39;.json&#39;,&#39;.jsonl&#39;,&#39;.txt&#39;,&#39;.sql&#39;,&#39;.csv&#39;,&#39;.yml&#39;,&#39;.yaml&#39;}: continue
+    try: t=p.read_text(encoding=&#39;utf-8-sig&#39;)
+    except Exception: continue
+    rel=p.relative_to(root)
+    if not (len(rel.parts)&gt;=2 and rel.parts[0]==&#39;docs&#39; and rel.parts[1]==&#39;project_history&#39;) and re.search(r&#39;{{[^}]+}}&#39;,t): errors.append(f&#39;Unresolved placeholder: {rel}&#39;)
+    if &#39;[session]/&#39; in t or &#39;[session]/&#39; in t or re.search(r&#39;(?i)C:\Users\&#39;,t): errors.append(f&#39;Local/session path leakage: {rel}&#39;)
+    if &#39;[historical internal-record detector literal omitted]&#39; in t or &#39;[historical internal-record detector literal omitted]&#39; in t: errors.append(f&#39;Internal reasoning record published: {rel}&#39;)
+    for pat in secret_patterns:
+        if re.search(pat,t): errors.append(f&#39;Credential-like string: {rel}&#39;)</p>
+<h1>Markdown relative links.</h1>
+<p>link_re=re.compile(r&#39;(?&lt;!!)[[^]]<em>](([^)]+))&#39;)
+for p in root.rglob(&#39;</em>.md&#39;):
+    if &#39;.git&#39; in p.relative_to(root).parts: continue
+    text=p.read_text(encoding=&#39;utf-8-sig&#39;)
+    for target in link_re.findall(text):
+        target=target.strip().strip(&#39;&lt;&gt;&#39;)
+        if target.startswith((&#39;http://&#39;,&#39;https://&#39;,&#39;#&#39;,&#39;mailto:&#39;,&#39;sandbox:&#39;)): continue
+        target=unquote(target.split(&#39;#&#39;,1)[0])
+        if not target: continue
+        q=(p.parent/target).resolve()
+        try: q.relative_to(root.resolve())
+        except Exception: errors.append(f&#39;Link escapes repository: {p.relative_to(root)} -&gt; {target}&#39;); continue
+        if not q.exists(): errors.append(f&#39;Broken link: {p.relative_to(root)} -&gt; {target}&#39;)</p>
+<h1>Manifest exact set and hashes.</h1>
+<p>with (root/&#39;MANIFEST.csv&#39;).open(newline=&#39;&#39;,encoding=&#39;utf-8&#39;) as f:
+    rows=list(csv.DictReader(f))
+manifest_paths={r[&#39;path&#39;] for r in rows}
+physical_paths={p.relative_to(root).as_posix() for p in governed_files()}
+for path in sorted(manifest_paths-physical_paths): errors.append(f&#39;Manifest extra path: {path}&#39;)
+for path in sorted(physical_paths-manifest_paths): errors.append(f&#39;Manifest missing path: {path}&#39;)
+for r in rows:
+    p=root/r[&#39;path&#39;]
+    if p.is_file():
+        h=hashlib.sha256(p.read_bytes()).hexdigest()
+        if h!=r[&#39;sha256&#39;]: errors.append(f&#39;Manifest hash mismatch: {r[&quot;path&quot;]}&#39;)
+        if p.stat().st_size!=int(r[&#39;size_bytes&#39;]): errors.append(f&#39;Manifest size mismatch: {r[&quot;path&quot;]}&#39;)</p>
+<h1>Expected release surfaces.</h1>
+<p>required=[
+ &#39;Module_2/README.md&#39;,
+ &#39;docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png&#39;,
+ &#39;docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio_v2.pdf&#39;,
+ &#39;docs/campaign_scale/README.md&#39;,
+ &#39;docs/campaign_scale/CAMPAIGN_SCALE_GOVERNANCE_BOUNDARY.md&#39;,
+ &#39;docs/project_history/chatgpt_logs_through_2026-08-12/README.md&#39;,
+ &#39;docs/project_history/chatgpt_logs_through_2026-08-12/CONVERSATION_INDEX.csv&#39;,
+]
+for rel in required:
+    if not (root/rel).is_file(): errors.append(f&#39;Required publication artifact missing: {rel}&#39;)</p>
+<h1>12 Module 2 stage roots.</h1>
+<p>stage_roots=[p for p in (root/&#39;Module_2&#39;).iterdir() if p.is_dir() and re.match(r&#39;2.\d{2}_&#39;,p.name)]
+if len(stage_roots)!=12: errors.append(f&#39;Module 2 stage folder count: expected 12, observed {len(stage_roots)}&#39;)</p>
+<p>if errors:
+    print(&#39;Public release validation FAIL&#39;)
+    print(&#39;\n&#39;.join(f&#39;- {e}&#39; for e in errors))
+    sys.exit(1)
+print(&#39;Public release validation PASS&#39;)
+print(f&#39;Governed manifest files: {len(rows)}&#39;)
+print(f&#39;Module 2 stage folders: {len(stage_roots)}&#39;)</p>
+</div></article><article id="m-f9a24763-5906-43b1-be26-e84d2a8b8c88" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00051 · 2026-08-18T16:15:11.790924-04:00 · active path</p><div class="bubble"><p>Perfect. The validator tells us exactly what needs to be repaired: <strong><code>MANIFEST.csv</code> has the old SHA-256 and byte size for the root <code>README.md</code>.</strong> Nothing else in the validator suggests you need to regenerate the whole release.</p>
+<p>From <code>C:\x\m</code>, first confirm the stale manifest entry:</p>
+<pre><code class="language-powershell">Import-Csv .\MANIFEST.csv | Where-Object { $_.path -eq &#39;README.md&#39; } | Format-List
+</code></pre>
+<p>Then calculate the current README values:</p>
+<pre><code class="language-powershell">Get-FileHash .\README.md -Algorithm SHA256
+(Get-Item .\README.md).Length
+</code></pre>
+<p>You could manually replace the <code>sha256</code> and <code>size_bytes</code> values in <code>MANIFEST.csv</code>, but I&#39;d use this small Python command so there is less chance of transcription error:</p>
+<pre><code class="language-powershell">@&#39;
+from pathlib import Path
+import csv, hashlib
+
+root = Path(&quot;.&quot;)
+manifest = root / &quot;MANIFEST.csv&quot;
+readme = root / &quot;README.md&quot;
+
+with manifest.open(newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+    rows = list(csv.DictReader(f))
+    fields = rows[0].keys()
+
+sha = hashlib.sha256(readme.read_bytes()).hexdigest()
+size = readme.stat().st_size
+
+found = False
+for row in rows:
+    if row[&quot;path&quot;] == &quot;README.md&quot;:
+        row[&quot;sha256&quot;] = sha
+        row[&quot;size_bytes&quot;] = str(size)
+        found = True
+
+if not found:
+    raise SystemExit(&quot;README.md not found in MANIFEST.csv&quot;)
+
+with manifest.open(&quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+    writer = csv.DictWriter(f, fieldnames=fields)
+    writer.writeheader()
+    writer.writerows(rows)
+
+print(&quot;README.md&quot;)
+print(&quot;sha256:&quot;, sha)
+print(&quot;size_bytes:&quot;, size)
+&#39;@ | python -
+</code></pre>
+<p>Then run the <strong>same validator GitHub Actions runs</strong>:</p>
+<pre><code class="language-powershell">python .\tools\validate_public_release.py
+</code></pre>
+<p>What we want is:</p>
+<pre><code class="language-text">Public release validation PASS
+Governed manifest files: ...
+Module 2 stage folders: 12
+</code></pre>
+<p>If that passes, inspect exactly what changed:</p>
+<pre><code class="language-powershell">git status
+git diff
+</code></pre>
+<p>At this point, because your README change is <strong>already committed</strong>, you will probably see only <code>MANIFEST.csv</code> as modified. That&#39;s okay. Commit the integrity correction:</p>
+<pre><code class="language-powershell">git add MANIFEST.csv
+git commit -m &quot;Restore publication integrity for Module 2 / G3 v2.0.0&quot;
+git push origin main
+</code></pre>
+<p><strong>Do not use <code>[skip ci]</code> this time.</strong> We specifically want the Publication Integrity workflow to run again and produce a green check.</p>
+<p>The end state should therefore be:</p>
+<pre><code class="language-text">README.md        = your current intended public README
+MANIFEST.csv     = current README hash + size
+local validator  = PASS
+GitHub Actions   = PASS
+</code></pre>
+<p>And the previous three red runs can simply remain in the history. They&#39;re useful evidence that the integrity control caught the README being changed outside the governed manifest.</p>
+</div></article><article id="m-ec9577fb-bad3-40e1-a4a1-ede30c30046c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00052 · 2026-08-18T16:17:23.465000-04:00 · active path</p><div class="bubble"><p>PS C:\x\m&gt; Import-Csv .\MANIFEST.csv | Where-Object { $_.path -eg &#39;README.md&#39; } | Format-List
+At line:1 char:52</p>
+<ul>
+<li>Import-Csv .\MANIFEST.csv | Where-Object { $_.path -eg &#39;README.md&#39; }  ...</li>
+<li><pre><code>                                               ~~~
+</code></pre>
+</li>
+</ul>
+<p>Unexpected token &#39;-eg&#39; in expression or statement.
+At line:1 char:56</p>
+<ul>
+<li>... t-Csv .\MANIFEST.csv | Where-Object { $_.path -eg &#39;README.md&#39; } | For ...</li>
+<li><pre><code>                                                  ~~~~~~~~~~~
+</code></pre>
+</li>
+</ul>
+<p>Unexpected token &#39;&#39;README.md&#39;&#39; in expression or statement.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : UnexpectedToken</p>
+<p>PS C:\x\m&gt; Get-FileHash .\README.md -Algorithm SHA256 (Get-Item .\README.md).Length
+Get-FileHash : A positional parameter cannot be found that accepts argument &#39;26765&#39;.
+At line:1 char:1</p>
+<ul>
+<li>Get-FileHash .\README.md -Algorithm SHA256 (Get-Item .\README.md).Len ...</li>
+<li><pre><code>  + CategoryInfo          : InvalidArgument: (:) [Get-FileHash], ParameterBindingException
+  + FullyQualifiedErrorId : PositionalParameterNotFound,Get-FileHash
+</code></pre>
+</li>
+</ul>
+</div></article><article id="m-cdb7cba6-c0d9-42a4-a5a4-8d6d67b8b936" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00053 · 2026-08-18T16:17:25.333889-04:00 · active path</p><div class="bubble"><p>Two small PowerShell syntax issues.</p>
+<p>First, use <code>-eq</code>, not <code>-eg</code>:</p>
+<pre><code class="language-powershell">Import-Csv .\MANIFEST.csv | Where-Object { $_.path -eq &#39;README.md&#39; } | Format-List
+</code></pre>
+<p>Second, run the hash and size as <strong>two separate commands</strong>:</p>
+<pre><code class="language-powershell">Get-FileHash .\README.md -Algorithm SHA256
+</code></pre>
+<p>then:</p>
+<pre><code class="language-powershell">(Get-Item .\README.md).Length
+</code></pre>
+<p>You already inadvertently confirmed the current README size is <strong>26,765 bytes</strong> from the error message, but run the second command cleanly anyway.</p>
+<p>Paste the three outputs:</p>
+<ul>
+<li>current <code>MANIFEST.csv</code> README entry,</li>
+<li>current README SHA-256,</li>
+<li>current README size,</li>
+</ul>
+<p>and I’ll give you the exact manifest correction.</p>
+</div></article><article id="m-59ebfbeb-07a4-4e5d-b456-1c97a1449953" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00054 · 2026-08-18T16:18:06.909000-04:00 · active path</p><div class="bubble"><p>PS C:\x\m&gt; Import-Csv .\MANIFEST.csv | Where-Object { $_.path -eq &#39;README.md&#39; } | Format-List</p>
+<p>path       : README.md
+size_bytes : 6069
+sha256     : b82b572c49c703f6895ad79838beae83acd6127dd67a3107572e98971e2aa150</p>
+<p>PS C:\x\m&gt; Get-FileHash .\README.md -Algorithm SHA256</p>
+<p>Algorithm       Hash                                                                   Path</p>
+<hr>
+<p>SHA256          73FE0B2A25ADA5434C29BFDFD0B8CCA4A3FB4C7DE51E84C1A84319B4374B4471       C:\x\m\README.md</p>
+<p>PS C:\x\m&gt; (Get-Item .\README.md).Length
+26765</p>
+</div></article><article id="m-5af45ee6-b373-40ab-af43-802ccbc442c5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00055 · 2026-08-18T16:18:09.602232-04:00 · active path</p><div class="bubble"><p>Great. That confirms the mismatch precisely.</p>
+<p>Your manifest currently records:</p>
+<pre><code class="language-text">size_bytes : 6069
+sha256     : b82b572c49c703f6895ad79838beae83acd6127dd67a3107572e98971e2aa150
+</code></pre>
+<p>but the current <code>README.md</code> is:</p>
+<pre><code class="language-text">size_bytes : 26765
+sha256     : 73fe0b2a25ada5434c29bfdfd0b8cca4a3fb4c7de51e84c1a84319b4374b4471
+</code></pre>
+<p>So update the <code>README.md</code> row in <code>MANIFEST.csv</code> to those exact new values.</p>
+<p>The safest way is to run this in PowerShell:</p>
+<pre><code class="language-powershell">@&#39;
+from pathlib import Path
+import csv
+
+manifest = Path(&quot;MANIFEST.csv&quot;)
+
+with manifest.open(newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+    rows = list(csv.DictReader(f))
+    fields = rows[0].keys()
+
+for row in rows:
+    if row[&quot;path&quot;] == &quot;README.md&quot;:
+        row[&quot;size_bytes&quot;] = &quot;26765&quot;
+        row[&quot;sha256&quot;] = &quot;73fe0b2a25ada5434c29bfdfd0b8cca4a3fb4c7de51e84c1a84319b4374b4471&quot;
+
+with manifest.open(&quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+    writer = csv.DictWriter(f, fieldnames=fields)
+    writer.writeheader()
+    writer.writerows(rows)
+&#39;@ | python -
+</code></pre>
+<p>Then immediately run:</p>
+<pre><code class="language-powershell">python .\tools\validate_public_release.py
+</code></pre>
+<p>You want to see:</p>
+<pre><code class="language-text">Public release validation PASS
+</code></pre>
+<p>If it passes, then check:</p>
+<pre><code class="language-powershell">git status
+git diff -- MANIFEST.csv
+</code></pre>
+<p>Assuming only the expected manifest row changed, commit and push:</p>
+<pre><code class="language-powershell">git add MANIFEST.csv
+git commit -m &quot;Restore publication integrity for Module 2 / G3 v2.0.0&quot;
+git push origin main
+</code></pre>
+<p>This time <strong>do not skip CI</strong>. We want the publication-integrity workflow to run and go green.</p>
+</div></article><article id="m-ce38bb89-5669-4f04-99a9-2555b3f40688" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00056 · 2026-08-18T16:20:05.083000-04:00 · active path</p><div class="bubble"><p>PS C:\x\m&gt; python .\tools\validate_public_release.py
+Public release validation PASS
+Governed manifest files: 1930
+Module 2 stage folders: 12
+PS C:\x\m&gt; git status
+On branch main
+Your branch is up to date with &#39;origin/main&#39;.</p>
+<p>Changes not staged for commit:
+  (use &quot;git add &lt;file&gt;...&quot; to update what will be committed)
+  (use &quot;git restore &lt;file&gt;...&quot; to discard changes in working directory)
+        modified:   MANIFEST.csv</p>
+<p>no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</p>
+</div></article><article id="m-d99577dc-00c6-47a5-9aab-2bbe565e9d51" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00057 · 2026-08-18T16:20:06.816955-04:00 · active path</p><div class="bubble"><p>Perfect. That is exactly the state you want: the validator passes, and only <code>MANIFEST.csv</code> remains modified.</p>
+<p>Now run:</p>
+<pre><code class="language-powershell">git add MANIFEST.csv
+git commit -m &quot;Restore publication integrity for Module 2 / G3 v2.0.0&quot;
+git push origin main
+</code></pre>
+<p>Then GitHub Actions should run again. This time the publication-integrity check should go green because the README hash and byte size now match the manifest.</p>
+<p>No need to touch the README again, and no <code>[skip ci]</code> on this corrective commit.</p>
+</div></article><article id="m-60925567-43a1-4a2b-b274-265cd0179125" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00058 · 2026-08-18T16:25:36.474000-04:00 · active path</p><div class="bubble"><p>thank you. aside over. I will return after the independent audit is complete.</p>
+</div></article><article id="m-6fac90bc-0f34-4998-bd55-bbba8fbecba5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C092-M00059 · 2026-08-18T16:25:37.173844-04:00 · active path</p><div class="bubble"><p>You&#39;re welcome. We’ll hold Module 3 at the R2 construction/static-validation boundary and resume from the independent audit disposition when you return. [export reference: memcite]</p>
+</div></article><article id="m-4546f8f2-7b1f-4a65-8312-797c92d77f18" class="message user"><p class="meta"><strong>Andrew / user</strong> · C092-M00060 · 2026-08-18T19:00:36.313000-04:00 · active path</p><p class="note">Attachment references: 07_IA_WP5A_CROSS_WORKSTREAM_NONREGRESSION_REPORT(3).md; 05_IA_WP4A_MODULE_3_M3_1_CONSTRUCTION_R2_AUDIT_REPORT(1).md; MSBF_IA_SECOND_DELIVERABLE_AUDIT_CYCLE_R3_20260818(3).zip; MSBF_IA_SECOND_DELIVERABLE_AUDIT_CYCLE_R3_20260818.zip(3).sha256</p><div class="bubble"><p>Audit has authorized the preparation of M3.1 construction R3 only. Correct the canonical signed-authorization design, complete signed-package/local-tree/attempt binding, enforce temporal validity before any connection, establish a distinct external quarantine identity, make privilege changes failure-safe, and persist exact exit/end-state evidence. Resubmit static evidence. Do not connect to or execute against any database.  Full Audit results attached.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

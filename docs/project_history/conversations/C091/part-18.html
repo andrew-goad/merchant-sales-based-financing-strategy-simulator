@@ -1,0 +1,1718 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence — part 18 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence — part 18</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-17.html">Previous part</a><a href="part-19.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-b2cc4070-adbe-4bee-93e4-572d170019f8" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00232 · 2026-08-21T08:34:09.469490-04:00 · active path</p><div class="bubble"><p>This is enough to classify the remaining two <code>model.bim</code> differences as <strong>Power BI-authored serialization metadata rather than substantive semantic drift</strong>.</p>
+<p>After reversing the authorized measure change in memory, the only residual differences are the <code>PBI_ResultType</code> annotations on <code>DimDate</code> and <code>DimRunCampaign</code>, each changing from <code>Table</code> to <code>Exception</code>. Every other annotation on those tables is identical; their names, import partitions, partition source structures, columns, relationships, measures, activation-wave annotations, and local-engine-status annotations are unchanged. More importantly, the exhaustive JSON comparison found <strong>no other parsed-model difference</strong>. The focused authorization expressly permits ordinary Power BI serialization changes mechanically caused by the one authorized measure edit and calls for separating that metadata from substantive model changes. [export reference: filecite | turn39file0 | L8-L11] [export reference: filecite | turn39file1 | L25-L30]</p>
+<p>So the final physical classification is now:</p>
+<pre><code class="language-text">AUTHORIZED SEMANTIC CHANGE
+1 measure expression:
+ModelParameters[Source Reconciliation Pass]
+
+DESKTOP / SERIALIZATION STATE
+Report/.pbi/localSettings.json
+  securityBindingsSignature only
+
+SemanticModel/.pbi/localSettings.json
+  securityBindingsSignature only
+
+SemanticModel/.pbi/cache.abf
+  Desktop processed-model cache
+
+model.bim serialization metadata:
+DimDate[PBI_ResultType]         Table → Exception
+DimRunCampaign[PBI_ResultType] Table → Exception
+
+NO OTHER PARSED MODEL DIFFERENCE
+</code></pre>
+<p>The original supplied validator should remain preserved as <strong>FAIL at an overly narrow physical-file assertion</strong>. The serialization-aware diagnostic should remain preserved as <strong>PASS</strong>. We should not alter either the executed project or the original validator merely to manufacture a one-file diff.</p>
+<h2>Final freeze procedure</h2>
+<p>First, if Power BI Desktop or DAX Studio is still open, close both normally now. Do not make any further edit or refresh. If Desktop asks whether to save changes and you have not made any change since the successful refresh/evidence capture, choose the normal close path without intentionally editing anything.</p>
+<p>Then verify both processes are gone:</p>
+<pre><code class="language-powershell">Get-Process `
+    -Name PBIDesktop,DaxStudio `
+    -ErrorAction SilentlyContinue |
+    Select-Object Id,ProcessName,StartTime |
+    Format-Table -AutoSize
+</code></pre>
+<p>The desired output is no processes.</p>
+<p>Now run the following.</p>
+<h3>1. Record the resolved serialization classification</h3>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+
+$work   = &quot;C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_WORKING_20260820&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+$classification = @&#39;
+# A1b Focused R2 — Final Serialization Classification
+
+## Governing semantic correction
+
+The only authorized substantive semantic correction is:
+
+ModelParameters[Source Reconciliation Pass]
+
+The normalized expression hashes reconcile exactly to the focused-remediation
+authorization:
+
+- predecessor expression:
+  cec29977bab86071d1209afaa1aaa5738f1a7f6d5c0d28791bbc847fcca1c1f5
+
+- Focused R2 replacement expression:
+  98c2a0d31349e30277192dfa531ec78066f883899895286961249d38000daac0
+
+## Executed physical project differences
+
+The post-Desktop project retains exactly 16 physical project files.
+
+Relative to the controlling predecessor, exactly four project files changed:
+
+1. Report/.pbi/localSettings.json
+2. SemanticModel/.pbi/cache.abf
+3. SemanticModel/.pbi/localSettings.json
+4. SemanticModel/model.bim
+
+No project file was added or deleted.
+
+## Local-settings classification
+
+Both changed localSettings.json files retain their original JSON structure.
+
+Their only observed changed value is:
+
+securityBindingsSignature
+
+This is classified as Desktop-local security-binding serialization metadata.
+
+## cache.abf classification
+
+SemanticModel/.pbi/cache.abf is the Power BI Desktop processed-model cache.
+
+Its post-refresh physical change is preserved as executed Desktop state and is not
+treated as an authored semantic-model change.
+
+## model.bim exact semantic classification
+
+An exhaustive parsed-JSON comparison was performed after replacing only the
+authorized Focused R2 Source Reconciliation Pass expression with the controlling
+predecessor expression in memory.
+
+Exactly two residual parsed differences remained:
+
+DimDate
+  annotation: PBI_ResultType
+  predecessor: Table
+  executed R2: Exception
+
+DimRunCampaign
+  annotation: PBI_ResultType
+  predecessor: Table
+  executed R2: Exception
+
+For both tables:
+
+- table identity is unchanged;
+- annotation identity is unchanged;
+- MSBF_ActivationWave remains A1a;
+- MSBF_LocalEngineStatus remains PENDING_LOCAL_DESKTOP_EVIDENCE;
+- PBI_NavigationStepName remains Navigation;
+- partition mode remains import;
+- partition source structure remains unchanged.
+
+No other parsed semantic-model difference was identified after reversing the
+authorized measure expression in memory.
+
+The two PBI_ResultType values are therefore classified as Power BI-authored
+serialization/runtime annotation metadata, not as an additional source-owner
+semantic correction.
+
+## Validator disposition
+
+The supplied Validate-A1bFocusedR2Static.py validator remains preserved unchanged.
+
+It fails before its substantive checks because it requires the complete physical
+project diff to contain model.bim only.
+
+That physical-file predicate is narrower than the focused-remediation authorization,
+which expressly permits ordinary Power BI serialization caused by the authorized
+one-measure correction.
+
+A copied serialization-aware diagnostic validator was used without altering the
+supplied validator. It passed all remaining substantive controls and established:
+
+- 32 tables
+- 32 relationships
+- 79 Power Query objects
+- 60 measures
+- exactly one changed measure expression
+- one technical shell
+- zero substantive pages
+- zero visuals
+- REL-076 as the sole inactive relationship
+
+The original validator failure and the serialization-aware PASS are both retained
+for Independent Audit review.
+
+## No normalization
+
+No executed-state file has been restored merely to force the project into a
+one-file physical diff.
+
+No PBI_ResultType annotation has been edited.
+
+No cache or local-settings file has been replaced.
+
+No additional semantic remediation has been performed.
+
+Independent Audit retains final acceptance authority.
+&#39;@
+
+$classification |
+    Set-Content `
+        -LiteralPath &quot;$return\R2_E107_FINAL_SERIALIZATION_CLASSIFICATION.md&quot; `
+        -Encoding utf8
+</code></pre>
+<h3>2. Re-run the final serialization-aware validator after Desktop closure</h3>
+<p>The copied diagnostic validator already exists in the evidence directory. Run it once more against the now-closed, stable filesystem state:</p>
+<pre><code class="language-powershell">$diagnosticValidator = Join-Path $return `
+    &quot;R2_E103_Validate-A1bFocusedR2Static_SERIALIZATION_AWARE_DIAGNOSTIC.py&quot;
+
+&amp; &quot;C:\Python314\python.exe&quot; `
+    $diagnosticValidator `
+    $work *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$return\R2_E107_FINAL_POST_CLOSE_SERIALIZATION_AWARE_STATIC_BOUNDARY.txt&quot;
+</code></pre>
+<p>Required final disposition:</p>
+<pre><code class="language-text">status                      PASS
+tables                      32
+relationships               32
+power_query_objects         79
+measures                    60
+technical_shell_pages       1
+substantive_pages           0
+visuals                     0
+inactive_relationships      REL-076 only
+changed_measure_expressions Source Reconciliation Pass only
+</code></pre>
+<p>If it does <strong>not</strong> pass, stop and send me the result.</p>
+<h3>3. Create the definitive post-close project manifest and root hash</h3>
+<p>Use the same root-hash definition as the supplied validator:</p>
+<pre><code class="language-powershell">$project = Join-Path $work &quot;project&quot;
+
+$projectManifest = @(
+    Get-ChildItem `
+        -LiteralPath $project `
+        -File `
+        -Recurse `
+        -Force |
+    Sort-Object {
+        $_.FullName.Substring($project.Length + 1).Replace(&#39;\&#39;,&#39;/&#39;).ToLowerInvariant()
+    } |
+    ForEach-Object {
+        [pscustomobject]@{
+            relative_path =
+                $_.FullName.Substring($project.Length + 1).Replace(&#39;\&#39;,&#39;/&#39;)
+
+            bytes = $_.Length
+
+            sha256 = (
+                Get-FileHash `
+                    -LiteralPath $_.FullName `
+                    -Algorithm SHA256
+            ).Hash.ToLowerInvariant()
+        }
+    }
+)
+
+$projectManifest |
+    Export-Csv `
+        -LiteralPath &quot;$return\R2_E107_FINAL_PROJECT_MANIFEST.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+$rootMaterial = &quot;&quot;
+
+foreach (
+    $row in @(
+        $projectManifest |
+        Sort-Object { $_.relative_path.ToLowerInvariant() }
+    )
+) {
+    $rootMaterial += (
+        $row.relative_path + &quot;`t&quot; +
+        $row.bytes + &quot;`t&quot; +
+        $row.sha256 + &quot;`n&quot;
+    )
+}
+
+$rootBytes = [Text.Encoding]::UTF8.GetBytes($rootMaterial)
+
+$rootHash = (
+    [BitConverter]::ToString(
+        [Security.Cryptography.SHA256]::Create().ComputeHash(
+            $rootBytes
+        )
+    )
+).Replace(&quot;-&quot;,&quot;&quot;).ToLowerInvariant()
+
+$modelPath = Join-Path $project `
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;
+
+$modelHash = (
+    Get-FileHash `
+        -LiteralPath $modelPath `
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+[pscustomobject]@{
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    project_files = $projectManifest.Count
+    project_root_sha256 = $rootHash
+    model_bim_sha256 = $modelHash
+
+    controlling_predecessor_project_root =
+        &quot;e3ec3953c97d29d289ee111d74a63677dbab18100886a53493188befee2b2740&quot;
+
+    status = &quot;FINAL_EXECUTED_FOCUSED_R2_IDENTITY&quot;
+} |
+    ConvertTo-Json -Depth 5 |
+    Set-Content `
+        -LiteralPath &quot;$return\R2_E107_FINAL_EXECUTED_PROJECT_IDENTITY.json&quot; `
+        -Encoding utf8
+
+Write-Host &quot;&quot;
+Write-Host &quot;Final project files:&quot; $projectManifest.Count
+Write-Host &quot;Final project root: &quot; $rootHash
+Write-Host &quot;Final model.bim:    &quot; $modelHash
+</code></pre>
+<p>Do <strong>not</strong> assume the root remains <code>4d67e1...</code> until this post-close calculation says so.</p>
+<h3>4. Create the source-owner final disposition</h3>
+<pre><code class="language-powershell">$finalDisposition = @&#39;
+# MSBF Power BI A1b Focused R2 — Source-Owner Final Disposition
+
+## Focused remediation
+
+The Focused R2 correction was derived from controlling predecessor project root:
+
+e3ec3953c97d29d289ee111d74a63677dbab18100886a53493188befee2b2740
+
+Exactly one source-owner semantic correction was authorized and executed:
+
+ModelParameters[Source Reconciliation Pass]
+
+The corrected measure preserves the qualified source status:
+
+PASS_A1A_R3_STATIC
+
+and requires exact source and validation cardinalities.
+
+No source carrier was normalized to literal PASS.
+
+## Live-engine re-performance
+
+R2_E01:
+All 60 measures compiled/evaluated in one live-engine query.
+
+R2_E02:
+FactSourceReconciliation:
+- rows = 214
+- distinct SourceObjectKey = 214
+- PASS_A1A_R3_STATIC = 214
+
+FactValidationResult:
+- rows = 533
+- distinct ValidationControlKey = 533
+- PASS = 533
+
+Source Reconciliation Pass = 1.
+
+R2_E03:
+The exact control baseline returned gate 1.
+Every truncated, duplicate, missing, unexpected-status, extra-control and
+dual-extra adversarial population returned gate 0.
+
+R2_E04:
+Endpoint availability = 0 / 1 / 0 across:
+- 2026-11-21
+- 2026-11-22
+- 2026-11-23
+
+Post-evidence state = HOLD_OUTSIDE_EVIDENCE.
+
+R2_E05:
+At the evidence endpoint the six core endpoint populations reconcile to:
+
+- FactGovernanceControl = 9
+- FactMonitoringEndpoint = 59
+- FactAccountCertification = 59
+- FactPortfolioPerformanceEndpoint = 59
+- FactServicingQueueEndpoint = 3
+- FactPortfolioKPIEndpoint = 72
+
+R2_E06:
+Endpoint measure behavior reconciles, including:
+
+- Certified Exposure = 785.48
+- Servicing Burden Units = 7
+- Endpoint Open Servicing Queue = 2
+
+R2_E07:
+- tables = 32
+- columns = 849
+- measures = 60
+- relationships = 32
+- active relationships = 31
+- REL-076 sole inactive
+- zero bidirectional relationships
+
+R2_E08 / R2_E09:
+All 31 active relationships demonstrate populated-key filter propagation after
+the six targeted follow-up cases.
+
+R2_E10:
+32 / 32 physical relationships return literal zero orphan keys.
+
+R2_E11:
+Scenario isolation remains:
+
+BASELINE:
+- 750 application-scenario rows
+- 44 account paths
+
+RECESSION_ENERGY:
+- 750 application-scenario rows
+- 15 account paths
+
+## Privacy/source nonregression
+
+The isolated read-only SMB source remains:
+
+\\localhost\MSBF_PBI_A1B_SYNTHETIC
+
+The 222 synthetic-root files reconcile exactly to the governed manifest.
+
+Power BI Desktop exposes the dedicated UNC source in Data Source Settings.
+
+Its privacy classification was physically captured.
+
+Global privacy enforcement remains enabled and global privacy-ignore remains disabled.
+
+pDataRoot and pBuildRoot remain unchanged.
+
+## Report boundary
+
+- technical shell pages = 1
+- substantive pages = 0
+- visuals = 0
+- bookmarks = 0
+
+No substantive report construction occurred.
+
+## Physical Desktop serialization
+
+Post-execution physical serialization is fully disclosed.
+
+Exactly four project files differ from the controlling predecessor:
+
+- Report/.pbi/localSettings.json
+- SemanticModel/.pbi/cache.abf
+- SemanticModel/.pbi/localSettings.json
+- SemanticModel/model.bim
+
+The two localSettings files differ only in securityBindingsSignature.
+
+cache.abf is processed Desktop cache state.
+
+Within parsed model.bim, after reversing the authorized measure expression in
+memory, only two residual Power BI annotation values differ:
+
+- DimDate PBI_ResultType: Table -&gt; Exception
+- DimRunCampaign PBI_ResultType: Table -&gt; Exception
+
+All remaining parsed model semantics reconcile to the predecessor.
+
+The original supplied static validator remains preserved with its one-physical-file
+assertion failure.
+
+A serialization-aware diagnostic copy passes all substantive static controls.
+
+Independent Audit is asked to classify the disclosed Desktop serialization under
+the authorization&#39;s ordinary-serialization allowance rather than having the source
+owner normalize the executed state.
+
+## Governing status
+
+ER-PBI-008:
+FOCUSED R2 EVIDENCE COMPLETE — PENDING INDEPENDENT AUDIT
+
+ER-PBI-010:
+FOCUSED R2 EVIDENCE COMPLETE — PENDING INDEPENDENT AUDIT
+
+PBI-WP2:
+HOLD
+
+Substantive report construction:
+NOT AUTHORIZED
+
+Publication:
+NOT AUTHORIZED
+
+Deployment:
+NOT AUTHORIZED
+
+Production readiness:
+NOT CLAIMED
+
+Public Power BI milestone:
+NOT AUTHORIZED
+&#39;@
+
+$finalDisposition |
+    Set-Content `
+        -LiteralPath &quot;$return\R2_E107_SOURCE_OWNER_FINAL_DISPOSITION.md&quot; `
+        -Encoding utf8
+</code></pre>
+<h2>Build the Independent Audit carrier</h2>
+<p>Use:</p>
+<pre><code class="language-text">MSBF_PBI_A1B_FOCUSED_R2_INDEPENDENT_AUDIT_SUBMISSION_20260821
+</code></pre>
+<h3>5. Create submission directories</h3>
+<pre><code class="language-powershell">$submissionName =
+    &quot;MSBF_PBI_A1B_FOCUSED_R2_INDEPENDENT_AUDIT_SUBMISSION_20260821&quot;
+
+$submissionRoot = Join-Path &quot;C:\MSBF&quot; $submissionName
+
+if (Test-Path -LiteralPath $submissionRoot) {
+    throw &quot;STOP: submission root already exists. Do not overwrite it.&quot;
+}
+
+New-Item `
+    -ItemType Directory `
+    -Path $submissionRoot |
+    Out-Null
+
+foreach ($folder in @(
+    &quot;authority&quot;,
+    &quot;project&quot;,
+    &quot;power_query&quot;,
+    &quot;synthetic_root&quot;,
+    &quot;dax&quot;,
+    &quot;tools&quot;,
+    &quot;evidence&quot;
+)) {
+    New-Item `
+        -ItemType Directory `
+        -Path (Join-Path $submissionRoot $folder) |
+        Out-Null
+}
+</code></pre>
+<h3>6. Copy the exact controlled carriers</h3>
+<pre><code class="language-powershell">foreach ($folder in @(
+    &quot;authority&quot;,
+    &quot;project&quot;,
+    &quot;power_query&quot;,
+    &quot;synthetic_root&quot;,
+    &quot;dax&quot;,
+    &quot;tools&quot;,
+    &quot;evidence&quot;
+)) {
+
+    $source = Join-Path $work $folder
+    $dest   = Join-Path $submissionRoot $folder
+
+    if (-not (Test-Path -LiteralPath $source)) {
+        throw &quot;STOP: required component missing: $source&quot;
+    }
+
+    Get-ChildItem `
+        -LiteralPath $source `
+        -Force |
+        Copy-Item `
+            -Destination $dest `
+            -Recurse `
+            -Force
+}
+</code></pre>
+<h3>7. Add a read-first audit request</h3>
+<pre><code class="language-powershell">$auditRequest = @&#39;
+# MSBF Power BI A1b Focused R2 — Independent Audit Submission
+
+## Requested review
+
+This is the bounded Focused R2 resubmission under:
+
+- ER-PBI-008
+- ER-PBI-010
+
+The source owner requests Independent Audit disposition of the authorized
+Source Reconciliation Pass remediation and its required re-execution evidence.
+
+No PBI-WP2 acceptance, substantive report construction, publication, deployment,
+production-readiness claim or public Power BI milestone is requested.
+
+## Controlling predecessor
+
+Project root:
+
+e3ec3953c97d29d289ee111d74a63677dbab18100886a53493188befee2b2740
+
+## Authorized semantic correction
+
+Exactly:
+
+ModelParameters[Source Reconciliation Pass]
+
+The replacement expression preserves PASS_A1A_R3_STATIC and requires exact:
+
+214 source rows
+214 distinct SourceObjectKey
+214 accepted PASS_A1A_R3_STATIC rows
+
+533 validation rows
+533 distinct ValidationControlKey
+533 accepted PASS rows
+
+No Power Query definition, source carrier, table, relationship, source root,
+other measure, page, visual, bookmark, filter, tooltip, drillthrough or mobile
+layout was intentionally changed.
+
+## Execution result
+
+The supplied live-engine evidence establishes:
+
+- all 60 measures execute;
+- exact 214/214/214 and 533/533/533 populations;
+- Source Reconciliation Pass = 1;
+- adversarial fail-closed controls PASS;
+- endpoint availability = 0 / 1 / 0;
+- six core endpoint gates reconcile;
+- endpoint measure behavior reconciles;
+- 32 tables / 849 columns / 60 measures / 32 relationships;
+- 31/31 active relationship propagation;
+- 32/32 zero orphan controls;
+- exact scenario isolation;
+- privacy/source-root nonregression;
+- one technical shell;
+- zero substantive pages;
+- zero visuals.
+
+## Disclosed Desktop serialization
+
+The supplied original static validator remains unchanged and fails at its
+physical-file assertion because post-Desktop execution produced four changed
+physical project files rather than model.bim only.
+
+The governing remediation authorization expressly permits ordinary Power BI
+serialization mechanically caused by the one authorized measure correction.
+
+The four physical differences are:
+
+1. Report/.pbi/localSettings.json
+2. SemanticModel/.pbi/cache.abf
+3. SemanticModel/.pbi/localSettings.json
+4. SemanticModel/model.bim
+
+The localSettings files differ only in securityBindingsSignature.
+
+cache.abf is Desktop processed-model cache state.
+
+The normalized predecessor and current measure-expression hashes exactly match
+the authorization.
+
+After reversing only the authorized measure expression in memory, the only
+remaining parsed model differences are:
+
+DimDate:
+PBI_ResultType = Table -&gt; Exception
+
+DimRunCampaign:
+PBI_ResultType = Table -&gt; Exception
+
+No other parsed semantic-model difference remains.
+
+A copied serialization-aware diagnostic validator passes all substantive static
+controls. The supplied original validator and its failure remain preserved.
+
+Independent Audit is expressly asked to determine whether these disclosed
+Desktop-generated physical/annotation differences fall within the authorized
+ordinary-serialization allowance.
+
+The source owner has not restored or normalized executed-state files merely to
+force a one-file physical diff.
+
+## Requested disposition
+
+Please determine:
+
+1. ER-PBI-008 focused-remediation disposition.
+2. ER-PBI-010 live-control re-performance disposition.
+3. Whether the disclosed three .pbi physical changes are ordinary authorized
+   Desktop serialization.
+4. Whether the two PBI_ResultType annotation changes are ordinary Power BI
+   serialization/runtime metadata rather than an unauthorized semantic change.
+5. Whether the one-measure correction is accepted as the sole substantive
+   semantic remediation.
+6. Whether AUD-ASOF-003B is now closed.
+7. Whether any further Focused R2 correction or re-performance is required.
+8. Explicitly preserve or revise the existing PBI-WP2 HOLD.
+
+Do not infer PBI-WP2 acceptance from a successful Focused R2 decision.
+&#39;@
+
+$auditRequest |
+    Set-Content `
+        -LiteralPath &quot;$submissionRoot\00_INDEPENDENT_AUDIT_REQUEST.md&quot; `
+        -Encoding utf8
+</code></pre>
+<h3>8. Reconcile every copied file</h3>
+<pre><code class="language-powershell">$copyChecks = @()
+
+foreach ($folder in @(
+    &quot;authority&quot;,
+    &quot;project&quot;,
+    &quot;power_query&quot;,
+    &quot;synthetic_root&quot;,
+    &quot;dax&quot;,
+    &quot;tools&quot;,
+    &quot;evidence&quot;
+)) {
+
+    $sourceRoot = Join-Path $work $folder
+    $destRoot   = Join-Path $submissionRoot $folder
+
+    $sourceFiles = @(
+        Get-ChildItem `
+            -LiteralPath $sourceRoot `
+            -File `
+            -Recurse `
+            -Force |
+        Sort-Object FullName
+    )
+
+    foreach ($sourceFile in $sourceFiles) {
+
+        $relative =
+            $sourceFile.FullName.Substring($sourceRoot.Length + 1)
+
+        $destFile = Join-Path $destRoot $relative
+
+        $sourceHash = (
+            Get-FileHash `
+                -LiteralPath $sourceFile.FullName `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+
+        $exists = Test-Path -LiteralPath $destFile
+
+        $destHash = if ($exists) {
+            (
+                Get-FileHash `
+                    -LiteralPath $destFile `
+                    -Algorithm SHA256
+            ).Hash.ToLowerInvariant()
+        }
+        else {
+            &quot;&quot;
+        }
+
+        $copyChecks += [pscustomobject]@{
+            component = $folder
+            relative_path = $relative
+            source_sha256 = $sourceHash
+            copied_sha256 = $destHash
+            copied_exists = $exists
+            pass = (
+                $exists -and
+                ($sourceHash -ceq $destHash)
+            )
+        }
+    }
+}
+
+$copyChecks |
+    Export-Csv `
+        -LiteralPath &quot;$submissionRoot\COPY_RECONCILIATION.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+$copyFailures = @(
+    $copyChecks |
+    Where-Object { -not $_.pass }
+)
+
+Write-Host &quot;Copy controls:&quot; $copyChecks.Count
+Write-Host &quot;Copy failures:&quot; $copyFailures.Count
+
+if ($copyFailures.Count -gt 0) {
+    throw &quot;STOP: submission copy reconciliation failed.&quot;
+}
+</code></pre>
+<h3>9. Build the submission manifest</h3>
+<pre><code class="language-powershell">$manifestPath = Join-Path $submissionRoot &quot;MANIFEST_SHA256.csv&quot;
+
+$payloadFiles = @(
+    Get-ChildItem `
+        -LiteralPath $submissionRoot `
+        -File `
+        -Recurse `
+        -Force |
+    Where-Object {
+        $_.FullName -cne $manifestPath
+    } |
+    Sort-Object FullName
+)
+
+$payloadManifest = foreach ($file in $payloadFiles) {
+
+    [pscustomobject]@{
+        relative_path =
+            $file.FullName.Substring($submissionRoot.Length + 1)
+
+        bytes = $file.Length
+
+        sha256 = (
+            Get-FileHash `
+                -LiteralPath $file.FullName `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+}
+
+$payloadManifest |
+    Export-Csv `
+        -LiteralPath $manifestPath `
+        -NoTypeInformation `
+        -Encoding utf8
+
+Write-Host &quot;Submission manifest entries:&quot; $payloadManifest.Count
+</code></pre>
+<h3>10. Seal the ZIP and sidecar</h3>
+<pre><code class="language-powershell">$zip = &quot;C:\MSBF\$submissionName.zip&quot;
+
+if (Test-Path -LiteralPath $zip) {
+    throw &quot;STOP: ZIP already exists. Do not overwrite it.&quot;
+}
+
+Compress-Archive `
+    -Path &quot;$submissionRoot\*&quot; `
+    -DestinationPath $zip `
+    -CompressionLevel Optimal
+
+$zipHash = (
+    Get-FileHash `
+        -LiteralPath $zip `
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+$sidecar = &quot;$zip.sha256&quot;
+
+&quot;$zipHash  $submissionName.zip&quot; |
+    Set-Content `
+        -LiteralPath $sidecar `
+        -Encoding ascii
+
+Write-Host &quot;&quot;
+Write-Host &quot;ZIP:     $zip&quot;
+Write-Host &quot;Bytes:  &quot; (Get-Item -LiteralPath $zip).Length
+Write-Host &quot;SHA-256: $zipHash&quot;
+Write-Host &quot;Sidecar: $sidecar&quot;
+</code></pre>
+<h3>11. Validate the ZIP</h3>
+<pre><code class="language-powershell">Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+$archive = [System.IO.Compression.ZipFile]::OpenRead($zip)
+
+try {
+
+    $entries = @($archive.Entries)
+
+    $unsafe = @(
+        $entries |
+        Where-Object {
+            $_.FullName.StartsWith(&quot;/&quot;) -or
+            $_.FullName.StartsWith(&quot;\&quot;) -or
+            $_.FullName -match &#39;(^|[\\/])\.\.([\\/]|$)&#39;
+        }
+    )
+
+    $duplicates = @(
+        $entries |
+        Group-Object FullName |
+        Where-Object Count -gt 1
+    )
+
+    $caseFoldDuplicates = @(
+        $entries |
+        Group-Object {
+            $_.FullName.ToLowerInvariant()
+        } |
+        Where-Object Count -gt 1
+    )
+
+    $readFailures = @()
+
+    foreach ($entry in $entries) {
+
+        if ([string]::IsNullOrEmpty($entry.Name)) {
+            continue
+        }
+
+        try {
+            $stream = $entry.Open()
+            $buffer = New-Object byte[] 65536
+
+            try {
+                while (
+                    $stream.Read(
+                        $buffer,
+                        0,
+                        $buffer.Length
+                    ) -gt 0
+                ) {}
+            }
+            finally {
+                $stream.Dispose()
+            }
+        }
+        catch {
+            $readFailures += $entry.FullName
+        }
+    }
+
+    $validation = [pscustomobject]@{
+        zip = [IO.Path]::GetFileName($zip)
+        bytes = (Get-Item -LiteralPath $zip).Length
+        sha256 = $zipHash
+        members = $entries.Count
+        unsafe_paths = $unsafe.Count
+        duplicate_paths = $duplicates.Count
+        case_fold_duplicate_paths =
+            $caseFoldDuplicates.Count
+        archive_read_failures =
+            $readFailures.Count
+
+        result = if (
+            $unsafe.Count -eq 0 -and
+            $duplicates.Count -eq 0 -and
+            $caseFoldDuplicates.Count -eq 0 -and
+            $readFailures.Count -eq 0
+        ) {
+            &quot;PASS&quot;
+        }
+        else {
+            &quot;FAIL&quot;
+        }
+    }
+
+    $validation | Format-List
+
+    $validation |
+        ConvertTo-Json -Depth 6 |
+        Set-Content `
+            -LiteralPath `
+            &quot;C:\MSBF\${submissionName}_ZIP_VALIDATION.json&quot; `
+            -Encoding utf8
+
+    if ($validation.result -ne &quot;PASS&quot;) {
+        throw &quot;STOP: ZIP validation failed.&quot;
+    }
+}
+finally {
+    $archive.Dispose()
+}
+</code></pre>
+<p>If the post-close serialization-aware validator passes, copy reconciliation is zero-failure, and ZIP validation is <code>PASS</code>, <strong>stop there</strong>. Do not reopen Desktop or perform more DAX execution.</p>
+<p>Send me these final outputs:</p>
+<pre><code class="language-text">post-close serialization-aware validator result
+final project-root SHA-256
+final model.bim SHA-256
+copy-control count / failures
+manifest-entry count
+ZIP bytes
+ZIP SHA-256
+ZIP member count
+ZIP validation result
+</code></pre>
+<p>I will then give you the <strong>final single-copy/paste Independent Audit prompt</strong>, incorporating the exact sealed identities.</p>
+<p>Because this is interaction <strong>107</strong>, the conversation-history carrier is currently:</p>
+<pre><code class="language-text">MSBF - Power BI Executive Portfolio Intelligence - ChatGPT_Interactions_89_Thru_107.zip
+</code></pre>
+<p>If you return the packaging results in the next interaction, the final history carrier will become <code>_89_Thru_108.zip</code>. [export reference: memcite]</p>
+</div></article><article id="m-2646c2f1-7122-4c23-8aae-04f775d21327" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00233 · 2026-08-21T08:43:24.106000-04:00 · active path</p><p class="note">Attachment references: MSBF_PBI_A1B_FOCUSED_R2_INDEPENDENT_AUDIT_SUBMISSION_20260821.zip; MSBF_PBI_A1B_FOCUSED_R2_INDEPENDENT_AUDIT_SUBMISSION_20260821_ZIP_VALIDATION.json</p><div class="bubble"><p>PS C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_WORKING_20260820&gt; Get-Process `</p>
+<blockquote>
+<blockquote>
+<pre><code>-Name PBIDesktop,DaxStudio `
+-ErrorAction SilentlyContinue |
+Select-Object Id,ProcessName,StartTime |
+Format-Table -AutoSize
+</code></pre>
+</blockquote>
+</blockquote>
+<p>PS C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_WORKING_20260820&gt; $ErrorActionPreference = &quot;Stop&quot;</p>
+<blockquote>
+<blockquote>
+<p>$work   = &quot;C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_WORKING_20260820&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;</p>
+<p>$classification = @&#39;</p>
+<h1>A1b Focused R2 — Final Serialization Classification</h1>
+<h2>Governing semantic correction</h2>
+<p>The only authorized substantive semantic correction is:</p>
+<p>ModelParameters[Source Reconciliation Pass]</p>
+<p>The normalized expression hashes reconcile exactly to the focused-remediation
+authorization:</p>
+<ul>
+<li><p>predecessor expression:
+cec29977bab86071d1209afaa1aaa5738f1a7f6d5c0d28791bbc847fcca1c1f5</p>
+</li>
+<li><p>Focused R2 replacement expression:
+98c2a0d31349e30277192dfa531ec78066f883899895286961249d38000daac0</p>
+</li>
+</ul>
+<h2>Executed physical project differences</h2>
+<p>The post-Desktop project retains exactly 16 physical project files.</p>
+<p>Relative to the controlling predecessor, exactly four project files changed:</p>
+<ol>
+<li>Report/.pbi/localSettings.json</li>
+<li>SemanticModel/.pbi/cache.abf</li>
+<li>SemanticModel/.pbi/localSettings.json</li>
+<li>SemanticModel/model.bim</li>
+</ol>
+<p>No project file was added or deleted.</p>
+<h2>Local-settings classification</h2>
+<p>Both changed localSettings.json files retain their original JSON structure.</p>
+<p>Their only observed changed value is:</p>
+<p>securityBindingsSignature</p>
+<p>This is classified as Desktop-local security-binding serialization metadata.</p>
+<h2>cache.abf classification</h2>
+<p>SemanticModel/.pbi/cache.abf is the Power BI Desktop processed-model cache.</p>
+<p>Its post-refresh physical change is preserved as executed Desktop state and is not
+treated as an authored semantic-model change.</p>
+<h2>model.bim exact semantic classification</h2>
+<p>An exhaustive parsed-JSON comparison was performed after replacing only the
+authorized Focused R2 Source Reconciliation Pass expression with the controlling
+predecessor expression in memory.</p>
+<p>Exactly two residual parsed differences remained:</p>
+<p>DimDate
+  annotation: PBI_ResultType
+  predecessor: Table
+  executed R2: Exception</p>
+<p>DimRunCampaign
+  annotation: PBI_ResultType
+  predecessor: Table
+  executed R2: Exception</p>
+<p>For both tables:</p>
+<ul>
+<li>table identity is unchanged;</li>
+<li>annotation identity is unchanged;</li>
+<li>MSBF_ActivationWave remains A1a;</li>
+<li>MSBF_LocalEngineStatus remains PENDING_LOCAL_DESKTOP_EVIDENCE;</li>
+<li>PBI_NavigationStepName remains Navigation;</li>
+<li>partition mode remains import;</li>
+<li>partition source structure remains unchanged.</li>
+</ul>
+<p>No other parsed semantic-model difference was identified after reversing the
+authorized measure expression in memory.</p>
+<p>The two PBI_ResultType values are therefore classified as Power BI-authored
+serialization/runtime annotation metadata, not as an additional source-owner
+semantic correction.</p>
+<h2>Validator disposition</h2>
+<p>The supplied Validate-A1bFocusedR2Static.py validator remains preserved unchanged.</p>
+<p>It fails before its substantive checks because it requires the complete physical
+project diff to contain model.bim only.</p>
+<p>That physical-file predicate is narrower than the focused-remediation authorization,
+which expressly permits ordinary Power BI serialization caused by the authorized
+one-measure correction.</p>
+<p>A copied serialization-aware diagnostic validator was used without altering the
+supplied validator. It passed all remaining substantive controls and established:</p>
+<ul>
+<li>32 tables</li>
+<li>32 relationships</li>
+<li>79 Power Query objects</li>
+<li>60 measures</li>
+<li>exactly one changed measure expression</li>
+<li>one technical shell</li>
+<li>zero substantive pages</li>
+<li>zero visuals</li>
+<li>REL-076 as the sole inactive relationship</li>
+</ul>
+<p>The original validator failure and the serialization-aware PASS are both retained
+for Independent Audit review.</p>
+<h2>No normalization</h2>
+<p>No executed-state file has been restored merely to force the project into a
+one-file physical diff.</p>
+<p>No PBI_ResultType annotation has been edited.</p>
+<p>No cache or local-settings file has been replaced.</p>
+<p>No additional semantic remediation has been performed.</p>
+<p>Independent Audit retains final acceptance authority.
+&#39;@</p>
+<p>$classification |
+    Set-Content <code>        -LiteralPath &quot;$return\R2_E107_FINAL_SERIALIZATION_CLASSIFICATION.md&quot;</code>
+        -Encoding utf8
+PS C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_WORKING_20260820&gt; $diagnosticValidator = Join-Path $return `</p>
+<blockquote>
+<pre><code>&quot;R2_E103_Validate-A1bFocusedR2Static_SERIALIZATION_AWARE_DIAGNOSTIC.py&quot;
+</code></pre>
+<p>&amp; &quot;C:\Python314\python.exe&quot; <code>    $diagnosticValidator</code>
+    $work *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$return\R2_E107_FINAL_POST_CLOSE_SERIALIZATION_AWARE_STATIC_BOUNDARY.txt&quot;
+{
+  &quot;status&quot;: &quot;PASS&quot;,
+  &quot;baseline_project_root&quot;: &quot;e3ec3953c97d29d289ee111d74a63677dbab18100886a53493188befee2b2740&quot;,
+  &quot;focused_r2_static_project_root&quot;: &quot;4d67e1a43ae4e540bb5efed0c8b55eca0ecc4a40c30e2784485c0b400b7424d0&quot;,
+  &quot;baseline_model_sha256&quot;: &quot;600c1bbd47af2313044fe319c28c7daa0d667119b55369c643d5f790b14cdc14&quot;,
+  &quot;focused_r2_model_sha256&quot;: &quot;71ecb70eaa345ecd0d68398c844198424e62f954453b83f5e68ec13ac348de6f&quot;,
+  &quot;changed_project_files&quot;: [
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.Report/.pbi/localSettings.json&quot;,
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.SemanticModel/.pbi/cache.abf&quot;,
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.SemanticModel/.pbi/localSettings.json&quot;,
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.SemanticModel/model.bim&quot;
+  ],
+  &quot;changed_measure_expressions&quot;: [
+    &quot;ModelParameters[Source Reconciliation Pass]&quot;
+  ],
+  &quot;tables&quot;: 32,
+  &quot;relationships&quot;: 32,
+  &quot;power_query_objects&quot;: 79,
+  &quot;measures&quot;: 60,
+  &quot;technical_shell_pages&quot;: 1,
+  &quot;substantive_pages&quot;: 0,
+  &quot;visuals&quot;: 0,
+  &quot;inactive_relationships&quot;: [
+    &quot;REL-076&quot;
+  ]
+}
+PS C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_WORKING_20260820&gt; $project = Join-Path $work &quot;project&quot;</p>
+<blockquote>
+<p>$projectManifest = @(
+    Get-ChildItem <code>        -LiteralPath $project</code>
+        -File <code>        -Recurse</code>
+        -Force |
+    Sort-Object {
+        $<em>.FullName.Substring($project.Length + 1).Replace(&#39;&#39;,&#39;/&#39;).ToLowerInvariant()
+    } |
+    ForEach-Object {
+        [pscustomobject]@{
+            relative_path =
+                $</em>.FullName.Substring($project.Length + 1).Replace(&#39;&#39;,&#39;/&#39;)</p>
+<pre><code>        bytes = $_.Length
+
+        sha256 = (
+            Get-FileHash `
+                -LiteralPath $_.FullName `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+}
+</code></pre>
+<p>)</p>
+<p>$projectManifest |
+    Export-Csv <code>        -LiteralPath &quot;$return\R2_E107_FINAL_PROJECT_MANIFEST.csv&quot;</code>
+        -NoTypeInformation `
+        -Encoding utf8</p>
+<p>$rootMaterial = &quot;&quot;</p>
+<p>foreach (
+    $row in @(
+        $projectManifest |
+        Sort-Object { $_.relative_path.ToLowerInvariant() }
+    )
+) {
+    $rootMaterial += (
+        $row.relative_path + &quot;<code>t&quot; +         $row.bytes + &quot;</code>t&quot; +
+        $row.sha256 + &quot;`n&quot;
+    )
+}</p>
+<p>$rootBytes = [Text.Encoding]::UTF8.GetBytes($rootMaterial)</p>
+<p>$rootHash = (
+    [BitConverter]::ToString(
+        [Security.Cryptography.SHA256]::Create().ComputeHash(
+            $rootBytes
+        )
+    )
+).Replace(&quot;-&quot;,&quot;&quot;).ToLowerInvariant()</p>
+<p>$modelPath = Join-Path $project `
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;</p>
+<p>$modelHash = (
+    Get-FileHash <code>        -LiteralPath $modelPath</code>
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()</p>
+<p>[pscustomobject]@{
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)</p>
+<pre><code>project_files = $projectManifest.Count
+project_root_sha256 = $rootHash
+model_bim_sha256 = $modelHash
+
+controlling_predecessor_project_root =
+    &quot;e3ec3953c97d29d289ee111d74a63677dbab18100886a53493188befee2b2740&quot;
+
+status = &quot;FINAL_EXECUTED_FOCUSED_R2_IDENTITY&quot;
+</code></pre>
+<p>} |
+    ConvertTo-Json -Depth 5 |
+    Set-Content <code>        -LiteralPath &quot;$return\R2_E107_FINAL_EXECUTED_PROJECT_IDENTITY.json&quot;</code>
+        -Encoding utf8</p>
+<p>Write-Host &quot;&quot;
+Write-Host &quot;Final project files:&quot; $projectManifest.Count
+Write-Host &quot;Final project root: &quot; $rootHash
+Write-Host &quot;Final model.bim:    &quot; $modelHash</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>Final project files: 16
+Final project root:  4d67e1a43ae4e540bb5efed0c8b55eca0ecc4a40c30e2784485c0b400b7424d0
+Final model.bim:     71ecb70eaa345ecd0d68398c844198424e62f954453b83f5e68ec13ac348de6f
+PS C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_WORKING_20260820&gt; $finalDisposition = @&#39;</p>
+<blockquote>
+<blockquote>
+<h1>MSBF Power BI A1b Focused R2 — Source-Owner Final Disposition</h1>
+<h2>Focused remediation</h2>
+<p>The Focused R2 correction was derived from controlling predecessor project root:</p>
+<p>e3ec3953c97d29d289ee111d74a63677dbab18100886a53493188befee2b2740</p>
+<p>Exactly one source-owner semantic correction was authorized and executed:</p>
+<p>ModelParameters[Source Reconciliation Pass]</p>
+<p>The corrected measure preserves the qualified source status:</p>
+<p>PASS_A1A_R3_STATIC</p>
+<p>and requires exact source and validation cardinalities.</p>
+<p>No source carrier was normalized to literal PASS.</p>
+<h2>Live-engine re-performance</h2>
+<p>R2_E01:
+All 60 measures compiled/evaluated in one live-engine query.</p>
+<p>R2_E02:
+FactSourceReconciliation:</p>
+<ul>
+<li>rows = 214</li>
+<li>distinct SourceObjectKey = 214</li>
+<li>PASS_A1A_R3_STATIC = 214</li>
+</ul>
+<p>FactValidationResult:</p>
+<ul>
+<li>rows = 533</li>
+<li>distinct ValidationControlKey = 533</li>
+<li>PASS = 533</li>
+</ul>
+<p>Source Reconciliation Pass = 1.</p>
+<p>R2_E03:
+The exact control baseline returned gate 1.
+Every truncated, duplicate, missing, unexpected-status, extra-control and
+dual-extra adversarial population returned gate 0.</p>
+<p>R2_E04:
+Endpoint availability = 0 / 1 / 0 across:</p>
+<ul>
+<li>2026-11-21</li>
+<li>2026-11-22</li>
+<li>2026-11-23</li>
+</ul>
+<p>Post-evidence state = HOLD_OUTSIDE_EVIDENCE.</p>
+<p>R2_E05:
+At the evidence endpoint the six core endpoint populations reconcile to:</p>
+<ul>
+<li>FactGovernanceControl = 9</li>
+<li>FactMonitoringEndpoint = 59</li>
+<li>FactAccountCertification = 59</li>
+<li>FactPortfolioPerformanceEndpoint = 59</li>
+<li>FactServicingQueueEndpoint = 3</li>
+<li>FactPortfolioKPIEndpoint = 72</li>
+</ul>
+<p>R2_E06:
+Endpoint measure behavior reconciles, including:</p>
+<ul>
+<li>Certified Exposure = 785.48</li>
+<li>Servicing Burden Units = 7</li>
+<li>Endpoint Open Servicing Queue = 2</li>
+</ul>
+<p>R2_E07:</p>
+<ul>
+<li>tables = 32</li>
+<li>columns = 849</li>
+<li>measures = 60</li>
+<li>relationships = 32</li>
+<li>active relationships = 31</li>
+<li>REL-076 sole inactive</li>
+<li>zero bidirectional relationships</li>
+</ul>
+<p>R2_E08 / R2_E09:
+All 31 active relationships demonstrate populated-key filter propagation after
+the six targeted follow-up cases.</p>
+<p>R2_E10:
+32 / 32 physical relationships return literal zero orphan keys.</p>
+<p>R2_E11:
+Scenario isolation remains:</p>
+<p>BASELINE:</p>
+<ul>
+<li>750 application-scenario rows</li>
+<li>44 account paths</li>
+</ul>
+<p>RECESSION_ENERGY:</p>
+<ul>
+<li>750 application-scenario rows</li>
+<li>15 account paths</li>
+</ul>
+<h2>Privacy/source nonregression</h2>
+<p>The isolated read-only SMB source remains:</p>
+<p>\localhost\MSBF_PBI_A1B_SYNTHETIC</p>
+<p>The 222 synthetic-root files reconcile exactly to the governed manifest.</p>
+<p>Power BI Desktop exposes the dedicated UNC source in Data Source Settings.</p>
+<p>Its privacy classification was physically captured.</p>
+<p>Global privacy enforcement remains enabled and global privacy-ignore remains disabled.</p>
+<p>pDataRoot and pBuildRoot remain unchanged.</p>
+<h2>Report boundary</h2>
+<ul>
+<li>technical shell pages = 1</li>
+<li>substantive pages = 0</li>
+<li>visuals = 0</li>
+<li>bookmarks = 0</li>
+</ul>
+<p>No substantive report construction occurred.</p>
+<h2>Physical Desktop serialization</h2>
+<p>Post-execution physical serialization is fully disclosed.</p>
+<p>Exactly four project files differ from the controlling predecessor:</p>
+<ul>
+<li>Report/.pbi/localSettings.json</li>
+<li>SemanticModel/.pbi/cache.abf</li>
+<li>SemanticModel/.pbi/localSettings.json</li>
+<li>SemanticModel/model.bim</li>
+</ul>
+<p>The two localSettings files differ only in securityBindingsSignature.</p>
+<p>cache.abf is processed Desktop cache state.</p>
+<p>Within parsed model.bim, after reversing the authorized measure expression in
+memory, only two residual Power BI annotation values differ:</p>
+<ul>
+<li>DimDate PBI_ResultType: Table -&gt; Exception</li>
+<li>DimRunCampaign PBI_ResultType: Table -&gt; Exception</li>
+</ul>
+<p>All remaining parsed model semantics reconcile to the predecessor.</p>
+<p>The original supplied static validator remains preserved with its one-physical-file
+assertion failure.</p>
+<p>A serialization-aware diagnostic copy passes all substantive static controls.</p>
+<p>Independent Audit is asked to classify the disclosed Desktop serialization under
+the authorization&#39;s ordinary-serialization allowance rather than having the source
+owner normalize the executed state.</p>
+<h2>Governing status</h2>
+<p>ER-PBI-008:
+FOCUSED R2 EVIDENCE COMPLETE — PENDING INDEPENDENT AUDIT</p>
+<p>ER-PBI-010:
+FOCUSED R2 EVIDENCE COMPLETE — PENDING INDEPENDENT AUDIT</p>
+<p>PBI-WP2:
+HOLD</p>
+<p>Substantive report construction:
+NOT AUTHORIZED</p>
+<p>Publication:
+NOT AUTHORIZED</p>
+<p>Deployment:
+NOT AUTHORIZED</p>
+<p>Production readiness:
+NOT CLAIMED</p>
+<p>Public Power BI milestone:
+NOT AUTHORIZED
+&#39;@</p>
+<p>$finalDisposition |
+    Set-Content <code>        -LiteralPath &quot;$return\R2_E107_SOURCE_OWNER_FINAL_DISPOSITION.md&quot;</code>
+        -Encoding utf8
+PS C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_WORKING_20260820&gt; $submissionName =</p>
+<blockquote>
+<pre><code>&quot;MSBF_PBI_A1B_FOCUSED_R2_INDEPENDENT_AUDIT_SUBMISSION_20260821&quot;
+</code></pre>
+<p>$submissionRoot = Join-Path &quot;C:\MSBF&quot; $submissionName</p>
+<p>if (Test-Path -LiteralPath $submissionRoot) {
+    throw &quot;STOP: submission root already exists. Do not overwrite it.&quot;
+}</p>
+<p>New-Item <code>    -ItemType Directory</code>
+    -Path $submissionRoot |
+    Out-Null</p>
+<p>foreach ($folder in @(
+    &quot;authority&quot;,
+    &quot;project&quot;,
+    &quot;power_query&quot;,
+    &quot;synthetic_root&quot;,
+    &quot;dax&quot;,
+    &quot;tools&quot;,
+    &quot;evidence&quot;
+)) {
+    New-Item <code>        -ItemType Directory</code>
+        -Path (Join-Path $submissionRoot $folder) |
+        Out-Null
+}
+PS C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_WORKING_20260820&gt; foreach ($folder in @(</p>
+<blockquote>
+<pre><code>&quot;authority&quot;,
+&quot;project&quot;,
+&quot;power_query&quot;,
+&quot;synthetic_root&quot;,
+&quot;dax&quot;,
+&quot;tools&quot;,
+&quot;evidence&quot;
+</code></pre>
+<p>)) {</p>
+<pre><code>$source = Join-Path $work $folder
+$dest   = Join-Path $submissionRoot $folder
+
+if (-not (Test-Path -LiteralPath $source)) {
+    throw &quot;STOP: required component missing: $source&quot;
+}
+
+Get-ChildItem `
+    -LiteralPath $source `
+    -Force |
+    Copy-Item `
+        -Destination $dest `
+        -Recurse `
+        -Force
+</code></pre>
+<p>}
+PS C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_WORKING_20260820&gt; $auditRequest = @&#39;</p>
+<blockquote>
+<h1>MSBF Power BI A1b Focused R2 — Independent Audit Submission</h1>
+<h2>Requested review</h2>
+<p>This is the bounded Focused R2 resubmission under:</p>
+<ul>
+<li>ER-PBI-008</li>
+<li>ER-PBI-010</li>
+</ul>
+<p>The source owner requests Independent Audit disposition of the authorized
+Source Reconciliation Pass remediation and its required re-execution evidence.</p>
+<p>No PBI-WP2 acceptance, substantive report construction, publication, deployment,
+production-readiness claim or public Power BI milestone is requested.</p>
+<h2>Controlling predecessor</h2>
+<p>Project root:</p>
+<p>e3ec3953c97d29d289ee111d74a63677dbab18100886a53493188befee2b2740</p>
+<h2>Authorized semantic correction</h2>
+<p>Exactly:</p>
+<p>ModelParameters[Source Reconciliation Pass]</p>
+<p>The replacement expression preserves PASS_A1A_R3_STATIC and requires exact:</p>
+<p>214 source rows
+214 distinct SourceObjectKey
+214 accepted PASS_A1A_R3_STATIC rows</p>
+<p>533 validation rows
+533 distinct ValidationControlKey
+533 accepted PASS rows</p>
+<p>No Power Query definition, source carrier, table, relationship, source root,
+other measure, page, visual, bookmark, filter, tooltip, drillthrough or mobile
+layout was intentionally changed.</p>
+<h2>Execution result</h2>
+<p>The supplied live-engine evidence establishes:</p>
+<ul>
+<li>all 60 measures execute;</li>
+<li>exact 214/214/214 and 533/533/533 populations;</li>
+<li>Source Reconciliation Pass = 1;</li>
+<li>adversarial fail-closed controls PASS;</li>
+<li>endpoint availability = 0 / 1 / 0;</li>
+<li>six core endpoint gates reconcile;</li>
+<li>endpoint measure behavior reconciles;</li>
+<li>32 tables / 849 columns / 60 measures / 32 relationships;</li>
+<li>31/31 active relationship propagation;</li>
+<li>32/32 zero orphan controls;</li>
+<li>exact scenario isolation;</li>
+<li>privacy/source-root nonregression;</li>
+<li>one technical shell;</li>
+<li>zero substantive pages;</li>
+<li>zero visuals.</li>
+</ul>
+<h2>Disclosed Desktop serialization</h2>
+<p>The supplied original static validator remains unchanged and fails at its
+physical-file assertion because post-Desktop execution produced four changed
+physical project files rather than model.bim only.</p>
+<p>The governing remediation authorization expressly permits ordinary Power BI
+serialization mechanically caused by the one authorized measure correction.</p>
+<p>The four physical differences are:</p>
+<ol>
+<li>Report/.pbi/localSettings.json</li>
+<li>SemanticModel/.pbi/cache.abf</li>
+<li>SemanticModel/.pbi/localSettings.json</li>
+<li>SemanticModel/model.bim</li>
+</ol>
+<p>The localSettings files differ only in securityBindingsSignature.</p>
+<p>cache.abf is Desktop processed-model cache state.</p>
+<p>The normalized predecessor and current measure-expression hashes exactly match
+the authorization.</p>
+<p>After reversing only the authorized measure expression in memory, the only
+remaining parsed model differences are:</p>
+<p>DimDate:
+PBI_ResultType = Table -&gt; Exception</p>
+<p>DimRunCampaign:
+PBI_ResultType = Table -&gt; Exception</p>
+<p>No other parsed semantic-model difference remains.</p>
+<p>A copied serialization-aware diagnostic validator passes all substantive static
+controls. The supplied original validator and its failure remain preserved.</p>
+<p>Independent Audit is expressly asked to determine whether these disclosed
+Desktop-generated physical/annotation differences fall within the authorized
+ordinary-serialization allowance.</p>
+<p>The source owner has not restored or normalized executed-state files merely to
+force a one-file physical diff.</p>
+<h2>Requested disposition</h2>
+<p>Please determine:</p>
+<ol>
+<li>ER-PBI-008 focused-remediation disposition.</li>
+<li>ER-PBI-010 live-control re-performance disposition.</li>
+<li>Whether the disclosed three .pbi physical changes are ordinary authorized
+Desktop serialization.</li>
+<li>Whether the two PBI_ResultType annotation changes are ordinary Power BI
+serialization/runtime metadata rather than an unauthorized semantic change.</li>
+<li>Whether the one-measure correction is accepted as the sole substantive
+semantic remediation.</li>
+<li>Whether AUD-ASOF-003B is now closed.</li>
+<li>Whether any further Focused R2 correction or re-performance is required.</li>
+<li>Explicitly preserve or revise the existing PBI-WP2 HOLD.</li>
+</ol>
+<p>Do not infer PBI-WP2 acceptance from a successful Focused R2 decision.
+&#39;@</p>
+<p>$auditRequest |
+    Set-Content <code>        -LiteralPath &quot;$submissionRoot\00_INDEPENDENT_AUDIT_REQUEST.md&quot;</code>
+        -Encoding utf8
+PS C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_WORKING_20260820&gt; $copyChecks = @()</p>
+<blockquote>
+<p>foreach ($folder in @(
+    &quot;authority&quot;,
+    &quot;project&quot;,
+    &quot;power_query&quot;,
+    &quot;synthetic_root&quot;,
+    &quot;dax&quot;,
+    &quot;tools&quot;,
+    &quot;evidence&quot;
+)) {</p>
+<pre><code>$sourceRoot = Join-Path $work $folder
+$destRoot   = Join-Path $submissionRoot $folder
+
+$sourceFiles = @(
+    Get-ChildItem `
+        -LiteralPath $sourceRoot `
+        -File `
+        -Recurse `
+        -Force |
+    Sort-Object FullName
+)
+
+foreach ($sourceFile in $sourceFiles) {
+
+    $relative =
+        $sourceFile.FullName.Substring($sourceRoot.Length + 1)
+
+    $destFile = Join-Path $destRoot $relative
+
+    $sourceHash = (
+        Get-FileHash `
+            -LiteralPath $sourceFile.FullName `
+            -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+
+    $exists = Test-Path -LiteralPath $destFile
+
+    $destHash = if ($exists) {
+        (
+            Get-FileHash `
+                -LiteralPath $destFile `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+    else {
+        &quot;&quot;
+    }
+
+    $copyChecks += [pscustomobject]@{
+        component = $folder
+        relative_path = $relative
+        source_sha256 = $sourceHash
+        copied_sha256 = $destHash
+        copied_exists = $exists
+        pass = (
+            $exists -and
+            ($sourceHash -ceq $destHash)
+        )
+    }
+}
+</code></pre>
+<p>}</p>
+<p>$copyChecks |
+    Export-Csv <code>        -LiteralPath &quot;$submissionRoot\COPY_RECONCILIATION.csv&quot;</code>
+        -NoTypeInformation `
+        -Encoding utf8</p>
+<p>$copyFailures = @(
+    $copyChecks |
+    Where-Object { -not $_.pass }
+)</p>
+<p>Write-Host &quot;Copy controls:&quot; $copyChecks.Count
+Write-Host &quot;Copy failures:&quot; $copyFailures.Count</p>
+<p>if ($copyFailures.Count -gt 0) {
+    throw &quot;STOP: submission copy reconciliation failed.&quot;
+}
+Copy controls: 434
+Copy failures: 0
+PS C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_WORKING_20260820&gt; $manifestPath = Join-Path $submissionRoot &quot;MANIFEST_SHA256.csv&quot;</p>
+<blockquote>
+<p>$payloadFiles = @(
+    Get-ChildItem <code>        -LiteralPath $submissionRoot</code>
+        -File <code>        -Recurse</code>
+        -Force |
+    Where-Object {
+        $_.FullName -cne $manifestPath
+    } |
+    Sort-Object FullName
+)</p>
+<p>$payloadManifest = foreach ($file in $payloadFiles) {</p>
+<pre><code>[pscustomobject]@{
+    relative_path =
+        $file.FullName.Substring($submissionRoot.Length + 1)
+
+    bytes = $file.Length
+
+    sha256 = (
+        Get-FileHash `
+            -LiteralPath $file.FullName `
+            -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+}
+</code></pre>
+<p>}</p>
+<p>$payloadManifest |
+    Export-Csv <code>        -LiteralPath $manifestPath</code>
+        -NoTypeInformation `
+        -Encoding utf8</p>
+<p>Write-Host &quot;Submission manifest entries:&quot; $payloadManifest.Count
+Submission manifest entries: 436
+PS C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_WORKING_20260820&gt; $zip = &quot;C:\MSBF$submissionName.zip&quot;</p>
+<blockquote>
+<p>if (Test-Path -LiteralPath $zip) {
+    throw &quot;STOP: ZIP already exists. Do not overwrite it.&quot;
+}</p>
+<p>Compress-Archive <code>    -Path &quot;$submissionRoot\*&quot;</code>
+    -DestinationPath $zip `
+    -CompressionLevel Optimal</p>
+<p>$zipHash = (
+    Get-FileHash <code>        -LiteralPath $zip</code>
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()</p>
+<p>$sidecar = &quot;$zip.sha256&quot;</p>
+<p>&quot;$zipHash  $submissionName.zip&quot; |
+    Set-Content <code>        -LiteralPath $sidecar</code>
+        -Encoding ascii</p>
+<p>Write-Host &quot;&quot;
+Write-Host &quot;ZIP:     $zip&quot;
+Write-Host &quot;Bytes:  &quot; (Get-Item -LiteralPath $zip).Length
+Write-Host &quot;SHA-256: $zipHash&quot;
+Write-Host &quot;Sidecar: $sidecar&quot;</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>ZIP:     C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_INDEPENDENT_AUDIT_SUBMISSION_20260821.zip
+Bytes:   34813542
+SHA-256: 8dddea7de21f1ead227d9ed9bd6fdcbe439b0e48aa11f3cb16023e0b77744b02
+Sidecar: C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_INDEPENDENT_AUDIT_SUBMISSION_20260821.zip.sha256
+PS C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_WORKING_20260820&gt; Add-Type -AssemblyName System.IO.Compression.FileSystem</p>
+<blockquote>
+<blockquote>
+<p>$archive = [System.IO.Compression.ZipFile]::OpenRead($zip)</p>
+<p>try {</p>
+<pre><code>$entries = @($archive.Entries)
+
+$unsafe = @(
+    $entries |
+    Where-Object {
+        $_.FullName.StartsWith(&quot;/&quot;) -or
+        $_.FullName.StartsWith(&quot;\&quot;) -or
+        $_.FullName -match &#39;(^|[\\/])\.\.([\\/]|$)&#39;
+    }
+)
+
+$duplicates = @(
+    $entries |
+    Group-Object FullName |
+    Where-Object Count -gt 1
+)
+
+$caseFoldDuplicates = @(
+    $entries |
+    Group-Object {
+        $_.FullName.ToLowerInvariant()
+    } |
+    Where-Object Count -gt 1
+)
+
+$readFailures = @()
+
+foreach ($entry in $entries) {
+
+    if ([string]::IsNullOrEmpty($entry.Name)) {
+        continue
+    }
+
+    try {
+        $stream = $entry.Open()
+        $buffer = New-Object byte[] 65536
+
+        try {
+            while (
+                $stream.Read(
+                    $buffer,
+                    0,
+                    $buffer.Length
+                ) -gt 0
+            ) {}
+        }
+        finally {
+            $stream.Dispose()
+        }
+    }
+    catch {
+        $readFailures += $entry.FullName
+    }
+}
+
+$validation = [pscustomobject]@{
+    zip = [IO.Path]::GetFileName($zip)
+    bytes = (Get-Item -LiteralPath $zip).Length
+    sha256 = $zipHash
+    members = $entries.Count
+    unsafe_paths = $unsafe.Count
+    duplicate_paths = $duplicates.Count
+    case_fold_duplicate_paths =
+        $caseFoldDuplicates.Count
+    archive_read_failures =
+        $readFailures.Count
+
+    result = if (
+        $unsafe.Count -eq 0 -and
+        $duplicates.Count -eq 0 -and
+        $caseFoldDuplicates.Count -eq 0 -and
+        $readFailures.Count -eq 0
+    ) {
+        &quot;PASS&quot;
+    }
+    else {
+        &quot;FAIL&quot;
+    }
+}
+
+$validation | Format-List
+
+$validation |
+    ConvertTo-Json -Depth 6 |
+    Set-Content `
+        -LiteralPath `
+        &quot;C:\MSBF\${submissionName}_ZIP_VALIDATION.json&quot; `
+        -Encoding utf8
+
+if ($validation.result -ne &quot;PASS&quot;) {
+    throw &quot;STOP: ZIP validation failed.&quot;
+}
+</code></pre>
+<p>}
+finally {
+    $archive.Dispose()
+}</p>
+</blockquote>
+</blockquote>
+<p>zip                       : MSBF_PBI_A1B_FOCUSED_R2_INDEPENDENT_AUDIT_SUBMISSION_20260821.zip
+bytes                     : 34813542
+sha256                    : 8dddea7de21f1ead227d9ed9bd6fdcbe439b0e48aa11f3cb16023e0b77744b02
+members                   : 441
+unsafe_paths              : 0
+duplicate_paths           : 0
+case_fold_duplicate_paths : 0
+archive_read_failures     : 0
+result                    : PASS                           Interaction: 108</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

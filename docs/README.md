@@ -22,6 +22,10 @@
 
 **The short mechanism routes are deliberate.** The [decision-engine poster](guide/LEARNING.md#how-the-governed-decision-engine-works) explains evidence → search → authority. The [after-decision poster](guide/LEARNING.md#what-happens-after-the-decision) explains monitoring → permissions → servicing → certification. Each has its own full-resolution reading path.
 
+## Development history and human judgment
+
+[History home](project_history/README.md) · [HITL report-to-message guide](project_history/HITL_guide.md) · [Conversation directory](project_history/CONVERSATIONS.md) · [Coverage and legacy reconciliation](project_history/COVERAGE_AND_PROVENANCE.md)
+
 ## Three ways to inspect the logic
 
 | Business question | Current reading companion |

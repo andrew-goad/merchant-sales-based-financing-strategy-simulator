@@ -1,0 +1,1617 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence — part 05 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence — part 05</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-04.html">Previous part</a><a href="part-06.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-2d7dad92-3fd4-4dbd-b478-10e4eefb70a9" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00066 · 2026-08-19T09:33:46.902000-04:00 · active path</p><div class="bubble"><p>PS C:\Windows\System32&gt; $work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;</p>
+<blockquote>
+<blockquote>
+<p>$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+$hotfixRoot = Join-Path $ev &quot;E03_M_RUNTIME_HOTFIX_R1&quot;
+$beforeRoot = Join-Path $hotfixRoot &quot;before&quot;</p>
+<p>$modelPath = Join-Path $work `
+    &quot;project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;</p>
+<p>$targets = [ordered]@{
+    &quot;stg_POWER_BI_DATA_CATALOG&quot; = Join-Path $work <code>        &quot;power_query\staging\stg_POWER_BI_DATA_CATALOG.m&quot;     &quot;fxReadCatalogedCsv&quot; = Join-Path $work</code>
+        &quot;power_query\functions\fxReadCatalogedCsv.m&quot;
+    &quot;fxReadBuildCsv&quot; = Join-Path $work `
+        &quot;power_query\functions\fxReadBuildCsv.m&quot;
+}</p>
+<p>$checks = foreach ($name in $targets.Keys) {
+    [pscustomobject]@{
+        object = $name
+        unchanged = (
+            (Get-FileHash $targets[$name] -Algorithm SHA256).Hash -ceq
+            (Get-FileHash (Join-Path $beforeRoot &quot;$name.m&quot;) -Algorithm SHA256).Hash
+        )
+    }
+}</p>
+<p>$checks += [pscustomobject]@{
+    object = &quot;model.bim&quot;
+    unchanged = (
+        (Get-FileHash $modelPath -Algorithm SHA256).Hash -ceq
+        (Get-FileHash (Join-Path $beforeRoot &quot;model.bim&quot;) -Algorithm SHA256).Hash
+    )
+}</p>
+<p>$checks | Format-Table -AutoSize</p>
+<p>if (@($checks | Where-Object { -not $_.unchanged }).Count -gt 0) {
+    throw &quot;STOP: a governed file changed.&quot;
+}</p>
+<p>Write-Host &quot;PRE-WRITE INTEGRITY PASS&quot;</p>
+</blockquote>
+</blockquote>
+<p>object                    unchanged</p>
+<hr>
+<p>stg_POWER_BI_DATA_CATALOG      True
+fxReadCatalogedCsv             True
+fxReadBuildCsv                 True
+model.bim                      True</p>
+<p>PRE-WRITE INTEGRITY PASS
+PS C:\Windows\System32&gt; $modelBeforePath = Join-Path $beforeRoot &quot;model.bim&quot;</p>
+<blockquote>
+<blockquote>
+<p>$model = Get-Content <code>    -LiteralPath $modelBeforePath</code>
+    -Raw |
+    ConvertFrom-Json</p>
+<p>$diagnostic = foreach ($name in $targets.Keys) {</p>
+<pre><code>$expr = @(
+    $model.model.expressions |
+    Where-Object { $_.name -ceq $name }
+)
+
+if ($expr.Count -ne 1) {
+    throw &quot;Expected one expression named $name; found $($expr.Count).&quot;
+}
+
+$value = $expr[0].expression
+
+[pscustomobject]@{
+    object = $name
+    expression_type = $value.GetType().FullName
+    expression_count = @($value).Count
+    first_element_type = if (@($value).Count -gt 0) {
+        @($value)[0].GetType().FullName
+    } else {
+        $null
+    }
+    first_element = if (@($value).Count -gt 0) {
+        @($value)[0]
+    } else {
+        $null
+    }
+}
+</code></pre>
+<p>}</p>
+<p>$diagnostic | Format-List</p>
+<p>$diagnostic |
+    Export-Csv <code>        -LiteralPath &quot;$hotfixRoot\MODEL_BIM_EXPRESSION_STRUCTURE_DIAGNOSTIC.csv&quot;</code>
+        -NoTypeInformation `
+        -Encoding utf8</p>
+</blockquote>
+</blockquote>
+<p>object             : stg_POWER_BI_DATA_CATALOG
+expression_type    : System.Object[]
+expression_count   : 13
+first_element_type : System.String
+first_element      : // Catalog authority for all core CSV reads.</p>
+<p>object             : fxReadCatalogedCsv
+expression_type    : System.Object[]
+expression_count   : 27
+first_element_type : System.String
+first_element      : // Governed CSV reader: exact catalog row, path, ordered header, and row-count checks.</p>
+<p>object             : fxReadBuildCsv
+expression_type    : System.Object[]
+expression_count   : 10
+first_element_type : System.String
+first_element      : // Reads versioned Power BI-owned catalogs from the WP1/WP2 package root.</p>
+<p>PS C:\Windows\System32&gt; $raw = [IO.File]::ReadAllText($modelBeforePath)</p>
+<blockquote>
+<blockquote>
+<p>foreach ($name in $targets.Keys) {</p>
+<pre><code>$needle = &#39;&quot;name&quot;: &quot;&#39; + $name + &#39;&quot;&#39;
+$index = $raw.IndexOf(
+    $needle,
+    [System.StringComparison]::Ordinal
+)
+
+if ($index -lt 0) {
+    throw &quot;Could not locate raw model.bim name: $name&quot;
+}
+
+$start = [Math]::Max(0, $index - 200)
+$length = [Math]::Min(
+    2200,
+    $raw.Length - $start
+)
+
+$fragment = $raw.Substring($start, $length)
+
+$out = Join-Path $hotfixRoot `
+    (&quot;RAW_MODEL_FRAGMENT_&quot; + $name + &quot;.txt&quot;)
+
+[IO.File]::WriteAllText(
+    $out,
+    $fragment,
+    [Text.UTF8Encoding]::new($false)
+)
+
+Write-Host &quot;&quot;
+Write-Host &quot;========== $name ==========&quot;
+Write-Host $fragment
+</code></pre>
+<p>}</p>
+</blockquote>
+</blockquote>
+<p>========== stg_POWER_BI_DATA_CATALOG ==========
+value&quot;: &quot;false&quot;
+          }
+        ],
+        &quot;expression&quot;: &quot;false meta [IsParameterQuery=true, Type=&quot;Logical&quot;, IsParameterQueryRequired=true]&quot;,
+        &quot;kind&quot;: &quot;m&quot;
+      },
+      {
+        &quot;name&quot;: &quot;stg_POWER_BI_DATA_CATALOG&quot;,
+        &quot;annotations&quot;: [
+          {
+            &quot;name&quot;: &quot;MSBF_ActivationWave&quot;,
+            &quot;value&quot;: &quot;A1a&quot;
+          },
+          {
+            &quot;name&quot;: &quot;MSBF_LoadEnabled&quot;,
+            &quot;value&quot;: &quot;false&quot;
+          }
+        ],
+        &quot;expression&quot;: [
+          &quot;// Catalog authority for all core CSV reads.&quot;,
+          &quot;let&quot;,
+          &quot;    Root = Text.TrimEnd(pDataRoot, {&quot;/&quot;, &quot;\\&quot;}),&quot;,
+          &quot;    Path = Root &amp; &quot;\\data\\POWER_BI_DATA_CATALOG.csv&quot;,&quot;,
+          &quot;    Raw = Csv.Document(File.Contents(Path), [Delimiter=&quot;,&quot;, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),&quot;,
+          &quot;    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),&quot;,
+          &quot;    Typed = Table.TransformColumnTypes(Headers, {&quot;,
+          &quot;        {&quot;schema&quot;, type text}, {&quot;object&quot;, type text}, {&quot;rows&quot;, Int64.Type}, {&quot;columns&quot;, Int64.Type},&quot;,
+          &quot;        {&quot;bytes&quot;, Int64.Type}, {&quot;sha256&quot;, type text}, {&quot;role&quot;, type text}, {&quot;primary_pages&quot;, type text},&quot;,
+          &quot;        {&quot;import_priority&quot;, type text}, {&quot;package_path&quot;, type text}, {&quot;original_source_path&quot;, type text}, {&quot;header_json&quot;, type text}&quot;,
+          &quot;    }, &quot;en-US&quot;)&quot;,
+          &quot;in&quot;,
+          &quot;    Typed&quot;
+        ],
+        &quot;kind&quot;: &quot;m&quot;
+      },
+      {
+        &quot;name&quot;: &quot;fxReadCatalogedCsv&quot;,
+        &quot;annotations&quot;: [
+          {
+            &quot;name&quot;: &quot;MSBF_ActivationWave&quot;,
+            &quot;value&quot;: &quot;A1a&quot;
+          },
+          {
+            &quot;name&quot;: &quot;MSBF_LoadEnabled&quot;,
+            &quot;value&quot;: &quot;false&quot;
+          }
+        ],
+        &quot;expression&quot;: [
+          &quot;// Governed CSV reader: exact catalog row, path, ordered header, and row-count checks.&quot;,
+          &quot;(schemaName as text, objectName as text) as table =&gt;&quot;,
+          &quot;let&quot;,
+          &quot;    Matches = Table.SelectRows(stg_POWER_BI_DATA_CATALOG, each [schema] = schemaName and [object] = objectName),&quot;,
+          &quot;    CatalogRow = if Table.RowCount(Matches) &lt;&gt; 1 then error Error</p>
+<p>========== fxReadCatalogedCsv ==========
+original_source_path&quot;, type text}, {&quot;header_json&quot;, type text}&quot;,
+          &quot;    }, &quot;en-US&quot;)&quot;,
+          &quot;in&quot;,
+          &quot;    Typed&quot;
+        ],
+        &quot;kind&quot;: &quot;m&quot;
+      },
+      {
+        &quot;name&quot;: &quot;fxReadCatalogedCsv&quot;,
+        &quot;annotations&quot;: [
+          {
+            &quot;name&quot;: &quot;MSBF_ActivationWave&quot;,
+            &quot;value&quot;: &quot;A1a&quot;
+          },
+          {
+            &quot;name&quot;: &quot;MSBF_LoadEnabled&quot;,
+            &quot;value&quot;: &quot;false&quot;
+          }
+        ],
+        &quot;expression&quot;: [
+          &quot;// Governed CSV reader: exact catalog row, path, ordered header, and row-count checks.&quot;,
+          &quot;(schemaName as text, objectName as text) as table =&gt;&quot;,
+          &quot;let&quot;,
+          &quot;    Matches = Table.SelectRows(stg_POWER_BI_DATA_CATALOG, each [schema] = schemaName and [object] = objectName),&quot;,
+          &quot;    CatalogRow = if Table.RowCount(Matches) &lt;&gt; 1 then error Error.Record(&quot;CATALOG_LOOKUP&quot;, &quot;Expected exactly one catalog row.&quot;, [Schema=schemaName, Object=objectName, Matches=Table.RowCount(Matches)]) else Matches{0},&quot;,
+          &quot;    Root = Text.TrimEnd(pDataRoot, {&quot;/&quot;, &quot;\\&quot;}),&quot;,
+          &quot;    RelativePath = Text.Replace(CatalogRow[package_path], &quot;/&quot;, &quot;\\&quot;),&quot;,
+          &quot;    FullPath = Root &amp; &quot;\\&quot; &amp; RelativePath,&quot;,
+          &quot;    Raw = try Csv.Document(File.Contents(FullPath), [Delimiter=&quot;,&quot;, Columns=CatalogRow[columns], Encoding=65001, QuoteStyle=QuoteStyle.Csv])&quot;,
+          &quot;          otherwise error Error.Record(&quot;SOURCE_READ&quot;, &quot;Required source could not be read.&quot;, [Path=FullPath, Schema=schemaName, Object=objectName]),&quot;,
+          &quot;    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),&quot;,
+          &quot;    ExpectedColumns = Json.Document(Text.ToBinary(CatalogRow[header_json], TextEncoding.Utf8)),&quot;,
+          &quot;    ActualColumns = Table.ColumnNames(Headers),&quot;,
+          &quot;    MissingColumns = List.Difference(ExpectedColumns, ActualColumns),&quot;,
+          &quot;    UnexpectedColumns = List.Difference(ActualColumns, ExpectedColumns),&quot;,
+          &quot;    HeaderCheck = if MissingColumns &lt;&gt; {} or UnexpectedColumns &lt;&gt; {} or ActualColumns &lt;&gt; ExpectedColumns&quot;,
+          &quot;        then error Error.Record(&quot;HEADER_MISMATCH&quot;, &quot;Source he</p>
+<p>========== fxReadBuildCsv ==========
+Id)),&quot;,
+          &quot;    AssertedRun = fxAssertSelectedRun(SelectedRun, &quot;module1_run_id&quot;)&quot;,
+          &quot;in&quot;,
+          &quot;    AssertedRun&quot;
+        ],
+        &quot;kind&quot;: &quot;m&quot;
+      },
+      {
+        &quot;name&quot;: &quot;fxReadBuildCsv&quot;,
+        &quot;annotations&quot;: [
+          {
+            &quot;name&quot;: &quot;MSBF_ActivationWave&quot;,
+            &quot;value&quot;: &quot;A1a&quot;
+          },
+          {
+            &quot;name&quot;: &quot;MSBF_LoadEnabled&quot;,
+            &quot;value&quot;: &quot;false&quot;
+          }
+        ],
+        &quot;expression&quot;: [
+          &quot;// Reads versioned Power BI-owned catalogs from the WP1/WP2 package root.&quot;,
+          &quot;(relativePath as text) as table =&gt;&quot;,
+          &quot;let&quot;,
+          &quot;    Root = Text.TrimEnd(pBuildRoot, {&quot;/&quot;, &quot;\\&quot;}),&quot;,
+          &quot;    FullPath = Root &amp; &quot;\\&quot; &amp; Text.Replace(relativePath, &quot;/&quot;, &quot;\\&quot;),&quot;,
+          &quot;    Raw = try Csv.Document(File.Contents(FullPath), [Delimiter=&quot;,&quot;, Encoding=65001, QuoteStyle=QuoteStyle.Csv])&quot;,
+          &quot;          otherwise error Error.Record(&quot;BUILD_CATALOG_READ&quot;, &quot;Power BI build catalog could not be read.&quot;, [Path=FullPath]),&quot;,
+          &quot;    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true])&quot;,
+          &quot;in&quot;,
+          &quot;    Headers&quot;
+        ],
+        &quot;kind&quot;: &quot;m&quot;
+      }
+    ],
+    &quot;relationships&quot;: [
+      {
+        &quot;name&quot;: &quot;REL-001&quot;,
+        &quot;annotations&quot;: [
+          {
+            &quot;name&quot;: &quot;MSBF_ControlId&quot;,
+            &quot;value&quot;: &quot;REL-001&quot;
+          },
+          {
+            &quot;name&quot;: &quot;MSBF_LocalEngineStatus&quot;,
+            &quot;value&quot;: &quot;PENDING_AUD_REL_005&quot;
+          }
+        ],
+        &quot;fromColumn&quot;: &quot;industry_code&quot;,
+        &quot;fromTable&quot;: &quot;DimMerchant&quot;,
+        &quot;toColumn&quot;: &quot;industry_code&quot;,
+        &quot;toTable&quot;: &quot;DimIndustry&quot;
+      },
+      {
+        &quot;name&quot;: &quot;REL-002&quot;,
+        &quot;annotations&quot;: [
+          {
+            &quot;name&quot;: &quot;MSBF_ControlId&quot;,
+            &quot;value&quot;: &quot;REL-002&quot;
+          },
+          {
+            &quot;name&quot;: &quot;MSBF_LocalEngineStatus&quot;,
+            &quot;value&quot;: &quot;PENDING_AUD_REL_005&quot;
+          }
+        ],
+        &quot;fromColumn&quot;: &quot;region_code&quot;,
+        &quot;fromTable&quot;: &quot;DimMerchant&quot;,
+        &quot;toColumn&quot;: &quot;region_code&quot;,
+        &quot;toTable&quot;: &quot;DimRegion&quot;
+      },
+      {
+        &quot;name&quot;: &quot;REL-003&quot;,</p>
+</div></article><article id="m-6461635e-33fa-4d5a-94af-9339c276ce0b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00067 · 2026-08-19T09:33:50.746797-04:00 · active path</p><div class="bubble"><p>Perfect. We now know the exact physical representation: <code>model.bim</code> stores each of these M definitions as a <strong>JSON array of individual source lines</strong>. That explains every prior <code>0 raw JSON values</code> match.</p>
+<p>We can now apply the hotfix without reserializing <code>model.bim</code>: patch the three external <code>.m</code> files and replace exactly <strong>seven escaped JSON line values</strong> in the raw BIM text. This preserves the rest of the file byte-for-byte.</p>
+<p>Your pre-write integrity check already passed, so keep Desktop closed and run the block below.</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+Set-StrictMode -Version Latest
+
+$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+$hotfixRoot = Join-Path $ev &quot;E03_M_RUNTIME_HOTFIX_R1&quot;
+$beforeRoot = Join-Path $hotfixRoot &quot;before&quot;
+$afterRoot  = Join-Path $hotfixRoot &quot;after&quot;
+
+$modelPath = Join-Path $work `
+    &quot;project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;
+
+$targets = [ordered]@{
+    &quot;stg_POWER_BI_DATA_CATALOG&quot; = Join-Path $work `
+        &quot;power_query\staging\stg_POWER_BI_DATA_CATALOG.m&quot;
+
+    &quot;fxReadCatalogedCsv&quot; = Join-Path $work `
+        &quot;power_query\functions\fxReadCatalogedCsv.m&quot;
+
+    &quot;fxReadBuildCsv&quot; = Join-Path $work `
+        &quot;power_query\functions\fxReadBuildCsv.m&quot;
+}
+
+if (@(Get-Process PBIDesktop -ErrorAction SilentlyContinue).Count -gt 0) {
+    throw &quot;Power BI Desktop is running. Close it before applying HF01.&quot;
+}
+
+# ------------------------------------------------------------------
+# 1. RECONFIRM CURRENT FILES STILL EQUAL PRESERVED BEFORE COPIES
+# ------------------------------------------------------------------
+
+$integrity = foreach ($name in $targets.Keys) {
+    [pscustomobject]@{
+        object = $name
+        unchanged = (
+            (Get-FileHash $targets[$name] -Algorithm SHA256).Hash -ceq
+            (Get-FileHash (Join-Path $beforeRoot &quot;$name.m&quot;) -Algorithm SHA256).Hash
+        )
+    }
+}
+
+$integrity += [pscustomobject]@{
+    object = &quot;model.bim&quot;
+    unchanged = (
+        (Get-FileHash $modelPath -Algorithm SHA256).Hash -ceq
+        (Get-FileHash (Join-Path $beforeRoot &quot;model.bim&quot;) -Algorithm SHA256).Hash
+    )
+}
+
+$integrity | Format-Table -AutoSize
+
+if (@($integrity | Where-Object { -not $_.unchanged }).Count -gt 0) {
+    throw &quot;PRE-WRITE INTEGRITY FAIL. Stop.&quot;
+}
+
+# ------------------------------------------------------------------
+# 2. EXTERNAL M REPAIR FUNCTION
+# ------------------------------------------------------------------
+
+function Repair-A1aMDefinition {
+    param(
+        [Parameter(Mandatory=$true)][string]$Name,
+        [Parameter(Mandatory=$true)][string]$Text
+    )
+
+    $result = $Text
+
+    switch ($Name) {
+        &quot;stg_POWER_BI_DATA_CATALOG&quot; {
+            $result = $result.Replace(
+                &#39;{&quot;/&quot;, &quot;\\&quot;}&#39;,
+                &#39;{&quot;/&quot;, &quot;\&quot;}&#39;
+            )
+            $result = $result.Replace(
+                &#39;&quot;\\data\\POWER_BI_DATA_CATALOG.csv&quot;&#39;,
+                &#39;&quot;\data\POWER_BI_DATA_CATALOG.csv&quot;&#39;
+            )
+        }
+
+        &quot;fxReadCatalogedCsv&quot; {
+            $result = $result.Replace(
+                &#39;{&quot;/&quot;, &quot;\\&quot;}&#39;,
+                &#39;{&quot;/&quot;, &quot;\&quot;}&#39;
+            )
+            $result = $result.Replace(
+                &#39;Text.Replace(CatalogRow[package_path], &quot;/&quot;, &quot;\\&quot;)&#39;,
+                &#39;Text.Replace(CatalogRow[package_path], &quot;/&quot;, &quot;\&quot;)&#39;
+            )
+            $result = $result.Replace(
+                &#39;Root &amp; &quot;\\&quot; &amp; RelativePath&#39;,
+                &#39;Root &amp; &quot;\&quot; &amp; RelativePath&#39;
+            )
+        }
+
+        &quot;fxReadBuildCsv&quot; {
+            $result = $result.Replace(
+                &#39;{&quot;/&quot;, &quot;\\&quot;}&#39;,
+                &#39;{&quot;/&quot;, &quot;\&quot;}&#39;
+            )
+            $result = $result.Replace(
+                &#39;Root &amp; &quot;\\&quot; &amp; Text.Replace(relativePath, &quot;/&quot;, &quot;\\&quot;)&#39;,
+                &#39;Root &amp; &quot;\&quot; &amp; Text.Replace(relativePath, &quot;/&quot;, &quot;\&quot;)&#39;
+            )
+        }
+
+        default {
+            throw &quot;Unexpected target $Name&quot;
+        }
+    }
+
+    if ($result -ceq $Text) {
+        throw &quot;No external M change produced for $Name.&quot;
+    }
+
+    return $result
+}
+
+# ------------------------------------------------------------------
+# 3. BUILD EXTERNAL BEFORE/AFTER + EXACT 7-LINE DIFF
+# ------------------------------------------------------------------
+
+$externalAfter = @{}
+$lineDiff = @()
+
+foreach ($name in $targets.Keys) {
+
+    $beforeText = [IO.File]::ReadAllText(
+        (Join-Path $beforeRoot &quot;$name.m&quot;)
+    )
+
+    $afterText = Repair-A1aMDefinition `
+        -Name $name `
+        -Text $beforeText
+
+    $externalAfter[$name] = $afterText
+
+    $beforeLines = @($beforeText -split &quot;`r?`n&quot;)
+    $afterLines  = @($afterText  -split &quot;`r?`n&quot;)
+
+    $max = [Math]::Max($beforeLines.Count, $afterLines.Count)
+
+    for ($i = 0; $i -lt $max; $i++) {
+        $b = if ($i -lt $beforeLines.Count) { $beforeLines[$i] } else { $null }
+        $a = if ($i -lt $afterLines.Count)  { $afterLines[$i]  } else { $null }
+
+        if ($b -cne $a) {
+            $lineDiff += [pscustomobject]@{
+                object = $name
+                line_number = $i + 1
+                before = $b
+                after = $a
+            }
+        }
+    }
+}
+
+$lineDiff | Format-Table -AutoSize
+
+if ($lineDiff.Count -ne 7) {
+    throw &quot;Expected exactly 7 external M line changes; observed $($lineDiff.Count).&quot;
+}
+
+$lineDiff |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\M_RUNTIME_EXACT_LINE_DIFF.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+# ------------------------------------------------------------------
+# 4. TARGETED RAW model.bim PATCH
+#
+# model.bim stores expression as JSON ARRAYS OF LINES.
+# These replacements therefore operate on exact escaped line strings.
+# ------------------------------------------------------------------
+
+$modelRaw = [IO.File]::ReadAllText(
+    (Join-Path $beforeRoot &quot;model.bim&quot;)
+)
+
+$rawReplacements = @(
+    [pscustomobject]@{
+        control = &quot;PDataRoot_TrimEnd&quot;
+        old = &#39;&quot;    Root = Text.TrimEnd(pDataRoot, {\&quot;/\&quot;, \&quot;\\\\\&quot;}),&quot;&#39;
+        new = &#39;&quot;    Root = Text.TrimEnd(pDataRoot, {\&quot;/\&quot;, \&quot;\\\&quot;}),&quot;&#39;
+        expected_count = 2
+    },
+    [pscustomobject]@{
+        control = &quot;Catalog_Path&quot;
+        old = &#39;&quot;    Path = Root &amp; \&quot;\\\\data\\\\POWER_BI_DATA_CATALOG.csv\&quot;,&quot;&#39;
+        new = &#39;&quot;    Path = Root &amp; \&quot;\\data\\POWER_BI_DATA_CATALOG.csv\&quot;,&quot;&#39;
+        expected_count = 1
+    },
+    [pscustomobject]@{
+        control = &quot;CatalogedCsv_RelativePath&quot;
+        old = &#39;&quot;    RelativePath = Text.Replace(CatalogRow[package_path], \&quot;/\&quot;, \&quot;\\\\\&quot;),&quot;&#39;
+        new = &#39;&quot;    RelativePath = Text.Replace(CatalogRow[package_path], \&quot;/\&quot;, \&quot;\\\&quot;),&quot;&#39;
+        expected_count = 1
+    },
+    [pscustomobject]@{
+        control = &quot;CatalogedCsv_FullPath&quot;
+        old = &#39;&quot;    FullPath = Root &amp; \&quot;\\\\\&quot; &amp; RelativePath,&quot;&#39;
+        new = &#39;&quot;    FullPath = Root &amp; \&quot;\\\&quot; &amp; RelativePath,&quot;&#39;
+        expected_count = 1
+    },
+    [pscustomobject]@{
+        control = &quot;PBuildRoot_TrimEnd&quot;
+        old = &#39;&quot;    Root = Text.TrimEnd(pBuildRoot, {\&quot;/\&quot;, \&quot;\\\\\&quot;}),&quot;&#39;
+        new = &#39;&quot;    Root = Text.TrimEnd(pBuildRoot, {\&quot;/\&quot;, \&quot;\\\&quot;}),&quot;&#39;
+        expected_count = 1
+    },
+    [pscustomobject]@{
+        control = &quot;BuildCsv_FullPath&quot;
+        old = &#39;&quot;    FullPath = Root &amp; \&quot;\\\\\&quot; &amp; Text.Replace(relativePath, \&quot;/\&quot;, \&quot;\\\\\&quot;),&quot;&#39;
+        new = &#39;&quot;    FullPath = Root &amp; \&quot;\\\&quot; &amp; Text.Replace(relativePath, \&quot;/\&quot;, \&quot;\\\&quot;),&quot;&#39;
+        expected_count = 1
+    }
+)
+
+$replacementEvidence = @()
+
+foreach ($r in $rawReplacements) {
+
+    $count = (
+        [regex]::Matches(
+            $modelRaw,
+            [regex]::Escape($r.old)
+        )
+    ).Count
+
+    $replacementEvidence += [pscustomobject]@{
+        control = $r.control
+        expected_count = $r.expected_count
+        actual_count = $count
+        pass = ($count -eq $r.expected_count)
+    }
+
+    if ($count -ne $r.expected_count) {
+        $replacementEvidence | Format-Table -AutoSize
+        throw &quot;Raw BIM replacement control $($r.control) matched $count; expected $($r.expected_count). No writes performed.&quot;
+    }
+}
+
+$replacementEvidence |
+    Format-Table -AutoSize
+
+$replacementEvidence |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\MODEL_BIM_RAW_REPLACEMENT_CONTROL.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+# Perform replacements only after ALL match-count controls pass.
+foreach ($r in $rawReplacements) {
+    $modelRaw = $modelRaw.Replace($r.old, $r.new)
+}
+
+# ------------------------------------------------------------------
+# 5. WRITE EXACTLY THREE EXTERNAL M FILES + model.bim
+# ------------------------------------------------------------------
+
+New-Item -ItemType Directory -Force -Path $afterRoot | Out-Null
+
+foreach ($name in $targets.Keys) {
+
+    [IO.File]::WriteAllText(
+        $targets[$name],
+        $externalAfter[$name],
+        [Text.UTF8Encoding]::new($false)
+    )
+
+    [IO.File]::WriteAllText(
+        (Join-Path $afterRoot &quot;$name.m&quot;),
+        $externalAfter[$name],
+        [Text.UTF8Encoding]::new($false)
+    )
+}
+
+[IO.File]::WriteAllText(
+    $modelPath,
+    $modelRaw,
+    [Text.UTF8Encoding]::new($false)
+)
+
+Copy-Item `
+    -LiteralPath $modelPath `
+    -Destination (Join-Path $afterRoot &quot;model.bim&quot;) `
+    -Force
+
+# ------------------------------------------------------------------
+# 6. PARSE model.bim AND VERIFY ARRAY-LINE SEMANTIC PARITY
+# ------------------------------------------------------------------
+
+$modelAfter = Get-Content `
+    -LiteralPath $modelPath `
+    -Raw |
+    ConvertFrom-Json
+
+$parity = foreach ($name in $targets.Keys) {
+
+    $expr = @(
+        $modelAfter.model.expressions |
+        Where-Object { $_.name -ceq $name }
+    )
+
+    if ($expr.Count -ne 1) {
+        throw &quot;Expected one embedded expression named $name; observed $($expr.Count).&quot;
+    }
+
+    $embeddedLines = @($expr[0].expression)
+
+    # Join the array-of-lines into normalized source.
+    $embeddedNorm = ($embeddedLines -join &quot;`n&quot;).TrimEnd(&quot;`r&quot;,&quot;`n&quot;)
+
+    $externalNorm = (
+        [IO.File]::ReadAllText($targets[$name]) -replace &quot;`r`n&quot;, &quot;`n&quot;
+    ).TrimEnd(&quot;`r&quot;,&quot;`n&quot;)
+
+    [pscustomobject]@{
+        object = $name
+        embedded_line_count = $embeddedLines.Count
+        normalized_embedded_equals_external = ($embeddedNorm -ceq $externalNorm)
+    }
+}
+
+$parity | Format-Table -AutoSize
+
+$parity |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\EMBEDDED_EXTERNAL_M_NORMALIZED_PARITY.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+if (@($parity | Where-Object {
+    -not $_.normalized_embedded_equals_external
+}).Count -gt 0) {
+    throw &quot;Embedded/external normalized parity failed after write.&quot;
+}
+
+# ------------------------------------------------------------------
+# 7. BEFORE/AFTER HASH EVIDENCE
+# ------------------------------------------------------------------
+
+$hashEvidence = foreach ($name in $targets.Keys) {
+    [pscustomobject]@{
+        object = $name
+        artifact = &quot;EXTERNAL_M&quot;
+        sha256_before = (
+            Get-FileHash `
+                (Join-Path $beforeRoot &quot;$name.m&quot;) `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+        sha256_after = (
+            Get-FileHash `
+                $targets[$name] `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+}
+
+$hashEvidence += [pscustomobject]@{
+    object = &quot;model.bim&quot;
+    artifact = &quot;EMBEDDED_MODEL&quot;
+    sha256_before = (
+        Get-FileHash `
+            (Join-Path $beforeRoot &quot;model.bim&quot;) `
+            -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+    sha256_after = (
+        Get-FileHash `
+            $modelPath `
+            -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+}
+
+$hashEvidence |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\M_RUNTIME_BEFORE_AFTER_HASHES.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+Write-Host &quot;&quot;
+Write-Host &quot;================================================&quot;
+Write-Host &quot;A1A-M-RUNTIME-HF01 APPLIED&quot;
+Write-Host &quot;External M definitions changed: 3&quot;
+Write-Host &quot;External source lines changed:   7&quot;
+Write-Host &quot;model.bim patched in place:      YES&quot;
+Write-Host &quot;Whole-BIM JSON reserialization:  NO&quot;
+Write-Host &quot;Embedded/external parity:        PASS&quot;
+Write-Host &quot;================================================&quot;
+</code></pre>
+<p>The raw replacement control should report:</p>
+<pre><code class="language-text">PDataRoot_TrimEnd          expected 2   actual 2
+Catalog_Path               expected 1   actual 1
+CatalogedCsv_RelativePath  expected 1   actual 1
+CatalogedCsv_FullPath      expected 1   actual 1
+PBuildRoot_TrimEnd         expected 1   actual 1
+BuildCsv_FullPath          expected 1   actual 1
+</code></pre>
+<p>That totals exactly <strong>7 physical BIM line-value changes</strong>, corresponding to the same seven external-M line changes you already reproduced.</p>
+<p>Then the parity table should show all three as <code>True</code>.</p>
+<h3>After that, prove only three external M files changed</h3>
+<p>Run:</p>
+<pre><code class="language-powershell">$preTree = Import-Csv `
+    &quot;$hotfixRoot\POWER_QUERY_TREE_BEFORE.csv&quot;
+
+$postTree = foreach (
+    $file in @(
+        Get-ChildItem `
+            -LiteralPath (Join-Path $work &quot;power_query&quot;) `
+            -File `
+            -Recurse `
+            -Filter &quot;*.m&quot; |
+        Sort-Object FullName
+    )
+) {
+    [pscustomobject]@{
+        relative_path = $file.FullName.Substring($work.Length + 1)
+        sha256 = (
+            Get-FileHash `
+                $file.FullName `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+}
+
+$comparison = foreach ($before in $preTree) {
+
+    $after = @(
+        $postTree |
+        Where-Object {
+            $_.relative_path -ceq $before.relative_path
+        }
+    )
+
+    if ($after.Count -ne 1) {
+        throw &quot;Tree mismatch for $($before.relative_path)&quot;
+    }
+
+    [pscustomobject]@{
+        relative_path = $before.relative_path
+        sha256_before = $before.sha256
+        sha256_after = $after[0].sha256
+        changed = ($before.sha256 -cne $after[0].sha256)
+    }
+}
+
+$comparison |
+    Export-Csv `
+        &quot;$hotfixRoot\POWER_QUERY_TREE_CHANGE_CONTROL.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+$changed = @(
+    $comparison |
+    Where-Object { $_.changed }
+)
+
+$changed |
+    Format-Table `
+        relative_path,
+        sha256_before,
+        sha256_after `
+        -AutoSize
+
+Write-Host &quot;Changed external M files:&quot; $changed.Count
+
+if ($changed.Count -ne 3) {
+    throw &quot;Expected exactly 3 external M files to change.&quot;
+}
+</code></pre>
+<p>Required:</p>
+<pre><code class="language-text">Changed external M files: 3
+</code></pre>
+<p>Finally rerun the corrected shell verifier:</p>
+<pre><code class="language-powershell">$verifier = Join-Path $HOME `
+    &quot;Downloads\Verify-A1aTechnicalShellBoundary.ps1&quot;
+
+&amp; $verifier `
+    -PackageRoot $work `
+    -SourceRoot `
+    &quot;C:\MSBF\MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818&quot;
+</code></pre>
+<p>It must still return 14 tables, 6 relationships, 47 queries, 0 explicit measures, one technical shell page, zero substantive pages/visuals, zero A1b objects, and <code>status = PASS</code>. That remains the exact authorized physical boundary. [export reference: filecite | turn9file0 | L63-L79]</p>
+<p>If the hotfix block reaches <strong><code>A1A-M-RUNTIME-HF01 APPLIED</code></strong>, paste the raw replacement-control table and the parity table next.</p>
+</div></article><article id="m-ab725594-9115-46b0-85f5-c63eda7a9b1e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00068 · 2026-08-19T09:54:13.808000-04:00 · active path</p><div class="bubble"><p>object                    unchanged</p>
+<hr>
+<p>stg_POWER_BI_DATA_CATALOG      True
+fxReadCatalogedCsv             True
+fxReadBuildCsv                 True
+model.bim                      True</p>
+<p>object                    line_number before                                                                after</p>
+<hr>
+<p>stg_POWER_BI_DATA_CATALOG           3     Root = Text.TrimEnd(pDataRoot, {&quot;/&quot;, &quot;\&quot;}),                          Root = Text.TrimEnd(pDataRoot, {&quot;/&quot;, &quot;&quot;}),
+stg_POWER_BI_DATA_CATALOG           4     Path = Root &amp; &quot;\data\POWER_BI_DATA_CATALOG.csv&quot;,                    Path = Root &amp; &quot;\data\POWER_BI_DATA_CATALOG.csv&quot;,
+fxReadCatalogedCsv                  6     Root = Text.TrimEnd(pDataRoot, {&quot;/&quot;, &quot;\&quot;}),                          Root = Text.TrimEnd(pDataRoot, {&quot;/&quot;, &quot;&quot;}),
+fxReadCatalogedCsv                  7     RelativePath = Text.Replace(CatalogRow[package_path], &quot;/&quot;, &quot;\&quot;),     RelativePath = Text.Replace(CatalogRow[package_path], &quot;/&quot;, &quot;&quot;),
+fxReadCatalogedCsv                  8     FullPath = Root &amp; &quot;\&quot; &amp; RelativePath,                                FullPath = Root &amp; &quot;&quot; &amp; RelativePath,
+fxReadBuildCsv                      4     Root = Text.TrimEnd(pBuildRoot, {&quot;/&quot;, &quot;\&quot;}),                         Root = Text.TrimEnd(pBuildRoot, {&quot;/&quot;, &quot;&quot;}),
+fxReadBuildCsv                      5     FullPath = Root &amp; &quot;\&quot; &amp; Text.Replace(relativePath, &quot;/&quot;, &quot;\&quot;),       FullPath = Root &amp; &quot;&quot; &amp; Text.Replace(relativePath, &quot;/&quot;, &quot;&quot;),</p>
+<p>control                   expected_count actual_count pass</p>
+<hr>
+<p>PDataRoot_TrimEnd                      2            2 True
+Catalog_Path                           1            1 True
+CatalogedCsv_RelativePath              1            1 True
+CatalogedCsv_FullPath                  1            1 True
+PBuildRoot_TrimEnd                     1            1 True
+BuildCsv_FullPath                      1            1 True</p>
+<p>object                    embedded_line_count normalized_embedded_equals_external</p>
+<hr>
+<p>stg_POWER_BI_DATA_CATALOG                  13                                True
+fxReadCatalogedCsv                         27                                True
+fxReadBuildCsv                             10                                True</p>
+<h1>================================================
+A1A-M-RUNTIME-HF01 APPLIED
+External M definitions changed: 3
+External source lines changed:   7
+model.bim patched in place:      YES
+Whole-BIM JSON reserialization:  NO
+Embedded/external parity:        PASS</h1>
+<p>PS C:\Windows\System32&gt; $preTree = Import-Csv `</p>
+<blockquote>
+<blockquote>
+<pre><code>&quot;$hotfixRoot\POWER_QUERY_TREE_BEFORE.csv&quot;
+</code></pre>
+<p>$postTree = foreach (
+    $file in @(
+        Get-ChildItem <code>            -LiteralPath (Join-Path $work &quot;power_query&quot;)</code>
+            -File <code>            -Recurse</code>
+            -Filter &quot;*.m&quot; |
+        Sort-Object FullName
+    )
+) {
+    [pscustomobject]@{
+        relative_path = $file.FullName.Substring($work.Length + 1)
+        sha256 = (
+            Get-FileHash <code>                $file.FullName</code>
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+}</p>
+<p>$comparison = foreach ($before in $preTree) {</p>
+<pre><code>$after = @(
+    $postTree |
+    Where-Object {
+        $_.relative_path -ceq $before.relative_path
+    }
+)
+
+if ($after.Count -ne 1) {
+    throw &quot;Tree mismatch for $($before.relative_path)&quot;
+}
+
+[pscustomobject]@{
+    relative_path = $before.relative_path
+    sha256_before = $before.sha256
+    sha256_after = $after[0].sha256
+    changed = ($before.sha256 -cne $after[0].sha256)
+}
+</code></pre>
+<p>}</p>
+<p>$comparison |
+    Export-Csv <code>        &quot;$hotfixRoot\POWER_QUERY_TREE_CHANGE_CONTROL.csv&quot;</code>
+        -NoTypeInformation `
+        -Encoding utf8</p>
+<p>$changed = @(
+    $comparison |
+    Where-Object { $_.changed }
+)</p>
+<p>$changed |
+    Format-Table <code>        relative_path,         sha256_before,         sha256_after</code>
+        -AutoSize</p>
+<p>Write-Host &quot;Changed external M files:&quot; $changed.Count</p>
+<p>if ($changed.Count -ne 3) {
+    throw &quot;Expected exactly 3 external M files to change.&quot;
+}</p>
+</blockquote>
+</blockquote>
+<p>relative_path                                   sha256_before                                                    sha256_after</p>
+<hr>
+<p>power_query\functions\fxReadBuildCsv.m          d02b486b9dd1f950ce728fc4f9b926ed6e8f57822792b46b2327d756b0e23656 50baff873f4b77162f521e0460d261c3747fa216ab9ea35ce2ef0d32732c68dc
+power_query\functions\fxReadCatalogedCsv.m      af950de91052f82dc0bfdc094d0fea395ebf6fe144c047db32b78dff4b9396c7 a4e46ac8367592965a5eb4a848b23b7a856ba1b09ee27ab7a059c7e86cff7a9f
+power_query\staging\stg_POWER_BI_DATA_CATALOG.m c643d527e9a0670e9b13dc881dc7e6d7d5fd6077160ca2e79e931785720cd5e7 c100d18b3bdb382752b25604c49c6b232e56d8861c3fa7980d46b3277de06919</p>
+<p>Changed external M files: 3
+PS C:\Windows\System32&gt; $verifier = Join-Path $HOME `</p>
+<blockquote>
+<blockquote>
+<pre><code>&quot;Downloads\Verify-A1aTechnicalShellBoundary.ps1&quot;
+</code></pre>
+<p>&amp; $verifier <code>    -PackageRoot $work</code>
+    -SourceRoot `
+    &quot;C:\MSBF\MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818&quot;
+{
+  &quot;schema_version&quot;: &quot;1.0&quot;,
+  &quot;decision_id&quot;: &quot;IA-D-R3A-PBI-001&quot;,
+  &quot;verified_utc&quot;: &quot;2026-08-19T13:53:47.9642109Z&quot;,
+  &quot;package_root&quot;: &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;,
+  &quot;semantic_tables&quot;: 14,
+  &quot;relationships&quot;: 6,
+  &quot;named_expressions&quot;: 33,
+  &quot;table_partitions&quot;: 14,
+  &quot;power_query_queries&quot;: 47,
+  &quot;explicit_measures&quot;: 0,
+  &quot;semantic_activation_objects&quot;: 67,
+  &quot;substantive_report_pages&quot;: 0,
+  &quot;technical_shell_pages&quot;: 1,
+  &quot;total_physical_report_pages&quot;: 1,
+  &quot;visual_objects&quot;: 0,
+  &quot;bookmark_objects&quot;: 0,
+  &quot;mobile_visual_layout_files&quot;: 0,
+  &quot;mobile_state_metadata_present&quot;: false,
+  &quot;report_extensions_metadata_present&quot;: false,
+  &quot;page_filters&quot;: 0,
+  &quot;report_filters&quot;: 0,
+  &quot;visual_interactions&quot;: 0,
+  &quot;page_binding_present&quot;: false,
+  &quot;tooltip_configuration_present&quot;: false,
+  &quot;a1b_tokens&quot;: 0,
+  &quot;page_display_name&quot;: &quot;A1A_TECHNICAL_SHELL_NO_VISUALS&quot;,
+  &quot;page_internal_name&quot;: &quot;b164c3b67606af1817c0&quot;,
+  &quot;page_folder_name&quot;: &quot;b164c3b67606af1817c0&quot;,
+  &quot;page_order&quot;: &quot;b164c3b67606af1817c0&quot;,
+  &quot;active_page_name&quot;: &quot;b164c3b67606af1817c0&quot;,
+  &quot;active_page_resolves&quot;: true,
+  &quot;report_boundary_annotation&quot;: &quot;ONE_PHYSICAL_TECHNICAL_SHELL_ZERO_SUBSTANTIVE_REPORT_PAGES_ZERO_VISUALS&quot;,
+  &quot;classification&quot;: [
+    &quot;TECHNICAL_CONTAINER_ONLY&quot;,
+    &quot;NON_SUBSTANTIVE&quot;,
+    &quot;NOT_REPORT_DESIGN&quot;,
+    &quot;NOT_PUBLIC_CLAIMABLE&quot;
+  ],
+  &quot;status&quot;: &quot;PASS&quot;,
+  &quot;failures&quot;: [],
+  &quot;unchanged_holds&quot;: [
+    &quot;AUD-SCN-004&quot;,
+    &quot;AUD-REL-005&quot;,
+    &quot;AUD-ASOF-003&quot;
+  ],
+  &quot;pbi_wp2&quot;: &quot;HOLD&quot;,
+  &quot;a1b&quot;: &quot;NOT_AUTHORIZED&quot;
+}
+A1a technical-shell boundary PASS.
+One physical technical shell page, zero substantive report pages, and zero visuals.</p>
+</blockquote>
+</blockquote>
+</div></article><article id="m-af520677-151b-48a6-958c-f0baddfabc56" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00069 · 2026-08-19T09:54:17.605480-04:00 · active path</p><div class="bubble"><p>The hotfix is now in a good controlled state.</p>
+<p>What you have physically established is:</p>
+<pre><code class="language-text">A1A-M-RUNTIME-HF01
+External M definitions changed: 3
+Exact external source-line changes: 7
+model.bim patched in place: YES
+Whole-BIM JSON reserialization: NO
+Embedded/external normalized parity: PASS
+Changed external M files: exactly 3
+Shell-aware boundary verification: PASS
+</code></pre>
+<p>The post-hotfix verifier also confirms the authorized footprint is still intact:</p>
+<pre><code class="language-text">14 semantic tables
+6 relationships
+47 Power Query queries
+0 explicit measures
+67 semantic activation objects
+
+1 physical technical shell page
+0 substantive report pages
+0 visuals
+0 bookmarks
+0 A1b objects
+active_page_resolves = true
+status = PASS
+</code></pre>
+<p>That remains consistent with the audit’s technical-shell exception and does not close the three local-engine holds. [export reference: filecite | turn9file0 | L63-L79]</p>
+<h2>Resume Desktop and test the repaired queries</h2>
+<p>Reopen the same derived PBIP:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819
+\project
+\MSBF_PBI_A1A_Local_Construction_R1.pbip
+</code></pre>
+<p>Do not click either Desktop <code>Refresh now</code> banner.</p>
+<p>Open:</p>
+<p><strong>Home → Transform data</strong></p>
+<h3>1. Test the upstream catalog query first</h3>
+<p>Click:</p>
+<pre><code class="language-text">stg_POWER_BI_DATA_CATALOG
+</code></pre>
+<p>It should now show a populated preview instead of:</p>
+<pre><code class="language-text">Expression.Error: The value isn&#39;t a single-character string.
+</code></pre>
+<p>If it still errors, stop and send the exact error.</p>
+<h3>2. Test the build reader</h3>
+<p>Click:</p>
+<pre><code class="language-text">fxReadBuildCsv
+</code></pre>
+<p>Because this is a function, Power Query may show its function interface rather than rows. That is fine. What we do not want to see is the prior malformed-path failure.</p>
+<p>Then click one fact query that previously showed:</p>
+<pre><code class="language-text">BUILD_CATALOG_READ
+</code></pre>
+<p>Use:</p>
+<pre><code class="language-text">FactGovernanceControl
+</code></pre>
+<p>If the repair is working, it should evaluate rather than inherit the build-catalog error.</p>
+<h2>Then perform Refresh Preview Attempt 2</h2>
+<p>Only after those spot checks are clean:</p>
+<p><strong>Home → Refresh Preview ▼ → Refresh All</strong></p>
+<p>Let the full 47-query evaluation finish.</p>
+<p>Do not click <strong>Close &amp; Apply</strong> yet.</p>
+<p>If Attempt 2 completes successfully, preserve it immediately in PowerShell:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1A_POWER_QUERY_REFRESH_PREVIEW_ATTEMPT_2&quot;
+    timestamp_local = (Get-Date).ToString(&quot;o&quot;)
+    timestamp_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+    result = &quot;PASS&quot;
+    hotfix_id = &quot;A1A-M-RUNTIME-HF01&quot;
+    query_inventory = 47
+    semantic_queries = 14
+    staging_queries = 19
+    functions = 5
+    parameters = 9
+    refresh_preview_succeeded = $true
+    close_and_apply_performed = $false
+    semantic_model_refresh_performed = $false
+    explicit_measures = 0
+    a1b_started = $false
+} |
+    ConvertTo-Json -Depth 5 |
+    Set-Content `
+        -LiteralPath &quot;$ev\E04_POWER_QUERY_REFRESH_ATTEMPT_2_PASS.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Also take a screenshot showing the clean Queries pane after Refresh All.</p>
+<p>If <strong>any</strong> query still errors, do not repair it on your own. Preserve the exact error and stop there.</p>
+<p>The important transition now is:</p>
+<pre><code class="language-text">Attempt 1     FAIL — common M path-literal defect
+HF01          APPLIED — 3 definitions / 7 lines
+Static boundary PASS
+Attempt 2     NEXT
+Close &amp; Apply NOT YET
+</code></pre>
+<p>Once Refresh Preview Attempt 2 finishes, tell me whether it passed cleanly and, if not, the exact remaining error.</p>
+</div></article><article id="m-02e91f09-7a4e-4ea0-87e9-559be04615b2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00070 · 2026-08-19T10:05:06.536000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: REQUESTED_SCREENSHOT.png</p><div class="bubble"><p>See attached screenshot after selecting Refresh All - Many items have a yellow warning and say &quot;Information is required about data privacy.&quot; With a continue button following.</p>
+</div></article><article id="m-5a36e3b7-9ee7-4b0d-a3b0-ad24acb8bf7e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00071 · 2026-08-19T10:05:18.534469-04:00 · active path</p><div class="bubble"><p>This is the expected next gate: <strong>the M-runtime defect is fixed, and Power Query has advanced to data privacy classification</strong>. Do not treat the yellow triangles as query failures yet.</p>
+<p>Microsoft documents this exact state: when privacy levels haven’t been assigned, Power Query raises <strong>“Information is required about data privacy”</strong> and the <strong>Continue</strong> button opens the Privacy Levels dialog. [export reference: cite | turn417583search0]</p>
+<p>For this A1a run, use a conservative, governed setting. All sources are local files inside the same derived working copy, so set them to the <strong>same privacy level</strong>. I recommend <strong>Private</strong> rather than Public, because these are controlled project artifacts and we do not need to relax isolation unnecessarily. Microsoft notes that Private is the most restrictive classification and that compatible privacy settings are what allow query combinations to proceed. [export reference: cite | turn417583search0 | turn417583search1]</p>
+<p>Do this now:</p>
+<ol>
+<li>Click <strong>Continue</strong> on the yellow privacy banner.</li>
+<li>In the Privacy Levels dialog, you should see the local source roots—likely the <code>pDataRoot</code> and <code>pBuildRoot</code> locations, or their underlying file/folder sources.</li>
+<li>Set <strong>every listed A1a local source</strong> to:<pre><code class="language-text">Private
+</code></pre>
+</li>
+<li>Do <strong>not</strong> choose any option resembling:<pre><code class="language-text">Ignore Privacy Levels
+Fast Combine
+Always ignore privacy settings
+</code></pre>
+Microsoft explicitly cautions that ignoring privacy levels can allow unintended information transfer between sources. [export reference: cite | turn417583search0]</li>
+<li>Click <strong>Save/OK</strong> in the privacy dialog and let Power Query continue evaluating.</li>
+</ol>
+<p>Because your Desktop appears current, Microsoft’s July 2026 behavior should allow queries that reference other queries and also access sources as long as the privacy levels are compatible; disabling privacy protection should not be necessary. [export reference: cite | turn417583search1]</p>
+<p>Before you click Continue, preserve this privacy-gate evidence in PowerShell:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1A_POWER_QUERY_PRIVACY_GATE&quot;
+    timestamp_local = (Get-Date).ToString(&quot;o&quot;)
+    timestamp_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+    refresh_attempt = 2
+    state = &quot;PRIVACY_INFORMATION_REQUIRED&quot;
+    prior_hotfix = &quot;A1A-M-RUNTIME-HF01&quot;
+    intended_privacy_classification = &quot;PRIVATE&quot;
+    ignore_privacy_levels = $false
+    semantic_model_refresh_performed = $false
+    close_and_apply_performed = $false
+    a1b_started = $false
+} |
+    ConvertTo-Json |
+    Set-Content `
+        -LiteralPath &quot;$ev\E04_PRIVACY_GATE_ATTEMPT2.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Your screenshot is also good evidence of this intermediate state: the full <code>Queries [47]</code> inventory is still present, and the engine is no longer reporting the original <code>single-character string</code> error. That is meaningful evidence that HF01 cleared the first runtime blocker.</p>
+<p>After you click <strong>Continue</strong>, send me a screenshot of the Privacy Levels dialog <strong>before you confirm it</strong>, so I can verify exactly which sources Desktop is asking you to classify.</p>
+</div></article><article id="m-2dd1085c-5b92-4d0c-a266-6422f9589a24" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00072 · 2026-08-19T10:19:58.037000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: REQUESTED_SCREENSHOT_01(3).png; REQUESTED_SCREENSHOT_02(3).png</p><div class="bubble"><p>The Data settings are looking at my C:\ root. Selecting Private created errors where the fx would not populate. I updated to Public and selected Refresh All. All data now loads correctly.</p>
+</div></article><article id="m-745c987b-b63d-482e-9c3c-50a105665b99" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00073 · 2026-08-19T10:19:59.726653-04:00 · active path</p><div class="bubble"><p>Good. <strong>Refresh Preview Attempt 2 has now succeeded</strong>, but we should record the privacy behavior precisely rather than calling the Public setting intrinsically “correct.”</p>
+<p>Your screenshots show two important physical results:</p>
+<ul>
+<li><code>DimAsOfDate</code> is populated with <strong>123 rows</strong> and no visible column errors.</li>
+<li><code>FactValidationResult</code> is populated with <strong>533 rows</strong>, and the visible validation rows show <code>PASS</code>.</li>
+<li>The warning triangles that accompanied the privacy gate are gone from the visible query population.</li>
+</ul>
+<p>This means the hotfix cleared the original M-runtime defect and, after the privacy-level change, the 47-query Power Query layer evaluates successfully.</p>
+<p>One nuance: setting the <strong>C:\ data source privacy level to Public</strong> is broader than ideal. Power Query privacy classification concerns whether data may be combined with other sources; “Public” does not mean the files themselves were published, but it does tell the Formula Firewall they may be freely combined. Since this machine/source configuration produced errors under Private, we should <strong>preserve Public as an execution-enabling local configuration decision</strong>, not silently characterize it as a governance standard for future deployments.</p>
+<h2>1. Record Attempt 2 and the privacy decision</h2>
+<p>While Power Query remains open, run:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1A_POWER_QUERY_REFRESH_PREVIEW_ATTEMPT_2&quot;
+    timestamp_local = (Get-Date).ToString(&quot;o&quot;)
+    timestamp_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    result = &quot;PASS_AFTER_HF01_AND_LOCAL_PRIVACY_CONFIGURATION&quot;
+    hotfix_id = &quot;A1A-M-RUNTIME-HF01&quot;
+
+    query_inventory = 47
+    parameters = 9
+    functions = 5
+    staging_queries = 19
+    semantic_queries = 14
+
+    refresh_preview_succeeded = $true
+
+    observed_semantic_examples = @{
+        DimAsOfDate = @{
+            rows = 123
+            visible_column_errors = 0
+        }
+        FactValidationResult = @{
+            rows = 533
+            visible_column_errors = 0
+            visible_status = &quot;PASS&quot;
+        }
+    }
+
+    privacy_configuration = @{
+        initial_private_attempt = &quot;ERROR_FUNCTIONS_DID_NOT_POPULATE&quot;
+        final_local_setting = &quot;PUBLIC&quot;
+        configured_source_scope = &quot;C_DRIVE_SOURCE_AS_PRESENTED_BY_POWER_QUERY&quot;
+        ignore_privacy_levels = $false
+        interpretation = &quot;LOCAL_EXECUTION_CONFIGURATION_NOT_PRODUCTION_GOVERNANCE_STANDARD&quot;
+    }
+
+    close_and_apply_performed = $false
+    semantic_model_refresh_performed = $false
+    explicit_measures = 0
+    substantive_report_pages = 0
+    technical_shell_pages = 1
+    a1b_started = $false
+
+    unchanged_holds = @(
+        &quot;AUD-SCN-004&quot;,
+        &quot;AUD-REL-005&quot;,
+        &quot;AUD-ASOF-003&quot;
+    )
+} |
+    ConvertTo-Json -Depth 8 |
+    Set-Content `
+        -LiteralPath &quot;$ev\E04_POWER_QUERY_REFRESH_ATTEMPT_2_PASS.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>The audit requires actual refresh/evaluation results and source-to-model evidence, so preserving this intermediate result is important. [export reference: filecite | turn9file0 | L127-L138]</p>
+<h2>2. Save the two successful screenshots</h2>
+<p>Save your screenshots locally as:</p>
+<pre><code class="language-text">E04_REFRESH_ATTEMPT2_DIMASOFDATE_123_ROWS.png
+E04_REFRESH_ATTEMPT2_FACTVALIDATIONRESULT_533_ROWS.png
+</code></pre>
+<p>Place them in:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819
+\evidence\local_engine_return
+</code></pre>
+<p>Also retain the earlier privacy-gate screenshot and the Attempt-1 error screenshots. We want the complete chronology:</p>
+<pre><code class="language-text">Attempt 1
+→ M-runtime failure
+
+HF01
+→ 3 definitions / 7 lines
+
+Attempt 2 initial evaluation
+→ privacy gate
+
+Private
+→ incompatible local evaluation behavior
+
+Public local source classification
+→ 47-query evaluation succeeds
+</code></pre>
+<h2>3. We can now perform <code>Close &amp; Apply</code></h2>
+<p>This is the important next transition: actually loading the 14 semantic tables into the local semantic engine.</p>
+<p>In Power Query click:</p>
+<p><strong>Home → Close &amp; Apply</strong></p>
+<p>Do <strong>not</strong> click ordinary Desktop Refresh separately yet.</p>
+<p>Power BI should show an <strong>Applying query changes</strong> dialog and begin loading the model.</p>
+<p>Let it run to completion without interacting with the report canvas.</p>
+<h3>If anything fails</h3>
+<p>If you get:</p>
+<ul>
+<li><code>Load was cancelled</code>;</li>
+<li>relationship errors;</li>
+<li>duplicate-key errors;</li>
+<li>data type conversion errors;</li>
+<li>privacy/firewall errors;</li>
+<li>query load errors;</li>
+<li>an unexpected request to alter the model;</li>
+</ul>
+<p>stop and send me the entire dialog.</p>
+<p>Do not click through a substantive error.</p>
+<h2>4. If Close &amp; Apply succeeds</h2>
+<p>When you return to the blank technical shell, don&#39;t save yet.</p>
+<p>First inspect the top banners. Ideally, the earlier messages about:</p>
+<pre><code class="language-text">Some of the tables have incomplete or no data.
+</code></pre>
+<p>should disappear or materially change.</p>
+<p>Then click <strong>Model view</strong> using the relationship/model icon on the left.</p>
+<p>We need to see the physically instantiated model.</p>
+<p>At this stage we expect exactly:</p>
+<pre><code class="language-text">14 tables
+6 relationships
+</code></pre>
+<p>and still:</p>
+<pre><code class="language-text">0 explicit measures
+1 technical shell page
+0 visuals
+</code></pre>
+<p>The six relationships are now particularly important because <code>AUD-REL-005</code> explicitly requires physical instantiated relationship metadata and filter behavior; static design evidence cannot close it. [export reference: filecite | turn9file5 | L45-L53]</p>
+<h3>Send me two things after Close &amp; Apply</h3>
+<ol>
+<li>Tell me whether <strong>Close &amp; Apply completed successfully</strong>.</li>
+<li>If successful, send a screenshot of <strong>Model view</strong> showing the tables and relationship lines.</li>
+</ol>
+<p>Don&#39;t manually rearrange, create, delete, activate, or modify any relationship yet. The first Model-view screenshot should capture exactly what Desktop instantiated from the governed A1a project.</p>
+</div></article><article id="m-74112f56-bd05-48b0-b2b3-4dfcbe39c15c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00074 · 2026-08-19T10:25:53.006000-04:00 · active path</p><div class="bubble"><p>The dialog seemed to run correctly but we still have a banner that says &quot;Some of the tables have incomplete or no data.&quot;</p>
+</div></article><article id="m-70090c58-a9d4-4b61-8a43-230295f9ee7c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00075 · 2026-08-19T10:25:54.483224-04:00 · active path</p><div class="bubble"><p>That banner alone does <strong>not</strong> establish that <code>Close &amp; Apply</code> failed. Given that the apply dialog appeared to complete normally, we should now determine whether it is simply a stale/expected Desktop warning or whether one of the 14 loaded tables is actually incomplete.</p>
+<p>Do <strong>not</strong> click the banner&#39;s <strong>Refresh now</strong> button yet, and do not save.</p>
+<h3>Next: inspect Model view</h3>
+<p>Click the <strong>Model view</strong> icon on the left—the icon showing connected boxes.</p>
+<p>Once Model view opens, look for:</p>
+<pre><code class="language-text">14 table boxes
+6 relationship lines
+</code></pre>
+<p>Do not move tables or modify relationships.</p>
+<p>Send me a screenshot of the <strong>entire Model view</strong>, including the warning banner if it remains visible.</p>
+<h3>Why we&#39;re checking this first</h3>
+<p>We already have clean Power Query evidence that the bounded query layer evaluated after HF01. The next audit requirement is physical evidence of the instantiated semantic model—especially the six relationships. The audit specifically retained <code>AUD-REL-005</code> until Desktop provides relationship metadata, cardinality, active/inactive state, and filter-behavior evidence. [export reference: filecite | turn9file5 | L45-L53]</p>
+<p>The banner could have several explanations, including a table that Desktop considers unprocessed, a table intentionally having no imported rows, or simply state retained from before <code>Close &amp; Apply</code>. We should not infer which one from the banner alone.</p>
+<p>For now the evidence state is:</p>
+<pre><code class="language-text">Power Query inventory                 47/47 observed
+HF01                                  APPLIED
+Refresh Preview Attempt 2             PASS
+Close &amp; Apply                         APPARENTLY COMPLETED
+Semantic-model load                   NEEDS VERIFICATION
+&quot;Incomplete or no data&quot; banner        OPEN OBSERVATION
+AUD-SCN-004                            HOLD
+AUD-REL-005                            HOLD
+AUD-ASOF-003                           HOLD
+A1b                                    NOT STARTED
+</code></pre>
+<p>Please send the full <strong>Model view screenshot</strong> next.</p>
+</div></article><article id="m-67232b65-018d-4de8-9fd6-22bac0b806c5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00076 · 2026-08-19T10:34:50.832000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: MODEL_VIEW_SCREENSHOT.png</p><div class="bubble"><p>Model view screenshot attached.</p>
+</div></article><article id="m-1e5b801c-03b8-4ab5-82a9-51f92331a0e4" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00077 · 2026-08-19T10:34:52.536270-04:00 · active path</p><div class="bubble"><p>This screenshot is useful. <strong>The A1a model structure is physically present in Desktop.</strong> I can count all <strong>14 authorized semantic tables</strong>, and I can see the expected relationship network on the left side. The right-side governance/control tables are intentionally disconnected in A1a.</p>
+<p>However, the red/orange warning triangles on many table headers and the persistent <strong>“Some of the tables have incomplete or no data”</strong> banner mean we should <strong>not yet claim the semantic-model load passed</strong>. We need to identify what Desktop thinks is incomplete.</p>
+<h3>What the screenshot establishes</h3>
+<p>The 14 tables visible are:</p>
+<pre><code class="language-text">DimIndustry
+DimRegion
+DimMerchant
+DimApplication
+DimAcquisitionSource
+DimAccountAdvance
+DimScenario
+DimAsOfDate
+DimDate
+DimRunCampaign
+FactGovernanceControl
+FactSourceReconciliation
+FactValidationResult
+ModelParameters
+</code></pre>
+<p>So the physical table count is correct. This is meaningful progress, but <code>AUD-REL-005</code> remains held until we verify the instantiated relationship metadata and filter behavior, as the audit requires. [export reference: filecite | turn9file5 | L45-L53]</p>
+<h2>Next — click one warning triangle</h2>
+<p>Don&#39;t click <strong>Refresh now</strong> yet.</p>
+<p>Click the warning triangle in the upper-right corner of a simple table such as:</p>
+<pre><code class="language-text">DimDate
+</code></pre>
+<p>If that triangle itself isn&#39;t clickable, hover over it and see whether Desktop gives you a tooltip.</p>
+<p>We need the exact reason Desktop associates with the table warning.</p>
+<p>If nothing useful appears, switch to <strong>Data view</strong> using the table/grid icon on the left and select:</p>
+<pre><code class="language-text">DimDate
+</code></pre>
+<p>Then tell me whether you can see the 123 rows.</p>
+<p>After that select:</p>
+<pre><code class="language-text">DimAsOfDate
+</code></pre>
+<p>and verify it also displays 123 rows.</p>
+<p>Then check:</p>
+<pre><code class="language-text">FactValidationResult
+</code></pre>
+<p>and see whether the 533 rows are physically available in Data view.</p>
+<h3>Don&#39;t refresh again yet</h3>
+<p>We already know Power Query Preview can produce these datasets. The question now is whether <code>Close &amp; Apply</code> loaded them into VertiPaq or whether Desktop retained an unprocessed state. Clicking Refresh now before answering that would blur the evidence between:</p>
+<pre><code class="language-text">Close &amp; Apply result
+</code></pre>
+<p>and:</p>
+<pre><code class="language-text">subsequent Desktop refresh result
+</code></pre>
+<p>We want those to remain distinct for the audit trail.</p>
+<p>So please first <strong>hover/click the warning triangle on <code>DimDate</code></strong>. If it provides no diagnostic, open <strong>Data view → DimDate</strong> and send me a screenshot.</p>
+</div></article><article id="m-a50ca085-a190-407f-88b5-af7cf8169660" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00078 · 2026-08-19T10:40:41.823000-04:00 · active path</p><div class="bubble"><p>Hovering over the triangles for all 14 tables, the culprit seems to be &quot;Invalid Date&quot;. When I go to table view, I see columns exist in all 14 tables but there appear to be no rows.</p>
+</div></article><article id="m-8dffc3cd-12ba-4a27-9874-18f876e1ae09" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00079 · 2026-08-19T10:40:43.795890-04:00 · active path</p><div class="bubble"><p>That identifies the next real local-engine defect.</p>
+<p>The evidence now says:</p>
+<pre><code class="language-text">Power Query Preview                 PASS
+47-query evaluation                 PASS
+Close &amp; Apply                       completed
+14 table schemas instantiated       PASS
+Rows physically loaded             NO
+Desktop table status                Invalid Date
+</code></pre>
+<p>So the persistent banner is not merely stale. <strong>The semantic-model load did not succeed.</strong> The tables exist because their metadata was instantiated, but VertiPaq has no rows because processing encountered an <code>Invalid Date</code> condition.</p>
+<p>Do <strong>not</strong> click <strong>Refresh now</strong>, save the project, or modify any date column yet.</p>
+<p>The audit requires physical refresh/evaluation evidence and keeps the as-of behavior control open; we should preserve this executed failure rather than masking it. [export reference: filecite | turn9file0 | L127-L138]</p>
+<h3>First, capture this state</h3>
+<p>In PowerShell run:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1A_CLOSE_AND_APPLY_ATTEMPT_1&quot;
+    timestamp_local = (Get-Date).ToString(&quot;o&quot;)
+    timestamp_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    result = &quot;FAILED_SEMANTIC_PROCESSING_INVALID_DATE&quot;
+
+    prior_power_query_preview = &quot;PASS&quot;
+    prior_hotfix = &quot;A1A-M-RUNTIME-HF01&quot;
+
+    semantic_tables_physically_instantiated = 14
+    table_columns_visible = $true
+    table_rows_visible = $false
+    desktop_table_warning = &quot;Invalid Date&quot;
+    incomplete_or_no_data_banner = $true
+
+    desktop_refresh_after_close_apply = $false
+    manual_model_repair_performed = $false
+    project_saved_after_failure = $false
+
+    explicit_measures = 0
+    substantive_report_pages = 0
+    technical_shell_pages = 1
+    a1b_started = $false
+
+    unchanged_holds = @(
+        &quot;AUD-SCN-004&quot;,
+        &quot;AUD-REL-005&quot;,
+        &quot;AUD-ASOF-003&quot;
+    )
+} |
+    ConvertTo-Json -Depth 6 |
+    Set-Content `
+        -LiteralPath &quot;$ev\E05_CLOSE_AND_APPLY_ATTEMPT1_INVALID_DATE.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Save your Model-view screenshot as:</p>
+<pre><code class="language-text">E05_MODEL_VIEW_INVALID_DATE_AFTER_CLOSE_APPLY.png
+</code></pre>
+<p>If practical, also take one Data-view screenshot showing an instantiated table with columns but no rows.</p>
+<h2>Now diagnose the date failure without changing anything</h2>
+<p>Return to:</p>
+<p><strong>Home → Transform data</strong></p>
+<p>Do <strong>not</strong> Refresh All again.</p>
+<p>We already know the preview layer succeeds. We need to inspect the date values and data types being handed to VertiPaq.</p>
+<p>Start with <code>DimDate</code>.</p>
+<p>Click:</p>
+<pre><code class="language-text">DimDate
+</code></pre>
+<p>Then inspect the <code>Date</code> column header.</p>
+<p>Please tell me exactly what its Power Query data-type icon is:</p>
+<ul>
+<li>calendar = <code>Date</code></li>
+<li>calendar + clock = <code>Date/Time</code></li>
+<li><code>ABC</code> = Text</li>
+<li><code>123</code> = numeric</li>
+<li>something else</li>
+</ul>
+<p>Then click the dropdown on the <code>Date</code> column and choose:</p>
+<p><strong>Remove Empty</strong>? <strong>No. Don&#39;t alter anything.</strong></p>
+<p>Instead, select the <code>Date</code> column and go to:</p>
+<p><strong>View → Column quality</strong></p>
+<p>and:</p>
+<p><strong>View → Column profile</strong></p>
+<p>We need to know whether Power Query reports:</p>
+<pre><code class="language-text">Valid 100%
+Error 0%
+Empty 0%
+</code></pre>
+<p>Your earlier <code>DimAsOfDate</code> screenshot showed precisely that sort of clean preview, which makes this particularly interesting: the invalid-date failure may be coming from the <strong>semantic model&#39;s column metadata</strong>, rather than bad source values.</p>
+<h3>One specific clue I want checked</h3>
+<p>In your earlier Power Query screenshot, <code>DimAsOfDate[AsOfDate]</code> showed values beginning:</p>
+<pre><code class="language-text">7/23/2026
+7/24/2026
+...
+</code></pre>
+<p>with 123 distinct values and no preview errors. If <code>DimDate[Date]</code> is similarly 100% valid in Power Query but Desktop still marks it <code>Invalid Date</code>, we should inspect <code>model.bim</code> for the semantic column definitions—especially their <code>dataType</code>, <code>formatString</code>, and any date-table annotations—before changing the M code.</p>
+<p>That distinction matters:</p>
+<pre><code class="language-text">bad Power Query date values
+→ transformation/data defect
+
+clean Power Query dates + Invalid Date during model processing
+→ semantic metadata/type/format defect
+</code></pre>
+<p>The second case is increasingly likely because <strong>all fourteen tables have zero loaded rows</strong>, even tables that do not fundamentally depend on a date dimension. A processing failure in one model partition can leave the entire apply transaction unprocessed.</p>
+<p>For now, please send me <strong>one screenshot of <code>DimDate</code> in Power Query with Column quality/profile visible</strong>, including the <code>Date</code> column&#39;s type icon. We should diagnose this before performing another refresh.</p>
+</div></article><article id="m-62f4a1cb-5cb5-4e15-a556-d007e73680e7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00080 · 2026-08-19T10:48:45.091000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: DIM_DATE_SCREENSHOT.png</p><div class="bubble"><p>DIMDATE screenshot attached.</p>
+</div></article><article id="m-5867cc1f-02c1-4f1b-9196-0e4b74adc7c2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00081 · 2026-08-19T10:48:48.899022-04:00 · active path</p><div class="bubble"><p>This is strong diagnostic evidence. <code>DimDate</code> itself is <strong>not producing invalid dates in Power Query</strong>.</p>
+<p>Your screenshot shows:</p>
+<pre><code class="language-text">DimDate[Date]
+Data type: Date
+Rows: 123
+Distinct: 123
+Valid: 100%
+Error: 0%
+Empty: 0%
+
+Range begins: 7/23/2026
+IsSourceRunAsOf on 7/23/2026: TRUE
+</code></pre>
+<p>The other visible columns are also 100% valid. So we should <strong>not change <code>DimDate</code> M code</strong>.</p>
+<p>That materially shifts the diagnosis toward the semantic-model metadata or another date-typed column elsewhere causing the transactional model processing failure.</p>
+<h2>Next diagnostic: inspect <code>model.bim</code> date metadata</h2>
+<p>Do not make any changes in Power Query. Leave Desktop/Power Query open if convenient, but don&#39;t Apply or Refresh.</p>
+<p>Open a separate PowerShell 7 window and run this <strong>read-only</strong> diagnostic:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+$modelPath = Join-Path $work `
+    &quot;project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;
+
+$model = Get-Content `
+    -LiteralPath $modelPath `
+    -Raw |
+    ConvertFrom-Json
+
+$dateColumns = foreach ($table in @($model.model.tables)) {
+
+    foreach ($column in @($table.columns)) {
+
+        $dataType = if (
+            $null -ne $column.PSObject.Properties[&quot;dataType&quot;]
+        ) {
+            [string]$column.dataType
+        } else {
+            &quot;&quot;
+        }
+
+        $formatString = if (
+            $null -ne $column.PSObject.Properties[&quot;formatString&quot;]
+        ) {
+            [string]$column.formatString
+        } else {
+            &quot;&quot;
+        }
+
+        if (
+            $dataType -match &quot;date&quot; -or
+            $formatString -match &quot;[dMy]&quot;
+        ) {
+            [pscustomobject]@{
+                table = $table.name
+                column = $column.name
+                data_type = $dataType
+                format_string = $formatString
+                source_column = if (
+                    $null -ne $column.PSObject.Properties[&quot;sourceColumn&quot;]
+                ) {
+                    $column.sourceColumn
+                } else {
+                    &quot;&quot;
+                }
+            }
+        }
+    }
+}
+
+$dateColumns |
+    Sort-Object table,column |
+    Format-Table -AutoSize
+
+$dateColumns |
+    Export-Csv `
+        -LiteralPath &quot;$ev\E05_MODEL_DATE_COLUMN_METADATA.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+Write-Host &quot;&quot;
+Write-Host &quot;Date/date-formatted semantic columns:&quot; $dateColumns.Count
+</code></pre>
+<p>Then run this second read-only diagnostic for the two date dimensions specifically:</p>
+<pre><code class="language-powershell">foreach ($tableName in @(&quot;DimDate&quot;,&quot;DimAsOfDate&quot;)) {
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;================ $tableName ================&quot;
+
+    $table = @(
+        $model.model.tables |
+        Where-Object { $_.name -ceq $tableName }
+    )[0]
+
+    $table.columns |
+        Select-Object `
+            name,
+            dataType,
+            formatString,
+            sourceColumn |
+        Format-Table -AutoSize
+}
+</code></pre>
+<h3>What I&#39;m looking for</h3>
+<p>For the physical date columns, something like this is normal:</p>
+<pre><code class="language-text">DimDate      Date       dateTime    M/d/yyyy
+DimAsOfDate  AsOfDate   dateTime    M/d/yyyy
+</code></pre>
+<p>But we are looking for anomalies such as:</p>
+<pre><code class="language-text">dataType = date
+</code></pre>
+<p>if the tabular model expects <code>dateTime</code>, a malformed <code>formatString</code>, a text field assigned date metadata, or some other semantic column being treated as a date unexpectedly.</p>
+<p>Power Query and the semantic model have different type systems, so <strong>Power Query <code>type date</code> being valid does not by itself prove the corresponding <code>model.bim</code> column metadata is valid</strong>.</p>
+<h2>Also preserve this clean DimDate evidence</h2>
+<p>Save the screenshot as:</p>
+<pre><code class="language-text">E05_DIMDATE_POWER_QUERY_123_ROWS_100PCT_VALID.png
+</code></pre>
+<p>in:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819
+\evidence\local_engine_return
+</code></pre>
+<p>The important evidence chain is now:</p>
+<pre><code class="language-text">Power Query DimDate
+    123 rows
+    Date type
+    100% valid
+    0% errors
+        ↓
+Close &amp; Apply
+        ↓
+Desktop semantic model
+    &quot;Invalid Date&quot;
+    columns instantiated
+    rows not processed
+</code></pre>
+<p>That is much more diagnostic than simply seeing the Desktop warning.</p>
+<p>Also, your screenshot physically confirms <code>IsSourceRunAsOf = TRUE</code> for <strong>July 23, 2026</strong>, which aligns with the frozen accepted source/evidence cutoff. [export reference: filecite | turn9file4 | L17-L21] It does <strong>not</strong> close <code>AUD-ASOF-003</code>, but it is useful positive evidence for the eventual control package.</p>
+<p>Paste the output of the <strong>date-column metadata commands</strong> next. Do not change any date types yet.</p>
+</div></article><article id="m-babfb37a-fc70-4205-bda7-b8d3af9e4545" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00082 · 2026-08-19T10:50:03.232000-04:00 · active path</p><div class="bubble"><p>table                column                         data_type format_string source_column</p>
+<hr>
+<p>DimAccountAdvance    booking_date                   dateTime  Short Date    booking_date
+DimAccountAdvance    created_at                     dateTime  Short Date    created_at
+DimAccountAdvance    first_expected_remittance_date dateTime  Short Date    first_expected_remittance_date
+DimAccountAdvance    funding_date                   dateTime  Short Date    funding_date
+DimAccountAdvance    monitoring_start_date          dateTime  Short Date    monitoring_start_date
+DimAccountAdvance    portfolio_activation_date      dateTime  Short Date    portfolio_activation_date
+DimAcquisitionSource effective_end_date             dateTime  Short Date    effective_end_date
+DimAcquisitionSource effective_start_date           dateTime  Short Date    effective_start_date
+DimApplication       application_date               dateTime  Short Date    application_date
+DimApplication       as_of_date                     dateTime  Short Date    as_of_date
+DimAsOfDate          AsOfDate                       dateTime  Short Date    AsOfDate
+DimDate              Date                           dateTime  Short Date    Date
+DimIndustry          effective_end_date             dateTime  Short Date    effective_end_date
+DimIndustry          effective_start_date           dateTime  Short Date    effective_start_date
+DimMerchant          created_date                   dateTime  Short Date    created_date
+DimMerchant          incorporation_date             dateTime  Short Date    incorporation_date
+DimRunCampaign       as_of_date                     dateTime  Short Date    as_of_date
+DimRunCampaign       completed_at                   dateTime  Short Date    completed_at
+DimRunCampaign       created_at                     dateTime  Short Date    created_at
+DimRunCampaign       started_at                     dateTime  Short Date    started_at</p>
+<p>Date/date-formatted semantic columns: 20
+PS C:\Windows\System32&gt; foreach ($tableName in @(&quot;DimDate&quot;,&quot;DimAsOfDate&quot;)) {</p>
+<blockquote>
+<blockquote>
+<pre><code>Write-Host &quot;&quot;
+Write-Host &quot;================ $tableName ================&quot;
+
+$table = @(
+    $model.model.tables |
+    Where-Object { $_.name -ceq $tableName }
+)[0]
+
+$table.columns |
+    Select-Object `
+        name,
+        dataType,
+        formatString,
+        sourceColumn |
+    Format-Table -AutoSize
+</code></pre>
+<p>}</p>
+</blockquote>
+</blockquote>
+<p>================ DimDate ================</p>
+<p>name               dataType formatString sourceColumn</p>
+<hr>
+<p>Date               dateTime Short Date   Date
+Year               int64                 Year
+Quarter            string                Quarter
+MonthNumber        int64                 MonthNumber
+MonthName          string                MonthName
+MonthYear          string                MonthYear
+IsEvidenceEndpoint boolean               IsEvidenceEndpoint
+IsSourceRunAsOf    boolean               IsSourceRunAsOf</p>
+<p>================ DimAsOfDate ================</p>
+<p>name               dataType formatString sourceColumn</p>
+<hr>
+<p>AsOfDate           dateTime Short Date   AsOfDate
+Year               int64                 Year
+Quarter            string                Quarter
+MonthNumber        int64                 MonthNumber
+MonthName          string                MonthName
+MonthYear          string                MonthYear
+IsEvidenceEndpoint boolean               IsEvidenceEndpoint
+IsSourceRunAsOf    boolean               IsSourceRunAsOf
+IsDefaultAsOf      boolean               IsDefaultAsOf</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

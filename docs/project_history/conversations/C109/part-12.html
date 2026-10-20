@@ -1,0 +1,669 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 12 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 12</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-11.html">Previous part</a><a href="part-13.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-f910a805-8272-40b0-b052-dd0fd502689e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00307 · 2026-08-26T18:33:13.184861-04:00 · active path</p><div class="bubble"><p>Yes — that result tells us the <strong>measure is the wrong object for this particular table use case</strong>. Your screenshot is actually very diagnostic.</p>
+<p>When you add <code>P03 Application ID</code>, Power BI starts evaluating that measure across the table&#39;s grouping contexts. Because the measure uses <code>SELECTEDVALUE(&#39;DimApplication&#39;[merchant_application_id])</code>, most of those generated contexts do <strong>not</strong> resolve to exactly one application, so the measure returns <code>NOT AVAILABLE</code>. One context finally resolves to the actual application and returns <code>A01</code>. That&#39;s why adding the measure explodes the visual into many rows.</p>
+<p>So, <strong>delete <code>P03 Application ID</code> from this table.</strong> The underlying application data is fine; the problem is only our presentation adapter.</p>
+<p>For a row-level identifier such as application suffix, a <strong>calculated column on <code>DimApplication</code></strong> is the cleaner object because the suffix is an attribute of each application row, not a context-dependent calculation. The model authority confirms that <code>merchant_application_id</code> is the scenario-invariant application identity, while the semantic <code>ApplicationKey</code> adds the run boundary. [export reference: filecite | turn39file0 | L9-L12]</p>
+<p>Create this calculated column in <code>DimApplication</code>:</p>
+<pre><code class="language-DAX">P03 Application Label =
+VAR _Application = &#39;DimApplication&#39;[merchant_application_id]
+VAR _Marker = SEARCH ( &quot;_A&quot;, _Application, 1, 0 )
+RETURN
+    IF (
+        ISBLANK ( _Application ) || _Marker = 0,
+        BLANK (),
+        MID (
+            _Application,
+            _Marker + 1,
+            LEN ( _Application )
+        )
+    )
+</code></pre>
+<p>For:</p>
+<pre><code class="language-text">MSBF_POP_0001_M000012_A01
+</code></pre>
+<p>it returns:</p>
+<pre><code class="language-text">A01
+</code></pre>
+<p>And because this is a <strong>column on the application row</strong>, if you put it into a table beside <code>application_date</code>, <code>requested_funding_amount</code>, etc., it will stay at the same one-row application grain rather than changing the grouping behavior.</p>
+<h3>What about the existing measure?</h3>
+<p>I would actually <strong>delete <code>P03 Application ID</code></strong> from <code>ModelParameters</code>. We discovered empirically that this identity belongs at row grain, so carrying both a measure and a column just creates unnecessary adapter clutter.</p>
+<p>The calculated column should be named something like:</p>
+<p><strong><code>P03 Application Label</code></strong></p>
+<p>rather than <code>Application ID</code>, because technically the governed application identifier is still the complete:</p>
+<p><code>MSBF_POP_0001_M000012_A01</code></p>
+<p>We&#39;re only creating a compact <strong>presentation label</strong> from its application-sequence component.</p>
+<h3>One more important observation from your screenshot</h3>
+<p>Those extra rows from <code>$5,000</code>, <code>$5,100</code>, <code>$5,200</code>, etc. are another reason not to try to make scalar measures do row-identity work. The measure is causing Power BI to evaluate combinations that weren&#39;t exposed when the table consisted only of row-level fields. It does <strong>not</strong> mean Merchant 000012 suddenly has all those applications.</p>
+<p>So the correct pattern going forward is:</p>
+<pre><code class="language-text">Row-level application attribute
+→ calculated presentation column
+
+Scalar KPI / context-dependent value
+→ explicit measure
+</code></pre>
+<p>That is cleaner semantically and should behave naturally in both tables and future drillthrough.</p>
+<p>After creating <code>P03 Application Label</code>, replace the long <code>merchant_application_id</code> in your diagnostic table with this new column. You should get the same single row, except the first field will simply read <strong>A01</strong>. Show me that result, and then we&#39;re ready to stop diagnosing application identity and design the actual <strong>Current application → Decision &amp; offer</strong> presentation.</p>
+</div></article><article id="m-33a33275-eda6-4a13-be37-f531485cc79e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00308 · 2026-08-26T18:48:16.811000-04:00 · active path</p><p class="note">Attachment references: Pasted text(20260826-224811).txt</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-3f46153e-ec20-4c30-9fec-c336d69e4261" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00309 · 2026-08-26T18:48:40.451147-04:00 · active path</p><div class="bubble"><p>The pasted data confirms the identifier structure we inferred. <code>merchant_application_id</code> is explicitly carried alongside separate <code>population_id</code> and <code>merchant_id</code> fields, and the composite keys then prepend run/scenario identifiers. For example, Merchant 000012 appears as <code>MSBF_POP_0001_M000012_A01</code>, with <code>ApplicationKey = 1|MSBF_POP_0001_M000012_A01</code> and <code>ApplicationScenarioKey = 1|6|MSBF_POP_0001_M000012_A01</code>. [export reference: filecite | turn40file0 | L1-L10]</p>
+<p>So our interpretation is now well supported:</p>
+<pre><code class="language-text">MSBF_POP_0001_M000012_A01
+│        │       │      │
+│        │       │      └─ Application sequence = A01
+│        │       └──────── Merchant = M000012
+│        └──────────────── Population = POP_0001
+└───────────────────────── MSBF namespace
+</code></pre>
+<p>One correction to my previous recommendation, though: <strong>do not create the calculated column yet.</strong> Given the audit authorization, we should minimize semantic-model additions when the existing physical field can do the job. We also now know from the supplied decision data that <code>A01</code> is consistently embedded in the governed application identifier; the rows shown throughout the file follow that pattern. [export reference: filecite | turn40file0 | L5-L8]</p>
+<p>For the actual P03 experience, I don&#39;t think the user needs to see <code>A01</code> at all unless there are multiple applications for a merchant. Right now the application table is telling a much more useful story through <strong>application date, requested amount, use of proceeds, channel, requested remittance rate, expected payoff days, requested repayment, finance charge, status and source</strong>.</p>
+<p>More importantly, this new file gives us the next layer we need: <strong>final decision and offer.</strong> It contains <code>final_decision_outcome_code</code>, authorization/review flags, final offer amount, final remittance rate, payback multiple, collection horizon, total repayment, finance charge, implied payoff days, evidence status and decision reasons. [export reference: filecite | turn40file0 | L1-L10]</p>
+<p>So I recommend we stop spending time on application-ID cosmetics and proceed with the real P03 story.</p>
+<h3>Next step in Power BI</h3>
+<p>Leave your two working application tables in place for the moment. Keep <strong>Merchant 000012</strong>, <strong>Baseline</strong>, and <strong>7/23/2026</strong> selected.</p>
+<p>Now find the model table corresponding to the data you just pasted — it should contain fields such as:</p>
+<pre><code class="language-text">final_decision_outcome_code
+final_offer_authorized_flag
+counteroffer_review_required_flag
+decline_authorized_flag
+manual_review_required_flag
+final_offer_amount
+final_remittance_rate
+final_payback_multiple
+final_collection_horizon_days
+final_total_repayment_amount
+final_finance_charge_amount
+final_implied_payoff_days
+final_authorization_evidence_status
+primary_decision_reason_code
+</code></pre>
+<p>Create <strong>one new temporary Table visual</strong> beneath the application tables.</p>
+<p>For the first test, add only these <strong>four fields</strong>, in this order:</p>
+<pre><code class="language-text">merchant_application_id
+scenario_code
+final_decision_outcome_code
+final_authorization_evidence_status
+</code></pre>
+<p>Don&#39;t format it yet and don&#39;t add the monetary fields yet.</p>
+<p>We&#39;re testing something materially more important than presentation: whether the <strong>Merchant + Scenario selection propagates correctly from the application/request layer into the final-decision layer</strong>.</p>
+<p>For Merchant 000012 under <strong>Baseline</strong>, I want to see exactly what that four-column diagnostic table returns. That will tell us how to build the <strong>Application → Decision → Offer</strong> section without introducing another unnecessary adapter.</p>
+</div></article><article id="m-756de20d-1f5d-4e03-a613-d7fdc331a573" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00310 · 2026-08-26T18:52:15.758000-04:00 · active path</p><div class="bubble"><p>that fact final decision is a hidden table. we have been creating measures in this case or i could just unhide.</p>
+</div></article><article id="m-9ad1fd0d-bfb8-4941-8f9b-4fc35b100f81" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00311 · 2026-08-26T18:52:18.818150-04:00 · active path</p><div class="bubble"><p>Yes. <strong>Keep <code>FactFinalDecision</code> hidden and use measures.</strong> I would not unhide it just to make P03 easier to construct.</p>
+<p>That is consistent with how we&#39;ve been building this report: the hidden fact tables remain technical/model infrastructure, while the report exposes a curated presentation layer through report-owned measures. Audit explicitly authorized those adapters when they are presentation/context measures and do not redefine the underlying business method.</p>
+<p>The pasted data also reinforces that this is a good candidate: <code>FactFinalDecision</code> contains the governed application/scenario decision result, including the final outcome, authorization status, offer economics, and decision reason. [export reference: filecite | turn40file0 | L1-L10]</p>
+<h3>Let&#39;s create the P03 decision measures</h3>
+<p>Start with these four. Create them in the same visible measures table where you&#39;ve been putting the other <code>P03</code> measures:</p>
+<pre><code class="language-DAX">P03 Decision Outcome =
+VAR _Value =
+    SELECTEDVALUE ( FactFinalDecision[final_decision_outcome_code] )
+RETURN
+    COALESCE ( _Value, &quot;NOT AVAILABLE&quot; )
+</code></pre>
+<pre><code class="language-DAX">P03 Decision Evidence Status =
+VAR _Value =
+    SELECTEDVALUE ( FactFinalDecision[final_authorization_evidence_status] )
+RETURN
+    COALESCE ( _Value, &quot;NOT AVAILABLE&quot; )
+</code></pre>
+<pre><code class="language-DAX">P03 Final Offer Amount =
+SELECTEDVALUE ( FactFinalDecision[final_offer_amount] )
+</code></pre>
+<pre><code class="language-DAX">P03 Final Remittance Rate =
+SELECTEDVALUE ( FactFinalDecision[final_remittance_rate] )
+</code></pre>
+<p><strong>Do not create anything else yet.</strong></p>
+<p>Then create a temporary table containing, in this exact order:</p>
+<pre><code class="language-text">P03 Decision Outcome
+P03 Decision Evidence Status
+P03 Final Offer Amount
+P03 Final Remittance Rate
+</code></pre>
+<p>Keep <strong>Merchant 000012 / Baseline / 7/23/2026</strong> selected.</p>
+<h3>What we&#39;re testing</h3>
+<p>This is a cleaner test than unhiding the fact. If those measures resolve correctly, we&#39;ve demonstrated that the existing filter path gives us a unique final-decision row at the intended P03 context.</p>
+<p>Also, don&#39;t be concerned if <strong>Final Offer Amount is blank</strong> for Merchant 000012. The supplied final-decision data shows Merchant 000012 under Recession Energy as <code>DECLINE_POLICY_AUTHORIZED</code>, with the offer-economic fields blank—which is exactly the kind of state in which blank should remain semantically meaningful rather than being converted to zero. [export reference: filecite | turn40file0 | L10-L10]</p>
+<p>Once you show me what those four measures return for <strong>000012 / Baseline</strong>, we&#39;ll know whether we can proceed directly into the polished <strong>Application → Decision → Offer</strong> experience or need to adjust the measure context first.</p>
+</div></article><article id="m-c7006089-7b9d-4d9e-9d2f-83fbbffd229c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00312 · 2026-08-26T18:53:27.385000-04:00 · active path</p><div class="bubble"><p>final decision outcome code does exist in another, visible table but the evidence status does not</p>
+</div></article><article id="m-5d3a251b-ac44-402c-8492-939f00de04c1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00313 · 2026-08-26T18:53:32.309301-04:00 · active path</p><div class="bubble"><p>Then use the <strong>visible table for <code>final_decision_outcome_code</code></strong> and reserve a report-owned measure only for the hidden fact field that has no visible equivalent.</p>
+<p>That is preferable to unnecessarily reaching into a hidden fact for a field we already expose elsewhere.</p>
+<p>So I would revise the plan like this:</p>
+<p>For the outcome, use the existing visible field directly wherever the visual allows it. If you need a scalar/card value, create a thin display measure over that visible table rather than <code>FactFinalDecision</code>.</p>
+<p>For evidence status, keep the hidden fact table hidden and create only:</p>
+<pre><code class="language-DAX">P03 Decision Evidence Status =
+VAR _Value =
+    SELECTEDVALUE (
+        FactFinalDecision[final_authorization_evidence_status]
+    )
+RETURN
+    COALESCE ( _Value, &quot;NOT AVAILABLE&quot; )
+</code></pre>
+<p>For the other final-offer economics, first check whether those fields also exist in a visible table. If they do, use the visible source. If they do not, then create narrowly scoped P03 measures from <code>FactFinalDecision</code>.</p>
+<p>So the rule for P03 should be:</p>
+<p><strong>Visible accepted field exists → use it.</strong><br><strong>Only hidden technical fact has the needed attribute → create a thin P03 measure.</strong></p>
+<p>That keeps the adapter layer minimal and makes the report easier to maintain.</p>
+</div></article><article id="m-d520687b-874f-4df4-aa59-1f8068b2b0a6" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00314 · 2026-08-26T18:55:44.495000-04:00 · active path</p><div class="bubble"><p>that P03 Decision Evidence Status expanded the table like before</p>
+</div></article><article id="m-0b1f1726-ee2a-4693-9a98-1418ef7598dc" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00315 · 2026-08-26T18:55:50.084823-04:00 · active path</p><div class="bubble"><p>Yes — that confirms the same pattern, and my last instruction was wrong for this use case.</p>
+<p><code>P03 Decision Evidence Status</code> is a <strong>scalar measure from <code>FactFinalDecision</code></strong>. When you drop it into a row-level table built from another table, Power BI has to evaluate that measure across the table&#39;s grouping combinations. Because the row context does not map cleanly to one <code>FactFinalDecision</code> row in every generated grouping, the visual expands just like the Application ID measure did.</p>
+<p>So: <strong>remove <code>P03 Decision Evidence Status</code> from the table. Do not troubleshoot the data.</strong></p>
+<p>For P03, I would use this rule going forward:</p>
+<ul>
+<li><strong>Row/detail tables:</strong> use columns from the table that owns the row grain.</li>
+<li><strong>Cards/KPIs:</strong> use explicit measures.</li>
+<li>Do not mix hidden-fact scalar measures into a diagnostic/detail table unless we deliberately establish a common row key.</li>
+</ul>
+<p>For <strong>Decision Evidence Status</strong>, we don&#39;t actually need it in the application/decision table. It&#39;s governance metadata, not part of the merchant&#39;s core business story. Keep the measure, but eventually display it as a <strong>small Card</strong> or tooltip in the Decision section if we decide it adds value.</p>
+<h3>What to do next</h3>
+<p>For now, build the decision test using only the <strong>visible decision table</strong>.</p>
+<p>Add a separate Table visual and start with the visible fields that identify the decision at its natural grain, specifically the available equivalents of:</p>
+<pre><code class="language-text">merchant_application_id
+scenario
+final_decision_outcome_code
+</code></pre>
+<p>Then add any <strong>visible</strong> final-offer fields that exist in that same table.</p>
+<p>What I want to see physically is something like:</p>
+<pre><code class="language-text">Application   Scenario   Decision
+A01           Baseline   FINAL_OFFER...
+</code></pre>
+<p>without any report-owned measures in the table.</p>
+<p>Once we confirm that grain, we&#39;ll decide how much of it becomes the finished <strong>Decision &amp; offer</strong> presentation.</p>
+<h3>One broader correction</h3>
+<p>We are learning an important Power BI implementation rule for this model:</p>
+<blockquote>
+<p><strong>Don&#39;t use <code>SELECTEDVALUE</code> presentation measures as surrogate row attributes.</strong></p>
+</blockquote>
+<p>They work very well for cards because the slicers establish a single merchant/application/scenario context. They are a poor fit for table rows when the visual itself is creating grouping contexts.</p>
+<p>So the two visual expansions we&#39;ve encountered are <strong>presentation-layer behavior, not data problems</strong>. We should stop trying to force those measures into tables.</p>
+<p>And for <code>final_authorization_evidence_status</code> specifically, I would <strong>not create a calculated column or unhide <code>FactFinalDecision</code> yet</strong>. It is not important enough to justify changing the semantic presentation surface. We&#39;ll use the existing measure later in a scalar context if needed.</p>
+</div></article><article id="m-629351a8-1fac-4a5e-813f-13b2110e8bc2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00316 · 2026-08-26T19:06:39.027000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 53b2f94c-7267-4947-9232-3a278591cb72.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-3c9511db-a7b7-47cf-9610-32a94b6142aa" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00317 · 2026-08-26T19:06:42.422969-04:00 · active path</p><div class="bubble"><p>Excellent. <strong>This is the clean result we were trying to establish.</strong> The visual is staying at one application row, the Merchant and Scenario context are propagating correctly, and we now have the beginning of a very useful merchant journey.</p>
+<p>For Merchant 000012 / Baseline, the story is immediately understandable:</p>
+<p><strong>A01 → Applied 7/23/2026 → Requested $13.1K → Working Capital → Processor Embedded → 14% requested remittance → 60-day expected payoff → $16.64K requested repayment → Policy Decline</strong></p>
+<p>That last transition is where P03 starts becoming much more interesting than simply displaying merchant attributes.</p>
+<h3>One immediate cleanup</h3>
+<p>Rename the two raw headers:</p>
+<ul>
+<li><code>scenario_code</code> → <strong>Scenario</strong></li>
+<li><code>final_decision_outcome_code</code> → <strong>Decision outcome</strong></li>
+</ul>
+<p>And I would eventually presentation-clean the value <code>DECLINE_POLICY_AUTHORIZED</code> to <strong>Policy decline</strong>, just as we did with P01 decision outcomes. But don&#39;t create another measure for the table. We should see whether the existing P01 presentation column/label can be reused or whether the visible decision table already has a display label.</p>
+<h3>Next: extend this same row into the decision/offer</h3>
+<p>Don&#39;t create another visual yet.</p>
+<p>In the <strong>same visible table that supplied <code>final_decision_outcome_code</code></strong>, look for fields corresponding to:</p>
+<ul>
+<li>final offer amount</li>
+<li>final remittance rate</li>
+<li>final payback multiple</li>
+<li>final collection horizon/days</li>
+<li>final total repayment</li>
+<li>final finance charge</li>
+<li>implied payoff days</li>
+<li>primary decision reason</li>
+</ul>
+<p>If those are visible, add them temporarily to the <strong>right side of this same table</strong>.</p>
+<p>For Merchant 000012 / Baseline, because this is a policy decline, I expect several offer fields to be blank. <strong>That&#39;s desirable.</strong> It will show us how the final visual needs to handle different decision paths.</p>
+<p>Then change the Scenario slicer to <strong>Recession Energy</strong> and see whether the decision/outcome or offer terms change.</p>
+<p>After that, switch to a merchant that receives a <strong>final offer</strong>. That is the state we especially need to inspect because it will tell us whether P03 can elegantly present:</p>
+<blockquote>
+<p><strong>Requested terms → Decision → Authorized terms</strong></p>
+</blockquote>
+<p>rather than simply dumping application and decision fields into a wide table.</p>
+<h3>I think we&#39;re approaching the final P03 structure</h3>
+<p>Based on what we&#39;ve physically learned, I would now expect the middle of the page to become something like:</p>
+<p><strong>Current application</strong></p>
+<p><code>A01</code> · Applied <code>7/23/2026</code> · Working capital · Processor embedded</p>
+<table>
+<thead>
+<tr>
+<th>Requested</th>
+<th>Decision / authorized</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Funding: $13.1K</td>
+<td>Policy decline</td>
+</tr>
+<tr>
+<td>Remittance: 14.0%</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Expected payoff: 60 days</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Repayment: $16.64K</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p>For a funded/final-offer merchant, the right side would instead contain actual authorized terms.</p>
+<p>That gives the user a very natural question-and-answer flow:</p>
+<p><strong>Who is the merchant? → What did they request? → What did we decide? → What did we actually fund? → How did it perform?</strong></p>
+<p>So your current table is doing exactly what we needed. <strong>Next, inspect the visible decision table for those final-offer fields and add whichever ones exist to this same diagnostic row.</strong></p>
+</div></article><article id="m-b16cbbae-6b65-495c-9bda-ae49cc841e16" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00318 · 2026-08-26T19:08:38.350000-04:00 · active path</p><div class="bubble"><p>Not sure we even need Scenario since the slicer would select the scenario</p>
+</div></article><article id="m-5a07ef96-6a48-4858-9f62-eb8576e1774c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00319 · 2026-08-26T19:08:41.240899-04:00 · active path</p><div class="bubble"><p>Correct. <strong>I would remove Scenario from this table.</strong></p>
+<p>The Scenario slicer already establishes the scenario context for the page. Repeating <code>BASELINE</code> in every row consumes horizontal space without adding information.</p>
+<p>That gives us a cleaner row:</p>
+<p><strong>Application ID | Applied | Requested | Use of proceeds | Channel | Requested remittance | Expected payoff | Requested repayment | Decision outcome</strong></p>
+<p>This is also semantically sound because the <strong>Decision outcome changes with the Scenario slicer</strong>, while the application/request attributes generally remain fixed. The user can see the selected scenario directly at the top of the page.</p>
+<h3>I would apply this principle throughout P03</h3>
+<p>Don&#39;t repeat slicer context inside visuals unless it serves a specific comparison purpose.</p>
+<p>So:</p>
+<ul>
+<li><strong>Merchant</strong> — selected at top; don&#39;t repeat full merchant name everywhere.</li>
+<li><strong>Scenario</strong> — selected at top; don&#39;t repeat it in tables.</li>
+<li><strong>Observation date</strong> — selected at top; don&#39;t repeat it unless a visual specifically needs to show dates over time.</li>
+<li><strong>Application ID</strong> — useful because it identifies the current application/journey and leaves us future-ready for multiple applications.</li>
+</ul>
+<p>Your current visual becomes noticeably stronger simply by dropping <code>scenario_code</code>.</p>
+<p>And now we have more horizontal room for the important next fields—<strong>Decision outcome</strong> and, where applicable, the authorized offer terms.</p>
+</div></article><article id="m-57aee6a9-5888-4fca-8b39-28d8e7281ea6" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00320 · 2026-08-26T19:09:43.881000-04:00 · active path</p><div class="bubble"><p>Decision outcome is duplicative. I named it just Decision and I think this works nicely as a table vs a card</p>
+</div></article><article id="m-507c5ab2-be68-4c2c-b8c2-2f203f6eeb1c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00321 · 2026-08-26T19:09:46.440160-04:00 · active path</p><div class="bubble"><p>Agreed on both points.</p>
+<p><strong><code>Decision</code> is better than <code>Decision outcome</code>.</strong> “Outcome” adds nothing—the values themselves tell us the outcome. And after seeing the physical data, I now prefer this as a <strong>table rather than a card</strong>.</p>
+<p>The table works particularly well because it reads naturally left-to-right as a compact transaction narrative:</p>
+<p><strong>Application ID → Applied → Requested → Use of proceeds → Channel → Requested remittance → Expected payoff → Requested repayment → Decision</strong></p>
+<p>That is much more information-dense than a collection of cards, while still being very easy to scan. It also future-proofs P03: if a future population contains A01, A02, etc. for one merchant, the exact same visual simply gains another row instead of requiring redesign.</p>
+<p>I would therefore promote this from diagnostic to a <strong>final P03 visual</strong>, with a section title of <strong>Current application</strong> for this release. We can later reconsider “Applications” once the model actually contains multi-application merchants.</p>
+<h3>Next step</h3>
+<p>Now we should determine whether the <strong>authorized/final terms belong in this same table</strong> or deserve the next visual.</p>
+<p>Because horizontal space is finite, I don&#39;t want to just append every <code>FactFinalDecision</code> field. First, find which of these are available in the same visible table that gave you <code>Decision</code>:</p>
+<ul>
+<li>Final offer amount</li>
+<li>Final remittance rate</li>
+<li>Final payback multiple</li>
+<li>Final collection horizon</li>
+<li>Final total repayment</li>
+<li>Final finance charge</li>
+<li>Final implied payoff days</li>
+<li>Primary decision reason</li>
+</ul>
+<p>Tell me which of those are visible. Then we&#39;ll choose the <strong>minimum high-value set</strong> and test a final-offer merchant.</p>
+<p>My initial expectation is that the final page will be stronger if this table remains focused on <strong>what the merchant requested + the decision</strong>, while a compact <strong>Authorized terms / Funding</strong> section immediately beneath it tells what actually happened after the decision. That creates a clean progression instead of a 15-column table.</p>
+</div></article><article id="m-5010791e-e217-4009-953d-7783b9f204bf" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00322 · 2026-08-26T19:10:59.397000-04:00 · active path</p><div class="bubble"><p>I like distinguishing what was requested along with the decision in one table and then have a separate table for the approved details.</p>
+</div></article><article id="m-875a16e4-643c-42b1-a7b7-c73aef652b9d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00323 · 2026-08-26T19:11:02.092047-04:00 · active path</p><div class="bubble"><p>I agree. That creates a much stronger <strong>Requested → Decision → Approved structure</strong> and prevents one oversized table from mixing different stages of the financing journey.</p>
+<p>I would now treat your current table as essentially final:</p>
+<h3>Current application</h3>
+<p><strong>Application ID | Applied | Requested | Use of proceeds | Channel | Requested remittance | Expected payoff | Requested repayment | Decision</strong></p>
+<p>That answers:</p>
+<blockquote>
+<p><strong>What did the merchant ask for, and what was our decision?</strong></p>
+</blockquote>
+<p>Then immediately below or beside it, create a second visual:</p>
+<h3>Approved terms</h3>
+<p>That answers:</p>
+<blockquote>
+<p><strong>If approved, what terms did we actually authorize?</strong></p>
+</blockquote>
+<p>I would keep this one deliberately compact. The highest-value fields are:</p>
+<p><strong>Approved amount | Remittance rate | Payback multiple | Collection horizon | Total repayment</strong></p>
+<p>I would consider <strong>Finance charge</strong> useful but secondary; we can add it if space permits. <strong>Implied payoff days</strong> may be duplicative with collection horizon depending on exactly what those two fields mean in this model, so I would not automatically include both.</p>
+<p>Critically, for a decline such as Merchant 000012, I want this second visual to <strong>show no approved terms rather than zeros</strong>. Ideally the section communicates something like <code>No approved offer</code> rather than producing an empty-looking or misleading row. We&#39;ll solve that after seeing the native behavior.</p>
+<h3>Build the raw Approved terms table next</h3>
+<p>Stay on Merchant <strong>000012 / Baseline</strong> for the first test.</p>
+<p>From the <strong>visible table containing the final-decision fields</strong>, add these raw columns if available:</p>
+<pre><code class="language-text">final_offer_amount
+final_remittance_rate
+final_payback_multiple
+final_collection_horizon_days
+final_total_repayment_amount
+</code></pre>
+<p>If <code>final_finance_charge_amount</code> is visible, add it temporarily as a sixth field too.</p>
+<p>Do <strong>not</strong> add measures and don&#39;t add Scenario, Merchant ID, Application ID, Decision, or evidence status. The selected application context is already apparent from the visual immediately above it.</p>
+<p>Then we&#39;ll test two states:</p>
+<p><strong>000012 / Baseline — decline path</strong><br>We learn how the Approved terms visual behaves when no offer exists.</p>
+<p><strong>A final-offer merchant / Baseline — approval path</strong><br>We learn what a populated authorized structure looks like and whether all six fields deserve permanent space.</p>
+<p>After that, the next logical section becomes <strong>Funding / activation</strong>, which is a different event again:</p>
+<p><strong>Requested → Decision → Approved → Funded</strong></p>
+<p>That progression is shaping up to be the core of Merchant Relationship 360, with the left-side relationship profile supplying the historical context and later performance/servicing visuals completing the journey.</p>
+</div></article><article id="m-d18bb31f-a4f3-4168-8a55-89f33de512a6" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00324 · 2026-08-26T19:17:50.780000-04:00 · active path</p><p class="note">5 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: a549037f-d9d3-4897-b4e9-aecc70c0239b.png; c1a69677-93cc-4530-8eba-8d6ecfb9e2ad.png; 81f4eb41-cece-4bdf-9174-563b6687086f.png; 27f77916-d056-447b-891e-1888689367a3.png; a1e07216-43d1-4b93-9565-36e0d9f1a040.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-ebce1ba6-5f80-4328-b99c-5b805d5a81d8" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00325 · 2026-08-26T19:17:53.960531-04:00 · active path</p><div class="bubble"><p>This is a very useful test set. <strong>The two-table architecture is validated.</strong> The screenshots show exactly why separating <strong>Merchant request &amp; decision</strong> from <strong>Authorized terms</strong> is better than combining everything.</p>
+<p>The five examples establish three materially different paths:</p>
+<ul>
+<li><strong>000012 / 000221 / 000001:</strong> decline → no authorized terms.</li>
+<li><strong>000738:</strong> counteroffer review required → no authorized terms yet.</li>
+<li><strong>000749:</strong> final offer authorized → authorized terms populate.</li>
+</ul>
+<p>And 000749 demonstrates the business story especially well:</p>
+<blockquote>
+<p>Requested <strong>$17.7K</strong> at <strong>10%</strong>, 90-day expected payoff, $21.45K repayment → <strong>Final offer authorized</strong> → authorized amount <strong>$11.7K</strong> at <strong>10%</strong>, 1.21× payback, 90-day collection horizon, <strong>$14.18K</strong> repayment.</p>
+</blockquote>
+<p>That&#39;s exactly the kind of request-to-authorization comparison Merchant 360 should make easy.</p>
+<h2>I would keep both tables</h2>
+<p>They&#39;re no longer diagnostic visuals. They&#39;re legitimate P03 components.</p>
+<p>I would make a few presentation changes now.</p>
+<h3>Merchant request &amp; decision</h3>
+<p>Keep your current nine columns, but clean the displayed values/headers:</p>
+<table>
+<thead>
+<tr>
+<th>Current</th>
+<th>Display</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Application ID</td>
+<td>Application</td>
+</tr>
+<tr>
+<td>Applied</td>
+<td>Applied</td>
+</tr>
+<tr>
+<td>Requested</td>
+<td>Requested</td>
+</tr>
+<tr>
+<td>Use of proceeds</td>
+<td>Use</td>
+</tr>
+<tr>
+<td>Channel</td>
+<td>Channel</td>
+</tr>
+<tr>
+<td>Requested remittance</td>
+<td>Remittance</td>
+</tr>
+<tr>
+<td>Expected payoff</td>
+<td>Payoff days</td>
+</tr>
+<tr>
+<td>Requested repayment</td>
+<td>Repayment</td>
+</tr>
+<tr>
+<td>Decision</td>
+<td>Decision</td>
+</tr>
+</tbody></table>
+<p>I particularly like your title <strong>Merchant request &amp; decision</strong>. Keep it.</p>
+<p>We should also clean the categorical values eventually:</p>
+<p><code>WORKING_CAPITAL</code> → <code>Working capital</code><br><code>PROCESSOR_EMBEDDED</code> → <code>Processor embedded</code><br><code>FINAL_OFFER_AUTHORIZED</code> → <code>Final offer</code><br><code>COUNTEROFFER_REVIEW_REQUIRED</code> → <code>Counteroffer review</code><br><code>DECLINE_POLICY_AUTHORIZED</code> → <code>Policy decline</code><br><code>DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED</code> → <code>Evidence decline</code></p>
+<p>But I would <strong>not create measures for that</strong>. If these are columns, presentation columns are the appropriate mechanism if needed, just as we learned with Application ID. We can batch that cleanup rather than creating adapters one-by-one right now.</p>
+<h3>Authorized terms</h3>
+<p>Keep these five:</p>
+<p><strong>Funded amount | Remittance | Payback multiple | Collection horizon | Total repayment</strong></p>
+<p>Your selection is excellent.</p>
+<p>But there is an important semantic issue with the title:</p>
+<p>The fields you&#39;ve actually used are named:</p>
+<pre><code class="language-text">funded_amount
+activation_remittance_rate
+activation_payback_multiple
+activation_collection_horizon_days
+activation_total_repayment_amount
+</code></pre>
+<p>Those sound like <strong>activation/funded-account terms</strong>, not merely final-decision authorized-offer terms.</p>
+<p>And the fact that they populate for 000749 but not for the decline/review cases is consistent with that.</p>
+<p>Therefore, I would rename this section:</p>
+<h2><strong>Funded terms</strong></h2>
+<p>rather than <strong>Authorized terms</strong>.</p>
+<p>That gives us a much cleaner and more exact lifecycle:</p>
+<p><strong>Merchant request &amp; decision</strong><br>↓<br><strong>Funded terms</strong></p>
+<p>And it avoids claiming that <code>funded_amount</code> is merely an authorized amount when the field explicitly says funded.</p>
+<h3>One thing to verify before we freeze that title</h3>
+<p>Change the <strong>Observation date</strong> for Merchant 000749 from 7/23 to a few days later.</p>
+<p>If these fields remain the same, as I expect, then they are activation/funding attributes and <strong>Funded terms</strong> is unquestionably the better label.</p>
+<p>If they only become populated after an actual funding date, that&#39;s even stronger confirmation.</p>
+<hr>
+<h2>One design issue the screenshots reveal</h2>
+<p>For decline/review merchants, the empty <strong>Funded terms</strong> table is truthful, but visually it looks unfinished.</p>
+<p>Eventually I would prefer:</p>
+<blockquote>
+<p><strong>Funded terms</strong><br><em>No funded advance for the selected application and scenario.</em></p>
+</blockquote>
+<p>rather than five headers floating above an empty row.</p>
+<p>But <strong>don&#39;t solve that yet</strong>. That could require another display measure/conditional visual arrangement, and we have more important construction to do first.</p>
+<p>The empty table is perfectly acceptable while building.</p>
+<hr>
+<h2>Next: Funding → performance</h2>
+<p>We&#39;re now ready for the next major P03 component.</p>
+<p>Merchant 000749 is the right merchant to keep selected because it has a funded path. Advance the Observation date beyond funding and inspect the account lifecycle.</p>
+<p>The next section should answer:</p>
+<blockquote>
+<p><strong>Once funded, how is this merchant performing as of the selected observation date?</strong></p>
+</blockquote>
+<p>We already know from P01/P02 that the model supports:</p>
+<ul>
+<li>current exposure,</li>
+<li>cumulative/expected remittance,</li>
+<li>remittance fulfillment/pace,</li>
+<li>days since last remittance,</li>
+<li>payoff slippage,</li>
+<li>monitoring status,</li>
+<li>active alerts,</li>
+<li>open servicing,</li>
+<li>paid-off status.</li>
+</ul>
+<p>But Merchant 360 should not simply reproduce P01.</p>
+<p>I think the next visual should be a <strong>compact merchant-level performance trajectory</strong>—likely exposure plus cumulative/expected remittance or remittance fulfillment—paired with a small selected-date servicing/status block.</p>
+<p>That would give the page its complete narrative:</p>
+<p><strong>Relationship context</strong><br>→ <strong>Merchant request &amp; decision</strong><br>→ <strong>Funded terms</strong><br>→ <strong>Performance trajectory</strong><br>→ <strong>Servicing &amp; exceptions</strong></p>
+<p>Before we build that, change <strong>000749&#39;s Observation date forward until the funded account becomes active</strong> and show me what happens to the Funded terms table and roughly when it first populates. That will establish the activation timing boundary we need for the rest of P03.</p>
+</div></article><article id="m-1eebbeee-180d-4021-986c-1eff74d47955" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00326 · 2026-08-26T19:26:28.243000-04:00 · active path</p><div class="bubble"><p>I clicked a sort by - how to remove that little triangle</p>
+</div></article><article id="m-e4b94e96-6d90-4795-90b4-f9f34e477a8f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00327 · 2026-08-26T19:26:31.060055-04:00 · active path</p><div class="bubble"><p>Yes. That triangle is Power BI&#39;s <strong>sort indicator</strong> for the table column.</p>
+<p>To remove it:</p>
+<ol>
+<li>Select the table.</li>
+<li>Open the visual&#39;s <strong>⋯ (More options)</strong> menu.</li>
+<li>Choose <strong>Sort axis / Sort by</strong>.</li>
+<li>Power BI generally requires a table to retain some sort state, so there often isn&#39;t a true <strong>“No sort”</strong> option.</li>
+</ol>
+<p>For a <strong>Table visual</strong>, the easiest way to make the triangle disappear is usually to <strong>click the currently sorted column header again or Ctrl+click the sorted header</strong> (depending on your Desktop version) to clear/reset that interactive sort.</p>
+<p>If that does not clear it, tell me which Power BI menu/options you see under the <code>...</code>; there are a couple version-specific behaviors here, and I don&#39;t want you changing the underlying model&#39;s <strong>Sort by column</strong> property just to remove a visual indicator.</p>
+</div></article><article id="m-2e33ce12-d5f6-4115-b002-ad74a9512ba5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00328 · 2026-08-26T19:30:09.283000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 36fbf2f3-b75a-4ec4-90a9-70f2e32d5c09.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-92599a75-3259-4c7e-8826-2d79605207d2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00329 · 2026-08-26T19:30:12.152699-04:00 · active path</p><div class="bubble"><p>Yes — <strong>this is much better</strong>, and the move to <strong>Funded terms</strong> is now physically validated.</p>
+<p>For Merchant 000749 at observation date 8/16/2026, the page tells a clean sequential story:</p>
+<p><strong>Merchant request &amp; decision</strong><br>A01 → applied 7/23 → requested $17.7K → Working Capital → Processor Embedded → 10% remittance → 90-day payoff → $21.45K repayment → Final offer authorized</p>
+<p><strong>Funded terms</strong><br>$11.7K funded → 10% activation remittance → 1.21× payback → 90-day collection horizon → $14.18K total repayment → funded 7/25</p>
+<p>That&#39;s a meaningful comparison: the merchant requested <strong>$17.7K</strong>, but the ultimately funded amount was <strong>$11.7K</strong>. The two-table structure makes that immediately apparent without us manufacturing a variance metric.</p>
+<p>A few refinements before moving on:</p>
+<ul>
+<li>Keep <strong>Funded terms</strong> as the title.</li>
+<li>Keep <code>funding_date</code>; it is important because it establishes when the application became an active advance.</li>
+<li>Rename <code>funding_date</code> → <strong>Funded</strong>.</li>
+<li>I&#39;d shorten <strong>Collection horizon</strong> to <strong>Horizon days</strong> if you need horizontal space.</li>
+<li>Format <strong>Payback multiple</strong> as <code>1.21×</code> if Power BI permits that cleanly without creating another semantic adapter. Otherwise <code>1.21</code> is perfectly acceptable.</li>
+<li>The raw decision value <code>FINAL_OFFER_AUTHORIZED</code> is now the biggest remaining presentation rough edge. We should eventually show <strong>Final offer</strong>. Likewise <code>WORKING_CAPITAL</code> → <strong>Working capital</strong> and <code>PROCESSOR_EMBEDDED</code> → <strong>Processor embedded</strong>. I suggest batching those presentation-label corrections rather than interrupting construction now.</li>
+</ul>
+<p>And importantly, the observation-date test has confirmed what we needed: <strong>funding occurred 7/25/2026 and the funded terms persist when we move the observation date forward.</strong> They are fixed activation attributes, while the selected date will control the subsequent performance/servicing state.</p>
+<h2>Next visual: merchant performance</h2>
+<p>We&#39;re ready to leave origination and move into the lifecycle.</p>
+<p>Keep:</p>
+<p><strong>Merchant 000749 | Baseline | Observation date 8/16/2026</strong></p>
+<p>The next section should answer:</p>
+<blockquote>
+<p><strong>How has this funded advance performed from funding through the selected observation date?</strong></p>
+</blockquote>
+<p>I recommend that our first physical test be a <strong>line chart</strong> using the account-daily data, with:</p>
+<p><strong>X-axis:</strong> monitoring/observation date<br><strong>Y-axis:</strong> exposure/receivable balance</p>
+<p>But unlike P02, P03 should <strong>end the trajectory at the selected Observation date</strong>. That&#39;s important: this is a merchant 360 viewed <strong>as of 8/16</strong>, so it shouldn&#39;t reveal the merchant&#39;s subsequent lifecycle through November.</p>
+<p>Then we&#39;ll likely add remittance performance to that section and eventually a compact selected-date status/servicing block.</p>
+<p>So the page is now naturally becoming:</p>
+<p><strong>Relationship profile</strong> → <strong>Merchant request &amp; decision</strong> → <strong>Funded terms</strong> → <strong>Performance through selected date</strong> → <strong>Servicing &amp; exceptions</strong></p>
+<p>I would proceed next with the <strong>exposure-through-selected-date line chart</strong>.</p>
+</div></article><article id="m-eb14758b-087c-416e-9aab-872db66b2d6e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00330 · 2026-08-26T19:32:15.595000-04:00 · active path</p><div class="bubble"><p>If you&#39;d like to propose updated columns for working capital / channel / decision - or anything else - propose and let&#39;s build</p>
+</div></article><article id="m-9a68095a-98bd-4a38-b938-03f7b8149040" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00331 · 2026-08-26T19:32:18.419888-04:00 · active path</p><div class="bubble"><p>Yes. Now is a good time to create a <strong>small P03 presentation-label layer</strong>. We have enough physical evidence to know which raw codes are hurting readability, and calculated columns are preferable here because these are row attributes used in tables—not scalar measures.</p>
+<p>I would create <strong>three columns now</strong>, all on the table that owns the corresponding raw field. I would not transform the underlying governed columns.</p>
+<h3>1. Application use label — <code>DimApplication</code></h3>
+<pre><code class="language-DAX">P03 Use Label =
+VAR _Value = &#39;DimApplication&#39;[requested_use_of_proceeds]
+RETURN
+    SWITCH (
+        _Value,
+        &quot;WORKING_CAPITAL&quot;, &quot;Working capital&quot;,
+        &quot;INVENTORY&quot;, &quot;Inventory&quot;,
+        &quot;SEASONAL_NEED&quot;, &quot;Seasonal need&quot;,
+        &quot;EXPANSION&quot;, &quot;Expansion&quot;,
+        &quot;EQUIPMENT&quot;, &quot;Equipment&quot;,
+        IF (
+            ISBLANK ( _Value ),
+            BLANK (),
+            SUBSTITUTE ( _Value, &quot;_&quot;, &quot; &quot; )
+        )
+    )
+</code></pre>
+<p>This is intentionally fail-soft: if another valid category exists that we haven&#39;t explicitly mapped, it still displays without underscores rather than disappearing.</p>
+<p>Use the visual header <strong>Use</strong>.</p>
+<h3>2. Application channel label — <code>DimApplication</code></h3>
+<pre><code class="language-DAX">P03 Channel Label =
+VAR _Value = &#39;DimApplication&#39;[application_channel]
+RETURN
+    SWITCH (
+        _Value,
+        &quot;PROCESSOR_EMBEDDED&quot;, &quot;Processor embedded&quot;,
+        &quot;DIGITAL_DIRECT&quot;, &quot;Digital direct&quot;,
+        &quot;BROKER_REFERRAL&quot;, &quot;Broker referral&quot;,
+        IF (
+            ISBLANK ( _Value ),
+            BLANK (),
+            SUBSTITUTE ( _Value, &quot;_&quot;, &quot; &quot; )
+        )
+    )
+</code></pre>
+<p>Visual header:</p>
+<p><strong>Channel</strong></p>
+<h3>3. Decision label — on the visible table currently supplying <code>final_decision_outcome_code</code></h3>
+<p>Use the <strong>same table that contains your raw Decision field</strong>. Replace <code>YourVisibleDecisionTable</code> below with its actual name:</p>
+<pre><code class="language-DAX">P03 Decision Label =
+VAR _Value =
+    &#39;YourVisibleDecisionTable&#39;[final_decision_outcome_code]
+RETURN
+    SWITCH (
+        _Value,
+        &quot;FINAL_OFFER_AUTHORIZED&quot;, &quot;Final offer&quot;,
+        &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;, &quot;Counteroffer review&quot;,
+        &quot;DECLINE_POLICY_AUTHORIZED&quot;, &quot;Policy decline&quot;,
+        &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;, &quot;Evidence decline&quot;,
+        IF (
+            ISBLANK ( _Value ),
+            BLANK (),
+            SUBSTITUTE ( _Value, &quot;_&quot;, &quot; &quot; )
+        )
+    )
+</code></pre>
+<p>Visual header:</p>
+<p><strong>Decision</strong></p>
+<p>Before you create that third column, tell me the <strong>actual visible table name</strong> containing <code>final_decision_outcome_code</code>, and I&#39;ll give you the exact paste-ready DAX rather than having you substitute anything.</p>
+<h3>I would also keep these existing presentation choices</h3>
+<p>Your current headers are already strong:</p>
+<p><strong>Merchant request &amp; decision</strong></p>
+<p><code>Application | Applied | Requested | Use | Channel | Remittance | Payoff days | Repayment | Decision</code></p>
+<p><strong>Funded terms</strong></p>
+<p><code>Funded amount | Remittance | Payback multiple | Horizon days | Total repayment | Funded</code></p>
+<p>I wouldn&#39;t add more columns to either table right now.</p>
+<h3>Formatting cleanup</h3>
+<p>While we&#39;re here:</p>
+<ul>
+<li>Requested / Funded amount: <code>$#,0</code> or <code>$#,0.00</code> depending on how you want the report standardized. Given the underlying terms, I&#39;d favor <strong>$13.1K / $11.7K</strong> only if Power BI&#39;s native display units look good; otherwise <code>$13,100</code> is excellent.</li>
+<li>Remittance: <strong>14.0% / 10.0%</strong>, not <code>0.14 / 0.10</code>.</li>
+<li>Payback multiple: <strong>1.21×</strong> if native formatting permits; otherwise <code>1.21</code>.</li>
+<li>Payoff/Horizon days: integer, no <code>.00</code>.</li>
+<li>Repayment: currency.</li>
+<li>Applied/Funded: short date.</li>
+</ul>
+<p>The categorical-label columns are worth creating because they materially improve executive readability. The numeric changes should mostly be <strong>format strings</strong>, not new measures or columns.</p>
+<p>Give me the visible table name for <code>final_decision_outcome_code</code>, and we&#39;ll finish the three-column presentation layer before moving into performance.</p>
+</div></article><article id="m-b0c5464e-7eb2-478c-bd32-9e37d39d4b12" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00332 · 2026-08-26T19:41:43.179000-04:00 · active path</p><div class="bubble"><p>DimDecisionOutcome</p>
+</div></article><article id="m-e82976c6-3ab9-4982-a685-19e95154981c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00333 · 2026-08-26T19:41:48.703386-04:00 · active path</p><div class="bubble"><p>Great. Then the exact calculated column goes on <code>DimDecisionOutcome</code>:</p>
+<pre><code class="language-DAX">P03 Decision Label =
+VAR _Value =
+    &#39;DimDecisionOutcome&#39;[final_decision_outcome_code]
+RETURN
+    SWITCH (
+        _Value,
+        &quot;FINAL_OFFER_AUTHORIZED&quot;, &quot;Final offer&quot;,
+        &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;, &quot;Counteroffer review&quot;,
+        &quot;DECLINE_POLICY_AUTHORIZED&quot;, &quot;Policy decline&quot;,
+        &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;, &quot;Evidence decline&quot;,
+        IF (
+            ISBLANK ( _Value ),
+            BLANK (),
+            SUBSTITUTE ( _Value, &quot;_&quot;, &quot; &quot; )
+        )
+    )
+</code></pre>
+<p>Then replace the raw <code>final_decision_outcome_code</code> column in <strong>Merchant request &amp; decision</strong> with <code>P03 Decision Label</code>, and rename the displayed header simply:</p>
+<p><strong>Decision</strong></p>
+<p>I would also go ahead and create the two <code>DimApplication</code> presentation columns from my last response at the same time:</p>
+<pre><code class="language-DAX">P03 Use Label =
+VAR _Value = &#39;DimApplication&#39;[requested_use_of_proceeds]
+RETURN
+    SWITCH (
+        _Value,
+        &quot;WORKING_CAPITAL&quot;, &quot;Working capital&quot;,
+        &quot;INVENTORY&quot;, &quot;Inventory&quot;,
+        &quot;SEASONAL_NEED&quot;, &quot;Seasonal need&quot;,
+        &quot;EXPANSION&quot;, &quot;Expansion&quot;,
+        &quot;EQUIPMENT&quot;, &quot;Equipment&quot;,
+        IF (
+            ISBLANK ( _Value ),
+            BLANK (),
+            SUBSTITUTE ( _Value, &quot;_&quot;, &quot; &quot; )
+        )
+    )
+</code></pre>
+<pre><code class="language-DAX">P03 Channel Label =
+VAR _Value = &#39;DimApplication&#39;[application_channel]
+RETURN
+    SWITCH (
+        _Value,
+        &quot;PROCESSOR_EMBEDDED&quot;, &quot;Processor embedded&quot;,
+        &quot;DIGITAL_DIRECT&quot;, &quot;Digital direct&quot;,
+        &quot;BROKER_REFERRAL&quot;, &quot;Broker referral&quot;,
+        IF (
+            ISBLANK ( _Value ),
+            BLANK (),
+            SUBSTITUTE ( _Value, &quot;_&quot;, &quot; &quot; )
+        )
+    )
+</code></pre>
+<p>Then swap those into the table and keep the displayed headers as <strong>Use</strong> and <strong>Channel</strong>.</p>
+<p>That gives you a much cleaner row without changing any governed source values. After that, I’d format the numeric columns: Remittance as percent, Payoff/Horizon as whole numbers, and Payback multiple as 2 decimals.</p>
+</div></article><article id="m-34c1c8ea-0319-4d07-ad0a-c8522888ccbb" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00334 · 2026-08-26T19:52:44.306000-04:00 · active path</p><div class="bubble"><p>if I want to change the merchant slicer to allow the user to type the merchant number in - how could I do that. scrolling is not very feasible, especially once we expand beyond 750</p>
+</div></article><article id="m-d7151149-2c03-4327-af20-ee53d345bd5b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00335 · 2026-08-26T19:52:47.051409-04:00 · active path</p><div class="bubble"><p>Yes. For P03, scrolling through 750+ merchants is not viable. <strong>Use the slicer&#39;s built-in Search</strong> rather than changing the model.</p>
+<p>With the existing Merchant dropdown selected:</p>
+<ol>
+<li>Select the <strong>Merchant slicer</strong>.</li>
+<li>Go to <strong>Format visual → Slicer settings → Options</strong>.</li>
+<li>Make sure the slicer style is <strong>Dropdown</strong>.</li>
+<li>Turn <strong>Search = On</strong>. Depending on your Desktop version, Search may instead be available from the slicer&#39;s <code>...</code> menu.</li>
+<li>Open the slicer dropdown. You should now have a search box at the top.</li>
+<li>Type <code>000749</code> and Power BI should narrow the list to <code>Synthetic Merchant 000749</code>.</li>
+<li>Select it.</li>
+</ol>
+<p>That immediately solves the scalability problem without another measure or calculated column.</p>
+<h3>But I think we can improve it further</h3>
+<p>The slicer currently forces the user to know that the displayed values begin with <code>Synthetic Merchant</code>. Search will still find <code>000749</code>, but the visible selector is unnecessarily verbose.</p>
+<p>I recommend creating a <strong>merchant presentation column</strong> on <code>DimMerchant</code>, analogous to our application label:</p>
+<pre><code class="language-DAX">P03 Merchant Label =
+VAR _Merchant = &#39;DimMerchant&#39;[synthetic_business_name]
+VAR _Marker = SEARCH ( &quot;M&quot;, &#39;DimMerchant&#39;[MerchantKey], 1, 0 )
+RETURN
+    RIGHT ( _Merchant, 6 )
+</code></pre>
+<p>Actually, since <code>synthetic_business_name</code> is consistently displayed as <code>Synthetic Merchant 000749</code>, we don&#39;t need to involve the technical key at all:</p>
+<pre><code class="language-DAX">P03 Merchant Label =
+VAR _Merchant = &#39;DimMerchant&#39;[synthetic_business_name]
+RETURN
+    IF (
+        ISBLANK ( _Merchant ),
+        BLANK (),
+        RIGHT ( _Merchant, 6 )
+    )
+</code></pre>
+<p>Then use <strong><code>P03 Merchant Label</code></strong> as the slicer field.</p>
+<p>The top control becomes:</p>
+<blockquote>
+<p><strong>Merchant</strong><br><code>000749 ▼</code></p>
+</blockquote>
+<p>and when opened, the user can type:</p>
+<blockquote>
+<p><code>749</code></p>
+</blockquote>
+<p>or</p>
+<blockquote>
+<p><code>000749</code></p>
+</blockquote>
+<p>to find it immediately.</p>
+<p>That is what I recommend for the final P03 design. We already say <strong>Merchant</strong> above the control, so repeating “Synthetic Merchant” 750+ times adds no information.</p>
+<p>One caution: keep the original <code>synthetic_business_name</code> untouched. <code>P03 Merchant Label</code> is only a report presentation column. That preserves the governed identity while giving the user a much better selector.</p>
+<p><strong>I would make this change now.</strong> P03 is specifically intended to become the merchant-level navigation destination, so merchant lookup needs to work efficiently before we build the rest of the page.</p>
+</div></article><article id="m-c8c70bb5-f6a9-4859-8259-2e7a3be34c70" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00336 · 2026-08-26T19:58:39.216000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: d8aec274-ea1a-43b9-a4de-6d2422e3b3aa.png</p><div class="bubble"><p>we did create this measure before for the card , but perhaps we should have just created a column instead?</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

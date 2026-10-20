@@ -1,0 +1,1546 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 35 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 35</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-34.html">Previous part</a><a href="part-36.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-7d727534-495f-4271-9fee-f618f4824e6e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00763 · 2026-09-02T19:19:03.839072-04:00 · active path</p><div class="bubble"><p>Yes. Below is the <strong>explicit implementation sequence</strong> I would follow from where you are now. The goal is to stop improvising inside P03 and first repair the carrier/model with one proper successor lifecycle table.</p>
+<p>The governing point is that the current successor carrier already exposes R1 decision, monitoring, intervention, operational setup, servicing, certification, etc., but the funded lifecycle dates were omitted from the curated projection. The R1/R26 handoff explicitly says to preserve the source-owned chain rather than reconstruct it in DAX. [export reference: filecite | turn140file0 | L82-L103]</p>
+<h2>Step 1 — Create the physical <code>R1FactFundedLifecycle.csv</code></h2>
+<p>Do this outside Power BI first.</p>
+<ol>
+<li>Open <strong>File Explorer</strong>.</li>
+<li>Go to:
+<code>C:\MSBF\R26\power_bi\carrier</code></li>
+<li>Confirm you see:<ul>
+<li><code>curated</code></li>
+<li><code>raw</code></li>
+<li><code>SUCCESSOR_DATA_CATALOG.csv</code></li>
+<li>package manifest/receipt files.</li>
+</ul>
+</li>
+<li>Do <strong>not</strong> edit <code>R1FactDailyMonitoring.csv</code>.</li>
+<li>We need to create a new file:
+<code>C:\MSBF\R26\power_bi\carrier\curated\R1FactFundedLifecycle.csv</code></li>
+</ol>
+<p>The preferred source is the exact R1 M2.4 lifecycle population. Since you have the retained R1/R26 physical source chain locally, the easiest controlled route is to generate the 130-row CSV from the accepted successor source—not from report DAX.</p>
+<p>Use PostgreSQL/psql only if that R1 successor database is still available. If it is not, we can derive the carrier file from the exact retained R17 M2.5 source payload, because that source physically carries the M2.4 lifecycle dates forward. The M2.5 source contains <code>funding_date</code>, <code>portfolio_activation_date</code>, <code>monitoring_start_date</code>, and related funded terms. [export reference: filecite | turn141file0 | L11-L35]</p>
+<p>Before I give you a source-generation script, tell me which of these is currently available locally:</p>
+<ul>
+<li>the accepted R1/R26 database containing the successor M2.4 objects; or</li>
+<li>the raw R17 M2.5 CSV under the carrier.</li>
+</ul>
+<p>You almost certainly have the second one. Check:</p>
+<p><code>C:\MSBF\R26\power_bi\carrier\raw\r17\m2_5_power_bi.csv</code></p>
+<p>If that file exists, we can create the lifecycle file from it without touching the database.</p>
+<h2>Step 2 — Build the lifecycle CSV from the raw R17 source</h2>
+<p>Assuming that file exists, use PowerShell.</p>
+<p>Open a normal PowerShell window and run:</p>
+<pre><code class="language-powershell">$Source = &quot;C:\MSBF\R26\power_bi\carrier\raw\r17\m2_5_power_bi.csv&quot;
+$Target = &quot;C:\MSBF\R26\power_bi\carrier\curated\R1FactFundedLifecycle.csv&quot;
+
+$Rows = Import-Csv -LiteralPath $Source
+
+$Lifecycle =
+    $Rows |
+    Group-Object module1_run_id,scenario_id,merchant_application_id |
+    ForEach-Object {
+
+        $g = $_.Group
+        $r = $g | Select-Object -First 1
+
+        [pscustomobject]@{
+            module1_run_id                 = $r.module1_run_id
+            scenario_id                    = $r.scenario_id
+            scenario_code                  = $r.scenario_code
+            merchant_application_id        = $r.merchant_application_id
+            population_id                  = $r.population_id
+            merchant_id                    = $r.merchant_id
+
+            synthetic_account_id           = $r.synthetic_account_id
+            synthetic_advance_id           = $r.synthetic_advance_id
+
+            booking_date                   = $r.booking_date
+            funding_date                   = $r.funding_date
+            portfolio_activation_date      = $r.portfolio_activation_date
+            monitoring_start_date           = $r.monitoring_start_date
+            first_expected_remittance_date = $r.first_expected_remittance_date
+
+            funded_amount                  = $r.funded_amount
+            collection_horizon_days        = $r.collection_horizon_days
+        }
+    }
+
+$Lifecycle |
+    Export-Csv -LiteralPath $Target -NoTypeInformation -Encoding UTF8
+
+Write-Host &quot;Rows:&quot; $Lifecycle.Count
+Write-Host &quot;Target:&quot; $Target
+</code></pre>
+<p>Important: if <code>booking_date</code> does <strong>not</strong> exist in the R17 raw M2.5 file, PowerShell will leave it blank. That is acceptable temporarily; do not infer it. Funding date is the critical P03 field.</p>
+<p>The source files show that M2.4 distinguishes booking, funding, activation, monitoring, and first-remittance dates, so those dates should remain independent source fields. [export reference: filecite | turn141file3 | L337-L344]</p>
+<h2>Step 3 — Validate the new file before Power BI</h2>
+<p>Run:</p>
+<pre><code class="language-powershell">$Lifecycle = Import-Csv &quot;C:\MSBF\R26\power_bi\carrier\curated\R1FactFundedLifecycle.csv&quot;
+
+&quot;Rows = $($Lifecycle.Count)&quot;
+&quot;Distinct application-scenario keys = $(
+    ($Lifecycle |
+        ForEach-Object { &quot;$($_.module1_run_id)|$($_.scenario_id)|$($_.merchant_application_id)&quot; } |
+        Sort-Object -Unique).Count
+)&quot;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">Rows = 130
+Distinct application-scenario keys = 130
+</code></pre>
+<p>Then check 738:</p>
+<pre><code class="language-powershell">$Lifecycle |
+    Where-Object {
+        $_.merchant_application_id -eq &quot;MSBF_POP_0001_M000738_A01&quot;
+    } |
+    Format-List *
+</code></pre>
+<p>Expected Baseline facts include:</p>
+<pre><code class="language-text">scenario_code                  : BASELINE
+funding_date                   : 2026-07-25
+portfolio_activation_date      : 2026-07-25
+monitoring_start_date          : 2026-07-25
+first_expected_remittance_date : 2026-07-26
+funded_amount                  : 25000
+collection_horizon_days        : 60
+</code></pre>
+<p>There should be <strong>no Recession Energy row for 738</strong>, because that scenario is not funded.</p>
+<p>If those values do not appear, stop there and send me the output. Do not continue into Power BI.</p>
+<h2>Step 4 — Add the Power Query table</h2>
+<p>Once the CSV validates:</p>
+<ol>
+<li>Open the current PBIP:
+<code>MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902</code></li>
+<li>Go to <strong>Home → Transform data</strong>.</li>
+<li>In Power Query Editor, go to <strong>Home → New Source → Text/CSV</strong>.</li>
+<li>Browse to:
+<code>C:\MSBF\R26\power_bi\carrier\curated\R1FactFundedLifecycle.csv</code></li>
+<li>Select the file.</li>
+<li>Click <strong>Transform Data</strong>, not Load.</li>
+<li>Rename the query exactly:
+<code>R1FactFundedLifecycle</code></li>
+</ol>
+<p>Now set data types explicitly:</p>
+<ul>
+<li><code>module1_run_id</code> → Whole Number</li>
+<li><code>scenario_id</code> → Whole Number</li>
+<li><code>scenario_code</code> → Text</li>
+<li><code>merchant_application_id</code> → Text</li>
+<li><code>population_id</code> → Text</li>
+<li><code>merchant_id</code> → Text</li>
+<li><code>synthetic_account_id</code> → Text</li>
+<li><code>synthetic_advance_id</code> → Text</li>
+<li><code>booking_date</code> → Date</li>
+<li><code>funding_date</code> → Date</li>
+<li><code>portfolio_activation_date</code> → Date</li>
+<li><code>monitoring_start_date</code> → Date</li>
+<li><code>first_expected_remittance_date</code> → Date</li>
+<li><code>funded_amount</code> → Decimal Number</li>
+<li><code>collection_horizon_days</code> → Whole Number</li>
+</ul>
+<p>Do not create calculated lifecycle dates in Power Query.</p>
+<h2>Step 5 — Add the semantic keys in Power Query</h2>
+<p>Because your R1 successor model uses <code>ApplicationScenarioKey</code> consistently, add it here too.</p>
+<p>In Power Query:</p>
+<ol>
+<li>Go to <strong>Add Column → Custom Column</strong>.</li>
+<li>Name:
+<code>ApplicationScenarioKey</code></li>
+<li>Formula:</li>
+</ol>
+<pre><code class="language-powerquery">Text.From([module1_run_id])
+    &amp; &quot;|&quot;
+    &amp; Text.From([scenario_id])
+    &amp; &quot;|&quot;
+    &amp; [merchant_application_id]
+</code></pre>
+<ol start="4">
+<li>Click OK.</li>
+<li>Set its type to <strong>Text</strong>.</li>
+</ol>
+<p>If you also want consistent R1 lineage keys, add:</p>
+<pre><code class="language-powerquery">ApplicationKey =
+Text.From([module1_run_id])
+    &amp; &quot;|&quot;
+    &amp; [merchant_application_id]
+</code></pre>
+<p>and:</p>
+<pre><code class="language-powerquery">RunScenarioKey =
+Text.From([module1_run_id])
+    &amp; &quot;|&quot;
+    &amp; Text.From([scenario_id])
+</code></pre>
+<p>I would add all three so this table behaves like the rest of the successor carrier.</p>
+<h2>Step 6 — Add lineage columns</h2>
+<p>Since this is a controlled integration delta, add:</p>
+<ul>
+<li><code>R1SourceBoundary</code></li>
+<li><code>R1AuthorityState</code></li>
+</ul>
+<p>Use <strong>Add Column → Custom Column</strong>.</p>
+<p>For <code>R1SourceBoundary</code>:</p>
+<pre><code class="language-powerquery">&quot;R1_M2_4_FUNDED_LIFECYCLE_VIA_R17&quot;
+</code></pre>
+<p>For <code>R1AuthorityState</code>:</p>
+<pre><code class="language-powerquery">&quot;CANDIDATE_ONLY_PENDING_R26_INTEGRATION_REVIEW&quot;
+</code></pre>
+<p>For <code>R1SourceArtifactSha256</code>, I would not fabricate a hash manually. Either:</p>
+<ul>
+<li>use the exact raw R17 source SHA already in the carrier catalog, or</li>
+<li>leave it out until we update the carrier manifest formally.</li>
+</ul>
+<p>The existing successor catalog identifies the raw R17 monitoring source and its SHA, so this can be lineage-bound later rather than guessed. [export reference: filecite | turn143file3 | L109-L110]</p>
+<h2>Step 7 — Load the table</h2>
+<ol>
+<li>In Power Query Editor, click <strong>Home → Close &amp; Apply</strong>.</li>
+<li>Wait for the table to load.</li>
+<li>Go to <strong>Data view</strong>.</li>
+<li>Select <code>R1FactFundedLifecycle</code>.</li>
+<li>Verify row count = <strong>130</strong>.</li>
+</ol>
+<h2>Step 8 — Create the relationship</h2>
+<p>Go to <strong>Model view</strong>.</p>
+<p>Create:</p>
+<p><code>R1DimApplicationScenario[ApplicationScenarioKey]</code></p>
+<p>to:</p>
+<p><code>R1FactFundedLifecycle[ApplicationScenarioKey]</code></p>
+<p>Set:</p>
+<ul>
+<li>Cardinality: <strong>One to many (1:*)</strong></li>
+<li>Cross filter direction: <strong>Single</strong></li>
+<li>Make this relationship active: <strong>checked</strong></li>
+</ul>
+<p>Click OK.</p>
+<p>Do not relate the lifecycle table directly to <code>DimMerchant</code>, <code>DimApplication</code>, or scenario by merchant-only keys.</p>
+<h2>Step 9 — Validate the relationship before changing P03</h2>
+<p>Create this temporary DAX measure:</p>
+<pre><code class="language-DAX">R26 P03 DEBUG Lifecycle Rows =
+COUNTROWS ( &#39;R1FactFundedLifecycle&#39; )
+</code></pre>
+<p>Put it in a temporary card on P03.</p>
+<p>Test:</p>
+<p><strong>Merchant 000738 / Baseline</strong></p>
+<p>Expected:</p>
+<pre><code class="language-text">1
+</code></pre>
+<p>Then switch to:</p>
+<p><strong>Merchant 000738 / Recession Energy</strong></p>
+<p>Expected:</p>
+<pre><code class="language-text">0
+</code></pre>
+<p>If you get 1 / 0, the exact scenario-key relationship is working.</p>
+<h2>Step 10 — Replace <code>Funded Lifecycle Available</code></h2>
+<p>Use this full replacement:</p>
+<pre><code class="language-DAX">R26 P03 Funded Lifecycle Available =
+VAR _Rows =
+    COUNTROWS (
+        &#39;R1FactFundedLifecycle&#39;
+    )
+RETURN
+    IF (
+        _Rows = 1,
+        1,
+        0
+    )
+</code></pre>
+<p>Because the relationship now does the filtering, we no longer need unnecessary <code>TREATAS</code> machinery here.</p>
+<p>If you prefer a defensive exact-key version, use:</p>
+<pre><code class="language-DAX">R26 P03 Funded Lifecycle Available =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+VAR _Rows =
+    CALCULATE (
+        COUNTROWS (
+            &#39;R1FactFundedLifecycle&#39;
+        ),
+        TREATAS (
+            { _Key },
+            &#39;R1FactFundedLifecycle&#39;[ApplicationScenarioKey]
+        )
+    )
+RETURN
+    IF (
+        NOT ISBLANK ( _Key )
+            &amp;&amp; _Rows = 1,
+        1,
+        0
+    )
+</code></pre>
+<p>I prefer the defensive version for P03.</p>
+<h2>Step 11 — Replace Funding Date measure</h2>
+<p>Use:</p>
+<pre><code class="language-DAX">R26 P03 Funding Date =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+RETURN
+    IF (
+        [R26 P03 Funded Lifecycle Available] = 1
+            &amp;&amp; NOT ISBLANK ( _Key ),
+        CALCULATE (
+            SELECTEDVALUE (
+                &#39;R1FactFundedLifecycle&#39;[funding_date]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactFundedLifecycle&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+</code></pre>
+<p>Format:</p>
+<ol>
+<li>Select the measure in the Data pane.</li>
+<li><strong>Measure tools → Format → Date</strong></li>
+<li>Use your preferred short date format, probably:
+<code>M/d/yyyy</code></li>
+</ol>
+<h2>Step 12 — Put Funding Date back into Proposed structure</h2>
+<p>Select the Proposed structure table.</p>
+<p>Final order:</p>
+<ol>
+<li>Amount</li>
+<li>Remittance</li>
+<li>Payback multiple</li>
+<li>Horizon days</li>
+<li>Repayment</li>
+<li>Funding date</li>
+</ol>
+<p>Use only the <strong>measure</strong> <code>R26 P03 Funding Date</code>.</p>
+<p>Do not put the raw lifecycle <code>funding_date</code> column into the visual.</p>
+<h2>Step 13 — Fix the decision tile colors</h2>
+<p>Your Decision Class / Label should remain based on <code>R1FactFinalDecision</code>.</p>
+<p>Use:</p>
+<pre><code class="language-DAX">R26 P03 Decision Tile Background =
+SWITCH (
+    [R26 P03 Decision Class],
+    &quot;AUTHORIZED&quot;, &quot;#2E7D32&quot;,
+    &quot;REVIEW&quot;,     &quot;#C58A00&quot;,
+    &quot;DECLINED&quot;,   &quot;#C62828&quot;,
+    &quot;#D9D9D9&quot;
+)
+</code></pre>
+<p>For both the upper and lower decision cards:</p>
+<ol>
+<li>Select the card.</li>
+<li><strong>Format visual → General → Effects → Background</strong></li>
+<li>Click <strong>fx</strong>.</li>
+<li>Format style → <strong>Field value</strong></li>
+<li>Base it on → <code>R26 P03 Decision Tile Background</code></li>
+<li>Click OK.</li>
+</ol>
+<p>Keep:</p>
+<ul>
+<li>Uniform padding = <strong>0</strong></li>
+<li>text wrap = On</li>
+<li>value alignment = Center.</li>
+</ul>
+<h2>Step 14 — Fix Recommendation narrative</h2>
+<p>Replace the current Recommendation measure with:</p>
+<pre><code class="language-DAX">R26 P03 Decision Narrative =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+RETURN
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            SELECTEDVALUE (
+                &#39;R1FactFinalDecision&#39;[decision_why_text]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+</code></pre>
+<p>Then:</p>
+<ol>
+<li>Select the Recommendation text visual.</li>
+<li>Remove the current narrative measure.</li>
+<li>Add <code>R26 P03 Decision Narrative</code>.</li>
+<li>Keep the heading <strong>Recommendation</strong>.</li>
+</ol>
+<p>For 738 / Baseline, it should no longer say manual authorization is required.</p>
+<h2>Step 15 — Retest 738 as the primary regression case</h2>
+<p>For <strong>738 / Baseline</strong>, verify all of these at once:</p>
+<ul>
+<li>green tile</li>
+<li><code>AUTHORIZED</code></li>
+<li><code>Approved as requested</code></li>
+<li>proposed amount <code>$25,000.00</code></li>
+<li>remittance <code>13.40%</code></li>
+<li>payback multiple <code>1.21</code></li>
+<li>horizon <code>60</code></li>
+<li>repayment <code>$30,209.08</code></li>
+<li>funding date <code>7/25/2026</code></li>
+<li>funded lifecycle available</li>
+<li>Account performance populated</li>
+<li>Monitoring journey populated</li>
+<li>Recommendation reflects R1 authorization, not predecessor review.</li>
+</ul>
+<p>Then switch only Scenario to <strong>Recession Energy</strong>:</p>
+<ul>
+<li>red tile</li>
+<li>declined/evidence decline</li>
+<li>no proposed funded lifecycle</li>
+<li>Funding date blank</li>
+<li>Account performance blank</li>
+<li>Monitoring journey blank</li>
+<li>no Baseline date leaking across.</li>
+</ul>
+<p>That single merchant/scenario pair is now a very strong regression test for correct successor-vs-predecessor authority handling.</p>
+<p>The one thing I need from you before you execute Step 2 is simply confirmation that this file exists:</p>
+<p><code>C:\MSBF\R26\power_bi\carrier\raw\r17\m2_5_power_bi.csv</code></p>
+<p>If it does, use the sequence above. If it does not, I will give you the exact alternative extraction route from the retained R1 M2.4 source instead.</p>
+</div></article><article id="m-dbba06fe-a410-43ec-b706-d6755316cbcc" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00764 · 2026-09-02T19:43:38.358000-04:00 · active path</p><p class="note">Attachment references: MSBF_R26_POWER_BI_FUNDED_LIFECYCLE_EXPORT_RESULT.zip; MSBF_R26_POWER_BI_FUNDED_LIFECYCLE_EXPORT_RESULT.zip.sha256</p><div class="bubble"><h1>R26 FUNDED-LIFECYCLE INTEGRATION — PHYSICAL EXPORT RETURN</h1>
+<p>The bounded R1 M2.4 funded-lifecycle export has now been physically executed from the retained read-only source:</p>
+<pre><code>
+</code></pre>
+<pre><code>msbf_r1_m2_4_r6_20260830_030634
+</code></pre>
+<p>Attached is the generated result package:</p>
+<pre><code>
+</code></pre>
+<pre><code>MSBF_R26_POWER_BI_FUNDED_LIFECYCLE_EXPORT_RESULT.zip
+</code></pre>
+<p>together with its SHA-256 sidecar.</p>
+<h2>Governing authority</h2>
+<p>R26 has now completed focused Independent Audit:</p>
+<pre><code>
+</code></pre>
+<pre><code>Decision ID: IA-D-R15-M12-001
+Overall: PASS_WITH_OBSERVATIONS
+R26 technical successor baseline: PASS
+Version-separated repository / Power BI integration: AUTHORIZED NEXT STEP
+Public supersession/publication: NOT AUTHORIZED
+</code></pre>
+<p>Therefore, no longer describe R26 itself as pending focused audit. The current Power BI project remains a <strong>version-separated integration candidate pending its own bounded integration-delta review</strong>.</p>
+<h2>First action</h2>
+<p>Before changing the PBIP:</p>
+<ol>
+<li>verify the attached result ZIP against its sidecar; </li>
+<li>ingest the complete result package and its receipt/validation evidence; </li>
+<li>independently confirm that <code>R1FactFundedLifecycle.csv</code> is the physically generated R1 M2.4 lifecycle projection rather than a DAX- or lag-derived table; </li>
+<li>verify expected population and uniqueness before model integration.</li>
+</ol>
+<p>Expected:</p>
+<pre><code>
+</code></pre>
+<pre><code>R1FactFundedLifecycle rows          130
+BASELINE                           103
+RECESSION_ENERGY                    27
+Unique ApplicationScenarioKey      130
+Grain                              one funded ApplicationScenarioKey
+</code></pre>
+<h2>Required regression case — application 738</h2>
+<p>Confirm:</p>
+<pre><code>
+</code></pre>
+<pre><code>ApplicationScenarioKey
+1|5|MSBF_POP_0001_M000738_A01
+
+Scenario
+BASELINE
+
+booking_date                    2026-07-24
+funding_date                    2026-07-25
+portfolio_activation_date       2026-07-25
+monitoring_start_date           2026-07-25
+first_expected_remittance_date  2026-07-26
+funded_amount                   25000.00
+collection_horizon_days         60
+</code></pre>
+<p>and confirm that:</p>
+<pre><code>
+</code></pre>
+<pre><code>1|6|MSBF_POP_0001_M000738_A01
+RECESSION_ENERGY
+</code></pre>
+<p>has <strong>no funded-lifecycle row</strong>.</p>
+<p>No Baseline lifecycle value may leak to the Recession Energy path.</p>
+<h2>Integration instruction</h2>
+<p>Add:</p>
+<pre><code>
+</code></pre>
+<pre><code>R1FactFundedLifecycle
+</code></pre>
+<p>as a <strong>new additive semantic object</strong> in the current:</p>
+<pre><code>
+</code></pre>
+<pre><code>MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902
+</code></pre>
+<p>or its current direct successor working copy.</p>
+<p>Do <strong>not</strong> modify:</p>
+<pre><code>
+</code></pre>
+<pre><code>R1FactDailyMonitoring
+</code></pre>
+<p>which remains the accepted R26 monitoring projection at:</p>
+<pre><code>
+</code></pre>
+<pre><code>15,600 rows
+47 columns
+</code></pre>
+<p>Do not add <code>funding_date</code> as a 48th monitoring column.</p>
+<h2>Relationship</h2>
+<p>Establish:</p>
+<pre><code>
+</code></pre>
+<pre><code>R1DimApplicationScenario[ApplicationScenarioKey]
+                 1
+                 |
+                 v
+                 *
+R1FactFundedLifecycle[ApplicationScenarioKey]
+</code></pre>
+<p>with:</p>
+<pre><code>
+</code></pre>
+<pre><code>Cardinality             One-to-many
+Cross-filter direction  Single
+Active                  Yes
+</code></pre>
+<p>Do not relate the lifecycle object by merchant ID or application ID alone.</p>
+<h2>Source boundary</h2>
+<p>Treat <code>R1FactFundedLifecycle</code> as the Power BI exposure of the physical R1 M2.4 funded-lifecycle authority.</p>
+<p>Do not calculate:</p>
+<pre><code>
+</code></pre>
+<pre><code>funding_date = as_of_date + 2
+</code></pre>
+<p>in DAX or Power Query.</p>
+<p>Do not infer lifecycle dates from monitoring dates.</p>
+<p>The physical export is the lifecycle-date authority.</p>
+<h2>P03 correction</h2>
+<p>Once the table is physically loaded and reconciled:</p>
+<ul>
+<li>use <code>R1FactFundedLifecycle</code> for <code>R26 P03 Funded Lifecycle Available</code>; </li>
+<li>use its physical <code>funding_date</code> for <code>R26 P03 Funding Date</code>; </li>
+<li>restore <strong>Funding date</strong> to the Proposed Structure table; </li>
+<li>preserve final-decision authority from <code>R1FactFinalDecision[governed_final_outcome_code]</code>; </li>
+<li>preserve the R1 final-decision narrative from <code>decision_why_text</code>; </li>
+<li>do not allow predecessor decision or M1 review language to control the R26 P03 decision presentation.</li>
+</ul>
+<p>For 738 / Baseline, final P03 should reconcile to:</p>
+<pre><code>
+</code></pre>
+<pre><code>Decision              AUTHORIZED
+Label                 Approved as requested
+Amount                $25,000.00
+Remittance            13.40%
+Payback multiple      1.21
+Horizon               60 days
+Repayment             $30,209.08
+Funding date          7/25/2026
+Lifecycle             Present
+</code></pre>
+<p>For 738 / Recession Energy:</p>
+<pre><code>
+</code></pre>
+<pre><code>Decision              DECLINED
+Funding date          BLANK
+Lifecycle             Absent
+Account performance   BLANK
+Monitoring journey    BLANK
+</code></pre>
+<h2>Carrier/inventory treatment</h2>
+<p>Record this as a bounded <strong>R26 Power BI integration delta</strong>, not an R26 source correction:</p>
+<pre><code>
+</code></pre>
+<pre><code>New semantic object
+R1FactFundedLifecycle
+
+Rows
+130
+
+Grain
+ApplicationScenarioKey
+
+Source
+Physical R1 M2.4 funded lifecycle
+
+R1FactDailyMonitoring
+UNCHANGED — 15,600 / 47
+
+R26 monitoring policy
+UNCHANGED
+
+R26 technical certification
+UNCHANGED — 70/70
+</code></pre>
+<p>Update the successor data catalog, Power Query/model inventory, relationship inventory, lineage documentation, model counts, integration-delta register, and validation evidence accordingly.</p>
+<h2>Continue after lifecycle integration</h2>
+<p>Do not stop merely after loading the CSV.</p>
+<p>After the lifecycle object passes:</p>
+<ol>
+<li>complete the P03 corrections; </li>
+<li>run the 738 Baseline/Recession Energy regression; </li>
+<li>test additional funded and nonfunded scenario paths; </li>
+<li>confirm P01/P02/P04/P05/P06 nonregression except for already authorized R26 integration/refinement changes; </li>
+<li>continue the remaining Power BI refinement work; </li>
+<li>preserve this lifecycle addition for the final save/close/reopen and bounded integration-audit evidence package.</li>
+</ol>
+<p>Do <strong>not</strong> publish Power BI, activate public supersession, or alter accepted predecessor artifacts through this action.</p>
+</div></article><article id="m-40c9d28c-ca7d-41e7-b480-e8c4229f5376" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00765 · 2026-09-02T19:45:30.607973-04:00 · active path</p><div class="bubble"><p>The funded-lifecycle export package passes the requested pre-integration checks. I would proceed with integration.</p>
+<p>I verified the ZIP SHA-256 against the sidecar:</p>
+<p><code>74e5051319a815ae648d0c73987d2f642c46854b07e41a6d555a590a2bf8a7ee</code> — <strong>PASS</strong></p>
+<p>The ZIP itself is structurally clean, all four internal SHA-256 sidecars validate, and the receipt reports the retained read-only source as:</p>
+<p><code>msbf_r1_m2_4_r6_20260830_030634</code><br><code>msbf_m2.application_booking_funding_activation_latest</code></p>
+<p>The physical raw export and curated table both contain <strong>130 rows</strong>. The raw 15 lifecycle fields are byte-for-data identical to those same 15 fields in the curated 23-column table; the additional eight curated fields are deterministic semantic keys/lineage fields, not lifecycle calculations. The supplied Power Query M only reads and types the CSV—it does not calculate funding dates. I also independently verified <strong>103 Baseline / 27 Recession Energy / 130 unique ApplicationScenarioKey / zero duplicate keys</strong>, no nulls in the physical lifecycle fields, and valid date ordering across all 130 rows.</p>
+<p>For merchant 738 specifically, I verified:</p>
+<pre><code class="language-text">1|5|MSBF_POP_0001_M000738_A01
+BASELINE
+
+booking_date                    2026-07-24
+funding_date                    2026-07-25
+portfolio_activation_date       2026-07-25
+monitoring_start_date           2026-07-25
+first_expected_remittance_date  2026-07-26
+funded_amount                   25000.00
+collection_horizon_days         60
+</code></pre>
+<p>and there is <strong>no</strong> row for:</p>
+<p><code>1|6|MSBF_POP_0001_M000738_A01</code></p>
+<p>So the Baseline/Recession scenario boundary is physically clean.</p>
+<p>Also, I will use the updated authority language going forward:</p>
+<blockquote>
+<p><strong>R26 technical successor baseline = accepted. Current Power BI work = version-separated integration candidate pending bounded integration-delta review. Publication/public supersession = not authorized.</strong></p>
+</blockquote>
+<h2>Recommended physical integration sequence</h2>
+<p>I would make one adjustment to the earlier workflow: <strong>do not directly mutate the accepted R26 carrier root if we can avoid it.</strong> Create an additive integration carrier copy first. That gives us a clean R26 → integration-candidate diff.</p>
+<h3>1. Save and close Power BI first</h3>
+<p>In Power BI Desktop:</p>
+<ol>
+<li>Press <strong>Ctrl+S</strong>.</li>
+<li>Close the PBIP.</li>
+<li>Do not reopen it yet.</li>
+</ol>
+<h3>2. Create a separate integration carrier</h3>
+<p>Open PowerShell and run:</p>
+<pre><code class="language-powershell">$SourceCarrier = &quot;C:\MSBF\R26\power_bi\carrier&quot;
+$IntegrationCarrier = &quot;C:\MSBF\R26\power_bi\carrier_integration_c1&quot;
+
+if (Test-Path $IntegrationCarrier) {
+    throw &quot;Integration carrier already exists: $IntegrationCarrier&quot;
+}
+
+Copy-Item `
+    -LiteralPath $SourceCarrier `
+    -Destination $IntegrationCarrier `
+    -Recurse
+
+Write-Host &quot;Created integration carrier:&quot;
+Write-Host $IntegrationCarrier
+</code></pre>
+<p>This preserves the accepted R26 carrier untouched.</p>
+<h3>3. Extract the verified lifecycle package</h3>
+<p>Assuming you placed the downloaded result ZIP somewhere accessible, extract it to a temporary folder. For example:</p>
+<pre><code class="language-powershell">$Zip = &quot;C:\MSBF\MSBF_R26_POWER_BI_FUNDED_LIFECYCLE_EXPORT_RESULT.zip&quot;
+$Temp = &quot;C:\MSBF\_R26_FUNDED_LIFECYCLE_EXPORT&quot;
+
+if (Test-Path $Temp) {
+    Remove-Item $Temp -Recurse -Force
+}
+
+Expand-Archive `
+    -LiteralPath $Zip `
+    -DestinationPath $Temp
+
+Get-ChildItem $Temp -Recurse
+</code></pre>
+<p>You should see the same 12 package members I verified.</p>
+<h3>4. Copy the curated lifecycle object into the integration carrier</h3>
+<p>Run:</p>
+<pre><code class="language-powershell">Copy-Item `
+    -LiteralPath &quot;$Temp\curated\R1FactFundedLifecycle.csv&quot; `
+    -Destination &quot;$IntegrationCarrier\curated\R1FactFundedLifecycle.csv&quot;
+</code></pre>
+<p>Then copy the raw R6 source evidence:</p>
+<pre><code class="language-powershell">New-Item `
+    -ItemType Directory `
+    -Force `
+    -Path &quot;$IntegrationCarrier\raw\r6&quot; |
+    Out-Null
+
+Copy-Item `
+    -LiteralPath &quot;$Temp\raw\r6\m2_4_funded_lifecycle.csv&quot; `
+    -Destination &quot;$IntegrationCarrier\raw\r6\m2_4_funded_lifecycle.csv&quot;
+</code></pre>
+<p>Do <strong>not</strong> touch:</p>
+<p><code>R1FactDailyMonitoring.csv</code></p>
+<h3>5. Verify the physical copied table</h3>
+<p>Run:</p>
+<pre><code class="language-powershell">$Lifecycle =
+    Import-Csv &quot;$IntegrationCarrier\curated\R1FactFundedLifecycle.csv&quot;
+
+&quot;Rows: $($Lifecycle.Count)&quot;
+
+&quot;Baseline: $(
+    @($Lifecycle | Where-Object scenario_code -eq &#39;BASELINE&#39;).Count
+)&quot;
+
+&quot;Recession Energy: $(
+    @($Lifecycle | Where-Object scenario_code -eq &#39;RECESSION_ENERGY&#39;).Count
+)&quot;
+
+&quot;Unique keys: $(
+    @($Lifecycle.ApplicationScenarioKey | Sort-Object -Unique).Count
+)&quot;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">Rows: 130
+Baseline: 103
+Recession Energy: 27
+Unique keys: 130
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">$Lifecycle |
+    Where-Object ApplicationScenarioKey -eq `
+        &quot;1|5|MSBF_POP_0001_M000738_A01&quot; |
+    Format-List
+</code></pre>
+<p>Confirm <code>funding_date = 2026-07-25</code>.</p>
+<p>And:</p>
+<pre><code class="language-powershell">$Lifecycle |
+    Where-Object ApplicationScenarioKey -eq `
+        &quot;1|6|MSBF_POP_0001_M000738_A01&quot;
+</code></pre>
+<p>Expected: <strong>no output</strong>.</p>
+<h2>6. Point the working PBIP to the integration carrier</h2>
+<p>Your current project uses <code>pSuccessorRoot</code>.</p>
+<p>Open the PBIP again.</p>
+<p>Then:</p>
+<ol>
+<li><p><strong>Home → Transform data → Transform data</strong></p>
+</li>
+<li><p>In Power Query Editor, select parameter <strong><code>pSuccessorRoot</code></strong>.</p>
+</li>
+<li><p>Change only its working-copy value from:</p>
+<p><code>C:\MSBF\R26\power_bi\carrier</code></p>
+<p>to:</p>
+<p><code>C:\MSBF\R26\power_bi\carrier_integration_c1</code></p>
+</li>
+<li><p>Do not change the accepted carrier files themselves.</p>
+</li>
+</ol>
+<p>This makes the current PBIP explicitly a <strong>version-separated integration candidate</strong>.</p>
+<h2>7. Add <code>R1FactFundedLifecycle</code> in Power Query</h2>
+<p>Still in Power Query Editor:</p>
+<ol>
+<li><p><strong>Home → New Source → Blank Query</strong></p>
+</li>
+<li><p>In the Queries pane, rename it exactly:</p>
+<p><code>R1FactFundedLifecycle</code></p>
+</li>
+<li><p>Select the query.</p>
+</li>
+<li><p><strong>Home → Advanced Editor</strong></p>
+</li>
+<li><p>Delete everything currently in the editor.</p>
+</li>
+<li><p>Paste this exact M from the verified export package:</p>
+</li>
+</ol>
+<pre><code class="language-powerquery">let
+    Source = Csv.Document(
+        File.Contents(pSuccessorRoot &amp; &quot;\\curated\\R1FactFundedLifecycle.csv&quot;),
+        [Delimiter=&quot;,&quot;, Encoding=65001, QuoteStyle=QuoteStyle.Csv]
+    ),
+    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    Typed = Table.TransformColumnTypes(
+        PromotedHeaders,
+        {
+            {&quot;module1_run_id&quot;, Int64.Type},
+            {&quot;scenario_id&quot;, Int64.Type},
+            {&quot;scenario_code&quot;, type text},
+            {&quot;merchant_application_id&quot;, type text},
+            {&quot;merchant_id&quot;, type text},
+            {&quot;population_id&quot;, type text},
+            {&quot;synthetic_account_id&quot;, type text},
+            {&quot;synthetic_advance_id&quot;, type text},
+            {&quot;booking_date&quot;, type date},
+            {&quot;funding_date&quot;, type date},
+            {&quot;portfolio_activation_date&quot;, type date},
+            {&quot;monitoring_start_date&quot;, type date},
+            {&quot;first_expected_remittance_date&quot;, type date},
+            {&quot;funded_amount&quot;, type number},
+            {&quot;collection_horizon_days&quot;, Int64.Type},
+            {&quot;ApplicationKey&quot;, type text},
+            {&quot;RunScenarioKey&quot;, type text},
+            {&quot;ApplicationScenarioKey&quot;, type text},
+            {&quot;AccountKey&quot;, type text},
+            {&quot;AdvanceKey&quot;, type text},
+            {&quot;R1SourceBoundary&quot;, type text},
+            {&quot;R1SourceArtifactSha256&quot;, type text},
+            {&quot;R1AuthorityState&quot;, type text}
+        }
+    )
+in
+    Typed
+</code></pre>
+<ol start="7">
+<li>Click <strong>Done</strong>.</li>
+<li>Confirm the preview shows <strong>23 columns</strong>.</li>
+<li>Confirm the date columns display as dates.</li>
+<li><strong>Home → Close &amp; Apply</strong>.</li>
+</ol>
+<p>Do not add calculated keys or calculated dates—the physical export already contains them.</p>
+<h2>8. Verify the new semantic table</h2>
+<p>After the model loads:</p>
+<ol>
+<li>Go to <strong>Data view</strong>.</li>
+<li>Select <code>R1FactFundedLifecycle</code>.</li>
+<li>Confirm the status bar/table count reports <strong>130 rows</strong>.</li>
+<li>Scroll through the fields and confirm:<ul>
+<li><code>funding_date</code></li>
+<li><code>ApplicationScenarioKey</code></li>
+<li><code>R1SourceBoundary</code></li>
+<li><code>R1AuthorityState</code></li>
+</ul>
+</li>
+</ol>
+<p>are present.</p>
+<h2>9. Create the relationship</h2>
+<p>Go to <strong>Model view</strong>.</p>
+<p>Drag:</p>
+<p><code>R1DimApplicationScenario[ApplicationScenarioKey]</code></p>
+<p>onto:</p>
+<p><code>R1FactFundedLifecycle[ApplicationScenarioKey]</code></p>
+<p>In the relationship dialog set:</p>
+<ul>
+<li><strong>Cardinality:</strong> One to many (<code>1:*</code>)</li>
+<li><strong>Cross-filter direction:</strong> Single</li>
+<li><strong>Make this relationship active:</strong> checked</li>
+</ul>
+<p>Click <strong>OK</strong>.</p>
+<p>Do not create merchant-ID or application-ID relationships.</p>
+<h2>10. Add/replace the two lifecycle measures</h2>
+<p>Open <strong>DAX Query View → New query</strong>.</p>
+<p>Paste:</p>
+<pre><code class="language-DAX">DEFINE
+
+    MEASURE &#39;R1Measures&#39;[R26 P03 Funded Lifecycle Available] =
+        VAR _Key =
+            SELECTEDVALUE (
+                &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+            )
+        VAR _Rows =
+            CALCULATE (
+                COUNTROWS (
+                    &#39;R1FactFundedLifecycle&#39;
+                ),
+                TREATAS (
+                    { _Key },
+                    &#39;R1FactFundedLifecycle&#39;[ApplicationScenarioKey]
+                )
+            )
+        RETURN
+            IF (
+                NOT ISBLANK ( _Key )
+                    &amp;&amp; _Rows = 1,
+                1,
+                0
+            )
+
+
+    MEASURE &#39;R1Measures&#39;[R26 P03 Funding Date] =
+        VAR _Key =
+            SELECTEDVALUE (
+                &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+            )
+        RETURN
+            IF (
+                [R26 P03 Funded Lifecycle Available] = 1
+                    &amp;&amp; NOT ISBLANK ( _Key ),
+                CALCULATE (
+                    SELECTEDVALUE (
+                        &#39;R1FactFundedLifecycle&#39;[funding_date]
+                    ),
+                    TREATAS (
+                        { _Key },
+                        &#39;R1FactFundedLifecycle&#39;[ApplicationScenarioKey]
+                    )
+                )
+            )
+
+EVALUATE
+ROW (
+    &quot;Lifecycle rows&quot;,
+        [R26 P03 Funded Lifecycle Available],
+    &quot;Funding date&quot;,
+        [R26 P03 Funding Date]
+)
+</code></pre>
+<p>Then:</p>
+<ol>
+<li>Click <strong>Update model with changes</strong>.</li>
+<li>Let Power BI replace the existing measures if prompted.</li>
+<li>Run the query.</li>
+</ol>
+<p>With 738 / Baseline selected, expected:</p>
+<pre><code class="language-text">Lifecycle rows   1
+Funding date     7/25/2026
+</code></pre>
+<p>Switch the P03 Scenario slicer to Recession Energy and rerun if necessary:</p>
+<pre><code class="language-text">Lifecycle rows   0
+Funding date     blank
+</code></pre>
+<h2>11. Format Funding Date</h2>
+<p>In the Data pane:</p>
+<ol>
+<li><p>Select <code>R26 P03 Funding Date</code>.</p>
+</li>
+<li><p>Go to <strong>Measure tools</strong>.</p>
+</li>
+<li><p><strong>Format → Date</strong></p>
+</li>
+<li><p>Choose a short date representation matching the page, preferably:</p>
+<p><code>M/d/yyyy</code></p>
+</li>
+</ol>
+<h2>12. Restore Funding date to Proposed structure</h2>
+<p>On P03:</p>
+<ol>
+<li><p>Select the <strong>Proposed structure</strong> table.</p>
+</li>
+<li><p>In <strong>Build visual</strong>, remove any raw:</p>
+<ul>
+<li><code>operational_activation_date</code></li>
+<li>old predecessor funding date</li>
+<li>obsolete funding-date measure</li>
+</ul>
+</li>
+<li><p>Add:</p>
+<p><code>R1Measures[R26 P03 Funding Date]</code></p>
+</li>
+<li><p>Move it to the final column.</p>
+</li>
+</ol>
+<p>Final order:</p>
+<p><strong>Amount | Remittance | Payback multiple | Horizon days | Repayment | Funding date</strong></p>
+<p>For 738 / Baseline, this should now show exactly one row with <code>7/25/2026</code>.</p>
+<h2>13. Correct Decision Narrative now</h2>
+<p>The current 738 narrative shown earlier was still predecessor/review language.</p>
+<p>Replace <code>R26 P03 Decision Narrative</code> with:</p>
+<pre><code class="language-DAX">R26 P03 Decision Narrative =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+RETURN
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            SELECTEDVALUE (
+                &#39;R1FactFinalDecision&#39;[decision_why_text]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+</code></pre>
+<p>Then make sure the visible <strong>Recommendation</strong> block uses this measure.</p>
+<p>738 / Baseline should no longer state that manual authorization remains required.</p>
+<h2>14. Correct the decision-card background</h2>
+<p>Use this exact measure:</p>
+<pre><code class="language-DAX">R26 P03 Decision Tile Background =
+SWITCH (
+    [R26 P03 Decision Class],
+    &quot;AUTHORIZED&quot;, &quot;#2E7D32&quot;,
+    &quot;REVIEW&quot;,     &quot;#C58A00&quot;,
+    &quot;DECLINED&quot;,   &quot;#C62828&quot;,
+    &quot;#D9D9D9&quot;
+)
+</code></pre>
+<p>For <strong>both</strong> decision cards:</p>
+<ol>
+<li>Select the card.</li>
+<li><strong>Format visual → General → Effects → Background</strong></li>
+<li>Click <strong>fx</strong>.</li>
+<li><strong>Format style → Field value</strong></li>
+<li>Base on:
+<code>R26 P03 Decision Tile Background</code></li>
+<li>Click <strong>OK</strong>.</li>
+</ol>
+<p>738 / Baseline must now be green.</p>
+<h2>15. Run the full 738 regression</h2>
+<h3>738 / Baseline</h3>
+<p>Confirm simultaneously:</p>
+<pre><code class="language-text">Decision             AUTHORIZED
+Label                Approved as requested
+Tile                 Green
+Amount               $25,000.00
+Remittance           13.40%
+Payback multiple     1.21
+Horizon              60
+Repayment            $30,209.08
+Funding date         7/25/2026
+Lifecycle available  1
+</code></pre>
+<p>And:</p>
+<ul>
+<li>Recommendation reflects the R1 authorized outcome.</li>
+<li>Account performance exists.</li>
+<li>Monitoring journey exists.</li>
+</ul>
+<h3>738 / Recession Energy</h3>
+<p>Confirm:</p>
+<pre><code class="language-text">Decision             DECLINED
+Funding date         blank
+Lifecycle available  0
+</code></pre>
+<p>And:</p>
+<ul>
+<li>Proposed funded lifecycle does not appear.</li>
+<li>Account performance is blank.</li>
+<li>Monitoring journey is blank.</li>
+<li>No <code>7/25/2026</code> leakage.</li>
+</ul>
+<h2>16. Do not forget the integration-control artifacts</h2>
+<p>After the physical model works, we still need to update the <strong>integration candidate</strong>, not the accepted R26 source package:</p>
+<ul>
+<li>successor data catalog: append the supplied <code>R1FactFundedLifecycle</code> catalog row;</li>
+<li>model table count: <strong>54 → 55</strong></li>
+<li>relationship count: <strong>54 → 55</strong></li>
+<li>Power Query expression count: <strong>52 → 53</strong></li>
+<li>document the new 130-row table;</li>
+<li>record <code>R1FactDailyMonitoring</code> unchanged at <strong>15,600 × 47</strong>;</li>
+<li>record R26 G3-v2 unchanged at <strong>70/70</strong>;</li>
+<li>preserve the export receipt and hashes in integration evidence;</li>
+<li>record the carrier-root change and new semantic object in the integration-delta register.</li>
+</ul>
+<p>I would do those metadata/package-control updates <strong>after</strong> we prove the physical Power BI relationship and 738 regression, so we don&#39;t formalize an integration object that has not yet rendered correctly.</p>
+<p>Once you reach the point where <strong>738 / Baseline shows one proposed-structure row with <code>7/25/2026</code></strong>, send me that P03 screenshot. From there we can finish the remaining P03 semantic/visual regression without another source-discovery loop.</p>
+</div></article><article id="m-191e5f99-7ce6-4fa3-8633-6a3d059cb1d1" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00766 · 2026-09-02T20:14:46.135000-04:00 · active path</p><div class="bubble"><p>explain this - which direction is the one to many?   9. Create the relationship
+Go to <strong>Model view</strong>.</p>
+<p>Drag:</p>
+<p><code>R1DimApplicationScenario[ApplicationScenarioKey]</code></p>
+<p>onto:</p>
+<p><code>R1FactFundedLifecycle[ApplicationScenarioKey]</code></p>
+<p>In the relationship dialog set:</p>
+<ul>
+<li><strong>Cardinality:</strong> One to many (<code>1:*</code>) </li>
+<li><strong>Cross-filter direction:</strong> Single </li>
+<li><strong>Make this relationship active:</strong> checked</li>
+</ul>
+<p>Click <strong>OK</strong>.</p>
+<p>Do not create merchant-ID or application-ID relationships.</p>
+</div></article><article id="m-0e240f7d-9f86-4a68-8b68-eaa445f0f568" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00767 · 2026-09-02T20:14:49.676654-04:00 · active path</p><div class="bubble"><p>The <strong>one side is <code>R1DimApplicationScenario</code></strong> and the <strong>many side is <code>R1FactFundedLifecycle</code></strong>.</p>
+<p>So the relationship is:</p>
+<pre><code class="language-text">R1DimApplicationScenario[ApplicationScenarioKey]   1
+                                                    |
+                                                    |
+                                                    v
+R1FactFundedLifecycle[ApplicationScenarioKey]      *
+</code></pre>
+<p>Why:</p>
+<ul>
+<li><code>R1DimApplicationScenario</code> has exactly one row for each <code>ApplicationScenarioKey</code>.</li>
+<li><code>R1FactFundedLifecycle</code> is a fact table. Even though this specific export currently also has one row per funded <code>ApplicationScenarioKey</code>, structurally it belongs on the <strong>many/fact side</strong> of the model.</li>
+<li>This preserves the standard dimensional pattern: <strong>dimension filters fact</strong>.</li>
+</ul>
+<p>In the Power BI relationship dialog, if it shows:</p>
+<p><strong>From table:</strong> <code>R1DimApplicationScenario</code><br><strong>To table:</strong> <code>R1FactFundedLifecycle</code></p>
+<p>then choose:</p>
+<p><strong>Cardinality:</strong> <code>One to many (1:*)</code></p>
+<p>with the <strong>1 next to <code>R1DimApplicationScenario</code></strong> and the <strong>* next to <code>R1FactFundedLifecycle</code></strong>.</p>
+<p>For cross-filter direction, choose <strong>Single</strong>, with filtering flowing:</p>
+<pre><code class="language-text">R1DimApplicationScenario
+        ↓
+R1FactFundedLifecycle
+</code></pre>
+<p>That way your Merchant + Scenario slicers resolve the selected <code>ApplicationScenarioKey</code> in the dimension and then filter the funded-lifecycle row. The lifecycle table does not filter back upstream into the dimension.</p>
+<p>One nuance: because the lifecycle export is currently unique at 130/130 keys, Power BI may offer or infer <strong>one-to-one</strong>. I still want the model relationship treated as <strong>dimension 1 → fact *</strong> unless Power BI prevents it because both sides are physically unique. If Power BI shows one-to-one as the only sensible option, send me that dialog screenshot before clicking OK.</p>
+</div></article><article id="m-658423be-2d4c-425d-abaf-12ca739eecc5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00768 · 2026-09-02T20:17:41.961000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 3c282d68-c9be-493b-843b-704fd5c169dc.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-1a8b7fae-4a37-4e0d-8f84-b6f0fffa18a6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00769 · 2026-09-02T20:17:47.318002-04:00 · active path</p><div class="bubble"><p>The screenshot is very useful. <strong>Do not save this relationship yet.</strong> Power BI has already created or detected another relationship involving the new lifecycle table, which is creating an ambiguous filter path.</p>
+<p>The error tells us exactly what the competing paths are:</p>
+<pre><code class="language-text">Path 1
+R1FactFundedLifecycle → DimMerchant
+
+Path 2
+R1FactFundedLifecycle
+→ R1DimApplicationScenario
+→ DimApplication
+→ DimMerchant
+</code></pre>
+<p>We want <strong>Path 2 only</strong>. The new lifecycle table should hang off <code>R1DimApplicationScenario</code> at <code>ApplicationScenarioKey</code> grain. It should <strong>not</strong> also connect directly to <code>DimMerchant</code>.</p>
+<h3>Do this now</h3>
+<ol>
+<li>In the relationship dialog you have open, click <strong>Cancel</strong>.</li>
+<li>Go to <strong>Model view</strong>.</li>
+<li>Find <code>R1FactFundedLifecycle</code>.</li>
+<li>Look for <strong>every relationship line currently connected to it</strong>.</li>
+</ol>
+<p>Because Power BI often auto-detects relationships when a new table is loaded, I expect you will see at least one automatically created line from <code>R1FactFundedLifecycle</code> to a core table.</p>
+<h3>Delete the unwanted direct relationship</h3>
+<p>Find the relationship between:</p>
+<p><code>R1FactFundedLifecycle</code></p>
+<p>and</p>
+<p><code>DimMerchant</code></p>
+<p>Click the relationship line, then either:</p>
+<ul>
+<li>press <strong>Delete</strong>, or</li>
+<li>right-click → <strong>Delete</strong></li>
+</ul>
+<p>Confirm deletion.</p>
+<p>We do <strong>not</strong> want this:</p>
+<pre><code class="language-text">DimMerchant
+    ↑
+R1FactFundedLifecycle
+</code></pre>
+<p>The lifecycle table contains <code>merchant_id</code> only as a <strong>descriptive/lineage field</strong>. It is not supposed to create a separate semantic filter route.</p>
+<h3>Also inspect for other auto-detected relationships</h3>
+<p>Before creating the intended relationship, check whether Power BI also created direct relationships from <code>R1FactFundedLifecycle</code> to any of these:</p>
+<ul>
+<li><code>DimApplication</code></li>
+<li><code>DimScenario</code></li>
+<li><code>DimMerchant</code></li>
+<li>any other core dimension</li>
+</ul>
+<p>If so, <strong>delete those too</strong>.</p>
+<p>For this new table, I want exactly <strong>one model relationship</strong> at this stage:</p>
+<pre><code class="language-text">R1DimApplicationScenario[ApplicationScenarioKey]   1
+                       |
+                       v
+R1FactFundedLifecycle[ApplicationScenarioKey]      *
+</code></pre>
+<p>Nothing else.</p>
+<p>The fields such as:</p>
+<ul>
+<li><code>ApplicationKey</code></li>
+<li><code>RunScenarioKey</code></li>
+<li><code>merchant_id</code></li>
+<li><code>AccountKey</code></li>
+<li><code>AdvanceKey</code></li>
+</ul>
+<p>remain in <code>R1FactFundedLifecycle</code> for lineage and traceability, but they should <strong>not each become separate active relationships</strong>. <code>ApplicationScenarioKey</code> is the governed grain key for this object.</p>
+<h3>Then create the intended relationship again</h3>
+<p>After removing the auto-detected relationships:</p>
+<ol>
+<li>Drag <code>R1DimApplicationScenario[ApplicationScenarioKey]</code></li>
+<li>onto <code>R1FactFundedLifecycle[ApplicationScenarioKey]</code>.</li>
+</ol>
+<p>Set:</p>
+<ul>
+<li><strong>From table:</strong> <code>R1DimApplicationScenario</code></li>
+<li><strong>From column:</strong> <code>ApplicationScenarioKey</code></li>
+<li><strong>To table:</strong> <code>R1FactFundedLifecycle</code></li>
+<li><strong>To column:</strong> <code>ApplicationScenarioKey</code></li>
+<li><strong>Cardinality:</strong> <code>One to many (1:*)</code></li>
+<li><strong>Cross-filter direction:</strong> <code>Single</code></li>
+<li><strong>Make this relationship active:</strong> checked</li>
+</ul>
+<p>Then <strong>Save</strong> should become available.</p>
+<h3>Why this matters</h3>
+<p>The existing successor model already has the proper upstream path:</p>
+<pre><code class="language-text">DimMerchant
+   ↓
+DimApplication
+   ↓
+R1DimApplicationScenario
+   ↓
+R1FactFundedLifecycle
+</code></pre>
+<p>More precisely, the existing core/successor integration uses <code>DimApplication[ApplicationKey] 1 → * R1DimApplicationScenario[ApplicationKey]</code>. The handoff established that as part of the successor model. [export reference: filecite | turn140file11 | L943-L976]</p>
+<p>Adding another direct:</p>
+<pre><code class="language-text">DimMerchant → R1FactFundedLifecycle
+</code></pre>
+<p>gives Power BI two ways to reach the same data, hence the ambiguity warning.</p>
+<p>So <strong>cancel this dialog, delete every auto-detected lifecycle relationship, then create only the ApplicationScenarioKey relationship.</strong></p>
+<p>If you want, send me a screenshot of <code>R1FactFundedLifecycle</code> in Model view after you cancel—I can tell you exactly which line(s) to delete before you touch anything.</p>
+</div></article><article id="m-546ef257-bfc1-4967-b484-9e15c86422eb" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00770 · 2026-09-02T20:25:59.850000-04:00 · active path</p><p class="note">13 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 60b170ea-30ea-4d82-a9c5-65ca0f73fecb.png; 684c61bb-535e-4a5b-bcfc-cd69c20285ef.png; 6b77a01c-fd84-48f3-9119-cf03548277a9.png; 1fd4c917-34bf-480e-8ede-c1ddb6131c0f.png; 8147ac7f-cf06-4d6a-bb54-2e3bbf30148a.png; 7dd75412-a2ad-487e-9f23-28ffd097e8dc.png; 09ea21c7-8d3e-40e2-bb6d-4c5b1e37f76a.png; 107d2c17-1606-452a-9731-9cb59b4809ea.png; 3e0d5e04-281a-40b5-8587-83ff0dcf4f07.png; e0c5d86e-5693-4c9e-8e2c-3bbf991ed826.png; 42377b9f-6520-47a5-a4c0-75d6265b22f1.png; 663653c3-1842-4892-99eb-399ab30725ba.png; 12da5df5-9e69-4709-aac7-5c10dd8ce571.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-161e67af-7209-4114-afa0-65cfe34fe8c1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00771 · 2026-09-02T20:26:10.290377-04:00 · active path</p><div class="bubble"><p>These screenshots clarify exactly what happened: <strong>Power BI auto-detected a large set of relationships for the new table. None of those auto-detected relationships should remain.</strong> The lifecycle table should have <strong>one and only one model relationship</strong>: the governed <code>ApplicationScenarioKey</code> relationship to <code>R1DimApplicationScenario</code>.</p>
+<p>Most importantly, one of the auto-created relationships is <strong>active</strong>:</p>
+<p><code>R1FactFundedLifecycle[population_id] → DimRunCampaign[population_id]</code></p>
+<p>That active relationship is what makes the intended <code>R1DimApplicationScenario → R1FactFundedLifecycle</code> relationship ambiguous. The other auto-detected relationships are currently inactive, but they should still be removed because they are not part of the lifecycle-table contract and create unnecessary alternate semantic paths.</p>
+<p>The successor model deliberately uses deterministic keys and controlled relationships; the handoff says not to rediscover or reconstruct alternate paths merely because columns happen to match. [export reference: filecite | turn140file0 | L31-L55]</p>
+<h3>Delete every existing relationship connected to <code>R1FactFundedLifecycle</code></h3>
+<p>From your screenshots, I count <strong>13 auto-detected relationships</strong>. Delete all of these:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Other table</th>
+<th>Lifecycle key</th>
+<th>Status now</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>R1FactPortfolioPerformance</code></td>
+<td><code>synthetic_account_id</code></td>
+<td>Inactive</td>
+<td><strong>Delete</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>R1FactIntervention</code></td>
+<td><code>synthetic_account_id</code></td>
+<td>Inactive</td>
+<td><strong>Delete</strong></td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>FactAccountDaily</code></td>
+<td><code>synthetic_advance_id</code></td>
+<td>Inactive</td>
+<td><strong>Delete</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>FactApplicationScenario</code></td>
+<td><code>ApplicationScenarioKey</code></td>
+<td>Inactive</td>
+<td><strong>Delete</strong></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>FactPaymentException</code></td>
+<td><code>scenario_id</code></td>
+<td>Inactive</td>
+<td><strong>Delete</strong></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>FactFinalDecision</code></td>
+<td><code>ApplicationScenarioKey</code></td>
+<td>Inactive</td>
+<td><strong>Delete</strong></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>DimRunCampaign</code></td>
+<td><code>population_id</code></td>
+<td><strong>ACTIVE</strong></td>
+<td><strong>Delete</strong></td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>R1FactServicingExecution</code></td>
+<td><code>synthetic_account_id</code></td>
+<td>Inactive</td>
+<td><strong>Delete</strong></td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>R1FactDailyMonitoring</code></td>
+<td><code>synthetic_advance_id</code></td>
+<td>Inactive</td>
+<td><strong>Delete</strong></td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>R1FactAccountStrategySimulation</code></td>
+<td><code>AccountKey</code></td>
+<td>Inactive</td>
+<td><strong>Delete</strong></td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>R1FactOperationalSetup</code></td>
+<td><code>synthetic_account_id</code></td>
+<td>Inactive</td>
+<td><strong>Delete</strong></td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>R1FactAccountCertification</code></td>
+<td><code>synthetic_account_id</code></td>
+<td>Inactive</td>
+<td><strong>Delete</strong></td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>R1DimApplicationScenario</code></td>
+<td><code>ApplicationScenarioKey</code></td>
+<td>Inactive auto-created 1:1</td>
+<td><strong>Delete and recreate correctly</strong></td>
+</tr>
+</tbody></table>
+<p>That last one deserves emphasis: you already have an automatically created relationship to the <strong>right table and column</strong>, but it is currently:</p>
+<ul>
+<li>inactive;</li>
+<li><code>1:1</code>;</li>
+<li>bidirectional.</li>
+</ul>
+<p>That is <strong>not</strong> the relationship contract we want.</p>
+<h3>How to delete them</h3>
+<p>For each dotted/solid line touching <code>R1FactFundedLifecycle</code>:</p>
+<ol>
+<li>Click the relationship line.</li>
+<li>Confirm the Properties pane shows <code>R1FactFundedLifecycle</code> as one of the tables.</li>
+<li>Press the <strong>Delete</strong> key on your keyboard.</li>
+<li>Power BI will ask you to confirm deletion.</li>
+<li>Click <strong>Delete</strong>.</li>
+<li>Repeat until <code>R1FactFundedLifecycle</code> has <strong>no relationship lines at all</strong>.</li>
+</ol>
+<p>Because there are a lot of lines close together, use the Properties pane exactly as you did in these screenshots to make sure you have selected the intended relationship before deleting it.</p>
+<p>Do <strong>not</strong> delete any relationships between other existing tables. Only lines where one endpoint is <code>R1FactFundedLifecycle</code>.</p>
+<h3>Then create exactly one relationship</h3>
+<p>Once the lifecycle table is completely isolated, drag:</p>
+<p><code>R1DimApplicationScenario[ApplicationScenarioKey]</code></p>
+<p>onto:</p>
+<p><code>R1FactFundedLifecycle[ApplicationScenarioKey]</code></p>
+<p>In the dialog, make sure the top and bottom are exactly:</p>
+<pre><code class="language-text">From table
+R1DimApplicationScenario
+Column
+ApplicationScenarioKey
+
+To table
+R1FactFundedLifecycle
+Column
+ApplicationScenarioKey
+</code></pre>
+<p>Then set:</p>
+<p><strong>Cardinality:</strong> <code>One to many (1:*)</code></p>
+<p>This means:</p>
+<pre><code class="language-text">R1DimApplicationScenario                              R1FactFundedLifecycle
+ApplicationScenarioKey                                ApplicationScenarioKey
+          1                         →                          *
+</code></pre>
+<p>So the <strong>1 belongs to <code>R1DimApplicationScenario</code></strong> and the <strong>* belongs to <code>R1FactFundedLifecycle</code></strong>.</p>
+<p>Even though the current lifecycle export happens to contain exactly 130 unique keys, we are deliberately modeling it as a fact hanging off the application-scenario dimension. The semantic contract is dimension → fact, not peer-to-peer <code>1:1</code>.</p>
+<p>Set:</p>
+<p><strong>Cross-filter direction:</strong> <code>Single</code></p>
+<p>The direction should be:</p>
+<pre><code class="language-text">R1DimApplicationScenario
+          ↓
+R1FactFundedLifecycle
+</code></pre>
+<p>Set:</p>
+<p><strong>Make this relationship active:</strong> <code>Yes</code></p>
+<p>Then click <strong>Save</strong>.</p>
+<h3>Why we do not want the other relationships</h3>
+<p>The fields in <code>R1FactFundedLifecycle</code> such as:</p>
+<p><code>population_id</code><br><code>synthetic_account_id</code><br><code>synthetic_advance_id</code><br><code>ApplicationKey</code><br><code>AccountKey</code><br><code>AdvanceKey</code></p>
+<p>are valuable <strong>lineage and reconciliation attributes</strong>. They are not invitations to build another model relationship for each identifier.</p>
+<p>The governed grain of this new object is:</p>
+<p><code>ApplicationScenarioKey</code></p>
+<p>and the physical export has exactly 130 unique keys. Everything else should be reached through the established model path:</p>
+<pre><code class="language-text">DimMerchant / DimApplication / DimScenario
+                ↓
+       R1DimApplicationScenario
+                ↓
+       R1FactFundedLifecycle
+</code></pre>
+<p>That is why merchant 738 works correctly:</p>
+<pre><code class="language-text">738 + Baseline
+→ ApplicationScenarioKey 1|5|...
+→ lifecycle row exists
+
+738 + Recession Energy
+→ ApplicationScenarioKey 1|6|...
+→ lifecycle row does not exist
+</code></pre>
+<p>No merchant-level or population-level relationship can accidentally leak the Baseline lifecycle into Recession Energy.</p>
+<h3>One setting I want you to check before clicking Save</h3>
+<p>After deleting the 13 auto-detected relationships and recreating the intended one, the dialog should look like this:</p>
+<pre><code class="language-text">R1DimApplicationScenario              R1FactFundedLifecycle
+ApplicationScenarioKey                ApplicationScenarioKey
+
+Cardinality:
+One to many (1:*)
+
+Cross-filter direction:
+Single
+
+Active:
+Yes
+</code></pre>
+<p>There should be <strong>no red ambiguity warning</strong> at the bottom.</p>
+<p>If that is what you see, save it. If Power BI gives you a new warning despite all other lifecycle relationships being deleted, send me that dialog before proceeding.</p>
+</div></article><article id="m-d89a066c-166c-4fac-8d33-4e804c32adcc" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00772 · 2026-09-02T20:32:17.281000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 12c24c25-e319-4900-9a2c-57e24a7afa6e.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-02a638f4-70e0-44e9-b413-358af6f67524" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00773 · 2026-09-02T20:32:21.471723-04:00 · active path</p><div class="bubble"><p>The error is actually good news: <strong>the relationship design is fine; the wrong columns are selected in the dialog.</strong></p>
+<p>In your screenshot, Power BI is currently relating:</p>
+<pre><code class="language-text">R1DimApplicationScenario[ApplicationKey]
+        1
+        ↓
+R1FactFundedLifecycle[ApplicationKey]
+        *
+</code></pre>
+<p>—not <code>ApplicationScenarioKey</code>.</p>
+<p>You can see the green selection box is on <strong>ApplicationKey</strong> in both preview grids. That field is <strong>not unique</strong> in <code>R1DimApplicationScenario</code>, because each application occurs once for Baseline and once for Recession Energy. Hence Power BI reports a duplicate such as:</p>
+<pre><code class="language-text">1|MSBF_POP_0001_M000001_A01
+</code></pre>
+<p>That is exactly expected for <code>ApplicationKey</code>.</p>
+<h3>Fix it in this same dialog</h3>
+<p>Do <strong>not</strong> cancel. Just change the selected columns.</p>
+<ol>
+<li>In the <strong>top grid</strong> for <code>R1DimApplicationScenario</code>, look immediately to the right of the currently highlighted <code>ApplicationKey</code> column.</li>
+<li>Click the next column:
+<strong><code>ApplicationScenarioKey</code></strong></li>
+<li>Make sure the green outline moves from <code>ApplicationKey</code> to <code>ApplicationScenarioKey</code>.</li>
+</ol>
+<p>Then in the <strong>bottom grid</strong> for <code>R1FactFundedLifecycle</code>:</p>
+<ol start="4">
+<li>Again, look immediately to the right of <code>ApplicationKey</code>.</li>
+<li>Click:
+<strong><code>ApplicationScenarioKey</code></strong></li>
+<li>Make sure the green outline is on <code>ApplicationScenarioKey</code>.</li>
+</ol>
+<p>The dialog should then represent:</p>
+<pre><code class="language-text">FROM
+R1DimApplicationScenario[ApplicationScenarioKey]
+
+TO
+R1FactFundedLifecycle[ApplicationScenarioKey]
+</code></pre>
+<h3>Leave these settings as they are</h3>
+<p>Keep:</p>
+<ul>
+<li><strong>Cardinality:</strong> <code>One to many (1:*)</code></li>
+<li><strong>Cross-filter direction:</strong> <code>Single</code></li>
+<li><strong>Make this relationship active:</strong> checked</li>
+</ul>
+<p>Once both selected columns are actually <code>ApplicationScenarioKey</code>, the duplicate-key error should disappear and <strong>Save</strong> should become available.</p>
+<h3>Why <code>ApplicationKey</code> failed but <code>ApplicationScenarioKey</code> works</h3>
+<p>For merchant/application 738:</p>
+<p><code>ApplicationKey</code> is the same under both scenarios:</p>
+<pre><code class="language-text">1|MSBF_POP_0001_M000738_A01
+</code></pre>
+<p>so it occurs twice in the 1,500-row R1 dimension.</p>
+<p>But <code>ApplicationScenarioKey</code> includes the scenario:</p>
+<pre><code class="language-text">Baseline:
+1|5|MSBF_POP_0001_M000738_A01
+
+Recession Energy:
+1|6|MSBF_POP_0001_M000738_A01
+</code></pre>
+<p>Those are different and unique.</p>
+<p>That is precisely why the lifecycle export and handoff require <strong>ApplicationScenarioKey grain</strong>—it prevents Baseline funding facts from leaking into Recession Energy.</p>
+<p>So: <strong>you do not have a data defect here. You simply clicked the adjacent <code>ApplicationKey</code> column instead of <code>ApplicationScenarioKey</code>.</strong> Select <code>ApplicationScenarioKey</code> in both grids and save.</p>
+</div></article><article id="m-305a73de-ac86-4389-994f-8b44aa9f30fc" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00774 · 2026-09-02T20:45:04.116000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 116b9d75-5d38-498d-9320-eb8ed3457393.png; 76f53115-4196-4264-9da5-93b6c657a8f3.png</p><div class="bubble"><p>I&#39;m not a big fan of the decision narrative. It is not a substantial write-up. Other than that, it seems we have made significant progress.</p>
+</div></article><article id="m-769b9114-b761-444e-b287-fcd13486577b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00775 · 2026-09-02T20:45:07.652733-04:00 · active path</p><div class="bubble"><p>Yes — the page has made a major jump. The <strong>authority problem is now largely solved</strong>: 738 cleanly differentiates Baseline vs. Recession Energy, Funding date is correct on the funded path, and the final decision tile/narratives no longer leak predecessor review state.</p>
+<p>I agree with your criticism of the current <strong>Recommendation</strong> block. It is now factually correct, but too thin relative to the rest of the page. The operating-evidence and risk/economics blocks are substantive; the recommendation should close the story with comparable explanatory weight.</p>
+<p>I would not simply make <code>decision_why_text</code> longer in DAX. Instead, use a <strong>composite R1-successor narrative measure</strong> that remains source-owned but assembles the final decision narrative with selected-structure and search context already present in the successor facts.</p>
+<p>For example, for 738 / Baseline, the recommendation should read more like:</p>
+<blockquote>
+<p>The requested structure was authorized without a counteroffer. The selected terms preserve the requested $25,000 amount, 13.40% remittance rate, 1.21 payback multiple, and 60-day horizon. The structure passed the governed decision boundary and entered the funded lifecycle on July 25, 2026.</p>
+</blockquote>
+<p>That is much more satisfying because it answers three executive questions:</p>
+<p><strong>What did we decide?</strong><br><strong>What structure did we authorize?</strong><br><strong>Did it actually proceed into the funded lifecycle?</strong></p>
+<p>For a counteroffer review, it should instead say something like:</p>
+<blockquote>
+<p>A supportable alternative structure was identified after governed candidate search, but the outcome remains subject to review and was not authorized for funding. The proposed terms reduce exposure and/or alter repayment economics relative to the original request; no funded lifecycle exists for this scenario.</p>
+</blockquote>
+<p>And for a decline:</p>
+<blockquote>
+<p>The application was declined because governed evidence/structure requirements were not satisfied. No authorized structure or funded lifecycle was established for this scenario.</p>
+</blockquote>
+<p>I would therefore replace the visible <code>Recommendation</code> measure with a richer <strong>presentation measure</strong>, but keep <code>R1FactFinalDecision[decision_why_text]</code> as the anchor rather than override it.</p>
+<p>A good full replacement pattern is:</p>
+<pre><code class="language-DAX">R26 P03 Recommendation Narrative =
+VAR _BaseNarrative =
+    [R26 P03 Decision Narrative]
+
+VAR _DecisionClass =
+    [R26 P03 Decision Class]
+
+VAR _DecisionLabel =
+    [R26 P03 Decision Label]
+
+VAR _Amount =
+    [R26 P03 Selected Structure Amount]
+
+VAR _Remittance =
+    [R26 P03 Selected Remittance Rate]
+
+VAR _PBM =
+    [R26 P03 Selected Payback Multiple]
+
+VAR _Horizon =
+    [R26 P03 Selected Horizon Days]
+
+VAR _FundingDate =
+    [R26 P03 Funding Date]
+
+RETURN
+    SWITCH (
+        TRUE (),
+
+        _DecisionClass = &quot;AUTHORIZED&quot;,
+            _BaseNarrative
+                &amp; &quot; The authorized structure is &quot;
+                &amp; FORMAT ( _Amount, &quot;$#,0.00&quot; )
+                &amp; &quot; at a &quot;
+                &amp; FORMAT ( _Remittance, &quot;0.00%&quot; )
+                &amp; &quot; remittance rate, &quot;
+                &amp; FORMAT ( _PBM, &quot;0.00&quot; )
+                &amp; &quot; payback multiple, and &quot;
+                &amp; FORMAT ( _Horizon, &quot;0&quot; )
+                &amp; &quot;-day horizon.&quot;
+                &amp; IF (
+                    NOT ISBLANK ( _FundingDate ),
+                    &quot; The funded lifecycle began on &quot;
+                        &amp; FORMAT ( _FundingDate, &quot;mmmm d, yyyy&quot; )
+                        &amp; &quot;.&quot;,
+                    &quot;&quot;
+                ),
+
+        _DecisionClass = &quot;REVIEW&quot;,
+            _BaseNarrative
+                &amp; IF (
+                    NOT ISBLANK ( _Amount ),
+                    &quot; A proposed structure of &quot;
+                        &amp; FORMAT ( _Amount, &quot;$#,0.00&quot; )
+                        &amp; &quot; at a &quot;
+                        &amp; FORMAT ( _Remittance, &quot;0.00%&quot; )
+                        &amp; &quot; remittance rate, &quot;
+                        &amp; FORMAT ( _PBM, &quot;0.00&quot; )
+                        &amp; &quot; payback multiple, and &quot;
+                        &amp; FORMAT ( _Horizon, &quot;0&quot; )
+                        &amp; &quot;-day horizon remains subject to governed review.&quot;,
+                    &quot;&quot;
+                )
+                &amp; &quot; No funded lifecycle has been established.&quot;,
+
+        _DecisionClass = &quot;DECLINED&quot;,
+            _BaseNarrative
+                &amp; &quot; No authorized structure or funded lifecycle was established for this scenario.&quot;,
+
+        _BaseNarrative
+    )
+</code></pre>
+<p>Then bind the <strong>Recommendation</strong> visual to:</p>
+<p><code>R26 P03 Recommendation Narrative</code></p>
+<p>instead of the shorter <code>R26 P03 Decision Narrative</code>.</p>
+<p>I like this because it does <strong>not invent a new decision</strong>. It presents the existing successor decision, the exact successor proposed terms, and the physical funded-lifecycle result together in one executive-readable close.</p>
+<p>One small visual point: you now have enough vertical room in that lower-left section that I would let Recommendation use <strong>3–4 lines</strong>, not force it into the same compact height as before. The page balance still works, and the recommendation is important enough to deserve the extra space.</p>
+<p>So yes: <strong>keep the current P03 structure, but materially strengthen Recommendation.</strong> That is the next change I would make before freezing the page.</p>
+</div></article><article id="m-66fda1d2-8ce0-4c07-ba8d-ab6c6e464dd1" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00776 · 2026-09-02T20:54:35.278000-04:00 · active path</p><div class="bubble"><p>what does it even mean to a user reading when it says, &quot;The independent scenario authorized...&quot; It sounds too technical still.</p>
+</div></article><article id="m-33342071-e602-4d9c-89f5-cd842667dde9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00777 · 2026-09-02T20:54:39.364946-04:00 · active path</p><div class="bubble"><p>I agree. <strong>“The independent scenario authorized…” is model/process language, not business-user language.</strong> A user reading P03 should not have to understand what an “independent scenario” is to know what happened.</p>
+<p>For the page, the Recommendation should speak in plain decision terms:</p>
+<ul>
+<li>what happened,</li>
+<li>why,</li>
+<li>what structure resulted,</li>
+<li>and whether it funded.</li>
+</ul>
+<p>For 738 / Baseline, I would use wording more like:</p>
+<blockquote>
+<p><strong>The requested structure was approved as submitted.</strong> The $25,000 request, 13.40% remittance rate, 1.21 payback multiple, and 60-day term satisfied the governed decision requirements. The account entered the funded lifecycle on July 25, 2026.</p>
+</blockquote>
+<p>That is much clearer.</p>
+<p>For other classes, I would use the same business-facing pattern:</p>
+<ul>
+<li><strong>Counteroffer authorized:</strong> “A revised structure was approved after the requested terms did not fully satisfy the governed decision requirements. The approved structure reduced or adjusted the original request while remaining within the required risk and economic boundaries.”</li>
+<li><strong>Counteroffer review:</strong> “A revised structure was identified, but it requires additional review before it can be authorized. No funded lifecycle has been established.”</li>
+<li><strong>Underwriting review:</strong> “The application requires additional underwriting review before a final authorization can be made. No funded lifecycle has been established.”</li>
+<li><strong>Evidence decline:</strong> “The application was declined because required underwriting evidence was not sufficient to support a complete decision. No funded lifecycle was established.”</li>
+<li><strong>No feasible structure:</strong> “The requested structure did not meet the governed requirements, and no supportable alternative structure was identified. No funded lifecycle was established.”</li>
+<li><strong>Policy hard stop:</strong> “The application was declined because a governed policy requirement was not satisfied. No funded lifecycle was established.”</li>
+</ul>
+<p>So I would treat <code>decision_why_text</code> as a <strong>source explanation</strong>, not necessarily final display copy. The Power BI measure can translate that source-owned state into polished business wording without changing the underlying decision.</p>
+<p>For 738 specifically, I would absolutely replace “The independent scenario authorized…” with <strong>“The requested structure was approved as submitted.”</strong> That is the right executive language.</p>
+</div></article><article id="m-037987f9-b7e4-406e-9421-03851d95b2b1" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00778 · 2026-09-02T20:56:09.565000-04:00 · active path</p><div class="bubble"><p>I agree with that. These merchant operating evidence / risk &amp; economic assessment / recommendation need to be written with the user in mind and it needs to be highly marketable and clear and professional. let&#39;s work on these write-ups logic.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

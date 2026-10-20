@@ -1,0 +1,1051 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5 — part 05 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5 — part 05</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-04.html">Previous part</a><a href="part-06.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-f05426f1-17bb-4c6a-a78b-01076c3f3d52" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00062 · 2026-09-10T08:17:13.675037-04:00 · active path</p><div class="bubble"><p>The mismatch is now explained. <strong>R6 is not defective. The retry wrapper invoked the wrong retained overlay validator.</strong></p>
+<p>R6 contains <strong>two</strong> overlay validators:</p>
+<pre><code class="language-text">successor_candidates\m2-g3-v2.1.0-rc1\tools\validate_candidate_overlay.py
+successor_candidates\m2-g3-v2.1.0-rc2\tools\validate_candidate_overlay.py
+</code></pre>
+<p>I independently checked the exact retained R6 ZIP again. Their outputs are:</p>
+<pre><code class="language-text">rc1 validator:
+Candidate overlay validation PASS
+Governed candidate files: 235
+</code></pre>
+<pre><code class="language-text">rc2 validator:
+Candidate overlay validation PASS
+Governed candidate files: 248
+</code></pre>
+<p>And the root validator still returns:</p>
+<pre><code class="language-text">Public release validation PASS
+Governed manifest files: 2880
+Module 2 stage folders: 12
+</code></pre>
+<p>So the problem was my Phase C retry line that hardcoded the <strong>rc1</strong> validator while still asserting the <strong>rc2 expected count of 248</strong>.</p>
+<p>The correct disposition is therefore:</p>
+<pre><code class="language-text">PHASE_C_ATTEMPT_1 = FAILED_SCRIPT_GUARD_LOGIC
+PHASE_C_ATTEMPT_2 = FAILED_WRAPPER_VALIDATOR_SELECTION
+R6_DEFECT = NO
+RC1_VALIDATOR = PASS / 235
+RC2_VALIDATOR = PASS / 248
+CHECKOUT_MUTATION = NONE
+GIT_MUTATION = NONE
+PUBLICATION = NONE
+</code></pre>
+<p>We do <strong>not</strong> weaken or edit either validator. Both are legitimate historical/current retained validators with different governed populations.</p>
+<p>Run this bounded completion block against the <strong>already extracted staging tree</strong>. There is no need to extract R6 a third time.</p>
+<pre><code class="language-powershell">&amp; {
+    $ErrorActionPreference = &#39;Stop&#39;
+
+    $Stage = &#39;D:\MSBF_RELEASE_R6_STAGING_20260910T121241797Z_028c5f94&#39;
+    $EvidenceDir = &#39;D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_C_20260910T121241797Z_028c5f94&#39;
+
+    $R6Zip = &#39;D:\MSBF_ZIP_FILES_091026\MSBF_FINAL_INTEGRATED_PUBLICATION_CANDIDATE_R6_20260910_FINAL_MICROPOLISH.zip&#39;
+
+    $ExpectedR6Bytes = 279632507
+    $ExpectedR6Sha256 = &#39;31611a7c90ad7a0b597ecc3c0a5592c2aa7c031a82b5c7fbcc40750c8e8d0bf2&#39;
+    $ExpectedMembers = 2884
+
+    $ExpectedPbixBytes = 27635305
+    $ExpectedPbixSha256 = &#39;ca46e8551860836a0cf4ff9239c42fcf8df02f1705596b9f8ca1bd047b5294e4&#39;
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;MSBF PHASE C — FINAL VALIDATION COMPLETION&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;Staging:  $Stage&quot;
+    Write-Host &quot;Evidence: $EvidenceDir&quot;
+    Write-Host &quot;&quot;
+
+    foreach ($required in @($Stage,$EvidenceDir)) {
+        if (-not (Test-Path -LiteralPath $required -PathType Container)) {
+            throw &quot;Required directory missing: $required&quot;
+        }
+    }
+
+    if (-not (Test-Path -LiteralPath $R6Zip -PathType Leaf)) {
+        throw &quot;R6 ZIP missing: $R6Zip&quot;
+    }
+
+    # ---------------------------------------------------------
+    # 1. Reconfirm outer R6 identity
+    # ---------------------------------------------------------
+
+    $R6Item = Get-Item -LiteralPath $R6Zip
+    $R6Hash = (Get-FileHash -LiteralPath $R6Zip -Algorithm SHA256).Hash.ToLowerInvariant()
+
+    if ($R6Item.Length -ne $ExpectedR6Bytes) {
+        throw &quot;R6 size mismatch.&quot;
+    }
+
+    if ($R6Hash -cne $ExpectedR6Sha256) {
+        throw &quot;R6 SHA-256 mismatch.&quot;
+    }
+
+    # ---------------------------------------------------------
+    # 2. Reconfirm extracted population
+    # ---------------------------------------------------------
+
+    $StageFiles = @(Get-ChildItem -LiteralPath $Stage -Recurse -File -Force)
+
+    if ($StageFiles.Count -ne $ExpectedMembers) {
+        throw &quot;Extracted-file count mismatch. Expected $ExpectedMembers ; actual $($StageFiles.Count)&quot;
+    }
+
+    # ---------------------------------------------------------
+    # 3. Locate Python
+    # ---------------------------------------------------------
+
+    $PythonExe = $null
+    $PythonPrefix = @()
+
+    $pythonCmd = Get-Command python.exe -ErrorAction SilentlyContinue
+
+    if ($pythonCmd) {
+        $PythonExe = $pythonCmd.Source
+    }
+    else {
+        $pyCmd = Get-Command py.exe -ErrorAction SilentlyContinue
+
+        if ($pyCmd) {
+            $PythonExe = $pyCmd.Source
+            $PythonPrefix = @(&#39;-3&#39;)
+        }
+    }
+
+    if (-not $PythonExe) {
+        throw &quot;Python launcher not found.&quot;
+    }
+
+    # ---------------------------------------------------------
+    # 4. Exact validator paths
+    # ---------------------------------------------------------
+
+    $PublicValidator = Join-Path $Stage `
+        &#39;tools\validate_public_release.py&#39;
+
+    $Rc1Validator = Join-Path $Stage `
+        &#39;successor_candidates\m2-g3-v2.1.0-rc1\tools\validate_candidate_overlay.py&#39;
+
+    $Rc2Validator = Join-Path $Stage `
+        &#39;successor_candidates\m2-g3-v2.1.0-rc2\tools\validate_candidate_overlay.py&#39;
+
+    foreach ($v in @($PublicValidator,$Rc1Validator,$Rc2Validator)) {
+        if (-not (Test-Path -LiteralPath $v -PathType Leaf)) {
+            throw &quot;Validator missing: $v&quot;
+        }
+    }
+
+    # ---------------------------------------------------------
+    # 5. Run all three unchanged validators
+    # ---------------------------------------------------------
+
+    Push-Location $Stage
+
+    try {
+        $PublicOutput = @(&amp; $PythonExe @PythonPrefix $PublicValidator 2&gt;&amp;1)
+        $PublicCode = $LASTEXITCODE
+
+        $Rc1Output = @(&amp; $PythonExe @PythonPrefix $Rc1Validator 2&gt;&amp;1)
+        $Rc1Code = $LASTEXITCODE
+
+        $Rc2Output = @(&amp; $PythonExe @PythonPrefix $Rc2Validator 2&gt;&amp;1)
+        $Rc2Code = $LASTEXITCODE
+    }
+    finally {
+        Pop-Location
+    }
+
+    $PublicText = $PublicOutput -join &quot;`n&quot;
+    $Rc1Text = $Rc1Output -join &quot;`n&quot;
+    $Rc2Text = $Rc2Output -join &quot;`n&quot;
+
+    if ($PublicCode -ne 0) {
+        throw &quot;Public validator failed:`n$PublicText&quot;
+    }
+
+    if ($Rc1Code -ne 0) {
+        throw &quot;rc1 overlay validator failed:`n$Rc1Text&quot;
+    }
+
+    if ($Rc2Code -ne 0) {
+        throw &quot;rc2 overlay validator failed:`n$Rc2Text&quot;
+    }
+
+    if ($PublicText -notmatch &#39;Public release validation PASS&#39; -or
+        $PublicText -notmatch &#39;Governed manifest files:\s*2880&#39; -or
+        $PublicText -notmatch &#39;Module 2 stage folders:\s*12&#39;) {
+        throw &quot;Public validator output differs from expected R6 result.&quot;
+    }
+
+    if ($Rc1Text -notmatch &#39;Candidate overlay validation PASS&#39; -or
+        $Rc1Text -notmatch &#39;Governed candidate files:\s*235&#39;) {
+        throw &quot;rc1 overlay output differs from its retained expected result.&quot;
+    }
+
+    if ($Rc2Text -notmatch &#39;Candidate overlay validation PASS&#39; -or
+        $Rc2Text -notmatch &#39;Governed candidate files:\s*248&#39;) {
+        throw &quot;rc2 overlay output differs from its retained expected result.&quot;
+    }
+
+    # ---------------------------------------------------------
+    # 6. PBIX identity
+    # ---------------------------------------------------------
+
+    $PbixPath = Join-Path $Stage `
+        &#39;docs\power_bi\m2_v2_1\release\MSBF_Merchant_Credit_Intelligence_M2_v2.1.0-rc2.pbix&#39;
+
+    if (-not (Test-Path -LiteralPath $PbixPath -PathType Leaf)) {
+        throw &quot;Accepted PBIX missing.&quot;
+    }
+
+    $Pbix = Get-Item -LiteralPath $PbixPath
+    $PbixHash = (Get-FileHash -LiteralPath $PbixPath -Algorithm SHA256).Hash.ToLowerInvariant()
+
+    if ($Pbix.Length -ne $ExpectedPbixBytes) {
+        throw &quot;PBIX byte-size mismatch.&quot;
+    }
+
+    if ($PbixHash -cne $ExpectedPbixSha256) {
+        throw &quot;PBIX SHA-256 mismatch.&quot;
+    }
+
+    # ---------------------------------------------------------
+    # 7. Eleven exact R22 excluded paths
+    #
+    # Pull them from the public exclusion register in R6 if present.
+    # Fail closed if the register cannot be resolved.
+    # ---------------------------------------------------------
+
+    $ExclusionRegisterHits = @(
+        Get-ChildItem -LiteralPath $Stage -Recurse -File |
+        Where-Object {
+            $_.Name -match &#39;(?i)exclusion|provenance|projection&#39;
+        } |
+        Select-String -SimpleMatch &#39;02_POST_DESKTOP_STRUCTURAL_VALIDATION.json&#39; `
+            -List -ErrorAction SilentlyContinue |
+        Select-Object -ExpandProperty Path -Unique
+    )
+
+    if ($ExclusionRegisterHits.Count -eq 0) {
+        throw &quot;Could not resolve a retained public exclusion/provenance record for R22.&quot;
+    }
+
+    # Direct known private-R22 subtree must not exist as public payload.
+    $PrivateR22Root = Join-Path $Stage `
+        &#39;successor_candidates\m2-g3-v2.1.0-rc2\power_bi\evidence\r22&#39;
+
+    $PrivateR22Files = @()
+
+    if (Test-Path -LiteralPath $PrivateR22Root) {
+        $PrivateR22Files = @(
+            Get-ChildItem -LiteralPath $PrivateR22Root -Recurse -File -Force
+        )
+    }
+
+    if ($PrivateR22Files.Count -gt 0) {
+        throw &quot;Private R22 payload files are present under excluded subtree.&quot;
+    }
+
+    # ---------------------------------------------------------
+    # 8. Private/raw carrier screening
+    # ---------------------------------------------------------
+
+    $ForbiddenPatterns = @(
+        &#39;*PRIVATE*.zip&#39;,
+        &#39;*EVIDENCE_PRIVATE*.zip&#39;,
+        &#39;*CONTROL_PRIVATE*.zip&#39;,
+        &#39;*AUDIT_RETURN*.zip&#39;,
+        &#39;*PART4_RETURN*.zip&#39;,
+        &#39;*ChatGPT Conversation Log*.pdf&#39;
+    )
+
+    $Forbidden = New-Object System.Collections.Generic.List[string]
+
+    foreach ($pattern in $ForbiddenPatterns) {
+        Get-ChildItem -LiteralPath $Stage -Recurse -File -Filter $pattern `
+            -ErrorAction SilentlyContinue |
+            ForEach-Object { $Forbidden.Add($_.FullName) }
+    }
+
+    if ($Forbidden.Count -gt 0) {
+        throw &quot;Potential private/raw carrier found: $($Forbidden -join &#39;; &#39;)&quot;
+    }
+
+    # ---------------------------------------------------------
+    # 9. Standalone font check
+    # ---------------------------------------------------------
+
+    $FontExtensions = @(&#39;.ttf&#39;,&#39;.otf&#39;,&#39;.woff&#39;,&#39;.woff2&#39;,&#39;.eot&#39;)
+
+    $Fonts = @(
+        $StageFiles |
+        Where-Object { $FontExtensions -contains $_.Extension.ToLowerInvariant() }
+    )
+
+    if ($Fonts.Count -gt 0) {
+        throw &quot;Standalone fonts found: $($Fonts.FullName -join &#39;; &#39;)&quot;
+    }
+
+    # ---------------------------------------------------------
+    # 10. Key public routes
+    # ---------------------------------------------------------
+
+    $RequiredPublicPaths = @(
+        &#39;README.md&#39;,
+        &#39;docs\README.md&#39;,
+        &#39;docs\guide\CURRENT_USE.md&#39;,
+        &#39;docs\guide\EXPLAINABILITY.md&#39;,
+        &#39;docs\guide\LEARNING.md&#39;,
+        &#39;docs\guide\VISUALS.md&#39;,
+
+        &#39;docs\power_bi\m2_v2_1\assets\power_bi\core\p03_application_journey_738_baseline.png&#39;,
+        &#39;docs\power_bi\m2_v2_1\assets\power_bi\core\p03_application_journey_749_baseline.png&#39;,
+
+        &#39;docs\portfolio_visuals\MSBF_VISUAL_PUBLIC_R1\assets\posters\MSBF_MCI_How_the_Governed_Decision_Engine_Works_v2_1_COPYFIX_R1.png&#39;,
+        &#39;docs\portfolio_visuals\MSBF_VISUAL_PUBLIC_R1\assets\posters\MSBF_MCI_What_Happens_After_the_Decision_v2_1_COPYFIX_R1.png&#39;
+    )
+
+    foreach ($relative in $RequiredPublicPaths) {
+        if (-not (Test-Path -LiteralPath (Join-Path $Stage $relative) -PathType Leaf)) {
+            throw &quot;Required public path missing: $relative&quot;
+        }
+    }
+
+    # ---------------------------------------------------------
+    # 11. Write final Phase C receipt
+    # ---------------------------------------------------------
+
+    $Receipt = [ordered]@{
+        SchemaVersion = &#39;1.2&#39;
+        Task = &#39;MSBF_RELEASE_ENGINEERING_PHASE_C_FINAL&#39;
+        GoverningDecision = &#39;IA-D-R20-INT-001&#39;
+        ConditionalAuthority = &#39;IA-PUB-R20-INTEGRATED-001&#39;
+
+        PriorAttempt1 = &#39;FAILED_SCRIPT_GUARD_LOGIC&#39;
+        PriorAttempt2 = &#39;FAILED_WRAPPER_VALIDATOR_SELECTION&#39;
+        CandidateDefectEstablished = $false
+
+        R6Zip = $R6Zip
+        R6Bytes = $R6Item.Length
+        R6Sha256 = $R6Hash
+
+        Stage = $Stage
+        EvidenceDirectory = $EvidenceDir
+        ExtractedFiles = $StageFiles.Count
+
+        PublicValidator = [ordered]@{
+            Path = &#39;tools\validate_public_release.py&#39;
+            ExitCode = $PublicCode
+            Output = @($PublicOutput)
+            ExpectedGovernedFiles = 2880
+        }
+
+        Rc1OverlayValidator = [ordered]@{
+            Path = &#39;successor_candidates\m2-g3-v2.1.0-rc1\tools\validate_candidate_overlay.py&#39;
+            ExitCode = $Rc1Code
+            Output = @($Rc1Output)
+            ExpectedGovernedFiles = 235
+        }
+
+        Rc2OverlayValidator = [ordered]@{
+            Path = &#39;successor_candidates\m2-g3-v2.1.0-rc2\tools\validate_candidate_overlay.py&#39;
+            ExitCode = $Rc2Code
+            Output = @($Rc2Output)
+            ExpectedGovernedFiles = 248
+        }
+
+        PbixBytes = $Pbix.Length
+        PbixSha256 = $PbixHash
+
+        PrivateR22Files = $PrivateR22Files.Count
+        ForbiddenPrivateCarriers = $Forbidden.Count
+        StandaloneFonts = $Fonts.Count
+
+        ExclusionProvenanceRecordCandidates = @($ExclusionRegisterHits)
+
+        CheckoutMutation = &#39;NONE&#39;
+        GitMutation = &#39;NONE&#39;
+        Publication = &#39;NOT_PERFORMED&#39;
+
+        PhaseCStatus = &#39;PASS&#39;
+    }
+
+    $JsonPath = Join-Path $EvidenceDir `
+        &#39;MSBF_PHASE_C_R6_STAGING_VALIDATION_FINAL.json&#39;
+
+    $TxtPath = Join-Path $EvidenceDir `
+        &#39;MSBF_PHASE_C_FINAL_SUMMARY.txt&#39;
+
+    $Receipt |
+        ConvertTo-Json -Depth 10 |
+        Set-Content -LiteralPath $JsonPath -Encoding UTF8
+
+    $Summary = @(
+        &#39;PHASE_C_R6_STAGING = PASS&#39;,
+        &quot;R6 SHA-256: $R6Hash&quot;,
+        &quot;Staging root: $Stage&quot;,
+        &quot;Extracted files: $($StageFiles.Count)&quot;,
+        &#39;&#39;,
+        &#39;Public release validation PASS&#39;,
+        &#39;Governed manifest files: 2880&#39;,
+        &#39;Module 2 stage folders: 12&#39;,
+        &#39;&#39;,
+        &#39;rc1 candidate overlay validation PASS&#39;,
+        &#39;Governed candidate files: 235&#39;,
+        &#39;&#39;,
+        &#39;rc2 candidate overlay validation PASS&#39;,
+        &#39;Governed candidate files: 248&#39;,
+        &#39;&#39;,
+        &quot;Private R22 payload files: $($PrivateR22Files.Count)&quot;,
+        &quot;Forbidden private/raw carriers: $($Forbidden.Count)&quot;,
+        &quot;Standalone fonts: $($Fonts.Count)&quot;,
+        &quot;PBIX bytes: $($Pbix.Length)&quot;,
+        &quot;PBIX SHA-256: $PbixHash&quot;,
+        &#39;&#39;,
+        &#39;Candidate defect established: False&#39;,
+        &#39;D:\x\m mutation: NONE&#39;,
+        &#39;Git mutation: NONE&#39;,
+        &#39;Publication: NOT PERFORMED&#39;,
+        &#39;&#39;,
+        &quot;Receipt: $JsonPath&quot;
+    )
+
+    $Summary |
+        Set-Content -LiteralPath $TxtPath -Encoding UTF8
+
+    Write-Host &quot;&quot;
+    $Summary | ForEach-Object { Write-Host $_ }
+    Write-Host &quot;&quot;
+    Write-Host &quot;Stop here and return the JSON receipt and console summary.&quot;
+}
+</code></pre>
+<p>What I expect is:</p>
+<pre><code class="language-text">PHASE_C_R6_STAGING = PASS
+
+Public release validation PASS
+Governed manifest files: 2880
+
+rc1 candidate overlay validation PASS
+Governed candidate files: 235
+
+rc2 candidate overlay validation PASS
+Governed candidate files: 248
+</code></pre>
+<p>This distinction is worth retaining in the evidence because it explains the apparent discrepancy rather than hiding it.</p>
+<p>Once that returns PASS, <strong>Phase C will finally be closed</strong>, and only then will I give you the deterministic staging-to-<code>D:\x\m</code> synchronization block. We still will not commit or tag at that point.</p>
+</div></article><article id="m-1cd5fcdc-1814-4175-bcdd-9f72cb229f8d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00063 · 2026-09-10T08:20:04.682000-04:00 · active path</p><p class="note">Attachment references: MSBF_PHASE_C_FINAL_SUMMARY.txt; MSBF_PHASE_C_R6_STAGING_VALIDATION_FINAL.json; OVERLAY_VALIDATOR_RAW_OUTPUT_RETRY1.txt</p><div class="bubble"><h1>============================================================
+MSBF PHASE C — FINAL VALIDATION COMPLETION</h1>
+<p>Staging:  D:\MSBF_RELEASE_R6_STAGING_20260910T121241797Z_028c5f94
+Evidence: D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_C_20260910T121241797Z_028c5f94</p>
+<p>PHASE_C_R6_STAGING = PASS
+R6 SHA-256: 31611a7c90ad7a0b597ecc3c0a5592c2aa7c031a82b5c7fbcc40750c8e8d0bf2
+Staging root: D:\MSBF_RELEASE_R6_STAGING_20260910T121241797Z_028c5f94
+Extracted files: 2884</p>
+<p>Public release validation PASS
+Governed manifest files: 2880
+Module 2 stage folders: 12</p>
+<p>rc1 candidate overlay validation PASS
+Governed candidate files: 235</p>
+<p>rc2 candidate overlay validation PASS
+Governed candidate files: 248</p>
+<p>Private R22 payload files: 0
+Forbidden private/raw carriers: 0
+Standalone fonts: 0
+PBIX bytes: 27635305
+PBIX SHA-256: ca46e8551860836a0cf4ff9239c42fcf8df02f1705596b9f8ca1bd047b5294e4</p>
+<p>Candidate defect established: False
+D:\x\m mutation: NONE
+Git mutation: NONE
+Publication: NOT PERFORMED</p>
+<p>Receipt: D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_C_20260910T121241797Z_028c5f94\MSBF_PHASE_C_R6_STAGING_VALIDATION_FINAL.json</p>
+<p>Stop here and return the JSON receipt and console summary.</p>
+</div></article><article id="m-cdf4dc43-26e7-4e52-a719-a5bf2cfed442" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00064 · 2026-09-10T08:20:09.587149-04:00 · active path</p><div class="bubble"><p><strong>Phase C is now closed with a clean PASS.</strong> The physical receipt records R6 at the expected SHA-256, all <strong>2,884 extracted files</strong>, the root validator at <strong>2,880 governed files</strong>, rc1 at <strong>235</strong>, rc2 at <strong>248</strong>, the accepted PBIX identity, zero private R22 payload files, zero forbidden private carriers, and zero standalone fonts. It also records that neither <code>D:\x\m</code> nor Git was mutated. [export reference: filecite | turn23file0 | L1-L20] [export reference: filecite | turn23file1 | L43-L54]</p>
+<p>The two failed wrapper attempts are now properly characterized as tooling defects rather than candidate defects. The final receipt explicitly records <code>CandidateDefectEstablished: false</code>. [export reference: filecite | turn23file1 | L6-L14]</p>
+<p>We can record:</p>
+<pre><code class="language-text">PHASE_C_R6_STAGING = PASS
+R6_DEFECT = FALSE
+R20 staging/validator gate = PASS
+</code></pre>
+<h2>Phase D — safely materialize R6 into <code>D:\x\m</code></h2>
+<p>This is the <strong>first step that will modify the checkout</strong>, but it will not commit, tag, push, or publish anything.</p>
+<p>The block below is designed to fail closed. Before copying, it rechecks the repository, branch, HEAD, cleanliness, <strong>untracked files and ignored local-only files</strong>, and the staging population. If it discovers local material that a mirror could delete, it stops before mutation.</p>
+<p>If the checkout is safe, it:</p>
+<ol>
+<li>records a complete pre-apply file inventory;</li>
+<li>mirrors the already validated R6 staging tree into <code>D:\x\m</code> while explicitly preserving <code>.git</code>;</li>
+<li>captures <code>git status</code>, <code>git diff --stat</code>, and <code>git diff --name-status</code>;</li>
+<li>compares <strong>every non-<code>.git</code> file path, size, and SHA-256</strong> against R6 staging;</li>
+<li>refuses to advance unless the checkout is exactly equal to R6.</li>
+</ol>
+<p>Use the <strong>same PowerShell window</strong> and paste this entire block:</p>
+<pre><code class="language-powershell">&amp; {
+    $ErrorActionPreference = &#39;Stop&#39;
+
+    $Repo = &#39;D:\x\m&#39;
+    $Stage = &#39;D:\MSBF_RELEASE_R6_STAGING_20260910T121241797Z_028c5f94&#39;
+
+    $ExpectedHead = &#39;46fb1f9198475678edc9cabdeefd2f91a59e49c2&#39;
+    $ExpectedR6Files = 2884
+
+    $Stamp = (Get-Date).ToUniversalTime().ToString(&#39;yyyyMMddTHHmmssfffZ&#39;)
+    $Suffix = [guid]::NewGuid().ToString(&#39;N&#39;).Substring(0,8)
+
+    $EvidenceDir = &quot;D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_D_${Stamp}_${Suffix}&quot;
+    New-Item -ItemType Directory -Path $EvidenceDir -Force | Out-Null
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;MSBF PHASE D — CONTROLLED R6 CHECKOUT MATERIALIZATION&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;Validated source: $Stage&quot;
+    Write-Host &quot;Target checkout:  $Repo&quot;
+    Write-Host &quot;Evidence:         $EvidenceDir&quot;
+    Write-Host &quot;&quot;
+
+    # =========================================================
+    # A. HARD PRE-MUTATION CHECKS
+    # =========================================================
+
+    foreach ($requiredDir in @($Repo,$Stage)) {
+        if (-not (Test-Path -LiteralPath $requiredDir -PathType Container)) {
+            throw &quot;Required directory missing: $requiredDir&quot;
+        }
+    }
+
+    if (-not (Test-Path -LiteralPath (Join-Path $Repo &#39;.git&#39;) -PathType Container)) {
+        throw &quot;Target does not contain expected .git directory: $Repo&quot;
+    }
+
+    $RepoRoot = (&amp; git -C $Repo rev-parse --show-toplevel).Trim()
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;Unable to resolve target Git root.&quot;
+    }
+
+    if (
+        ([IO.Path]::GetFullPath($RepoRoot).TrimEnd(&#39;\&#39;)) -ine
+        ([IO.Path]::GetFullPath($Repo).TrimEnd(&#39;\&#39;))
+    ) {
+        throw &quot;Unexpected Git root. Expected $Repo ; actual $RepoRoot&quot;
+    }
+
+    $Branch = (&amp; git -C $Repo branch --show-current).Trim()
+
+    if ($Branch -cne &#39;main&#39;) {
+        throw &quot;Expected branch main; actual: $Branch&quot;
+    }
+
+    $Head = (&amp; git -C $Repo rev-parse HEAD).Trim().ToLowerInvariant()
+
+    if ($Head -cne $ExpectedHead) {
+        throw &quot;HEAD changed since Phase B. Expected $ExpectedHead ; actual $Head&quot;
+    }
+
+    $Porcelain = @(&amp; git -C $Repo status --porcelain=v1)
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;git status failed.&quot;
+    }
+
+    if ($Porcelain.Count -gt 0) {
+        throw &quot;Working tree is no longer clean. Stop before materialization.`n$($Porcelain -join &quot;`n&quot;)&quot;
+    }
+
+    # Untracked files should already be absent from porcelain, but make
+    # this explicit.
+    $Untracked = @(&amp; git -C $Repo ls-files --others --exclude-standard)
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;Unable to inventory untracked files.&quot;
+    }
+
+    if ($Untracked.Count -gt 0) {
+        throw &quot;Untracked files exist and could be affected by mirror operation:`n$($Untracked -join &quot;`n&quot;)&quot;
+    }
+
+    # Critical extra protection: ordinary git status does not show
+    # ignored local-only content by default.
+    $Ignored = @(&amp; git -C $Repo ls-files --others --ignored --exclude-standard)
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;Unable to inventory ignored local-only files.&quot;
+    }
+
+    if ($Ignored.Count -gt 0) {
+        $IgnoredPath = Join-Path $EvidenceDir &#39;IGNORED_LOCAL_ONLY_FILES.txt&#39;
+        $Ignored | Set-Content -LiteralPath $IgnoredPath -Encoding UTF8
+
+        throw @&quot;
+Ignored local-only files exist in D:\x\m.
+A mirror could remove them, so Phase D is stopping BEFORE mutation.
+Inventory saved to:
+$IgnoredPath
+&quot;@
+    }
+
+    # Stage itself must have exactly the already accepted population.
+    $StageFiles = @(
+        Get-ChildItem -LiteralPath $Stage -Recurse -File -Force
+    )
+
+    if ($StageFiles.Count -ne $ExpectedR6Files) {
+        throw &quot;Staging population changed. Expected $ExpectedR6Files ; actual $($StageFiles.Count)&quot;
+    }
+
+    # =========================================================
+    # B. PRE-APPLY INVENTORY
+    # =========================================================
+
+    function Get-TreeInventory {
+        param(
+            [Parameter(Mandatory=$true)][string]$Root,
+            [switch]$ExcludeGit
+        )
+
+        $rootFull = [IO.Path]::GetFullPath($Root).TrimEnd(&#39;\&#39;) + &#39;\&#39;
+
+        $files = Get-ChildItem -LiteralPath $Root -Recurse -File -Force
+
+        if ($ExcludeGit) {
+            $gitPrefix = [IO.Path]::GetFullPath((Join-Path $Root &#39;.git&#39;)).TrimEnd(&#39;\&#39;) + &#39;\&#39;
+
+            $files = @(
+                $files | Where-Object {
+                    -not $_.FullName.StartsWith(
+                        $gitPrefix,
+                        [StringComparison]::OrdinalIgnoreCase
+                    )
+                }
+            )
+        }
+
+        foreach ($f in $files) {
+            $relative = $f.FullName.Substring($rootFull.Length).Replace(&#39;\&#39;,&#39;/&#39;)
+
+            [pscustomobject]@{
+                Path   = $relative
+                Bytes  = [int64]$f.Length
+                Sha256 = (
+                    Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256
+                ).Hash.ToLowerInvariant()
+            }
+        }
+    }
+
+    Write-Host &quot;Hashing pre-apply checkout inventory...&quot;
+    $RepoBefore = @(Get-TreeInventory -Root $Repo -ExcludeGit)
+
+    $RepoBefore |
+        Sort-Object Path |
+        Export-Csv `
+            -LiteralPath (Join-Path $EvidenceDir &#39;CHECKOUT_PRE_APPLY_INVENTORY.csv&#39;) `
+            -NoTypeInformation `
+            -Encoding UTF8
+
+    Write-Host &quot;Hashing validated R6 staging inventory...&quot;
+    $StageInventory = @(Get-TreeInventory -Root $Stage)
+
+    if ($StageInventory.Count -ne $ExpectedR6Files) {
+        throw &quot;Hashed stage inventory count mismatch.&quot;
+    }
+
+    $StageInventory |
+        Sort-Object Path |
+        Export-Csv `
+            -LiteralPath (Join-Path $EvidenceDir &#39;R6_STAGE_INVENTORY.csv&#39;) `
+            -NoTypeInformation `
+            -Encoding UTF8
+
+    # =========================================================
+    # C. DRY-RUN MIRROR PREVIEW
+    # =========================================================
+
+    $DryRunLog = Join-Path $EvidenceDir &#39;ROBOCOPY_DRY_RUN.txt&#39;
+
+    $DryArgs = @(
+        $Stage,
+        $Repo,
+        &#39;/MIR&#39;,
+        &#39;/COPY:DAT&#39;,
+        &#39;/DCOPY:DAT&#39;,
+        &#39;/R:0&#39;,
+        &#39;/W:0&#39;,
+        &#39;/XJ&#39;,
+        &#39;/XD&#39;, &#39;.git&#39;,
+        &#39;/L&#39;,
+        &#39;/FP&#39;,
+        &#39;/BYTES&#39;,
+        &#39;/NJH&#39;,
+        &#39;/NJS&#39;,
+        &#39;/NP&#39;
+    )
+
+    &amp; robocopy @DryArgs 2&gt;&amp;1 |
+        Tee-Object -FilePath $DryRunLog |
+        Out-Host
+
+    $DryCode = $LASTEXITCODE
+
+    # Robocopy 0-7 are nonfatal informational/success states.
+    if ($DryCode -ge 8) {
+        throw &quot;Robocopy dry run failed with exit code $DryCode.&quot;
+    }
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Dry-run mirror completed. No mutation yet.&quot;
+    Write-Host &quot;Proceeding because checkout is clean and contains no ignored/untracked local files.&quot;
+    Write-Host &quot;&quot;
+
+    # =========================================================
+    # D. ACTUAL MIRROR — PRESERVE .git
+    # =========================================================
+
+    $ApplyLog = Join-Path $EvidenceDir &#39;ROBOCOPY_APPLY.txt&#39;
+
+    $ApplyArgs = @(
+        $Stage,
+        $Repo,
+        &#39;/MIR&#39;,
+        &#39;/COPY:DAT&#39;,
+        &#39;/DCOPY:DAT&#39;,
+        &#39;/R:1&#39;,
+        &#39;/W:1&#39;,
+        &#39;/XJ&#39;,
+        &#39;/XD&#39;, &#39;.git&#39;,
+        &#39;/FP&#39;,
+        &#39;/BYTES&#39;,
+        &#39;/TEE&#39;,
+        &quot;/LOG:$ApplyLog&quot;
+    )
+
+    &amp; robocopy @ApplyArgs
+    $ApplyCode = $LASTEXITCODE
+
+    if ($ApplyCode -ge 8) {
+        throw &quot;Robocopy materialization failed with exit code $ApplyCode. STOP. Do not commit.&quot;
+    }
+
+    # =========================================================
+    # E. IMMEDIATE GIT EVIDENCE
+    # =========================================================
+
+    $StatusShort = @(&amp; git -C $Repo status --short)
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;git status failed after materialization.&quot;
+    }
+
+    $StatusBranch = @(&amp; git -C $Repo status --short --branch)
+    $DiffStat = @(&amp; git -C $Repo diff --stat)
+    $DiffNameStatus = @(&amp; git -C $Repo diff --name-status)
+
+    $StatusShort |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;GIT_STATUS_SHORT.txt&#39;) `
+            -Encoding UTF8
+
+    $StatusBranch |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;GIT_STATUS_SHORT_BRANCH.txt&#39;) `
+            -Encoding UTF8
+
+    $DiffStat |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;GIT_DIFF_STAT.txt&#39;) `
+            -Encoding UTF8
+
+    $DiffNameStatus |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;GIT_DIFF_NAME_STATUS.txt&#39;) `
+            -Encoding UTF8
+
+    # HEAD and historical tag must remain untouched.
+    $HeadAfter = (&amp; git -C $Repo rev-parse HEAD).Trim().ToLowerInvariant()
+
+    if ($HeadAfter -cne $ExpectedHead) {
+        throw &quot;HEAD changed unexpectedly during file materialization.&quot;
+    }
+
+    # =========================================================
+    # F. EXACT FILE-TREE EQUALITY: R6 STAGE == CHECKOUT
+    # =========================================================
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Hashing post-apply checkout for exact R6 equality...&quot;
+    $RepoAfter = @(Get-TreeInventory -Root $Repo -ExcludeGit)
+
+    $RepoAfter |
+        Sort-Object Path |
+        Export-Csv `
+            -LiteralPath (Join-Path $EvidenceDir &#39;CHECKOUT_POST_APPLY_INVENTORY.csv&#39;) `
+            -NoTypeInformation `
+            -Encoding UTF8
+
+    $StageMap = @{}
+    foreach ($r in $StageInventory) {
+        $StageMap[$r.Path.ToLowerInvariant()] = $r
+    }
+
+    $RepoMap = @{}
+    foreach ($r in $RepoAfter) {
+        $RepoMap[$r.Path.ToLowerInvariant()] = $r
+    }
+
+    $Missing = New-Object System.Collections.Generic.List[string]
+    $Extra = New-Object System.Collections.Generic.List[string]
+    $Mismatch = New-Object System.Collections.Generic.List[object]
+
+    foreach ($k in $StageMap.Keys) {
+        if (-not $RepoMap.ContainsKey($k)) {
+            $Missing.Add($StageMap[$k].Path)
+            continue
+        }
+
+        $s = $StageMap[$k]
+        $r = $RepoMap[$k]
+
+        if (
+            $s.Path -cne $r.Path -or
+            $s.Bytes -ne $r.Bytes -or
+            $s.Sha256 -cne $r.Sha256
+        ) {
+            $Mismatch.Add(
+                [pscustomobject]@{
+                    StagePath = $s.Path
+                    RepoPath = $r.Path
+                    StageBytes = $s.Bytes
+                    RepoBytes = $r.Bytes
+                    StageSha256 = $s.Sha256
+                    RepoSha256 = $r.Sha256
+                }
+            )
+        }
+    }
+
+    foreach ($k in $RepoMap.Keys) {
+        if (-not $StageMap.ContainsKey($k)) {
+            $Extra.Add($RepoMap[$k].Path)
+        }
+    }
+
+    $Missing |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;TREE_MISSING_FROM_CHECKOUT.txt&#39;) `
+            -Encoding UTF8
+
+    $Extra |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;TREE_EXTRA_IN_CHECKOUT.txt&#39;) `
+            -Encoding UTF8
+
+    $Mismatch |
+        Export-Csv `
+            -LiteralPath (Join-Path $EvidenceDir &#39;TREE_HASH_MISMATCHES.csv&#39;) `
+            -NoTypeInformation `
+            -Encoding UTF8
+
+    if ($RepoAfter.Count -ne $ExpectedR6Files) {
+        throw &quot;Checkout file population differs from R6. Expected $ExpectedR6Files ; actual $($RepoAfter.Count)&quot;
+    }
+
+    if ($Missing.Count -gt 0) {
+        throw &quot;Checkout is missing $($Missing.Count) R6 files.&quot;
+    }
+
+    if ($Extra.Count -gt 0) {
+        throw &quot;Checkout contains $($Extra.Count) files not present in R6.&quot;
+    }
+
+    if ($Mismatch.Count -gt 0) {
+        throw &quot;Checkout has $($Mismatch.Count) path/size/hash mismatches versus R6.&quot;
+    }
+
+    # =========================================================
+    # G. RECEIPT
+    # =========================================================
+
+    $Receipt = [ordered]@{
+        SchemaVersion = &#39;1.0&#39;
+        Task = &#39;MSBF_RELEASE_ENGINEERING_PHASE_D_CHECKOUT_MATERIALIZATION&#39;
+        GoverningDecision = &#39;IA-D-R20-INT-001&#39;
+        ConditionalAuthority = &#39;IA-PUB-R20-INTEGRATED-001&#39;
+
+        SourceStage = $Stage
+        TargetCheckout = $Repo
+        EvidenceDirectory = $EvidenceDir
+
+        Branch = $Branch
+        HeadBefore = $Head
+        HeadAfter = $HeadAfter
+
+        PreApplyWorkingTreeClean = $true
+        PreApplyUntrackedFiles = 0
+        PreApplyIgnoredLocalOnlyFiles = 0
+
+        RobocopyDryRunExitCode = $DryCode
+        RobocopyApplyExitCode = $ApplyCode
+
+        ExpectedR6Files = $ExpectedR6Files
+        StageFiles = $StageInventory.Count
+        CheckoutFilesAfter = $RepoAfter.Count
+
+        MissingFromCheckout = $Missing.Count
+        ExtraInCheckout = $Extra.Count
+        PathSizeHashMismatches = $Mismatch.Count
+
+        GitStatusShort = @($StatusShort)
+        GitDiffStat = @($DiffStat)
+        GitDiffNameStatus = @($DiffNameStatus)
+
+        CommitPerformed = $false
+        TagPerformed = $false
+        PushPerformed = $false
+        PublicationPerformed = $false
+
+        PhaseDStatus = &#39;PASS&#39;
+    }
+
+    $JsonPath = Join-Path $EvidenceDir `
+        &#39;MSBF_PHASE_D_CHECKOUT_MATERIALIZATION.json&#39;
+
+    $TxtPath = Join-Path $EvidenceDir `
+        &#39;MSBF_PHASE_D_SUMMARY.txt&#39;
+
+    $Receipt |
+        ConvertTo-Json -Depth 8 |
+        Set-Content -LiteralPath $JsonPath -Encoding UTF8
+
+    $Summary = @(
+        &#39;PHASE_D_CHECKOUT_MATERIALIZATION = PASS&#39;,
+        &quot;Repository: $Repo&quot;,
+        &quot;Source staging: $Stage&quot;,
+        &quot;Branch: $Branch&quot;,
+        &quot;HEAD unchanged: $HeadAfter&quot;,
+        &#39;&#39;,
+        &quot;R6 staging files: $($StageInventory.Count)&quot;,
+        &quot;Checkout files: $($RepoAfter.Count)&quot;,
+        &quot;Missing: $($Missing.Count)&quot;,
+        &quot;Extra: $($Extra.Count)&quot;,
+        &quot;Path/size/hash mismatches: $($Mismatch.Count)&quot;,
+        &#39;&#39;,
+        &quot;Git changed paths: $($StatusShort.Count)&quot;,
+        &#39;&#39;,
+        &#39;No commit performed.&#39;,
+        &#39;No tag created.&#39;,
+        &#39;No push performed.&#39;,
+        &#39;No publication performed.&#39;,
+        &#39;&#39;,
+        &quot;Receipt: $JsonPath&quot;
+    )
+
+    $Summary |
+        Set-Content -LiteralPath $TxtPath -Encoding UTF8
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;============================================================&quot;
+    $Summary | ForEach-Object { Write-Host $_ }
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;git status --short:&quot;
+    $StatusShort | ForEach-Object { Write-Host $_ }
+    Write-Host &quot;&quot;
+    Write-Host &quot;git diff --stat:&quot;
+    $DiffStat | ForEach-Object { Write-Host $_ }
+    Write-Host &quot;&quot;
+    Write-Host &quot;Stop here. Do NOT stage or commit yet.&quot;
+    Write-Host &quot;Return the JSON receipt and console summary.&quot;
+}
+</code></pre>
+<h3>One potentially important stop condition</h3>
+<p>If this stops because it finds <strong>ignored local-only files</strong>, that is intentional. <code>git status</code> being clean does <strong>not</strong> prove there are no ignored items, and <code>/MIR</code> could otherwise remove them.</p>
+<p>If that happens, <strong>do not delete those files and do not rerun with the protection removed</strong>. Send me the resulting list and I&#39;ll classify them against R6.</p>
+<h3>Expected successful end state</h3>
+<p>We want:</p>
+<pre><code class="language-text">PHASE_D_CHECKOUT_MATERIALIZATION = PASS
+
+R6 staging files: 2884
+Checkout files: 2884
+Missing: 0
+Extra: 0
+Path/size/hash mismatches: 0
+
+HEAD unchanged:
+46fb1f9198475678edc9cabdeefd2f91a59e49c2
+</code></pre>
+<p>The working tree is <strong>expected to become dirty</strong> here because R6 is being materialized over the public predecessor. That is not a failure. What matters is that its complete non-<code>.git</code> tree becomes exactly R6.</p>
+<p>Do <strong>not</strong> run <code>git add</code>, commit, or create the tag afterward, even if Phase D passes. The next step is <strong>Phase E</strong>, where we&#39;ll validate the actual <code>D:\x\m</code> working tree—including manifests, public/private boundaries, PBIX/DataModel/protected payloads, documentation routes, line-ending behavior, and the exact Git change set—before anything is staged.</p>
+</div></article><article id="m-6722514a-701a-4117-a0a2-07cdba8d3582" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00065 · 2026-09-10T08:27:14.431000-04:00 · active path</p><p class="note">Attachment references: GIT_DIFF_NAME_STATUS(1).txt; GIT_DIFF_STAT(1).txt; GIT_STATUS_SHORT(1).txt; GIT_STATUS_SHORT_BRANCH(1).txt; MSBF_PHASE_D_CHECKOUT_MATERIALIZATION(1).json; MSBF_PHASE_D_SUMMARY(1).txt; R6_STAGE_INVENTORY(1).csv; ROBOCOPY_APPLY(1).txt; ROBOCOPY_DRY_RUN(1).txt; CHECKOUT_POST_APPLY_INVENTORY(1).csv; CHECKOUT_PRE_APPLY_INVENTORY(1).csv</p><div class="bubble"><hr>
+<pre><code>           Total    Copied   Skipped  Mismatch    FAILED    Extras
+Dirs :       772       436       336         0         0         1
+</code></pre>
+<p>   Files :      2884      2884         0         0         0         0
+   Bytes : 353094115 353094115         0         0         0         0
+   Times :   0:00:42   0:00:03                       0:00:00   0:00:39</p>
+<p>   Speed :            89255337 Bytes/sec.
+   Speed :            5107.231 MegaBytes/min.
+   Ended : Thursday, September 10, 2026 8:23:24 AM</p>
+<p>Refresh index: 100% (1934/1934), done.</p>
+<p>Hashing post-apply checkout for exact R6 equality...</p>
+<p>============================================================
+PHASE_D_CHECKOUT_MATERIALIZATION = PASS
+Repository: D:\x\m
+Source staging: D:\MSBF_RELEASE_R6_STAGING_20260910T121241797Z_028c5f94
+Branch: main
+HEAD unchanged: 46fb1f9198475678edc9cabdeefd2f91a59e49c2</p>
+<p>R6 staging files: 2884
+Checkout files: 2884
+Missing: 0
+Extra: 0
+Path/size/hash mismatches: 0</p>
+<p>Git changed paths: 29</p>
+<p>No commit performed.
+No tag created.
+No push performed.
+No publication performed.</p>
+<h1>Receipt: D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_D_20260910T122211251Z_abd96b08\MSBF_PHASE_D_CHECKOUT_MATERIALIZATION.json</h1>
+<p>git status --short:
+ M CHANGELOG.md
+ M GITHUB_PUBLICATION_GUIDE.md
+ M GOVERNANCE_AND_VALIDATION.md
+ M MANIFEST.csv
+ M MODULE_AND_RELEASE_INDEX.md
+ M PACKAGE_INVENTORY.csv
+ M PROJECT_ARTIFACT_MAP.md
+ M PROJECT_ROADMAP.md
+ M README.md
+ M RELEASE_NOTES.md
+ M REPRODUCIBILITY_AND_EXECUTION.md
+ M SHA256SUMS.txt
+ M docs/README.md
+ M docs/project_history/README.md
+ M manifest.json
+ M release_metadata.json
+?? CANDIDATE_RELEASES.md
+?? R23_OVERLAY_DIFF_INDEX.csv
+?? R23_OVERLAY_METADATA.json
+?? docs/cohort/
+?? docs/guide/
+?? docs/portfolio_visuals/
+?? docs/power_bi/
+?? docs/project_history/chatgpt_logs_through_2026-09-09/
+?? docs/project_history/preaudit/
+?? docs/release_change_control/
+?? docs/release_integration/
+?? docs/reproducibility/
+?? successor_candidates/</p>
+<p>git diff --stat:
+ CHANGELOG.md                     |    23 +
+ GITHUB_PUBLICATION_GUIDE.md      |     8 +
+ GOVERNANCE_AND_VALIDATION.md     |     8 +
+ MANIFEST.csv                     |  1890 +++--
+ MODULE_AND_RELEASE_INDEX.md      |    20 +
+ PACKAGE_INVENTORY.csv            |  4812 ++++++-----
+ PROJECT_ARTIFACT_MAP.md          |     8 +
+ PROJECT_ROADMAP.md               |     8 +
+ README.md                        |   629 +-
+ RELEASE_NOTES.md                 |     8 +
+ REPRODUCIBILITY_AND_EXECUTION.md |     8 +
+ SHA256SUMS.txt                   |  1890 +++--
+ docs/README.md                   |   151 +-
+ docs/project_history/README.md   |     4 +
+ manifest.json                    | 16314 ++++++++++++++++++++++++-------------
+ release_metadata.json            |    40 +-
+ 16 files changed, 16564 insertions(+), 9257 deletions(-)</p>
+<p>Stop here. Do NOT stage or commit yet.
+Return the JSON receipt and console summary.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

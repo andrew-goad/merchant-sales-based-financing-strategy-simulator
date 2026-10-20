@@ -1,0 +1,622 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 13 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 13</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-12.html">Previous part</a><a href="part-14.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-483574eb-1372-4058-9274-33d0427d8ff6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00337 · 2026-08-26T19:58:45.184591-04:00 · active path</p><div class="bubble"><p>Yes. <strong>For the slicer, a calculated column is the better object.</strong> The measure we created for the card was appropriate because the card needed one scalar value from the current filter context. But a slicer needs a <strong>column containing one value per merchant row</strong>.</p>
+<p>So I would keep the existing <code>P03 Merchant Name</code> measure for the profile card, and add a new presentation column on <code>DimMerchant</code> specifically for selection.</p>
+<p>Use:</p>
+<pre><code class="language-DAX">P03 Merchant Label =
+VAR _Merchant =
+    &#39;DimMerchant&#39;[synthetic_business_name]
+RETURN
+    IF (
+        ISBLANK ( _Merchant ),
+        BLANK (),
+        RIGHT ( _Merchant, 6 )
+    )
+</code></pre>
+<p>That should produce:</p>
+<pre><code class="language-text">000002
+000012
+000221
+000749
+</code></pre>
+<p>Then replace <code>synthetic_business_name</code> in the Merchant slicer with <code>P03 Merchant Label</code>.</p>
+<p>After that:</p>
+<ol>
+<li>Keep the slicer as <strong>Dropdown</strong>.</li>
+<li>Turn <strong>Search</strong> on.</li>
+<li>Keep <strong>Single select = On</strong>.</li>
+<li>Keep <strong>Select all = Off</strong>.</li>
+<li>Test by typing <code>749</code> or <code>000749</code>.</li>
+</ol>
+<p>I would <strong>not replace the card measure</strong>. The two objects serve different purposes:</p>
+<ul>
+<li><code>P03 Merchant Label</code> column → slicer/search/listing.</li>
+<li><code>P03 Merchant Name</code> measure → scalar Merchant ID display in the profile card.</li>
+</ul>
+<p>That is a clean model pattern and avoids the table-expansion problems we&#39;ve already seen when measures are used where row-level attributes belong.</p>
+</div></article><article id="m-8f9fb24b-6225-4ed2-9fd7-0ab7f8be87c5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00338 · 2026-08-26T20:07:58.452000-04:00 · active path</p><div class="bubble"><p>ok, let&#39;s move on to the next visuals beyond these Merchant request &amp; decision and Funded terms.</p>
+</div></article><article id="m-a0c5deab-488d-4b97-bddd-07d7112f4a5c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00339 · 2026-08-26T20:08:05.385959-04:00 · active path</p><div class="bubble"><p>Yes. At this point, <strong>Merchant request &amp; decision</strong> and <strong>Funded terms</strong> establish the origination side of the story. The next visuals should move deliberately into <strong>performance, servicing, and current posture</strong> rather than adding more origination detail.</p>
+<p>I would build the remainder of P03 in this order:</p>
+<ol>
+<li><p><strong>Performance trajectory</strong> — one longitudinal chart showing how the selected merchant’s funded advance behaves from funding through the selected Observation date. Start with <strong>Current exposure</strong> as the primary line. If the account is not funded, the visual should naturally remain blank. The X-axis should be the daily/monitoring date, and unlike P02, it should stop at the selected Observation date so P03 truly represents the merchant “as of” that date.</p>
+</li>
+<li><p><strong>Remittance performance</strong> — a second lifecycle chart immediately below or beside Exposure. I would use <strong>Remittance fulfillment / pace ratio</strong> against a 100% reference line, because that tells a merchant-specific servicing story much better than cumulative dollars alone. We already know from P02 that this measure behaves meaningfully over time.</p>
+</li>
+<li><p><strong>Current account posture</strong> — a compact selected-date card/table, not another chart. This should answer: current exposure, remittance fulfillment, days since last remittance, payoff slippage, monitoring status, active-alert count, open-servicing count, and paid-off status where applicable. This is the point-in-time complement to the two lifecycle charts.</p>
+</li>
+<li><p><strong>Servicing &amp; exceptions history</strong> — a small event-oriented table showing meaningful interventions/exceptions through the selected date. I would not try to expose every technical servicing field. The eventual columns should probably be something like event date, event/type, status, reason, and perhaps exposure or days open if available. This becomes the merchant-level precursor to the dedicated P05/P07 servicing page later.</p>
+</li>
+</ol>
+<p>The important structural point is that <strong>P03 should not become another P02</strong>. P02 compares a cohort’s aggregate lifecycle. P03 should answer, “For this merchant, what was requested, what was funded, how has that advance performed, and what operational attention has it required?”</p>
+<p>So visually, I would now aim for this page story:</p>
+<pre><code class="language-text">Relationship profile
+
+Merchant request &amp; decision
+Funded terms
+
+Performance trajectory        Current account posture
+Remittance performance        Servicing &amp; exceptions
+</code></pre>
+<p>For the <strong>very next build step</strong>, create only the first chart: <strong>Performance trajectory</strong>.</p>
+<p>Use the daily/account performance table that contains the merchant/account lifecycle. Set:</p>
+<ul>
+<li><strong>X-axis:</strong> monitoring date / observation date</li>
+<li><strong>Y-axis:</strong> current exposure / receivable exposure</li>
+<li><strong>Title:</strong> <code>Exposure</code></li>
+<li>Filter behavior: Merchant and Scenario should filter it.</li>
+<li>Observation-date slicer should define the <strong>maximum visible date</strong>, not select only one point.</li>
+</ul>
+<p>That last point matters. If the Observation date slicer currently filters the chart down to one day, we will need a report-owned measure that preserves dates <strong>up to</strong> the selected observation date rather than only the selected date itself.</p>
+<p>Build the raw Exposure line first and show me what happens when Merchant <code>000749</code>, Baseline, and 8/16/2026 are selected. From that behavior we can determine whether the existing model already gives us the correct “through selected date” trajectory or whether we need a bounded P03 lifecycle measure.</p>
+</div></article><article id="m-4f660a64-fe73-4b24-ae19-6c90f29b9064" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00340 · 2026-08-26T20:12:11.461000-04:00 · active path</p><p class="note">Attachment references: Pasted text(20260827-001156).txt</p><div class="bubble"><p>i am not sure which dim table may have daily detail. i know we had this daily table </p>
+</div></article><article id="m-5f561640-ac9b-4594-85ff-1bd1f2ae5e2e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00341 · 2026-08-26T20:12:30.510083-04:00 · active path</p><div class="bubble"><p>Yes — <strong>this is the daily-detail table we want</strong>, and it is much richer than just an exposure source.</p>
+<p>The grain is effectively <strong>one application/account × scenario × monitoring date</strong>. The table carries <code>merchant_application_id</code>, <code>merchant_id</code>, <code>synthetic_account_id</code>, <code>scenario_code</code>, <code>monitoring_day_index</code>, and <code>monitoring_date</code>, followed by daily sales, remittance, balance, exposure, status, alert, and payoff fields. [export reference: filecite | turn42file3 | L44-L46]</p>
+<p>For Merchant Relationship 360, the strongest fields in it are:</p>
+<ul>
+<li><code>monitoring_date</code> — lifecycle X-axis</li>
+<li><code>receivable_balance_after</code> — best candidate for the contractual remaining receivable trajectory</li>
+<li><code>principal_exposure_proxy</code> — principal-oriented exposure trajectory</li>
+<li><code>actual_remittance_amount</code> and <code>expected_due_today_amount</code> — daily payment behavior</li>
+<li><code>cumulative_remittance_amount</code> and <code>cumulative_expected_remittance_amount</code></li>
+<li><code>cumulative_pace_ratio</code> — very useful merchant performance indicator</li>
+<li><code>days_since_last_positive_remittance</code></li>
+<li><code>trailing_7_day_remittance_amount</code> / <code>trailing_30_day_remittance_amount</code></li>
+<li><code>monitoring_status_code</code></li>
+<li>the daily/cumulative pace, zero-sales, liquidity, and horizon alert flags</li>
+<li><code>paid_off_flag</code></li>
+</ul>
+<p>And the data clearly does contain meaningful daily performance states rather than just static endpoint records. For example, rows can move through <code>CURRENT</code>, <code>WATCH</code>, <code>UNDERPERFORMING</code>, and more severe states as cumulative pace and shortfall conditions change. [export reference: filecite | turn42file0 | L10-L12] [export reference: filecite | turn42file2 | L32-L35]</p>
+<h3>One correction to my prior recommendation</h3>
+<p>I would <strong>not</strong> start by plotting a generic existing “Current Exposure” measure. Now that we have inspected the physical daily data, we should deliberately decide which balance concept belongs on the merchant 360.</p>
+<p>For this page I recommend the first chart be:</p>
+<p><strong><code>Receivable trajectory</code></strong></p>
+<p>with:</p>
+<ul>
+<li><strong>X-axis:</strong> <code>monitoring_date</code></li>
+<li><strong>Y-axis:</strong> <code>receivable_balance_after</code></li>
+</ul>
+<p>That tells the cleanest intuitive story: <em>how much of the contractual receivable remained over time</em>. Then, if useful, <code>principal_exposure_proxy</code> can become either a second line or a separate compact metric because it is a different economic concept.</p>
+<h3>But don&#39;t build it quite yet</h3>
+<p>There is one Power BI modeling issue we should solve first: your <strong>Observation date slicer</strong> currently represents an as-of date. If it directly filters this daily fact table, selecting <code>8/16/2026</code> will likely leave us with <strong>only the 8/16 row</strong>, destroying the historical line.</p>
+<p>So the next step is very small and diagnostic.</p>
+<p>In Power BI, find the table containing these fields. It may be named something like a monitoring/daily fact rather than a <code>Dim</code> table. You do <strong>not</strong> need a dimension table for the daily values themselves.</p>
+<p>Once you find it, create a temporary line chart with:</p>
+<p><strong>X-axis:</strong> <code>monitoring_date</code><br><strong>Y-axis:</strong> <code>receivable_balance_after</code></p>
+<p>Do <strong>not</strong> worry about formatting. Keep your current Merchant <code>000749</code>, Scenario <code>Baseline</code>, and Observation date <code>8/16/2026</code> selections.</p>
+<p>Then tell me exactly what you see:</p>
+<ul>
+<li>one point on 8/16,</li>
+<li>a full history through 8/16,</li>
+<li>a full history including dates after 8/16,</li>
+<li>or no data.</li>
+</ul>
+<p>That one empirical test will tell us precisely how to construct the bounded P03 as-of measure instead of guessing at the relationship behavior.</p>
+</div></article><article id="m-46124838-79b4-453a-aa5e-c14c4a6928c5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00342 · 2026-08-26T20:14:46.594000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: d6ca3e58-e83d-4d4a-8022-4f0579ce5ef2.png; 449373d5-18a9-4f61-835f-2f326e0d0671.png</p><div class="bubble"><p>these are all i see pertaining to that request</p>
+</div></article><article id="m-9da7cc5a-9aec-45be-a179-14f4b54c0a08" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00343 · 2026-08-26T20:14:49.870160-04:00 · active path</p><div class="bubble"><p>That explains it. <strong>The physical daily monitoring fact is not exposed in your visible Fields pane.</strong> What you are seeing is the curated semantic layer:</p>
+<ul>
+<li><code>DimAccountAdvance[monitoring_start_date]</code></li>
+<li><code>DimMonitoringStatus[...]</code></li>
+<li><code>ModelParameters → 04 Performance → [Remaining Receivable As Of]</code></li>
+</ul>
+<p>The daily source you pasted clearly contains <code>monitoring_date</code>, <code>receivable_balance_after</code>, <code>actual_remittance_amount</code>, <code>cumulative_pace_ratio</code>, etc., but those fields are not presently visible to you in the report model. [export reference: filecite | turn42file3 | L44-L46]</p>
+<p>That also tells me something important: <strong><code>Remaining Receivable As Of</code> was almost certainly created specifically to abstract the hidden daily fact.</strong> So I would not start unhiding things indiscriminately.</p>
+<h3>What I want you to do next</h3>
+<p>Let&#39;s inspect what <code>[Remaining Receivable As Of]</code> actually does.</p>
+<ol>
+<li>Click <strong>Remaining Receivable As Of</strong>.</li>
+<li>Copy the DAX formula from the formula bar.</li>
+<li>Paste it here.</li>
+</ol>
+<p>That will tell me the name of the hidden daily fact table and, more importantly, how the existing model intentionally handles the Observation Date/as-of boundary.</p>
+<p>I suspect we&#39;ll find something along the lines of a hidden <code>Fact...DailyMonitoring</code> table being filtered to the selected observation date. If so, rather than exposing the raw table, we can build the <strong>merchant performance/lifecycle measures in <code>04 Performance</code></strong>, consistent with the semantic-layer pattern you&#39;ve already established.</p>
+<p>And I now think that is probably the better architecture for P03: keep the ugly physical daily fact hidden and expose a small, deliberate merchant-360 measure surface.</p>
+</div></article><article id="m-242646aa-0a61-41e6-9bff-509f29ba8ca9" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00344 · 2026-08-26T20:15:42.561000-04:00 · active path</p><div class="bubble"><p>why do we have so many hidden tables? i know you said there is a reason, but this is not a production environment. this is for a github portfolio and it is slowing us down and adding unnecessary duplication in having to create new columns / new measures</p>
+</div></article><article id="m-575f653d-edf8-40cf-9443-c6b4c27f38c9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00345 · 2026-08-26T20:15:48.315084-04:00 · active path</p><div class="bubble"><p>I agree with your concern. The current level of hiding made sense when we were treating the semantic model like a tightly controlled production-facing dataset, but it is now imposing a real construction tax on a GitHub portfolio artifact.</p>
+<p>The original rationale was sound: hide fact/bridge/technical tables so report builders use a curated semantic layer, reduce accidental misuse of grain, and avoid exposing implementation plumbing. That is useful in a production self-service model with many report authors. Here, though, <strong>you are the only builder, the model is synthetic, and we are actively demonstrating analytical depth rather than protecting novice users from the schema</strong>.</p>
+<p>What we are seeing in P03 is the downside: the physical model already contains the exact daily fields we need, but because the fact is hidden we keep manufacturing <code>P03 ...</code> measures and presentation columns just to regain access to data that already exists. That adds duplication, slows iteration, increases the adapter inventory, and paradoxically makes the portfolio harder to understand.</p>
+<p>I would therefore recalibrate now rather than keep fighting the model.</p>
+<h3>Recommended approach: selective unhiding, not “show everything”</h3>
+<p>For the remainder of the portfolio build, I would use a <strong>builder-accessible semantic model</strong>:</p>
+<ul>
+<li>Keep pure technical/control tables hidden: hashes, manifests, bridge plumbing, helper/calculation tables, internal lineage tables, etc.</li>
+<li>Keep dimensions visible.</li>
+<li><strong>Unhide analytically meaningful fact tables needed for report construction</strong>, including the daily monitoring/performance fact we just identified.</li>
+<li>Within those facts, hide genuinely technical identifiers/hash columns if they clutter the Fields pane, but expose business-meaningful fields such as <code>monitoring_date</code>, balances, remittances, pace ratios, statuses and alert flags.</li>
+<li>Continue creating measures when aggregation/context logic is genuinely required.</li>
+<li>Stop creating measures merely because an otherwise-valid column happens to be hidden.</li>
+<li>Continue using calculated presentation columns only where we genuinely want a cleaner label such as <code>Working capital</code>, <code>Processor embedded</code>, <code>Final offer</code>, or <code>A01</code>.</li>
+</ul>
+<p>That is a much better division.</p>
+<p>For example, this:</p>
+<pre><code class="language-text">receivable_balance_after
+monitoring_date
+cumulative_pace_ratio
+monitoring_status_code
+paid_off_flag
+</code></pre>
+<p>should be available to us directly for constructing merchant-level tables and charts.</p>
+<p>Whereas something such as:</p>
+<pre><code class="language-text">Remaining Receivable As Of
+</code></pre>
+<p>is still useful as a measure because <strong>“as of selected date” is actual filter-context logic</strong>, not merely access to a hidden column.</p>
+<h3>This does not mean abandoning governance</h3>
+<p>We would not change:</p>
+<ul>
+<li>sources,</li>
+<li>Power Query logic,</li>
+<li>relationships,</li>
+<li>grains,</li>
+<li>accepted governed-measure formulas,</li>
+<li>scenario interpretation,</li>
+<li>business methods,</li>
+<li>or underlying values.</li>
+</ul>
+<p>We would be changing <strong>model presentation metadata — visibility</strong> to make the accepted model practical to build against.</p>
+<p>That is materially different from changing the model&#39;s analytical truth.</p>
+<p>And given Audit just ratified a build-first model specifically because physical construction was surfacing issues faster than theoretical preapproval, <strong>this is exactly the kind of construction friction we should solve empirically rather than continue compensating for.</strong></p>
+<h3>I would also stop treating every hidden-field need as a reason for another adapter</h3>
+<p>Our operating rule should become:</p>
+<blockquote>
+<p><strong>Need the actual row-level attribute? Expose the accepted field.<br>Need a calculation or context transformation? Create a measure.<br>Need human-readable categorical presentation? Create a presentation column only when necessary.</strong></p>
+</blockquote>
+<p>That eliminates a lot of the duplication we&#39;ve created.</p>
+<p>For P03 specifically, I now recommend that we <strong>unhide the daily monitoring fact</strong> rather than build a collection of P03 measures around it. Then we can construct Exposure, remittance performance, status history, alerts, and servicing behavior directly from its real fields.</p>
+<p>We should first identify its exact table name from <code>[Remaining Receivable As Of]</code> or from Model view, then unhide that table and decide which of its business fields should remain exposed. I would not wait for another Audit cycle to do that; log it as a <strong>presentation-visibility correction within the authorized wave</strong> and include it in the frozen model delta at the next combined audit gate. [export reference: memcite]</p>
+</div></article><article id="m-2300ea39-8b07-44b8-a9d8-206cc89271d2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00346 · 2026-08-26T20:18:09.517000-04:00 · active path</p><div class="bubble"><p>i am unhiding factaccountdaily for this exercise</p>
+</div></article><article id="m-8ca68cc3-5585-414e-ad67-2504c3df3fdb" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00347 · 2026-08-26T20:18:14.365295-04:00 · active path</p><div class="bubble"><p>Good. For this exercise, that is the right move.</p>
+<p>Now that <code>FactAccountDaily</code> is visible, we can stop proxying its row-level fields through extra measures and build directly from the actual daily grain.</p>
+<p>For the next P03 visual, create a <strong>Line chart</strong> with:</p>
+<ul>
+<li><strong>X-axis:</strong> <code>FactAccountDaily[monitoring_date]</code></li>
+<li><strong>Y-axis:</strong> <code>FactAccountDaily[receivable_balance_after]</code></li>
+<li><strong>Title:</strong> <code>Receivable trajectory</code></li>
+</ul>
+<p>Keep Merchant <code>000749</code>, Scenario <code>Baseline</code>, and Observation date <code>8/16/2026</code> selected.</p>
+<p>The key test is the Observation-date behavior. Tell me whether the chart shows:</p>
+<ol>
+<li>only 8/16,</li>
+<li>the full history through 8/16,</li>
+<li>the full history including dates after 8/16, or</li>
+<li>no data.</li>
+</ol>
+<p>That result will determine whether we can use the raw field directly or need one bounded “through selected date” measure.</p>
+</div></article><article id="m-71d7f9d6-0e24-4d10-9859-ee6cc7e3bfc5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00348 · 2026-08-26T20:19:33.241000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: a8d5e40c-913b-4fdc-8fb7-16207ecc7957.png</p><div class="bubble"><p>receivable balance after will need a measure: </p>
+</div></article><article id="m-5d589e6b-33b9-43ec-b0da-abe6b7f3de8b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00349 · 2026-08-26T20:19:40.803453-04:00 · active path</p><div class="bubble"><p>Right — because the model has <strong>Discourage implicit measures</strong> enabled, Power BI won’t let you drag <code>receivable_balance_after</code> directly into Values. We should create an explicit measure.</p>
+<p>For this chart, start with the simplest correct aggregation:</p>
+<pre><code class="language-DAX">P03 Receivable Balance =
+SUM (
+    FactAccountDaily[receivable_balance_after]
+)
+</code></pre>
+<p>Then build the line chart with:</p>
+<ul>
+<li><strong>X-axis:</strong> <code>FactAccountDaily[monitoring_date]</code></li>
+<li><strong>Y-axis:</strong> <code>[P03 Receivable Balance]</code></li>
+<li><strong>Title:</strong> <code>Receivable trajectory</code></li>
+</ul>
+<p>Keep Merchant <code>000749</code>, Scenario <code>Baseline</code>, Observation date <code>8/16/2026</code>.</p>
+<p>This measure is appropriate because at the selected merchant/application/scenario/date grain there should effectively be one daily row, while <code>SUM</code> also remains safe if the visual context ever spans more than one account.</p>
+<p>Now the important part is still the Observation-date behavior. Once the chart renders, tell me whether it shows only 8/16, history through 8/16, or dates beyond 8/16. That will tell us whether we need a second bounded measure for “through selected date.”</p>
+</div></article><article id="m-52da973d-55dd-4084-9135-0d20653a5217" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00350 · 2026-08-26T20:27:25.495000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 860ca349-3040-42ed-8607-d3212321af82.png</p><div class="bubble"><p>Yes, so far it doesn&#39;t seem like observation date is very needed here.</p>
+</div></article><article id="m-ef33f1cb-cc53-4870-88b6-07ff53946d73" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00351 · 2026-08-26T20:27:32.240483-04:00 · active path</p><div class="bubble"><p>I agree. <strong>For this P03 design, the Observation date slicer is not earning its space right now.</strong></p>
+<p>The <code>Receivable Trajectory</code> is already showing the merchant’s full lifecycle from funding through payoff, and that is arguably more useful for a Merchant 360 page than forcing the user to inspect one historical as-of state at a time.</p>
+<p>What the screenshot suggests is a cleaner P03 contract:</p>
+<ul>
+<li><strong>Merchant</strong> selects the relationship.</li>
+<li><strong>Scenario</strong> selects the scenario-qualified path.</li>
+<li>The page then shows the <strong>full available journey</strong> for that merchant/scenario.</li>
+<li>The request/decision and funded-terms tables provide the fixed origination facts.</li>
+<li>The lifecycle visuals show the full subsequent performance history.</li>
+</ul>
+<p>That is simpler and more intuitive.</p>
+<p>I would therefore <strong>remove Observation date from P03</strong> unless we later build a point-in-time servicing/status panel that genuinely needs an as-of selector. We already have P01 for “what did this cohort look like on a selected date?” P03 can instead specialize in <strong>complete merchant history</strong>.</p>
+<p>Your current <code>Receivable Trajectory</code> also looks good structurally. I would keep it and proceed to the second longitudinal visual:</p>
+<h3>Next visual: Remittance performance</h3>
+<p>Use <code>FactAccountDaily</code> and create:</p>
+<pre><code class="language-DAX">P03 Cumulative Pace Ratio =
+AVERAGE (
+    FactAccountDaily[cumulative_pace_ratio]
+)
+</code></pre>
+<p>Then create a line chart with:</p>
+<ul>
+<li><strong>X-axis:</strong> <code>FactAccountDaily[monitoring_date]</code></li>
+<li><strong>Y-axis:</strong> <code>[P03 Cumulative Pace Ratio]</code></li>
+<li><strong>Title:</strong> <code>Remittance performance</code></li>
+<li>Format as percentage.</li>
+<li>Add a constant/reference line at <strong>100%</strong>.</li>
+</ul>
+<p>For a single merchant/account/day, <code>AVERAGE</code> simply returns the daily value; it also behaves sensibly if the context ever contains more than one row.</p>
+<p>That chart answers a different question from receivable balance:</p>
+<blockquote>
+<p><strong>Is the merchant remitting ahead of, at, or behind the contractual pace?</strong></p>
+</blockquote>
+<p>After that, I’d build a third visual around <strong>Monitoring status / servicing attention</strong>, probably as a status timeline or compact event table rather than another KPI card.</p>
+<p>So I would make one page-level change now: <strong>delete the Observation date slicer</strong>, widen Merchant and Scenario slightly, and let P03 become a full-journey Merchant 360 page.</p>
+</div></article><article id="m-6374bef8-e6cf-4a68-9dbe-2aa7195ed8b7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00352 · 2026-08-26T20:41:05.169000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: b49998bb-007e-405e-aae4-353613c1b3ec.png</p><div class="bubble"><p>current layout and space remaining - debating how to organize this to make the story clear and best use white space for the remaining visuals.</p>
+</div></article><article id="m-06077f78-5dbd-4e07-9989-ff3dfd5ec22f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00353 · 2026-08-26T20:41:08.025813-04:00 · active path</p><div class="bubble"><p>I would reorganize <strong>before adding anything else</strong>. The page is strong, but the current geometry gives the two lifecycle charts almost the entire lower half while the actual “360” operational conclusion still has nowhere obvious to live.</p>
+<p>The clearest story is:</p>
+<p><strong>Who is this merchant? → What did they request and receive? → How did the advance perform? → What happened operationally?</strong></p>
+<p>I would keep the left profile rail exactly as the anchor, then make the right side three horizontal story bands.</p>
+<h3>Recommended final P03 architecture</h3>
+<p><strong>Top band — Origination &amp; funding</strong><br>Keep <strong>Merchant request &amp; decision</strong> and <strong>Funded terms</strong> where they are. They work very well as two compact rows. I would not make them taller.</p>
+<p><strong>Middle band — Performance</strong><br>Keep the two charts side-by-side:</p>
+<p><strong>Receivable trajectory</strong> | <strong>Remittance performance</strong></p>
+<p>But make them somewhat <strong>shorter vertically</strong>. They currently occupy roughly 350 px of height; I think ~230–250 px is enough. These curves are simple enough that we don&#39;t need that much plotting area.</p>
+<p>That creates a substantial new band underneath them.</p>
+<p><strong>Bottom band — Operational outcome</strong><br>Use the reclaimed width for two complementary visuals:</p>
+<p><strong>Monitoring journey</strong> | <strong>Servicing &amp; exceptions</strong></p>
+<p>That completes the story instead of adding more financial charts.</p>
+<p>Conceptually:</p>
+<pre><code class="language-text">┌────────────────────────────────────────────────────────────────────┐
+│ Merchant request &amp; decision                                        │
+├────────────────────────────────────────────────────────────────────┤
+│ Funded terms                                                       │
+├──────────────────────────────┬─────────────────────────────────────┤
+│ Receivable trajectory        │ Remittance performance              │
+│                              │                                     │
+├──────────────────────────────┼─────────────────────────────────────┤
+│ Monitoring journey           │ Servicing &amp; exceptions              │
+└──────────────────────────────┴─────────────────────────────────────┘
+</code></pre>
+<h3>What I want <code>Monitoring journey</code> to do</h3>
+<p>This should <strong>not be another line chart of a number merely because we can plot one</strong>.</p>
+<p><code>FactAccountDaily</code> contains <code>monitoring_status_code</code>, and the physical data shows meaningful transitions among statuses such as <code>CURRENT</code>, <code>WATCH</code>, <code>UNDERPERFORMING</code>, and <code>SEVERE_SHORTFALL</code>. [export reference: filecite | turn42file0 | L10-L12] [export reference: filecite | turn42file2 | L32-L35]</p>
+<p>I would like this visual to answer:</p>
+<blockquote>
+<p><strong>When did this merchant move into and out of elevated monitoring states?</strong></p>
+</blockquote>
+<p>A status-over-time visual could be excellent here. We need to experiment with the native Power BI choices before deciding whether that becomes a stepped line, compact status table, or something else.</p>
+<h3><code>Servicing &amp; exceptions</code></h3>
+<p>This should answer:</p>
+<blockquote>
+<p><strong>What actually required attention?</strong></p>
+</blockquote>
+<p>The daily data already carries alert conditions such as daily shortfall, cumulative pace deterioration, zero-sales streak, liquidity stress, horizon overrun, and paid-off state. [export reference: filecite | turn42file3 | L44-L46]</p>
+<p>If the model also has actual servicing-event detail elsewhere, even better—we should use that rather than pretending daily alert flags are servicing actions. This section could ultimately be a compact event table.</p>
+<h3>I would also remove Observation date now</h3>
+<p>Seeing the page physically reinforces my earlier recommendation. It is occupying prime header space but <strong>does not control the story you&#39;re actually presenting</strong>. Your two lifecycle charts appropriately show the full merchant journey.</p>
+<p>P03&#39;s contract is becoming:</p>
+<blockquote>
+<p><strong>Select Merchant + Scenario → see that merchant&#39;s complete modeled relationship and financing journey.</strong></p>
+</blockquote>
+<p>That&#39;s cleaner than mixing full-lifecycle charts with an apparently operative as-of-date slicer.</p>
+<p>Removing it also lets <strong>Merchant</strong> and <strong>Scenario</strong> breathe in the header.</p>
+<h3>One other thing I would change now</h3>
+<p>The footer still says:</p>
+<blockquote>
+<p>“The selected run cohort remains fixed as observation period advances...”</p>
+</blockquote>
+<p>That&#39;s P02 language and is now <strong>wrong for P03</strong>.</p>
+<p>P03 needs merchant-specific boundary language. Eventually something closer to:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Merchant lifecycle dates after 2026-07-23 reflect governed deterministic-synthetic forward monitoring through 2026-11-22, not additional realized source history; <strong>Interpretation boundary:</strong> Deterministic synthetic evidence.</p>
+</blockquote>
+<p>That should be corrected before we forget.</p>
+<p>So my next move would <strong>not</strong> be another measure. I would first:</p>
+<ol>
+<li>Remove <strong>Observation date</strong>.</li>
+<li>Shorten both lifecycle charts enough to establish a bottom operational band.</li>
+<li>Update the P03 temporal-boundary footer.</li>
+<li>Then build <strong>Monitoring journey</strong> in the lower-left space.</li>
+</ol>
+<p>That gives us a deliberate four-act page rather than simply filling remaining white space.</p>
+</div></article><article id="m-6b0f315f-2059-4f9c-9d49-b4faf38c7962" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00354 · 2026-08-26T20:48:22.871000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 469f4ee0-19c1-4fa5-bca3-1ed2dcedad8b.png</p><div class="bubble"><p>how about this: </p>
+</div></article><article id="m-1efce45d-5f39-4091-96eb-1b6ded91947c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00355 · 2026-08-26T20:48:29.487374-04:00 · active path</p><div class="bubble"><p>Yes. <strong>I prefer this layout.</strong> It creates a much stronger visual hierarchy and uses the page width intelligently.</p>
+<p>The page now reads naturally:</p>
+<p><strong>Merchant context → Request/decision → Funded terms → Lifecycle performance</strong></p>
+<p>And, importantly, you&#39;ve created a large central/lower-left canvas for the remaining operational story without squeezing the two lifecycle charts.</p>
+<p>A few adjustments:</p>
+<ul>
+<li><strong>Keep the right-side charts exactly in this stacked configuration.</strong> Receivable Trajectory above Remittance Performance works because they share the same time axis conceptually.</li>
+<li><strong>Keep the two transaction tables where they are.</strong> I especially like Funded terms being slightly indented beneath Request &amp; Decision—it visually communicates progression.</li>
+<li>The large open center area is now an asset, not wasted space. That&#39;s where we should put <strong>Monitoring journey</strong> and <strong>Servicing &amp; exceptions</strong>.</li>
+<li>I would probably add a subtle vertical divider between the central operational area and the right-hand performance charts, analogous to your divider after the Merchant profile. That will give the page three obvious zones: <strong>Relationship | Journey/operations | Performance</strong>.</li>
+</ul>
+<h3>One change I would make to the header</h3>
+<p>Now that we&#39;ve physically arranged it this way, I&#39;m even more convinced we should remove <strong>Observation date</strong>.</p>
+<p>It currently implies that <code>8/16/2026</code> governs what the user is seeing, yet both right-side charts visibly continue through November. That&#39;s an interpretation conflict.</p>
+<p>Removing it gives you:</p>
+<p><strong>Merchant 000749 | Scenario Baseline</strong></p>
+<p>which accurately defines the page.</p>
+<h3>Use the open space deliberately</h3>
+<p>I would <strong>not</strong> put two more large charts there.</p>
+<p>Instead, I see the remaining center canvas roughly like this:</p>
+<pre><code class="language-text">Merchant request &amp; decision
+             Funded terms
+
+Monitoring journey
+────────────────────────────────────
+[compact lifecycle/status experience]
+
+Servicing &amp; exceptions
+────────────────────────────────────
+[compact event/detail experience]
+</code></pre>
+<p>That asymmetry is actually desirable. The right side answers <strong>“How did it perform quantitatively?”</strong> while the center answers <strong>“What happened operationally?”</strong></p>
+<h3>Before building Monitoring journey</h3>
+<p>Let&#39;s fix the footer now because its current wording is inherited from P02 and no longer describes this page correctly.</p>
+<p>I recommend:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Merchant lifecycle dates after 2026-07-23 reflect governed deterministic-synthetic forward monitoring through 2026-11-22, not additional originations or realized source history; <strong>Interpretation boundary:</strong> Deterministic synthetic evidence</p>
+</blockquote>
+<p>That is shorter, P03-specific, and accurately describes why a merchant selected from the 7/23 source boundary can have lifecycle observations extending into November.</p>
+<p>Then remove Observation date, update that footer, and <strong>we&#39;ll build Monitoring journey in the large open center space next</strong>. I want to use the actual <code>FactAccountDaily</code> status fields for that rather than inventing another generic line chart.</p>
+</div></article><article id="m-b54b0502-81ec-4824-86d6-f4df71455e58" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00356 · 2026-08-26T20:51:42.365000-04:00 · active path</p><div class="bubble"><p>create monitoring journey and servicing and exceptions</p>
+</div></article><article id="m-ee5d4240-9827-4b1d-80c9-cdf0438d0178" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00357 · 2026-08-26T20:51:45.210935-04:00 · active path</p><div class="bubble"><p>Yes. With the layout you now have, I would make these <strong>two compact operational visuals in the open center area</strong>, rather than more large trend charts.</p>
+<h2>1. Monitoring journey</h2>
+<p>This should answer:</p>
+<blockquote>
+<p><strong>How did this merchant&#39;s monitoring posture change during the life of the advance?</strong></p>
+</blockquote>
+<p>We already know <code>FactAccountDaily</code> contains both <code>monitoring_status_code</code> and <code>monitoring_status_rank</code>, with statuses such as CURRENT, WATCH, UNDERPERFORMING, and SEVERE_SHORTFALL. [export reference: filecite | turn42file0 | L10-L12]</p>
+<h3>Step 1 — Create the measure</h3>
+<p>In <code>ModelParameters → 04 Performance</code>:</p>
+<pre><code class="language-DAX">P03 Monitoring Status Rank =
+MAX (
+    FactAccountDaily[monitoring_status_rank]
+)
+</code></pre>
+<p>This is a legitimate measure rather than an access workaround: we need a numeric Y value to plot the categorical status through time.</p>
+<h3>Step 2 — Create a line chart</h3>
+<p>Place it in the <strong>upper portion of the open center area</strong>, below Funded terms.</p>
+<p>Use:</p>
+<p><strong>X-axis</strong></p>
+<pre><code class="language-text">FactAccountDaily[monitoring_date]
+</code></pre>
+<p><strong>Y-axis</strong></p>
+<pre><code class="language-text">[P03 Monitoring Status Rank]
+</code></pre>
+<p>Title:</p>
+<p><strong>Monitoring journey</strong></p>
+<p>For now, don&#39;t worry that the Y-axis displays <code>1</code>, <code>2</code>, <code>3</code>, <code>4</code>, etc. First we want to see the physical behavior.</p>
+<h3>Step 3 — Tooltip</h3>
+<p>Add these raw fields to the tooltip if Power BI permits them without demanding measures:</p>
+<pre><code class="language-text">FactAccountDaily[monitoring_status_code]
+FactAccountDaily[primary_monitoring_reason_code]
+</code></pre>
+<p>If <code>primary_monitoring_reason_code</code> is hidden/unavailable, skip it for now.</p>
+<p>Also add:</p>
+<pre><code class="language-text">[P03 Cumulative Pace Ratio]
+</code></pre>
+<p>This means hovering over a date can tell the user something like:</p>
+<pre><code class="language-text">Date                  8/19/2026
+Status                WATCH
+Reason                ...
+Remittance performance 87.4%
+</code></pre>
+<p>That is useful operational information.</p>
+<h3>Step 4 — Formatting</h3>
+<p>Keep this chart <strong>short</strong>—roughly 140–170 px high. We want it to read as a status trajectory, not compete with the two major performance charts.</p>
+<p>Turn markers <strong>On</strong> if they remain readable.</p>
+<p>Do not add a legend.</p>
+<hr>
+<h1>2. Servicing &amp; exceptions</h1>
+<p>For this one, I recommend a <strong>table</strong>, not another chart.</p>
+<p>And we need to distinguish two concepts carefully:</p>
+<p><strong>Monitoring alerts</strong> are daily conditions.<br><strong>Servicing events</strong> are actual operational actions/events.</p>
+<p>The daily source contains flags for daily shortfall, cumulative pace deterioration, zero-sales streak, liquidity stress, horizon overrun, and paid-off status. [export reference: filecite | turn42file3 | L44-L46]</p>
+<p>But we should <strong>not call those servicing actions</strong>.</p>
+<p>So let&#39;s initially make this visual a compact <strong>Monitoring exceptions</strong> table, and then add actual servicing events if the model contains an appropriate servicing fact.</p>
+<h3>Step 1 — Create these measures</h3>
+<pre><code class="language-DAX">P03 Daily Shortfall =
+SUM (
+    FactAccountDaily[daily_shortfall_amount]
+)
+</code></pre>
+<pre><code class="language-DAX">P03 Cumulative Shortfall =
+MAX (
+    FactAccountDaily[cumulative_shortfall_amount]
+)
+</code></pre>
+<pre><code class="language-DAX">P03 Days Since Remittance =
+MAX (
+    FactAccountDaily[days_since_last_positive_remittance]
+)
+</code></pre>
+<p>We already have:</p>
+<pre><code class="language-text">[P03 Cumulative Pace Ratio]
+</code></pre>
+<h3>Step 2 — Create a table</h3>
+<p>Place this beneath <strong>Monitoring journey</strong>.</p>
+<p>Use:</p>
+<pre><code class="language-text">FactAccountDaily[monitoring_date]
+FactAccountDaily[monitoring_status_code]
+[P03 Daily Shortfall]
+[P03 Cumulative Shortfall]
+[P03 Cumulative Pace Ratio]
+[P03 Days Since Remittance]
+</code></pre>
+<p>Rename the headers:</p>
+<pre><code class="language-text">Date
+Status
+Daily shortfall
+Cumulative shortfall
+Pace
+Days since remittance
+</code></pre>
+<p>Title it:</p>
+<p><strong>Monitoring exceptions</strong></p>
+<p>At first this will probably contain <strong>every monitoring day</strong>. That&#39;s okay—we&#39;re establishing the raw behavior.</p>
+<hr>
+<h2>3. Then filter the exception table</h2>
+<p>We don&#39;t want 100 ordinary CURRENT rows.</p>
+<p>Use the visual-level filter:</p>
+<pre><code class="language-text">FactAccountDaily[monitoring_status_rank]
+</code></pre>
+<p>and set it to whatever excludes the ordinary/current state.</p>
+<p>Based on the data we&#39;ve already inspected, rank <code>1</code> corresponds to <code>CURRENT</code>, while elevated states have higher ranks. For example, the supplied rows show CURRENT at rank 1 and UNDERPERFORMING at rank 3. [export reference: filecite | turn42file0 | L10-L12] [export reference: filecite | turn42file2 | L32-L35]</p>
+<p>So initially set:</p>
+<p><strong>monitoring_status_rank &gt; 1</strong></p>
+<p>Now the table becomes an exception history rather than a daily dump.</p>
+<hr>
+<h2>4. The eventual servicing component</h2>
+<p>After these two are physically working, search the Fields pane for:</p>
+<pre><code class="language-text">servicing
+exception
+case
+action
+resolution
+alert
+</code></pre>
+<p>We know from P01/P02 that the model has servicing concepts because we&#39;ve already displayed <strong>Open servicing</strong>. I don&#39;t want to manufacture a servicing history from monitoring flags if a proper servicing-event fact already exists.</p>
+<p>If we find one, the final bottom visual may become:</p>
+<p><strong>Servicing &amp; exceptions</strong></p>
+<p>with something like:</p>
+<pre><code class="language-text">Date | Type | Status | Reason | Resolution
+</code></pre>
+<p>and monitoring alerts can remain contextual rather than masquerading as servicing events.</p>
+<hr>
+<h3>Your P03 will then read</h3>
+<pre><code class="language-text">RELATIONSHIP        APPLICATION / FUNDING              PERFORMANCE
+
+Merchant profile    Merchant request &amp; decision        Receivable trajectory
+                    Funded terms                       Remittance performance
+
+                    Monitoring journey
+                    Monitoring exceptions /
+                    Servicing &amp; exceptions
+</code></pre>
+<p>That&#39;s a very strong Merchant 360 story.</p>
+<p><strong>Start with <code>P03 Monitoring Status Rank</code> and the Monitoring journey line chart.</strong> Show me what the status trajectory looks like for Merchant <strong>000749 / Baseline</strong> before we polish its axis or build the exceptions table; the actual pattern will tell us whether a line/step-style presentation is the right native visual.</p>
+</div></article><article id="m-7a8e8a53-74ab-48f7-99f1-c54b92ace45a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00358 · 2026-08-26T21:01:51.387000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 61ece78e-03e9-43ed-ac10-fe7b1c1dc85e.png</p><div class="bubble"><p>monitoring status code and primary monitoring reason code need measures to be in the tooltips.</p>
+</div></article><article id="m-bfa93ec4-132e-4811-9b31-06dc56918f16" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00359 · 2026-08-26T21:01:57.235518-04:00 · active path</p><div class="bubble"><p>Correct. Because implicit measures are disabled, those text fields need explicit scalar measures for tooltips.</p>
+<p>Create:</p>
+<pre><code class="language-DAX">P03 Monitoring Status =
+VAR _Value =
+    SELECTEDVALUE (
+        FactAccountDaily[monitoring_status_code]
+    )
+RETURN
+    COALESCE ( _Value, &quot;NOT AVAILABLE&quot; )
+</code></pre>
+<p>and:</p>
+<pre><code class="language-DAX">P03 Monitoring Reason =
+VAR _Value =
+    SELECTEDVALUE (
+        FactAccountDaily[primary_monitoring_reason_code]
+    )
+RETURN
+    COALESCE ( _Value, &quot;NOT AVAILABLE&quot; )
+</code></pre>
+<p>Then add both to the <strong>Tooltip</strong> well for <code>Monitoring journey</code>, along with <code>[P03 Cumulative Pace Ratio]</code> if you want the hover state to explain the status numerically.</p>
+<p>For this chart, these measures are appropriate because each plotted point already establishes a single merchant/scenario/date context. Unlike the earlier table issue, we are not asking the measures to behave as row-level grouping attributes.</p>
+<p>Your current chart is also useful: it shows frequent movement between ranks 1 and 2, a short rank-4 deterioration around late October, and then rank 0 after that. Before we polish the Y-axis, I want to understand what <strong>rank 0</strong> represents—likely paid-off/inactive or another terminal state—because that changes how we should label the journey.</p>
+</div></article><article id="m-9b12fe35-e026-49e0-96bd-e5835fa8eced" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00360 · 2026-08-26T21:13:46.917000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 6381c516-cee6-4f6f-9994-019712b2a9f8.png; 54768adc-910c-4ce4-81c0-f55b53748e5e.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-c7cfc284-896e-4e84-a86a-6d80346c351a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00361 · 2026-08-26T21:13:50.251982-04:00 · active path</p><div class="bubble"><p>Good. These tooltips validate the chart nicely:</p>
+<ul>
+<li>Rank <strong>2 = WATCH</strong>, with <code>M2_5_STATUS_WATCH</code>.</li>
+<li>Rank <strong>4 = SEVERE_SHORTFALL</strong>, with <code>M2_5_STATUS_SEVERE_SHORTFALL</code>.</li>
+<li>So the numeric trajectory is genuinely representing changes in monitoring severity rather than an arbitrary score.</li>
+</ul>
+<p>The remaining question is rank <strong>0</strong> after the late-October severe-shortfall episode. Given that the receivable trajectory reaches zero around the same period, I strongly suspect rank 0 is the terminal/paid-off state. But we should verify rather than infer it.</p>
+<p>Hover one of the <strong>rank-0 dates in November</strong> and show me the tooltip. That will tell us whether it reports <code>PAID_OFF</code>, <code>NOT ACTIVE</code>, blank, or something else.</p>
+<h3>I would keep this visual</h3>
+<p>The physical result is better than I expected. The stepped-looking movement makes the merchant&#39;s monitoring history very easy to understand:</p>
+<p><strong>Current ↔ Watch → severe shortfall → terminal state</strong></p>
+<p>Once we identify rank 0, I think we should improve the Y-axis. <code>0 / 1 / 2 / 3 / 4</code> is analytically correct but not executive-friendly. Ideally the chart itself communicates the states, while the tooltip provides the exact code/reason.</p>
+<p>One particularly interesting feature is that the late-October rank-4 event occurs while the remittance-performance chart is still around/above 100%. That&#39;s not necessarily contradictory: the monitoring framework can respond to <strong>daily or other monitoring conditions even when cumulative pace remains healthy</strong>. The physical daily source explicitly contains both daily-shortfall and cumulative-pace alert concepts, so we should preserve that distinction rather than assume cumulative pace alone determines status. [export reference: filecite | turn42file3 | L44-L46]</p>
+<p>After you hover a rank-0 point, we&#39;ll finish this visual and then use the remaining space for <strong>Servicing &amp; exceptions</strong>.</p>
+</div></article><article id="m-40d17115-34ce-41c7-ac4e-6952d7833f2c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00362 · 2026-08-26T21:14:40.067000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 17460020-c789-4237-944a-f0b23eff19b1.png</p><div class="bubble"><p> 0 - paid off.</p>
+</div></article><article id="m-775ff02b-0a7e-4d71-b455-b1f9983e1c9a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00363 · 2026-08-26T21:14:43.114498-04:00 · active path</p><div class="bubble"><p>Exactly. That resolves the entire scale:</p>
+<ul>
+<li><strong>0 = Paid off</strong></li>
+<li><strong>1 = Current</strong></li>
+<li><strong>2 = Watch</strong></li>
+<li><strong>3 = Underperforming</strong></li>
+<li><strong>4 = Severe shortfall</strong></li>
+</ul>
+<p>And the trajectory for Merchant 000749 now tells a coherent story: predominantly Current with intermittent Watch periods, a brief Severe Shortfall episode, then Paid Off on November 1.</p>
+<p>I would <strong>keep Monitoring journey exactly as the analytical concept</strong>. The numeric Y-axis isn&#39;t perfect, but the tooltip makes the status explicit, and the ordered rank is meaningful.</p>
+<p>One small improvement: change the Y-axis title, if currently shown, to <strong>Monitoring severity</strong>, or leave the axis title off. I would not spend time trying to replace 0–4 with text labels; that likely creates more complexity than value.</p>
+<p>Now let&#39;s use the remaining space for <strong>Servicing &amp; exceptions</strong>. Before building it, search your Fields pane for a fact table containing <code>servicing</code>, <code>exception</code>, or <code>case</code>. If one exists, tell me its table name(s). I want actual servicing/event records there rather than repackaging monitoring alerts as servicing activity.</p>
+</div></article><article id="m-73b3ee7e-e717-45a2-acf1-5af3396f7f06" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00364 · 2026-08-26T21:15:43.833000-04:00 · active path</p><div class="bubble"><p>I won&#39;t if we can make the Y-axis more informative to the reader</p>
+</div></article><article id="m-2021b409-f758-4b41-afad-03a78c02635e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00365 · 2026-08-26T21:15:46.914935-04:00 · active path</p><div class="bubble"><p>I agree. <strong>A 0–4 axis is too cryptic for a portfolio piece.</strong> A viewer shouldn&#39;t need to hover to learn what <code>3</code> means.</p>
+<p>Unfortunately, a standard Power BI line chart does not cleanly support replacing numeric Y-axis tick labels with arbitrary categorical labels such as <code>Paid off</code>, <code>Current</code>, <code>Watch</code>, etc. But we can make the visual substantially more informative without overengineering it.</p>
+<h3>Best native solution: add labeled horizontal reference lines</h3>
+<p>Keep the rank measure exactly as-is, but use the Analytics pane to add constant lines at the meaningful levels:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Value</th>
+<th>Label</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">4</td>
+<td>Severe shortfall</td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td>Underperforming</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td>Watch</td>
+</tr>
+<tr>
+<td align="right">1</td>
+<td>Current</td>
+</tr>
+<tr>
+<td align="right">0</td>
+<td>Paid off</td>
+</tr>
+</tbody></table>
+<p>For each line:</p>
+<ol>
+<li>Select <strong>Monitoring journey</strong>.</li>
+<li>Open the <strong>Analytics</strong> pane.</li>
+<li>Add a <strong>Y-axis constant line</strong>.</li>
+<li>Enter the value.</li>
+<li>Turn <strong>Data label = On</strong>.</li>
+<li>Set the label/text to the corresponding status.</li>
+<li>Repeat for the five ranks.</li>
+</ol>
+<p>Then we can potentially turn the normal Y-axis labels <strong>Off</strong>, because the reference-line labels themselves explain the scale.</p>
+<p>Conceptually, the viewer sees:</p>
+<pre><code class="language-text">Severe shortfall ────────────────
+                    ┌───┐
+Underperforming ────│───│────────
+                    │   │
+Watch ──┐─┐──┐─┐────│───│────────
+        │ │  │ │    │   │
+Current └─┴──┴─┴────┘   │
+                         │
+Paid off ────────────────└────────
+</code></pre>
+<p>That is <strong>far more portfolio-quality</strong> than <code>0, 1, 2, 3, 4</code>.</p>
+<h3>One caveat</h3>
+<p>Five labeled constant lines could become visually busy in this relatively small chart. So I would test it physically rather than assume all five are necessary.</p>
+<p>My preferred hierarchy would be:</p>
+<p><strong>Definitely label</strong></p>
+<ul>
+<li><code>4 — Severe shortfall</code></li>
+<li><code>3 — Underperforming</code></li>
+<li><code>2 — Watch</code></li>
+</ul>
+<p>Then perhaps leave <code>1</code> and <code>0</code> understandable through the axis/tooltips—or label all five if it remains clean.</p>
+<p>Another option is to keep the numeric ticks and change the Y-axis title to:</p>
+<p><strong>Monitoring severity (0 Paid off → 4 Severe)</strong></p>
+<p>That&#39;s less elegant but extremely compact.</p>
+<p><strong>I would try the labeled constant-line approach first.</strong> If five lines clutter the visual, we&#39;ll simplify it rather than accept an unexplained numeric scale.</p>
+</div></article><article id="m-85c37616-04e8-48ec-bdc7-3fd527016676" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00366 · 2026-08-26T21:22:57.931000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: e6528e63-15fd-43e4-b692-f520053ed681.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

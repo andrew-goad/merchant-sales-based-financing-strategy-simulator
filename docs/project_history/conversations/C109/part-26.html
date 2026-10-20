@@ -1,0 +1,1415 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 26 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 26</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-25.html">Previous part</a><a href="part-27.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-b3194ef0-4319-4b1e-b766-0bfa32acb7b9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00557 · 2026-09-01T08:18:08.745341-04:00 · active path</p><div class="bubble"><p>Absolutely. Beginning with <strong>Step 2</strong>, I’ll make the instructions explicit enough to follow click-by-click in Power BI Desktop.</p>
+<h2>Step 2 — Create the two bridge relationships</h2>
+<p>We are connecting the existing core slicer dimensions into the new R1 successor application-scenario dimension.</p>
+<h3>2A. Open Model view</h3>
+<ol>
+<li><p>On the far left side of Power BI Desktop, click the <strong>Model</strong> icon.</p>
+<ul>
+<li>It looks like a small relationship/diagram icon.</li>
+<li>It is usually the <strong>third icon down</strong> underneath Report and Data view.</li>
+</ul>
+</li>
+<li><p>Wait for the relationship diagram to appear.</p>
+</li>
+</ol>
+<p>You do <strong>not</strong> need to rearrange the whole model.</p>
+<h3>2B. Create the Application bridge</h3>
+<ol>
+<li>On the top ribbon, click <strong>Modeling</strong>.</li>
+<li>Click <strong>Manage relationships</strong>.</li>
+<li>In the Manage relationships window, click <strong>New</strong>.</li>
+</ol>
+<p>You should now see a relationship configuration window.</p>
+<p>Set it as follows:</p>
+<p><strong>First table</strong></p>
+<ul>
+<li>Select <code>DimApplication</code></li>
+<li>Select column <code>ApplicationKey</code></li>
+</ul>
+<p><strong>Second table</strong></p>
+<ul>
+<li>Select <code>R1DimApplicationScenario</code></li>
+<li>Select column <code>ApplicationKey</code></li>
+</ul>
+<p>Then set:</p>
+<pre><code class="language-text">Cardinality:
+One to many (1:*)
+
+Cross-filter direction:
+Single
+
+Make this relationship active:
+Checked / Yes
+</code></pre>
+<p>The <code>1</code> side should be:</p>
+<pre><code class="language-text">DimApplication
+</code></pre>
+<p>and the <code>*</code> side should be:</p>
+<pre><code class="language-text">R1DimApplicationScenario
+</code></pre>
+<p>Then:</p>
+<ol start="4">
+<li>Click <strong>OK</strong>.</li>
+<li>Back in Manage relationships, verify the new relationship appears.</li>
+<li>Do <strong>not</strong> close the Manage relationships window yet.</li>
+</ol>
+<h3>2C. Create the Scenario bridge</h3>
+<ol>
+<li>Still in <strong>Manage relationships</strong>, click <strong>New</strong> again.</li>
+</ol>
+<p>Set:</p>
+<p><strong>First table</strong></p>
+<ul>
+<li><code>DimScenario</code></li>
+<li>Column: <code>RunScenarioKey</code></li>
+</ul>
+<p><strong>Second table</strong></p>
+<ul>
+<li><code>R1DimApplicationScenario</code></li>
+<li>Column: <code>RunScenarioKey</code></li>
+</ul>
+<p>Set:</p>
+<pre><code class="language-text">Cardinality:
+One to many (1:*)
+
+Cross-filter direction:
+Single
+
+Make this relationship active:
+Checked / Yes
+</code></pre>
+<p>Again:</p>
+<pre><code class="language-text">DimScenario = 1 side
+R1DimApplicationScenario = * side
+</code></pre>
+<ol start="2">
+<li>Click <strong>OK</strong>.</li>
+<li>Click <strong>Close</strong> on Manage relationships.</li>
+</ol>
+<h3>2D. Quick visual check</h3>
+<p>In Model view, you should now be able to see relationship lines equivalent to:</p>
+<pre><code class="language-text">DimApplication
+      1
+      |
+      *
+R1DimApplicationScenario
+</code></pre>
+<p>and:</p>
+<pre><code class="language-text">DimScenario
+      1
+      |
+      *
+R1DimApplicationScenario
+</code></pre>
+<p>If Power BI gives you an <strong>ambiguous relationship/path warning</strong>, stop there and send me the exact message. Otherwise proceed.</p>
+<p>Do <strong>not</strong> create relationships from Industry, Acquisition Source, or Observation Date directly to the R1 tables.</p>
+<hr>
+<h1>Step 3 — Create the two P01 decision-outcome columns</h1>
+<p>Now we need readable labels and a deterministic sort order for the new seven-category decision chart.</p>
+<h3>3A. Go to Data view</h3>
+<ol>
+<li><p>On the far-left navigation, click the <strong>Data</strong> icon.</p>
+<ul>
+<li>It looks like a small table/grid.</li>
+<li>Usually second icon down.</li>
+</ul>
+</li>
+<li><p>In the Fields/Data pane, click:</p>
+</li>
+</ol>
+<pre><code class="language-text">R1DimApplicationScenario
+</code></pre>
+<h3>3B. Create <code>P01 R1 Outcome Label</code></h3>
+<ol>
+<li>On the top ribbon, click <strong>Table tools</strong> or <strong>Modeling</strong>.</li>
+<li>Click <strong>New column</strong>.</li>
+</ol>
+<p>A formula bar should appear near the top.</p>
+<ol start="3">
+<li>Delete whatever placeholder Power BI inserts.</li>
+<li>Paste this entire formula:</li>
+</ol>
+<pre><code class="language-DAX">P01 R1 Outcome Label =
+SWITCH (
+    &#39;R1DimApplicationScenario&#39;[governed_final_outcome_code],
+    &quot;APPROVE_AS_REQUESTED_AUTHORIZED&quot;, &quot;Approved as requested&quot;,
+    &quot;COUNTEROFFER_AUTHORIZED&quot;, &quot;Counteroffer authorized&quot;,
+    &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;, &quot;Counteroffer review&quot;,
+    &quot;MANUAL_UNDERWRITING_REVIEW_REQUIRED&quot;, &quot;Underwriting review&quot;,
+    &quot;DECLINE_INSUFFICIENT_EVIDENCE&quot;, &quot;Evidence decline&quot;,
+    &quot;DECLINE_NO_FEASIBLE_STRUCTURE&quot;, &quot;No feasible structure&quot;,
+    &quot;DECLINE_POLICY_HARD_STOP&quot;, &quot;Policy hard stop&quot;,
+    &quot;Other / unclassified&quot;
+)
+</code></pre>
+<ol start="5">
+<li>Press <strong>Enter</strong>.</li>
+<li>Wait for Power BI to finish calculating the column.</li>
+</ol>
+<p>You should now see:</p>
+<pre><code class="language-text">P01 R1 Outcome Label
+</code></pre>
+<p>under <code>R1DimApplicationScenario</code>.</p>
+<h3>3C. Create <code>P01 R1 Outcome Sort</code></h3>
+<ol>
+<li>Keep <code>R1DimApplicationScenario</code> selected.</li>
+<li>Click <strong>New column</strong> again.</li>
+<li>Paste:</li>
+</ol>
+<pre><code class="language-DAX">P01 R1 Outcome Sort =
+SWITCH (
+    &#39;R1DimApplicationScenario&#39;[governed_final_outcome_code],
+    &quot;APPROVE_AS_REQUESTED_AUTHORIZED&quot;, 1,
+    &quot;COUNTEROFFER_AUTHORIZED&quot;, 2,
+    &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;, 3,
+    &quot;MANUAL_UNDERWRITING_REVIEW_REQUIRED&quot;, 4,
+    &quot;DECLINE_INSUFFICIENT_EVIDENCE&quot;, 5,
+    &quot;DECLINE_NO_FEASIBLE_STRUCTURE&quot;, 6,
+    &quot;DECLINE_POLICY_HARD_STOP&quot;, 7,
+    99
+)
+</code></pre>
+<ol start="4">
+<li>Press <strong>Enter</strong>.</li>
+</ol>
+<h3>3D. Apply the sort</h3>
+<ol>
+<li>In the Fields/Data pane, click:</li>
+</ol>
+<pre><code class="language-text">P01 R1 Outcome Label
+</code></pre>
+<ol start="2">
+<li>On the top ribbon, click <strong>Column tools</strong>.</li>
+<li>Find <strong>Sort by column</strong>.</li>
+<li>Click it.</li>
+<li>Select:</li>
+</ol>
+<pre><code class="language-text">P01 R1 Outcome Sort
+</code></pre>
+<p>That ensures the chart will display the seven outcomes in the business sequence we want rather than alphabetically.</p>
+<hr>
+<h1>Step 4 — Add the 50 P01 measures using DAX Query View</h1>
+<p>This is much faster than creating each measure manually.</p>
+<h3>4A. Open DAX Query View</h3>
+<p>On the far-left navigation, click the <strong>DAX Query View</strong> icon.</p>
+<p>In your Desktop build, this should be one of the lower icons in the left navigation pane and typically contains <strong>DAX</strong> lettering.</p>
+<p>You should get a blank query editor.</p>
+<h3>4B. Open the batch script</h3>
+<p>Use this file:</p>
+<p>Open the P01 batch DAX script (historical reference: <code>sandbox:[session]/MSBF_P01_R1_BATCH_MEASURES_DAX_QUERY_20260901.dax</code>; referenced bytes not established here)</p>
+<p>Open it in another window or download/open it in Notepad.</p>
+<ol>
+<li>Press <strong>Ctrl+A</strong> inside the file.</li>
+<li>Press <strong>Ctrl+C</strong>.</li>
+</ol>
+<h3>4C. Paste into Power BI</h3>
+<p>Back in Power BI DAX Query View:</p>
+<ol>
+<li>Click inside the query editor.</li>
+<li>Press <strong>Ctrl+A</strong> if there is existing text.</li>
+<li>Press <strong>Ctrl+V</strong>.</li>
+</ol>
+<p>You should see a large block of DAX defining the P01 measures.</p>
+<h3>4D. Update the semantic model</h3>
+<p>Look across the DAX Query View ribbon for:</p>
+<pre><code class="language-text">Update model with changes
+</code></pre>
+<p>or a similarly worded <strong>Update model</strong> button.</p>
+<ol>
+<li>Click <strong>Update model with changes</strong>.</li>
+<li>Allow Power BI to process the measure definitions.</li>
+</ol>
+<p>If Power BI flags <strong>any error</strong>, do not start fixing individual formulas yet. Send me:</p>
+<ul>
+<li>the exact error;</li>
+<li>the measure name Power BI identifies.</li>
+</ul>
+<p>If it completes successfully, continue.</p>
+<h3>4E. Verify the measures landed</h3>
+<ol>
+<li>Go back to <strong>Report view</strong> or <strong>Model view</strong>.</li>
+<li>Expand:</li>
+</ol>
+<pre><code class="language-text">R1Measures
+</code></pre>
+<ol start="3">
+<li>Expand:</li>
+</ol>
+<pre><code class="language-text">P01 | Cohort Command Center
+</code></pre>
+<p>You should see the new P01 measures there.</p>
+<p>You do not have to count all 50 manually. Just confirm the folder is populated substantially and that measures such as these exist:</p>
+<pre><code class="language-text">R1 P01 Funded Account Paths
+R1 P01 Funded Amount
+R1 P01 Current Exposure As Of
+R1 P01 Remittance Fulfillment
+R1 P01 Supportable Path Rate
+R1 P01 Comparative Expected-Loss Rate
+R1 P01 Decision Paths
+R1 P01 Selected Structure Amount
+R1 P01 Risk-Adjusted Contribution
+R1 P01 G3v2 Display
+R1 P01 Strategy Source
+R1 P01 Power BI Model
+</code></pre>
+<hr>
+<h1>Step 5 — Update the P01 subtitle</h1>
+<p>Now go back to the page.</p>
+<ol>
+<li>Click <strong>Report view</strong>.</li>
+<li>Select the tab:</li>
+</ol>
+<pre><code class="language-text">P01 - Cohort Command Center
+</code></pre>
+<ol start="3">
+<li>Click the existing subtitle text box underneath:</li>
+</ol>
+<pre><code class="language-text">Merchant Financing Cohort Command Center
+</code></pre>
+<ol start="4">
+<li>Double-click inside the text box or use the text-edit mode.</li>
+<li>Replace the existing subtitle with:</li>
+</ol>
+<blockquote>
+<p>A fixed synthetic cohort: successor decisions and funding stay fixed while account performance reflects the selected observation date.</p>
+</blockquote>
+<p>Do not alter the page title.</p>
+<hr>
+<h1>Step 6 — Keep and verify the four slicers</h1>
+<p>Do not rebuild the slicers.</p>
+<p>We are keeping:</p>
+<pre><code class="language-text">Scenario
+Industry
+Acquisition source
+Observation date
+</code></pre>
+<p>But we should verify the exact fields.</p>
+<h3>Scenario</h3>
+<ol>
+<li>Click the Scenario slicer.</li>
+<li>In the <strong>Build visual</strong> pane, confirm its field is:</li>
+</ol>
+<pre><code class="language-text">DimScenario[ScenarioLabel]
+</code></pre>
+<h3>Industry</h3>
+<p>Confirm:</p>
+<pre><code class="language-text">DimIndustry[industry_name]
+</code></pre>
+<h3>Acquisition source</h3>
+<p>Confirm:</p>
+<pre><code class="language-text">DimAcquisitionSource[source_family_name]
+</code></pre>
+<h3>Observation date</h3>
+<p>Confirm:</p>
+<pre><code class="language-text">DimAsOfDate[AsOfDate]
+</code></pre>
+<p>Do not replace these fields with R1 versions.</p>
+<hr>
+<h1>Step 7 — Update the six KPI cards</h1>
+<p>Your left rail currently contains six cards.</p>
+<p>We will replace only the fields and labels.</p>
+<h2>KPI 1 — Funded account paths</h2>
+<ol>
+<li>Click the current <strong>Funded accounts</strong> card.</li>
+<li>In the Build visual pane, remove the existing measure.</li>
+<li>Drag:</li>
+</ol>
+<pre><code class="language-text">R1Measures
+→ P01 | Cohort Command Center
+→ R1 P01 Funded Account Paths
+</code></pre>
+<p>into the card.</p>
+<ol start="4">
+<li>Right-click the field inside the visual&#39;s field well.</li>
+<li>Choose <strong>Rename for this visual</strong>.</li>
+<li>Enter:</li>
+</ol>
+<pre><code class="language-text">Funded account paths
+</code></pre>
+<p>Expected Baseline endpoint value:</p>
+<pre><code class="language-text">103
+</code></pre>
+<h2>KPI 2 — Synthetic funded amount</h2>
+<p>Replace current Funded amount with:</p>
+<pre><code class="language-text">R1 P01 Funded Amount
+</code></pre>
+<p>Rename for visual:</p>
+<pre><code class="language-text">Synthetic funded amount
+</code></pre>
+<p>Expected Baseline:</p>
+<pre><code class="language-text">$1.385M approximately
+</code></pre>
+<p>Depending on your card display units, it may render <code>$1.4M</code>. We can tune display units after fields are correct.</p>
+<h2>KPI 3 — Current exposure</h2>
+<p>Replace with:</p>
+<pre><code class="language-text">R1 P01 Current Exposure As Of
+</code></pre>
+<p>Rename:</p>
+<pre><code class="language-text">Current exposure
+</code></pre>
+<h2>KPI 4 — Remittance fulfillment</h2>
+<p>Replace with:</p>
+<pre><code class="language-text">R1 P01 Remittance Fulfillment
+</code></pre>
+<p>Rename:</p>
+<pre><code class="language-text">Remittance fulfillment
+</code></pre>
+<h2>KPI 5 — Supportable path rate</h2>
+<p>Replace the old Final-offer rate with:</p>
+<pre><code class="language-text">R1 P01 Supportable Path Rate
+</code></pre>
+<p>Rename:</p>
+<pre><code class="language-text">Supportable path rate
+</code></pre>
+<p>Expected Baseline:</p>
+<pre><code class="language-text">40.0%
+</code></pre>
+<h2>KPI 6 — Comparative expected-loss rate</h2>
+<p>Replace old Expected-loss rate with:</p>
+<pre><code class="language-text">R1 P01 Comparative Expected-Loss Rate
+</code></pre>
+<p>Rename:</p>
+<pre><code class="language-text">Comparative expected-loss rate
+</code></pre>
+<p>Expected Baseline:</p>
+<pre><code class="language-text">9.40%
+</code></pre>
+<p>Do not worry yet if card text wrapping or spacing gets ugly. We will do a visual-formatting pass after all semantics are replaced.</p>
+<hr>
+<h1>Step 8 — Update Funding by acquisition source</h1>
+<ol>
+<li>Click the <strong>Funding by acquisition source</strong> bar chart.</li>
+</ol>
+<p>In the Build visual pane:</p>
+<h3>Y-axis</h3>
+<p>Keep:</p>
+<pre><code class="language-text">DimAcquisitionSource[source_family_name]
+</code></pre>
+<h3>X-axis</h3>
+<p>Remove the existing predecessor funding measure.</p>
+<p>Add:</p>
+<pre><code class="language-text">R1 P01 Funded Amount
+</code></pre>
+<h3>Tooltips</h3>
+<p>Add these:</p>
+<pre><code class="language-text">R1 P01 Funded Account Paths
+R1 P01 Current Exposure As Of
+R1 P01 Remittance Fulfillment
+R1 P01 Authorized Offer Rate
+R1 P01 Supportable Path Rate
+</code></pre>
+<p>For each tooltip field, use <strong>Rename for this visual</strong>:</p>
+<pre><code class="language-text">Funded account paths
+Current exposure
+Remittance fulfillment
+Authorized-offer rate
+Supportable path rate
+</code></pre>
+<h3>Sort</h3>
+<ol>
+<li>Click the three dots <code>...</code> on the visual.</li>
+<li>Choose <strong>Sort by</strong>.</li>
+<li>Select:</li>
+</ol>
+<pre><code class="language-text">R1 P01 Funded Amount
+</code></pre>
+<ol start="4">
+<li>Choose <strong>Descending</strong>.</li>
+</ol>
+<hr>
+<h1>Step 9 — Update Decision outcomes</h1>
+<p>This is the most important visible P01 change.</p>
+<ol>
+<li>Click the <strong>Decision outcomes</strong> bar chart.</li>
+</ol>
+<h3>Remove the current category</h3>
+<p>Remove:</p>
+<pre><code class="language-text">DimDecisionOutcome[P01 Executive Outcome Label]
+</code></pre>
+<h3>Add the new category</h3>
+<p>Add:</p>
+<pre><code class="language-text">R1DimApplicationScenario[P01 R1 Outcome Label]
+</code></pre>
+<p>to the Y-axis.</p>
+<h3>Remove the old value</h3>
+<p>Remove:</p>
+<pre><code class="language-text">Decisioned Applications
+</code></pre>
+<h3>Add the new value</h3>
+<p>Add:</p>
+<pre><code class="language-text">R1 P01 Decision Paths
+</code></pre>
+<p>to the X-axis.</p>
+<h3>Tooltips</h3>
+<p>Add:</p>
+<pre><code class="language-text">R1 P01 Outcome Share
+R1 P01 Selected Structure Amount
+</code></pre>
+<p>Rename for visual:</p>
+<pre><code class="language-text">Share of decision paths
+Selected structure amount
+</code></pre>
+<p>Do not change the title.</p>
+<p>Expected Baseline bars:</p>
+<pre><code class="language-text">Approved as requested          92
+Counteroffer authorized        11
+Counteroffer review           174
+Underwriting review            23
+Evidence decline               43
+No feasible structure         290
+Policy hard stop              117
+</code></pre>
+<p>If the order is wrong, verify that Step 3D—Sort by column—was applied.</p>
+<hr>
+<h1>Step 10 — Update Industry risk and economics</h1>
+<ol>
+<li>Click the scatter chart titled:</li>
+</ol>
+<pre><code class="language-text">Industry risk and economics
+</code></pre>
+<p>In the Build visual pane:</p>
+<h3>Details / Legend</h3>
+<p>Keep:</p>
+<pre><code class="language-text">DimIndustry[industry_name]
+</code></pre>
+<h3>X-axis</h3>
+<p>Replace existing measure with:</p>
+<pre><code class="language-text">R1 P01 Risk-Adjusted Contribution
+</code></pre>
+<h3>Y-axis</h3>
+<p>Replace existing measure with:</p>
+<pre><code class="language-text">R1 P01 Comparative Expected-Loss Rate
+</code></pre>
+<h3>Size</h3>
+<p>Use:</p>
+<pre><code class="language-text">R1 P01 Funded Amount
+</code></pre>
+<h3>Tooltips</h3>
+<p>Add:</p>
+<pre><code class="language-text">R1 P01 Funded Account Paths
+R1 P01 Funded Amount
+R1 P01 Authorized Expected Loss
+R1 P01 Authorized Path-Weighted EAD
+R1 P01 Annualized RAR
+R1 P01 Authorized Offer Rate
+R1 P01 Supportable Path Rate
+</code></pre>
+<p>Rename them:</p>
+<pre><code class="language-text">Funded account paths
+Synthetic funded amount
+Comparative expected loss
+Path-weighted EAD
+Annualized risk-adjusted return
+Authorized-offer rate
+Supportable path rate
+</code></pre>
+<hr>
+<h1>Step 11 — Update Endpoint reconciliation</h1>
+<p>Click the multi-card visual titled:</p>
+<pre><code class="language-text">Endpoint reconciliation
+</code></pre>
+<p>Replace the four measures in the same positions:</p>
+<pre><code class="language-text">R1 P01 Certified Paths
+→ Reconciled paths
+
+R1 P01 Certified Exposure
+→ Ending exposure
+
+R1 P01 Reconciliation Variance
+→ Variance
+
+R1 P01 Unresolved Exceptions
+→ Exceptions
+</code></pre>
+<p>At 11/22/2026 Baseline, expect roughly:</p>
+<pre><code class="language-text">Reconciled paths      103
+Ending exposure       $6,061.03
+Variance              $0.00
+Exceptions            0
+</code></pre>
+<hr>
+<h1>Step 12 — Update Review signals</h1>
+<p>Click the current:</p>
+<pre><code class="language-text">Review signals
+</code></pre>
+<p>visual.</p>
+<h3>Rename the visual title</h3>
+<p>In Format visual:</p>
+<pre><code class="language-text">General
+→ Title
+</code></pre>
+<p>Change title text to:</p>
+<pre><code class="language-text">Operational attention
+</code></pre>
+<p>Then replace its four fields:</p>
+<pre><code class="language-text">R1 P01 Active Alert Flags As Of
+→ Active alerts
+
+R1 P01 Open Servicing Paths
+→ Open servicing
+
+R1 P01 Review-Hold Paths
+→ Review holds
+
+R1 P01 Servicing Burden Units
+→ Servicing burden
+</code></pre>
+<p>At Baseline endpoint expect:</p>
+<pre><code class="language-text">Active alerts       11
+Open servicing       4
+Review holds          3
+Servicing burden     17
+</code></pre>
+<hr>
+<h1>Step 13 — Update evidence strip</h1>
+<p>At the bottom, the current five-cell evidence strip should become:</p>
+<pre><code class="language-text">R1 P01 Evidence Status Display
+→ Evidence status
+
+P01 G2 Display
+→ Module 1 · G2
+
+R1 P01 G3v2 Display
+→ G3-v2 controls
+
+R1 P01 Endpoint Display
+→ Endpoint gate
+
+R1 P01 Carrier Display
+→ R1 carrier
+</code></pre>
+<p>Expected display:</p>
+<pre><code class="language-text">VALID | PASS | PASS | PASS | PASS
+</code></pre>
+<hr>
+<h1>Step 14 — Update provenance footer</h1>
+<p>This is where your stale-source observation gets fixed.</p>
+<p>The current footer has four label/value pairs.</p>
+<p>Update them to:</p>
+<pre><code class="language-text">Source run
+Strategy source
+Power BI model
+Observed-source cutoff
+</code></pre>
+<p>Use these measures:</p>
+<pre><code class="language-text">Source run
+→ R1 P01 Source Run
+
+Strategy source
+→ R1 P01 Strategy Source
+
+Power BI model
+→ R1 P01 Power BI Model
+
+Observed-source cutoff
+→ keep existing Source Run As Of Date
+</code></pre>
+<p>Expected values:</p>
+<pre><code class="language-text">M1_V0_2_BASELINE_BUILD
+Module 2 / G3 v2.1.0-rc2
+PBI_R1_REFINEMENT_C1_20260901
+2026-07-23
+</code></pre>
+<p>Replace the existing temporal/interpretation boundary text with:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Decision and funding evidence is fixed at the 2026-07-23 source snapshot; account monitoring is deterministic synthetic-forward through 2026-11-22. <strong>Interpretation boundary:</strong> Synthetic strategy and lifecycle evidence.</p>
+</blockquote>
+<hr>
+<h2>Where I want you to pause</h2>
+<p>Do Steps <strong>2 through 14</strong> continuously unless Power BI produces an error.</p>
+<p>The only useful checkpoint before formatting is when P01 shows:</p>
+<ul>
+<li><strong>103</strong> funded account paths;</li>
+<li>seven successor decision bars;</li>
+<li><strong>40.0%</strong> supportable path rate;</li>
+<li>the successor-funded amount;</li>
+<li>updated endpoint / operational-attention controls;</li>
+<li>the new provenance footer.</li>
+</ul>
+<p>At that point send me a full-page screenshot. I will do the visual QA and then give you the exact tooltip, alt-text, interaction, formatting, and evidence-capture pass before we freeze P01.</p>
+</div></article><article id="m-1d18a717-8d05-44ca-9414-4424f9eb0d1c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00558 · 2026-09-01T08:35:59.595000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 3894b168-3379-4968-b9f0-ff1f22ca940d.png; c6e897e5-f9b7-4ce2-8cdd-d0f9368aceea.png</p><div class="bubble"><p>measures were successfully created in 4B. not sure they are in the folder structure we had desired, but close enough (or maybe they are)</p>
+</div></article><article id="m-8c600b5d-b256-4ff9-ab34-955b7a7f1431" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00559 · 2026-09-01T08:36:05.314716-04:00 · active path</p><div class="bubble"><p>Yes — this is correct enough to proceed, and in fact the folder structure is essentially what we wanted.</p>
+<p>You now have:</p>
+<pre><code class="language-text">R1Measures
+├─ P01 | Cohort Command Center
+│  ├─ [all new P01 measures]
+│
+└─ R1 Successor Candidate
+   ├─ [existing R1 measures]
+</code></pre>
+<p>That is the intended separation.</p>
+<p>A few of the new measures beginning with double underscores, such as:</p>
+<pre><code class="language-text">R1 P01 __Active Alert Count As Of
+R1 P01 __Cumulative Actual As Of
+R1 P01 __Cumulative Expected As Of
+R1 P01 __Exposure As Of
+...
+</code></pre>
+<p>are <strong>helper measures</strong>. They are supposed to live in the same P01 folder during construction. We can hide them after the page is working and validated. Do not move or rename anything right now.</p>
+<p>So Step 4 is a <strong>PASS</strong>.</p>
+<p>One small point: the display folder shown as:</p>
+<pre><code class="language-text">P01 | Cohort Command Center
+</code></pre>
+<p>is exactly what we wanted. Power BI is treating it as one display-folder name, not a nested folder, which is fine.</p>
+<h2>Proceed to Step 5</h2>
+<p>Go back to <strong>Report view</strong>:</p>
+<ol>
+<li>Click the <strong>Report</strong> icon on the far left.</li>
+<li>Click the bottom tab:<pre><code class="language-text">P01 - Cohort Command Center
+</code></pre>
+</li>
+<li>Click the subtitle beneath:<pre><code class="language-text">Merchant Financing Cohort Command Center
+</code></pre>
+</li>
+<li>Edit the subtitle to:</li>
+</ol>
+<blockquote>
+<p><strong>A fixed synthetic cohort: successor decisions and funding stay fixed while account performance reflects the selected observation date.</strong></p>
+</blockquote>
+<p>Keep the page title unchanged.</p>
+<p>Then move directly to <strong>Step 6 — verify the four slicers</strong>. You do not need to send me another screenshot yet unless one of the slicer fields differs from the expected mapping.</p>
+</div></article><article id="m-36fa3d54-a6be-43c7-a1a5-f5fd749a25fb" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00560 · 2026-09-01T09:51:51.956000-04:00 · active path</p><div class="bubble"><p>what does R1 carrier tell the user? vs the old source reconciliation?</p>
+</div></article><article id="m-b28e3875-6971-4d5f-b06b-2903667cd6c3" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00561 · 2026-09-01T09:51:54.172724-04:00 · active path</p><div class="bubble"><p>They communicate <strong>different controls</strong>, and I would not replace <strong>Source reconciliation</strong> with <strong>R1 carrier</strong> on P01.</p>
+<ul>
+<li><strong>Source reconciliation — PASS</strong> tells the user: <em>the analytical population reconciles to its governed source; the expected rows/paths are accounted for without unexplained source-to-report differences.</em> That is a meaningful data-integrity control for an executive dashboard.</li>
+<li><strong>R1 carrier — PASS</strong> tells the user something more technical: <em>the R1 successor Power BI carrier/package passed its carrier-level validation controls.</em> That matters for audit/release engineering, but an executive seeing “R1 carrier — PASS” probably has no idea what a “carrier” is.</li>
+</ul>
+<p>The R20 validation does establish substantial carrier integrity—e.g., 1,500 unique R1 application-scenario rows, 1,500 unique final-decision rows, and no missing application/profile references in those objects. [export reference: filecite | turn91file5 | L467-L485] [export reference: filecite | turn91file5 | L529-L541] But <strong>“R1 carrier” is implementation vocabulary</strong>, not an executive control concept.</p>
+<h3>I would revise my Step 13 recommendation</h3>
+<p>Keep the fifth cell as:</p>
+<p><strong>Source reconciliation</strong></p>
+<p>We should simply rebase its value to the <strong>R1 successor reconciliation control</strong>, rather than retain the predecessor measure.</p>
+<p>So our desired strip remains conceptually:</p>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>What it tells the user</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Evidence status</strong></td>
+<td>Is the report&#39;s governed evidence valid?</td>
+</tr>
+<tr>
+<td><strong>Module 1 · G2</strong></td>
+<td>Did the upstream merchant-evidence module pass its gate?</td>
+</tr>
+<tr>
+<td><strong>Module 2 · G3-v2</strong></td>
+<td>Did the successor decisioning module pass its certification controls?</td>
+</tr>
+<tr>
+<td><strong>Endpoint gate</strong></td>
+<td>Does the downstream lifecycle endpoint reconcile?</td>
+</tr>
+<tr>
+<td><strong>Source reconciliation</strong></td>
+<td>Does the report population reconcile to its governed source?</td>
+</tr>
+</tbody></table>
+<p>That&#39;s much better executive language.</p>
+<p>I would reserve <strong>carrier status</strong>, exact carrier SHA-256, certification ID, audit state, etc. for a technical tooltip/drill-through or evidence package—not the primary P01 canvas.</p>
+<p>So <strong>do not replace Source reconciliation with R1 carrier when we reach Step 13</strong>. I&#39;ll map the appropriate R1 successor reconciliation measure/control for that fifth position when we implement the strip.</p>
+</div></article><article id="m-11e7b95f-e5f3-4fd5-b97e-ec396ad22000" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00562 · 2026-09-01T09:53:36.719000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: bfc890f2-c8f1-43e3-b710-81e8df55ba62.png</p><div class="bubble"><p>this source for source reconciliation still good?</p>
+</div></article><article id="m-ca7a558d-80f4-49fe-9901-062f3ce9b359" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00563 · 2026-09-01T09:53:39.371709-04:00 · active path</p><div class="bubble"><p>Yes. <strong>Keep that source.</strong></p>
+<p><code>ModelParameters[P01 Source Reconciliation Display]</code> is still appropriate for the <strong>Source reconciliation</strong> cell because it represents the core governed source-reconciliation control rather than the obsolete decision-strategy outputs we are replacing.</p>
+<p>So for Step 13, revise my earlier instructions to:</p>
+<table>
+<thead>
+<tr>
+<th>Cell</th>
+<th>Final field</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Evidence status</td>
+<td><code>R1 P01 Evidence Status Display</code></td>
+</tr>
+<tr>
+<td>Module 1 · G2</td>
+<td>existing <code>P01 G2 Display</code></td>
+</tr>
+<tr>
+<td>Module 2 · G3-v2</td>
+<td><code>R1 P01 G3v2 Display</code></td>
+</tr>
+<tr>
+<td>Endpoint gate</td>
+<td><code>R1 P01 Endpoint Display</code></td>
+</tr>
+<tr>
+<td><strong>Source reconciliation</strong></td>
+<td><strong>existing <code>ModelParameters[P01 Source Reconciliation Display]</code></strong></td>
+</tr>
+</tbody></table>
+<p>In other words, <strong>do not replace the fifth field</strong>.</p>
+<p>The important modernization is the Module 2 cell: the old <strong>Module 2 · G3</strong> control should become the successor <strong>G3-v2</strong> control. Source reconciliation remains a valid upstream/report-integrity control and does not become stale merely because the strategy was remediated.</p>
+<p>So your screenshot is correct: leave <strong>Source reconciliation</strong> exactly where it is.</p>
+</div></article><article id="m-ea446e3b-1884-4433-aa1f-af079fdea751" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00564 · 2026-09-01T10:03:44.945000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: a83b8355-9062-4bea-a350-4c74382c021b.png</p><div class="bubble"><p>Does the temporal boundary and interpretation boundary need to be as long? current spacing - note, we could try to shift things higher to create a second line if we need:</p>
+</div></article><article id="m-43162030-32b6-4c13-846d-6b71a89e2074" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00565 · 2026-09-01T10:03:48.440613-04:00 · active path</p><div class="bubble"><p>I would <strong>shorten it rather than move the page upward to make room for a second line</strong>. The current page is dense but balanced, and the bottom governance/provenance area should function as a compact disclosure band, not compete with the analytical content.</p>
+<p>The existing sentence is carrying more words than necessary because several ideas are already communicated elsewhere:</p>
+<ul>
+<li><code>Observed-source cutoff: 2026-07-23</code> is immediately above it.</li>
+<li><code>Observation date</code> is visible in the slicer.</li>
+<li>the subtitle already says this is a <strong>fixed synthetic cohort</strong>.</li>
+<li>the page now explicitly identifies the successor strategy source.</li>
+</ul>
+<h3>Recommended final wording</h3>
+<p>I would use:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Post-cutoff account performance is deterministic synthetic-forward through 2026-11-22; <strong>Interpretation boundary:</strong> Synthetic strategy and lifecycle evidence</p>
+</blockquote>
+<p>That preserves the important distinction while removing the redundant repetition of <code>2026-07-23</code>.</p>
+<p>Even tighter, and probably my preference visually:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Post-cutoff account performance is synthetic-forward through 2026-11-22; <strong>Interpretation boundary:</strong> Deterministic synthetic evidence</p>
+</blockquote>
+<p>That is almost exactly the amount of text your current one-line footer wants.</p>
+<h3>Why I prefer the second version</h3>
+<p>Your provenance line immediately above already establishes:</p>
+<blockquote>
+<p><strong>Observed-source cutoff: 2026-07-23</strong></p>
+</blockquote>
+<p>So the reader naturally gets:</p>
+<p><strong>Observed source through 7/23 → synthetic-forward account performance afterward → endpoint 11/22.</strong></p>
+<p>And <strong>“Deterministic synthetic evidence”</strong> remains the strongest concise interpretation boundary because it applies to the whole portfolio rather than implying only the strategy/lifecycle portions are synthetic.</p>
+<p>I would therefore use:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Post-cutoff account performance is synthetic-forward through 2026-11-22; <strong>Interpretation boundary:</strong> Deterministic synthetic evidence</p>
+</blockquote>
+<p>No second line needed.</p>
+<h3>Two small presentation changes I would make now</h3>
+<p>Your refreshed P01 looks substantially better. I would also change the provenance labels visible in the screenshot:</p>
+<p><strong><code>Run:</code> → <code>Source run:</code></strong><br><strong><code>Source release:</code> → <code>Strategy source:</code></strong><br><strong><code>Model version:</code> → <code>Power BI model:</code></strong></p>
+<p>The <strong>values are now good</strong>; the labels simply haven&#39;t caught up with the new provenance contract.</p>
+<p>And on the KPI rail, change:</p>
+<p><strong><code>Funded accounts</code> → <code>Funded account paths</code></strong><br><strong><code>Funded amount</code> → <code>Synthetic funded amount</code></strong><br><strong><code>Expected-loss rate</code> → <code>Comparative expected-loss rate</code></strong></p>
+<p>Those distinctions matter with the R1 successor and make the page semantically precise.</p>
+<p>Otherwise, I would <strong>not shift the main page upward</strong>. The current geometry is strong, and preserving a little white-space separation above the governance strip helps distinguish executive analytics from control/provenance information.</p>
+</div></article><article id="m-aa581278-66bc-4162-87b0-e28fc43d55b0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00566 · 2026-09-01T10:07:53.021000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 003496f2-a283-4ae3-8fee-551a7c404c26.png</p><div class="bubble"><p>I&#39;ll come back to capture evidence from P01. I have to run an errand. While I&#39;m doing that, Please create P02 step by step using the mapping that the handoff provided and this screenshot. Note, no need to touch on the Run/Source Release/Model version, Observed-source cutoff. I will carry that over from P01.</p>
+</div></article><article id="m-75967968-af14-4c44-b7a3-fdbf79fdcb91" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00567 · 2026-09-01T10:33:50.475407-04:00 · active path</p><div class="bubble"><h1>P02 successor implementation package is ready</h1>
+<p>I mapped P02 against the physical R22 page, the full semantic and relationship inventories, and the R1 carrier data. <strong>No change was made to your open PBIP.</strong> The package below contains the complete click-by-click construction instructions, one batch DAX script, exact field mappings, and recomputed UAT values.</p>
+<p>The existing P02 contract remains sound:</p>
+<ul>
+<li>Scenario, Industry, and Acquisition source define the cohort slice.</li>
+<li>Observation period changes the visible lifecycle window but not the fixed cohort profile.</li>
+<li>The exposure comparison intentionally retains both Baseline and Recession Energy.</li>
+<li>Remittance, attention, and payoff visuals respond to the selected Scenario.</li>
+<li>Only slicers drive page context. [export reference: filecite | turn84file4 | L305-L326]</li>
+</ul>
+<p>The successor data now supports 103 Baseline funded paths and 27 Recession Energy funded paths, rather than the old 44/15 predecessor population. The accepted successor outcome also distinguishes approvals as requested, authorized counteroffers, counteroffer review, underwriting review, no-feasible outcomes, policy hard stops, and evidence declines. [export reference: filecite | turn90file11 | L595-L619]</p>
+<h2>Files</h2>
+<p>Download the complete P02 implementation pack (historical reference: <code>sandbox:[session]/MSBF_P02_R1_SUCCESSOR_IMPLEMENTATION_PACK_20260901.zip</code>; referenced bytes not established here)</p>
+<p>Open the detailed click-by-click guide (historical reference: <code>sandbox:[session]/MSBF_P02_R1_SUCCESSOR_IMPLEMENTATION_GUIDE_20260901.md</code>; referenced bytes not established here)</p>
+<p>Open the complete batch DAX script (historical reference: <code>sandbox:[session]/MSBF_P02_R1_BATCH_MEASURES_DAX_QUERY_20260901.dax</code>; referenced bytes not established here)</p>
+<p>Open the exact visual-field mapping (historical reference: <code>sandbox:[session]/MSBF_P02_R1_FIELD_MAPPING_20260901.csv</code>; referenced bytes not established here)</p>
+<p>Open the expected UAT values (historical reference: <code>sandbox:[session]/MSBF_P02_R1_UAT_EXPECTED_VALUES_20260901.csv</code>; referenced bytes not established here)</p>
+<p>Download the package SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_P02_R1_SUCCESSOR_IMPLEMENTATION_PACK_20260901.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Package SHA-256:</p>
+<pre><code class="language-text">4e48efc4db158ccd7980f6ace4b3e1ae4987b2ed1f15a3ac3de22296743dc95b
+</code></pre>
+<p>The archive passed CRC testing with all four files intact.</p>
+<hr>
+<h1>Locked P02 design</h1>
+<h2>Page title</h2>
+<p>Keep:</p>
+<pre><code class="language-text">Merchant Financing Cohort Lifecycle
+</code></pre>
+<p>Replace the subtitle with:</p>
+<blockquote>
+<p><strong>Track the selected synthetic funded cohort from activation through receivable runoff, remittance performance, attention signals, and payoff timing.</strong></p>
+</blockquote>
+<h2>Slicers</h2>
+<p>Keep all four current slicers:</p>
+<pre><code class="language-text">Scenario
+Industry
+Acquisition source
+Observation period
+</code></pre>
+<p>No new Strategy Profile slicer belongs on P02.</p>
+<p>No new relationship or calculated column is required. The two bridges already created during P01 are sufficient:</p>
+<pre><code class="language-text">DimApplication[ApplicationKey]
+    1 → *
+R1DimApplicationScenario[ApplicationKey]
+
+DimScenario[RunScenarioKey]
+    1 → *
+R1DimApplicationScenario[RunScenarioKey]
+</code></pre>
+<p>The R1 facts already relate many-to-one to <code>R1DimApplicationScenario</code> through <code>ApplicationScenarioKey</code>, including daily monitoring, final decisions, offer candidates, intervention, servicing, performance, and account certification. [export reference: filecite | turn91file0 | L11-L84]</p>
+<hr>
+<h1>Main visual changes</h1>
+<h2>1. Fixed cohort profile</h2>
+<p>Replace the six predecessor measures with:</p>
+<table>
+<thead>
+<tr>
+<th>New visible label</th>
+<th>Measure</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Funded account paths</strong></td>
+<td><code>R1 P02 Cohort Funded Account Paths</code></td>
+</tr>
+<tr>
+<td><strong>Synthetic funded amount</strong></td>
+<td><code>R1 P02 Cohort Funded Amount</code></td>
+</tr>
+<tr>
+<td><strong>Average funded amount</strong></td>
+<td><code>R1 P02 Average Funded Amount</code></td>
+</tr>
+<tr>
+<td><strong>Authorized-offer rate</strong></td>
+<td><code>R1 P02 Authorized Offer Rate</code></td>
+</tr>
+<tr>
+<td><strong>Comparative expected-loss rate</strong></td>
+<td><code>R1 P02 Comparative Expected-Loss Rate</code></td>
+</tr>
+<tr>
+<td><strong>Risk-adjusted contribution</strong></td>
+<td><code>R1 P02 Risk-Adjusted Contribution</code></td>
+</tr>
+</tbody></table>
+<p>I selected <strong>Authorized-offer rate</strong>, rather than Supportable path rate, for P02 because this page follows the cohort that actually entered the synthetic account lifecycle. Reviewable paths do not yet have account-monitoring records and should not be presented as funded.</p>
+<p>The old <code>Negative contribution = 159</code> KPI is removed. It belonged to the predecessor application-scenario population and no longer describes the R1 funded cohort.</p>
+<h2>2. <code>Exposure</code> → <code>Receivable runoff</code></h2>
+<p>Keep the two-scenario comparison but replace the measure with:</p>
+<pre><code class="language-text">R1 P02 Current Exposure As Of
+</code></pre>
+<p>Visible series label:</p>
+<pre><code class="language-text">Remaining receivable
+</code></pre>
+<p>Keep:</p>
+<pre><code class="language-text">DimScenario[ScenarioLabel]
+</code></pre>
+<p>as the legend, and preserve the existing interaction where the Scenario slicer does <strong>not</strong> filter this chart.</p>
+<p>Recommended tooltips:</p>
+<pre><code class="language-text">Funded account paths
+Active account paths
+Paid-off paths
+Remittance fulfillment
+</code></pre>
+<h2>3. <code>Review signals</code> → <code>Attention signals</code></h2>
+<p>Replace the old series with:</p>
+<pre><code class="language-text">R1 P02 Active Alert Flags As Of
+R1 P02 Attention Account Paths As Of
+</code></pre>
+<p>Visible names:</p>
+<pre><code class="language-text">Active alert flags
+Accounts requiring attention
+</code></pre>
+<p><code>Accounts requiring attention</code> counts funded paths whose latest status at the plotted date is:</p>
+<pre><code class="language-text">WATCH
+UNDERPERFORMING
+SEVERE_SHORTFALL
+DORMANT_NO_REMITTANCE
+</code></pre>
+<p>This is more accurate than plotting an <code>Open servicing</code> proxy over historical dates. Formal servicing disposition remains endpoint evidence; P02 should not back-cast it.</p>
+<h2>4. Remittance fulfillment</h2>
+<p>Replace the predecessor measure with:</p>
+<pre><code class="language-text">R1 P02 Remittance Fulfillment
+</code></pre>
+<p>Use these tooltips:</p>
+<pre><code class="language-text">R1 P02 Cumulative Actual As Of
+    → Remitted to date
+
+R1 P02 Cumulative Expected As Of
+    → Expected to date
+
+R1 P02 Current Exposure As Of
+    → Remaining receivable
+
+R1 P02 Active Alert Flags As Of
+    → Active alert flags
+
+R1 P02 Attention Account Paths As Of
+    → Accounts requiring attention
+</code></pre>
+<p>Retain the dotted 100% expected-pace line.</p>
+<h2>5. <code>Payoff slippage</code> → <code>Payoff timing vs plan</code></h2>
+<p>The R1 funded cohort generally pays earlier than its selected horizon, so the term <strong>slippage</strong> is no longer neutral enough.</p>
+<p>Use:</p>
+<pre><code class="language-text">R1 P02 Average Payoff Variance Days
+</code></pre>
+<p>Visible series name:</p>
+<pre><code class="language-text">Average days vs plan
+</code></pre>
+<p>Y-axis title:</p>
+<pre><code class="language-text">Average days (+ late / – early)
+</code></pre>
+<p>Add a dotted zero line.</p>
+<p>Interpretation:</p>
+<pre><code class="language-text">Negative = earlier than selected plan
+Zero     = on plan or not yet beyond plan
+Positive = later than selected plan
+</code></pre>
+<hr>
+<h1>Measure creation</h1>
+<p>The DAX batch creates <strong>25 complete measures</strong> in one operation, including:</p>
+<ul>
+<li>fixed cohort-profile measures;</li>
+<li>R1 as-of lifecycle aliases;</li>
+<li>active and paid-off account-path counts;</li>
+<li>accounts requiring attention;</li>
+<li>payoff timing versus the selected horizon;</li>
+<li>helper measures;</li>
+<li>five dynamic accessibility measures.</li>
+</ul>
+<p>To install them:</p>
+<ol>
+<li>Open <strong>DAX Query View</strong>.</li>
+<li>Open the batch DAX file (historical reference: <code>sandbox:[session]/MSBF_P02_R1_BATCH_MEASURES_DAX_QUERY_20260901.dax</code>; referenced bytes not established here).</li>
+<li>Copy the entire file.</li>
+<li>Paste it into a new DAX query tab.</li>
+<li>Select <strong>Update model with changes</strong>.</li>
+<li>Run the final <code>EVALUATE ROW</code> validation.</li>
+<li>In Model view, select all measures beginning <code>R1 P02</code>.</li>
+<li>Set Display folder to:</li>
+</ol>
+<pre><code class="language-text">P02 | Cohort Lifecycle
+</code></pre>
+<p>After QA, hide these five implementation helpers:</p>
+<pre><code class="language-text">R1 P02 __Monitoring Status As Of
+R1 P02 __Monitoring Day Index As Of
+R1 P02 __Paid-Off Flag As Of
+R1 P02 __First Paid-Off Day As Of
+R1 P02 __Payoff Variance Days
+</code></pre>
+<p>The measures aggregate the source-owned R1 facts. They do not recreate feature availability, candidate feasibility, selection, decision routing, no-feasible proofs, or certification in DAX, consistent with the Power BI construction boundary. [export reference: filecite | turn88file15 | L933-L945]</p>
+<hr>
+<h1>Required interactions</h1>
+<p>Preserve these two specific exceptions:</p>
+<h3>Scenario → Receivable runoff</h3>
+<pre><code class="language-text">None
+</code></pre>
+<p>This keeps both scenario lines visible.</p>
+<h3>Observation period → Cohort profile</h3>
+<pre><code class="language-text">None
+</code></pre>
+<p>This keeps the funded-cohort definition fixed when the viewer narrows the visible dates.</p>
+<p>All four charts should also have <strong>None</strong> interactions with one another and with the profile card. Only slicers should drive context.</p>
+<p>Industry and Acquisition source should continue filtering:</p>
+<ul>
+<li>the cohort profile;</li>
+<li>both lines in Receivable runoff;</li>
+<li>Remittance fulfillment;</li>
+<li>Attention signals;</li>
+<li>Payoff timing versus plan.</li>
+</ul>
+<hr>
+<h1>Baseline UAT</h1>
+<p>Set:</p>
+<pre><code class="language-text">Scenario:            Baseline
+Industry:            All
+Acquisition source:  All
+Observation period:  7/23/2026–11/22/2026
+</code></pre>
+<p>Expected profile:</p>
+<pre><code class="language-text">Funded account paths                 103
+Synthetic funded amount       $1,385,300
+Average funded amount          $13,449.51
+Authorized-offer rate               13.7%
+Comparative expected-loss rate       9.40%
+Risk-adjusted contribution      $147,981.13
+</code></pre>
+<p>Expected lifecycle endpoints:</p>
+<pre><code class="language-text">Receivable runoff
+7/26/2026     $1,621,427.74
+11/22/2026        $7,823.28
+
+Remittance fulfillment, 11/22       99.5%
+Active alert flags, 11/22               11
+Accounts requiring attention, 11/22      4
+Active account paths, 11/22               4
+Paid-off paths, 11/22                     99
+Average payoff variance, 11/22          -18.9 days
+</code></pre>
+<h2>Recession Energy UAT</h2>
+<p>Expected profile:</p>
+<pre><code class="language-text">Funded account paths                  27
+Synthetic funded amount         $344,200
+Average funded amount          $12,748.15
+Authorized-offer rate                3.6%
+Comparative expected-loss rate      11.43%
+Risk-adjusted contribution       $30,032.10
+</code></pre>
+<p>Expected endpoint:</p>
+<pre><code class="language-text">Remaining receivable                 $0.00
+Remittance fulfillment              100.0%
+Active alert flags                       0
+Accounts requiring attention             0
+Active account paths                      0
+Paid-off paths                          27
+Average payoff variance              -27.4 days
+</code></pre>
+<p>The Receivable runoff chart must continue to show <strong>both scenario lines</strong> even when the Scenario slicer is switched.</p>
+<hr>
+<h1>Accessibility population</h1>
+<p>The batch includes:</p>
+<pre><code class="language-text">R1 P02 Cohort Profile Alt Text
+R1 P02 Receivable Runoff Alt Text
+R1 P02 Attention Signals Alt Text
+R1 P02 Remittance Fulfillment Alt Text
+R1 P02 Payoff Timing Alt Text
+</code></pre>
+<p>Recommended tab order:</p>
+<pre><code class="language-text">1   Title and subtitle
+2   Scenario
+3   Industry
+4   Acquisition source
+5   Observation period
+6   Cohort profile
+7   Receivable runoff
+8   Attention signals
+9   Remittance fulfillment
+10  Payoff timing vs plan
+11  Provenance/footer
+</code></pre>
+<p>The detailed guide contains every menu selection, field removal, field addition, tooltip rename, formatting choice, interaction setting, and QA step. Once implemented, P02 will tell a much stronger successor story:</p>
+<blockquote>
+<p><strong>What cohort was actually funded, how large and economically valuable was it, how did the receivable run off, how did remittance perform, where did operating attention arise, and did payoff occur earlier or later than the governed selected plan?</strong></p>
+</blockquote>
+</div></article><article id="m-bc2079da-6d85-4a5d-b3d5-a7f7710849fa" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00568 · 2026-09-01T12:03:48.578000-04:00 · active path</p><div class="bubble"><p>what about the alt text for title and multi card? both P01 and P02 please.</p>
+</div></article><article id="m-4bd2e138-a998-4fca-8426-0b08d19190ea" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00569 · 2026-09-01T12:03:52.278329-04:00 · active path</p><div class="bubble"><p>Yes. We should give <strong>both the page title/subtitle object and the left-hand multi-card/profile object explicit alt text</strong> on P01 and P02.</p>
+<p>I would use these exact texts.</p>
+<table>
+<thead>
+<tr>
+<th>Page / object</th>
+<th>Alt text</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>P01 — Title &amp; subtitle</strong></td>
+<td><strong>Merchant Financing Cohort Command Center. Executive view of a fixed synthetic cohort showing successor decision outcomes, funded exposure, risk-adjusted economics, account performance, and reconciliation at the selected observation date.</strong></td>
+</tr>
+<tr>
+<td><strong>P01 — KPI multi-card</strong></td>
+<td><strong>Cohort summary showing funded account paths, synthetic funded amount, current exposure, remittance fulfillment, supportable path rate, and comparative expected-loss rate for the selected scenario, industry, acquisition source, and observation date.</strong></td>
+</tr>
+<tr>
+<td><strong>P02 — Title &amp; subtitle</strong></td>
+<td><strong>Merchant Financing Cohort Lifecycle. Tracks the selected synthetic funded cohort from activation through receivable runoff, remittance performance, operational attention, and payoff timing.</strong></td>
+</tr>
+<tr>
+<td><strong>P02 — Cohort-profile multi-card</strong></td>
+<td><strong>Fixed funded-cohort profile showing funded account paths, synthetic funded amount, average funded amount, authorized-offer rate, comparative expected-loss rate, and risk-adjusted contribution for the selected scenario, industry, and acquisition source. The observation period does not change this fixed cohort profile.</strong></td>
+</tr>
+</tbody></table>
+<h3>One distinction I want to preserve</h3>
+<p>For <strong>P01</strong>, the multi-card alt text explicitly includes <strong>observation date</strong>, because Current exposure and Remittance fulfillment are as-of measures.</p>
+<p>For <strong>P02</strong>, it deliberately <strong>does not say the cohort profile is evaluated at the observation period</strong>. The P02 profile is fixed, and the observation-period slicer is intentionally prevented from filtering it. Calling that out in the alt text is useful accessibility information, not unnecessary technical detail.</p>
+<h3>Where to enter them</h3>
+<p>For each object:</p>
+<ol>
+<li>Select the visual.</li>
+<li>Open <strong>Format visual</strong>.</li>
+<li>Expand <strong>General</strong>.</li>
+<li>Expand <strong>Properties</strong> or <strong>Alt text</strong> depending on how your Desktop build presents it.</li>
+<li>Turn <strong>Alt text</strong> on if necessary.</li>
+<li>Paste the appropriate text above.</li>
+</ol>
+<p>For the title/subtitle, if those are separate text boxes rather than one object, <strong>do not duplicate the full alt text on both</strong>. Give the <strong>title object</strong> the full page-description alt text and either leave the purely decorative subtitle out of the tab order/alt-text flow or give it only its visible subtitle text if Power BI requires accessible text.</p>
+<p>That avoids a screen reader announcing essentially the same page introduction twice.</p>
+</div></article><article id="m-85408d9f-cf50-4186-9a7e-95fc4fe6f2f8" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00570 · 2026-09-01T12:10:30.600000-04:00 · active path</p><div class="bubble"><p>for P01 what does the KPI alt text belong to?</p>
+</div></article><article id="m-227e5d21-3baa-4179-9c01-095dc962f71f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00571 · 2026-09-01T12:10:35.112214-04:00 · active path</p><div class="bubble"><p>For P01, the <strong>KPI alt text belongs to the entire left-hand multi-card visual</strong> containing these six KPIs:</p>
+<ul>
+<li>Funded account paths</li>
+<li>Synthetic funded amount</li>
+<li>Current exposure</li>
+<li>Remittance fulfillment</li>
+<li>Supportable path rate</li>
+<li>Comparative expected-loss rate</li>
+</ul>
+<p>So select that <strong>whole multi-card visual</strong> and use the <code>R1 P01 KPI Alt Text</code> measure as its dynamic alt text.</p>
+<p>You do <strong>not</strong> need separate alt text for each individual KPI inside that multi-card—the multi-card is one visual/accessibility object.</p>
+</div></article><article id="m-b3dda8b4-1fa2-42a4-94b7-86fb29f7d5d0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00572 · 2026-09-01T12:11:15.786000-04:00 · active path</p><div class="bubble"><p>ah, so above when i asked for alt text for those multi cards, I really should just use that?</p>
+</div></article><article id="m-f5362a7f-b1e5-436f-b07f-dbc3235f0f77" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00573 · 2026-09-01T12:11:18.251176-04:00 · active path</p><div class="bubble"><p>Exactly. <strong>Use the dynamic measure we already created.</strong> My manually written multi-card alt text above was redundant.</p>
+<p>For P01:</p>
+<p><strong>Left KPI multi-card → Alt text:</strong></p>
+<pre><code class="language-text">[R1 P01 KPI Alt Text]
+</code></pre>
+<p>That is preferable because it can dynamically describe the currently selected context/values rather than being static.</p>
+<p>Likewise for P02, if the batch created the corresponding measure:</p>
+<p><strong>Left cohort-profile multi-card → Alt text:</strong></p>
+<pre><code class="language-text">[R1 P02 Cohort Profile Alt Text]
+</code></pre>
+<h3>Rule going forward</h3>
+<p>Where we have deliberately created a dynamic <code>... Alt Text</code> measure, <strong>use that measure</strong>. I should only give you manually written static alt text for objects where we have <strong>not</strong> created an appropriate dynamic measure—such as the page title/subtitle.</p>
+<p>So:</p>
+<ul>
+<li><strong>P01 title:</strong> static alt text I provided.</li>
+<li><strong>P01 KPI multi-card:</strong> <code>R1 P01 KPI Alt Text</code>.</li>
+<li><strong>P02 title:</strong> static alt text I provided.</li>
+<li><strong>P02 cohort-profile multi-card:</strong> <code>R1 P02 Cohort Profile Alt Text</code>.</li>
+</ul>
+<p>We&#39;ll follow that convention consistently through P03–P06.</p>
+</div></article><article id="m-b87c0657-5962-441d-b5a1-01919e2efb62" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00574 · 2026-09-01T12:11:53.516000-04:00 · active path</p><div class="bubble"><p>what about endpoint reconciliation, operational attention, and the evidence status... what alt text for those?</p>
+</div></article><article id="m-c2e9766f-20ec-4312-ba2d-a9de25cccc7d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00575 · 2026-09-01T12:11:56.988305-04:00 · active path</p><div class="bubble"><p>Yes. Those three P01 objects also need alt text. We did not create dedicated dynamic measures for all three, so I would handle them as follows.</p>
+<table>
+<thead>
+<tr>
+<th>P01 visual</th>
+<th>Alt text</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Endpoint reconciliation</strong></td>
+<td><strong>Endpoint reconciliation showing reconciled account paths, ending exposure, reconciliation variance, and unresolved exceptions at the governed lifecycle endpoint.</strong></td>
+</tr>
+<tr>
+<td><strong>Operational attention</strong></td>
+<td><strong>Operational attention showing active alert flags, open servicing paths, review holds, and servicing burden for the selected cohort.</strong></td>
+</tr>
+<tr>
+<td><strong>Evidence/control strip</strong></td>
+<td><strong>Governance and evidence controls showing evidence status, Module 1 G2 status, Module 2 G3-v2 certification status, endpoint gate status, and source reconciliation status.</strong></td>
+</tr>
+</tbody></table>
+<h3>Static or dynamic?</h3>
+<p>For these particular visuals, I am comfortable with <strong>static alt text</strong>.</p>
+<p>The purpose of accessibility text here is primarily to explain <strong>what the visual contains</strong>. The individual values inside these multi-card/control visuals should already be exposed to assistive technology as visual content; we don&#39;t need to repeat every number in a long alt-text sentence.</p>
+<p>There is one exception worth considering later: <strong>Operational attention</strong> changes materially with Scenario/Industry/Acquisition source, so a dynamic alt-text measure could improve it. But I would <strong>not stop P01 construction to create one</strong>. The static description is sufficient for this candidate.</p>
+<p>So P01&#39;s accessibility population is now:</p>
+<ul>
+<li><strong>Title/subtitle:</strong> static page-description alt text</li>
+<li><strong>KPI multi-card:</strong> <code>[R1 P01 KPI Alt Text]</code></li>
+<li><strong>Funding by acquisition source:</strong> <code>[R1 P01 Funding Source Alt Text]</code></li>
+<li><strong>Decision outcomes:</strong> <code>[R1 P01 Decision Outcomes Alt Text]</code></li>
+<li><strong>Industry risk and economics:</strong> <code>[R1 P01 Industry Risk Economics Alt Text]</code></li>
+<li><strong>Endpoint reconciliation:</strong> static text above</li>
+<li><strong>Operational attention:</strong> static text above</li>
+<li><strong>Evidence/control strip:</strong> static text above</li>
+</ul>
+<p>That gives every substantive P01 visual a clear accessibility description without overengineering the page.</p>
+</div></article><article id="m-9224d2dc-b982-424f-a374-b58433337fe4" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00576 · 2026-09-01T13:03:57.258000-04:00 · active path</p><div class="bubble"><p>what about P02 temporal boundary write-up?</p>
+</div></article><article id="m-cad5b5a3-79b2-43b3-b490-5aabf9eb791d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00577 · 2026-09-01T13:03:59.810272-04:00 · active path</p><div class="bubble"><p>For P02, I would <strong>not simply copy the P01 temporal boundary</strong>, because P02 is explicitly a lifecycle/time-series page and its <strong>Observation period</strong> slicer controls the displayed monitoring window.</p>
+<p>I recommend this concise footer:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Account lifecycle is deterministic synthetic-forward through 2026-11-22; <strong>Interpretation boundary:</strong> Deterministic synthetic evidence</p>
+</blockquote>
+<p>That is my preferred P02 wording.</p>
+<p>The provenance line immediately above already shows:</p>
+<p><strong>Observed-source cutoff: 2026-07-23</strong></p>
+<p>so we do not need to repeat that date in the boundary sentence.</p>
+<h3>Why slightly different from P01</h3>
+<p>P01 says:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Post-cutoff account performance is synthetic-forward through 2026-11-22; <strong>Interpretation boundary:</strong> Deterministic synthetic evidence</p>
+</blockquote>
+<p>P02 should say:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Account lifecycle is deterministic synthetic-forward through 2026-11-22; <strong>Interpretation boundary:</strong> Deterministic synthetic evidence</p>
+</blockquote>
+<p>That small distinction is intentional:</p>
+<ul>
+<li><strong>P01:</strong> decision/funding snapshot + account performance as of a selected date.</li>
+<li><strong>P02:</strong> explicitly follows the <strong>account lifecycle over time</strong>.</li>
+</ul>
+<p>I would keep it to <strong>one line</strong>. No need to create additional footer space.</p>
+</div></article><article id="m-77fe00cc-740e-44e0-9c2a-dd90e3c6d7e9" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00578 · 2026-09-01T13:05:19.786000-04:00 · active path</p><div class="bubble"><p>we have two lines available on P02 if we want more detail in that temporal boundary OR we could make it one line and increase the font of that</p>
+</div></article><article id="m-2a4af33d-c344-49fa-a362-a465c84ad5e0" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00579 · 2026-09-01T13:05:26.391522-04:00 · active path</p><div class="bubble"><p>I would use the <strong>two lines</strong>. P02 is the one page where the temporal distinction deserves slightly more explanation because the viewer is explicitly manipulating an observation-period slicer and looking at longitudinal curves.</p>
+<p>I recommend:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Decision and funding evidence is fixed at the 2026-07-23 source snapshot. Account lifecycle is deterministic synthetic-forward through 2026-11-22.<br><strong>Interpretation boundary:</strong> Observation period changes the displayed lifecycle window, not the fixed funded-cohort definition. All evidence is deterministic synthetic evidence.</p>
+</blockquote>
+<p>This is stronger than simply increasing the font on the one-line version because it explains an important analytical behavior:</p>
+<p><strong>Observation period ≠ cohort redefinition.</strong></p>
+<p>That matters on P02. A viewer could otherwise reasonably assume that moving the date range changes which accounts belong to the cohort.</p>
+<p>It also reinforces the page architecture:</p>
+<p><strong>7/23 source snapshot</strong><br>→ fixed decision/funding cohort<br>→ deterministic forward lifecycle<br>→ user-selected observation window<br>→ endpoint 11/22</p>
+<p>I would use the available second line rather than enlarge the shorter statement. Keep it visually subordinate—roughly the same small footer font you already use—because this is disclosure/context, not another analytical headline.</p>
+</div></article><article id="m-da854d9d-0fcb-4f09-a8bf-ddc85bb6500d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00580 · 2026-09-01T13:11:00.454000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: eb3bb07d-ceaf-4081-9e0b-e8ed610ed14c.png; fc71b31f-197f-40df-963a-56ded5a9d27c.png</p><div class="bubble"><p>P01 and P02 are complete: </p>
+</div></article><article id="m-08e580bf-f11f-408f-b6ae-871bdb1d2ab9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00581 · 2026-09-01T13:11:07.894412-04:00 · active path</p><div class="bubble"><p>Agreed. Based on the completed screenshots, <strong>P01 and P02 are ready to move into evidence capture/freeze rather than further construction.</strong></p>
+<h3>P01 — complete</h3>
+<p>The successor rebase is now visibly doing what we intended:</p>
+<ul>
+<li>funded population moved from <strong>44 → 103</strong>;</li>
+<li>funded amount moved to <strong>$1.39M</strong>;</li>
+<li>successor decision taxonomy is exposed rather than compressed back into predecessor outcomes;</li>
+<li><strong>40.0% supportable path rate</strong> captures authorized plus governed-review opportunity;</li>
+<li>industry risk/economics is now based on successor economics;</li>
+<li>endpoint reconciliation and operational attention have been rebased;</li>
+<li><strong>G3-v2</strong> is explicitly represented;</li>
+<li>the old source/model identities have been replaced;</li>
+<li>temporal disclosure is concise and readable.</li>
+</ul>
+<p>The seven-category decision chart is especially important. It now shows that the strategy is not simply “more approvals”: it distinguishes <strong>92 approved as requested, 11 authorized counteroffers, 174 counteroffer reviews, 23 underwriting reviews, 43 evidence declines, 290 no-feasible structures, and 117 policy hard stops</strong>. That is a much more sophisticated executive strategy story.</p>
+<p>One cosmetic observation only: the visible KPI labels still appear as <strong>Funded accounts</strong>, <strong>Funded amount</strong>, and <strong>Expected-loss rate</strong>, rather than the longer labels we discussed. Looking at the finished page, I actually prefer the shorter visible labels. The page context makes their meaning clear, while the tooltips/alt text can carry the more exact terminology. <strong>I would leave them as shown.</strong></p>
+<h3>P02 — complete</h3>
+<p>This is also a substantial improvement.</p>
+<p>The page now cleanly separates:</p>
+<p><strong>fixed cohort definition</strong>
+from
+<strong>longitudinal lifecycle behavior</strong>.</p>
+<p>The revised visual vocabulary is much better:</p>
+<ul>
+<li><strong>Receivable runoff</strong> instead of Exposure;</li>
+<li><strong>Attention signals</strong> instead of Review signals;</li>
+<li><strong>Payoff timing vs plan</strong> instead of Payoff slippage.</li>
+</ul>
+<p>And the actual successor lifecycle is much more informative:</p>
+<ul>
+<li>103 funded paths / $1.39M;</li>
+<li>13.7% authorized-offer rate;</li>
+<li>9.4% comparative expected-loss rate;</li>
+<li>$147.98K risk-adjusted contribution;</li>
+<li>strong receivable runoff;</li>
+<li>remittance recovery toward 100%;</li>
+<li>attention signals that peak and subsequently resolve;</li>
+<li>payoff ultimately running about <strong>19 days earlier than plan</strong>, rather than being framed as positive “slippage.”</li>
+</ul>
+<p>The two-line boundary is also the right choice here. It explains both the fixed decision/funding snapshot and the fact that changing the observation period changes the <strong>displayed lifecycle window rather than redefining the cohort</strong>.</p>
+<h2>Before freezing: evidence set</h2>
+<p>I would capture both pages now rather than revisit them after P03–P06.</p>
+<p>For <strong>each page</strong>, capture one evidence set containing:</p>
+<ol>
+<li><strong>Baseline — full page</strong>, at the default/all segment context and endpoint date.</li>
+<li><strong>Recession Energy — full page</strong>, same segment context/date or observation period.</li>
+<li><strong>Industry slicer interaction</strong> — one selected industry demonstrating successful successor filtering.</li>
+<li><strong>Acquisition-source slicer interaction</strong> — one selected source.</li>
+<li><strong>Alt text</strong> — screenshots showing the substantive visual alt-text configuration.</li>
+<li><strong>Tab order</strong>.</li>
+<li><strong>Tooltip evidence</strong> — representative hover for each chart type.</li>
+<li><strong>Edit interactions</strong> — especially P02 showing Scenario → Receivable runoff = <strong>None</strong>, and Observation period → fixed cohort profile = <strong>None</strong>.</li>
+<li><strong>P02 observation-period test</strong> — shorten the observation window and demonstrate that the charts truncate while the left cohort profile remains unchanged.</li>
+<li><strong>Save/reopen evidence</strong> can wait until P01–P06 are all complete; we do not need six separate reopen cycles.</li>
+</ol>
+<p>For P01 I would additionally capture the <strong>seven decision outcomes with their counts visible</strong>, because that is one of the most important pieces of successor-strategy evidence.</p>
+<p>For P02 I would capture a tooltip from <strong>Payoff timing vs plan</strong> showing the meaning of the negative value if the tooltip includes it.</p>
+<p>Then save the PBIP.</p>
+<p>After that, I would mark:</p>
+<pre><code class="language-text">P01 — R1 successor construction: FROZEN
+P02 — R1 successor construction: FROZEN
+</code></pre>
+<p>subject to final whole-report nonregression and save/reopen testing.</p>
+<p>And then move directly to <strong>P03</strong>. That is where the largest conceptual work remains: we need to rebase the Application Journey onto the R1 successor underwriting/explainability architecture while preserving the strong application → decision → funded-account → performance story we already built.</p>
+</div></article><article id="m-6b858be8-9ed9-4467-bdf1-5ac012794ef8" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00582 · 2026-09-01T13:31:45.234000-04:00 · active path</p><p class="note">17 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: P01_Baseline_Full_Page.png; P01_Industry_Slicer_Interaction.png; P01_Recession_Energy_Full_Page.png; P01_Tab_Order(1).png; P01_Tooltip_Evidence.png; P02_Acquisition_Source_Slicer_Interaction.png; P02_Alt_Text(1).png; P02_Baseline_Full_Page.png; P02_Edit_Interactions_Observation_Period_Slicer.png; P02_Edit_Interactions_Scenario_Slicer.png; P02_Industry_Slicer_Interaction.png; P02_Observation_Period_Test.png; P02_Recession_Energy_Full_Page.png; P02_Tab_Order(1).png; P02_Tooltip_Evidence.png; P01_Acquisition_Source_Slicer_Interaction.png; P01_Alt_Text(1).png</p><div class="bubble"><p>C:\MSBF\R22\owner_evidence\captures\Power_BI_Final_Design now contains these screenshots . Please review. PBIP has been saved.</p>
+</div></article><article id="m-0b25644a-7e37-45e6-ab64-0e8cc69ad97f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00583 · 2026-09-01T13:31:49.909667-04:00 · active path</p><div class="bubble"><p>I reviewed the full P01/P02 evidence set. <strong>Both pages pass this construction checkpoint. I do not see a blocker or a reason to reopen either page before whole-report validation.</strong></p>
+<h2>P01 — PASS / freeze</h2>
+<p>The evidence establishes the important successor behaviors:</p>
+<ul>
+<li><strong>Baseline:</strong> 103 funded accounts, $1.39M funded, 40.0% supportable-path rate, 9.4% expected-loss rate, seven successor decision outcomes, 103 reconciled paths, and all five governance controls passing.</li>
+<li><strong>Recession Energy:</strong> 27 funded accounts, $344.20K funded, 10.7% supportable-path rate, 11.4% expected-loss rate, materially different decision distribution, and 27 reconciled paths.</li>
+<li><strong>Industry filtering:</strong> E-Commerce &amp; Digital correctly reduces the funded cohort to 11 and correspondingly changes funding, decision outcomes, economics, reconciliation, and operational-attention results.</li>
+<li><strong>Acquisition-source filtering:</strong> Strategic Partner correctly reduces the funded cohort to 16 / $174.4K and propagates through decisions, economics, reconciliation, and operational attention.</li>
+<li><strong>Tooltip:</strong> the industry economics tooltip is excellent. It exposes contribution, expected loss, funded amount/count, comparative expected loss, path-weighted EAD, annualized RAR, authorization rate, and supportable-path rate without cluttering the canvas.</li>
+<li><strong>Tab order:</strong> coherent and executive-first: introduction → slicers → KPI rail → primary analytical visuals → controls/provenance.</li>
+<li><strong>Alt text:</strong> the KPI multi-card is demonstrably bound to <code>R1 P01 KPI Alt Text</code>.</li>
+</ul>
+<p>The revised provenance and compact temporal boundary also read cleanly in the captured page.</p>
+<p><strong>P01 status:</strong></p>
+<pre><code class="language-text">R1 successor construction candidate — FROZEN
+Evidence checkpoint — PASS
+Whole-report/save-reopen nonregression — PENDING
+</code></pre>
+<h2>P02 — PASS / freeze</h2>
+<p>The P02 evidence is particularly strong because you captured the behaviors that could not be established from a static screenshot alone.</p>
+<ul>
+<li><strong>Baseline:</strong> 103 funded accounts / $1.39M and the expected successor economics.</li>
+<li><strong>Recession Energy:</strong> 27 / $344.20K with materially different economics and lifecycle behavior.</li>
+<li><strong>Industry filtering:</strong> Healthcare Services correctly changes the fixed cohort and all applicable lifecycle series.</li>
+<li><strong>Acquisition-source filtering:</strong> Broker or Lead correctly produces a nine-account / $137.10K cohort and updates the lifecycle.</li>
+<li><strong>Observation-period test:</strong> shortening the window to 9/1–10/31 truncates the lifecycle charts while the left cohort profile remains <strong>103 / $1.39M / $13.45K / 13.7% / 9.4% / $147.98K</strong>. That is exactly the fixed-cohort behavior we wanted.</li>
+<li><strong>Scenario interaction:</strong> the captured Edit Interactions state shows the Scenario slicer does not filter <code>Receivable runoff</code>, preserving both Baseline and Recession Energy lines.</li>
+<li><strong>Observation-period interaction:</strong> the evidence shows the date-range slicer is prevented from redefining the fixed cohort profile.</li>
+<li><strong>Tooltip:</strong> <code>Receivable runoff</code> correctly reports both scenarios at the same date with remaining receivable, funded accounts, active accounts, paid-off accounts, and remittance fulfillment. This is a strong executive comparison.</li>
+<li><strong>Dynamic alt text:</strong> the capture explicitly shows <code>R1 P02 Receivable Runoff Alt Text</code> assigned through field-value conditional formatting.</li>
+<li><strong>Tab order:</strong> coherent and appropriately concise.</li>
+<li><strong>Temporal disclosure:</strong> the two-line treatment works well here and clearly states the distinction between the fixed 7/23 decision/funding snapshot and the selectable synthetic-forward lifecycle window.</li>
+</ul>
+<p><strong>P02 status:</strong></p>
+<pre><code class="language-text">R1 successor construction candidate — FROZEN
+Evidence checkpoint — PASS
+Whole-report/save-reopen nonregression — PENDING
+</code></pre>
+<h3>One observation, not a defect</h3>
+<p>The P02 <code>Attention signals</code> chart has much larger absolute counts than the predecessor page. That initially looks dramatic, but the legend now explicitly says <strong>Active alerts</strong> and <strong>Accounts requiring attention</strong>, and the successor population is also much larger. The evidence shows those signals subsequently resolve toward zero. I would leave it exactly as built rather than normalize or suppress the behavior.</p>
+<h2>Evidence sufficiency</h2>
+<p>You have enough P01/P02 evidence now. I would <strong>not spend time capturing additional screenshots</strong> before moving forward.</p>
+<p>The one thing we deliberately deferred is physical <strong>save → close → reopen → refresh/render/nonregression</strong> testing. Since the PBIP is saved, keep that as a report-level gate after P06 rather than repeatedly reopening after every page.</p>
+<p>So our controlled state is now:</p>
+<pre><code class="language-text">P01  FROZEN — evidence PASS
+P02  FROZEN — evidence PASS
+P03  NEXT — successor rebase
+P04  pending
+P05  pending
+P06  pending
+</code></pre>
+<p>We should now move directly into <strong>P03 — Application Journey</strong>. That page deserves the deepest successor rework because R1 changed precisely the part of the story P03 is intended to explain: evidence availability, capacity/risk/economics, policy gates, counteroffer search, selected structure, final decision, and the distinction between authorized, reviewable, no-feasible, hard-stop, and insufficient-evidence paths.</p>
+</div></article><article id="m-f714cff7-7468-4034-90a1-b33549540d6d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00584 · 2026-09-01T13:35:05.491000-04:00 · active path</p><div class="bubble"><p>let&#39;s not leave this. let&#39;s dive in to understand it: One observation, not a defect
+The P02 <code>Attention signals</code> chart has much larger absolute counts than the predecessor page. That initially looks dramatic, but the legend now explicitly says <strong>Active alerts</strong> and <strong>Accounts requiring attention</strong>, and the successor population is also much larger. The evidence shows those signals subsequently resolve toward zero. I would leave it exactly as built rather than normalize or suppress the behavior.  first, specifically what are you comparing?</p>
+</div></article><article id="m-21058061-a090-496a-a863-81e68380ce3b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00585 · 2026-09-01T13:35:08.715638-04:00 · active path</p><div class="bubble"><p>Specifically, I was comparing the <strong>old P02 “Review signals” chart from the predecessor page</strong> against the <strong>new R1 P02 “Attention signals” chart</strong>.</p>
+<p>In your original P02 screenshot, the chart had two series:</p>
+<ul>
+<li><strong>Active alerts</strong></li>
+<li><strong>Open servicing</strong></li>
+</ul>
+<p>and its approximate peak was:</p>
+<ul>
+<li>Active alerts: roughly <strong>80–90</strong></li>
+<li>Open servicing: roughly <strong>35–40</strong></li>
+</ul>
+<p>In the rebuilt R1 P02, we deliberately changed the second series and the underlying population. The chart now shows:</p>
+<ul>
+<li><strong>Active alert flags</strong></li>
+<li><strong>Accounts requiring attention</strong></li>
+</ul>
+<p>and in the Baseline screenshot it peaks around:</p>
+<ul>
+<li>Active alert flags: roughly <strong>190–200</strong></li>
+<li>Accounts requiring attention: roughly <strong>80–90</strong></li>
+</ul>
+<p>So when I said “much larger absolute counts,” I was comparing those plotted magnitudes.</p>
+<p>But there are <strong>two confounding changes</strong>, which is why I don&#39;t want to wave it away as merely “the population got bigger.”</p>
+<p>First, the funded population changed substantially:</p>
+<pre><code class="language-text">Old P02 Baseline funded accounts:   44
+R1 P02 Baseline funded accounts:   103
+</code></pre>
+<p>That&#39;s about <strong>2.34×</strong> as many funded accounts.</p>
+<p>Second—and more importantly—the second line is <strong>not the same metric anymore</strong>:</p>
+<pre><code class="language-text">Old: Open servicing
+New: Accounts requiring attention
+</code></pre>
+<p>Those are conceptually different. <code>Accounts requiring attention</code> was defined in our new P02 measure as account paths whose latest monitoring state on a date is one of:</p>
+<pre><code class="language-text">WATCH
+UNDERPERFORMING
+SEVERE_SHORTFALL
+DORMANT_NO_REMITTANCE
+</code></pre>
+<p>So we should <strong>not compare the old dark line and new dark line as though they measure the same thing</strong>.</p>
+<p>There is also something more important in your new screenshots that I want to investigate: <strong>Active alerts can substantially exceed funded-account count.</strong></p>
+<p>For example, Baseline has <strong>103 funded accounts</strong>, while the Active-alert series peaks around <strong>200</strong>.</p>
+<p>That can be perfectly valid <strong>if “Active alerts” counts alert flags rather than accounts</strong>. One account can simultaneously carry multiple alert conditions. In fact, we named the R1 measure <code>Active Alert Flags As Of</code>, which suggests exactly that.</p>
+<p>But that means the chart is currently juxtaposing:</p>
+<blockquote>
+<p><strong>number of alert flags</strong></p>
+</blockquote>
+<p>with</p>
+<blockquote>
+<p><strong>number of account paths requiring attention</strong></p>
+</blockquote>
+<p>on the same count axis.</p>
+<p>That is not inherently wrong, but it can easily be misread as “200 accounts had alerts” when only 103 funded account paths exist.</p>
+<p>So I would revise my earlier statement. <strong>I do not yet want to declare the larger magnitude harmless and freeze it without understanding the alert grain.</strong></p>
+<p>The questions we should answer from the physical R1 mapping/data are:</p>
+<ol>
+<li>What exactly is the grain behind <code>R1 P02 Active Alert Flags As Of</code>?</li>
+<li>Can one account contribute multiple flags on the same monitoring date?</li>
+<li>Which source fields/flags are being summed?</li>
+<li>At the Baseline peak, how many <strong>distinct account paths</strong> have ≥1 active alert versus how many total alert flags exist?</li>
+<li>How does that compare with <code>Accounts requiring attention</code>?</li>
+<li>Would an executive page be clearer with:<ul>
+<li><strong>Alert flags + accounts requiring attention</strong>, as now;</li>
+<li><strong>Accounts with active alerts + accounts requiring attention</strong>; or</li>
+<li>one account-level attention series plus alert detail in the tooltip?</li>
+</ul>
+</li>
+</ol>
+<p>That is the comparison I was making, and looking more closely at it, <strong>the flag-versus-account grain distinction is the part we should resolve before permanently freezing P02.</strong></p>
+</div></article><article id="m-564ff578-399d-432a-9af8-b85ff0e676e7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00586 · 2026-09-01T13:47:35.926000-04:00 · active path</p><div class="bubble"><p>I see, the old P02 was prior to the Remediation Corrections, so this would make sense. The Remediation Corrections made significant changes. The more logical question is do the current attention signals make sense for a population of this size and this type of product?</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

@@ -1,0 +1,1818 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 3 — part 04 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 3 — part 04</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-03.html">Previous part</a><a href="part-05.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-8c7311e5-6a2a-4af2-88cd-ee7868ce2f38" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00051 · 2026-09-03T17:15:56.936414-04:00 · active path</p><div class="bubble"><h1>P04 design decision</h1>
+<p><strong>Disposition:</strong> <code>KEEP_PAGE_SKELETON / REPLACE_PREDECESSOR_SEMANTICS / REPURPOSE_LOWER_DETAIL</code></p>
+<p>The current P04 layout has the right basic operating model:</p>
+<ul>
+<li>one Scenario controller;</li>
+<li>an endpoint summary;</li>
+<li>monitoring and servicing charts;</li>
+<li>an account-level workbench;</li>
+<li>a lower-detail area.</li>
+</ul>
+<p>It should <strong>not</strong> be rebuilt from scratch. But it also should not be treated as nearly complete. The physical binding inventory shows that its substantive visuals still depend on predecessor <code>FactMonitoringEndpoint</code>, <code>FactServicingExecution</code>, <code>FactPaymentException</code>, and predecessor <code>P04 ...</code> measures. Even the two chart subtitles are leftover text about “four accepted decision outcomes,” which does not describe either chart. [export reference: filecite | turn99file0 | L78-L90] [export reference: filecite | turn99file0 | L93-L116]</p>
+<p>The correct P04 work is a <strong>controlled semantic rebase with one purposeful structural change</strong>: replace the unsupported event-level <strong>Payment exception history</strong> with a successor-supported <strong>Payment &amp; certification detail</strong> table.</p>
+<hr>
+<h1>1. Story told across the portfolio so far</h1>
+<table>
+<thead>
+<tr>
+<th>Page</th>
+<th>Question answered</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>P01 — Cohort Command Center</strong></td>
+<td>What portfolio was generated, what decisions and exposure exist, and what is the governed endpoint status?</td>
+</tr>
+<tr>
+<td><strong>P02 — Cohort Lifecycle</strong></td>
+<td>How did the funded cohort progress through exposure, remittance, monitoring, and payoff over time?</td>
+</tr>
+<tr>
+<td><strong>P03 — Application Journey</strong></td>
+<td>Why did one application receive its governed outcome and proposed structure, and—when funded—what happened to that account?</td>
+</tr>
+<tr>
+<td><strong>P04 — Servicing &amp; Exceptions</strong></td>
+<td>Which funded accounts require operational attention at the endpoint, why, what intervention was recommended, how did the governed setup and servicing path progress, and did the resulting account state reconcile?</td>
+</tr>
+</tbody></table>
+<p>That P04 story should move in this order:</p>
+<pre><code class="language-text">Find the attention population
+        ↓
+Understand the monitoring driver
+        ↓
+See the recommended intervention
+        ↓
+Trace operational setup and execution
+        ↓
+Verify payment, exception, and certification outcome
+</code></pre>
+<p>The successor architecture explicitly separates M2.6 intervention, M2.7 setup, M2.8 execution, M2.9 certification, and M2.10 performance. P04 should make that progression intelligible without blending the stages together. [export reference: filecite | turn95file15 | L619-L644]</p>
+<hr>
+<h1>2. What the current page gets right—and wrong</h1>
+<h2>What to keep</h2>
+<p>Keep:</p>
+<ul>
+<li>page title;</li>
+<li>one Scenario slicer;</li>
+<li>endpoint-only design with <strong>no Observation date slicer</strong>;</li>
+<li>left-side KPI stack;</li>
+<li>two top charts;</li>
+<li>middle account workbench;</li>
+<li>lower selected-account detail area;</li>
+<li>workbench interaction that leaves the portfolio KPIs and charts stable while filtering the lower detail;</li>
+<li>native visuals and the current basic geometry.</li>
+</ul>
+<h2>What must change</h2>
+<h3>A. The current population is the predecessor population</h3>
+<p>The old page reflects the earlier servicing implementation that had 59 servicing rows, 57 with no processing, one active temporary-processing path, and one review hold. [export reference: filecite | turn96file19 | L793-L835]</p>
+<p>The current R26 successor has:</p>
+<pre><code class="language-text">R1FactIntervention             130 rows
+R1FactOperationalSetup         130 rows
+R1FactServicingExecution       130 rows
+R1FactAccountCertification     130 rows
+R1FactPortfolioPerformance     130 rows
+</code></pre>
+<p>Each is at one row per exact <code>ApplicationScenarioKey</code>, while daily monitoring remains 15,600 rows at application-scenario × monitoring-day grain. [export reference: filecite | turn102file1 | L21-L27]</p>
+<h3>B. The current page understates the operational population</h3>
+<p>The current Baseline screenshot shows:</p>
+<pre><code class="language-text">Requiring attention       2
+Active servicing          1
+Review holds              1
+</code></pre>
+<p>Direct reconciliation of the current physical R26 carrier produces:</p>
+<pre><code class="language-text">Baseline funded paths            103
+Endpoint paid off                 99
+Endpoint severe shortfall          4
+Accounts requiring attention       4
+Active servicing                    1
+Review holds                        3
+</code></pre>
+<p>So the present page is not just using old names—it is displaying a materially obsolete population.</p>
+<h3>C. The current account story is wrong</h3>
+<p>The predecessor page presents <strong>merchant 312</strong> as the temporary-payment active-servicing path. The illustrative handoff also repeated 312 as that case. [export reference: filecite | turn95file15 | L654-L660]</p>
+<p>The current R26 physical carrier instead establishes:</p>
+<ul>
+<li><strong>749 / Baseline</strong> as the single temporary-remittance, active-processing, return-and-retry path;</li>
+<li><strong>098, 112, and 312 / Baseline</strong> as targeted-outreach, governance-review, execution-review-hold paths.</li>
+</ul>
+<p>The exact current retry case is merchant 749, with seven payment events, one return, one retry, exact reconciliation, and certified ending exposure. [export reference: filecite | turn96file7 | L197-L215]</p>
+<p>This is why P04 must be rebuilt from the successor chain rather than cosmetically rebinding old labels.</p>
+<h3>D. Payment exception history cannot remain</h3>
+<p>The current lower table uses predecessor event-level fields:</p>
+<pre><code class="language-text">originating_event_date
+exception_amount
+resolving_event_date
+exception_open_days
+</code></pre>
+<p>from <code>FactPaymentException</code>. [export reference: filecite | turn99file0 | L104-L110]</p>
+<p>The current R1 curated carrier does <strong>not</strong> provide a successor event-level payment-exception table with those dates. It provides payment-event counts and amounts through M2.8, followed by exception-resolution and reconciliation state through M2.9/M2.10.</p>
+<p>We must not fabricate an event history or preserve predecessor events merely because the old visual looks useful.</p>
+<hr>
+<h1>3. Final P04 page story and layout</h1>
+<h2>Page title</h2>
+<p>Keep:</p>
+<blockquote>
+<p><strong>Merchant Servicing &amp; Exceptions</strong></p>
+</blockquote>
+<h2>Subtitle</h2>
+<p>Replace the current subtitle with:</p>
+<blockquote>
+<p><strong>Identify funded accounts requiring operational attention, understand the drivers, and trace governed intervention, servicing, and certification outcomes.</strong></p>
+</blockquote>
+<p>That better represents the full M2.5–M2.10 progression.</p>
+<h2>Final visual architecture</h2>
+<table>
+<thead>
+<tr>
+<th>Page area</th>
+<th>Final visual</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Left</td>
+<td>Endpoint operational KPI stack</td>
+</tr>
+<tr>
+<td>Upper middle</td>
+<td><strong>Endpoint monitoring posture</strong></td>
+</tr>
+<tr>
+<td>Upper right</td>
+<td><strong>Servicing execution state</strong></td>
+</tr>
+<tr>
+<td>Middle</td>
+<td><strong>Account attention workbench</strong></td>
+</tr>
+<tr>
+<td>Lower</td>
+<td><strong>Payment &amp; certification detail</strong></td>
+</tr>
+<tr>
+<td>Top</td>
+<td>Scenario slicer only</td>
+</tr>
+<tr>
+<td>Footer</td>
+<td>Current R26/C2 identity and bounded synthetic interpretation</td>
+</tr>
+</tbody></table>
+<p>This is a <strong>moderate redesign</strong>, not a wholesale replacement.</p>
+<hr>
+<h1>4. Governing source map</h1>
+<p>Use this exact division of responsibility:</p>
+<table>
+<thead>
+<tr>
+<th>Story element</th>
+<th>Governing source</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Merchant/scenario row anchor</td>
+<td><code>R1DimApplicationScenario</code></td>
+</tr>
+<tr>
+<td>Endpoint monitoring state and receivable</td>
+<td><code>R1FactDailyMonitoring</code>, endpoint row</td>
+</tr>
+<tr>
+<td>Recommended intervention</td>
+<td><code>R1FactIntervention</code> — M2.6</td>
+</tr>
+<tr>
+<td>Operational setup/review state</td>
+<td><code>R1FactOperationalSetup</code> — M2.7</td>
+</tr>
+<tr>
+<td>Payment-processing and servicing execution</td>
+<td><code>R1FactServicingExecution</code> — M2.8</td>
+</tr>
+<tr>
+<td>Reconciliation and certified account state</td>
+<td><code>R1FactAccountCertification</code> — M2.9</td>
+</tr>
+<tr>
+<td>Final servicing queue, performance tier, exceptions, and burden</td>
+<td><code>R1FactPortfolioPerformance</code> — M2.10</td>
+</tr>
+</tbody></table>
+<p>The M2.6 total population remains exactly:</p>
+<pre><code class="language-text">126  Closed / no further action
+  3  Targeted merchant outreach review
+  1  Temporary remittance-adjustment review
+</code></pre>
+<p>[export reference: filecite | turn95file15 | L646-L652]</p>
+<p>Use <code>ApplicationScenarioKey</code> as the exact cross-stage identity. Do not join or resolve the chain using merchant number alone.</p>
+<hr>
+<h1>5. Step-by-step production roadmap</h1>
+<h2>Step 1 — Preserve the controlled starting state</h2>
+<p>Continue in:</p>
+<pre><code class="language-text">MSBF_PBI_R26_PARALLEL_REFINEMENT_C2_20260902
+</code></pre>
+<p>Do not create C3.</p>
+<p>The R4 package already preserves the physical current P04 before-state, so a duplicate page is not required. Save C2 before installing any P04 measures.</p>
+<p>Do not:</p>
+<ul>
+<li>delete predecessor tables from the model;</li>
+<li>edit accepted source queries;</li>
+<li>add relationships;</li>
+<li>mutate the R26 source facts;</li>
+<li>create an observation-date slicer;</li>
+<li>infer servicing from raw alert counts;</li>
+<li>use <code>operational_activation_date</code> as a funding date. [export reference: filecite | turn95file15 | L633-L645]</li>
+</ul>
+<p>Unbinding predecessor objects from P04 is authorized; deleting them from the shared model is not part of this page rebase.</p>
+<hr>
+<h2>Step 2 — Create a bounded P04 presentation layer</h2>
+<p>Place the new objects under <code>R1Measures</code> with these folders:</p>
+<pre><code class="language-text">P04 | 01 Summary
+P04 | 02 Monitoring
+P04 | 03 Workbench
+P04 | 04 Servicing &amp; Certification
+P04 | 90 Accessibility
+P04 | 99 QA
+</code></pre>
+<p>Create only report-owned presentation adapters and context adapters. No servicing method belongs in DAX.</p>
+<h3>Reuse existing canonical semantics</h3>
+<p>Where an existing accepted measure already owns the metric, use a page alias rather than recreating it:</p>
+<pre><code class="language-text">R26 P04 Accounts Requiring Attention
+    → R26 P02 Accounts in Adverse Monitoring Status As Of
+
+R26 P04 Review Holds
+    → R1 P01 Review-Hold Paths
+
+R26 P04 Certified Exposure
+    → R1 P01 Certified Exposure
+
+R26 P04 Servicing Burden
+    → R1 P01 Servicing Burden Units
+
+R26 P04 Unresolved Exceptions
+    → R1 P01 Unresolved Exceptions
+
+R26 P04 Intervention Display
+    → R26 P03 Intervention Display
+</code></pre>
+<p>This follows the established P01/P02 alias hierarchy rather than creating competing formulas. P01 already owns certified exposure, unresolved exceptions, review holds, and servicing burden from the R1 certification and performance facts. [export reference: filecite | turn96file12 | L491-L509] [export reference: filecite | turn96file13 | L520-L540]</p>
+<h3>Create P04-specific context adapters</h3>
+<p>P04-specific measures are needed for:</p>
+<ul>
+<li>endpoint monitoring status by application-scenario;</li>
+<li>endpoint remittance pace;</li>
+<li>endpoint remaining exposure;</li>
+<li>attention flag;</li>
+<li>active-servicing count;</li>
+<li>monitoring count by displayed status;</li>
+<li>monitoring exposure by displayed status;</li>
+<li>servicing count by execution state;</li>
+<li>certified exposure and burden by execution state;</li>
+<li>setup-state display;</li>
+<li>execution-state display;</li>
+<li>reconciliation display;</li>
+<li>endpoint performance-state display;</li>
+<li>payment-event count;</li>
+<li>processed-payment amount;</li>
+<li>return/retry summary;</li>
+<li>exception-resolution display;</li>
+<li>certification date.</li>
+</ul>
+<h3>Presentation columns</h3>
+<p>Create only the category/display columns required for chart axes:</p>
+<ol>
+<li><code>R26 P04 Monitoring Status Display</code></li>
+<li><code>R26 P04 Monitoring Status Sort</code></li>
+<li><code>R26 P04 Servicing Execution State Display</code></li>
+<li><code>R26 P04 Servicing Execution State Sort</code></li>
+<li><code>R26 P04 Merchant Display</code></li>
+</ol>
+<p>These are friendly-label and sort adapters, not new business classifications.</p>
+<hr>
+<h1>6. Rebuild the left KPI stack</h1>
+<p>I recommend <strong>seven</strong> endpoint KPIs:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Order</th>
+<th>Display label</th>
+<th>Semantic source</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td><strong>Requiring attention</strong></td>
+<td>Adverse endpoint monitoring population</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td><strong>Attention exposure</strong></td>
+<td>Endpoint remaining receivable on adverse paths</td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td><strong>Active servicing</strong></td>
+<td>M2.8 processing-authorized paths</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td><strong>Review holds</strong></td>
+<td>M2.8/M2.10 governed review-hold paths</td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td><strong>Certified exposure</strong></td>
+<td>M2.9 certified residual exposure</td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td><strong>Servicing burden</strong></td>
+<td>M2.10 workload units</td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td><strong>Unresolved exceptions</strong></td>
+<td>M2.10 unresolved exception count</td>
+</tr>
+</tbody></table>
+<p>This creates a coherent progression:</p>
+<pre><code class="language-text">Monitoring need
+→ exposure
+→ execution state
+→ certification
+→ workload
+→ unresolved controls
+</code></pre>
+<h3>Expected default values</h3>
+<table>
+<thead>
+<tr>
+<th>KPI</th>
+<th align="right">Baseline</th>
+<th align="right">Recession Energy</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Requiring attention</td>
+<td align="right"><strong>4</strong></td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Attention exposure</td>
+<td align="right"><strong>$7,823.28</strong></td>
+<td align="right"><strong>$0.00</strong></td>
+</tr>
+<tr>
+<td>Active servicing</td>
+<td align="right"><strong>1</strong></td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Review holds</td>
+<td align="right"><strong>3</strong></td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Certified exposure</td>
+<td align="right"><strong>$6,061.03</strong></td>
+<td align="right"><strong>$0.00</strong></td>
+</tr>
+<tr>
+<td>Servicing burden</td>
+<td align="right"><strong>17</strong></td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Unresolved exceptions</td>
+<td align="right"><strong>0</strong></td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>Seven values should fit with slightly tighter vertical spacing. If visual readability requires six, move <strong>Certified exposure</strong> to the lower detail and retain the other six. Do not remove Servicing burden; it is the direct M2.10 workload signal.</p>
+<hr>
+<h1>7. Rebuild the first chart</h1>
+<h2>Title</h2>
+<p>Change:</p>
+<blockquote>
+<p>Monitoring posture</p>
+</blockquote>
+<p>to:</p>
+<blockquote>
+<p><strong>Endpoint monitoring posture</strong></p>
+</blockquote>
+<h2>Optional subtitle</h2>
+<blockquote>
+<p><strong>Funded accounts at the governed 2026-11-22 synthetic endpoint.</strong></p>
+</blockquote>
+<h2>Bindings</h2>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Binding</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Y-axis/category</td>
+<td><code>R26 P04 Monitoring Status Display</code></td>
+</tr>
+<tr>
+<td>X-axis/value</td>
+<td><code>R26 P04 Monitoring Account Count</code></td>
+</tr>
+<tr>
+<td>Tooltip</td>
+<td><code>R26 P04 Monitoring Exposure</code></td>
+</tr>
+<tr>
+<td>Tooltip</td>
+<td><code>R26 P04 Average Remittance Pace</code></td>
+</tr>
+<tr>
+<td>Tooltip</td>
+<td>Operational alert-family count, only if useful</td>
+</tr>
+</tbody></table>
+<p>Apply a visual-level endpoint filter:</p>
+<pre><code class="language-text">R1FactDailyMonitoring[monitoring_day_index] = 120
+</code></pre>
+<p>The current source contract contains exactly one day-120 row for every funded application-scenario.</p>
+<p>Use the full governed status vocabulary:</p>
+<pre><code class="language-text">Dormant / no remittance
+Severe shortfall
+Underperforming
+Watch
+Current
+Paid off
+</code></pre>
+<p>Sort from most operationally severe to Paid off.</p>
+<p>The chart should show the complete endpoint posture, but the <strong>Requiring attention</strong> KPI must count only:</p>
+<pre><code class="language-text">UNDERPERFORMING
+SEVERE_SHORTFALL
+DORMANT_NO_REMITTANCE
+</code></pre>
+<p>It must exclude <code>WATCH</code>, <code>CURRENT</code>, and <code>PAID_OFF</code>. The accepted monitoring interpretation expressly treats Watch as broader monitoring evidence rather than an adverse servicing population. [export reference: filecite | turn97file1 | L77-L127]</p>
+<h3>Expected chart results</h3>
+<pre><code class="language-text">Baseline
+  Severe shortfall     4
+  Paid off            99
+
+Recession Energy
+  Paid off            27
+</code></pre>
+<p>Remove the current copied subtitle:</p>
+<blockquote>
+<p>Four accepted decision outcomes at application-scenario grain.</p>
+</blockquote>
+<hr>
+<h1>8. Rebuild the second chart</h1>
+<h2>Title</h2>
+<p>Change:</p>
+<blockquote>
+<p>Servicing disposition</p>
+</blockquote>
+<p>to:</p>
+<blockquote>
+<p><strong>Servicing execution state</strong></p>
+</blockquote>
+<h2>Optional subtitle</h2>
+<blockquote>
+<p><strong>Funded paths requiring active processing or governed review.</strong></p>
+</blockquote>
+<h2>Bindings</h2>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Binding</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Y-axis/category</td>
+<td><code>R26 P04 Servicing Execution State Display</code></td>
+</tr>
+<tr>
+<td>X-axis/value</td>
+<td><code>R26 P04 Servicing Account Count</code></td>
+</tr>
+<tr>
+<td>Tooltip</td>
+<td><code>R26 P04 Certified Exposure</code> under execution-state context</td>
+</tr>
+<tr>
+<td>Tooltip</td>
+<td><code>R26 P04 Servicing Burden</code> under execution-state context</td>
+</tr>
+</tbody></table>
+<p>Apply this visual filter:</p>
+<pre><code class="language-text">R1FactServicingExecution[no_processing_required_flag] = FALSE
+</code></pre>
+<p>This chart should deliberately omit the 99 or 27 <code>No servicing required</code> paths. Including them would visually swamp the four actionable Baseline accounts and undermine the page&#39;s operational purpose.</p>
+<p>Use only these currently populated categories:</p>
+<pre><code class="language-text">Active servicing
+Review hold
+</code></pre>
+<h3>Expected results</h3>
+<pre><code class="language-text">Baseline
+  Active servicing     1
+  Review hold          3
+
+Recession Energy
+  no actionable rows
+</code></pre>
+<p>Remove the current copied decision-outcome subtitle here as well.</p>
+<hr>
+<h1>9. Rebuild the Account attention workbench</h1>
+<h2>Title</h2>
+<p>Keep:</p>
+<blockquote>
+<p><strong>Account attention workbench</strong></p>
+</blockquote>
+<h2>Governing row anchor</h2>
+<p>Anchor the visual on:</p>
+<pre><code class="language-text">R1DimApplicationScenario
+</code></pre>
+<p>not directly on one of the facts.</p>
+<p>That ensures a selected row filters all M2.5–M2.10 facts through the exact application-scenario dimension rather than attempting fact-to-fact propagation.</p>
+<h2>Final columns</h2>
+<table>
+<thead>
+<tr>
+<th align="right">Order</th>
+<th>Display label</th>
+<th>Source stage</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td><strong>Merchant</strong></td>
+<td><code>R1DimApplicationScenario</code></td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td><strong>Monitoring status</strong></td>
+<td>M2.5 endpoint adapter</td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td><strong>Remittance pace</strong></td>
+<td>M2.5 endpoint adapter</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td><strong>Attention exposure</strong></td>
+<td>M2.5 endpoint receivable</td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td><strong>Intervention</strong></td>
+<td>M2.6</td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td><strong>Setup state</strong></td>
+<td>M2.7</td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td><strong>Execution state</strong></td>
+<td>M2.8</td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td><strong>Endpoint state</strong></td>
+<td>M2.10</td>
+</tr>
+</tbody></table>
+<p>Apply:</p>
+<pre><code class="language-text">R26 P04 Requires Attention Flag = 1
+</code></pre>
+<p>Sort by <strong>Attention exposure descending</strong>.</p>
+<h3>Friendly state mappings</h3>
+<p><strong>Setup state</strong></p>
+<pre><code class="language-text">NO_OPERATIONAL_SETUP_REQUIRED
+→ No setup required
+
+OPERATIONAL_SETUP_REVIEW_REQUIRED
+→ Governance review required
+
+TEMPORARY_PAYMENT_ADJUSTMENT_SETUP_READY
+→ Temporary-adjustment setup ready
+</code></pre>
+<p><strong>Execution state</strong></p>
+<pre><code class="language-text">NO_SERVICING_EXECUTION_REQUIRED
+→ No servicing required
+
+SERVICING_EXECUTION_REVIEW_HOLD
+→ Review hold
+
+SIMULATED_TEMPORARY_PAYMENT_PROCESSING_ACTIVE
+→ Active servicing
+</code></pre>
+<p><strong>Endpoint state</strong></p>
+<pre><code class="language-text">CLOSED_STABLE
+→ Closed stable
+
+CONTROLLED_REVIEW
+→ Controlled review
+
+ACTIVE_RECONCILED
+→ Active reconciled
+</code></pre>
+<p>Do not collapse Intervention, Setup state, Execution state, and Endpoint state into one generic “Disposition” field. Their progression is the page&#39;s central analytical story.</p>
+<h3>Expected Baseline rows</h3>
+<table>
+<thead>
+<tr>
+<th align="right">Merchant</th>
+<th>Intervention</th>
+<th>Setup</th>
+<th>Execution</th>
+<th>Endpoint</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right"><strong>000749</strong></td>
+<td>Temporary remittance review</td>
+<td>Setup ready</td>
+<td>Active servicing</td>
+<td>Active reconciled</td>
+</tr>
+<tr>
+<td align="right"><strong>000098</strong></td>
+<td>Targeted outreach review</td>
+<td>Governance review</td>
+<td>Review hold</td>
+<td>Controlled review</td>
+</tr>
+<tr>
+<td align="right"><strong>000112</strong></td>
+<td>Targeted outreach review</td>
+<td>Governance review</td>
+<td>Review hold</td>
+<td>Controlled review</td>
+</tr>
+<tr>
+<td align="right"><strong>000312</strong></td>
+<td>Targeted outreach review</td>
+<td>Governance review</td>
+<td>Review hold</td>
+<td>Controlled review</td>
+</tr>
+</tbody></table>
+<p>Recession Energy should produce <strong>zero workbench rows</strong>.</p>
+<p>This directly corrects the predecessor page, where 312 was shown as the active temporary-payment path.</p>
+<hr>
+<h1>10. Replace Payment exception history</h1>
+<h2>Remove</h2>
+<p>Remove all predecessor bindings from:</p>
+<blockquote>
+<p>Payment exception history</p>
+</blockquote>
+<p>including:</p>
+<pre><code class="language-text">FactPaymentException[P04 Exception Merchant]
+FactPaymentException[originating_event_date]
+FactPaymentException[exception_amount]
+FactPaymentException[P04 Exception Status]
+FactPaymentException[resolving_event_date]
+FactPaymentException[exception_open_days]
+FactPaymentException[P04 Exception Resolution]
+</code></pre>
+<p>Do not retain the title “history.”</p>
+<h2>New title</h2>
+<p>Use:</p>
+<blockquote>
+<p><strong>Payment &amp; certification detail</strong></p>
+</blockquote>
+<h2>Optional subtitle</h2>
+<blockquote>
+<p><strong>Select an attention-workbench row to isolate one funded account.</strong></p>
+</blockquote>
+<h2>Final columns</h2>
+<table>
+<thead>
+<tr>
+<th align="right">Order</th>
+<th>Display label</th>
+<th>Governing source</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td><strong>Merchant</strong></td>
+<td><code>R1DimApplicationScenario</code></td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td><strong>Execution</strong></td>
+<td>M2.8</td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td><strong>Payment events</strong></td>
+<td>M2.8 <code>payment_event_count</code></td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td><strong>Processed</strong></td>
+<td>M2.8/M2.9 <code>processed_payment_amount</code></td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td><strong>Return / retry</strong></td>
+<td>M2.8 returned and retry counts/amounts</td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td><strong>Reconciliation</strong></td>
+<td>M2.9 <code>reconciliation_outcome_code</code></td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td><strong>Certified on</strong></td>
+<td>M2.9 <code>certification_date</code></td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td><strong>Certified exposure</strong></td>
+<td>M2.9 <code>certified_exposure_amount</code></td>
+</tr>
+</tbody></table>
+<p>The Return / retry display should render examples such as:</p>
+<pre><code class="language-text">None
+1 returned / 1 retried
+</code></pre>
+<p>The Reconciliation display should render:</p>
+<pre><code class="language-text">No payment activity — reconciled
+Reconciled after retry
+Reconciliation review hold
+</code></pre>
+<p>This table tells a truthful account-level processing and control story without implying the carrier contains dated event-history rows that do not exist.</p>
+<hr>
+<h1>11. Preserve and tighten interactions</h1>
+<h2>Scenario slicer</h2>
+<p>Scenario must filter:</p>
+<ul>
+<li>all seven KPIs;</li>
+<li>Endpoint monitoring posture;</li>
+<li>Servicing execution state;</li>
+<li>Account attention workbench;</li>
+<li>Payment &amp; certification detail;</li>
+<li>footer context where applicable.</li>
+</ul>
+<h2>Workbench</h2>
+<p>A selected workbench row should filter <strong>only</strong>:</p>
+<blockquote>
+<p>Payment &amp; certification detail</p>
+</blockquote>
+<p>It should <strong>not</strong> change:</p>
+<ul>
+<li>the portfolio KPI stack;</li>
+<li>Endpoint monitoring posture;</li>
+<li>Servicing execution state.</li>
+</ul>
+<p>That preserves the distinction between:</p>
+<ul>
+<li>portfolio posture; and</li>
+<li>selected-account detail.</li>
+</ul>
+<h2>Charts</h2>
+<p>Do not permit either chart to cross-highlight the KPI stack, the other chart, or the workbench. The Scenario slicer should be the only page-wide controller.</p>
+<p>No Merchant slicer and no Observation-date slicer should be added.</p>
+<hr>
+<h1>12. Footer and boundary update</h1>
+<p>Use current identity:</p>
+<pre><code class="language-text">Run:                 M1_V0_2_BASELINE_BUILD
+Source release:      Module 2 / G3 v2.1.0-rc2
+Model version:       PBI_R26_PARALLEL_REFINEMENT_C2_20260902
+Observed-source cutoff: 2026-07-23
+</code></pre>
+<p>Use these two compact boundary lines:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Monitoring posture reflects the governed 2026-11-22 synthetic endpoint; servicing, payment, and certification fields are deterministic synthetic lifecycle evidence.<br><strong>Interpretation boundary:</strong> Deterministic synthetic evidence; intervention, setup, execution, and certification are simulated governance outcomes, not real production servicing actions.</p>
+</blockquote>
+<hr>
+<h1>13. Required P04 QA</h1>
+<p>Run QA before visual evidence.</p>
+<h2>Population and key controls</h2>
+<p>Require:</p>
+<pre><code class="language-text">R1FactIntervention             130 rows / 130 unique keys
+R1FactOperationalSetup         130 rows / 130 unique keys
+R1FactServicingExecution       130 rows / 130 unique keys
+R1FactAccountCertification     130 rows / 130 unique keys
+R1FactPortfolioPerformance     130 rows / 130 unique keys
+</code></pre>
+<p>Require exact set equality across:</p>
+<pre><code class="language-text">R1FactFundedLifecycle
+R1FactIntervention
+R1FactOperationalSetup
+R1FactServicingExecution
+R1FactAccountCertification
+R1FactPortfolioPerformance
+day-120 R1FactDailyMonitoring membership
+</code></pre>
+<h2>Stage-distribution controls</h2>
+<p>Require the current total chain:</p>
+<pre><code class="language-text">M2.6
+126 closed / 3 outreach / 1 temporary review
+
+M2.7
+126 no setup / 3 setup review / 1 setup ready
+
+M2.8
+126 no execution / 3 review hold / 1 active processing
+
+M2.9
+126 certified closed / 3 certified review hold /
+1 certified reassessment after retry
+
+M2.10
+126 closed stable / 3 controlled review / 1 active reconciled
+</code></pre>
+<h2>Reconciliation controls</h2>
+<p>Require:</p>
+<pre><code class="language-text">State-certified rows                 130
+Reconciliation variance              $0.00
+Exposure variance                    $0.00
+Exception incidents                      1
+Resolved exceptions                      1
+Unresolved exceptions                    0
+</code></pre>
+<p>For the active 749 path:</p>
+<pre><code class="language-text">Payment events              7
+Settled events              5
+Returned events             1
+Retry events                1
+Scheduled amount      $1,762.25
+Processed amount      $1,762.25
+Returned amount         $251.75
+Retry amount            $251.75
+Certified exposure    $2,937.12
+Endpoint state        Active reconciled
+Servicing burden                   2
+</code></pre>
+<p>The exact-zero reconciliation contract is important; the earlier one-cent defect on merchant 749 was corrected at the M2.8 generation layer rather than hidden with tolerance. [export reference: filecite | turn96file7 | L197-L259]</p>
+<hr>
+<h1>14. Visual regression cases</h1>
+<p>Capture or inspect these after the page is complete:</p>
+<table>
+<thead>
+<tr>
+<th>Case</th>
+<th>Required result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Baseline, no account selected</strong></td>
+<td>4 attention rows; 1 active servicing; 3 review holds</td>
+</tr>
+<tr>
+<td><strong>Recession Energy</strong></td>
+<td>27 paid-off accounts; no attention, servicing, or detail rows</td>
+</tr>
+<tr>
+<td><strong>749 / Baseline</strong></td>
+<td>Temporary-remittance setup, active processing, one return and retry, reconciled active state</td>
+</tr>
+<tr>
+<td><strong>098 / Baseline</strong></td>
+<td>Targeted outreach, governance review, execution review hold</td>
+</tr>
+<tr>
+<td><strong>112 / Baseline</strong></td>
+<td>Same governed review-hold chain, distinct exposure/pace</td>
+</tr>
+<tr>
+<td><strong>312 / Baseline</strong></td>
+<td>Targeted outreach and review hold—not temporary processing</td>
+</tr>
+<tr>
+<td><strong>264 / Baseline</strong></td>
+<td>Closed/no further action/no processing/certified closed when tested outside the attention filter</td>
+</tr>
+<tr>
+<td><strong>082 / Baseline or 738 / Recession Energy</strong></td>
+<td>Nonfunded path absent from every P04 servicing population</td>
+</tr>
+</tbody></table>
+<hr>
+<h1>15. Accessibility and evidence sequence</h1>
+<p>After semantics, visuals, interactions, and footer are complete:</p>
+<ol>
+<li>Apply title/page alt text.</li>
+<li>Add dynamic alt text for the KPI summary, both charts, the workbench, and Payment &amp; certification detail.</li>
+<li>Establish tab order:<ul>
+<li>title;</li>
+<li>Scenario;</li>
+<li>KPI summary;</li>
+<li>Endpoint monitoring posture;</li>
+<li>Servicing execution state;</li>
+<li>Account attention workbench;</li>
+<li>Payment &amp; certification detail;</li>
+<li>footer.</li>
+</ul>
+</li>
+<li>Run full refresh.</li>
+<li>Save C2.</li>
+<li>Close Power BI Desktop.</li>
+<li>Reopen C2.</li>
+<li>Revalidate Baseline and Recession Energy.</li>
+<li>Capture final P04 evidence.</li>
+<li>Freeze P04.</li>
+</ol>
+<hr>
+<h1>Final roadmap disposition</h1>
+<pre><code class="language-text">Page title                         KEEP
+Subtitle                           UPDATE
+Scenario slicer                    KEEP
+Observation-date slicer            DO NOT ADD
+KPI stack                          KEEP / REBASE / EXPAND TO 7
+Monitoring chart                   KEEP / RETITLE / REBIND
+Servicing chart                    KEEP / RETITLE / REBIND
+Account attention workbench        KEEP / RESTRUCTURE
+Payment exception history          REMOVE
+Payment &amp; certification detail     ADD BY REPURPOSING EXISTING TABLE
+Existing page geometry             SUBSTANTIALLY PRESERVE
+Predecessor P04 bindings            REMOVE FROM PAGE
+Predecessor model objects           DO NOT DELETE
+New source or relationships         NONE
+New servicing methodology           NONE
+</code></pre>
+<p>This is the controlling P04 production design. The next implementation artifact should be a single bounded <strong>R26 P04 presentation-layer patch plus QA query</strong>, followed by the visual rebindings in the exact sequence above.</p>
+</div></article><article id="m-1cf187a8-db3e-421c-bacb-261d708f7a73" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00052 · 2026-09-03T17:54:38.824000-04:00 · active path</p><p class="note">Attachment references: Pasted text(20260903-215419).txt</p><div class="bubble"><p>Your Recommended P03 evidence population list is not accurate. 101 is Declined Evidence Decline. Here is the Dax MSBF R26 P03 Narrative QA Queries - Correction R1 Result 3 of 3. Please re-provide recommended P03 evidence population for me to capture. Note, I already captured 738 Baseline - Approved as requested.</p>
+</div></article><article id="m-49de8627-b2c8-453c-b33e-0b69395511d2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00053 · 2026-09-03T18:11:40.845353-04:00 · active path</p><div class="bubble"><p>You are correct. <strong>000101 / Recession Energy is an evidence decline</strong>, not a counteroffer authorization. Its governed outcome is <code>DECLINE_INSUFFICIENT_EVIDENCE</code>: 28 usable days versus 30 required, including two disconnected processor-outage days. My earlier classification was wrong. [export reference: filecite | turn113file0 | L11-L11]</p>
+<p>The correct Recession Energy counteroffer-authorization example is <strong>000098 / Recession Energy</strong>. [export reference: filecite | turn108file1 | L23-L23]</p>
+<p>I reclassified the supplied Result 3 inventory from the actual visible narrative wording. The smallest defensible <strong>branch-complete</strong> population contains <strong>24 cases</strong>:</p>
+<ul>
+<li>2 authorization situations</li>
+<li>6 counteroffer-review reason situations</li>
+<li>5 manual-underwriting-review reason situations</li>
+<li>3 evidence-decline situations</li>
+<li>3 no-feasible-structure situations</li>
+<li>5 policy-hard-stop situations</li>
+</ul>
+<p>This captures all material visible narrative branches, all six observed proposed-structure adjustment patterns, both scenarios, funded and nonfunded behavior, the scenario non-improvement floor, and the important evidence-language conditions. It does not attempt to capture every merchant-specific permutation of industry, size, amount, and rate.</p>
+<p>Because <strong>000738 / Baseline is already complete</strong>, the branch-complete population requires <strong>23 additional screenshots</strong>.</p>
+<h1>Corrected P03 evidence population</h1>
+<h2>1. Authorized outcomes</h2>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th align="right">Merchant</th>
+<th>Scenario</th>
+<th>Narrative situation</th>
+<th>Why this case</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Captured</strong></td>
+<td align="right"><strong>000738</strong></td>
+<td><strong>Baseline</strong></td>
+<td>Approve as requested</td>
+<td>Clean requested-terms authorization, physical funding date, and downstream funded-lifecycle displays. [export reference: filecite</td>
+</tr>
+<tr>
+<td>Capture</td>
+<td align="right"><strong>000098</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td>Counteroffer authorized</td>
+<td>Correct stress-scenario authorization example. It shows an amount-only reduction from $5,200 to $2,500, negative observed liquidity, 100% negative-balance days, non-improvement-floor reselection, and actual funding. [export reference: filecite</td>
+</tr>
+</tbody></table>
+<h2>2. Counteroffer-review situations</h2>
+<p>These six cases exhaust the distinct business-facing reasons used in the <code>COUNTEROFFER_REVIEW_REQUIRED</code> Decision narrative.</p>
+<table>
+<thead>
+<tr>
+<th align="right">Merchant</th>
+<th>Scenario</th>
+<th>Narrative situation</th>
+<th>Why this case</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right"><strong>000002</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td>Verification concern <strong>plus capacity boundary</strong></td>
+<td>Exercises the combined verification-and-capacity explanation; the proposed alternative adjusts remittance and payback. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000149</strong></td>
+<td><strong>Baseline</strong></td>
+<td>Verification concern <strong>only</strong></td>
+<td>The only pure verification-only counteroffer-review case. It also demonstrates simultaneous amount, remittance, and payback changes. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000082</strong></td>
+<td><strong>Baseline</strong></td>
+<td>Evidence usable, but not strong enough for straight-through authorization</td>
+<td>Canonical Patch 3 wording case; amount and remittance are changed, and the corrected specialist-review sentence is visible. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000741</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td>Processor-continuity concern</td>
+<td>Exercises the disrupted-processor-continuity explanation, an amount reduction, omitted sales language, and observed negative-balance days. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000051</strong></td>
+<td><strong>Baseline</strong></td>
+<td>Capacity boundary <strong>plus repayment guardrail</strong></td>
+<td>Exercises the combined capacity/repayment-band language, remittance and payback changes, and the evidence wording for one NSF event with no negative-balance days. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000108</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td>Capacity boundary <strong>only</strong></td>
+<td>Clean capacity-only case with a remittance-only adjustment; also provides a returning merchant with strong prior performance. [export reference: filecite</td>
+</tr>
+</tbody></table>
+<h2>3. Manual-underwriting-review situations</h2>
+<p>These five cases exhaust the distinct visible reasons used in <code>MANUAL_UNDERWRITING_REVIEW_REQUIRED</code>.</p>
+<table>
+<thead>
+<tr>
+<th align="right">Merchant</th>
+<th>Scenario</th>
+<th>Narrative situation</th>
+<th>Why this case</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right"><strong>000116</strong></td>
+<td><strong>Baseline</strong></td>
+<td>Verification concern <strong>plus capacity boundary</strong></td>
+<td>The sole manual-underwriting case using the combined verification-and-capacity wording. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000201</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td>Verification concern <strong>only</strong></td>
+<td>Shows a requested structure that remains potentially supportable but requires specialist verification resolution. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000298</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td>Evidence usable, but not strong enough for straight-through authorization</td>
+<td>Manual-review counterpart to the 082 counteroffer-review case; the strategy retained a potentially supportable review path. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000335</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td>Processor-continuity concern</td>
+<td>Manual-review processor-continuity branch, with negative liquidity and negative balances on 100% of observed days. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000749</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td>Capacity/resilience review frontier</td>
+<td>Capacity-boundary Decision wording with negative liquidity and 100% negative-balance days; no funding occurs under this scenario. [export reference: filecite</td>
+</tr>
+</tbody></table>
+<h2>4. Evidence-decline situations</h2>
+<table>
+<thead>
+<tr>
+<th align="right">Merchant</th>
+<th>Scenario</th>
+<th>Narrative situation</th>
+<th>Why this case</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right"><strong>000001</strong></td>
+<td><strong>Baseline</strong></td>
+<td>One disconnected outage day</td>
+<td>Exercises the singular grammar: 29 usable days versus 30 required, including <strong>one</strong> disconnected processor-outage day. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000738</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td>Multiple disconnected outage days</td>
+<td>Exercises the plural grammar: 28 usable days versus 30 required, including <strong>two</strong> outage days. It is also the most valuable direct scenario contrast with the already-captured 738 Baseline approval. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000042</strong></td>
+<td><strong>Baseline</strong></td>
+<td>Incomplete or contradictory operating evidence</td>
+<td>Exercises the non-outage evidence-decline branch: required evidence is incomplete or contradictory, and structure assessment is withheld rather than converted into weak performance. [export reference: filecite</td>
+</tr>
+</tbody></table>
+<p><strong>000101 / Recession Energy would duplicate the multiple-outage evidence-decline situation.</strong> Use 738 / Recession Energy instead because it creates a much stronger Baseline-versus-Recession evidence pair.</p>
+<h2>5. No-feasible-structure situations</h2>
+<table>
+<thead>
+<tr>
+<th align="right">Merchant</th>
+<th>Scenario</th>
+<th>Narrative situation</th>
+<th>Why this case</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right"><strong>000004</strong></td>
+<td><strong>Baseline</strong></td>
+<td>Ordinary complete search</td>
+<td>Clean complete-search decline: 11 alternatives were evaluated and none satisfied policy, capacity, resilience, risk, and economics together. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000022</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td>Stress-route non-improvement floor without an independent complete-search claim</td>
+<td>The independent stress path had insufficient evidence, while the governed route was held to the matched Baseline no-feasible result. It also captures returning/mixed-prior language, negative liquidity, one NSF event, and 100% negative-balance days. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000082</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td>Complete candidate search <strong>plus</strong> stress non-improvement floor</td>
+<td>Direct contrast with 082 Baseline review: a candidate search occurred, but no eligible stress candidate survived the Baseline term floor, producing a governed no-feasible decline. [export reference: filecite</td>
+</tr>
+</tbody></table>
+<p>The two stress-floor cases are genuinely different:</p>
+<ul>
+<li><strong>000022:</strong> no independently supportable stress structure is presented; the Baseline <strong>route</strong> floor controls.</li>
+<li><strong>000082:</strong> stress candidate evaluation occurred, but the Baseline <strong>term</strong> floor leaves no eligible governed candidate.</li>
+</ul>
+<p>Both should be captured.</p>
+<h2>6. Policy-hard-stop situations</h2>
+<table>
+<thead>
+<tr>
+<th align="right">Merchant</th>
+<th>Scenario</th>
+<th>Narrative situation</th>
+<th>Why this case</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right"><strong>000012</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td>Elevated verification or fraud-risk condition</td>
+<td>Exercises the fraud/verification-risk hard-stop branch and adds returning/mixed-prior and negative-liquidity evidence. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000549</strong></td>
+<td><strong>Baseline</strong></td>
+<td>Required processor-continuity condition</td>
+<td>Exercises the hard-stop processor-continuity branch and adds a developing-merchant evidence profile. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000102</strong></td>
+<td><strong>Baseline</strong></td>
+<td>Evidence-confidence condition outside the permitted policy boundary</td>
+<td>Distinct from a reviewable medium-confidence case: this condition is outside policy and therefore cannot be cured through revised terms. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000120</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td>Non-remediable verification conflict</td>
+<td>Exercises the specific verification-conflict branch and the evidence wording that decision-critical operating evidence was available even though a hard stop controlled. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000074</strong></td>
+<td><strong>Baseline</strong></td>
+<td>Generic policy, verification, or covenant hard stop</td>
+<td>Exercises the governed fallback hard-stop wording and provides a returning lower-middle-market merchant with mixed prior performance. [export reference: filecite</td>
+</tr>
+</tbody></table>
+<h1>Coverage achieved by the 24-case set</h1>
+<p>The resulting evidence package contains:</p>
+<pre><code class="language-text">Baseline screenshots          11
+Recession Energy screenshots  13
+Total branch-complete set     24
+Already captured               1
+Remaining captures            23
+</code></pre>
+<p>It covers every material visible decision-narrative situation and all six observed structure treatments:</p>
+<pre><code class="language-text">No proposed-term change
+Amount only
+Remittance only
+Amount + remittance
+Remittance + payback
+Amount + remittance + payback
+</code></pre>
+<p>It also includes these evidence-language states:</p>
+<pre><code class="language-text">Clean operating evidence
+Sales stated
+Sales omitted
+Positive liquidity
+Negative liquidity
+No NSF or negative-balance days
+One NSF with no negative-balance days
+Negative-balance days with no NSF
+One NSF plus negative-balance days
+One outage day
+Multiple outage days
+Incomplete or contradictory evidence
+</code></pre>
+<h1>Two recommended supplemental screenshots</h1>
+<p>These are not needed to complete the 24 narrative branches, but they materially strengthen the evidence package by showing that adverse observations are incorporated rather than mechanically forcing review or decline.</p>
+<table>
+<thead>
+<tr>
+<th align="right">Merchant</th>
+<th>Scenario</th>
+<th>Supplemental value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right"><strong>000589</strong></td>
+<td><strong>Baseline</strong></td>
+<td>Approve as requested despite slightly negative liquidity, one NSF event, and negative balances on 60% of observed days; the structure still clears the governed standards. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right"><strong>000664</strong></td>
+<td><strong>Baseline</strong></td>
+<td>Authorized counteroffer for a returning merchant with mixed prior performance, negative liquidity, and 100% negative-balance days; amount, remittance, and payback are all revised before funding. [export reference: filecite</td>
+</tr>
+</tbody></table>
+<p>My recommendation is therefore:</p>
+<pre><code class="language-text">Required branch-complete evidence      24 total / 23 remaining
+Recommended enhanced evidence          26 total / 25 remaining
+</code></pre>
+<p>Use the <strong>26-case enhanced population</strong> for the final P03 evidence package. It is extensive enough to demonstrate the depth of the narrative engine without devolving into repetitive merchant-specific screenshots.</p>
+</div></article><article id="m-2b07a212-ce23-49d4-a4be-b4d38b99395d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00054 · 2026-09-03T18:29:04.915000-04:00 · active path</p><div class="bubble"><p>somehow i deleted (well - changed it to a blank measure) the DimApplication P03 Channel Label we had created. What I was trying to solve was I noticed a value we had not accounted for RELATIONSHIP MANAGER or something like that. We need to account for all channel types. Please help me create a more proper channel Dax Measure.</p>
+</div></article><article id="m-6dd938d1-5c33-4877-a3d2-d5d841638fb3" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00055 · 2026-09-03T18:29:44.466261-04:00 · active path</p><div class="bubble"><p>Yes. I found the exact prior calculated-column definition, and I also see why you encountered the gap.</p>
+<p><code>P03 Channel Label</code> is a <strong>calculated column in <code>DimApplication</code></strong>, not a measure. The prior version used <code>DimApplication[application_channel]</code> and explicitly prettified only three values—<code>PROCESSOR_EMBEDDED</code>, <code>DIGITAL_DIRECT</code>, and <code>BROKER_REFERRAL</code>—then fell back to replacing underscores with spaces for anything else. [export reference: filecite | turn117file12 | L303-L316]</p>
+<p>That fallback is why a value such as <code>RELATIONSHIP_MANAGER</code> would show up as <code>RELATIONSHIP MANAGER</code> rather than a polished display label. We should improve the column so that <strong>all known channel codes are intentionally mapped, while retaining a safe fallback for any future code</strong>.</p>
+<p>Use this as the replacement calculated column:</p>
+<pre><code class="language-DAX">P03 Channel Label =
+VAR _Value =
+    UPPER (
+        TRIM (
+            COALESCE (
+                &#39;DimApplication&#39;[application_channel],
+                &quot;&quot;
+            )
+        )
+    )
+RETURN
+    SWITCH (
+        TRUE (),
+
+        _Value = &quot;&quot;, BLANK (),
+
+        _Value = &quot;PROCESSOR_EMBEDDED&quot;, &quot;Processor embedded&quot;,
+        _Value = &quot;PROCESSOR_DIRECT&quot;, &quot;Processor direct&quot;,
+
+        _Value = &quot;DIGITAL_DIRECT&quot;, &quot;Digital direct&quot;,
+
+        _Value = &quot;BROKER_REFERRAL&quot;, &quot;Broker referral&quot;,
+        _Value = &quot;BROKER_NETWORK&quot;, &quot;Broker network&quot;,
+
+        _Value = &quot;BANK_RELATIONSHIP&quot;, &quot;Bank relationship&quot;,
+        _Value = &quot;RELATIONSHIP_MANAGER&quot;, &quot;Relationship manager&quot;,
+
+        _Value = &quot;STRATEGIC_PARTNER&quot;, &quot;Strategic partner&quot;,
+
+        -- Fail-safe for any legitimate future channel code
+        VAR _Spaced =
+            SUBSTITUTE ( LOWER ( _Value ), &quot;_&quot;, &quot; &quot; )
+        RETURN
+            UPPER ( LEFT ( _Spaced, 1 ) )
+                &amp; MID ( _Spaced, 2, LEN ( _Spaced ) )
+    )
+</code></pre>
+<p>This is materially better than the original for three reasons. First, it explicitly handles the channel concepts we know are appearing in R26—including processor, digital, broker, bank/relationship, and strategic-partner routes. Second, it normalizes case and whitespace before matching, so an otherwise valid source value cannot miss its mapping merely because of capitalization or surrounding spaces. Third, it <strong>does not silently turn an unrecognized channel into blank</strong>; a future value such as <code>AFFILIATE_PARTNER</code> would display as <code>Affiliate partner</code>, which is preferable on P03 to losing the channel entirely.</p>
+<p>The underlying model definitely contains both <code>application_channel</code> and <code>accepted_application_channel</code>; the prior P03 display column was intentionally based on <code>application_channel</code>. [export reference: filecite | turn117file12 | L267-L274] The P03 Merchant Request visual also still expects <code>DimApplication[P03 Channel Label]</code> as its <code>Channel</code> field. [export reference: filecite | turn116file5 | L121-L128] So <strong>do not recreate this as a measure</strong>—select <code>DimApplication</code>, choose <strong>New column</strong>, and paste the DAX above.</p>
+<p>One important point: the narrative QA output independently demonstrates five business-facing source descriptions—<strong>digital-direct, bank-relationship, processor-direct, strategic partner, and broker network</strong>—so it makes sense to cover those concepts rather than limiting ourselves to the three values in the old calculated column. For example, the supplied R26 narrative population contains bank-relationship, processor-direct, digital-direct, and strategic-partner cases in the same governed population. [export reference: filecite | turn115file0 | L5-L8]</p>
+<p>After you add it, I would do one quick validation before continuing screenshots: temporarily put <strong><code>application_channel</code> + <code>P03 Channel Label</code></strong> into a two-column table visual. That will tell us in about 30 seconds whether R26 contains any additional raw channel code that we have not explicitly enumerated. If you paste those distinct rows back to me, I can give you the <strong>final exact closed-set mapping</strong> before we continue P03 evidence capture.</p>
+</div></article><article id="m-f5200887-3927-43c3-8b9c-27604adb706e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00056 · 2026-09-03T18:38:23.814000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 6057b55f-fe17-4ea1-9286-30670e8f1c82.png</p><div class="bubble"><p>Similarly, Use has a value that is not formatted: EQUIPMENT_REPAIR - P03 Use Label =<br>VAR _Value = &#39;DimApplication&#39;[requested_use_of_proceeds] 
+RETURN 
+    SWITCH ( 
+        _Value, 
+        &quot;WORKING_CAPITAL&quot;, &quot;Working capital&quot;, 
+        &quot;INVENTORY&quot;, &quot;Inventory&quot;, 
+        &quot;SEASONAL_NEED&quot;, &quot;Seasonal need&quot;, 
+        &quot;EXPANSION&quot;, &quot;Expansion&quot;, 
+        &quot;EQUIPMENT&quot;, &quot;Equipment&quot;, 
+        IF ( 
+            ISBLANK ( _Value ), 
+            BLANK (), 
+            SUBSTITUTE ( <em>Value, &quot;</em>&quot;, &quot; &quot; ) 
+        ) 
+    )               please update for all possible values now and in the future.</p>
+</div></article><article id="m-ebf361f0-0a14-448e-b05e-435e7833711b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00057 · 2026-09-03T18:38:31.023382-04:00 · active path</p><div class="bubble"><p>Yes. We should make <code>P03 Use Label</code> resilient in the same way: explicit mappings for known values, normalization up front, and a future-safe fallback that converts any new underscore-delimited code into clean sentence case.</p>
+<p>Use this replacement calculated column:</p>
+<pre><code class="language-DAX">P03 Use Label =
+VAR _Value =
+    UPPER (
+        TRIM (
+            COALESCE (
+                &#39;DimApplication&#39;[requested_use_of_proceeds],
+                &quot;&quot;
+            )
+        )
+    )
+
+VAR _Fallback =
+    VAR _Spaced =
+        SUBSTITUTE (
+            LOWER ( _Value ),
+            &quot;_&quot;,
+            &quot; &quot;
+        )
+    RETURN
+        IF (
+            _Spaced = &quot;&quot;,
+            BLANK (),
+            UPPER ( LEFT ( _Spaced, 1 ) )
+                &amp; MID (
+                    _Spaced,
+                    2,
+                    LEN ( _Spaced )
+                )
+        )
+
+RETURN
+    SWITCH (
+        TRUE (),
+
+        _Value = &quot;&quot;, BLANK (),
+
+        _Value = &quot;WORKING_CAPITAL&quot;, &quot;Working capital&quot;,
+        _Value = &quot;INVENTORY&quot;, &quot;Inventory&quot;,
+        _Value = &quot;SEASONAL_NEED&quot;, &quot;Seasonal need&quot;,
+        _Value = &quot;EXPANSION&quot;, &quot;Expansion&quot;,
+        _Value = &quot;EQUIPMENT&quot;, &quot;Equipment&quot;,
+        _Value = &quot;EQUIPMENT_REPAIR&quot;, &quot;Equipment repair&quot;,
+
+        _Value = &quot;EQUIPMENT_PURCHASE&quot;, &quot;Equipment purchase&quot;,
+        _Value = &quot;EQUIPMENT_UPGRADE&quot;, &quot;Equipment upgrade&quot;,
+
+        _Value = &quot;RENOVATION&quot;, &quot;Renovation&quot;,
+        _Value = &quot;REMODELING&quot;, &quot;Remodeling&quot;,
+        _Value = &quot;REPAIR&quot;, &quot;Repair&quot;,
+        _Value = &quot;MAINTENANCE&quot;, &quot;Maintenance&quot;,
+
+        _Value = &quot;MARKETING&quot;, &quot;Marketing&quot;,
+        _Value = &quot;ADVERTISING&quot;, &quot;Advertising&quot;,
+
+        _Value = &quot;PAYROLL&quot;, &quot;Payroll&quot;,
+        _Value = &quot;HIRING&quot;, &quot;Hiring&quot;,
+
+        _Value = &quot;DEBT_REFINANCE&quot;, &quot;Debt refinance&quot;,
+        _Value = &quot;DEBT_CONSOLIDATION&quot;, &quot;Debt consolidation&quot;,
+
+        _Value = &quot;PURCHASE_ORDER&quot;, &quot;Purchase order&quot;,
+        _Value = &quot;SUPPLIES&quot;, &quot;Supplies&quot;,
+
+        _Value = &quot;BUSINESS_ACQUISITION&quot;, &quot;Business acquisition&quot;,
+        _Value = &quot;LOCATION_EXPANSION&quot;, &quot;Location expansion&quot;,
+        _Value = &quot;NEW_LOCATION&quot;, &quot;New location&quot;,
+
+        _Value = &quot;EMERGENCY_EXPENSE&quot;, &quot;Emergency expense&quot;,
+        _Value = &quot;TAX_PAYMENT&quot;, &quot;Tax payment&quot;,
+
+        _Value = &quot;OTHER&quot;, &quot;Other&quot;,
+
+        _Fallback
+    )
+</code></pre>
+<p>The important improvement is the <code>_Fallback</code>. Even if a value appears later that we never anticipated—say:</p>
+<pre><code class="language-text">VEHICLE_REPAIR
+TECHNOLOGY_UPGRADE
+LEASEHOLD_IMPROVEMENT
+BRIDGE_FINANCING
+</code></pre>
+<p>it will display automatically as:</p>
+<pre><code class="language-text">Vehicle repair
+Technology upgrade
+Leasehold improvement
+Bridge financing
+</code></pre>
+<p>instead of the raw all-caps source code.</p>
+<p>I would actually treat the explicit mappings above as <strong>semantic documentation rather than a requirement for formatting</strong>. The fallback is what makes this future-proof. So <code>EQUIPMENT_REPAIR</code> is now explicitly controlled, while any legitimately new use-of-proceeds code will still render correctly without another DAX defect.</p>
+<p>Also keep this as a <strong>calculated column on <code>DimApplication</code></strong>, just like the existing <code>P03 Use Label</code>; the P03 Merchant Request visual is using it as a row-level display field, not as an aggregation.</p>
+<p>One small refinement I recommend after this: we should use the same normalization pattern for both <strong>Channel</strong> and <strong>Use</strong> so these two P03 display columns follow one consistent controlled-display convention. That will eliminate this class of issue rather than fixing values one at a time.</p>
+</div></article><article id="m-287520df-a07b-4ea0-9077-ffdac2a4ba83" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00058 · 2026-09-03T18:45:55.384000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: b7e1bdc1-63f9-4f7d-83ca-952f85a6d362.png; 7739dea8-a18e-4674-88e5-61f4891f30e3.png</p><div class="bubble"><p>P03 Relationship Stage =<br>VAR _Value = 
+    SELECTEDVALUE ( &#39;DimMerchant&#39;[relationship_stage] ) 
+RETURN 
+    IF ( 
+        ISBLANK ( _Value ), 
+        &quot;NOT AVAILABLE&quot;, 
+        SWITCH ( 
+            _Value, 
+            &quot;NEW&quot;, &quot;New&quot;, 
+            &quot;EXISTING&quot;, &quot;Existing&quot;, 
+            &quot;RETURNING&quot;, &quot;Returning&quot;, 
+            SUBSTITUTE ( <em>Value, &quot;</em>&quot;, &quot; &quot; ) 
+        ) 
+    )                           This needs updated to account for all possible values now and in the future.</p>
+</div></article><article id="m-cf863505-3d08-4a6d-a640-dfe2ecb1ffba" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00059 · 2026-09-03T18:46:31.699742-04:00 · active path</p><div class="bubble"><p>Yes. The current value you are seeing, <code>RETURNING_GOOD</code>, is one of four defined relationship-stage values in the governing parameter set:</p>
+<ul>
+<li><code>NEW</code></li>
+<li><code>RETURNING_GOOD</code></li>
+<li><code>RETURNING_MIXED</code></li>
+<li><code>LOW_AND_GROW</code> [export reference: filecite | turn118file3 | L216-L226]</li>
+</ul>
+<p>The old <code>P03 Relationship Stage</code> measure only explicitly handled <code>NEW</code>, <code>EXISTING</code>, and <code>RETURNING</code>, so it was obsolete for the actual synthetic population. [export reference: filecite | turn118file2 | L137-L151]</p>
+<p>Replace it with this future-safe measure:</p>
+<pre><code class="language-DAX">P03 Relationship Stage =
+VAR _RawValue =
+    SELECTEDVALUE ( &#39;DimMerchant&#39;[relationship_stage] )
+
+VAR _Value =
+    UPPER (
+        TRIM (
+            COALESCE (
+                _RawValue,
+                &quot;&quot;
+            )
+        )
+    )
+
+VAR _Fallback =
+    VAR _Spaced =
+        SUBSTITUTE (
+            LOWER ( _Value ),
+            &quot;_&quot;,
+            &quot; &quot;
+        )
+    RETURN
+        IF (
+            _Spaced = &quot;&quot;,
+            &quot;NOT AVAILABLE&quot;,
+            UPPER ( LEFT ( _Spaced, 1 ) )
+                &amp; MID (
+                    _Spaced,
+                    2,
+                    LEN ( _Spaced )
+                )
+        )
+
+RETURN
+    SWITCH (
+        TRUE (),
+
+        _Value = &quot;&quot;, &quot;NOT AVAILABLE&quot;,
+
+        _Value = &quot;NEW&quot;, &quot;New&quot;,
+
+        _Value = &quot;RETURNING_GOOD&quot;, &quot;Returning — good&quot;,
+        _Value = &quot;RETURNING_MIXED&quot;, &quot;Returning — mixed&quot;,
+
+        _Value = &quot;LOW_AND_GROW&quot;, &quot;Low and grow&quot;,
+
+        -- Legacy / compatibility values if they ever appear
+        _Value = &quot;EXISTING&quot;, &quot;Existing&quot;,
+        _Value = &quot;RETURNING&quot;, &quot;Returning&quot;,
+
+        -- Future-safe rendering of any new governed code
+        _Fallback
+    )
+</code></pre>
+<p>I prefer <strong>“Returning — good”</strong> and <strong>“Returning — mixed”</strong> over simply <code>Returning good</code> / <code>Returning mixed</code>. These are relationship-stage classifications, so the dash makes the hierarchy more natural and executive-readable.</p>
+<p>The fallback also makes the measure future-safe. For example:</p>
+<pre><code class="language-text">ESTABLISHED_GROWTH → Established growth
+RETURNING_STRONG   → Returning strong
+EARLY_TENURE       → Early tenure
+</code></pre>
+<p>without another broken all-caps display.</p>
+<p>One distinction from the <code>Use</code> and <code>Channel</code> fixes: <strong>keep this as a measure</strong>, because the current P03 left-side profile is already consuming <code>ModelParameters[P03 Relationship Stage]</code> in selected-merchant context. The old implementation was also a measure over <code>DimMerchant[relationship_stage]</code>, so there is no reason to change that architecture. [export reference: filecite | turn118file8 | L531-L545]</p>
+<p>This now correctly covers the full defined relationship-stage population and remains readable if new codes are introduced later.</p>
+</div></article><article id="m-d230b47d-119e-40e6-87e0-fd6314770ce3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00060 · 2026-09-03T19:03:25.346000-04:00 · active path</p><p class="note">3 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: cdfb711b-64cb-4374-9e29-4003207be9b1.png; 3f2dc4a1-025e-4d48-ad33-b0862d858448.png; f145102f-84d1-484e-8422-b69fea4f7db4.png</p><div class="bubble"><p>these two we should change to use proper case:           P03 Merchant Size Tier =<br>VAR _Value = 
+    SELECTEDVALUE ( &#39;DimMerchant&#39;[merchant_size_tier] ) 
+RETURN 
+    SWITCH ( 
+        _Value, 
+        &quot;LOWER_MIDDLE&quot;, &quot;Lower middle&quot;, 
+        &quot;UPPER_MIDDLE&quot;, &quot;Upper middle&quot;, 
+        &quot;SMALL&quot;, &quot;Small&quot;, 
+        &quot;LARGE&quot;, &quot;Large&quot;, 
+        IF ( 
+            ISBLANK ( _Value ), 
+            &quot;NOT AVAILABLE&quot;, 
+            SUBSTITUTE ( <em>Value, &quot;</em>&quot;, &quot; &quot; ) 
+        ) 
+    )                                                P03 Annual Sales Band =<br>VAR _Value = 
+    SELECTEDVALUE ( &#39;DimMerchant&#39;[annual_sales_band] ) 
+RETURN 
+    SWITCH ( 
+        _Value, 
+        &quot;UNDER_1M&quot;, &quot;&lt; $1M&quot;, 
+        &quot;1M_TO_5M&quot;, &quot;$1M–$5M&quot;, 
+        &quot;5M_TO_10M&quot;, &quot;$5M–$10M&quot;, 
+        &quot;10M_TO_25M&quot;, &quot;$10M–$25M&quot;, 
+        &quot;25M_PLUS&quot;, &quot;$25M+&quot;, 
+        IF ( 
+            ISBLANK ( _Value ), 
+            &quot;NOT AVAILABLE&quot;, 
+            SUBSTITUTE ( <em>Value, &quot;</em>&quot;, &quot; &quot; ) 
+        ) 
+    )                        account for values now and in the future.</p>
+</div></article><article id="m-1b293532-4b2c-4ef3-bfa2-75e3113e3172" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00061 · 2026-09-03T19:03:55.285278-04:00 · active path</p><div class="bubble"><p>Yes. Both current measures need the same cleanup pattern we just applied elsewhere: explicit mappings for the governed values that exist now, plus a future-safe fallback that converts any new underscore-delimited code to readable sentence case instead of exposing raw source codes.</p>
+<p>For <strong>Merchant Size Tier</strong>, the current governed population uses exactly <code>MICRO</code>, <code>SMALL</code>, <code>LOWER_MIDDLE</code>, and <code>MIDDLE</code>. [export reference: filecite | turn119file1 | L95-L119] Use:</p>
+<pre><code class="language-DAX">P03 Merchant Size Tier =
+VAR _RawValue =
+    SELECTEDVALUE ( &#39;DimMerchant&#39;[merchant_size_tier] )
+
+VAR _Value =
+    UPPER (
+        TRIM (
+            COALESCE (
+                _RawValue,
+                &quot;&quot;
+            )
+        )
+    )
+
+VAR _Fallback =
+    VAR _Spaced =
+        SUBSTITUTE (
+            LOWER ( _Value ),
+            &quot;_&quot;,
+            &quot; &quot;
+        )
+    RETURN
+        IF (
+            _Spaced = &quot;&quot;,
+            &quot;NOT AVAILABLE&quot;,
+            UPPER ( LEFT ( _Spaced, 1 ) )
+                &amp; MID (
+                    _Spaced,
+                    2,
+                    LEN ( _Spaced )
+                )
+        )
+
+RETURN
+    SWITCH (
+        TRUE (),
+
+        _Value = &quot;&quot;, &quot;NOT AVAILABLE&quot;,
+
+        _Value = &quot;MICRO&quot;, &quot;Micro&quot;,
+        _Value = &quot;SMALL&quot;, &quot;Small&quot;,
+        _Value = &quot;LOWER_MIDDLE&quot;, &quot;Lower middle&quot;,
+        _Value = &quot;MIDDLE&quot;, &quot;Middle&quot;,
+
+        -- Compatibility / future controlled values
+        _Value = &quot;UPPER_MIDDLE&quot;, &quot;Upper middle&quot;,
+        _Value = &quot;LARGE&quot;, &quot;Large&quot;,
+
+        _Fallback
+    )
+</code></pre>
+<p>That fixes the current <code>MICRO</code> display immediately and still renders future values like <code>MID_MARKET</code> as <code>Mid market</code> rather than <code>MID MARKET</code>.</p>
+<p>For <strong>Annual Sales Band</strong>, the current deterministic merchant population actually uses these four bands:</p>
+<pre><code class="language-text">UNDER_250K
+250K_TO_1M
+1M_TO_5M
+5M_TO_20M
+</code></pre>
+<p>They are generated directly from the current merchant-size architecture. [export reference: filecite | turn119file3 | L232-L236] Your old measure was therefore especially stale because it expected <code>UNDER_1M</code>, <code>5M_TO_10M</code>, <code>10M_TO_25M</code>, etc.</p>
+<p>Use this:</p>
+<pre><code class="language-DAX">P03 Annual Sales Band =
+VAR _RawValue =
+    SELECTEDVALUE ( &#39;DimMerchant&#39;[annual_sales_band] )
+
+VAR _Value =
+    UPPER (
+        TRIM (
+            COALESCE (
+                _RawValue,
+                &quot;&quot;
+            )
+        )
+    )
+
+VAR _Fallback =
+    VAR _Spaced =
+        SUBSTITUTE (
+            LOWER ( _Value ),
+            &quot;_&quot;,
+            &quot; &quot;
+        )
+    RETURN
+        IF (
+            _Spaced = &quot;&quot;,
+            &quot;NOT AVAILABLE&quot;,
+            UPPER ( LEFT ( _Spaced, 1 ) )
+                &amp; MID (
+                    _Spaced,
+                    2,
+                    LEN ( _Spaced )
+                )
+        )
+
+RETURN
+    SWITCH (
+        TRUE (),
+
+        _Value = &quot;&quot;, &quot;NOT AVAILABLE&quot;,
+
+        -- Current governed bands
+        _Value = &quot;UNDER_250K&quot;, &quot;&lt; $250K&quot;,
+        _Value = &quot;250K_TO_1M&quot;, &quot;$250K–$1M&quot;,
+        _Value = &quot;1M_TO_5M&quot;, &quot;$1M–$5M&quot;,
+        _Value = &quot;5M_TO_20M&quot;, &quot;$5M–$20M&quot;,
+
+        -- Legacy / compatibility values
+        _Value = &quot;UNDER_1M&quot;, &quot;&lt; $1M&quot;,
+        _Value = &quot;5M_TO_10M&quot;, &quot;$5M–$10M&quot;,
+        _Value = &quot;10M_TO_25M&quot;, &quot;$10M–$25M&quot;,
+        _Value = &quot;25M_PLUS&quot;, &quot;$25M+&quot;,
+
+        -- Future-safe display
+        _Fallback
+    )
+</code></pre>
+<p>So your screenshot would change from:</p>
+<pre><code class="language-text">Size tier
+MICRO
+
+Annual sales
+UNDER 250K
+</code></pre>
+<p>to:</p>
+<pre><code class="language-text">Size tier
+Micro
+
+Annual sales
+&lt; $250K
+</code></pre>
+<p>which is much more appropriate for the executive-facing P03 page.</p>
+<p>One nuance: the generic fallback is excellent for future <strong>categorical names</strong>, but dollar-band codes are special because something like <code>20M_TO_50M</code> would fall back to <code>20m to 50m</code>, not a professionally formatted <code>$20M–$50M</code>. So this measure is future-safe in the sense that a new code will remain readable and never show raw underscores, but <strong>new monetary bands should still be explicitly mapped when introduced</strong> if we want the polished currency-range convention. That is preferable to trying to write brittle DAX that parses every imaginable monetary code automatically.</p>
+</div></article><article id="m-7a171dfe-05d4-4f88-b16a-399af9de671e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00062 · 2026-09-03T19:32:11.895000-04:00 · active path</p><p class="note">Attachment references: P03_Captures.zip</p><div class="bubble"><p>Perform final review of P03.  All evidence is attached.  One thing I do wonder about is if Intervention and Action columns are too similar. Whether there is something else that would be valuable there.</p>
+</div></article><article id="m-732d5c15-993a-479b-b3fa-2ba0486fb048" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00063 · 2026-09-03T19:37:02.000095-04:00 · active path</p><div class="bubble"><p>I reviewed all <strong>31 artifacts</strong> in <code>P03_Captures.zip</code>: the 25 scenario/narrative captures, three narrative-QA result sets, alt-text evidence, tab-order evidence, and tooltip evidence.</p>
+<h2>Final disposition</h2>
+<p><strong>P03 is substantively very strong and very close to freeze, but I would not freeze it yet.</strong></p>
+<p>My disposition is:</p>
+<pre><code class="language-text">P03 semantic architecture                    PASS
+Narrative architecture                       PASS
+Narrative branch coverage                    PASS — extensive
+Narrative QA                                 PASS — 2 / 0 / 1,500
+Scenario isolation                           PASS
+Funded-lifecycle gating                      PASS
+Account-performance implementation           PASS
+Monitoring-journey implementation            PASS
+Servicing/intervention semantics             PASS
+Accessibility architecture                   PASS with evidence note
+Page presentation                            PASS with minor refinement
+Footer/current project identity               FAIL — localized correction
+Technical-rationale tooltip evidence         NOT PRESENT IN PACKAGE
+Operational P03 QA evidence                  NOT PRESENT IN PACKAGE
+P03 freeze                                   HOLD — localized closeout only
+</code></pre>
+<p>This is no longer a page-remediation exercise. It is a very bounded closeout.</p>
+<h2>What looks particularly good</h2>
+<p>The overall page now tells a coherent application-to-account story. The subtitle is right, <strong>Proposed structure</strong> is the appropriate business-facing term, the profile data is cleanly presented, the revised relationship-stage/size/sales formatting reads professionally, the three narrative sections work well as a proof sequence, and nonfunded paths correctly stop before downstream lifecycle evidence.</p>
+<p>The 25 captured cases are also excellent coverage. You captured the complete branch-oriented set we identified, plus an additional funded approval example. The evidence demonstrates approval, authorized counteroffer, all material review-reason families, evidence declines, ordinary and stress-floor no-feasible outcomes, and the material hard-stop families across both Baseline and Recession Energy.</p>
+<p>Your narrative QA is clean as well: Result 1 shows the two 738 paths, Result 2 is empty, and Result 3 contains 1,500 rows with only <code>PASS</code> in the QA-status filter. That is exactly the semantic control we wanted.</p>
+<p>The right-side lifecycle behavior also looks right. Funded examples populate Account performance and Monitoring journey; nonfunded examples remain blank. The new expected-to-date tooltip is behaving coherently—for example, the captured 749 tooltip reconciles expected-to-date, actual remitted-to-date, and cumulative shortfall rather than reaching back into the old <code>FactAccountDaily</code> population.</p>
+<h2>One definite defect: the footer still says C1</h2>
+<p>Every P03 page capture I inspected has this footer value:</p>
+<pre><code class="language-text">Model version: PBI_R26_PARALLEL_REFINEMENT_C1_20260902
+</code></pre>
+<p>while the Power BI window itself correctly shows:</p>
+<pre><code class="language-text">MSBF_PBI_R26_PARALLEL_REFINEMENT_C2_20260902
+</code></pre>
+<p>That must be corrected to:</p>
+<pre><code class="language-text">Model version: PBI_R26_PARALLEL_REFINEMENT_C2_20260902
+</code></pre>
+<p>This is more than cosmetic in a controlled evidence package: right now the screenshot contains <strong>two contradictory physical-project identities</strong>.</p>
+<p>Everything else in the footer looks good, including the <code>Module 2 / G3 v2.1.0-rc2</code> source identity, observed-source cutoff, and the shortened temporal/interpretation boundaries.</p>
+<h2>Intervention versus Action: yes, I would change this</h2>
+<p>Your instinct is right.</p>
+<p>On the physical current M2.6 architecture, <strong>Intervention and Action are functionally one-to-one for the current governed outcomes</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Intervention</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>No further action</td>
+<td>No action — closed</td>
+</tr>
+<tr>
+<td>Continue monitoring</td>
+<td>Continue standard monitoring</td>
+</tr>
+<tr>
+<td>Targeted outreach review</td>
+<td>Outreach review</td>
+</tr>
+<tr>
+<td>Temporary remittance review</td>
+<td>Temporary remittance review</td>
+</tr>
+</tbody></table>
+<p>That isn&#39;t merely coincidental wording. M2.6 explicitly generates <code>strategy_outcome_code</code> and <code>servicing_action_code</code> from the same governed monitoring state, and the current mapping pairs them deterministically. [export reference: filecite | turn122file2 | L106-L112] The R26 presentation measures then translate those two source fields almost exactly as your visual shows. [export reference: filecite | turn122file5 | L200-L250]</p>
+<p>So <strong>Action adds very little incremental information to P03</strong>.</p>
+<p>I also would <strong>not replace Action with Priority</strong>. <code>servicing_priority_rank</code> is generated from the same state as Intervention—0/1/2/3 for closed/monitoring/outreach/temporary review—so that would largely substitute one redundant field for another. The action/review flags are similarly governed from the same state. [export reference: filecite | turn122file4 | L160-L168]</p>
+<h3>Recommended final table</h3>
+<p>I would change the visible table to:</p>
+<table>
+<thead>
+<tr>
+<th>Recommended intervention</th>
+<th>Queue</th>
+<th align="right">Exposure</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Targeted outreach review</td>
+<td>Servicing review</td>
+<td align="right">$1,720.89</td>
+<td>Severe shortfall</td>
+</tr>
+<tr>
+<td>Temporary remittance review</td>
+<td>Servicing review</td>
+<td align="right">$4,699.37</td>
+<td>Severe shortfall</td>
+</tr>
+<tr>
+<td>No further action</td>
+<td>Closed</td>
+<td align="right">$0.00</td>
+<td>Paid off</td>
+</tr>
+</tbody></table>
+<p>I slightly prefer <strong><code>Recommended intervention</code></strong> over just <code>Intervention</code>. It reinforces the critical M2.6 boundary: this is a governed servicing recommendation, <strong>not evidence that an action was executed</strong>. M2.6 itself expressly keeps execution flags false; actual setup/execution belongs to M2.7/M2.8 and therefore to the P04 story. [export reference: filecite | turn122file6 | L263-L279]</p>
+<p>That four-column design is more marketable:</p>
+<pre><code class="language-text">What should happen?
+→ Where does it route?
+→ How much exposure is involved?
+→ Why?
+</code></pre>
+<p>And it gives each remaining column a genuinely distinct analytical purpose.</p>
+<h3>Update the servicing alt text accordingly</h3>
+<p>If you make that change, update <code>R26 P03 Servicing Alt Text</code> to:</p>
+<pre><code class="language-DAX">R26 P03 Servicing Alt Text =
+IF (
+    [R26 P03 Funded Lifecycle Available] &lt;&gt; 1,
+    &quot;No funded-account servicing or intervention evidence is available for this application-scenario path.&quot;,
+    &quot;Servicing and intervention. Recommended intervention: &quot;
+        &amp; COALESCE (
+            [R26 P03 Intervention Display],
+            &quot;not available&quot;
+        )
+        &amp; &quot;. Queue: &quot;
+        &amp; COALESCE (
+            [R26 P03 Servicing Queue Display],
+            &quot;not available&quot;
+        )
+        &amp; &quot;. Exposure: &quot;
+        &amp; FORMAT (
+            COALESCE (
+                [R26 P03 Intervention Exposure],
+                0
+            ),
+            &quot;$#,0.00&quot;
+        )
+        &amp; &quot;. Reason: &quot;
+        &amp; COALESCE (
+            [R26 P03 Intervention Reason Display],
+            &quot;not available&quot;
+        )
+        &amp; &quot;.&quot;
+)
+</code></pre>
+<p>Leave <code>R26 P03 Servicing Action Display</code> in the model. We are not deleting the semantic object; we simply don&#39;t need to expose it on P03.</p>
+<h2>Two evidence gaps I found</h2>
+<p>The first is the <strong>Technical rationale tooltip</strong>.</p>
+<p>Your file named <code>P03_Tooltip_Evidence.png</code> is good evidence of the <strong>Account performance tooltip</strong>—and that tooltip looks excellent—but it is not the Technical rationale report-page tooltip that was part of the P03 narrative architecture.</p>
+<p>The controlled design calls for a tooltip page containing:</p>
+<pre><code class="language-text">R26 P03 Technical Evidence Rationale
+R26 P03 Technical Structure Rationale
+R26 P03 Technical Decision Rationale
+ApplicationScenarioKey
+governed final outcome
+binding reason codes
+human-review reason codes
+</code></pre>
+<p>The purpose is to preserve exact source-level traceability underneath the polished executive narratives. [export reference: filecite | turn123file0 | L84-L114] I see no screenshot of that tooltip in the attached package. If you&#39;ve already built it, we only need to capture it. If it has not been built, that is the one substantive P03 feature still missing.</p>
+<p>The second gap is the <strong>post-remediation performance/monitoring QA</strong>. The package contains all three narrative-QA result sets, but I do not see captures from <code>MSBF_R26_P03_PERFORMANCE_MONITORING_QA_R1_20260903.dax</code>. The controlled P03 production sequence requires:</p>
+<pre><code class="language-text">Result 1    15,600 / 130 / 120 / 120
+Result 2    0 rows
+Result 3    738 Baseline = 120 + lifecycle; Recession Energy = 0
+Result 4    126 closed / 3 outreach / 1 temporary remittance
+</code></pre>
+<p>[export reference: filecite | turn120file11 | L731-L748]</p>
+<p>I would capture those before freeze.</p>
+<h2>Two smaller observations</h2>
+<p>The Account performance visual is strong, including the dual-axis scaling and tooltip. In the screenshots I can clearly see the <strong>Remittance pace</strong> secondary-axis title, but I do not see the primary-axis title <strong>Remaining receivable</strong>. The legend identifies that series, so this is not a correctness defect, but since we explicitly chose both axis titles, I would turn the primary title on if it is currently off.</p>
+<p>Your tab order is logically sound through the substantive page: title → selectors → profile/request/decision/structure → narratives → performance → monitoring → servicing. The remaining footer/text/shape objects follow later. I would not spend more time reorganizing it unless a decorative shape is actually keyboard-focusable in the live report.</p>
+<p>The alt-text screenshot proves the dynamic <code>R26 P03 Servicing Alt Text</code> binding. It does not independently prove every static alt-text assignment we made, but I would not create ten additional screenshots solely for that—the final physical PBIX can provide exhaustive accessibility evidence during integration audit.</p>
+<h2>Exact closeout sequence</h2>
+<ol>
+<li>Change the footer from <code>...C1_20260902</code> to <strong><code>PBI_R26_PARALLEL_REFINEMENT_C2_20260902</code></strong>.</li>
+<li>I recommend changing Servicing &amp; intervention to <strong>Recommended intervention | Queue | Exposure | Reason</strong>, removing visible Action and updating the servicing alt-text measure above.</li>
+<li>Turn on <strong>Remaining receivable</strong> as the primary Account-performance Y-axis title if it is currently off.</li>
+<li>Verify/capture the <strong>Technical rationale</strong> report-page tooltip.</li>
+<li>Capture one <strong>Monitoring journey tooltip</strong> as well; your current evidence only demonstrates the Account-performance hover.</li>
+<li>Run and capture the four-result <strong>P03 performance/monitoring QA</strong>.</li>
+<li>Save C2, close Power BI Desktop completely, reopen C2, and spot-check 738 Baseline/RE plus one funded intervention case.</li>
+<li>Then freeze P03 and move on to P04.</li>
+</ol>
+<p>You <strong>do not need to redo the narrative work or another narrative review cycle</strong>. The narratives are done.</p>
+<p>For the screenshots already captured, the C1 footer makes them imperfect as <em>final freeze</em> evidence. For the cleanest audit package I would recapture the page examples after the footer correction. If you want to minimize effort, however, the existing 25 screenshots can legitimately be retained as <strong>branch-review evidence</strong>, because the footer correction is non-semantic; then capture a smaller post-fix freeze set plus the corrected footer/technical-tooltip/operational-QA evidence. The final physical PBIX and post-fix QA will establish the controlling state.</p>
+<p>Once those localized items are complete, I would record <strong>P03 = PASS / FROZEN</strong> and shift fully to P04.</p>
+</div></article><article id="m-20eb815c-107a-453f-acd3-2b5c8d3f0de4" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00064 · 2026-09-03T19:45:03.937000-04:00 · active path</p><div class="bubble"><p>I updated the model version, but I wonder if we shouldn&#39;t start targeting a more refined name in line with what we&#39;ll actually publish this as. We&#39;re not going to upload our first Power BI build to GitHub titled, MSBF_PBI_R26_PARALLEL.... Let&#39;s think of a publishable name and stick with that. It should be short and aligned to where we are in the build. This is through Module 2 architecture. It should also be a marketable name. Something we can share and it conveys professionalism and would be in line with something you&#39;d present to a client.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

@@ -1,0 +1,1693 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WP3 Build Protocol — part 05 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>WP3 Build Protocol — part 05</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-04.html">Previous part</a><a href="part-06.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-9ec7a2cc-7ec9-4679-a5ad-b51775877127" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00087 · 2026-08-11T12:22:52.283173-04:00 · active path</p><div class="bubble"><h1>M2.12 Program 223 HF11 — Hotfix Complete</h1>
+<p>Your stop-and-rollback response was correct. <strong>Do not rerun Program 223 HF10.</strong> Program 223 HF11 is now the only current Program 223 execution source.</p>
+<h2>Downloads</h2>
+<h3>Controlled continuation package</h3>
+<ul>
+<li>Download M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_222_HF11.zip (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_222_HF11.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching ZIP sidecar (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_222_HF11.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<p>The package contains exactly one executable governed program—Program 223 HF11—and one read-only pre-execution verifier. It contains no executable Program 224–227 or recovery SQL.</p>
+<h3>Program 223 HF11</h3>
+<ul>
+<li>Download Program 223 HF11 SQL (historical reference: <code>sandbox:[session]/223_msbf_m2_12_positive_validation_128_controls_v1_HF11.sql</code>; referenced bytes not established here)</li>
+<li>Download the Program 223 HF11 SQL sidecar (historical reference: <code>sandbox:[session]/223_msbf_m2_12_positive_validation_128_controls_v1_HF11.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Mandatory pre-execution verifier</h3>
+<ul>
+<li>Download the Program 223 HF11 generated-checkpoint verifier (historical reference: <code>sandbox:[session]/223_HF11_pre_execution_generated_checkpoint_verification.sql</code>; referenced bytes not established here)</li>
+<li>Download the verifier sidecar (historical reference: <code>sandbox:[session]/223_HF11_pre_execution_generated_checkpoint_verification.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Principal review records</h3>
+<ul>
+<li>Operator protocol (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF11_OPERATOR_PROTOCOL.md</code>; referenced bytes not established here)</li>
+<li>Validation report (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF11_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Independent physical-readback report (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF11_INDEPENDENT_PHYSICAL_READBACK.md</code>; referenced bytes not established here)</li>
+<li>417-control independent readback ledger (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF11_INDEPENDENT_PHYSICAL_READBACK_CONTROLS.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable independent readback (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF11_INDEPENDENT_PHYSICAL_READBACK.json</code>; referenced bytes not established here)</li>
+<li>Complete 170-statement review (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF11_FULL_STATEMENT_REVIEW.csv</code>; referenced bytes not established here)</li>
+<li>Complete 128-control review (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF11_FULL_CONTROL_REVIEW.csv</code>; referenced bytes not established here)</li>
+<li>Client/parser compatibility audit (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF11_CLIENT_PARSER_COMPATIBILITY_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Known-defect-pattern scan (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF11_KNOWN_DEFECT_PATTERN_SCAN.csv</code>; referenced bytes not established here)</li>
+<li>HF10-to-HF11 source patch (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF10_TO_HF11.patch</code>; referenced bytes not established here)</li>
+<li>Programs 224–227 hold notice (historical reference: <code>sandbox:[session]/M2_12_PROGRAMS_224_227_HOLD_NOTICE_HF11.md</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Root cause</h1>
+<p>HF10 contained this line before its transaction began:</p>
+<pre><code class="language-text">\set ON_ERROR_STOP on
+BEGIN;
+</code></pre>
+<p><code>\set</code> is a <strong>psql client meta-command</strong>, not PostgreSQL SQL. DBeaver submitted it to the PostgreSQL server, which encountered the backslash and raised:</p>
+<pre><code class="language-text">SQLSTATE 42601
+syntax error at or near &quot;\&quot;
+</code></pre>
+<p>The physical source contained exactly one backslash and exactly one client meta-command, both on that line.</p>
+<p>Because the failure occurred <strong>before <code>BEGIN;</code></strong>, the failed HF10 attempt could not have:</p>
+<ul>
+<li>created a Program 223 temporary relation;</li>
+<li>evaluated any positive control;</li>
+<li>inserted positive evidence;</li>
+<li>changed either lifecycle;</li>
+<li>altered canonical state;</li>
+<li>advanced an owned sequence.</li>
+</ul>
+<p>Your <code>ROLLBACK</code> was conservative and correct, but there was no Program 223 transaction to undo. <strong>Recovery 223A is neither indicated nor authorized.</strong></p>
+<h1>HF11 correction</h1>
+<p>HF11 removes the psql-only command completely. Its executable opening is now pure PostgreSQL SQL:</p>
+<pre><code class="language-sql">-- Configure first-error-stop behavior in the database client;
+-- this file contains no client meta-commands.
+BEGIN;
+</code></pre>
+<p>First-error-stop behavior remains mandatory, but it must be configured in DBeaver or the invoking client rather than embedded as a backslash command in the governed SQL source.</p>
+<p>HF11 contains:</p>
+<pre><code class="language-text">psql meta-command lines             0
+executable backslashes              0
+client variable references          0
+statement-splitting errors          0
+unbalanced quotes/comments/tags     0
+</code></pre>
+<h1>Attached pre-run evidence reconciliation</h1>
+<p>The five attached verifier exports establish the exact committed Program 222 checkpoint immediately before the HF10 parser failure:</p>
+<ul>
+<li>All <strong>19 source edges</strong> have one accepted-source row, one target row, matching expected/source/target hashes, false mismatch flags, and <code>PASS</code>. [export reference: filecite | turn18file3 | L88-L107]</li>
+<li>All <strong>12 stage boundaries</strong> pass with their required physical controls and zero duplicates, missing controls, non-PASS controls, or boundary violations. [export reference: filecite | turn18file2 | L65-L77]</li>
+<li>All <strong>nine canonical families</strong> reproduce their expected cardinalities and stored set hashes with zero row-hash or set-hash mismatches. [export reference: filecite | turn18file1 | L45-L54]</li>
+<li>All <strong>24 generation-evidence rows</strong> have exact expected and actual values, false mismatch flags, and <code>PASS</code>. [export reference: filecite | turn18file0 | L10-L34]</li>
+<li>The state summary shows <code>M2_12_GENERATED / GENERATED</code>, 134 canonical entities, 9/9 families passing, 24/24 generation-evidence rows passing, 19/19 source edges, 12/12 stage boundaries, 70/70 physical controls, no validation or acceptance evidence, all three sequences at <code>1|true</code>, and combined hash <code>28d832719a63d5669a18016f15ba43fb</code>. [export reference: filecite | turn18file4 | L118-L119]</li>
+</ul>
+<p>The HF10 parser error occurred before any state-changing SQL, but the HF11 verifier must still be rerun to provide a fresh physical checkpoint immediately before the retry.</p>
+<h1>Broader Program 223 review</h1>
+<p>The review did not stop after removing the backslash.</p>
+<h2>Source-level scope</h2>
+<table>
+<thead>
+<tr>
+<th>Review area</th>
+<th align="right">HF11 result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Top-level statements reviewed</td>
+<td align="right"><strong>170/170 PASS</strong></td>
+</tr>
+<tr>
+<td>Positive-control definitions reviewed</td>
+<td align="right"><strong>128/128 PASS</strong></td>
+</tr>
+<tr>
+<td>Control sequence coverage</td>
+<td align="right"><strong>1–128 exact</strong></td>
+</tr>
+<tr>
+<td>Distinct control codes</td>
+<td align="right"><strong>128</strong></td>
+</tr>
+<tr>
+<td>Control-definition changes from HF10</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>PL/pgSQL blocks</td>
+<td align="right"><strong>8/8 balanced</strong></td>
+</tr>
+<tr>
+<td>Unscheduled temporary dependencies</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Pre-create temporary references</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Persistent mutation operations</td>
+<td align="right"><strong>3 exact</strong></td>
+</tr>
+<tr>
+<td>Persistent DELETE operations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Persistent DDL operations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Client/parser meta-command findings</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Independent physical controls</td>
+<td align="right"><strong>417/417 PASS</strong></td>
+</tr>
+</tbody></table>
+<p>The WP3 authority requires exactly 128 persisted-state positive controls, persistence only after 128/128 PASS, a transition only to <code>M2_12_VALIDATED</code>, and preservation of canonical business and hash state. [export reference: filecite | turn17file12 | L31-L46] HF11 preserves those requirements.</p>
+<h2>Source delta from HF10</h2>
+<p>Exactly <strong>11 of 170 statement byte ranges</strong> changed:</p>
+<table>
+<thead>
+<tr>
+<th>Change class</th>
+<th align="right">Statements</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Substantive client-compatibility correction</td>
+<td align="right"><strong>1</strong></td>
+</tr>
+<tr>
+<td>Revision-label or diagnostic-message updates only</td>
+<td align="right"><strong>10</strong></td>
+</tr>
+<tr>
+<td>Unchanged statements</td>
+<td align="right"><strong>159</strong></td>
+</tr>
+<tr>
+<td>Changed positive-control definitions</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Changed persistent mutations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>The one substantive change is Statement 1: removal of the psql-only meta-command and replacement with a non-executable operator comment.</p>
+<p>The other ten changed statements contain only HF10-to-HF11 revision labels, dollar-tag labels, comments, or diagnostic messages. Their query logic and mutation behavior are unchanged.</p>
+<h2>Additional defect classes reviewed</h2>
+<p>The source-wide scan found zero residual occurrences of:</p>
+<pre><code class="language-text">psql/client meta-commands
+executable backslashes
+raw M1.3 whole-JSON hash extraction
+jsonb aggregate followed by text cast
+incorrect evidence-family hash preimage
+unquoted governed lifecycle literals
+uncast pg_attribute name arrays
+correlated aggregate/outer-OID pattern
+residual HF10 revision labels
+</code></pre>
+<p>No additional Program 223 source change was indicated by the expanded review.</p>
+<h1>Mutation boundary</h1>
+<p>HF11 retains exactly the three authorized persistent operations:</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Target</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>INSERT</code></td>
+<td><code>msbf_ctl.run_evidence</code></td>
+<td>Persist exactly 128 positive PASS rows after the hard 128/128 gate</td>
+</tr>
+<tr>
+<td><code>UPDATE</code></td>
+<td><code>msbf_ctl.m2_12_g3_bundle_registry</code></td>
+<td>Transition <code>GENERATED → VALIDATED</code></td>
+</tr>
+<tr>
+<td><code>UPDATE</code></td>
+<td><code>msbf_ctl.run_registry</code></td>
+<td>Transition <code>M2_12_GENERATED → M2_12_VALIDATED</code></td>
+</tr>
+</tbody></table>
+<p>There is no persistent DELETE, persistent DDL, canonical business/hash update, or owned-sequence mutation.</p>
+<h1>Physical delivery ledger</h1>
+<h2>Canonical continuation ZIP</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filename</td>
+<td align="right"><code>M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_222_HF11.zip</code></td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td align="right"><strong>161,869</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>1a69f61a984b44f30c667d0f639202eb4e642cc6d803870257a28ce13d4bf1ba</code></td>
+</tr>
+<tr>
+<td>ZIP entries</td>
+<td align="right"><strong>47</strong></td>
+</tr>
+<tr>
+<td>Total uncompressed bytes</td>
+<td align="right"><strong>1,233,632</strong></td>
+</tr>
+<tr>
+<td>ZIP CRC</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Complete fresh extraction</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Path mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Byte-size mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>SHA-256 mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Case-insensitive duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Unsafe paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Manifest mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>JSON-manifest mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td><code>SHA256SUMS.txt</code> mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Package-inventory mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>The sidecar contains exactly:</p>
+<pre><code class="language-text">1a69f61a984b44f30c667d0f639202eb4e642cc6d803870257a28ce13d4bf1ba  M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_222_HF11.zip
+</code></pre>
+<h2>Program 223 HF11</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filename</td>
+<td align="right"><code>223_msbf_m2_12_positive_validation_128_controls_v1_HF11.sql</code></td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td align="right"><strong>768,957</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>0458f4d4b3096df2289222dc2d596c41e06d20b402db5168cf6151173a7f1c41</code></td>
+</tr>
+<tr>
+<td>Top-level statements</td>
+<td align="right"><strong>170</strong></td>
+</tr>
+<tr>
+<td>Positive controls</td>
+<td align="right"><strong>128</strong></td>
+</tr>
+<tr>
+<td>Definition changes from HF10</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Executable backslashes</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Client meta-commands</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>Its sidecar contains:</p>
+<pre><code class="language-text">0458f4d4b3096df2289222dc2d596c41e06d20b402db5168cf6151173a7f1c41  223_msbf_m2_12_positive_validation_128_controls_v1_HF11.sql
+</code></pre>
+<h2>HF11 verifier</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filename</td>
+<td align="right"><code>223_HF11_pre_execution_generated_checkpoint_verification.sql</code></td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td align="right"><strong>139,930</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>adbdeda058adfba63fba6dec42bf90c8961d933c02296530bd5bf36011b9cc35</code></td>
+</tr>
+<tr>
+<td>Top-level statements</td>
+<td align="right"><strong>25</strong></td>
+</tr>
+<tr>
+<td>Persistent DML</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Persistent DDL</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Result grids</td>
+<td align="right"><strong>5</strong></td>
+</tr>
+<tr>
+<td>Final transaction action</td>
+<td align="right"><strong>ROLLBACK</strong></td>
+</tr>
+</tbody></table>
+<p>Its sidecar contains:</p>
+<pre><code class="language-text">adbdeda058adfba63fba6dec42bf90c8961d933c02296530bd5bf36011b9cc35  223_HF11_pre_execution_generated_checkpoint_verification.sql
+</code></pre>
+<h1>Mandatory retry sequence</h1>
+<h2>1. Preserve the HF10 failure evidence</h2>
+<p>Keep these records unchanged:</p>
+<pre><code class="language-text">HF10 console transcript
+SQLSTATE 42601 error
+client/process status
+STOP action
+ROLLBACK response
+five HF10 pre-execution verifier exports
+</code></pre>
+<p>Do not overwrite them with HF11 evidence.</p>
+<h2>2. Execute the HF11 verifier</h2>
+<p>Execute the complete physical file:</p>
+<pre><code class="language-text">223_HF11_pre_execution_generated_checkpoint_verification.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">adbdeda058adfba63fba6dec42bf90c8961d933c02296530bd5bf36011b9cc35
+</code></pre>
+<p>It must produce five result grids:</p>
+<ol>
+<li><strong>19 source edges</strong>, all PASS.</li>
+<li><strong>12 stage boundaries</strong>, all PASS, 70/70 controls.</li>
+<li><strong>Nine canonical families</strong>, row vector <code>1,12,13,72,13,20,1,1,1</code>, zero mismatches.</li>
+<li><strong>24 generation-evidence rows</strong>, all PASS and exact.</li>
+<li>One state-summary row with:</li>
+</ol>
+<pre><code class="language-text">run_status                         M2_12_GENERATED
+contract_status                    GENERATED
+canonical_entities                134
+canonical_families                  9
+canonical_families_pass             9
+deterministic_mismatches             0
+generation_evidence_rows            24
+generation_evidence_pass_rows       24
+source_graph_rows                   19
+source_graph_pass_rows              19
+stage_boundary_rows                 12
+stage_boundary_pass_rows            12
+stage_boundary_required_controls    70
+stage_boundary_physical_controls    70
+positive_rows                        0
+negative_rows                        0
+acceptance_rows                      0
+g3_gate_rows                         0
+policy_sequence_state               1|true
+archive_sequence_state              1|true
+registry_sequence_state             1|true
+combined_set_hash                   28d832719a63d5669a18016f15ba43fb
+disposition                         READY_TO_EXECUTE_PROGRAM_223_HF11
+</code></pre>
+<p>Export all five grids using:</p>
+<pre><code class="language-text">Use fetched rows       ON
+Query the database     OFF
+Open new connection    OFF
+</code></pre>
+<h2>3. Execute Program 223 HF11 only</h2>
+<p>After the verifier passes exactly, execute:</p>
+<pre><code class="language-text">223_msbf_m2_12_positive_validation_128_controls_v1_HF11.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">0458f4d4b3096df2289222dc2d596c41e06d20b402db5168cf6151173a7f1c41
+</code></pre>
+<p>Execution boundaries:</p>
+<pre><code class="language-text">Complete physical file       one invocation
+First-error stop             configured in DBeaver/client
+Outer transaction            prohibited
+Program 224 concatenation    prohibited
+Ad hoc SQL                   prohibited
+Recovery 223A                prohibited
+</code></pre>
+<p>The live-execution authority requires exact sequential execution, an immediate stop on any error, and no rerun or ad hoc patching after an anomaly. [export reference: filecite | turn17file5 | L36-L50]</p>
+<h2>4. Required Program 223 outputs</h2>
+<h3>Grid 1 — persistence result</h3>
+<p>Require exactly one row:</p>
+<pre><code class="language-text">run_status            M2_12_VALIDATED
+contract_status       VALIDATED
+positive_pass         128
+positive_codes        128
+negative_rows         0
+acceptance_rows       0
+gate_rows             0
+hash_compare_rows     1
+hash_exact_rows       1
+persistence_status    PASS
+</code></pre>
+<h3>Grid 2 — positive-control detail</h3>
+<p>Require:</p>
+<pre><code class="language-text">rows                   128
+control sequences      1–128
+distinct codes         128
+status                 PASS for every row
+mismatch count         0 for every row
+</code></pre>
+<p>Export both grids immediately using fetched rows.</p>
+<h2>5. Stop after Program 223</h2>
+<p>Even after an exact PASS:</p>
+<pre><code class="language-text">Program 224        HELD
+Program 225        HELD
+Program 226        HELD
+Program 227        HELD
+Recovery 223A      UNAUTHORIZED
+M2.12 acceptance   NOT CLAIMED
+</code></pre>
+<p>The historical WP5 archive remains the approved baseline package with SHA-256 <code>5dce8642e46aa701cdbe1aaeb75eb8e0a8fd454fc000e8ec4161400a45a3a38c</code>, 98 entries, 3,926,125 uncompressed bytes, and passing CRC. [export reference: filecite | turn17file0 | L3-L12] HF11 is a bounded live-execution continuation and does not replace that historical archive.</p>
+</div></article><article id="m-a1eb4cd8-1c14-4363-917d-d20557099819" class="message user"><p class="meta"><strong>Andrew / user</strong> · C085-M00088 · 2026-08-11T12:37:20.105000-04:00 · active path</p><p class="note">Attachment references: 223_HF11_pre_execution_stage_boundary_detail_20260811.csv; 223_HF11_pre_execution_canonical_family_detail_20260811.csv; 223_HF11_pre_execution_generation_evidence_detail_20260811.csv; 223_HF11_pre_execution_state_summary_20260811.csv; 223_HF11_pre_execution_source_graph_detail_20260811.csv</p><div class="bubble"><p>another program 223 error: SQL Error [P0001]: ERROR: M2.12 Program 223 HF11 positive validation did not achieve 128/128 PASS
+  Detail: rows=128 codes=128 failures=2 family_mismatches=0
+  Where: PL/pgSQL function inline_code_block line 25 at RAISE
+  ERROR: M2.12 Program 223 HF11 positive validation did not achieve 128/128 PASS
+  Detail: rows=128 codes=128 failures=2 family_mismatches=0
+  Where: PL/pgSQL function inline_code_block line 25 at RAISE               correct error in a hotfix and do not wait for my approval. i selected stop and used rollback. when correcting error, do not correct this error and stop, review the rest of program 223 for additional, similar/noticeable errors. 223 pre-run evidence attached.        </p>
+</div></article><article id="m-5a0ec94c-d60f-4bad-af81-80515cc3a6a1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00089 · 2026-08-11T12:37:48.723835-04:00 · active path</p><div class="bubble"><p>I’ll trace the two HF11 control failures, patch the full affected defect family, then review all 128 controls plus downstream persistence/export logic before issuing HF12.</p>
+</div></article><article id="m-bdf05b7f-664a-41d6-a7da-61cec38141c5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00090 · 2026-08-11T12:43:54.789102-04:00 · active path</p><div class="bubble"><p>The attached verifier confirms the committed Program 222 checkpoint is clean, so the defect is isolated to HF11’s control observations rather than persisted generation state.</p>
+</div></article><article id="m-19cfe713-d717-447e-886a-398ce31ed4e0" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00091 · 2026-08-11T12:53:00.933671-04:00 · active path</p><div class="bubble"><p>Control 114 is isolated: it wrongly required 24 <code>PASS</code> strategy-evidence rows, while the accepted M2.11 contract intentionally has 24 <code>PARTIAL</code> rows with hard guards passing.</p>
+</div></article><article id="m-85b32f9a-4795-4574-a72d-dd6da3d4b53c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00092 · 2026-08-11T13:20:09.109137-04:00 · active path</p><div class="bubble"><p>Control 009 also wrongly removed the latest row hash when comparing archive payloads. HF12 now fixes only Controls 009/114 and adds a mutation-free 128-control diagnostic before retry.</p>
+</div></article><article id="m-402b22de-3a9c-4ff4-9f6e-529ffd23bbba" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00093 · 2026-08-11T13:35:40.527873-04:00 · active path</p><div class="bubble"><h1>M2.12 Program 223 HF12 — Bounded Hotfix and Full Review Complete</h1>
+<p>Your stop-and-rollback response was correct. <strong>Do not rerun Program 223 HF11.</strong> Program 223 HF12 is the only current Program 223 retry source.</p>
+<p>The attached pre-execution evidence proves that the committed Program 222 checkpoint was internally exact before the HF11 attempt:</p>
+<ul>
+<li>all 19 source-graph edges passed with exact accepted-source and target-recorded hashes; [export reference: filecite | turn18file3 | L88-L107]</li>
+<li>all 12 stage boundaries passed with 70 of 70 physical controls and no missing, duplicate, non-PASS, or violating controls; [export reference: filecite | turn18file2 | L65-L77]</li>
+<li>all nine canonical families reproduced their stored hashes and expected cardinalities; [export reference: filecite | turn18file1 | L45-L54]</li>
+<li>all 24 generation-evidence rows passed with exact expected values; [export reference: filecite | turn18file0 | L10-L34]</li>
+<li>the run remained at <code>M2_12_GENERATED / GENERATED</code>, with 134 canonical entities, zero downstream evidence, all three owned sequences at <code>1|true</code>, and combined-set hash <code>28d832719a63d5669a18016f15ba43fb</code>. [export reference: filecite | turn18file4 | L118-L119]</li>
+</ul>
+<p>The defect was therefore inside the HF11 positive-control observations rather than in Program 222’s committed state.</p>
+<h2>Downloads</h2>
+<h3>Controlled continuation package</h3>
+<ul>
+<li>Download M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_222_HF12.zip (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_222_HF12.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching ZIP SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_222_HF12.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<p>The ZIP contains exactly one executable governed program—Program 223 HF12—plus two read-only verifiers. It contains no Program 224–227 SQL and no recovery SQL.</p>
+<h3>Program 223 HF12</h3>
+<ul>
+<li>Download Program 223 HF12 SQL (historical reference: <code>sandbox:[session]/223_msbf_m2_12_positive_validation_128_controls_v1_HF12.sql</code>; referenced bytes not established here)</li>
+<li>Download the Program 223 HF12 SQL sidecar (historical reference: <code>sandbox:[session]/223_msbf_m2_12_positive_validation_128_controls_v1_HF12.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Mandatory read-only verifiers</h3>
+<ul>
+<li>Download the HF12 generated-checkpoint verifier (historical reference: <code>sandbox:[session]/223_HF12_pre_execution_generated_checkpoint_verification.sql</code>; referenced bytes not established here)</li>
+<li>Download its sidecar (historical reference: <code>sandbox:[session]/223_HF12_pre_execution_generated_checkpoint_verification.sql.sha256</code>; referenced bytes not established here)</li>
+<li>Download the new HF12 complete 128-control diagnostic (historical reference: <code>sandbox:[session]/223_HF12_pre_execution_positive_control_diagnostic.sql</code>; referenced bytes not established here)</li>
+<li>Download its sidecar (historical reference: <code>sandbox:[session]/223_HF12_pre_execution_positive_control_diagnostic.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Principal review records</h3>
+<ul>
+<li>HF11 failure diagnosis and HF12 correction (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF11_FAILURE_DIAGNOSIS_AND_HF12_CORRECTION.md</code>; referenced bytes not established here)</li>
+<li>HF12 operator protocol (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF12_OPERATOR_PROTOCOL.md</code>; referenced bytes not established here)</li>
+<li>HF12 validation report (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF12_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Independent physical/static readback (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF12_INDEPENDENT_PHYSICAL_READBACK.md</code>; referenced bytes not established here)</li>
+<li>337-control readback ledger (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF12_INDEPENDENT_PHYSICAL_READBACK_CONTROLS.csv</code>; referenced bytes not established here)</li>
+<li>Complete 128-control review (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF12_FULL_CONTROL_REVIEW.csv</code>; referenced bytes not established here)</li>
+<li>Complete 170-statement review (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF12_FULL_STATEMENT_REVIEW.csv</code>; referenced bytes not established here)</li>
+<li>Changed-control ledger (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF12_CHANGED_CONTROL_LEDGER.csv</code>; referenced bytes not established here)</li>
+<li>G3 archive-payload parity review (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF12_G3_ARCHIVE_PAYLOAD_PARITY_REVIEW.csv</code>; referenced bytes not established here)</li>
+<li>Accepted M2.11 status reconciliation (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF12_ACCEPTED_M2_11_STATUS_RECONCILIATION.csv</code>; referenced bytes not established here)</li>
+<li>Post-gate review (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF12_POST_GATE_REVIEW.csv</code>; referenced bytes not established here)</li>
+<li>Known-defect-pattern scan (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF12_KNOWN_DEFECT_PATTERN_SCAN.csv</code>; referenced bytes not established here)</li>
+<li>HF11-to-HF12 source patch (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_223_HF11_TO_HF12.patch</code>; referenced bytes not established here)</li>
+</ul>
+<h1>The two HF11 failures</h1>
+<p>HF11 reported:</p>
+<pre><code class="language-text">rows=128
+codes=128
+failures=2
+family_mismatches=0
+</code></pre>
+<p>That means 126 controls completed without a failure classification. The two deterministic failures were reconstructed from the physical HF11 source and the accepted predecessor evidence.</p>
+<h2>Control 009 — G3 archive payload parity</h2>
+<p>Control:</p>
+<pre><code class="language-text">M2_12_POS_009_G3_ARCHIVE_IDENTITY_AND_GUARD
+</code></pre>
+<p>Program 222 HF9 physically built the G3 archive payload as:</p>
+<pre><code class="language-sql">(to_jsonb(lt) - &#39;created_at&#39;)::jsonb
+</code></pre>
+<p>That payload intentionally retains the latest row’s <code>row_hash</code>.</p>
+<p>HF11 compared it to:</p>
+<pre><code class="language-sql">a.contract_payload =
+    (to_jsonb(l) - &#39;row_hash&#39; - &#39;created_at&#39;)
+</code></pre>
+<p>Removing <code>row_hash</code> made the validator’s reconstructed payload different from the payload Program 222 actually stored.</p>
+<p>HF12 uses the exact builder-compatible comparison:</p>
+<pre><code class="language-sql">a.contract_payload =
+    (to_jsonb(l) - &#39;created_at&#39;)
+</code></pre>
+<p>All three Control 009 comparison paths—observed count, mismatch count, and PASS predicate—were corrected.</p>
+<h2>Control 114 — accepted M2.11 evidence posture</h2>
+<p>Control:</p>
+<pre><code class="language-text">M2_12_POS_114_STRESS_AND_IMPROVEMENT_GUARDS
+</code></pre>
+<p>I reopened the accepted M2.11 latest-strategy-contract export from the accepted full-project baseline. Its physical state is:</p>
+<pre><code class="language-text">Strategy rows                         24
+strategy_evidence_status=PARTIAL      24
+strategy_evidence_status=PASS          0
+Aggregate guard-violation count        0
+stress_nonimprovement_pass_flag=true  24
+</code></pre>
+<p>HF11 incorrectly required:</p>
+<pre><code class="language-sql">count(*) FILTER (
+    WHERE strategy_evidence_status=&#39;PASS&#39;
+) = 24
+</code></pre>
+<p>That count was necessarily zero.</p>
+<p>HF12 requires the exact accepted state:</p>
+<pre><code class="language-sql">count(*) FILTER (
+    WHERE strategy_evidence_status=&#39;PARTIAL&#39;
+) = 24
+</code></pre>
+<p>It retains the other mandatory conditions:</p>
+<pre><code class="language-text">24 total strategy rows
+0 aggregate guard violations
+24 stress non-improvement passes
+</code></pre>
+<p>Thus the governed observed/expected vector remains:</p>
+<pre><code class="language-text">0|24|24
+</code></pre>
+<p>but the middle value now represents the exact accepted <code>PARTIAL</code> evidence posture rather than a nonexistent <code>PASS</code> posture.</p>
+<h1>Review beyond the two reported failures</h1>
+<p>The correction did not stop after patching Controls 009 and 114.</p>
+<h2>Complete source review</h2>
+<table>
+<thead>
+<tr>
+<th>Review scope</th>
+<th align="right">HF12 result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Top-level SQL statements</td>
+<td align="right"><strong>170/170 reviewed</strong></td>
+</tr>
+<tr>
+<td>Positive-control definitions</td>
+<td align="right"><strong>128/128 reviewed</strong></td>
+</tr>
+<tr>
+<td>Control sequences</td>
+<td align="right"><strong>1–128 exact</strong></td>
+</tr>
+<tr>
+<td>Distinct control codes</td>
+<td align="right"><strong>128</strong></td>
+</tr>
+<tr>
+<td>Control definitions changed</td>
+<td align="right"><strong>2</strong></td>
+</tr>
+<tr>
+<td>Controls byte-identical to HF11</td>
+<td align="right"><strong>126</strong></td>
+</tr>
+<tr>
+<td>Changed statement bodies</td>
+<td align="right"><strong>13</strong></td>
+</tr>
+<tr>
+<td>Substantive logic changes</td>
+<td align="right"><strong>3</strong></td>
+</tr>
+<tr>
+<td>Revision/diagnostic-label changes</td>
+<td align="right"><strong>10</strong></td>
+</tr>
+<tr>
+<td>Independent physical/static controls</td>
+<td align="right"><strong>337/337 PASS</strong></td>
+</tr>
+<tr>
+<td>Blocking findings</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>The three substantive statement changes are:</p>
+<ol>
+<li>Control 009 archive-payload parity.</li>
+<li>Control 114 accepted M2.11 status.</li>
+<li>The 128/128 release gate’s diagnostic detail.</li>
+</ol>
+<h2>Improved failure diagnostics</h2>
+<p>HF11 reported only the number of failed controls.</p>
+<p>HF12’s executable release gate now includes each failed control’s:</p>
+<pre><code class="language-text">control sequence
+evidence code
+status
+mismatch count
+observed value
+expected value
+</code></pre>
+<p>A future exception would therefore identify the actual failed controls rather than return only:</p>
+<pre><code class="language-text">failures=N
+</code></pre>
+<h2>Complete pre-write diagnostic</h2>
+<p>A separate read-only diagnostic now evaluates the complete Program 223 control path before any persistent write.</p>
+<p>It:</p>
+<ul>
+<li>reconstructs all 128 HF12 controls;</li>
+<li>creates only temporary relations;</li>
+<li>performs zero persistent DML;</li>
+<li>performs zero persistent DDL;</li>
+<li>changes no lifecycle;</li>
+<li>changes no sequence;</li>
+<li>ends with <code>ROLLBACK</code>.</li>
+</ul>
+<p>It returns four result grids:</p>
+<table>
+<thead>
+<tr>
+<th>Grid</th>
+<th>Required successful result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1 — Complete control detail</td>
+<td><strong>128 rows, all PASS, all mismatch counts zero</strong></td>
+</tr>
+<tr>
+<td>2 — Failure-only detail</td>
+<td><strong>Headers and zero data rows</strong></td>
+</tr>
+<tr>
+<td>3 — Family allocation</td>
+<td><strong>10 rows, all PASS</strong></td>
+</tr>
+<tr>
+<td>4 — Diagnostic summary</td>
+<td><strong>128 controls, 128 codes, 128 passes, zero failures, <code>PASS</code>, <code>READY_TO_EXECUTE_PROGRAM_223_HF12</code></strong></td>
+</tr>
+</tbody></table>
+<p>This means you will see any remaining control discrepancy <strong>before</strong> Program 223 is allowed to insert evidence or transition lifecycle.</p>
+<h2>Post-gate review</h2>
+<p>The complete section that HF11 never reached was also reviewed.</p>
+<table>
+<thead>
+<tr>
+<th>Post-gate control</th>
+<th align="right">Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Pre-write/post-write deterministic reconstruction parity</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Persistent mutation operations</td>
+<td align="right"><strong>3 exact</strong></td>
+</tr>
+<tr>
+<td>Positive-evidence insert targets</td>
+<td align="right"><strong>1 exact</strong></td>
+</tr>
+<tr>
+<td>Lifecycle update targets</td>
+<td align="right"><strong>2 exact</strong></td>
+</tr>
+<tr>
+<td>Persistent DELETE operations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Persistent DDL operations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Owned-sequence mutations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Final commits</td>
+<td align="right"><strong>1</strong></td>
+</tr>
+<tr>
+<td>Post-commit result grids</td>
+<td align="right"><strong>2</strong></td>
+</tr>
+<tr>
+<td>Result helpers use <code>ON COMMIT PRESERVE ROWS</code></td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+</tbody></table>
+<p>The WP3 authority requires exactly 128 persisted-state controls, persistence only after 128/128 PASS, transition only to <code>M2_12_VALIDATED</code>, and preservation of canonical business and hash fields. HF12 retains those boundaries. [export reference: filecite | turn19file12 | L31-L46]</p>
+<h1>Mutation boundary</h1>
+<p>Program 223 HF12 retains exactly three authorized persistent operations:</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Target</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>INSERT</code></td>
+<td><code>msbf_ctl.run_evidence</code></td>
+<td>Insert exactly 128 positive PASS evidence rows after the hard control gate</td>
+</tr>
+<tr>
+<td><code>UPDATE</code></td>
+<td><code>msbf_ctl.m2_12_g3_bundle_registry</code></td>
+<td>Transition <code>GENERATED → VALIDATED</code></td>
+</tr>
+<tr>
+<td><code>UPDATE</code></td>
+<td><code>msbf_ctl.run_registry</code></td>
+<td>Transition <code>M2_12_GENERATED → M2_12_VALIDATED</code></td>
+</tr>
+</tbody></table>
+<p>There are no changes to:</p>
+<pre><code class="language-text">canonical business rows
+canonical row hashes
+family set hashes
+contract-set hash
+combined-set hash
+owned sequences
+Programs 224–227
+Recovery 223A
+</code></pre>
+<h1>Physical delivery ledger</h1>
+<h2>Continuation ZIP</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filename</td>
+<td align="right"><code>M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_222_HF12.zip</code></td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td align="right"><strong>180,858</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>57fdc4024c4b00c395f3fbcd7720046c0d9207ea95415ba6a02e2c418f573ad0</code></td>
+</tr>
+<tr>
+<td>ZIP entries</td>
+<td align="right"><strong>32</strong></td>
+</tr>
+<tr>
+<td>Total uncompressed bytes</td>
+<td align="right"><strong>1,861,268</strong></td>
+</tr>
+<tr>
+<td>ZIP CRC</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Complete independent extraction</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Manifest rows</td>
+<td align="right"><strong>28</strong></td>
+</tr>
+<tr>
+<td>Package-inventory rows</td>
+<td align="right"><strong>31</strong></td>
+</tr>
+<tr>
+<td>Path mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Size mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>SHA-256 mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Case-insensitive duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Unsafe paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>The ZIP sidecar contains exactly:</p>
+<pre><code class="language-text">57fdc4024c4b00c395f3fbcd7720046c0d9207ea95415ba6a02e2c418f573ad0  M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_222_HF12.zip
+</code></pre>
+<h2>Program 223 HF12</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>769,374</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>a52a2ea1fe423fae840c21a3bba6dda7ca45dea1c29531134e823a96635411fe</code></td>
+</tr>
+<tr>
+<td>Top-level statements</td>
+<td align="right"><strong>170</strong></td>
+</tr>
+<tr>
+<td>Positive controls</td>
+<td align="right"><strong>128</strong></td>
+</tr>
+<tr>
+<td>Changed control definitions</td>
+<td align="right"><strong>2</strong></td>
+</tr>
+<tr>
+<td>Persistent mutations</td>
+<td align="right"><strong>3</strong></td>
+</tr>
+<tr>
+<td>Direct SQL versus packaged SQL</td>
+<td align="right"><strong>IDENTICAL</strong></td>
+</tr>
+</tbody></table>
+<p>Its sidecar contains exactly:</p>
+<pre><code class="language-text">a52a2ea1fe423fae840c21a3bba6dda7ca45dea1c29531134e823a96635411fe  223_msbf_m2_12_positive_validation_128_controls_v1_HF12.sql
+</code></pre>
+<h2>Generated-checkpoint verifier</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>139,957</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>f13eaf60dd3de48fe11afede4379505132ac9a5dfd661df6b159e8c2f93cb272</code></td>
+</tr>
+<tr>
+<td>Top-level statements</td>
+<td align="right"><strong>25</strong></td>
+</tr>
+<tr>
+<td>Persistent mutations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Final action</td>
+<td align="right"><strong>ROLLBACK</strong></td>
+</tr>
+</tbody></table>
+<h2>Complete 128-control diagnostic</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>743,579</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>622d7d4a3aa081f2229f815320c7f59b7a8e0f269cfbd91556e7fac67d01848e</code></td>
+</tr>
+<tr>
+<td>Top-level statements</td>
+<td align="right"><strong>165</strong></td>
+</tr>
+<tr>
+<td>Control definitions</td>
+<td align="right"><strong>128</strong></td>
+</tr>
+<tr>
+<td>Result grids</td>
+<td align="right"><strong>4</strong></td>
+</tr>
+<tr>
+<td>Persistent mutations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Final action</td>
+<td align="right"><strong>ROLLBACK</strong></td>
+</tr>
+</tbody></table>
+<h1>Mandatory HF12 execution sequence</h1>
+<p>The controlled-execution authority requires one whole physical file per invocation, exact sequential checkpoints, and an immediate stop on any error or ambiguity. [export reference: filecite | turn19file5 | L34-L50]</p>
+<h2>1. Preserve HF11 evidence</h2>
+<p>Keep unchanged:</p>
+<pre><code class="language-text">complete HF11 console transcript
+P0001 error
+rows=128 / codes=128 / failures=2 / family_mismatches=0 detail
+client/process status
+STOP action
+ROLLBACK response
+five HF11 pre-execution exports
+</code></pre>
+<p>Do not run Recovery 223A. HF11 failed at the 128/128 gate before the persistent evidence insert or lifecycle updates, and the transaction was rolled back.</p>
+<h2>2. Run the HF12 generated-checkpoint verifier</h2>
+<p>Execute:</p>
+<pre><code class="language-text">223_HF12_pre_execution_generated_checkpoint_verification.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">f13eaf60dd3de48fe11afede4379505132ac9a5dfd661df6b159e8c2f93cb272
+</code></pre>
+<p>Require the same exact five-grid checkpoint already demonstrated by the attached evidence:</p>
+<pre><code class="language-text">19/19 source edges PASS
+12/12 stage boundaries PASS
+70/70 physical stage controls
+9/9 canonical families PASS
+24/24 generation-evidence rows PASS
+M2_12_GENERATED / GENERATED
+134 canonical entities
+zero positive, negative, acceptance, and G3-gate rows
+all three owned sequences 1|true
+combined hash 28d832719a63d5669a18016f15ba43fb
+disposition READY_TO_EXECUTE_PROGRAM_223_HF12
+</code></pre>
+<p>Export all five grids using fetched rows.</p>
+<h2>3. Run the new 128-control diagnostic</h2>
+<p>Execute:</p>
+<pre><code class="language-text">223_HF12_pre_execution_positive_control_diagnostic.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">622d7d4a3aa081f2229f815320c7f59b7a8e0f269cfbd91556e7fac67d01848e
+</code></pre>
+<p>Require:</p>
+<pre><code class="language-text">Grid 1: 128 rows; every status PASS; every mismatch_count 0
+Grid 2: headers; zero data rows
+Grid 3: 10 family rows; every family_status PASS
+Grid 4:
+    control_rows           128
+    distinct_control_codes 128
+    minimum_sequence         1
+    maximum_sequence       128
+    pass_rows              128
+    failure_rows             0
+    family_pass_rows        10
+    family_failure_rows      0
+    diagnostic_status      PASS
+    disposition            READY_TO_EXECUTE_PROGRAM_223_HF12
+</code></pre>
+<p>Any failure row or different summary is a hard stop. Do not execute Program 223.</p>
+<h2>4. Execute Program 223 HF12 only</h2>
+<p>After both verifiers pass exactly, execute:</p>
+<pre><code class="language-text">223_msbf_m2_12_positive_validation_128_controls_v1_HF12.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">a52a2ea1fe423fae840c21a3bba6dda7ca45dea1c29531134e823a96635411fe
+</code></pre>
+<p>Execution boundaries:</p>
+<pre><code class="language-text">One complete physical file
+One invocation
+First-error stop configured in DBeaver/client
+No outer transaction
+No Program 224 concatenation
+No ad hoc SQL
+No recovery execution
+</code></pre>
+<h2>5. Required Program 223 outputs</h2>
+<h3>Persistence result</h3>
+<p>Require one row:</p>
+<pre><code class="language-text">run_status            M2_12_VALIDATED
+contract_status       VALIDATED
+positive_pass         128
+positive_codes        128
+negative_rows         0
+acceptance_rows       0
+gate_rows             0
+hash_compare_rows     1
+hash_exact_rows       1
+persistence_status    PASS
+</code></pre>
+<h3>Positive-control detail</h3>
+<p>Require:</p>
+<pre><code class="language-text">Rows                   128
+Control sequences      1–128
+Distinct codes         128
+Status                 PASS for every row
+Mismatch count         0 for every row
+</code></pre>
+<p>Export both grids using:</p>
+<pre><code class="language-text">Use fetched rows       ON
+Query the database     OFF
+Open new connection    OFF
+</code></pre>
+<h2>6. Stop after Program 223</h2>
+<p>Even after an exact PASS:</p>
+<pre><code class="language-text">Program 224        HELD
+Program 225        HELD
+Program 226        HELD
+Program 227        HELD
+Recovery 223A      UNAUTHORIZED
+M2.12 acceptance   NOT CLAIMED
+</code></pre>
+<p>The original WP5 package remains the historical approved archive with SHA-256 <code>5dce8642e46aa701cdbe1aaeb75eb8e0a8fd454fc000e8ec4161400a45a3a38c</code>, 98 entries, 3,926,125 uncompressed bytes, and passing CRC. [export reference: filecite | turn19file0 | L3-L12] HF12 is a bounded continuation after Program 222 and does not replace that archive.</p>
+</div></article><article id="m-e5f62f6c-49d3-4ec4-8a6e-e4c4a3f9a59f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C085-M00094 · 2026-08-11T13:45:07.176000-04:00 · active path</p><div class="bubble"><p>advice on what to name the outputs of 223_HF12_pre_execution_positive_control_diagnostic.sql  ?</p>
+</div></article><article id="m-0d81333c-6315-44e0-85f6-f614f888c2ce" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00095 · 2026-08-11T13:45:08.346014-04:00 · active path</p><div class="bubble"><p>Yes. For <code>223_HF12_pre_execution_positive_control_diagnostic.sql</code>, I recommend <strong>four separate CSVs matching the four result grids</strong>:</p>
+<ol>
+<li><p><code>223_HF12_pre_execution_positive_control_detail.csv</code><br>— Grid 1: all <strong>128 controls</strong>, with every control expected to be <code>PASS</code> and <code>mismatch_count=0</code>.</p>
+</li>
+<li><p><code>223_HF12_pre_execution_positive_control_failures.csv</code><br>— Grid 2: failure-only detail. On a clean run, preserve the <strong>headers with zero data rows</strong>.</p>
+</li>
+<li><p><code>223_HF12_pre_execution_positive_control_family_summary.csv</code><br>— Grid 3: the <strong>10 control-family rows</strong>, all expected <code>PASS</code>.</p>
+</li>
+<li><p><code>223_HF12_pre_execution_positive_control_diagnostic_summary.csv</code><br>— Grid 4: the one-row overall summary showing 128/128 PASS and <code>READY_TO_EXECUTE_PROGRAM_223_HF12</code>.</p>
+</li>
+</ol>
+<p>I would use those names exactly. They make the evidence purpose and sequence unambiguous and distinguish these <strong>pre-execution diagnostic outputs</strong> from the actual Program 223 outputs you will later capture.</p>
+<p>For each DBeaver export, continue using:</p>
+<pre><code class="language-text">Use fetched rows       ON
+Query the database     OFF
+Open new connection    OFF
+</code></pre>
+<p>And <strong>do not omit Grid 2 just because it has zero rows</strong>. The header-only failure file is affirmative evidence that the diagnostic returned the expected empty failure result.</p>
+<p>If all four reconcile exactly, then proceed to Program 223 HF12; otherwise stop. That preserves the governed one-program-at-a-time, checkpoint-first execution model. [export reference: filecite | turn19file5 | L36-L50]</p>
+</div></article><article id="m-3f826b61-14a8-4dcb-a1fd-51e7fbe5c652" class="message user"><p class="meta"><strong>Andrew / user</strong> · C085-M00096 · 2026-08-11T13:51:29.648000-04:00 · active path</p><p class="note">Attachment references: 223_msbf_m2_12_positive_validation_128_controls_v1_HF12_validation_persistence_results_20260811.csv; 223_HF12_pre_execution_positive_control_diagnostic_summary_20260811.csv; 223_HF12_pre_execution_positive_control_family_summary_20260811.csv; 223_HF12_pre_execution_positive_control_failures_20260811.csv; 223_HF12_pre_execution_positive_control_detail_20260811.csv; 223_HF12_pre_execution_state_summary_20260811.csv; 223_HF12_pre_execution_generation_evidence_detail_20260811.csv; 223_HF12_pre_execution_canonical_family_detail_20260811.csv; 223_HF12_pre_execution_stage_boundary_detail_20260811.csv; 223_HF12_pre_execution_source_graph_detail_20260811.csv; 223_msbf_m2_12_positive_validation_128_controls_v1_HF12_positive_results_20260811.csv</p><div class="bubble"><p>223 results attached. perform program 224 bounded correction and review.</p>
+</div></article><article id="m-81b06019-ded7-4045-9784-e10a04ca53e6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00097 · 2026-08-11T13:51:55.274811-04:00 · active path</p><div class="bubble"><p>I’ll reconcile the Program 223 evidence, then fully review Program 224’s 20 negative controls, isolation/fingerprints, parser compatibility, persistence, and package corrected SQL with preflight and independent audits.</p>
+</div></article><article id="m-a16f348c-63d2-4dce-8c5c-100062e0f89a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00098 · 2026-08-11T13:55:01.093886-04:00 · active path</p><div class="bubble"><p>Program 223 evidence reconciles exactly: 128/128 PASS, zero diagnostic failures, all ten families PASS, and committed <code>M2_12_VALIDATED / VALIDATED</code> with 128 positive controls.</p>
+</div></article><article id="m-c9c6fbac-381a-4f22-9afb-1d09c5594836" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00099 · 2026-08-11T14:04:09.058002-04:00 · active path</p><div class="bubble"><p>Initial Program 224 defects include DBeaver-incompatible <code>\set</code>, obsolete M1.3 hash extraction, a noncanonical evidence-family key, Control 013’s inverted predicate, and overly broad <code>SELECT *</code> usage.</p>
+</div></article><article id="m-2c441b3a-aea4-4597-8ad2-8e671d3898ef" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00100 · 2026-08-11T14:37:17.861522-04:00 · active path</p><div class="bubble"><h1>M2.12 Program 224 HF13 — Bounded Correction and Review Complete</h1>
+<p>The attached Program 223 HF12 evidence reconciles to the exact validated checkpoint required before Program 224:</p>
+<ul>
+<li>The pre-execution diagnostic evaluated 128 controls, 128 distinct codes, sequences 1–128, 128 PASS rows, zero failures, and all 10 control families passing. [export reference: filecite | turn20file1 | L22-L23]</li>
+<li>The failure-only diagnostic contains its governed headers and zero data rows. [export reference: filecite | turn20file2 | L28-L34]</li>
+<li>The committed Program 223 result shows <code>M2_12_VALIDATED / VALIDATED</code>, 128 persisted positive controls, zero negative, acceptance, or G3-gate rows, exact hash reconciliation, and <code>persistence_status=PASS</code>. [export reference: filecite | turn20file0 | L9-L11]</li>
+</ul>
+<p>The Program 224 authority requires exactly 20 exception-isolated negative controls, exact SQLSTATE and rejection-signature validation, complete before/after canonical/hash/sequence fingerprints, persistence of only the 20 negative PASS rows, and no lifecycle change from <code>M2_12_VALIDATED</code>. [export reference: filecite | turn19file12 | L48-L59]</p>
+<p><strong>Do not execute the historical Program 224 R1 source. Program 224 HF13 is the only current Program 224 execution source.</strong></p>
+<h2>Downloads</h2>
+<h3>Controlled continuation package</h3>
+<ul>
+<li>Download M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_223_HF13.zip (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_223_HF13.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching ZIP SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_223_HF13.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<p>The package contains exactly one executable governed program—Program 224 HF13—plus two read-only verifiers. It contains no executable Program 225–227 or recovery source.</p>
+<h3>Program 224 HF13</h3>
+<ul>
+<li>Download Program 224 HF13 SQL (historical reference: <code>sandbox:[session]/224_msbf_m2_12_negative_controls_20_isolated_v1_HF13.sql</code>; referenced bytes not established here)</li>
+<li>Download the Program 224 HF13 SQL sidecar (historical reference: <code>sandbox:[session]/224_msbf_m2_12_negative_controls_20_isolated_v1_HF13.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Mandatory pre-execution verifier</h3>
+<ul>
+<li>Download the validated-checkpoint verifier (historical reference: <code>sandbox:[session]/224_HF13_pre_execution_validated_checkpoint_verification.sql</code>; referenced bytes not established here)</li>
+<li>Download the verifier sidecar (historical reference: <code>sandbox:[session]/224_HF13_pre_execution_validated_checkpoint_verification.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Complete 20-control diagnostic</h3>
+<ul>
+<li>Download the pre-execution negative-control diagnostic (historical reference: <code>sandbox:[session]/224_HF13_pre_execution_negative_control_diagnostic.sql</code>; referenced bytes not established here)</li>
+<li>Download the diagnostic sidecar (historical reference: <code>sandbox:[session]/224_HF13_pre_execution_negative_control_diagnostic.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Operator and source authority</h3>
+<ul>
+<li>Program 224 HF13 operator protocol (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_224_HF13_OPERATOR_PROTOCOL.md</code>; referenced bytes not established here)</li>
+<li>Program 224 HF13 source authority (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_224_HF13_SOURCE_AUTHORITY.md</code>; referenced bytes not established here)</li>
+<li>Program 224 HF13 validation report (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_224_HF13_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Detailed review records</h3>
+<ul>
+<li>Independent physical-readback report (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_224_HF13_INDEPENDENT_PHYSICAL_READBACK.md</code>; referenced bytes not established here)</li>
+<li>116-control independent readback ledger (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_224_HF13_INDEPENDENT_PHYSICAL_READBACK_CONTROLS.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable independent readback (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_224_HF13_INDEPENDENT_PHYSICAL_READBACK.json</code>; referenced bytes not established here)</li>
+<li>Twenty-control catalog (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_224_HF13_NEGATIVE_CONTROL_CATALOG.csv</code>; referenced bytes not established here)</li>
+<li>Complete 20-control review (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_224_HF13_FULL_CONTROL_REVIEW.csv</code>; referenced bytes not established here)</li>
+<li>Complete 47-statement review (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_224_HF13_FULL_STATEMENT_REVIEW.csv</code>; referenced bytes not established here)</li>
+<li>Changed-control ledger (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_224_HF13_CHANGED_CONTROL_LEDGER.csv</code>; referenced bytes not established here)</li>
+<li>Known-defect-pattern scan (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_224_HF13_KNOWN_DEFECT_PATTERN_SCAN.csv</code>; referenced bytes not established here)</li>
+<li>Persistent-mutation inventory (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_224_HF13_PERSISTENT_MUTATION_INVENTORY.csv</code>; referenced bytes not established here)</li>
+<li>Original R1-to-HF13 source patch (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_224_R1_TO_HF13.patch</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Bounded corrections</h1>
+<p>The historical Program 224 R1 source had SHA-256:</p>
+<pre><code class="language-text">c010ed61c7f93da457235e01902f280596f706f42f232464fac546fd13dbda36
+</code></pre>
+<p>That identity remains part of the approved historical WP3 archive. [export reference: filecite | turn19file9 | L32-L54] HF13 supersedes it only for controlled Program 224 execution.</p>
+<h2>1. DBeaver-incompatible client command removed</h2>
+<p>The original source still contained a psql-only:</p>
+<pre><code class="language-text">\set ON_ERROR_STOP on
+</code></pre>
+<p>HF13 is pure PostgreSQL SQL:</p>
+<pre><code class="language-text">psql meta-command lines    0
+executable backslashes     0
+</code></pre>
+<p>First-error-stop behavior must be configured in DBeaver or the invoking client.</p>
+<h2>2. Source-graph reconstruction corrected</h2>
+<p>The original Program 224 carried a stale source-graph implementation. HF13 uses the same physically validated 19-edge authority proven during Programs 221–223, including:</p>
+<ul>
+<li>exact source and target registry identities;</li>
+<li>exact contract or bundle versions and statuses;</li>
+<li>one source and one target registry row per edge;</li>
+<li>exact source-gate status;</li>
+<li>exact expected, accepted-source, and target-recorded hashes.</li>
+</ul>
+<p>For the M1.3 request-authority edge, HF13 extracts the governed hash from:</p>
+<pre><code class="language-sql">(agr.observed_value::jsonb -&gt;&gt; &#39;application_set_hash&#39;)::text
+</code></pre>
+<p>It no longer compares the complete JSON document as a hash.</p>
+<h2>3. Evidence-certification entity key aligned</h2>
+<p>The canonical evidence-certification entity key is now consistently:</p>
+<pre><code class="language-text">node_sequence | evidence_family_sequence
+</code></pre>
+<p>The obsolete variant that also inserted <code>evidence_family_code</code> has been removed from the negative-control fingerprint path.</p>
+<h2>4. Control 013 mismatch direction corrected</h2>
+<p>Control 013 is:</p>
+<pre><code class="language-text">M2_12_NEG_013_CANONICAL_COUNT_OR_SET_HASH_MISMATCH
+</code></pre>
+<p>The original predicate had the mismatch direction inverted. It could reject a properly changed fingerprint rather than reject failure to create a changed fingerprint.</p>
+<p>HF13 now requires the deliberately mutated canonical fingerprint to be:</p>
+<pre><code class="language-sql">IS DISTINCT FROM
+</code></pre>
+<p>the baseline fingerprint before the isolation control may pass.</p>
+<h2>5. Control 014 rerun scope hardened</h2>
+<p>Control 014 now binds its simulated version-one rerun to the exact:</p>
+<ul>
+<li>policy code;</li>
+<li>policy version 1;</li>
+<li>policy status;</li>
+<li>G3 bundle code;</li>
+<li>G3 bundle version 1;</li>
+<li>registry lifecycle <code>VALIDATED</code>.</li>
+</ul>
+<p>It no longer relies on a broad or incompletely identified version-one fixture.</p>
+<h2>6. Broad fixture projections eliminated</h2>
+<p>Controls 004, 005, 015, and 016 previously used broad temporary-fixture projections. HF13 replaces those with explicit physical columns for:</p>
+<ul>
+<li>linear source-edge hash break;</li>
+<li>M2.11 multisource hash break;</li>
+<li>application-view grain multiplication;</li>
+<li>operational-view orphan or duplicate detection.</li>
+</ul>
+<p>No broad temporary-fixture <code>SELECT *</code> remains.</p>
+<h2>7. Control 018 exact authority retained</h2>
+<p>The capability-overclaim control still uses the approved physical fixture:</p>
+<pre><code class="language-text">capability_sequence                  17
+injected status                      IMPLEMENTED_PRODUCTION_AUTHORIZED
+production_action_authorized_flag    false
+legal_regulatory_certified_flag      false
+expected SQLSTATE                    23514
+expected rejected constraint         ck_m212_capability_status
+</code></pre>
+<p>This remains bounded to the specific capability check required by the WP3 authority. [export reference: filecite | turn19file12 | L50-L58]</p>
+<h2>8. Failure diagnostics strengthened</h2>
+<p>The original 20-of-20 release gate primarily reported aggregate failure counts.</p>
+<p>HF13’s gate now identifies each failing control with:</p>
+<pre><code class="language-text">control sequence
+evidence code
+expected SQLSTATE
+observed SQLSTATE
+expected constraint or trigger
+observed constraint or trigger
+before/after fingerprint result
+status
+isolation status
+</code></pre>
+<p>The separate read-only diagnostic exposes the complete control detail before any negative evidence can be persisted.</p>
+<h2>9. Final persistence postflight strengthened</h2>
+<p>HF13 proves exact totals rather than counting only PASS subsets:</p>
+<pre><code class="language-text">positive total rows       128
+positive PASS rows        128
+positive distinct codes   128
+
+negative total rows        20
+negative PASS rows         20
+negative distinct codes    20
+
+acceptance rows              0
+G3 gate rows                 0
+</code></pre>
+<p>It also requires the complete before/after canonical, hash, sequence, and lifecycle fingerprint to remain exact.</p>
+<h2>10. Result exportability preserved</h2>
+<p>Both final Program 224 result helpers use:</p>
+<pre><code class="language-sql">ON COMMIT PRESERVE ROWS
+</code></pre>
+<p>They remain available after commit in the <strong>same originating database session</strong>. Exporting the visible DBeaver grids with fetched rows remains the preferred evidence method.</p>
+<h1>Full review determination</h1>
+<table>
+<thead>
+<tr>
+<th>Review area</th>
+<th align="right">HF13 result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Negative-control definitions</td>
+<td align="right"><strong>20/20 PASS</strong></td>
+</tr>
+<tr>
+<td>Control sequence coverage</td>
+<td align="right"><strong>1–20 exact</strong></td>
+</tr>
+<tr>
+<td>Distinct control codes</td>
+<td align="right"><strong>20</strong></td>
+</tr>
+<tr>
+<td>Top-level SQL statements</td>
+<td align="right"><strong>47/47 PASS</strong></td>
+</tr>
+<tr>
+<td>Source-graph edges</td>
+<td align="right"><strong>19/19 reconciled</strong></td>
+</tr>
+<tr>
+<td>SQLSTATE/signature authorities</td>
+<td align="right"><strong>20/20 reconciled</strong></td>
+</tr>
+<tr>
+<td>Physical relations reviewed</td>
+<td align="right"><strong>34</strong></td>
+</tr>
+<tr>
+<td>Substantively changed controls</td>
+<td align="right"><strong>6</strong></td>
+</tr>
+<tr>
+<td>Nonsemantic block-boundary normalization</td>
+<td align="right"><strong>1 control</strong></td>
+</tr>
+<tr>
+<td>Residual known-defect patterns</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Independent package controls</td>
+<td align="right"><strong>116/116 PASS</strong></td>
+</tr>
+<tr>
+<td>Blocking findings</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>The six substantively corrected controls are:</p>
+<pre><code class="language-text">004
+005
+013
+014
+015
+016
+</code></pre>
+<p>Control 020 received only trailing block-boundary normalization; its governed behavior was not changed.</p>
+<h1>Mutation and isolation boundary</h1>
+<p>Six controls execute persistent-table probes, but only inside exception subtransactions:</p>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Probe</th>
+<th>Required rollback mechanism</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>008</td>
+<td>Archive <code>UPDATE</code></td>
+<td>Archive immutability trigger</td>
+</tr>
+<tr>
+<td>009</td>
+<td>Archive <code>DELETE</code></td>
+<td>Archive immutability trigger</td>
+</tr>
+<tr>
+<td>010</td>
+<td>Duplicate stage insert</td>
+<td>Primary-key rejection</td>
+</tr>
+<tr>
+<td>011</td>
+<td>Duplicate component insert</td>
+<td>Primary-key rejection</td>
+</tr>
+<tr>
+<td>018</td>
+<td>Capability-overclaim update</td>
+<td>Check-constraint rejection</td>
+</tr>
+<tr>
+<td>019</td>
+<td>Policy production-authority update</td>
+<td>Check-constraint rejection</td>
+</tr>
+</tbody></table>
+<p>Those probe mutations must leave zero persistent effect.</p>
+<p>The <strong>only committed persistent mutation</strong> is:</p>
+<pre><code class="language-text">INSERT exactly 20 M2_12_NEG_% PASS rows
+into msbf_ctl.run_evidence
+after the hard 20/20 gate
+</code></pre>
+<p>HF13 performs no:</p>
+<pre><code class="language-text">lifecycle update
+canonical-row update
+canonical-hash update
+owned-sequence mutation
+persistent DELETE
+persistent DDL
+Program 225–227 change
+recovery-source change
+</code></pre>
+<p>The final lifecycle must remain:</p>
+<pre><code class="language-text">run_status       M2_12_VALIDATED
+contract_status  VALIDATED
+</code></pre>
+<h1>Physical delivery ledger</h1>
+<h2>Continuation ZIP</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filename</td>
+<td align="right"><code>M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_223_HF13.zip</code></td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td align="right"><strong>125,168</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>d7a451c6350752150b5296497ed33106b584b0b940007e9473d895d5f16099ba</code></td>
+</tr>
+<tr>
+<td>ZIP entries</td>
+<td align="right"><strong>42</strong></td>
+</tr>
+<tr>
+<td>Total uncompressed bytes</td>
+<td align="right"><strong>815,932</strong></td>
+</tr>
+<tr>
+<td>ZIP CRC</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Complete independent extraction</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Path mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Size mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>SHA-256 mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Case-insensitive duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Unsafe paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Manifest mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>The ZIP sidecar contains exactly:</p>
+<pre><code class="language-text">d7a451c6350752150b5296497ed33106b584b0b940007e9473d895d5f16099ba  M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_223_HF13.zip
+</code></pre>
+<h2>Program 224 HF13</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>152,948</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>9639c0b1c08f7f2540ed282e819c4b81279e7944de637ad443fc049c04ad6767</code></td>
+</tr>
+<tr>
+<td>Top-level statements</td>
+<td align="right"><strong>47</strong></td>
+</tr>
+<tr>
+<td>Negative controls</td>
+<td align="right"><strong>20</strong></td>
+</tr>
+<tr>
+<td>Persistent committed mutation classes</td>
+<td align="right"><strong>1</strong></td>
+</tr>
+<tr>
+<td>Direct SQL versus packaged SQL</td>
+<td align="right"><strong>IDENTICAL</strong></td>
+</tr>
+</tbody></table>
+<p>The SQL sidecar contains:</p>
+<pre><code class="language-text">9639c0b1c08f7f2540ed282e819c4b81279e7944de637ad443fc049c04ad6767  224_msbf_m2_12_negative_controls_20_isolated_v1_HF13.sql
+</code></pre>
+<h2>Validated-checkpoint verifier</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>174,020</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>e200a8ca5500fdaa55de3b8b011c1808ab6d6a3e6aff7f555db5ea2c55b566e1</code></td>
+</tr>
+<tr>
+<td>Result grids</td>
+<td align="right"><strong>6</strong></td>
+</tr>
+<tr>
+<td>Persistent mutation</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Final action</td>
+<td align="right"><strong>ROLLBACK</strong></td>
+</tr>
+</tbody></table>
+<h2>Twenty-control diagnostic</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>151,055</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>72da3a957623a3be19690c576f3fad54df2a96d6aa5d90085319accc1edcd2c1</code></td>
+</tr>
+<tr>
+<td>Controls evaluated</td>
+<td align="right"><strong>20</strong></td>
+</tr>
+<tr>
+<td>Result grids</td>
+<td align="right"><strong>4</strong></td>
+</tr>
+<tr>
+<td>Persistent evidence insert</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Final action</td>
+<td align="right"><strong>ROLLBACK</strong></td>
+</tr>
+</tbody></table>
+<p>This is a source, static, isolation-boundary, physical, and packaging review. <strong>Program 224 HF13 has not been executed against your PostgreSQL database here.</strong></p>
+<h1>Mandatory execution sequence</h1>
+<h2>1. Preserve Program 223 evidence</h2>
+<p>Retain the complete Program 223 HF12 transcript and client status with all supplied verifier, diagnostic, persistence, and positive-control exports.</p>
+<h2>2. Execute the validated-checkpoint verifier</h2>
+<p>Execute:</p>
+<pre><code class="language-text">224_HF13_pre_execution_validated_checkpoint_verification.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">e200a8ca5500fdaa55de3b8b011c1808ab6d6a3e6aff7f555db5ea2c55b566e1
+</code></pre>
+<p>It produces six grids. Export them as:</p>
+<pre><code class="language-text">224_HF13_pre_execution_source_graph_detail.csv
+224_HF13_pre_execution_stage_boundary_detail.csv
+224_HF13_pre_execution_canonical_family_detail.csv
+224_HF13_pre_execution_generation_evidence_detail.csv
+224_HF13_pre_execution_positive_evidence_detail.csv
+224_HF13_pre_execution_state_summary.csv
+</code></pre>
+<p>Required summary:</p>
+<pre><code class="language-text">run_status                         M2_12_VALIDATED
+contract_status                    VALIDATED
+positive total/pass/distinct       128 / 128 / 128
+source graph                       19 / 19 PASS
+stage boundaries                   12 / 12 PASS
+physical stage controls            70 / 70
+canonical families                  9 / 9 PASS
+generation evidence                24 / 24 PASS
+negative rows                       0
+acceptance rows                     0
+G3 gate rows                        0
+policy sequence                     1|true
+archive sequence                    1|true
+registry sequence                   1|true
+disposition                         READY_TO_EXECUTE_PROGRAM_224_HF13
+</code></pre>
+<p>Any discrepancy is a hard stop.</p>
+<h2>3. Execute the complete 20-control diagnostic</h2>
+<p>Execute:</p>
+<pre><code class="language-text">224_HF13_pre_execution_negative_control_diagnostic.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">72da3a957623a3be19690c576f3fad54df2a96d6aa5d90085319accc1edcd2c1
+</code></pre>
+<p>Export its four grids as:</p>
+<pre><code class="language-text">224_HF13_pre_execution_negative_control_detail.csv
+224_HF13_pre_execution_negative_control_failures.csv
+224_HF13_pre_execution_negative_control_family_summary.csv
+224_HF13_pre_execution_negative_control_diagnostic_summary.csv
+</code></pre>
+<p>Required results:</p>
+<pre><code class="language-text">control rows                20
+distinct control codes      20
+minimum sequence             1
+maximum sequence            20
+PASS controls               20
+isolation PASS controls     20
+failure rows                 0
+family rows                 14
+family PASS rows            14
+diagnostic status           PASS
+disposition                 READY_TO_EXECUTE_PROGRAM_224_HF13
+</code></pre>
+<p>The failure-only grid must retain its headers and contain zero data rows.</p>
+<h2>4. Execute Program 224 HF13 only</h2>
+<p>After both verifiers pass exactly, execute:</p>
+<pre><code class="language-text">224_msbf_m2_12_negative_controls_20_isolated_v1_HF13.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">9639c0b1c08f7f2540ed282e819c4b81279e7944de637ad443fc049c04ad6767
+</code></pre>
+<p>Execution boundaries:</p>
+<pre><code class="language-text">one complete physical file
+one invocation
+first-error stop configured in DBeaver/client
+no outer transaction
+no Program 225 concatenation
+no ad hoc SQL
+no recovery execution
+</code></pre>
+<p>The controlled authority requires exact sequential execution and an immediate stop on any error, lifecycle mismatch, count mismatch, hash mismatch, or evidence anomaly. [export reference: filecite | turn19file5 | L36-L50]</p>
+<h2>5. Program 224 output names</h2>
+<p>Use:</p>
+<pre><code class="language-text">224_msbf_m2_12_negative_controls_20_isolated_v1_HF13_validation_persistence_results_20260811.csv
+
+224_msbf_m2_12_negative_controls_20_isolated_v1_HF13_negative_results_20260811.csv
+</code></pre>
+<p>Required persistence row:</p>
+<pre><code class="language-text">run_status             M2_12_VALIDATED
+contract_status        VALIDATED
+
+positive_total_rows    128
+positive_rows          128
+positive_codes         128
+
+negative_total_rows     20
+negative_rows           20
+negative_codes          20
+
+acceptance_rows          0
+gate_rows                0
+exact_flag               true
+persistence_status       PASS
+</code></pre>
+<p>Required negative-control detail:</p>
+<pre><code class="language-text">rows                    20
+control sequences       1–20
+distinct codes          20
+status                   PASS for every row
+isolation_status         PASS for every row
+before/after canonical   exact for every row
+before/after hashes      exact for every row
+before/after sequences   exact for every row
+before/after lifecycle   exact for every row
+</code></pre>
+<p>For every DBeaver export:</p>
+<pre><code class="language-text">Use fetched rows       ON
+Query the database     OFF
+Open new connection    OFF
+</code></pre>
+<h2>6. Stop after Program 224</h2>
+<p>Even after an exact PASS:</p>
+<pre><code class="language-text">Program 225        HELD
+Program 226        HELD
+Program 227        HELD
+M2.12 acceptance   NOT CLAIMED
+</code></pre>
+<p>Do not execute Program 225 until the complete Program 224 transcript, client status, both verifier sets, persistence result, all 20 negative-control detail rows, isolation signatures, evidence counts, lifecycle, fingerprints, and sequence states have reconciled exactly.</p>
+</div></article><article id="m-c526f8d2-28f3-46e3-8d5d-15134f7b52e0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C085-M00101 · 2026-08-11T14:48:52.499000-04:00 · active path</p><p class="note">Attachment references: 224_HF13_pre_execution_generation_evidence_detail_20260811.csv; 224_HF13_pre_execution_positive_evidence_detail_20260811.csv; 224_HF13_pre_execution_state_summary_20260811.csv; 224_HF13_pre_execution_negative_control_detail_20260811.csv; 224_HF13_pre_execution_negative_control_failures_20260811.csv; 224_HF13_pre_execution_negative_control_family_summary_20260811.csv; 224_HF13_pre_execution_negative_control_diagnostic_summary_20260811.csv; 224_HF13_pre_execution_source_graph_detail_20260811.csv; 224_HF13_pre_execution_stage_boundary_detail_20260811.csv; 224_HF13_pre_execution_canonical_family_detail_20260811.csv</p><div class="bubble"><p>I negative failure exists. I ran the pre_execution programs and attached evidence. I did not run the main 224 program yet. correct in a hot fix and do not wait on my approval.</p>
+</div></article><article id="m-2d3ae0fa-a440-49d2-b281-72fd3f0d9a64" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00102 · 2026-08-11T14:49:09.435354-04:00 · active path</p><div class="bubble"><p>I’m reconciling the failed HF13 diagnostic against the validated checkpoint, then I’ll patch the defect, rescan all 20 controls, and issue a superseding HF14 continuation package.</p>
+</div></article><article id="m-a5c0e0c1-6a89-42a7-bfc4-1e125547f37b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00103 · 2026-08-11T14:52:14.901037-04:00 · active path</p><div class="bubble"><p>The failure is isolated to Control 003: unqualified <code>contract_status</code> caused SQLSTATE <code>42702</code>, while isolation fingerprints remained exact. I’m also checking both pre-execution programs for related runtime hazards.</p>
+</div></article><article id="m-cb179992-bf1e-48c8-9694-362d6894d2b2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00104 · 2026-08-11T15:01:22.052459-04:00 · active path</p><div class="bubble"><p>The validated checkpoint remains pristine, so no recovery is indicated. HF14 is built with the executable and diagnostic patched; I’m completing independent ZIP, SQL-identity, delta, and persistence-tail readback.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

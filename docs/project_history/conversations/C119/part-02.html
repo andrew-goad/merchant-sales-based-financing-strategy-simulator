@@ -1,0 +1,888 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 3 — part 02 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 3 — part 02</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-01.html">Previous part</a><a href="part-03.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-6b2c28c2-7e86-471c-bbf4-d3c31faee9a4" class="message assistant"><p class="meta"><strong>Assistant</strong> · C119-M00019 · 2026-09-04T02:15:25.476680-04:00 · active path</p><div class="bubble"><p>Exactly. Then we <strong>don&#39;t need to solve the 4 GB ingestion problem at all</strong>. We only need to get the archive open successfully on your computer.</p>
+<p>Your existing machine-readable-summary method is preferable because it lets you process the raw export locally and give me the much smaller, structured MSBF conversation material afterward.</p>
+<p>For tonight, keep the original ZIP untouched. Tomorrow, we&#39;ll diagnose the extraction problem first. I would start with <strong>7-Zip rather than Windows Explorer</strong>, particularly for an archive that large. If 7-Zip can test the archive successfully, we know the underlying ZIP is sound even if Explorer refuses to handle it.</p>
+<p>If it fails there too, we&#39;ll determine whether the download is incomplete/corrupt or whether there&#39;s a ZIP64/structure issue and recover it accordingly.</p>
+<p>So tomorrow&#39;s first task is simply:</p>
+<p><strong>4 GB original ZIP → verify integrity → extract successfully.</strong></p>
+<p>Then you can run your established machine-readable conversation-summary workflow, and we&#39;ll pick Part 3 back up from those outputs. No need to redesign the history-ingestion process.</p>
+</div></article><article id="m-95c3eb73-1719-45c1-a202-9bc90e69b262" class="message user"><p class="meta"><strong>Andrew / user</strong> · C119-M00020 · 2026-09-04T07:08:39.959000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 1e64ec6f-4c6c-428e-b603-28a1f635c668.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-e14edbca-ce7e-4ff4-a328-5afccf770618" class="message assistant"><p class="meta"><strong>Assistant</strong> · C119-M00021 · 2026-09-04T07:08:41.496869-04:00 · active path</p><div class="bubble"><p>That screenshot gives us the key diagnosis.</p>
+<p><strong>7-Zip is reporting <code>Unexpected end of data</code>.</strong> It processed the archive through essentially its entire compressed size—about <strong>4,043 MB compressed / 4,484 MB expanded</strong>—but finished with <strong>2 errors</strong>. That strongly suggests the problem is <strong>the archive/download itself</strong>, not Windows Explorer simply struggling with a 4 GB ZIP.</p>
+<p>The important distinction is that this is not a path-length warning or an ordinary “Explorer can&#39;t handle it” situation. <code>Unexpected end of data</code> usually means 7-Zip reached the physical end of the file before the ZIP structure or one of its compressed streams said it should. In practical terms, the most likely explanation is an <strong>incomplete/truncated download</strong>. Less commonly, the export was generated with a damaged ZIP structure.</p>
+<p>I also see that 7-Zip got far enough to process the full displayed 4,484 MB of content. That means <strong>most of the archive may actually be recoverable</strong>, but I would not use a partially extracted copy as the canonical source for your machine-readable history if we can obtain a clean archive.</p>
+<h3>What I recommend now</h3>
+<p><strong>Don&#39;t delete this ZIP.</strong> Preserve <code>D:\o.zip</code> as the failed original so we have something to compare against.</p>
+<p>Then I would do <strong>one fresh download of the ChatGPT export</strong>, preferably to a different filename such as:</p>
+<pre><code class="language-text">D:\ChatGPT_Export_Redownload.zip
+</code></pre>
+<p>Don&#39;t overwrite <code>o.zip</code>.</p>
+<p>Before attempting extraction, use 7-Zip&#39;s <strong>Test</strong> function on the newly downloaded file. If the new archive tests clean, we&#39;re done with diagnosis: extract it and run your existing conversation-summary workflow.</p>
+<p>If the <strong>new download also reports <code>Unexpected end of data</code></strong>, don&#39;t keep downloading it repeatedly. At that point we should inspect the ZIP structure and determine whether the export itself was produced malformed or whether a particular very large member is damaged. We can do that locally with a very small diagnostic script and, if necessary, selectively recover the conversation JSON/HTML without extracting all ~4.5 GB.</p>
+<p>One thing I&#39;d capture <strong>before redownloading</strong>, because it will make comparison definitive: right-click <code>D:\o.zip</code> → <strong>Properties</strong> and tell me the exact <strong>Size in bytes</strong> (not “Size on disk”). If the fresh download has a different byte count, we&#39;ve essentially proven truncation immediately.</p>
+<p>So this screenshot moves us from “maybe Windows can&#39;t unzip a huge file” to <strong>“the first downloaded ZIP appears physically incomplete or malformed.”</strong> That&#39;s a much narrower problem to solve.</p>
+</div></article><article id="m-1e175fcc-c2b1-4597-b289-4c686d923229" class="message user"><p class="meta"><strong>Andrew / user</strong> · C119-M00022 · 2026-09-04T07:13:55.953000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 4c0dc15f-42d7-4019-8c02-885181dd9bd4.png</p><div class="bubble"><p>the network is fine, but the latest attempt triggered this and got to 7,908,607kb. I will delete both copies and try again.</p>
+</div></article><article id="m-26427bb7-f7ea-4222-8ec9-22d1ff0ba352" class="message assistant"><p class="meta"><strong>Assistant</strong> · C119-M00023 · 2026-09-04T07:13:57.496034-04:00 · active path</p><div class="bubble"><p>Yes, trying one clean download again makes sense. The second attempt is actually useful evidence: it reached about <strong>7.9 GB</strong> before the browser reported <strong>“Couldn&#39;t download – Network issue.”</strong> That suggests the earlier ~4 GB <code>o.zip</code> very likely was an incomplete download, which explains 7-Zip&#39;s <strong>“Unexpected end of data.”</strong></p>
+<p>One change: <strong>you don&#39;t need to delete both failed copies first</strong> unless you need the disk space. They can be useful for comparing byte sizes, although neither should be treated as authoritative. If you do delete them, that&#39;s fine—we already know they were incomplete.</p>
+<p>For the next attempt, I&#39;d do three things: download to a local drive with plenty of free space, avoid sleep/hibernation while it runs, and <strong>do not rename/move/open the <code>.crdownload</code>/partial file while downloading</strong>. Once the browser says the download is fully complete, check its exact size before trying extraction.</p>
+<p>The fact that attempt #2 reached ~7.9 GB also tells us something important: <strong>the completed export is probably substantially larger than the ~4 GB archive we were troubleshooting.</strong> So the first copy was almost certainly truncated rather than merely incompatible with Explorer.</p>
+<p>If attempt #3 completes, our next move should be:</p>
+<p><strong>7-Zip → Test archive first.</strong></p>
+<p>Don&#39;t extract it yet. Send me the Test result. If it says <strong>“No errors”</strong>, then we extract and move on to your machine-readable conversation-summary workflow.</p>
+<p>If the third download fails again—especially around a different byte count—I would stop using repeated browser downloads and troubleshoot the <strong>large-file delivery/download mechanism</strong> instead. We shouldn&#39;t burn time repeatedly pulling an ~8+ GB export.</p>
+</div></article><article id="m-803efdf3-a29a-4265-a8ab-7180f98aaf01" class="message user"><p class="meta"><strong>Andrew / user</strong> · C119-M00024 · 2026-09-04T10:39:44.065000-04:00 · active path</p><p class="note">Attachment references: project_history.zip</p><div class="bubble"><p>ok, i have everything needed to update the github project_history folder with updated chat logs. first, here is the current github project_history folder. take a moment to reflect on how it is organized and the quality of the presentations/documentation. this is the standard we are shooting for, but updated with latest information.</p>
+</div></article><article id="m-d463b5de-f90a-46e1-917e-4d21171cb6e0" class="message assistant"><p class="meta"><strong>Assistant</strong> · C119-M00025 · 2026-09-04T10:50:53.961233-04:00 · active path</p><div class="bubble"><h2>Baseline review complete</h2>
+<p>I extracted and reviewed the full <code>project_history</code> archive, including the landing pages, navigation documents, inventories, five human-readable transcripts, five JSONL companions, and source-provenance records—not merely the ZIP directory listing. I will treat this as the <strong>presentation and documentation baseline</strong> for the updated history. [export reference: filecite | turn8file0 | L1-L4]</p>
+<p>This is a strong public-history design. Its quality comes less from visual ornamentation and more from disciplined information architecture, traceability, and restraint.</p>
+<h2>Why the current organization works</h2>
+<h3>1. It has an effective two-level entry structure</h3>
+<p>The root <code>project_history/README.md</code> is intentionally brief. It explains the purpose of the area, points to the dated archive, and establishes the authority hierarchy before a reviewer enters the detailed material.</p>
+<p>The dated folder then functions as a self-contained publication:</p>
+<pre><code class="language-text">project_history/
+├── README.md
+└── chatgpt_logs_through_2026-08-12/
+    ├── README.md
+    ├── CONVERSATION_INDEX.csv
+    ├── CONVERSATION_INDEX.json
+    ├── PROJECT_CHRONOLOGY.md
+    ├── DECISION_AND_MILESTONE_INDEX.md
+    ├── NAVIGATION_AND_SEARCH_GUIDE.md
+    ├── ARCHIVE_SCOPE_AND_GOVERNANCE.md
+    ├── FORMAT_AND_PROVENANCE.md
+    ├── SANITIZATION_AND_PUBLICATION_REPORT.md
+    ├── SOURCE_FILE_INVENTORY.csv
+    ├── SOURCE_FILE_INVENTORY.json
+    ├── conversations/
+    ├── machine_readable/
+    └── source_provenance/
+</code></pre>
+<p>That hierarchy is intuitive for several audiences:</p>
+<ul>
+<li>a recruiter or executive can start with the README and chronology;</li>
+<li>a technical reviewer can navigate by stage, gate, or program number;</li>
+<li>an auditor can inspect provenance and publication controls;</li>
+<li>an analyst can use the CSV, JSON, and JSONL representations.</li>
+</ul>
+<h3>2. Human-readable and machine-readable records are treated as peers</h3>
+<p>Each of the five conversations has:</p>
+<ul>
+<li>a GitHub-native Markdown transcript;</li>
+<li>a line-oriented JSONL companion;</li>
+<li>a row in both the CSV and JSON conversation indexes;</li>
+<li>explicit source and published-message counts;</li>
+<li>a concise scope statement.</li>
+</ul>
+<p>That is materially better than publishing only raw exports or only executive summaries. It preserves reviewability without giving up deterministic processing.</p>
+<p>I also confirmed that the indexed visible-message counts reconcile exactly to both the Markdown message headings and JSONL row counts:</p>
+<pre><code class="language-text">Published visible messages     1,344
+Markdown transcript messages   1,344
+JSONL records                  1,344
+Count mismatches                   0
+</code></pre>
+<p>The source-message ordering and post-sanitization published-message numbering are also contiguous and internally consistent.</p>
+<h3>3. The transcripts are presented professionally</h3>
+<p>Each transcript opens with:</p>
+<ol>
+<li>a clear public-publication status notice;</li>
+<li>a metadata table;</li>
+<li>a scope summary;</li>
+<li>numbered messages with role and UTC timestamp;</li>
+<li>a link to the machine-readable companion.</li>
+</ol>
+<p>The individual message format is simple and durable:</p>
+<pre><code class="language-text">### 0001 · User · `timestamp`
+
+Message text
+
+---
+
+### 0002 · Assistant · `timestamp`
+</code></pre>
+<p>That works well on GitHub because it is readable without custom rendering, searchable with ordinary browser tools, and resistant to format obsolescence.</p>
+<h3>4. The archive separates transparency from authority</h3>
+<p>This is one of its strongest qualities.</p>
+<p>The documentation repeatedly establishes that conversation history may explain how the project developed but cannot supersede:</p>
+<pre><code class="language-text">Accepted SQL and package identities
+→ formal validation, audit, and acceptance
+→ current governed documentation
+→ publication documentation
+→ conversation history
+</code></pre>
+<p>That prevents a common portfolio error: treating a historical ChatGPT statement as though it were current technical truth.</p>
+<p>The same discipline appears in the synthetic/non-production boundary. The archive does not inflate the project into production deployment, empirical model calibration, autonomous decisioning, or lending authority.</p>
+<h3>5. Provenance and sanitization are first-class documentation</h3>
+<p>The current package records:</p>
+<ul>
+<li>the original source archive identity;</li>
+<li>every source export’s path, byte count, SHA-256, format, and role;</li>
+<li>which formats were canonical versus redundant;</li>
+<li>the derivation method;</li>
+<li>published and excluded record counts;</li>
+<li>duplicate-message statistics;</li>
+<li>redaction categories and counts;</li>
+<li>publication limitations.</li>
+</ul>
+<p>This gives the public history an evidentiary character rather than making it look like a manually curated marketing narrative.</p>
+<h3>6. Navigation is proportionate to the transcript volume</h3>
+<p>The five Markdown transcripts total more than 136,000 lines, so ordinary sequential reading would be impractical. The combination of:</p>
+<ul>
+<li>project chronology;</li>
+<li>decision and milestone index;</li>
+<li>conversation index;</li>
+<li>recommended search terms;</li>
+<li>branch-overlap disclosure;</li>
+</ul>
+<p>is therefore essential, not decorative.</p>
+<p>The current design understands that a history archive should help reviewers <strong>locate the relevant development event</strong>, rather than requiring them to consume every message.</p>
+<h2>Structural quality check</h2>
+<p>The current archive is clean:</p>
+<pre><code class="language-text">ZIP entries                         28
+Duplicate ZIP paths                  0
+Unsafe/traversal paths               0
+ZIP CRC errors                       0
+
+Relative Markdown links             30
+Broken relative links                0
+
+Conversation pairs                   5
+Markdown/JSONL count mismatches       0
+Index count mismatches                0
+Published-index discontinuities       0
+</code></pre>
+<p>That confirms the folder is not only well written; it is structurally controlled.</p>
+<h2>Standard to preserve in the updated version</h2>
+<p>The successor should preserve these presentation principles:</p>
+<ol>
+<li><strong>Keep the root landing page concise.</strong> It should orient, not duplicate the entire archive README.</li>
+<li><strong>Use a dated, self-contained archive folder.</strong> Every archive should remain understandable without relying on undocumented external context.</li>
+<li><strong>Retain both Markdown and JSONL.</strong> Neither should be treated as secondary.</li>
+<li><strong>Maintain paired CSV/JSON indexes and inventories.</strong></li>
+<li><strong>Preserve visible chronological order and branch relationships.</strong></li>
+<li><strong>Separate chronology, milestones, navigation, governance, provenance, and sanitization into distinct documents.</strong></li>
+<li><strong>Keep history subordinate to accepted technical authority.</strong></li>
+<li><strong>State exclusions and limitations plainly.</strong></li>
+<li><strong>Use GitHub-native presentation rather than requiring custom software.</strong></li>
+<li><strong>Do not publish raw exports, private evidence, local paths, credentials, or unrelated personal conversations.</strong></li>
+</ol>
+<h2>How the latest update should be integrated</h2>
+<p>The August 12 archive should not be silently overwritten. It is an identifiable historical publication and should remain available as the predecessor snapshot.</p>
+<p>The cleaner successor structure is:</p>
+<pre><code class="language-text">project_history/
+├── README.md
+├── chatgpt_logs_through_2026-08-12/
+└── chatgpt_logs_through_[NEW_CUTOFF]/
+</code></pre>
+<p>The root README should identify the new archive as current while retaining the August 12 archive as historical. That approach preserves prior public bytes and makes the update genuinely version-separated.</p>
+<p>The new archive should carry forward the same public structure while updating:</p>
+<ul>
+<li>the at-a-glance totals;</li>
+<li>conversation and branch inventory;</li>
+<li>chronology beyond August 12;</li>
+<li>decision and milestone index;</li>
+<li>search vocabulary;</li>
+<li>source inventories and hashes;</li>
+<li>sanitization and duplicate statistics;</li>
+<li>public authority explanation;</li>
+<li>the relationship among R17, R19, R23, R26, Power BI P01–P04, the P05/P06 publication hold, integration audit, and republication.</li>
+</ul>
+<p>Those updates must be derived from the supplied machine-readable records rather than reconstructed from our recollection of the chats.</p>
+<h2>Bounded improvements over the existing baseline</h2>
+<p>The public-facing design should remain familiar. I would improve the controls behind it without making the folder feel more complicated:</p>
+<ul>
+<li>add an output-file manifest with byte count and SHA-256 for every published artifact;</li>
+<li>add an explicit source-message-to-published-message mapping or deterministic transformation register;</li>
+<li>classify cross-conversation duplicates rather than reporting only aggregate duplicate counts;</li>
+<li>record exact redaction classes and replacement conventions;</li>
+<li>validate all Markdown links, JSONL schemas, counts, timestamps, ordering, and UTF-8 encoding in one reproducible validation step;</li>
+<li>produce a clean-extraction and deterministic-replay report for the final archive.</li>
+</ul>
+<p>One presentation issue deserves controlled treatment: the existing transcripts preserve numerous ChatGPT-native <code>filecite</code> markers. They reflect the visible source record but do not resolve as ordinary GitHub links. We should not silently remove or reinterpret them. The updated publication should either preserve them with a clear provenance note or apply a documented deterministic normalization such as “original conversation file citation,” with the original form retained in the machine-readable provenance.</p>
+<h2>Overall assessment</h2>
+<p>The current folder is <strong>high-quality, disciplined, and appropriately understated</strong>. It presents the development record as governed project evidence rather than promotional content. Its strongest characteristics are:</p>
+<pre><code class="language-text">Clear entry hierarchy
+Strong navigation
+Exact dual-format representation
+Transparent authority boundary
+Explicit sanitization
+Auditable provenance
+GitHub-native readability
+Honest limitations
+</code></pre>
+<p>That is the correct standard for the expanded publication. The successor should look like a natural, more mature continuation of this archive—not a redesigned or stylistically unrelated documentation set.</p>
+<p>The current baseline is now understood and preserved as the quality floor. The next machine-readable source package can be evaluated against this exact structure.</p>
+</div></article><article id="m-3f2a9050-f6f6-4e30-b8ba-0fac1d033c9f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C119-M00026 · 2026-09-04T11:08:31.968000-04:00 · active path</p><p class="note">Attachment references: ChatGPT_Log_PostgreSQL_M1.14_Execution_JSON.json; ChatGPT_Log_PostgreSQL_M1.14_Execution_CSV.csv</p><div class="bubble"><p>ok, now I will start passing you chats that have had an update since our last 8/12/26 load. there will be overlap. I will pass the full chat to you if there has been an update since 8/12/26 so as not to lose context.  This first chat relates to 03_postgresql_m1_14_execution.md, 03_postgresql_m1_14_executionjsonl. it was started prior to 8/12/26 but had updates up to 8/16/26. Focus first in this effort on updating these two specific files and then note the source and details necessary to update the combined project history documentation once we are done ingesting new chat detail.</p>
+</div></article><article id="m-4d9eb16d-b81a-4c45-83bb-a906d8c96a3b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C119-M00027 · 2026-09-04T11:24:14.886642-04:00 · active path</p><div class="bubble"><h1>Conversation 03 refresh complete</h1>
+<p>I updated the two requested files for <strong>PostgreSQL M1.14 Execution</strong> through the conversation’s final August 16 activity. The refreshed source identifies the same conversation title and creation timestamp, with an updated-through timestamp of <code>2026-08-16T17:15:51.823Z</code>. [export reference: filecite | turn10file0 | L2-L10]</p>
+<h2>Updated files</h2>
+<p>Download the updated human-readable Markdown transcript (historical reference: <code>sandbox:[session]/project_history_03_update/conversations/03_postgresql_m1_14_execution.md</code>; referenced bytes not established here)</p>
+<p>Download the updated machine-readable JSONL transcript (historical reference: <code>sandbox:[session]/project_history_03_update/machine_readable/03_postgresql_m1_14_execution.jsonl</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Markdown
+Bytes                 1,265,010
+Lines                    39,297
+Messages                    407
+SHA-256
+f907fe1811dd11141a3adf7f54055fe93f4d2ce7f95d5c7e88699557c76afa70
+
+JSONL
+Bytes                 1,366,170
+Rows                        407
+SHA-256
+d48bee092898a79e3b15bec174105c150f301dcc33405d82f8c9acb8042ef57c
+</code></pre>
+<h2>Source reconciliation</h2>
+<p>The refreshed JSON and CSV were independently reconciled:</p>
+<pre><code class="language-text">Source records                    1,264
+Visible messages                    407
+Internal-thought records             703
+Reasoning-recap records              154
+Classification total               1,264
+
+Prior source records                 903
+Prior published messages             258
+New source records                   361
+New published messages               149
+New thought records                  145
+New reasoning recaps                  67
+</code></pre>
+<p>The JSON and CSV contain the same 1,264 ordered records. Fifteen text fields differ only because the JSON retains CRLF line endings while the CSV representation uses LF; there are no substantive source mismatches.</p>
+<p>The newly published interval is:</p>
+<pre><code class="language-text">First new visible message
+2026-08-13T13:58:53.594Z
+
+Last new visible message
+2026-08-16T17:04:15.982Z
+</code></pre>
+<p>The conversation ends with several user intake messages for evaluating the five successor workstreams. Because no visible assistant disposition follows those messages in this export, they are preserved as open intake—not misrepresented as completed review.</p>
+<h2>Non-regression treatment</h2>
+<p>I preserved the predecessor publication exactly:</p>
+<pre><code class="language-text">Existing JSONL lines 1–258              BYTE-FOR-BYTE EXACT
+Existing Markdown messages 0001–0258    BYTE-FOR-BYTE EXACT
+Existing source indexes                 PRESERVED
+Existing published indexes              PRESERVED
+New published indexes                   0259–0407 CONTIGUOUS
+</code></pre>
+<p>No previously published message was rewritten, renumbered, removed, or re-sanitized.</p>
+<p>The refreshed export assigns the conversation source ID <code>conv_71</code>, while the existing public archive uses <code>conv_73</code>. I retained <strong><code>conv_73</code> as the stable public identity</strong> and documented the <code>conv_71 → conv_73</code> source mapping. The mapping is supported by the identical title and creation timestamp, the exact 903-record predecessor boundary, and matching source indexes, roles, and timestamps for all 258 prior visible messages.</p>
+<h2>Sanitization applied to the new material</h2>
+<pre><code class="language-text">Temporary session links redacted      92
+Local Windows paths redacted          52
+Session filesystem paths               0
+Email addresses                        0
+Telephone numbers                      0
+</code></pre>
+<p>Final scans found no unredacted sandbox links, mounted-container paths, absolute Windows paths, email-address patterns, telephone-number patterns, or internal thought/reasoning payloads. Public GitHub URLs and relevant project identifiers remain intact.</p>
+<h2>Updated scope summary</h2>
+<p>The replacement transcript now uses:</p>
+<blockquote>
+<p>Execution-centered record spanning M1.14 through M1.17/G2, Module 2/G3 construction and GitHub release, M1.17 clean-build recovery, publication refinement, and the transition into Power BI, campaign-scale, Module 3, independent-audit, and marketing workstreams.</p>
+</blockquote>
+<h2>Deferred combined-documentation record</h2>
+<p>I also prepared the exact information needed later for the archive-wide update, without prematurely modifying the combined documentation. It includes:</p>
+<ul>
+<li>the replacement <code>CONVERSATION_INDEX</code> row;</li>
+<li>source-file identities and SHA-256 values;</li>
+<li>sanitization-count deltas;</li>
+<li>candidate chronology and milestone entries;</li>
+<li>recommended search terms;</li>
+<li>the stable conversation-ID mapping;</li>
+<li>authority treatment for overlapping specialist chats;</li>
+<li>the complete list of combined documents that will require regeneration.</li>
+</ul>
+<p>Open the combined-documentation update handoff (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_03_POSTGRESQL_M1_14_UPDATE_R1_20260904/support/03_COMBINED_DOCUMENTATION_UPDATE_HANDOFF.md</code>; referenced bytes not established here)</p>
+<p>A particularly important control is recorded there: this chat should remain the <strong>origin and coordination record</strong> for the Power BI, Campaign Scale, Module 3, Independent Audit, and Marketing handoffs. The specialist chats should become the primary sources for their substantive downstream results. Exact overlap should be retained and classified, not silently deleted or counted as separate accomplishments.</p>
+<h2>Controlled update package</h2>
+<p>Download the complete Conversation 03 update package (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_03_POSTGRESQL_M1_14_UPDATE_R1_20260904.zip</code>; referenced bytes not established here)</p>
+<p>Download the package SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_03_POSTGRESQL_M1_14_UPDATE_R1_20260904.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Open the package start guide (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_03_POSTGRESQL_M1_14_UPDATE_R1_20260904/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Open the detailed transcript validation report (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_03_POSTGRESQL_M1_14_UPDATE_R1_20260904/support/03_UPDATE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<p>Open the machine-readable build summary (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_03_POSTGRESQL_M1_14_UPDATE_R1_20260904/support/03_UPDATE_BUILD_SUMMARY.json</code>; referenced bytes not established here)</p>
+<p>Open the ZIP-validation report (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_03_POSTGRESQL_M1_14_UPDATE_R1_20260904_ZIP_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package
+MSBF_PROJECT_HISTORY_03_POSTGRESQL_M1_14_UPDATE_R1_20260904.zip
+
+Bytes
+751,268
+
+SHA-256
+2d7d2f4df207571434688c48562914591487e476e9c4a0ca488ef2faf022ac70
+
+ZIP entries                 8
+Manifest rows               6
+ZIP CRC                     PASS
+Duplicate paths             0
+Unsafe paths                0
+Deterministic ZIP replay    BYTE-FOR-BYTE EXACT
+</code></pre>
+<p>The package contains a <code>COPY_INTO_ARCHIVE_ROOT</code> directory with only the two copy-ready replacements. These are intended for the forthcoming <strong>successor dated archive</strong>; the existing <code>chatgpt_logs_through_2026-08-12</code> folder should remain preserved as the historical snapshot.</p>
+</div></article><article id="m-58344579-4c79-480d-88c0-338f2a0cd851" class="message user"><p class="meta"><strong>Andrew / user</strong> · C119-M00028 · 2026-09-04T11:28:22.323000-04:00 · active path</p><p class="note">Attachment references: ChatGPT_Log_Branch_PostgreSQL_M1.14_Execution_JSON.json; ChatGPT_Log_Branch_PostgreSQL_M1.14_Execution_CSV.csv; ChatGPT_Log_MSBF_Power_BI_Executive_Portfolio_Intelligence_CSV.csv; ChatGPT_Log_MSBF_Module_3_Enterprise_Portfolio_Intelligence_JSON.json; ChatGPT_Log_MSBF_Module_3_Enterprise_Portfolio_Intelligence_CSV.csv; ChatGPT_Log_MSBF_Campaign_Scale_750_2500_25000_JSON.json; ChatGPT_Log_MSBF_Campaign_Scale_750_2500_25000_CSV.csv; ChatGPT_Log_MSBF_Independent_Cross_Workstream_Audit_&amp;_Assurance_JSON.json; ChatGPT_Log_MSBF_Independent_Cross_Workstream_Audit_&amp;_Assurance_CSV.csv; ChatGPT_Log_MSBF_LinkedIn_&amp;_GitHub_Marketing_Campaign_JSON.json; ChatGPT_Log_MSBF_LinkedIn_&amp;_GitHub_Marketing_Campaign_CSV.csv; ChatGPT_Log_MSBF_Power_BI_Executive_Portfolio_Intelligence_JSON.json</p><div class="bubble"><p>That chat was branched on 8/16. Here is it&#39;s branch chat showing updates up to 8/28. During that time, I also had 5 parallel chats focused on different aspects of the MSBF project (power bi; module 3 development; campaign scale; marketing; audit). The power bi has additional part2/3 chats that I will pass along in subsequent prompts.</p>
+</div></article><article id="m-15904482-7b02-4efe-adda-e80c2dbeb85a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C119-M00029 · 2026-09-04T11:58:24.509221-04:00 · active path</p><div class="bubble"><h1>Branch and parallel-workstream ingestion complete</h1>
+<p>I processed the complete branch conversation and all five initial parallel-workstream conversations into the same paired Markdown/JSONL format used by the existing <code>project_history</code> archive.</p>
+<p>The source identities and available date ranges are:</p>
+<ul>
+<li><strong>Branch · PostgreSQL M1.14 Execution</strong> — created August 16 and updated through August 28. [export reference: filecite | turn10file0 | L2-L10]</li>
+<li><strong>Power BI Executive Portfolio Intelligence — Part 1</strong> — updated through August 25. [export reference: filecite | turn10file5 | L2-L10]</li>
+<li><strong>Module 3 Enterprise Portfolio Intelligence</strong> — updated through August 28. [export reference: filecite | turn10file1 | L2-L10]</li>
+<li><strong>Campaign Scale 750 → 2,500 → 25,000</strong> — updated through August 28. [export reference: filecite | turn10file2 | L2-L10]</li>
+<li><strong>Independent Cross-Workstream Audit &amp; Assurance</strong> — the supplied source extends beyond the other chats, through September 1. [export reference: filecite | turn10file3 | L2-L10]</li>
+<li><strong>LinkedIn &amp; GitHub Marketing Campaign</strong> — updated through August 20. [export reference: filecite | turn10file4 | L2-L10]</li>
+</ul>
+<p>The original PostgreSQL M1.14 conversation remains the parent lineage and is separately preserved through August 16. [export reference: filecite | turn10file6 | L2-L10]</p>
+<h2>Batch result</h2>
+<pre><code class="language-text">New conversations                         6
+Source records                        2,536
+Published visible messages              917
+Excluded internal-thought records      1,277
+Excluded reasoning-recap records         342
+Markdown transcripts                       6
+JSONL companions                           6
+Total copy-ready transcript files         12
+</code></pre>
+<p>With the original five-conversation archive, the completed Conversation 03 refresh, and this batch, the <strong>interim successor corpus</strong> is now:</p>
+<pre><code class="language-text">Conversations                            11
+Source records                        7,566
+Published visible messages            2,410
+Excluded internal records             5,156
+</code></pre>
+<p>Those totals remain provisional because Power BI Parts 2 and 3 and any later continuation chats have not yet been incorporated.</p>
+<h2>Branch treatment</h2>
+<p>I did <strong>not</strong> append the branch to <code>03_postgresql_m1_14_execution.md</code>.</p>
+<p>That would have been structurally incorrect because the branch is not a simple continuation:</p>
+<pre><code class="language-text">Branch visible messages                          415
+Exact role-and-text overlap with Conversation 03 403
+Branch-only visible messages                      12
+Conversation-03-only visible messages              4
+Exact common visible prefix                      228
+Exact common source-record prefix                393
+</code></pre>
+<p>The full branch is therefore retained as a self-contained Conversation 06, consistent with the existing archive’s treatment of <code>Branch · Merchant POS Lending Simulator</code>.</p>
+<p>The overlap is classified as:</p>
+<pre><code class="language-text">PARENT_BRANCH_SHARED_LINEAGE
+</code></pre>
+<p>Conversation 03 remains the primary source for the original execution and publication lineage. Conversation 06 is the primary source for its branch-only coordination, terminology clarification, and August 28 transition into the Module 1/2 diagnostic-remediation effort.</p>
+<h2>Stable public identity treatment</h2>
+<p>The source-generated conversation IDs cannot safely serve as the new public IDs because they are not globally unique across the separately generated exports. For example, the Power BI source reports <code>conv_90</code>, but the current public archive already uses <code>conv_90</code> for <strong>WP3 Build Protocol</strong>.</p>
+<p>I assigned the following stable public identities:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Sequence</th>
+<th>Public ID</th>
+<th>Conversation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">06</td>
+<td><code>conv_91</code></td>
+<td>Branch · PostgreSQL M1.14 Execution</td>
+</tr>
+<tr>
+<td align="right">07</td>
+<td><code>conv_92</code></td>
+<td>Power BI Executive Portfolio Intelligence — Part 1</td>
+</tr>
+<tr>
+<td align="right">08</td>
+<td><code>conv_93</code></td>
+<td>Module 3 Enterprise Portfolio Intelligence</td>
+</tr>
+<tr>
+<td align="right">09</td>
+<td><code>conv_94</code></td>
+<td>Campaign Scale 750 → 2,500 → 25,000</td>
+</tr>
+<tr>
+<td align="right">10</td>
+<td><code>conv_95</code></td>
+<td>Independent Cross-Workstream Audit &amp; Assurance</td>
+</tr>
+<tr>
+<td align="right">11</td>
+<td><code>conv_96</code></td>
+<td>LinkedIn &amp; GitHub Marketing Campaign</td>
+</tr>
+</tbody></table>
+<p>The complete source-to-public mapping is retained in the package.</p>
+<h2>Source reconciliation</h2>
+<p>The JSON export is the canonical structured source for each conversation. The CSV is used to verify source ordering, roles, timestamps, and text.</p>
+<p>Five source pairs are substantively identical after newline normalization. The Power BI pair has one documented source exception:</p>
+<pre><code class="language-text">Power BI source message             350
+JSON treatment                      CANONICAL
+CSV variance                        One extra leading apostrophe
+Silent correction                   NO
+</code></pre>
+<p>The JSON text was published, and the discrepancy is explicitly recorded in the Power BI transcript validation report.</p>
+<p>The publication process also excluded all records structurally identified as internal thoughts or reasoning recaps and applied deterministic redaction of temporary links, local/session paths, contact information, and eight Power BI security-binding values.</p>
+<h2>Copy-ready transcripts</h2>
+<table>
+<thead>
+<tr>
+<th>Conversation</th>
+<th>Markdown</th>
+<th>JSONL</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>06 — Branch PostgreSQL M1.14</td>
+<td>Open Markdown (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/COPY_INTO_ARCHIVE_ROOT/conversations/06_branch_postgresql_m1_14_execution.md</code>; referenced bytes not established here)</td>
+<td>Download JSONL (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/COPY_INTO_ARCHIVE_ROOT/machine_readable/06_branch_postgresql_m1_14_execution.jsonl</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>07 — Power BI Part 1</td>
+<td>Open Markdown (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/COPY_INTO_ARCHIVE_ROOT/conversations/07_msbf_power_bi_executive_portfolio_intelligence_part_1.md</code>; referenced bytes not established here)</td>
+<td>Download JSONL (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/COPY_INTO_ARCHIVE_ROOT/machine_readable/07_msbf_power_bi_executive_portfolio_intelligence_part_1.jsonl</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>08 — Module 3</td>
+<td>Open Markdown (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/COPY_INTO_ARCHIVE_ROOT/conversations/08_msbf_module_3_enterprise_portfolio_intelligence.md</code>; referenced bytes not established here)</td>
+<td>Download JSONL (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/COPY_INTO_ARCHIVE_ROOT/machine_readable/08_msbf_module_3_enterprise_portfolio_intelligence.jsonl</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>09 — Campaign Scale</td>
+<td>Open Markdown (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/COPY_INTO_ARCHIVE_ROOT/conversations/09_msbf_campaign_scale_750_2500_25000.md</code>; referenced bytes not established here)</td>
+<td>Download JSONL (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/COPY_INTO_ARCHIVE_ROOT/machine_readable/09_msbf_campaign_scale_750_2500_25000.jsonl</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>10 — Independent Audit</td>
+<td>Open Markdown (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/COPY_INTO_ARCHIVE_ROOT/conversations/10_msbf_independent_cross_workstream_audit_assurance.md</code>; referenced bytes not established here)</td>
+<td>Download JSONL (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/COPY_INTO_ARCHIVE_ROOT/machine_readable/10_msbf_independent_cross_workstream_audit_assurance.jsonl</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>11 — Marketing</td>
+<td>Open Markdown (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/COPY_INTO_ARCHIVE_ROOT/conversations/11_msbf_linkedin_github_marketing_campaign.md</code>; referenced bytes not established here)</td>
+<td>Download JSONL (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/COPY_INTO_ARCHIVE_ROOT/machine_readable/11_msbf_linkedin_github_marketing_campaign.jsonl</code>; referenced bytes not established here)</td>
+</tr>
+</tbody></table>
+<h2>Combined-documentation records prepared</h2>
+<p>I have not prematurely regenerated the aggregate README, chronology, indexes, or sanitization report. Instead, the package contains the exact working records needed to do that after the remaining conversations arrive:</p>
+<ul>
+<li>conversation-index additions;</li>
+<li>source-file identities and SHA-256 values;</li>
+<li>source-to-public identity mappings;</li>
+<li>redaction totals;</li>
+<li>parent/branch overlap analysis;</li>
+<li>cross-workstream relay classifications;</li>
+<li>candidate chronology and milestone entries;</li>
+<li>authority and source-owner rules;</li>
+<li>recommended search vocabulary;</li>
+<li>the complete list of combined documents requiring regeneration.</li>
+</ul>
+<p>Key supporting records:</p>
+<p>Open the combined-documentation update handoff (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/support/COMBINED_DOCUMENTATION_UPDATE_HANDOFF.md</code>; referenced bytes not established here)</p>
+<p>Open the chronology and milestone candidates (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/support/CHRONOLOGY_AND_MILESTONE_CANDIDATES.md</code>; referenced bytes not established here)</p>
+<p>Open the overlap and duplicate-classification report (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/support/CROSS_CONVERSATION_OVERLAP_REPORT.md</code>; referenced bytes not established here)</p>
+<p>Download the conversation-index additions (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/support/CONVERSATION_INDEX_ADDITIONS.csv</code>; referenced bytes not established here)</p>
+<p>Download the source-file inventory additions (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/support/SOURCE_FILE_INVENTORY_ADDITIONS.csv</code>; referenced bytes not established here)</p>
+<p>Download the source-to-public identity map (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/support/SOURCE_TO_PUBLIC_IDENTITY_MAP.csv</code>; referenced bytes not established here)</p>
+<p>Download the redaction summary (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/support/REDACTION_SUMMARY.csv</code>; referenced bytes not established here)</p>
+<p>One final-publication issue is expressly deferred rather than ignored: the transcripts contain source-visible repository-relative links and ChatGPT-native file-citation markers copied inside historical messages. During repository integration, those targets must be checked against the final physical repository tree and either rewritten from the nested transcript location or neutralized deterministically. They are not being treated as archive navigation yet.</p>
+<h2>Controlled batch package</h2>
+<p>Download the complete Conversations 06–11 ingestion package (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904.zip</code>; referenced bytes not established here)</p>
+<p>Download the package SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Open the ZIP-validation report (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904_ZIP_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<p>Open the package start guide (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package
+MSBF_PROJECT_HISTORY_06_11_WORKSTREAM_INGESTION_R1_20260904.zip
+
+Bytes
+1,605,914
+
+SHA-256
+e57513d3d0e531afd13770b9489bc4180a292ded05d2375d72d61f39fa51ff80
+
+ZIP entries                         29
+Manifest rows                       27
+Outer CRC                           PASS
+Duplicate paths                      0
+Unsafe paths                         0
+Maximum simulated package path     162
+Source/extraction mismatches          0
+Published messages validated        917
+Deterministic archive replay        BYTE-FOR-BYTE EXACT
+</code></pre>
+<h2>Current project-history state</h2>
+<pre><code class="language-text">Historical through-2026-08-12 archive        PRESERVED
+Conversation 03 refreshed through 08-16      COMPLETE
+Conversation 06 branch                       COMPLETE
+Power BI Part 1                              COMPLETE
+Module 3                                     COMPLETE
+Campaign Scale                               COMPLETE
+Independent Audit through 09-01              COMPLETE
+Marketing through 08-20                      COMPLETE
+
+Power BI Part 2                              PENDING INBOUND
+Power BI Part 3                              PENDING INBOUND
+Other later continuation chats               PENDING AS SUPPLIED
+Combined successor documentation             DEFERRED
+Final archive cutoff                         OPEN
+Historical archive overwritten               FALSE
+</code></pre>
+<p>The next controlled input is the complete Power BI Part 2 JSON/CSV pair.</p>
+</div></article><article id="m-0b515bde-34fc-4a1c-9222-a0a1ddbbe2ab" class="message user"><p class="meta"><strong>Andrew / user</strong> · C119-M00030 · 2026-09-04T12:05:03.728000-04:00 · active path</p><p class="note">Attachment references: ChatGPT_Log_MSBF_Power_BI_Executive_Portfolio_Intelligence_Part_2_POST_DOWNLOAD_CONVERSATION.pdf; ChatGPT_Log_Branch_MSBF_Power_BI_Executive_Portfolio_Intelligence_Part_2_POST_DOWNLOAD_CONVERSATION.pdf; ChatGPT_Log_Branch_MSBF_Module_1_&amp;_2_Strategy_Correction_Remediation_&amp;_Republishing_Part_2_POST_DOWNLOAD_CONVERSATION.pdf; ChatGPT_Log_MSBF_Module_1_&amp;_2_Strategy_Correction_Remediation_&amp;_Republishing_Part_2_POST_DOWNLOAD_CONVERSATION.pdf; ChatGPT_Log_Branch_MSBF_Power_BI_Executive_Portfolio_Intelligence_Part_3_POST_DOWNLOAD_CONVERSATION.pdf; ChatGPT_Log_MSBF_Module_1_&amp;_2_Strategy_Correction_Remediation_&amp;_Republishing_Part_3_POST_DOWNLOAD_CONVERSATION.pdf; ChatGPT_Log_MSBF_Power_BI_Executive_Portfolio_Intelligence_Part_2_JSON.json; ChatGPT_Log_MSBF_Power_BI_Executive_Portfolio_Intelligence_Part_2_CSV.csv; ChatGPT_Log_MSBF_Module_1_&amp;_2_Strategy_Correction_Remediation_&amp;_Republishing_JSON.json; ChatGPT_Log_MSBF_Module_1_&amp;_2_Strategy_Correction_Remediation_&amp;_Republishing_CSV.csv; ChatGPT_Log_Branch_MSBF_Module_1_&amp;_2_Strategy_Correction_Remediation_&amp;_Republishing_JSON.json; ChatGPT_Log_Branch_MSBF_Module_1_&amp;_2_Strategy_Correction_Remediation_&amp;_Republishing_CSV.csv; ChatGPT_Log_MSBF_Module_1_&amp;_2_Strategy_Correction_Remediation_&amp;_Republishing_Part_2_JSON.json; ChatGPT_Log_MSBF_Module_1_&amp;_2_Strategy_Correction_Remediation_&amp;_Republishing_Part_2_CSV.csv; ChatGPT_Log_MSBF_Independent_Cross_Workstream_Audit_&amp;_Assurance_POST_DOWNLOAD_CONVERSATION.pdf</p><div class="bubble"><p>Following that, the Power BI chat identified issues that required going back and correcting module 1/2 strategy. There are multiple parts to the power bi / strategy correction chats. There is also an interaction again with the independent audit chat. These interactions are captured in the json/csv format through when I performed the ChatGPT Data Export and in pdf for all history following that ChatGPT Data Export. This along with our chat history today in this chat represent the full history of MSBF ChatGPT interactions. Following ingestion of these latest artifacts, stop before proceeding to summarizing and finalizing the project history archive. We will work on the readme and all other project history archive artifacts in the next prompt.</p>
+</div></article><article id="m-fccc75d5-c09e-4e5c-b31d-1a5f080b9d13" class="message assistant"><p class="meta"><strong>Assistant</strong> · C119-M00031 · 2026-09-04T12:44:25.777984-04:00 · active path</p><div class="bubble"><h1>Final-source ingestion complete</h1>
+<p>I ingested the remaining structured exports, all post-export PDF continuations, and the boundary of today’s active Part 3 conversation. I stopped before reconstructing the final public transcripts or regenerating any combined <code>project_history</code> documentation.</p>
+<p>The structured sources now cover:</p>
+<ul>
+<li>Power BI Part 2 through its September 1 export boundary. [export reference: filecite | turn10file6 | L7-L10]</li>
+<li>Module 1/2 Strategy Correction Part 1 through August 30. [export reference: filecite | turn10file7 | L7-L10]</li>
+<li>Its divergent branch through August 30. [export reference: filecite | turn10file8 | L7-L10]</li>
+<li>Module 1/2 Strategy Correction Part 2 through September 1. [export reference: filecite | turn10file9 | L7-L10]</li>
+</ul>
+<p>The later material was supplied as image-only PDFs. For example, Power BI Part 2 contains 119 rendered pages, Module 1/2 Part 2 contains 62 pages, Power BI Part 3 contains 43 pages, and the focused Independent Audit continuation contains nine pages. [export reference: filecite | turn10file0 | L1-L8] [export reference: filecite | turn10file3 | L1-L8] [export reference: filecite | turn10file4 | L1-L8] [export reference: filecite | turn10file10 | L1-L8]</p>
+<h2>Ingestion result</h2>
+<pre><code class="language-text">Latest physical source files                 15
+
+Structured JSON/CSV pairs                     4
+Structured source records                 1,447
+Visible conversation records                630
+Internal thought/reasoning records          817
+
+Post-export PDF continuations                  7
+PDF pages                                    260
+Rendered pages                               260
+OCR page records                             260
+Missing or corrupt final renders               0
+
+Active Part 3 tail before this response
+User turns                                     6
+Assistant turns                                5
+Total visible turns                           11
+</code></pre>
+<p>The four JSON files remain the canonical structured sources. Their CSV companions reconcile on record count, ordering, role, and timestamp. Three pairs are text-equivalent after newline normalization. The parent and branch Module 1/2 exports each have one documented JSON-versus-CSV text variance at source message 93; JSON remains canonical.</p>
+<h2>PDF treatment</h2>
+<p>Every PDF page was physically rendered and indexed. OCR was generated only to make the post-export material searchable and usable during the final build.</p>
+<pre><code class="language-text">Original PDF       Canonical source
+Rendered page      Visual verification source
+OCR page text      Retrieval aid only
+</code></pre>
+<p>The OCR derivatives have <strong>not</strong> been treated as exact message text without qualification. The final transcript build will consult the original page whenever punctuation, identifiers, attachment names, amounts, or <code>0/O</code> and <code>1/I</code> distinctions matter.</p>
+<h2>Lineage and overlap controls established</h2>
+<p>The ingestion identified and recorded the material overlap classes before any final transcript merge:</p>
+<pre><code class="language-text">M1/M2 strategy parent records             364
+M1/M2 strategy branch records             354
+Exact shared structured prefix            345
+
+Parent visible messages                    87
+Branch visible messages                    83
+Exact shared visible prefix                82
+</code></pre>
+<p>Both remain separate conversations. Their overlap is classified as <code>PARENT_BRANCH_SHARED_LINEAGE</code>, not deleted duplication.</p>
+<p>The 62-page Module 1/2 Part 2 PDF begins by repeating the final structured user message—source message 163. The final merge must retain that message once and append the PDF-only response and subsequent exchanges.</p>
+<p>The handoff branches and both Part 3 launch conversations embed predecessor summaries or copied remainder text inside new user messages. Those are classified as <code>HANDOFF_EMBEDDED_PARENT_CONTEXT</code>. They remain visible in their own conversations while being identified as overlap in archive-wide duplicate reporting.</p>
+<p>The existing Independent Audit Conversation 10 will receive the nine-page R26 focused-audit continuation. It will not be assigned a new conversation identity.</p>
+<h2>Provisional conversation allocation</h2>
+<p>The staging register reserves, without yet finalizing, the next conversation range:</p>
+<pre><code class="language-text">12 / conv_97     Power BI Part 2
+13 / conv_98     M1/M2 Strategy Correction Part 1
+14 / conv_99     Branch of Strategy Correction Part 1
+15 / conv_100    M1/M2 Strategy Correction Part 2
+16 / conv_101    Power BI Part 2 handoff branch
+17 / conv_102    M1/M2 Part 2 handoff branch
+18 / conv_103    Power BI Part 3
+19 / conv_104    M1/M2 Strategy Correction Part 3
+</code></pre>
+<p>These are staging assignments, not final publication identities.</p>
+<h2>Active-chat boundary</h2>
+<p>The supplied Part 3 PDF ends after the discussion of extracting the large ChatGPT data export. The active conversation then continued with:</p>
+<pre><code class="language-text">7-Zip “Unexpected end of data” diagnosis
+Browser large-download failure
+Existing project_history quality review
+Conversation 03 refresh
+Branch and parallel-workstream ingestion
+This final-source ingestion request
+</code></pre>
+<p>That live tail is registered as part of the complete history. I did not invent unavailable per-message UTC timestamps. This response must also be included when the active conversation is frozen during finalization.</p>
+<h2>Explicit stop boundary</h2>
+<p>As directed, I did <strong>not</strong> perform any of the following:</p>
+<pre><code class="language-text">Final PDF-to-message reconstruction            NOT PERFORMED
+Final public sanitization                       NOT PERFORMED
+Final Markdown/JSONL transcript merge           NOT PERFORMED
+Root project_history README update              NOT PERFORMED
+Dated-archive README update                     NOT PERFORMED
+Conversation index regeneration                 NOT PERFORMED
+Project chronology regeneration                 NOT PERFORMED
+Decision and milestone index regeneration       NOT PERFORMED
+Navigation/search guide regeneration            NOT PERFORMED
+Governance/provenance documentation update      NOT PERFORMED
+Final sanitization report                       NOT PERFORMED
+Public source inventory regeneration            NOT PERFORMED
+Final archive packaging                         NOT PERFORMED
+</code></pre>
+<p>The existing through-August-12 archive and both prior ingestion packages remain unchanged.</p>
+<h2>Controlled private staging package</h2>
+<pre><code class="language-text">Package
+MSBF_PROJECT_HISTORY_FINAL_SOURCE_INGESTION_R1_20260904.zip
+
+Internal ZIP root
+MSBF_PH_INGEST_R1_20260904
+
+Bytes
+47,797,506
+
+SHA-256
+61e61157c11d19d197dbcd302fc4196c1bd8c02936386f033e1c91d12fb95131
+
+ZIP entries
+49
+
+Payload manifest rows
+47
+
+Outer CRC
+PASS
+
+Duplicate paths
+0
+
+Unsafe paths
+0
+
+Maximum simulated Windows path
+225 / 240
+
+Deterministic archive replay
+BYTE-FOR-BYTE EXACT
+</code></pre>
+<p>Download the complete private source-ingestion package (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_FINAL_SOURCE_INGESTION_R1_20260904.zip</code>; referenced bytes not established here)</p>
+<p>Download the SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_FINAL_SOURCE_INGESTION_R1_20260904.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Open the ZIP-validation report (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_FINAL_SOURCE_INGESTION_R1_20260904_ZIP_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<p>Open the ingestion start guide (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_FINAL_SOURCE_INGESTION_R1_20260904/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Open the exact source inventory (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_FINAL_SOURCE_INGESTION_R1_20260904/support/02_SOURCE_INVENTORY.csv</code>; referenced bytes not established here)</p>
+<p>Open the structured-source reconciliation (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_FINAL_SOURCE_INGESTION_R1_20260904/support/03_STRUCTURED_SOURCE_RECONCILIATION.csv</code>; referenced bytes not established here)</p>
+<p>Open the provisional conversation-lineage and coverage register (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_FINAL_SOURCE_INGESTION_R1_20260904/support/04_CONVERSATION_LINEAGE_AND_COVERAGE.csv</code>; referenced bytes not established here)</p>
+<p>Open the PDF continuation index (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_FINAL_SOURCE_INGESTION_R1_20260904/support/05_PDF_CONTINUATION_INDEX.csv</code>; referenced bytes not established here)</p>
+<p>Open the overlap and branch register (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_FINAL_SOURCE_INGESTION_R1_20260904/support/05_OVERLAP_AND_BRANCH_REGISTER.md</code>; referenced bytes not established here)</p>
+<p>Open the active Part 3 chat-tail boundary (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_FINAL_SOURCE_INGESTION_R1_20260904/support/06_ACTIVE_PART3_CHAT_TAIL_BOUNDARY.md</code>; referenced bytes not established here)</p>
+<p>Open the deferred finalization checklist (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_FINAL_SOURCE_INGESTION_R1_20260904/support/07_DEFERRED_PROJECT_HISTORY_FINALIZATION_CHECKLIST.md</code>; referenced bytes not established here)</p>
+<p>Open the PDF rendering and OCR QA report (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_FINAL_SOURCE_INGESTION_R1_20260904/validation/PDF_CONTINUATION_RENDER_AND_OCR_QA.md</code>; referenced bytes not established here)</p>
+<p>The package is deliberately marked <strong>private source staging—do not publish</strong> because it retains the original JSON, CSV, and PDF bytes before final deterministic public sanitization.</p>
+</div></article><article id="m-0960c3f4-8742-4a16-b414-def6d83250ae" class="message user"><p class="meta"><strong>Andrew / user</strong> · C119-M00032 · 2026-09-04T13:48:19.365000-04:00 · active path</p><div class="bubble"><p>Thanks. Proceed with the next logical leap to get this project history archive packaged and ready. Do as much as is possible in the next leap, while ensuring that the prompt completes successfully.</p>
+</div></article><article id="m-8fed8682-4eed-4d56-bcc1-ca23cf9c9f0b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C119-M00033 · 2026-09-04T14:37:58.712577-04:00 · active path</p><div class="bubble"><h1>Project-history publication candidate ready</h1>
+<p>I advanced the work from <strong>private source staging</strong> to a complete, version-separated <strong>project-history publication candidate</strong>.</p>
+<p>The supplied structured source set covers Power BI Part 2 through September 1, the parent and branch Module 1/2 strategy-correction conversations through August 30, and the Part 2 remediation continuation through September 1. [export reference: filecite | turn10file6 | L7-L10] [export reference: filecite | turn10file7 | L7-L10] [export reference: filecite | turn10file8 | L7-L10] [export reference: filecite | turn10file9 | L7-L10] The supplied PDF continuations and the current Part 3 session were then integrated under explicitly disclosed fidelity rules rather than being silently treated as equivalent to structured exports.</p>
+<p>The result is ready for <strong>bounded Independent Audit and later repository integration</strong>. It is not yet authorized for public GitHub publication. That remains consistent with the R26 audit state: R26 is the accepted technical successor, version-separated integration is authorized, but public supersession and GitHub/Power BI publication remain unauthorized. [export reference: filecite | turn10file10 | L2-L8]</p>
+<h2>Primary deliverables</h2>
+<h3>Complete controlled audit package</h3>
+<p>This is the package to submit for the bounded project-history component audit. It contains the copy-ready repository tree plus support records, validation, manifests, integration instructions, and a reproducible validator.</p>
+<p>Download the complete project-history publication candidate (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904.zip</code>; referenced bytes not established here)</p>
+<p>Download the full-package SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package
+MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904.zip
+
+Bytes
+7,720,311
+
+SHA-256
+2745edd6971e21ed1bc34c4cd41f9125063d4e77361aaa71fb856612ae1cc615
+
+ZIP entries
+101
+</code></pre>
+<h3>Copy-ready GitHub folder</h3>
+<p>This package contains only the candidate:</p>
+<pre><code class="language-text">docs/project_history/
+</code></pre>
+<p>It excludes audit-support files and package tools that are not intended for the public repository.</p>
+<p>Download the copy-ready <code>docs/project_history</code> package (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_COPY_READY_R1_20260904.zip</code>; referenced bytes not established here)</p>
+<p>Download the copy-ready SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_COPY_READY_R1_20260904.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package
+MSBF_PROJECT_HISTORY_COPY_READY_R1_20260904.zip
+
+Bytes
+7,681,585
+
+SHA-256
+e5306da497fa9b22ec7e808f7230fcc595a7949db2feb7dce60f6acea448c60f
+
+ZIP entries
+90
+</code></pre>
+<h2>Archive composition</h2>
+<p>The candidate preserves the existing public archive and adds a new successor snapshot:</p>
+<pre><code class="language-text">docs/project_history/
+├── README.md
+├── chatgpt_logs_through_2026-08-12/
+└── chatgpt_logs_through_2026-09-04/
+</code></pre>
+<p>The August 12 archive is retained <strong>byte-for-byte</strong>. The candidate does not overwrite or rewrite that historical publication.</p>
+<p>The new September 4 archive contains:</p>
+<pre><code class="language-text">Conversations                         19
+Markdown transcripts                  19
+JSONL companions                      19
+Published records                  3,068
+Exact structured messages          3,040
+OCR-derived PDF continuation records   27
+Active-session summary records          1
+Excluded internal records           5,973
+Physical source files inventoried      49
+</code></pre>
+<p>The successor archive extends across the PostgreSQL execution lineage, Power BI Parts 1–3, Module 3, Campaign Scale, Independent Audit, Marketing, the Module 1/2 remediation parent and branches, R13–R26 correction history, and the current republication workstream.</p>
+<h2>Aggregate documentation completed</h2>
+<p>The September 4 archive now has a complete documentation layer matching and extending the quality of the August 12 baseline:</p>
+<ul>
+<li>archive README and conversation navigation;</li>
+<li>CSV and JSON conversation indexes;</li>
+<li>project chronology;</li>
+<li>decision and milestone index;</li>
+<li>navigation and search guide;</li>
+<li>scope and governance statement;</li>
+<li>format and provenance documentation;</li>
+<li>sanitization and publication report;</li>
+<li>duplicate and lineage register;</li>
+<li>current Power BI publication-scope decision;</li>
+<li>publication-candidate status;</li>
+<li>public artifact manifest;</li>
+<li>source inventory;</li>
+<li>public archive validation report.</li>
+</ul>
+<p>Key review files:</p>
+<p>Open the publication-candidate start guide (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Open the candidate root <code>project_history</code> README (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904/COPY_INTO_REPOSITORY/docs/project_history/README.md</code>; referenced bytes not established here)</p>
+<p>Open the September 4 archive README (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904/COPY_INTO_REPOSITORY/docs/project_history/chatgpt_logs_through_2026-09-04/README.md</code>; referenced bytes not established here)</p>
+<p>Open the conversation index (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904/COPY_INTO_REPOSITORY/docs/project_history/chatgpt_logs_through_2026-09-04/CONVERSATION_INDEX.csv</code>; referenced bytes not established here)</p>
+<p>Open the updated project chronology (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904/COPY_INTO_REPOSITORY/docs/project_history/chatgpt_logs_through_2026-09-04/PROJECT_CHRONOLOGY.md</code>; referenced bytes not established here)</p>
+<p>Open the decision and milestone index (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904/COPY_INTO_REPOSITORY/docs/project_history/chatgpt_logs_through_2026-09-04/DECISION_AND_MILESTONE_INDEX.md</code>; referenced bytes not established here)</p>
+<p>Open the duplicate and lineage register (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904/COPY_INTO_REPOSITORY/docs/project_history/chatgpt_logs_through_2026-09-04/DUPLICATE_AND_LINEAGE_REGISTER.md</code>; referenced bytes not established here)</p>
+<p>Open the publication-scope decision (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904/COPY_INTO_REPOSITORY/docs/project_history/chatgpt_logs_through_2026-09-04/PUBLICATION_SCOPE_DECISION.md</code>; referenced bytes not established here)</p>
+<p>Open the public archive validation report (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904/COPY_INTO_REPOSITORY/docs/project_history/chatgpt_logs_through_2026-09-04/PUBLIC_ARCHIVE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<h2>Provenance and sanitization controls</h2>
+<p>The candidate includes a substantially stronger provenance layer than the predecessor archive:</p>
+<pre><code class="language-text">SOURCE_TO_OUTPUT_MAP.csv
+ORIGINAL_SOURCE_FILE_HASHES.csv
+STRUCTURED_SOURCE_RECONCILIATION.csv/json
+PDF_CONTINUATION_INDEX.csv/json
+REDACTION_SUMMARY.csv
+DUPLICATE_CLASSIFICATION.csv
+PREDECESSOR_NONREGRESSION.csv
+SOURCE_ARCHIVE_IDENTITIES.md
+</code></pre>
+<p>The source-to-output map records, by output transcript:</p>
+<ul>
+<li>immediate input source;</li>
+<li>input text SHA-256;</li>
+<li>output SHA-256;</li>
+<li>whether text changed;</li>
+<li>number of sanitizations;</li>
+<li>sanitization categories;</li>
+<li>source representation and fidelity class.</li>
+</ul>
+<p>The structured JSON/CSV pairs were reconciled rather than assumed identical. JSON remains canonical for the documented source variances. Parent/branch overlap, copied handoff context, audit relays, and PDF boundary duplication are classified instead of silently removed.</p>
+<p>The public tree excludes:</p>
+<pre><code class="language-text">Raw ChatGPT JSON/CSV exports
+Original PDF continuations
+Internal thought/reasoning records
+Private Power BI Desktop evidence
+Usable sandbox or mounted-container links
+Usable local Windows paths
+Direct personal contact data
+Private source-staging packages
+</code></pre>
+<h2>Power BI publication-scope decision recorded</h2>
+<p>The candidate reflects the business decision reached in this chat:</p>
+<pre><code class="language-text">P01 — Executive Portfolio Command Center     RETAIN
+P02 — Cohort Lifecycle                       RETAIN
+P03 — Application Journey                    RETAIN
+P04 — Servicing &amp; Exceptions                 RETAIN
+
+Current P05/P06 strategy showcase            HOLD
+Accepted R26 technical evidence              PRESERVE
+Future decision-strategy challenger          DEFERRED
+</code></pre>
+<p>The history explains that the current M2.11 profiles are technically valid governed offer-selection/account-treatment simulations, but they should not be presented publicly as a mature challenger framework that produces approve/counteroffer/review/decline migration.</p>
+<p>This is recorded as a <strong>publication-scope decision</strong>, not a rejection or retroactive invalidation of R26.</p>
+<h2>Validation result</h2>
+<p>The archive and both external packages passed all automated and extraction controls:</p>
+<pre><code class="language-text">Internal candidate controls             165 / 165 PASS
+Public archive controls                   13 / 13 PASS
+
+Full-package Python CRC                         PASS
+Full-package CLI unzip test                     PASS
+Full-package unsafe paths                          0
+Full-package duplicate paths                       0
+Full-package clean extraction             101 / 101
+Full-package extraction mismatches                  0
+Full-package deterministic replay        BYTE-FOR-BYTE EXACT
+Maximum simulated Windows path              227 / 240
+
+Copy-ready Python CRC                            PASS
+Copy-ready CLI unzip test                        PASS
+Copy-ready unsafe paths                             0
+Copy-ready duplicate paths                          0
+Copy-ready clean extraction                 90 / 90
+Copy-ready extraction mismatches                    0
+Copy-ready deterministic replay           BYTE-FOR-BYTE EXACT
+Maximum simulated Windows path              167 / 240
+</code></pre>
+<p>Open the external ZIP-validation report (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904_ZIP_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<p>Open the internal 165-control validation report (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904/validation/VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<p>Open the machine-readable validation result (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904/validation/VALIDATION_RESULT.json</code>; referenced bytes not established here)</p>
+<p>The required <strong>actual Windows-native clean-extraction test</strong> remains pending for the future integrated repository or hosted release asset. The current Linux clean-extraction and 240-character path simulations reduce that risk but do not substitute for the later Windows test.</p>
+<h2>Audit submission materials</h2>
+<p>I prepared a bounded audit prompt tailored specifically to this project-history component. It asks Audit to verify the predecessor preservation, all 19 transcript pairs, fidelity disclosures, sanitization, lineage handling, Power BI publication scope, manifests, and integration boundary.</p>
+<p>Open the copy/paste Independent Audit prompt (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904_AUDIT_PROMPT.md</code>; referenced bytes not established here)</p>
+<p>Open the detailed audit scope and decision request (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904/support/INDEPENDENT_AUDIT_SCOPE_AND_DECISION_REQUEST.md</code>; referenced bytes not established here)</p>
+<p>Open the repository integration guide (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904/support/REPOSITORY_INTEGRATION_GUIDE.md</code>; referenced bytes not established here)</p>
+<p>Open the publication-readiness checklist (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904/support/PUBLICATION_READINESS_CHECKLIST.md</code>; referenced bytes not established here)</p>
+<p>Open the external package receipt (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904_PACKAGE_RECEIPT.json</code>; referenced bytes not established here)</p>
+<p>Download the receipt SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_PROJECT_HISTORY_PUBLICATION_CANDIDATE_R1_20260904_PACKAGE_RECEIPT.json.sha256</code>; referenced bytes not established here)</p>
+<h2>Fidelity observations for Audit</h2>
+<p>Two limitations are disclosed rather than hidden:</p>
+<ol>
+<li><p>The seven post-export PDF continuations were image-only. Their 27 published continuation blocks were reconstructed from rendered pages and OCR, with the original page ranges and source identities retained. The original PDF remains the exact source; OCR is not represented as technical-identity authority.</p>
+</li>
+<li><p>The final current-chat tail is represented by one explicitly labeled <strong>non-verbatim session summary</strong> because no later structured ChatGPT export exists for today’s messages. It can be replaced later if an exact structured export is supplied or if Audit requires exact verbatim publication.</p>
+</li>
+</ol>
+<p>Neither limitation changes accepted technical source or audit authority. The bounded audit is asked to decide whether they are acceptable publication observations or must be replaced before the final public release.</p>
+<h2>Current authority</h2>
+<pre><code class="language-text">R26 technical successor                         ACCEPTED
+R26 decision                                    IA-D-R15-M12-001
+Version-separated integration                   AUTHORIZED NEXT STEP
+Project-history publication candidate           BUILT / VALIDATED
+Project-history component audit                 PENDING
+Combined repository integration audit           PENDING
+Public supersession                             NOT AUTHORIZED
+GitHub publication                              NOT AUTHORIZED
+Power BI publication                            NOT AUTHORIZED
+</code></pre>
+<h2>Completed work</h2>
+<pre><code class="language-text">Full source-set ingestion                       COMPLETE
+Structured/PDF/live-tail reconciliation         COMPLETE
+Nineteen Markdown transcripts                   COMPLETE
+Nineteen JSONL companions                       COMPLETE
+Aggregate README/index/chronology rebuild       COMPLETE
+Governance/provenance/sanitization records      COMPLETE
+Duplicate and branch classification             COMPLETE
+Power BI publication-scope record               COMPLETE
+Historical August 12 preservation               PASS
+Public artifact manifest                        COMPLETE
+Copy-ready repository tree                      COMPLETE
+Controlled audit package                        COMPLETE
+Automated validation                            165 / 165 PASS
+Clean extraction and deterministic replay       PASS
+</code></pre>
+<h2>Current candidate state</h2>
+<pre><code class="language-text">Project-history component      READY FOR BOUNDED INDEPENDENT AUDIT
+Copy-ready GitHub folder       FROZEN CANDIDATE
+Repository-wide integration   NOT YET PERFORMED
+Publication                   GATED
+</code></pre>
+<h2>Source mutation status</h2>
+<pre><code class="language-text">August 12 archive modified                    FALSE
+Raw structured exports modified               FALSE
+Raw PDF continuations modified                FALSE
+Accepted R26 technical evidence modified      FALSE
+Public predecessor release modified           FALSE
+GitHub repository modified                    FALSE
+</code></pre>
+<h2>Open findings</h2>
+<pre><code class="language-text">Independent Audit disposition                 PENDING
+OCR-derived continuation acceptability        PENDING AUDIT
+Non-verbatim active-tail acceptability         PENDING AUDIT
+Actual repository-relative integration checks PENDING REPOSITORY
+Actual Windows-native extraction              PENDING RELEASE GATE
+</code></pre>
+<h2>Next action</h2>
+<p>Submit the complete controlled package, its SHA-256 sidecar, external receipt, ZIP-validation report, and prepared audit prompt to the Independent Audit chat. The requested audit should authorize only incorporation of the exact copy-ready tree into the later combined R26 repository/Power BI/history/visual integration candidate—not publication itself.</p>
+<h2>Owner action required</h2>
+<p>Send the audit package and prepared prompt to the Independent Audit workstream.</p>
+</div></article><article id="m-898cbde6-7835-44e2-8cd3-cfc852eafcf9" class="message user"><p class="meta"><strong>Andrew / user</strong> · C119-M00034 · 2026-09-04T15:33:23.042000-04:00 · active path</p><div class="bubble"><p>Please generate a detailed change log, reconciliation, and validation report governing the changes versus the prior Module 1/2 publication. In other words what changed in the current v2.1 versus what we previously published, from a code logic and data point of view and why is that accurate. These reports should speak to executives, non-experts, and experts alike. They need to be comprehensive and professional.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

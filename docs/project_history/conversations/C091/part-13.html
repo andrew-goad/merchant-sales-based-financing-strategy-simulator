@@ -1,0 +1,1396 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence — part 13 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence — part 13</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-12.html">Previous part</a><a href="part-14.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-244f5b48-e2da-41df-9337-6f4ade047e92" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00170 · 2026-08-20T12:19:45.062747-04:00 · active path</p><div class="bubble"><p>E06 completed successfully, with one qualification we should preserve rather than overstate.</p>
+<p>I inspected the actual CSV. It contains <strong>31 rows for the 31 active relationships</strong>, and every row reports <code>Pass = TRUE</code>:</p>
+<pre><code class="language-text">Active relationships tested       31
+Pass = TRUE                        31
+Pass = FALSE                        0
+</code></pre>
+<p>For <strong>25 relationships</strong>, the selected test key produced a nonblank direct row count and the propagated relationship count matched exactly. Examples include:</p>
+<pre><code class="language-text">REL-001   98 = 98
+REL-006   44 = 44
+REL-021  750 = 750
+REL-038  120 = 120
+REL-055  190 = 190
+REL-056 1059 = 1059
+REL-070   24 = 24
+REL-080   58 = 58
+</code></pre>
+<p>There are, however, <strong>6 relationships where both comparison counts are BLANK</strong> for the automatically selected test key:</p>
+<pre><code class="language-text">REL-005   DimAccountAdvance → DimApplication
+REL-045   FactPaymentException → DimAccountAdvance
+REL-057   FactMonitoringEndpoint → DimMonitoringStatus
+REL-072   FactAccountDaily → DimDate
+REL-075   FactPaymentException → DimDate
+REL-078   FactBookingActivation → DimDate
+</code></pre>
+<p>DAX evaluates <code>BLANK() = BLANK()</code> as true, so those six <code>TRUE</code> values are <strong>not strong affirmative propagation evidence</strong>. They are not failures, but we should not claim “31/31 physically demonstrated propagation” from this file alone.</p>
+<p>So the precise E06 disposition is:</p>
+<pre><code class="language-text">E06 test population                         31/31
+Nonblank propagation comparisons            25/31 PASS
+False comparisons                            0
+Blank/blank inconclusive comparisons         6
+Relationship configuration                  31 active OneDirection
+E06 overall                    PASS_WITH_FOLLOWUP
+</code></pre>
+<p>That is exactly why inspecting the exported data rather than relying only on the green <code>TRUE</code> column matters.</p>
+<h3>Next: E06B targeted retest of those six</h3>
+<p>We should resolve them now before moving to orphans. The issue is the generic generator selected the <strong>minimum dimension key</strong>, which happens not to occur on the many side for those six relationships. The retest should instead select a key that physically exists on <strong>both sides</strong>.</p>
+<p>Run this DAX query:</p>
+<pre><code class="language-dax">EVALUATE
+UNION(
+
+    /* REL-005 */
+    VAR K005 =
+        MINX(
+            FILTER(
+                VALUES(&#39;DimAccountAdvance&#39;[ApplicationKey]),
+                NOT ISBLANK(&#39;DimAccountAdvance&#39;[ApplicationKey])
+            ),
+            &#39;DimAccountAdvance&#39;[ApplicationKey]
+        )
+    VAR D005 =
+        CALCULATE(
+            COUNTROWS(&#39;DimAccountAdvance&#39;),
+            &#39;DimAccountAdvance&#39;[ApplicationKey] = K005
+        )
+    VAR P005 =
+        CALCULATE(
+            COUNTROWS(&#39;DimAccountAdvance&#39;),
+            TREATAS({K005}, &#39;DimApplication&#39;[ApplicationKey])
+        )
+    RETURN
+        ROW(
+            &quot;Relationship&quot;,&quot;REL-005&quot;,
+            &quot;TestKey&quot;,K005,
+            &quot;DirectExpectedRows&quot;,D005,
+            &quot;RelationshipFilteredRows&quot;,P005,
+            &quot;Pass&quot;,D005 = P005 &amp;&amp; NOT ISBLANK(D005)
+        ),
+
+    /* REL-045 */
+    VAR K045 =
+        MINX(
+            FILTER(
+                VALUES(&#39;FactPaymentException&#39;[AccountKey]),
+                NOT ISBLANK(&#39;FactPaymentException&#39;[AccountKey])
+            ),
+            &#39;FactPaymentException&#39;[AccountKey]
+        )
+    VAR D045 =
+        CALCULATE(
+            COUNTROWS(&#39;FactPaymentException&#39;),
+            &#39;FactPaymentException&#39;[AccountKey] = K045
+        )
+    VAR P045 =
+        CALCULATE(
+            COUNTROWS(&#39;FactPaymentException&#39;),
+            TREATAS({K045}, &#39;DimAccountAdvance&#39;[AccountKey])
+        )
+    RETURN
+        ROW(
+            &quot;Relationship&quot;,&quot;REL-045&quot;,
+            &quot;TestKey&quot;,K045,
+            &quot;DirectExpectedRows&quot;,D045,
+            &quot;RelationshipFilteredRows&quot;,P045,
+            &quot;Pass&quot;,D045 = P045 &amp;&amp; NOT ISBLANK(D045)
+        ),
+
+    /* REL-057 */
+    VAR K057 =
+        MINX(
+            FILTER(
+                VALUES(&#39;FactMonitoringEndpoint&#39;[latest_monitoring_status_code]),
+                NOT ISBLANK(&#39;FactMonitoringEndpoint&#39;[latest_monitoring_status_code])
+            ),
+            &#39;FactMonitoringEndpoint&#39;[latest_monitoring_status_code]
+        )
+    VAR D057 =
+        CALCULATE(
+            COUNTROWS(&#39;FactMonitoringEndpoint&#39;),
+            &#39;FactMonitoringEndpoint&#39;[latest_monitoring_status_code] = K057
+        )
+    VAR P057 =
+        CALCULATE(
+            COUNTROWS(&#39;FactMonitoringEndpoint&#39;),
+            TREATAS({K057}, &#39;DimMonitoringStatus&#39;[monitoring_status_code])
+        )
+    RETURN
+        ROW(
+            &quot;Relationship&quot;,&quot;REL-057&quot;,
+            &quot;TestKey&quot;,K057,
+            &quot;DirectExpectedRows&quot;,D057,
+            &quot;RelationshipFilteredRows&quot;,P057,
+            &quot;Pass&quot;,D057 = P057 &amp;&amp; NOT ISBLANK(D057)
+        ),
+
+    /* REL-072 */
+    VAR K072 =
+        MINX(
+            FILTER(
+                VALUES(&#39;FactAccountDaily&#39;[monitoring_date]),
+                NOT ISBLANK(&#39;FactAccountDaily&#39;[monitoring_date])
+            ),
+            &#39;FactAccountDaily&#39;[monitoring_date]
+        )
+    VAR D072 =
+        CALCULATE(
+            COUNTROWS(&#39;FactAccountDaily&#39;),
+            &#39;FactAccountDaily&#39;[monitoring_date] = K072
+        )
+    VAR P072 =
+        CALCULATE(
+            COUNTROWS(&#39;FactAccountDaily&#39;),
+            TREATAS({K072}, &#39;DimDate&#39;[Date])
+        )
+    RETURN
+        ROW(
+            &quot;Relationship&quot;,&quot;REL-072&quot;,
+            &quot;TestKey&quot;,K072,
+            &quot;DirectExpectedRows&quot;,D072,
+            &quot;RelationshipFilteredRows&quot;,P072,
+            &quot;Pass&quot;,D072 = P072 &amp;&amp; NOT ISBLANK(D072)
+        ),
+
+    /* REL-075 */
+    VAR K075 =
+        MINX(
+            FILTER(
+                VALUES(&#39;FactPaymentException&#39;[originating_event_date]),
+                NOT ISBLANK(&#39;FactPaymentException&#39;[originating_event_date])
+            ),
+            &#39;FactPaymentException&#39;[originating_event_date]
+        )
+    VAR D075 =
+        CALCULATE(
+            COUNTROWS(&#39;FactPaymentException&#39;),
+            &#39;FactPaymentException&#39;[originating_event_date] = K075
+        )
+    VAR P075 =
+        CALCULATE(
+            COUNTROWS(&#39;FactPaymentException&#39;),
+            TREATAS({K075}, &#39;DimDate&#39;[Date])
+        )
+    RETURN
+        ROW(
+            &quot;Relationship&quot;,&quot;REL-075&quot;,
+            &quot;TestKey&quot;,K075,
+            &quot;DirectExpectedRows&quot;,D075,
+            &quot;RelationshipFilteredRows&quot;,P075,
+            &quot;Pass&quot;,D075 = P075 &amp;&amp; NOT ISBLANK(D075)
+        ),
+
+    /* REL-078 */
+    VAR K078 =
+        MINX(
+            FILTER(
+                VALUES(&#39;FactBookingActivation&#39;[portfolio_activation_date]),
+                NOT ISBLANK(&#39;FactBookingActivation&#39;[portfolio_activation_date])
+            ),
+            &#39;FactBookingActivation&#39;[portfolio_activation_date]
+        )
+    VAR D078 =
+        CALCULATE(
+            COUNTROWS(&#39;FactBookingActivation&#39;),
+            &#39;FactBookingActivation&#39;[portfolio_activation_date] = K078
+        )
+    VAR P078 =
+        CALCULATE(
+            COUNTROWS(&#39;FactBookingActivation&#39;),
+            TREATAS({K078}, &#39;DimDate&#39;[Date])
+        )
+    RETURN
+        ROW(
+            &quot;Relationship&quot;,&quot;REL-078&quot;,
+            &quot;TestKey&quot;,K078,
+            &quot;DirectExpectedRows&quot;,D078,
+            &quot;RelationshipFilteredRows&quot;,P078,
+            &quot;Pass&quot;,D078 = P078 &amp;&amp; NOT ISBLANK(D078)
+        )
+)
+ORDER BY [Relationship]
+</code></pre>
+<p>Save the result as:</p>
+<pre><code class="language-text">E06B_RELATIONSHIP_FILTER_BEHAVIOR_TARGETED.csv
+</code></pre>
+<p>and the screenshot as:</p>
+<pre><code class="language-text">E06B_RELATIONSHIP_FILTER_BEHAVIOR_TARGETED.png
+</code></pre>
+<p>For all six we now require:</p>
+<pre><code class="language-text">DirectExpectedRows        &gt; 0
+RelationshipFilteredRows  = DirectExpectedRows
+Pass                       TRUE
+</code></pre>
+<p>If that happens, we can combine E06 + E06B and state rigorously:</p>
+<blockquote>
+<p><strong>31/31 active relationships demonstrated live-engine one-direction filter propagation using a physically populated test key.</strong></p>
+</blockquote>
+<p>Then we&#39;ll run the 31 active-relationship orphan controls.</p>
+</div></article><article id="m-652fae56-e08d-4070-8aa1-6f797e7b9691" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00171 · 2026-08-20T12:24:32.961000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E06B_RELATIONSHIP_FILTER_BEHAVIOR_TARGETED.png; E06B_RELATIONSHIP_FILTER_BEHAVIOR_TARGETED.csv</p><div class="bubble"><p>E06B_RELATIONSHIP_FILTER_BEHAVIOR_TARGETED attached.</p>
+</div></article><article id="m-e8d251d5-feba-45f3-9c3a-7e73962199d7" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00172 · 2026-08-20T12:24:41.968087-04:00 · active path</p><div class="bubble"><p>E06B resolves the six inconclusive E06 cases cleanly. I inspected the CSV itself: every targeted relationship now uses a populated key, every direct count is positive, every propagated count matches exactly, and all six return <code>Pass=True</code>.</p>
+<pre><code class="language-text">REL-005    2 = 2     PASS
+REL-045    1 = 1     PASS
+REL-057   57 = 57    PASS
+REL-072   59 = 59    PASS
+REL-075    1 = 1     PASS
+REL-078   59 = 59    PASS
+</code></pre>
+<p>Combined with E06, we can now state precisely:</p>
+<pre><code class="language-text">Active relationships                         31
+One-direction relationships                  31
+Relationships with populated-key test        31/31
+Direct vs propagated counts equal            31/31
+Filter-propagation failures                   0
+Sole inactive relationship              REL-076
+Bidirectional relationships                   0
+
+E06 + E06B FILTER BEHAVIOR                  PASS
+</code></pre>
+<p>So <code>AUD-REL-005</code> now has materially stronger live-engine filter-behavior evidence. We still need the matching orphan test before considering that control&#39;s A1b evidence complete.</p>
+<h2>E07 — all 32 relationship orphan controls</h2>
+<p>For orphan integrity, I recommend testing <strong>all 32 physical relationships</strong>, including inactive <code>REL-076</code>. Inactivity affects filter propagation; it does not remove the referential-integrity requirement.</p>
+<p>We can generate the DAX deterministically from the already exported live relationship inventory rather than manually transcribing 32 keys. Use the earlier:</p>
+<pre><code class="language-text">E03_LIVE_ENGINE_RELATIONSHIPS.csv
+</code></pre>
+<p>Run this PowerShell block:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+$input = Join-Path $return &quot;E03_LIVE_ENGINE_RELATIONSHIPS.csv&quot;
+$output = Join-Path $return &quot;E07_RELATIONSHIP_ORPHANS_QUERY.dax&quot;
+
+$rels = @(Import-Csv -LiteralPath $input)
+
+if ($rels.Count -ne 32) {
+    throw &quot;STOP: expected 32 physical relationships; found $($rels.Count).&quot;
+}
+
+function QTable([string]$name) {
+    &quot;&#39;&quot; + $name.Replace(&quot;&#39;&quot;,&quot;&#39;&#39;&quot;) + &quot;&#39;&quot;
+}
+
+function QColumn([string]$table,[string]$column) {
+    &quot;$(QTable $table)[$column]&quot;
+}
+
+$parts = @()
+
+foreach ($r in $rels) {
+
+    $fromColumn = QColumn $r.FromTable $r.FromColumn
+    $toColumn   = QColumn $r.ToTable   $r.ToColumn
+
+    $parts += @&quot;
+ROW(
+    &quot;Relationship&quot;, &quot;$($r.Relationship)&quot;,
+    &quot;FromTable&quot;, &quot;$($r.FromTable)&quot;,
+    &quot;FromColumn&quot;, &quot;$($r.FromColumn)&quot;,
+    &quot;ToTable&quot;, &quot;$($r.ToTable)&quot;,
+    &quot;ToColumn&quot;, &quot;$($r.ToColumn)&quot;,
+    &quot;IsActive&quot;, &quot;$($r.IsActive)&quot;,
+    &quot;NonBlankFromKeys&quot;,
+        COUNTROWS(
+            FILTER(
+                VALUES($fromColumn),
+                NOT ISBLANK($fromColumn)
+            )
+        ),
+    &quot;OrphanKeyCount&quot;,
+        COUNTROWS(
+            FILTER(
+                VALUES($fromColumn),
+                NOT ISBLANK($fromColumn)
+                    &amp;&amp;
+                NOT CONTAINS(
+                    ALL($toColumn),
+                    $toColumn,
+                    $fromColumn
+                )
+            )
+        )
+)
+&quot;@
+}
+
+$query = @&quot;
+EVALUATE
+VAR __Orphans =
+    UNION(
+$($parts -join &quot;,`r`n&quot;)
+    )
+RETURN
+    ADDCOLUMNS(
+        __Orphans,
+        &quot;Pass&quot;, [OrphanKeyCount] = 0
+    )
+ORDER BY [Relationship]
+&quot;@
+
+[IO.File]::WriteAllText(
+    $output,
+    $query,
+    [Text.UTF8Encoding]::new($false)
+)
+
+Write-Host &quot;Generated:&quot;
+Write-Host $output
+Write-Host &quot;&quot;
+Write-Host &quot;Relationships encoded:&quot; $rels.Count
+</code></pre>
+<p>Then open <code>E07_RELATIONSHIP_ORPHANS_QUERY.dax</code> in DAX Studio and execute it.</p>
+<h3>Required E07 result</h3>
+<p>We want exactly:</p>
+<pre><code class="language-text">Rows returned                  32
+Relationships tested           32
+OrphanKeyCount = 0             32
+Pass = TRUE                    32
+Failures                        0
+REL-076 included              YES
+</code></pre>
+<p><code>NonBlankFromKeys</code> is included as an important diagnostic. If any relationship unexpectedly has zero nonblank many-side keys, we will distinguish that from a successful populated referential-integrity test rather than allowing <code>0 orphans</code> to hide an empty test population.</p>
+<p>Save:</p>
+<pre><code class="language-text">E07_RELATIONSHIP_ORPHANS.csv
+E07_RELATIONSHIP_ORPHANS.png
+E07_RELATIONSHIP_ORPHANS_QUERY.dax
+</code></pre>
+<p>If all 32 return zero orphans with populated test populations where expected, we can close the relationship-integrity portion and move to <strong>scenario isolation</strong>, followed by the critical <strong>AUD-ASOF-003B 2026-11-21 / 2026-11-22 / 2026-11-23 endpoint test</strong>.</p>
+</div></article><article id="m-a071674c-a65c-4e98-9d80-ac09d9e1f5ec" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00173 · 2026-08-20T12:30:04.850000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E07_RELATIONSHIP_ORPHANS.png; E07_RELATIONSHIP_ORPHANS.csv; E07_RELATIONSHIP_ORPHANS_QUERY.dax</p><div class="bubble"><p>E07_RELATIONSHIP_ORPHANS attached.</p>
+</div></article><article id="m-677b0409-e8f3-4a54-9502-344480dbb53e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00174 · 2026-08-20T12:31:00.595702-04:00 · active path</p><div class="bubble"><p>E07 is substantively successful, with one small evidence-normalization issue that is worth fixing before we move on.</p>
+<p>I inspected the CSV directly. All <strong>32 physical relationships</strong> were tested, including inactive <code>REL-076</code>. Every relationship has a <strong>nonzero populated from-side key population</strong>, and no relationship produced any orphan rows.</p>
+<p>The exported <code>OrphanKeyCount</code> cells are all <code>BLANK()</code> rather than literal <code>0</code>, however. DAX treats that empty <code>COUNTROWS(FILTER(...))</code> result as blank in this construction, and your <code>Pass</code> expression therefore evaluates <code>BLANK() = 0</code> as <code>TRUE</code>. That is semantically fine, but for Audit I would prefer literal zeros so there is no ambiguity.</p>
+<p>The current evidence establishes:</p>
+<pre><code class="language-text">Relationships tested                  32
+Active                                31
+Inactive                               1
+REL-076 included                     YES
+
+NonBlankFromKeys &gt; 0                 32/32
+Observed orphan rows                    0
+Pass = TRUE                          32/32
+
+Exported OrphanKeyCount values        BLANK
+Literal-zero normalization          NEEDED
+</code></pre>
+<p>So E07 is best classified right now as <strong>PASS_WITH_EVIDENCE_NORMALIZATION</strong>.</p>
+<h3>E07B — normalize the orphan counts to literal zero</h3>
+<p>We do not need to regenerate the whole 32-relationship query. Use the existing <code>E07_RELATIONSHIP_ORPHANS_QUERY.dax</code> and make one evidence-only change in its final result projection.</p>
+<p>At the very end, your existing query currently has logic equivalent to:</p>
+<pre><code class="language-dax">RETURN
+    ADDCOLUMNS(
+        __Orphans,
+        &quot;Pass&quot;, [OrphanKeyCount] = 0
+    )
+ORDER BY [Relationship]
+</code></pre>
+<p>Replace only that final <code>RETURN</code> block with:</p>
+<pre><code class="language-dax">RETURN
+    SELECTCOLUMNS(
+        __Orphans,
+        &quot;Relationship&quot;, [Relationship],
+        &quot;FromTable&quot;, [FromTable],
+        &quot;FromColumn&quot;, [FromColumn],
+        &quot;ToTable&quot;, [ToTable],
+        &quot;ToColumn&quot;, [ToColumn],
+        &quot;IsActive&quot;, [IsActive],
+        &quot;NonBlankFromKeys&quot;, [NonBlankFromKeys],
+        &quot;OrphanKeyCount&quot;, COALESCE([OrphanKeyCount], 0),
+        &quot;Pass&quot;, COALESCE([OrphanKeyCount], 0) = 0
+    )
+ORDER BY [Relationship]
+</code></pre>
+<p>Do not alter any of the 32 relationship-specific tests above it.</p>
+<p>Run that revised query and save the result as:</p>
+<pre><code class="language-text">E07B_RELATIONSHIP_ORPHANS_NORMALIZED.csv
+E07B_RELATIONSHIP_ORPHANS_NORMALIZED.png
+</code></pre>
+<p>The exact required result is:</p>
+<pre><code class="language-text">Rows returned                  32
+NonBlankFromKeys &gt; 0           32/32
+OrphanKeyCount = 0             32/32
+Pass = TRUE                    32/32
+REL-076 included                 YES
+</code></pre>
+<p>If that occurs, we can state cleanly:</p>
+<blockquote>
+<p><strong>All 32 physical relationships, including the sole inactive role-playing relationship REL-076, were tested against populated from-side key populations and returned zero orphan keys.</strong></p>
+</blockquote>
+<p>After that normalization, the relationship evidence package will be exceptionally strong:</p>
+<pre><code class="language-text">E03  relationship metadata                PASS
+E06  active filter propagation           PASS
+E06B targeted populated-key follow-up    PASS
+E07/E07B referential integrity           PASS
+</code></pre>
+<p>Then we can move directly to <strong>scenario isolation</strong>, followed by the critical <code>AUD-ASOF-003B</code> three-date evidence test.</p>
+</div></article><article id="m-309609ae-dc41-48a6-8142-7908a478718d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00175 · 2026-08-20T12:51:29.605000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E07B_RELATIONSHIP_ORPHANS_NORMALIZED.csv; E07B_RELATIONSHIP_ORPHANS_NORMALIZED.png</p><div class="bubble"><p>E07B_RELATIONSHIP_ORPHANS_NORMALIZED attached.</p>
+</div></article><article id="m-51b0c815-12d2-47e2-a11c-f98c0232bc05" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00176 · 2026-08-20T12:51:37.464285-04:00 · active path</p><div class="bubble"><p>E07B is now a <strong>clean PASS</strong>. I inspected the CSV directly:</p>
+<pre><code class="language-text">Physical relationships tested       32
+Populated from-side populations      32/32
+Minimum NonBlankFromKeys              1
+OrphanKeyCount = 0                   32/32
+Pass = TRUE                          32/32
+Failures                              0
+
+REL-076 included                     YES
+REL-076 active                        NO
+REL-076 nonblank keys                  1
+REL-076 orphan keys                    0
+</code></pre>
+<p>This closes the evidence-normalization issue from E07. Combined evidence now supports:</p>
+<pre><code class="language-text">E03  Relationship metadata                    PASS
+E06  Initial active filter behavior           PASS_WITH_FOLLOWUP
+E06B Six populated-key follow-ups             PASS
+      → Combined filter propagation           31/31 PASS
+E07  Initial orphan integrity                 PASS_WITH_NORMALIZATION
+E07B Literal-zero orphan integrity            32/32 PASS
+</code></pre>
+<p>We can move on without further relationship testing.</p>
+<h2>E08 — Scenario isolation</h2>
+<p>We need to prove the scenario-qualified model continues to preserve the expected BASELINE versus RECESSION_ENERGY populations after A1b activation and processing.</p>
+<p>Run this in a new DAX Studio tab:</p>
+<pre><code class="language-dax">EVALUATE
+SUMMARIZECOLUMNS(
+    &#39;DimScenario&#39;[scenario_code],
+
+    &quot;ApplicationScenarioRows&quot;,
+        COUNTROWS(&#39;FactApplicationScenario&#39;),
+
+    &quot;DistinctApplications&quot;,
+        DISTINCTCOUNT(&#39;FactApplicationScenario&#39;[merchant_application_id]),
+
+    &quot;DistinctMerchants&quot;,
+        DISTINCTCOUNT(&#39;FactApplicationScenario&#39;[merchant_id]),
+
+    &quot;BookingActivationRows&quot;,
+        COUNTROWS(&#39;FactBookingActivation&#39;),
+
+    &quot;FinalDecisionRows&quot;,
+        COUNTROWS(&#39;FactFinalDecision&#39;),
+
+    &quot;AccountCount&quot;,
+        COUNTROWS(&#39;DimAccountAdvance&#39;),
+
+    &quot;MonitoringEndpointRows&quot;,
+        COUNTROWS(&#39;FactMonitoringEndpoint&#39;),
+
+    &quot;PortfolioPerformanceEndpointRows&quot;,
+        COUNTROWS(&#39;FactPortfolioPerformanceEndpoint&#39;),
+
+    &quot;ServicingExecutionRows&quot;,
+        COUNTROWS(&#39;FactServicingExecution&#39;)
+)
+ORDER BY
+    &#39;DimScenario&#39;[scenario_code]
+</code></pre>
+<p>Save:</p>
+<pre><code class="language-text">E08_SCENARIO_ISOLATION.csv
+E08_SCENARIO_ISOLATION.png
+</code></pre>
+<h3>What I expect to establish</h3>
+<p>The key population boundary remains:</p>
+<pre><code class="language-text">BASELINE
+44 accepted account paths / applications
+
+RECESSION_ENERGY
+15 matched stress-overlay paths / applications
+
+Total
+59 paths
+</code></pre>
+<p>The 750/1,500 application-level A1b facts operate at a different grain, so we should <strong>not</strong> expect every column in E08 to show 44/15. The purpose of this query is to expose the scenario-specific counts at each fact&#39;s actual grain and ensure the scenario relationship does not collapse, cross-contaminate, or duplicate populations.</p>
+<p>Do not treat different counts across facts as a failure by themselves.</p>
+<h2>Then E09 — <code>AUD-ASOF-003B</code></h2>
+<p>Once E08 is clean, the critical remaining control is the one A1a could not physically execute: endpoint-only fact behavior around the evidence endpoint.</p>
+<p>We&#39;ll test exactly:</p>
+<pre><code class="language-text">2026-11-21   pre-endpoint
+2026-11-22   evidence endpoint
+2026-11-23   post-evidence
+</code></pre>
+<p>against the A1b endpoint-governed facts and the centralized as-of measures. That test needs to distinguish:</p>
+<pre><code class="language-text">pre-endpoint       no historical back-casting
+endpoint           evidence becomes available
+post-endpoint      outside evidence boundary / HOLD behavior
+</code></pre>
+<p>Run <strong>E08 first</strong> and send me the CSV/result. Then I&#39;ll construct E09 from the actual live scenario-isolation result and the physical endpoint-fact schemas rather than guessing at their behavior.</p>
+</div></article><article id="m-6dbe5fe3-c75a-4c17-a72d-77981dcd87a0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00177 · 2026-08-20T13:02:18.702000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E08_SCENARIO_ISOLATION.png; E08_SCENARIO_ISOLATION.csv</p><div class="bubble"><p>E08_SCENARIO_ISOLATION attached.</p>
+</div></article><article id="m-ce59b2ea-045c-45c5-a550-499f90132792" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00178 · 2026-08-20T13:02:36.382891-04:00 · active path</p><div class="bubble"><p>E08 is a clean <strong>scenario-isolation PASS</strong>. I inspected the CSV directly.</p>
+<pre><code class="language-text">                           BASELINE   RECESSION_ENERGY
+ApplicationScenarioRows        750                750
+DistinctApplications           750                750
+DistinctMerchants              750                750
+BookingActivationRows          750                750
+FinalDecisionRows              750                750
+
+AccountCount                    44                 15
+MonitoringEndpointRows          44                 15
+PortfolioPerformanceEndpoint    44                 15
+ServicingExecutionRows          44                 15
+</code></pre>
+<p>This is particularly useful because it demonstrates both grains simultaneously: the A1b application/scenario facts preserve <strong>750 rows independently in each scenario</strong>, while the account/endpoint facts preserve the governed <strong>44 BASELINE + 15 RECESSION_ENERGY = 59 account paths</strong>. There is no visible scenario collapse or cross-scenario multiplication.</p>
+<pre><code class="language-text">E08 scenario populations                  2/2 PASS
+Application scenario isolation            750 / 750 PASS
+Distinct application isolation            750 / 750 PASS
+Distinct merchant isolation               750 / 750 PASS
+Booking/final-decision isolation           750 / 750 PASS
+Account-path isolation                      44 / 15 PASS
+Monitoring endpoint isolation               44 / 15 PASS
+Portfolio endpoint isolation                44 / 15 PASS
+Servicing execution isolation               44 / 15 PASS
+Total account paths                              59 PASS
+</code></pre>
+<p>We can now move to the major remaining local-engine control: <strong>AUD-ASOF-003B</strong>.</p>
+<h2>E09 — first establish the endpoint-fact physical dates</h2>
+<p>Before testing measures at 11/21, 11/22 and 11/23, I want one short diagnostic from the live model. This prevents us from assuming which date column governs each endpoint fact.</p>
+<p>Run:</p>
+<pre><code class="language-dax">EVALUATE
+UNION(
+    ROW(
+        &quot;Object&quot;, &quot;FactAccountCertification&quot;,
+        &quot;Rows&quot;, COUNTROWS(&#39;FactAccountCertification&#39;),
+        &quot;MinDate&quot;, MIN(&#39;FactAccountCertification&#39;[certification_date]),
+        &quot;MaxDate&quot;, MAX(&#39;FactAccountCertification&#39;[certification_date])
+    ),
+    ROW(
+        &quot;Object&quot;, &quot;FactMonitoringEndpoint&quot;,
+        &quot;Rows&quot;, COUNTROWS(&#39;FactMonitoringEndpoint&#39;),
+        &quot;MinDate&quot;, MIN(&#39;FactMonitoringEndpoint&#39;[latest_monitoring_date]),
+        &quot;MaxDate&quot;, MAX(&#39;FactMonitoringEndpoint&#39;[latest_monitoring_date])
+    ),
+    ROW(
+        &quot;Object&quot;, &quot;FactPortfolioPerformanceEndpoint&quot;,
+        &quot;Rows&quot;, COUNTROWS(&#39;FactPortfolioPerformanceEndpoint&#39;),
+        &quot;MinDate&quot;, MIN(&#39;FactPortfolioPerformanceEndpoint&#39;[portfolio_snapshot_date]),
+        &quot;MaxDate&quot;, MAX(&#39;FactPortfolioPerformanceEndpoint&#39;[portfolio_snapshot_date])
+    ),
+    ROW(
+        &quot;Object&quot;, &quot;FactServicingExecution&quot;,
+        &quot;Rows&quot;, COUNTROWS(&#39;FactServicingExecution&#39;),
+        &quot;MinDate&quot;, MIN(&#39;FactServicingExecution&#39;[created_at]),
+        &quot;MaxDate&quot;, MAX(&#39;FactServicingExecution&#39;[created_at])
+    ),
+    ROW(
+        &quot;Object&quot;, &quot;FactServicingQueueEndpoint&quot;,
+        &quot;Rows&quot;, COUNTROWS(&#39;FactServicingQueueEndpoint&#39;),
+        &quot;MinDate&quot;, MIN(&#39;FactServicingQueueEndpoint&#39;[created_at]),
+        &quot;MaxDate&quot;, MAX(&#39;FactServicingQueueEndpoint&#39;[created_at])
+    )
+)
+ORDER BY [Object]
+</code></pre>
+<p>If DAX Studio reports that one of those date-column names does not exist, <strong>do not substitute a guessed column</strong>. Send me the exact error and I will derive the correct column from the live metadata.</p>
+<p>Save a successful result as:</p>
+<pre><code class="language-text">E09_ENDPOINT_FACT_DATE_DIAGNOSTIC.csv
+E09_ENDPOINT_FACT_DATE_DIAGNOSTIC.png
+</code></pre>
+<h3>Why this intermediate step matters</h3>
+<p>We already know the controller spine physically contains:</p>
+<pre><code class="language-text">2026-07-23   source-run as-of
+2026-11-22   evidence endpoint
+</code></pre>
+<p>But <code>AUD-ASOF-003B</code> is stronger than proving that <code>DimDate</code> contains those dates. We need to prove the <strong>business facts and centralized measures do not expose endpoint evidence before 11/22, do expose it at 11/22, and correctly handle 11/23 as outside the evidence boundary</strong>.</p>
+<p>The final E09 test will therefore evaluate the same controlled measures under three explicit <code>DimAsOfDate[AsOfDate]</code> contexts:</p>
+<pre><code class="language-text">2026-11-21   PRE_ENDPOINT
+2026-11-22   ENDPOINT
+2026-11-23   POST_ENDPOINT
+</code></pre>
+<p>and will include at minimum:</p>
+<pre><code class="language-text">Selected As Of Date
+As Of Evidence Status
+Endpoint Evidence Available
+Portfolio Evidence Max Date
+
+Active Account Count As Of
+Current Exposure As Of
+Paid Off Accounts As Of
+Cumulative Actual Remittance As Of
+Cumulative Expected Remittance As Of
+Remaining Receivable As Of
+Open Servicing Queue
+Unresolved Payment Exceptions As Of
+</code></pre>
+<p>That will give Audit direct live-engine evidence of the no-back-casting and post-evidence boundary behavior rather than an inference from source dates.</p>
+<p>Run the <strong>E09 endpoint-fact date diagnostic</strong> first and send me the result.</p>
+</div></article><article id="m-316ca2bb-c45b-4d9a-8964-e0acfd77d399" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00179 · 2026-08-20T13:04:46.894000-04:00 · active path</p><div class="bubble"><p>error in that query: Query (18, 24) Column &#39;portfolio_snapshot_date&#39; in table &#39;FactPortfolioPerformanceEndpoint&#39; cannot be found or may not be used in this expression.</p>
+</div></article><article id="m-9969b205-f94c-4b51-8fbc-71cc9e813a4d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00180 · 2026-08-20T13:04:47.694498-04:00 · active path</p><div class="bubble"><p>Good stop. <strong>Do not substitute another date column yet.</strong> This is exactly why we put the diagnostic ahead of <code>AUD-ASOF-003B</code>.</p>
+<p>The failure is confined to the diagnostic query:</p>
+<pre><code class="language-text">FactPortfolioPerformanceEndpoint[portfolio_snapshot_date]
+→ column does not exist
+</code></pre>
+<p>No model change is indicated.</p>
+<h3>1. Preserve the failed diagnostic</h3>
+<p>Save the screenshot/error, then record:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;E09_ENDPOINT_FACT_DATE_DIAGNOSTIC_SCHEMA_OBSERVATION&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    query = &quot;E09_ENDPOINT_FACT_DATE_DIAGNOSTIC&quot;
+    result = &quot;STOPPED_ON_SCHEMA_MISMATCH&quot;
+
+    object = &quot;FactPortfolioPerformanceEndpoint&quot;
+    attempted_column = &quot;portfolio_snapshot_date&quot;
+
+    error =
+        &quot;Column &#39;portfolio_snapshot_date&#39; in table &#39;FactPortfolioPerformanceEndpoint&#39; cannot be found or may not be used in this expression.&quot;
+
+    model_modified = $false
+    measure_modified = $false
+    relationship_modified = $false
+
+    disposition =
+        &quot;DERIVE_ENDPOINT_DATE_COLUMNS_FROM_LIVE_ENGINE_METADATA_BEFORE_RETRY&quot;
+} |
+    ConvertTo-Json -Depth 6 |
+    Set-Content `
+        -LiteralPath &quot;$return\E09_ENDPOINT_DATE_DIAGNOSTIC_SCHEMA_OBSERVATION.json&quot; `
+        -Encoding utf8
+</code></pre>
+<h3>2. Ask the live engine for the actual columns</h3>
+<p>Run this in DAX Studio:</p>
+<pre><code class="language-dax">EVALUATE
+SELECTCOLUMNS(
+    FILTER(
+        INFO.VIEW.COLUMNS(),
+        [Table] IN {
+            &quot;FactAccountCertification&quot;,
+            &quot;FactMonitoringEndpoint&quot;,
+            &quot;FactPortfolioKPIEndpoint&quot;,
+            &quot;FactPortfolioPerformanceEndpoint&quot;,
+            &quot;FactServicingExecution&quot;,
+            &quot;FactServicingQueueEndpoint&quot;
+        }
+    ),
+    &quot;Table&quot;, [Table],
+    &quot;Column&quot;, [Name],
+    &quot;DataType&quot;, [DataType],
+    &quot;SourceColumn&quot;, [SourceColumn],
+    &quot;IsHidden&quot;, [IsHidden]
+)
+ORDER BY
+    [Table],
+    [Column]
+</code></pre>
+<p>This deliberately includes <strong>six endpoint-governed facts</strong>, including <code>FactPortfolioKPIEndpoint</code>; my previous diagnostic omitted that table, so we should correct the evidence population now rather than carry that omission forward.</p>
+<p>Save:</p>
+<pre><code class="language-text">E09_ENDPOINT_FACT_COLUMN_METADATA.csv
+E09_ENDPOINT_FACT_COLUMN_METADATA.png
+</code></pre>
+<h3>3. Do not run the three-date test yet</h3>
+<p>Once you send me that CSV/result, I will construct the corrected diagnostic using the <strong>actual live-engine date fields</strong> for all six endpoint-governed facts.</p>
+<p>Then we can build <code>AUD-ASOF-003B</code> against the authoritative physical schemas for:</p>
+<pre><code class="language-text">2026-11-21  PRE_ENDPOINT
+2026-11-22  ENDPOINT
+2026-11-23  POST_ENDPOINT
+</code></pre>
+<p>This was a useful failure: it prevented us from creating evidence around an assumed field name. The A1b model itself remains untouched.</p>
+</div></article><article id="m-05012183-eafe-433b-bf6e-595dc244cac1" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00181 · 2026-08-20T13:08:37.540000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E09_ENDPOINT_FACT_COLUMN_METADATA.png; E09_ENDPOINT_FACT_COLUMN_METADATA.csv</p><div class="bubble"><p>E09_ENDPOINT_FACT_COLUMN_METADATA attached.</p>
+</div></article><article id="m-dba41fea-59e4-4f35-9822-5afa7f7ea994" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00182 · 2026-08-20T13:08:46.024887-04:00 · active path</p><div class="bubble"><p>Good. The live metadata resolves the schema ambiguity. I inspected all <strong>238 column-metadata rows across the six endpoint-governed facts</strong>.</p>
+<p>The important finding is that these six objects <strong>do not share one common business-date column</strong>:</p>
+<pre><code class="language-text">FactAccountCertification
+  certification_date          Date
+  created_at                  DateTime
+
+FactMonitoringEndpoint
+  latest_monitoring_date      Date
+  created_at                  DateTime
+
+FactPortfolioKPIEndpoint
+  created_at                  DateTime
+
+FactPortfolioPerformanceEndpoint
+  created_at                  DateTime
+
+FactServicingExecution
+  created_at                  DateTime
+
+FactServicingQueueEndpoint
+  created_at                  DateTime
+</code></pre>
+<p>So my attempted <code>portfolio_snapshot_date</code> was incorrect. More importantly, we should <strong>not reinterpret <code>created_at</code> as an as-of/effective date merely because it is the only timestamp on four endpoint tables</strong>. That would invent semantics the physical schema does not establish.</p>
+<p>The better <code>AUD-ASOF-003B</code> test is therefore measure/controller based: exercise the centralized as-of logic at the three required dates and observe whether endpoint evidence is exposed or withheld. That is exactly the business behavior we need to validate.</p>
+<h2>E09A — three-date centralized as-of behavior</h2>
+<p>Run this exact query:</p>
+<pre><code class="language-dax">EVALUATE
+UNION(
+
+    /* ---------------------------------------------------------
+       PRE-ENDPOINT: 2026-11-21
+       --------------------------------------------------------- */
+    CALCULATETABLE(
+        ROW(
+            &quot;TestDate&quot;, DATE(2026,11,21),
+            &quot;BoundaryClass&quot;, &quot;PRE_ENDPOINT&quot;,
+
+            &quot;SelectedAsOfDate&quot;, [Selected As Of Date],
+            &quot;AsOfEvidenceStatus&quot;, [As Of Evidence Status],
+            &quot;EndpointEvidenceAvailable&quot;, [Endpoint Evidence Available],
+            &quot;PortfolioEvidenceMaxDate&quot;, [Portfolio Evidence Max Date],
+
+            &quot;ActiveAccountCountAsOf&quot;, [Active Account Count As Of],
+            &quot;CurrentExposureAsOf&quot;, [Current Exposure As Of],
+            &quot;PaidOffAccountsAsOf&quot;, [Paid Off Accounts As Of],
+
+            &quot;CumulativeActualRemittanceAsOf&quot;,
+                [Cumulative Actual Remittance As Of],
+
+            &quot;CumulativeExpectedRemittanceAsOf&quot;,
+                [Cumulative Expected Remittance As Of],
+
+            &quot;RemainingReceivableAsOf&quot;,
+                [Remaining Receivable As Of],
+
+            &quot;OpenServicingQueue&quot;,
+                [Open Servicing Queue],
+
+            &quot;UnresolvedPaymentExceptionsAsOf&quot;,
+                [Unresolved Payment Exceptions As Of]
+        ),
+        TREATAS(
+            { DATE(2026,11,21) },
+            &#39;DimAsOfDate&#39;[AsOfDate]
+        )
+    ),
+
+    /* ---------------------------------------------------------
+       EVIDENCE ENDPOINT: 2026-11-22
+       --------------------------------------------------------- */
+    CALCULATETABLE(
+        ROW(
+            &quot;TestDate&quot;, DATE(2026,11,22),
+            &quot;BoundaryClass&quot;, &quot;EVIDENCE_ENDPOINT&quot;,
+
+            &quot;SelectedAsOfDate&quot;, [Selected As Of Date],
+            &quot;AsOfEvidenceStatus&quot;, [As Of Evidence Status],
+            &quot;EndpointEvidenceAvailable&quot;, [Endpoint Evidence Available],
+            &quot;PortfolioEvidenceMaxDate&quot;, [Portfolio Evidence Max Date],
+
+            &quot;ActiveAccountCountAsOf&quot;, [Active Account Count As Of],
+            &quot;CurrentExposureAsOf&quot;, [Current Exposure As Of],
+            &quot;PaidOffAccountsAsOf&quot;, [Paid Off Accounts As Of],
+
+            &quot;CumulativeActualRemittanceAsOf&quot;,
+                [Cumulative Actual Remittance As Of],
+
+            &quot;CumulativeExpectedRemittanceAsOf&quot;,
+                [Cumulative Expected Remittance As Of],
+
+            &quot;RemainingReceivableAsOf&quot;,
+                [Remaining Receivable As Of],
+
+            &quot;OpenServicingQueue&quot;,
+                [Open Servicing Queue],
+
+            &quot;UnresolvedPaymentExceptionsAsOf&quot;,
+                [Unresolved Payment Exceptions As Of]
+        ),
+        TREATAS(
+            { DATE(2026,11,22) },
+            &#39;DimAsOfDate&#39;[AsOfDate]
+        )
+    ),
+
+    /* ---------------------------------------------------------
+       POST-EVIDENCE: 2026-11-23
+       --------------------------------------------------------- */
+    CALCULATETABLE(
+        ROW(
+            &quot;TestDate&quot;, DATE(2026,11,23),
+            &quot;BoundaryClass&quot;, &quot;POST_EVIDENCE&quot;,
+
+            &quot;SelectedAsOfDate&quot;, [Selected As Of Date],
+            &quot;AsOfEvidenceStatus&quot;, [As Of Evidence Status],
+            &quot;EndpointEvidenceAvailable&quot;, [Endpoint Evidence Available],
+            &quot;PortfolioEvidenceMaxDate&quot;, [Portfolio Evidence Max Date],
+
+            &quot;ActiveAccountCountAsOf&quot;, [Active Account Count As Of],
+            &quot;CurrentExposureAsOf&quot;, [Current Exposure As Of],
+            &quot;PaidOffAccountsAsOf&quot;, [Paid Off Accounts As Of],
+
+            &quot;CumulativeActualRemittanceAsOf&quot;,
+                [Cumulative Actual Remittance As Of],
+
+            &quot;CumulativeExpectedRemittanceAsOf&quot;,
+                [Cumulative Expected Remittance As Of],
+
+            &quot;RemainingReceivableAsOf&quot;,
+                [Remaining Receivable As Of],
+
+            &quot;OpenServicingQueue&quot;,
+                [Open Servicing Queue],
+
+            &quot;UnresolvedPaymentExceptionsAsOf&quot;,
+                [Unresolved Payment Exceptions As Of]
+        ),
+        TREATAS(
+            { DATE(2026,11,23) },
+            &#39;DimAsOfDate&#39;[AsOfDate]
+        )
+    )
+)
+ORDER BY [TestDate]
+</code></pre>
+<p>Save:</p>
+<pre><code class="language-text">E09A_AUD_ASOF_003B_THREE_DATE_MEASURE_BEHAVIOR.csv
+E09A_AUD_ASOF_003B_THREE_DATE_MEASURE_BEHAVIOR.png
+</code></pre>
+<h3>Do not assume the expected values yet</h3>
+<p>This is important. We know the intended control principle:</p>
+<pre><code class="language-text">11/21   PRE_ENDPOINT
+11/22   EVIDENCE_ENDPOINT
+11/23   POST_EVIDENCE
+</code></pre>
+<p>But we should let the <strong>actual governed DAX definitions tell us their encoded behavior</strong> before declaring exactly which measures must blank on each date.</p>
+<p>For example, <code>As Of Evidence Status</code> may distinguish these dates with explicit status text rather than simply returning <code>BLANK()</code>. Likewise, some daily monitoring measures could legitimately exist on 11/21 even though endpoint-only facts must not be back-cast.</p>
+<p>So for E09A, <strong>do not interpret anything manually and do not change any measure</strong>. Just preserve the three rows.</p>
+<h2>Then we will perform E09B</h2>
+<p>Once I see E09A, I will reconcile the output against the actual 60 measure definitions we already captured and construct a narrower endpoint-only test covering the six governed endpoint objects:</p>
+<pre><code class="language-text">FactAccountCertification
+FactMonitoringEndpoint
+FactPortfolioKPIEndpoint
+FactPortfolioPerformanceEndpoint
+FactServicingExecution
+FactServicingQueueEndpoint
+</code></pre>
+<p>That will let us distinguish rigorously between:</p>
+<ul>
+<li>ordinary historical/as-of monitoring evidence;</li>
+<li>endpoint-only evidence;</li>
+<li>the 11/22 evidence boundary;</li>
+<li>post-evidence HOLD behavior.</li>
+</ul>
+<p>Run <strong>E09A only</strong> next and send me the three-row CSV/result.</p>
+</div></article><article id="m-a4563561-4efe-4b56-a5e3-456ad572082f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00183 · 2026-08-20T13:14:44.367000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E09A_AUD_ASOF_003B_THREE_DATE_MEASURE_BEHAVIOR.png; E09A_AUD_ASOF_003B_THREE_DATE_MEASURE_BEHAVIOR.csv</p><div class="bubble"><p>E09A evidence attached.</p>
+</div></article><article id="m-6ec56314-f214-4c4b-9639-b8c7bae617d6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00184 · 2026-08-20T13:14:52.204021-04:00 · active path</p><div class="bubble"><p>E09A gives us a very important result. I inspected the three-row CSV directly.</p>
+<p>The centralized as-of controller behaves correctly at the <strong>post-evidence boundary</strong>, but it also exposes a specific issue/question we need to resolve before calling <code>AUD-ASOF-003B</code> complete:</p>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th align="right">11/21 PRE</th>
+<th align="right">11/22 ENDPOINT</th>
+<th align="right">11/23 POST</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Selected As Of Date</td>
+<td align="right">11/21</td>
+<td align="right">11/22</td>
+<td align="right"><strong>BLANK</strong></td>
+</tr>
+<tr>
+<td>As Of Evidence Status</td>
+<td align="right">VALID</td>
+<td align="right">VALID</td>
+<td align="right"><strong>HOLD_OUTSIDE_EVIDENCE</strong></td>
+</tr>
+<tr>
+<td>Endpoint Evidence Available</td>
+<td align="right"><strong>0</strong></td>
+<td align="right"><strong>0</strong></td>
+<td align="right">0</td>
+</tr>
+<tr>
+<td>Portfolio Evidence Max Date</td>
+<td align="right">11/22</td>
+<td align="right">11/22</td>
+<td align="right">11/22</td>
+</tr>
+<tr>
+<td>Active Accounts</td>
+<td align="right">2</td>
+<td align="right">2</td>
+<td align="right">0</td>
+</tr>
+<tr>
+<td>Current Exposure</td>
+<td align="right">1,287.02</td>
+<td align="right">979.73</td>
+<td align="right"><strong>BLANK</strong></td>
+</tr>
+<tr>
+<td>Paid Off Accounts</td>
+<td align="right">57</td>
+<td align="right">57</td>
+<td align="right">0</td>
+</tr>
+<tr>
+<td>Cumulative Actual</td>
+<td align="right">800,551.70</td>
+<td align="right">800,858.99</td>
+<td align="right"><strong>BLANK</strong></td>
+</tr>
+<tr>
+<td>Cumulative Expected</td>
+<td align="right">801,838.72</td>
+<td align="right">801,838.72</td>
+<td align="right"><strong>BLANK</strong></td>
+</tr>
+<tr>
+<td>Remaining Receivable</td>
+<td align="right">1,287.02</td>
+<td align="right">979.73</td>
+<td align="right"><strong>BLANK</strong></td>
+</tr>
+<tr>
+<td>Open Servicing Queue</td>
+<td align="right">10</td>
+<td align="right">10</td>
+<td align="right"><strong>BLANK</strong></td>
+</tr>
+</tbody></table>
+<h3>What has already passed</h3>
+<p>The <strong>11/23 outside-evidence behavior is excellent</strong>:</p>
+<pre><code class="language-text">Requested date                  2026-11-23
+Selected As Of Date             BLANK
+As Of Evidence Status           HOLD_OUTSIDE_EVIDENCE
+Portfolio Evidence Max Date     2026-11-22
+
+Exposure/remittance measures    BLANK
+Open servicing queue            BLANK
+</code></pre>
+<p>That is direct live-engine evidence that the model does <strong>not silently carry 11/22 evidence forward into 11/23</strong>.</p>
+<p>Likewise, 11/21 and 11/22 are distinguished correctly as valid dates, and the ordinary as-of measures evolve between them rather than simply repeating endpoint values:</p>
+<pre><code class="language-text">Current Exposure
+11/21   1,287.02
+11/22     979.73
+
+Cumulative Actual
+11/21   800,551.70
+11/22   800,858.99
+</code></pre>
+<p>So ordinary historical/as-of behavior is functioning.</p>
+<h2>One result requires investigation</h2>
+<p><code>Endpoint Evidence Available</code> is:</p>
+<pre><code class="language-text">11/21 = 0
+11/22 = 0
+11/23 = 0
+</code></pre>
+<p>That is potentially significant.</p>
+<p>If this measure is supposed to become <code>1</code> exactly on <strong>2026-11-22</strong>, then <code>AUD-ASOF-003B</code> has exposed a real defect. If instead the measure has a narrower semantic definition—for example, requiring a particular endpoint-fact/filter context—then the zero at 11/22 may be correct.</p>
+<p>We should <strong>not infer which interpretation applies</strong>.</p>
+<h3>E09A disposition</h3>
+<p>For now:</p>
+<pre><code class="language-text">Pre-endpoint ordinary as-of behavior        PASS
+Evidence-endpoint ordinary as-of behavior   PASS
+Post-evidence HOLD behavior                 PASS
+No post-endpoint carry-forward              PASS
+
+Endpoint Evidence Available:
+  11/21                                      0
+  11/22                                      0
+  11/23                                      0
+                                             INVESTIGATE
+
+AUD-ASOF-003B                               NOT YET CLOSED
+</code></pre>
+<h2>E09B — inspect the actual endpoint-control definitions</h2>
+<p>Before executing anything else, run this metadata query:</p>
+<pre><code class="language-dax">EVALUATE
+SELECTCOLUMNS(
+    FILTER(
+        INFO.VIEW.MEASURES(),
+        [Name] IN {
+            &quot;Endpoint Evidence Available&quot;,
+            &quot;As Of Evidence Status&quot;,
+            &quot;Selected As Of Date&quot;,
+            &quot;Portfolio Evidence Max Date&quot;
+        }
+    ),
+    &quot;Measure&quot;, [Name],
+    &quot;Expression&quot;, [Expression],
+    &quot;FormatString&quot;, [FormatString],
+    &quot;IsHidden&quot;, [IsHidden]
+)
+ORDER BY [Measure]
+</code></pre>
+<p>Save it as:</p>
+<pre><code class="language-text">E09B_ASOF_CONTROL_MEASURE_DEFINITIONS.csv
+E09B_ASOF_CONTROL_MEASURE_DEFINITIONS.png
+</code></pre>
+<p>This is read-only metadata evidence. <strong>Do not edit any measure.</strong></p>
+<p>Once you send me that CSV, I can determine exactly what <code>Endpoint Evidence Available = 0</code> means according to the model&#39;s own authored logic. Then we&#39;ll construct the final endpoint-only physical test around that definition and the six endpoint-governed facts.</p>
+<p>We are very close, but this is precisely the sort of result that should be resolved rather than waved through.</p>
+</div></article><article id="m-4a59c559-4343-4237-87f6-eecaef98606e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00185 · 2026-08-20T13:20:11.982000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E09B_ASOF_CONTROL_MEASURE_DEFINITIONS.csv; E09B_ASOF_CONTROL_MEASURE_DEFINITIONS.png</p><div class="bubble"><p>E09B_ASOF_CONTROL_MEASURE_DEFINITIONS attached.</p>
+</div></article><article id="m-77f66613-5d45-46be-a27d-574f39557529" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00186 · 2026-08-20T13:20:19.835623-04:00 · active path</p><div class="bubble"><p>E09B explains the <code>Endpoint Evidence Available = 0</code> result precisely. I inspected the exported measure definitions.</p>
+<p>The measure requires <strong>five conditions simultaneously</strong>:</p>
+<pre><code class="language-dax">[As Of Evidence Status] = &quot;VALID&quot;
+&amp;&amp; [Selected As Of Date] = [Portfolio Evidence Max Date]
+&amp;&amp; [G2 Contract Pass] = 1
+&amp;&amp; [G3 Contract Pass] = 1
+&amp;&amp; [Source Reconciliation Pass] = 1
+</code></pre>
+<p>At <code>2026-11-22</code>, E09A already established the first four conditions:</p>
+<pre><code class="language-text">As Of Evidence Status          VALID
+Selected As Of Date            2026-11-22
+Portfolio Evidence Max Date    2026-11-22
+G2 Contract Pass               previously observed = 1
+G3 Contract Pass               previously observed = 1
+</code></pre>
+<p>Therefore the remaining gating condition is <strong><code>[Source Reconciliation Pass]</code></strong>. In E05&#39;s unfiltered execution, that measure returned <code>0</code>. So <code>Endpoint Evidence Available = 0</code> is not an as-of/date-controller defect; it is the intended downstream consequence of the source-reconciliation gate currently evaluating false.</p>
+<p>That distinction is important.</p>
+<h3>Current <code>AUD-ASOF-003B</code> interpretation</h3>
+<p>The date-boundary behavior itself is behaving coherently:</p>
+<pre><code class="language-text">2026-11-21  VALID
+2026-11-22  VALID
+2026-11-23  HOLD_OUTSIDE_EVIDENCE
+</code></pre>
+<p>And <code>Portfolio Evidence Max Date</code> is explicitly derived from:</p>
+<pre><code class="language-dax">MAX(&#39;FactAccountDaily&#39;[monitoring_date])
+</code></pre>
+<p>with date filters removed. That physically establishes <code>2026-11-22</code> as the evidence ceiling.</p>
+<p>The endpoint availability flag is therefore <strong>fail-closed</strong> rather than incorrectly exposing endpoint evidence:</p>
+<pre><code class="language-text">Endpoint date reached                    YES
+Date boundary valid                      YES
+G2/G3 gates                              PASS
+Source reconciliation gate               NOT PASS
+Endpoint Evidence Available              0
+</code></pre>
+<p>We now need to determine <em>why</em> <code>Source Reconciliation Pass = 0</code> before deciding whether that is an expected governed HOLD or an A1b defect.</p>
+<h2>E09C — inspect and execute the reconciliation gate</h2>
+<p>First retrieve the exact measure definition:</p>
+<pre><code class="language-dax">EVALUATE
+SELECTCOLUMNS(
+    FILTER(
+        INFO.VIEW.MEASURES(),
+        [Name] IN {
+            &quot;Source Reconciliation Pass&quot;,
+            &quot;Reconciliation Difference&quot;,
+            &quot;Primary Key Fail Count&quot;,
+            &quot;Orphan Fail Count&quot;,
+            &quot;Measure Recompute Fail Count&quot;,
+            &quot;G2 Contract Pass&quot;,
+            &quot;G3 Contract Pass&quot;
+        }
+    ),
+    &quot;Measure&quot;, [Name],
+    &quot;Expression&quot;, [Expression],
+    &quot;IsHidden&quot;, [IsHidden]
+)
+ORDER BY [Measure]
+</code></pre>
+<p>Save:</p>
+<pre><code class="language-text">E09C_RECONCILIATION_GATE_MEASURE_DEFINITIONS.csv
+E09C_RECONCILIATION_GATE_MEASURE_DEFINITIONS.png
+</code></pre>
+<p>Then, in a second query, execute those controls specifically at the endpoint:</p>
+<pre><code class="language-dax">EVALUATE
+CALCULATETABLE(
+    ROW(
+        &quot;TestDate&quot;, DATE(2026,11,22),
+        &quot;AsOfEvidenceStatus&quot;, [As Of Evidence Status],
+        &quot;SelectedAsOfDate&quot;, [Selected As Of Date],
+        &quot;PortfolioEvidenceMaxDate&quot;, [Portfolio Evidence Max Date],
+
+        &quot;G2ContractPass&quot;, [G2 Contract Pass],
+        &quot;G3ContractPass&quot;, [G3 Contract Pass],
+
+        &quot;SourceReconciliationPass&quot;, [Source Reconciliation Pass],
+        &quot;ReconciliationDifference&quot;, [Reconciliation Difference],
+        &quot;PrimaryKeyFailCount&quot;, [Primary Key Fail Count],
+        &quot;OrphanFailCount&quot;, [Orphan Fail Count],
+        &quot;MeasureRecomputeFailCount&quot;, [Measure Recompute Fail Count],
+
+        &quot;EndpointEvidenceAvailable&quot;, [Endpoint Evidence Available]
+    ),
+    TREATAS(
+        { DATE(2026,11,22) },
+        &#39;DimAsOfDate&#39;[AsOfDate]
+    )
+)
+</code></pre>
+<p>Save:</p>
+<pre><code class="language-text">E09C_ENDPOINT_RECONCILIATION_GATE_EXECUTION.csv
+E09C_ENDPOINT_RECONCILIATION_GATE_EXECUTION.png
+</code></pre>
+<p>Do <strong>not</strong> change any measure if <code>SourceReconciliationPass</code> remains <code>0</code>.</p>
+<h3>Why this is the right next test</h3>
+<p>We should not weaken <code>Endpoint Evidence Available</code> just to make it return <code>1</code>. Its current construction is actually a desirable fail-closed control: endpoint evidence cannot become claimable unless date validity, G2, G3, <strong>and source reconciliation</strong> all pass.</p>
+<p>The remaining question is whether:</p>
+<ol>
+<li><code>Source Reconciliation Pass = 0</code> is an <strong>expected HOLD because its required validation context is absent</strong>, or</li>
+<li>the live A1b model contains an actual source-reconciliation failure.</li>
+</ol>
+<p>E09C will tell us which.</p>
+<p>At this point I would classify the evidence as:</p>
+<pre><code class="language-text">AUD-ASOF-003B
+
+Pre-endpoint date handling             PASS
+Endpoint date recognition              PASS
+Post-endpoint HOLD                     PASS
+No post-evidence carry-forward         PASS
+Evidence ceiling = 2026-11-22          PASS
+
+Endpoint Evidence Available               0
+Reason                                 SOURCE_RECONCILIATION_GATE_FALSE
+Correct fail-closed behavior           PASS
+
+Underlying reconciliation gate         INVESTIGATE
+Overall AUD-ASOF-003B                   PENDING E09C
+</code></pre>
+<p>Run both E09C queries and send me the two CSVs/results.</p>
+</div></article><article id="m-5a536923-8527-4bb1-800f-5893199531c7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00187 · 2026-08-20T13:27:47.651000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E09C_ENDPOINT_RECONCILIATION_GATE_EXECUTION.csv; E09C_RECONCILIATION_GATE_MEASURE_DEFINITIONS.png; E09C_RECONCILIATION_GATE_MEASURE_DEFINITIONS.csv; E09C_ENDPOINT_RECONCILIATION_GATE_EXECUTION.png</p><div class="bubble"><p>E09C evidence attached.</p>
+</div></article><article id="m-64a17d56-d6b4-496c-92ef-dae4675fed70" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00188 · 2026-08-20T13:28:03.938004-04:00 · active path</p><div class="bubble"><p>E09C narrows the issue materially. I inspected both CSVs directly.</p>
+<p>At the exact endpoint <code>2026-11-22</code>, the live engine returns:</p>
+<pre><code class="language-text">As Of Evidence Status          VALID
+Selected As Of Date            2026-11-22
+Portfolio Evidence Max Date    2026-11-22
+G2 Contract Pass               1
+G3 Contract Pass               1
+
+Source Reconciliation Pass     0
+Endpoint Evidence Available    0
+
+Reconciliation Difference      BLANK
+Primary Key Fail Count         BLANK
+Orphan Fail Count              BLANK
+Measure Recompute Fail Count   BLANK
+</code></pre>
+<p>The measure definition establishes exactly why. <code>Source Reconciliation Pass</code> is not based on those three specialized fail-count measures. It independently requires <strong>every row</strong> in both <code>FactSourceReconciliation</code> and <code>FactValidationResult</code> to have a PASS status:</p>
+<pre><code class="language-text">SourceControls &gt; 0
+ValidationControls &gt; 0
+SourceFailures = 0
+ValidationFailures = 0
+</code></pre>
+<p>where:</p>
+<pre><code class="language-text">SourceFailures =
+    FactSourceReconciliation[object_audit_status] &lt;&gt; &quot;PASS&quot;
+
+ValidationFailures =
+    FactValidationResult[status] &lt;&gt; &quot;PASS&quot;
+</code></pre>
+<p>So E09C has established that <strong>at least one row in one of those two populations is not PASS</strong>. We should not yet call that an A1b model defect, because it may be a deliberately retained HOLD/pending row in the governed evidence population.</p>
+<p>The blank <code>Primary Key Fail Count</code>, <code>Orphan Fail Count</code>, and <code>Measure Recompute Fail Count</code> are actually useful: they give us no evidence that those specific categories are causing the gate to fail. We now need to identify the exact non-PASS population.</p>
+<h2>E09D — identify the gate blocker exactly</h2>
+<p>Run this first. It gives us a compact status distribution for both controlling tables:</p>
+<pre><code class="language-dax">EVALUATE
+UNION(
+    SELECTCOLUMNS(
+        SUMMARIZECOLUMNS(
+            &#39;FactSourceReconciliation&#39;[object_audit_status],
+            &quot;RowCount&quot;, COUNTROWS(&#39;FactSourceReconciliation&#39;)
+        ),
+        &quot;Population&quot;, &quot;FactSourceReconciliation&quot;,
+        &quot;Status&quot;, COALESCE(&#39;FactSourceReconciliation&#39;[object_audit_status], &quot;&lt;BLANK&gt;&quot;),
+        &quot;RowCount&quot;, [RowCount]
+    ),
+
+    SELECTCOLUMNS(
+        SUMMARIZECOLUMNS(
+            &#39;FactValidationResult&#39;[status],
+            &quot;RowCount&quot;, COUNTROWS(&#39;FactValidationResult&#39;)
+        ),
+        &quot;Population&quot;, &quot;FactValidationResult&quot;,
+        &quot;Status&quot;, COALESCE(&#39;FactValidationResult&#39;[status], &quot;&lt;BLANK&gt;&quot;),
+        &quot;RowCount&quot;, [RowCount]
+    )
+)
+ORDER BY
+    [Population],
+    [Status]
+</code></pre>
+<p>Save as:</p>
+<pre><code class="language-text">E09D_RECONCILIATION_GATE_STATUS_DISTRIBUTION.csv
+E09D_RECONCILIATION_GATE_STATUS_DISTRIBUTION.png
+</code></pre>
+<p>Then run this second query to identify the actual source-reconciliation blockers:</p>
+<pre><code class="language-dax">EVALUATE
+FILTER(
+    SELECTCOLUMNS(
+        &#39;FactSourceReconciliation&#39;,
+        &quot;schema&quot;, &#39;FactSourceReconciliation&#39;[schema],
+        &quot;object&quot;, &#39;FactSourceReconciliation&#39;[object],
+        &quot;object_audit_status&quot;, &#39;FactSourceReconciliation&#39;[object_audit_status],
+        &quot;loaded_rows&quot;, &#39;FactSourceReconciliation&#39;[loaded_rows],
+        &quot;actual_rows&quot;, &#39;FactSourceReconciliation&#39;[actual_rows]
+    ),
+    COALESCE([object_audit_status], &quot;&quot;) &lt;&gt; &quot;PASS&quot;
+)
+ORDER BY
+    [schema],
+    [object]
+</code></pre>
+<p>Save as:</p>
+<pre><code class="language-text">E09D_SOURCE_RECONCILIATION_NONPASS.csv
+E09D_SOURCE_RECONCILIATION_NONPASS.png
+</code></pre>
+<p>Finally run the validation-side blocker query:</p>
+<pre><code class="language-dax">EVALUATE
+FILTER(
+    SELECTCOLUMNS(
+        &#39;FactValidationResult&#39;,
+        &quot;control_id&quot;, &#39;FactValidationResult&#39;[control_id],
+        &quot;validation_category&quot;, &#39;FactValidationResult&#39;[validation_category],
+        &quot;source_schema&quot;, &#39;FactValidationResult&#39;[source_schema],
+        &quot;source_object&quot;, &#39;FactValidationResult&#39;[source_object],
+        &quot;status&quot;, &#39;FactValidationResult&#39;[status],
+        &quot;residual_limitation&quot;, &#39;FactValidationResult&#39;[residual_limitation]
+    ),
+    COALESCE([status], &quot;&quot;) &lt;&gt; &quot;PASS&quot;
+)
+ORDER BY
+    [validation_category],
+    [control_id]
+</code></pre>
+<p>Save as:</p>
+<pre><code class="language-text">E09D_VALIDATION_NONPASS.csv
+E09D_VALIDATION_NONPASS.png
+</code></pre>
+<p>Do <strong>not</strong> alter any rows, measures, queries, or reconciliation logic regardless of what those queries return.</p>
+<h3>Current disposition</h3>
+<p>At this point the evidence supports a fairly strong conclusion already:</p>
+<pre><code class="language-text">AUD-ASOF-003B
+
+11/21 valid historical as-of behavior        PASS
+11/22 endpoint recognized                    PASS
+11/23 outside-evidence HOLD                  PASS
+No post-endpoint carry-forward               PASS
+Evidence ceiling = 2026-11-22                PASS
+G2 contract gate                             PASS
+G3 contract gate                             PASS
+
+Endpoint evidence publication gate           CLOSED / FAIL-CLOSED
+Endpoint Evidence Available                  0
+Immediate cause                              Source Reconciliation Pass = 0
+
+Underlying non-PASS population               IDENTIFICATION PENDING
+AUD-ASOF-003B final disposition              PENDING E09D
+</code></pre>
+<p>This is not a reason to weaken the gate. If the non-PASS rows turn out to be intentional governance HOLDs, then the model is doing exactly what it should: <strong>recognizing the endpoint while refusing to declare endpoint evidence available until every required reconciliation/validation control is PASS</strong>. If they are unexpected failures, we preserve them for Audit instead.</p>
+<p>Run the three E09D queries and send me the results.</p>
+</div></article><article id="m-c5622b89-5d8b-4cb9-b479-58e431837889" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00189 · 2026-08-20T13:36:27.628000-04:00 · active path</p><p class="note">3 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E09D_SOURCE_RECONCILIATION_NONPASS.png; E09D_SOURCE_RECONCILIATION_NONPASS.csv; E09D_RECONCILIATION_GATE_STATUS_DISTRIBUTION.png; E09D_RECONCILIATION_GATE_STATUS_DISTRIBUTION.csv; E09D_VALIDATION_NONPASS.png; E09D_VALIDATION_NONPASS.csv</p><div class="bubble"><p>E09D evidence attached.</p>
+</div></article><article id="m-780bbb4e-23c8-45c5-85da-e768271c9bd1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00190 · 2026-08-20T13:36:38.702474-04:00 · active path</p><div class="bubble"><p>E09D identifies the blocker conclusively, and it is <strong>not a substantive source-reconciliation failure</strong>. It is an exact-status predicate mismatch between the A1b DAX gate and the inherited A1a reconciliation evidence.</p>
+<p>The physical results are:</p>
+<pre><code class="language-text">FactSourceReconciliation
+  rows:    214
+  status:  PASS_A1A_R3_STATIC
+  rows with literal &quot;PASS&quot;: 0
+
+FactValidationResult
+  rows:    533
+  status:  PASS
+  non-PASS rows: 0
+</code></pre>
+<p>The second E09D export confirms why all 214 source-reconciliation rows were returned by the <code>&lt;&gt; &quot;PASS&quot;</code> query: every one carries <code>object_audit_status = PASS_A1A_R3_STATIC</code>. The validation-side non-PASS export is empty.</p>
+<h3>What this means</h3>
+<p><code>[Source Reconciliation Pass]</code> currently implements an <strong>exact literal <code>PASS</code> test</strong>. But its entire 214-row source population uses the more specific inherited status <code>PASS_A1A_R3_STATIC</code>.</p>
+<p>Therefore:</p>
+<pre><code class="language-text">Physical source reconciliation population       214
+PASS_A1A_R3_STATIC                              214/214
+Other source statuses                             0
+
+Physical validation population                   533
+PASS                                             533/533
+Other validation statuses                         0
+
+Substantive failed reconciliation rows             0
+Substantive failed validation rows                 0
+
+DAX Source Reconciliation Pass                     0
+Cause                       STATUS-VOCABULARY MISMATCH
+</code></pre>
+<p>This also explains the entire chain:</p>
+<pre><code class="language-text">PASS_A1A_R3_STATIC &lt;&gt; &quot;PASS&quot;
+        ↓
+Source Reconciliation Pass = 0
+        ↓
+Endpoint Evidence Available = 0
+</code></pre>
+<p>So I would <strong>not</strong> classify <code>AUD-ASOF-003B</code> as failing because the underlying evidence is bad. But neither should we self-correct the measure now: the authorized A1b catalog gave us an exact 60-measure semantic construction, and changing one of those measure definitions would be a semantic hotfix requiring explicit bounded authority.</p>
+<h2>Preserve this as a discovered A1b runtime finding</h2>
+<p>Before doing anything else, record it:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1B_SOURCE_RECONCILIATION_STATUS_VOCABULARY_FINDING&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    discovered_during = &quot;AUD-ASOF-003B&quot;
+
+    fact_source_reconciliation_rows = 214
+    fact_source_reconciliation_status = &quot;PASS_A1A_R3_STATIC&quot;
+    fact_source_reconciliation_status_count = 214
+    literal_pass_source_rows = 0
+
+    fact_validation_result_rows = 533
+    fact_validation_result_status = &quot;PASS&quot;
+    fact_validation_result_status_count = 533
+    validation_nonpass_rows = 0
+
+    substantive_source_failure_observed = $false
+    substantive_validation_failure_observed = $false
+
+    dax_source_reconciliation_pass = 0
+    dax_endpoint_evidence_available = 0
+
+    root_cause =
+        &quot;SOURCE_RECONCILIATION_PASS_MEASURE_REQUIRES_LITERAL_PASS_WHILE_ALL_214_SOURCE_ROWS_USE_PASS_A1A_R3_STATIC&quot;
+
+    classification =
+        &quot;A1B_RUNTIME_STATUS_VOCABULARY_MISMATCH&quot;
+
+    model_modified = $false
+    measure_modified = $false
+
+    remediation_authorized = $false
+
+    disposition =
+        &quot;PRESERVE_FAIL_CLOSED_STATE_AND_REFER_BOUNDED_SEMANTIC_REMEDIATION_TO_INDEPENDENT_AUDIT&quot;
+} |
+    ConvertTo-Json -Depth 8 |
+    Set-Content `
+        -LiteralPath &quot;$return\E09D_SOURCE_RECONCILIATION_STATUS_VOCABULARY_FINDING.json&quot; `
+        -Encoding utf8
+</code></pre>
+<h2>We should <strong>not patch it yet</strong></h2>
+<p>This is materially different from HF01. HF01 corrected malformed M path syntax necessary to execute the already-authorized logic. Here, changing <code>[Source Reconciliation Pass]</code> from something equivalent to:</p>
+<pre><code class="language-dax">[object_audit_status] &lt;&gt; &quot;PASS&quot;
+</code></pre>
+<p>to accepting <code>PASS_A1A_R3_STATIC</code> would change the semantic acceptance predicate of a governed measure.</p>
+<p>It may be the correct remediation—and the evidence strongly suggests that it is—but Independent Audit should decide whether:</p>
+<ol>
+<li><code>PASS_A1A_R3_STATIC</code> is an authorized success state for this A1b gate;</li>
+<li>the source carrier should instead have normalized that status to <code>PASS</code>; or</li>
+<li>some other contract was intended.</li>
+</ol>
+<p>We should not silently choose among those.</p>
+<h3><code>AUD-ASOF-003B</code> can now be stated precisely</h3>
+<p>The as-of control itself has produced useful positive evidence:</p>
+<pre><code class="language-text">2026-11-21
+  Status                         VALID
+  Endpoint availability         0
+  Historical as-of values       present
+
+2026-11-22
+  Status                         VALID
+  Selected date                 2026-11-22
+  Evidence ceiling              2026-11-22
+  G2                            PASS
+  G3                            PASS
+  Endpoint availability         0
+  blocker                       status-vocabulary mismatch
+
+2026-11-23
+  Status                         HOLD_OUTSIDE_EVIDENCE
+  Selected date                 BLANK
+  Exposure/remittance outputs   BLANK
+  Endpoint availability         0
+</code></pre>
+<p>Thus the model <strong>does pass the temporal boundary behavior</strong>: historical calculation before the endpoint, recognition of the endpoint itself, and fail-closed behavior beyond it. What cannot yet pass is the endpoint-availability grant because of the newly discovered reconciliation-status mismatch.</p>
+<p>I would therefore carry:</p>
+<pre><code class="language-text">AUD-ASOF-003B
+  temporal boundary behavior          PASS
+  pre-endpoint behavior               PASS
+  endpoint recognition                PASS
+  post-endpoint HOLD                  PASS
+  no post-endpoint carry-forward      PASS
+  endpoint grant                      BLOCKED
+  blocker                             A1B status-vocabulary mismatch
+  remediation                         NOT SELF-AUTHORIZED
+  final IA disposition                PENDING
+</code></pre>
+<p>At this point I recommend <strong>stopping further business-semantic testing and preserving this exact live state</strong>. We have found a real bounded A1b semantic defect/contract mismatch, and continuing downstream could produce evidence whose interpretation depends on a gate we already know is false.</p>
+<p>The appropriate next step is to package the evidence for Independent Audit with a narrowly framed request: <strong>ratify the PBI-F-004 equivalent-evidence exception and determine disposition/remediation authority for the <code>PASS_A1A_R3_STATIC</code> versus literal <code>PASS</code> mismatch discovered under <code>AUD-ASOF-003B</code>.</strong> No A1b measure should be edited before that decision.</p>
+</div></article><article id="m-38551fc8-2287-4990-b589-6c1915578f51" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00191 · 2026-08-20T13:44:45.746000-04:00 · active path</p><div class="bubble"><p>Proceed to package the evidence for Independent Audit (including instructions for how to zip the live evidence we&#39;ve been storing) with a narrowly framed request: <strong>ratify the PBI-F-004 equivalent-evidence exception and determine disposition/remediation authority for the</strong> <strong><code>PASS_A1A_R3_STATIC</code></strong> <strong>versus literal</strong> <strong><code>PASS</code></strong> <strong>mismatch discovered under</strong> <strong><code>AUD-ASOF-003B</code>****.</strong> No A1b measure should be edited before that decision.  When creating the audit prompt, know that I will be providing file MSBF - Power BI Executive Portfolio Intelligence - ChatGPT_Interactions_49_Thru_## where ## is currently 87, but will likely be 87+ after a few more interactions before we finalize this for audit.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

@@ -1,0 +1,1172 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 33 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 33</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-32.html">Previous part</a><a href="part-34.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-7846a162-7bde-4838-bac8-b33db576fe68" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00720 · 2026-09-02T15:03:05.076000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 3e1d6ae9-f5d0-4d87-8932-8d4f634fed75.png</p><div class="bubble"><p>height 82 seems to make it go to two lines in the word wrap but it leaves a lot of unnecessary cushion on top and bottom:</p>
+</div></article><article id="m-a4f05d12-a20b-4b5f-a684-1ae5893fd69c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00721 · 2026-09-02T15:03:13.123303-04:00 · active path</p><div class="bubble"><p>Yes — that is the tradeoff. At <strong>82 px</strong>, Power BI finally gives the lower label enough internal room to wrap, but the visual’s built-in card padding is now making the tile feel too tall.</p>
+<p>I would <strong>keep the explicit two-line label</strong>, but tighten the lower card’s internal spacing rather than shrinking the font.</p>
+<p>For the lower <code>Approved as requested</code> card:</p>
+<ol>
+<li>Select that lower card only.</li>
+<li>Go to <strong>Format visual → Visual</strong>.</li>
+<li>Under <strong>Apply settings to</strong>, choose the decision-label card.</li>
+<li>Expand <strong>Padding</strong>.</li>
+<li>Reduce <strong>Top</strong> and <strong>Bottom</strong> padding aggressively — start around <strong>0–2 px</strong> each.</li>
+<li>Keep <strong>Left/Right</strong> padding modest, around <strong>4–6 px</strong>.</li>
+<li>Then reduce the overall card height from <strong>82</strong> gradually:<ul>
+<li>try <strong>74</strong></li>
+<li>then <strong>70</strong></li>
+<li>then <strong>68</strong></li>
+</ul>
+</li>
+<li>Stop at the lowest height where the text still reliably stays on two lines.</li>
+</ol>
+<p>I would also make the line break explicit in the display measure, because that lets us optimize the tile height without depending on Power BI’s automatic wrap behavior:</p>
+<pre><code class="language-DAX">R26 P03 Decision Label Display =
+VAR _Label = [R26 P03 Decision Label]
+RETURN
+    SWITCH (
+        _Label,
+        &quot;Approved as requested&quot;, &quot;Approved as&quot; &amp; UNICHAR ( 10 ) &amp; &quot;requested&quot;,
+        &quot;Counteroffer authorized&quot;, &quot;Counteroffer&quot; &amp; UNICHAR ( 10 ) &amp; &quot;authorized&quot;,
+        &quot;Counteroffer review&quot;, &quot;Counteroffer&quot; &amp; UNICHAR ( 10 ) &amp; &quot;review&quot;,
+        &quot;Underwriting review&quot;, &quot;Underwriting&quot; &amp; UNICHAR ( 10 ) &amp; &quot;review&quot;,
+        &quot;Evidence decline&quot;, &quot;Evidence&quot; &amp; UNICHAR ( 10 ) &amp; &quot;decline&quot;,
+        &quot;No feasible structure&quot;, &quot;No feasible&quot; &amp; UNICHAR ( 10 ) &amp; &quot;structure&quot;,
+        &quot;Policy hard stop&quot;, &quot;Policy hard&quot; &amp; UNICHAR ( 10 ) &amp; &quot;stop&quot;,
+        _Label
+    )
+</code></pre>
+<p>With that explicit break, I would expect you can probably get the lower card down closer to <strong>66–72 px</strong> and still preserve the two-line layout.</p>
+<p>Visually, I’d aim for roughly:</p>
+<p><strong>AUTHORIZED</strong><br>small gap<br><strong>Approved as</strong><br><strong>requested</strong></p>
+<p>with the lower block feeling compact and vertically centered, not floating in a large green box.</p>
+</div></article><article id="m-6b33f4d4-002f-4811-ae94-c8f971e82b87" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00722 · 2026-09-02T15:04:55.736000-04:00 · active path</p><div class="bubble"><p>you know what that uniform padding was 12 px and that was causing the issue setting that to 0 and it actually reads on one line just fine</p>
+</div></article><article id="m-dd5e8cf9-f3e7-42eb-bcd8-e969565186c3" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00723 · 2026-09-02T15:05:03.745911-04:00 · active path</p><div class="bubble"><p>[export reference: message_reaction | 👍]Exactly. That was the real issue.</p>
+<p><strong>Uniform padding = 12 px</strong> was consuming so much internal width that Power BI had to wrap/truncate the label. Setting it to <strong>0</strong> restored enough usable width for <code>Approved as requested</code> to render on one line.</p>
+<p>I would keep it that way:</p>
+<ul>
+<li><strong>Uniform padding:</strong> 0 px</li>
+<li><strong>Text wrap:</strong> On</li>
+<li><strong>Horizontal alignment:</strong> Center</li>
+<li>Keep the current font size</li>
+<li>Reduce the card height back down to the more compact height you preferred</li>
+<li>No explicit <code>UNICHAR(10)</code> display measure is needed now</li>
+</ul>
+<p>That is cleaner than forcing two lines. For this tile, a single-line <code>Approved as requested</code> under <code>AUTHORIZED</code> is the better result if it fits comfortably.</p>
+<p>I would also test the longest other labels—especially <strong>Counteroffer authorized</strong>, <strong>Counteroffer review</strong>, and <strong>No feasible structure</strong>—before freezing the tile dimensions. If those all render acceptably with 0 padding, we&#39;ve solved the component without adding any extra DAX.</p>
+</div></article><article id="m-207c2cac-09e7-4d5b-b9c4-9a454c9cec34" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00724 · 2026-09-02T15:10:06.215000-04:00 · active path</p><p class="note">4 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 567c9c56-0303-4bfe-bd5e-0c4d0aa180e3.png; 1a14e839-866d-4200-8b05-3d04a4065b0c.png; 58bca1a8-d6a2-40e3-a349-3becaae325a0.png; 34985c58-ad7e-451b-af7f-79efe4bfd377.png</p><div class="bubble"><p>why is the one case yellow but it says authorized approved as requested?</p>
+</div></article><article id="m-73d6087d-cb66-4cb2-9072-c71956c6651a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00725 · 2026-09-02T15:10:14.301516-04:00 · active path</p><div class="bubble"><p>The yellow case is almost certainly because the <strong>tile color is being driven by a different field/measure than the visible <code>AUTHORIZED / Approved as requested</code> text</strong>.</p>
+<p>In your screenshots, the case in question shows:</p>
+<ul>
+<li><strong>Decision class:</strong> <code>AUTHORIZED</code></li>
+<li><strong>Decision label:</strong> <code>Approved as requested</code></li>
+<li><strong>Proposed structure:</strong> identical to the merchant request</li>
+<li>Yet the tile background is <strong>amber/yellow</strong></li>
+</ul>
+<p>That combination does <strong>not</strong> make semantic sense if your color convention is:</p>
+<ul>
+<li>green = authorized/approved</li>
+<li>amber = review</li>
+<li>red = declined</li>
+</ul>
+<p>So I would treat this as a <strong>conditional-formatting binding issue</strong>, not a strategy issue.</p>
+<p>Check the tile background measure or rule that drives the card color. It may still be tied to something like:</p>
+<ul>
+<li>a legacy <code>decision_outcome</code></li>
+<li>a review flag</li>
+<li>candidate-search status</li>
+<li><code>Counteroffer review</code></li>
+<li>an old P03 decision-state measure</li>
+<li>or a broader <code>REVIEW / AUTHORIZED / DECLINED</code> mapping that is resolving inconsistently for that application</li>
+</ul>
+<p>The visible text is clearly resolving to the authorized branch, so the color measure should be based on the <strong>same authoritative R26 decision class</strong>.</p>
+<p>I would make the background measure conceptually:</p>
+<pre><code class="language-DAX">R26 P03 Decision Tile Background =
+SWITCH (
+    [R26 P03 Decision Class],
+    &quot;AUTHORIZED&quot;, &quot;#2E7D32&quot;,
+    &quot;REVIEW&quot;,     &quot;#C58A00&quot;,
+    &quot;DECLINED&quot;,   &quot;#C62828&quot;,
+    &quot;#808080&quot;
+)
+</code></pre>
+<p>Then bind the <strong>entire tile background</strong> to that measure.</p>
+<p>Do the same for the value/text color if you are dynamically formatting it, although white text is fine across all three states.</p>
+<p>The key rule is:</p>
+<blockquote>
+<p><strong>Color follows <code>R26 P03 Decision Class</code> only.</strong></p>
+</blockquote>
+<p>Do not let <code>Approved as requested</code>, <code>Counteroffer authorized</code>, <code>Counteroffer review</code>, candidate search, or recommendation narrative independently determine the background.</p>
+<p>For the yellow screenshot specifically, <code>AUTHORIZED / Approved as requested</code> should be <strong>green</strong>, matching your <code>000749 / Baseline</code> authorized example. The yellow state should be reserved for <code>REVIEW</code>, like the <code>000749 / Recession Energy</code> example.</p>
+</div></article><article id="m-d3337e36-a48d-4666-86b1-acd99ae1a852" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00726 · 2026-09-02T15:11:11.481000-04:00 · active path</p><div class="bubble"><p>and there is no funding date - merchant 738 / baseline</p>
+</div></article><article id="m-64b9aab3-1a0b-4cb1-8ef1-d0c6ff0d32be" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00727 · 2026-09-02T15:11:22.317998-04:00 · active path</p><div class="bubble"><p>That makes the case even more diagnostic.</p>
+<p>For <strong>merchant 000738 / Baseline</strong>, the screenshot shows:</p>
+<ul>
+<li><strong>AUTHORIZED</strong></li>
+<li><strong>Approved as requested</strong></li>
+<li>Proposed structure populated</li>
+<li>Proposed terms match the request</li>
+<li><strong>Funding date blank</strong></li>
+<li>Tile colored amber/yellow</li>
+</ul>
+<p>Those last two items suggest the same underlying problem: <strong>the displayed decision class and the downstream funding/formatting logic are not all resolving from the same successor authority.</strong></p>
+<p>If your intended population rule is:</p>
+<blockquote>
+<p><strong>AUTHORIZED → funding date populated</strong></p>
+</blockquote>
+<p>then merchant 000738 / Baseline should not be blank. And because it is <code>AUTHORIZED / Approved as requested</code>, its tile should also be green.</p>
+<p>So I would not fix color and funding date separately yet. Treat this as one small P03 reconciliation problem:</p>
+<p><strong>Visible decision:</strong> AUTHORIZED<br><strong>Expected tile color:</strong> green<br><strong>Expected funding date:</strong> populated<br><strong>Observed tile color:</strong> amber<br><strong>Observed funding date:</strong> blank</p>
+<p>That strongly suggests either:</p>
+<ol>
+<li><code>R26 P03 Decision Class</code> is correct, but the color and funding-date measures are using older/other fields, or</li>
+<li>the current <code>AUTHORIZED</code> text itself is coming from a different decision source than the funding/activation source.</li>
+</ol>
+<p>The next best step is to inspect the exact measures/fields behind these three things for merchant 000738 / Baseline:</p>
+<ul>
+<li>the <strong>AUTHORIZED</strong> card,</li>
+<li>the <strong>tile background color</strong>,</li>
+<li>the <strong>Funding date</strong> field.</li>
+</ul>
+<p>Once we see those exact bindings, we can make all three follow one coherent R26 rule without guessing.</p>
+<p>For this case specifically, I would expect the finished result to be:</p>
+<p><strong>green tile → AUTHORIZED / Approved as requested → Funding date populated.</strong></p>
+</div></article><article id="m-1070da63-b92b-45af-a2ae-62cdeeb7cda3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00728 · 2026-09-02T15:13:25.537000-04:00 · active path</p><div class="bubble"><p>well i would say the decision class / decision label logic seems wrong since the color aligns to the blank funding date and the recommendation says it requires manual authorization.</p>
+</div></article><article id="m-b9b006d0-6e86-49f3-be4d-00cd290f332c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00729 · 2026-09-02T15:13:33.709033-04:00 · active path</p><div class="bubble"><p>[export reference: message_reaction | 👍]I agree. With that additional evidence, <strong>the more likely defect is the decision-class / decision-label logic</strong>, not the color or funding-date logic.</p>
+<p>For merchant <code>000738 / Baseline</code>, three independent page elements are telling the same story:</p>
+<ul>
+<li><strong>Amber tile</strong> → review state</li>
+<li><strong>Funding date blank</strong> → not authorized/funded</li>
+<li><strong>Recommendation says manual authorization is required</strong> → review state</li>
+</ul>
+<p>Against that, only the visible tile text says:</p>
+<ul>
+<li><code>AUTHORIZED</code></li>
+<li><code>Approved as requested</code></li>
+</ul>
+<p>That makes the text the outlier.</p>
+<p>So I would <strong>not change the amber formatting</strong> and I would <strong>not force a funding date to populate</strong>. We should fix the decision measures.</p>
+<h3>What the case probably should say</h3>
+<p>If the recommendation truly says that the structure <strong>requires manual authorization</strong>, the decision class should almost certainly be:</p>
+<p><strong>REVIEW</strong></p>
+<p>The specific label depends on the governed R26 outcome. It could be something such as:</p>
+<p><strong>Counteroffer review</strong><br>or<br><strong>Underwriting review</strong></p>
+<p>We should not choose between those from appearance alone. We should resolve it from the exact final-decision source.</p>
+<p>One subtle point: the Proposed structure matching the requested terms does <strong>not</strong> force <code>Approved as requested</code>. A requested structure could be retained economically but still require human authorization because of another governed condition. So:</p>
+<blockquote>
+<p>Requested terms = Proposed terms</p>
+</blockquote>
+<p>does not necessarily mean:</p>
+<blockquote>
+<p>Approved as requested.</p>
+</blockquote>
+<h3>Why I think the current decision DAX is wrong</h3>
+<p>The current <code>R26 P03 Decision Class</code> / <code>R26 P03 Decision Label</code> measures may be deriving the state from a <strong>candidate-selection result</strong> or another intermediate field rather than the authoritative final disposition.</p>
+<p>That would explain all four observations:</p>
+<pre><code class="language-text">Candidate/structure selected       → &quot;AUTHORIZED&quot; incorrectly inferred
+Recommendation                     → manual authorization required
+Funding activation                 → none
+Review-state color                 → amber
+</code></pre>
+<p>In other words, the strategy may have <strong>selected a candidate structure</strong>, but selected ≠ authorized.</p>
+<p>That is exactly the semantic distinction we encountered earlier when we renamed the terms block from <code>Selected structure</code> to <strong>Proposed structure</strong>.</p>
+<h3>What to do next</h3>
+<p>Before touching the visual, inspect the formulas for these two measures:</p>
+<pre><code class="language-text">R26 P03 Decision Class
+R26 P03 Decision Label
+</code></pre>
+<p>I want to see exactly which source fields they use.</p>
+<p>Then compare those against the authoritative fields available in <code>R1FactFinalDecision</code> for <code>000738 / Baseline</code>.</p>
+<p>The governing rule should be:</p>
+<blockquote>
+<p><strong>Decision class and decision label come from the final governed disposition — never inferred from whether a candidate structure exists.</strong></p>
+</blockquote>
+<p>Likewise:</p>
+<ul>
+<li>tile color follows that corrected decision class;</li>
+<li>Funding date only populates for corrected <code>AUTHORIZED</code>;</li>
+<li>Proposed structure may still populate for either <code>AUTHORIZED</code> or <code>REVIEW</code>.</li>
+</ul>
+<p>So yes: <strong>do not “fix” the amber or the blank funding date. They are useful corroborating evidence that the visible AUTHORIZED / Approved as requested classification is wrong.</strong></p>
+<p>If you show me the DAX for <code>R26 P03 Decision Class</code> and <code>R26 P03 Decision Label</code>, we can correct this precisely.</p>
+</div></article><article id="m-86fd17f5-ec8c-414f-af49-c5a5c46797bd" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00730 · 2026-09-02T15:14:54.846000-04:00 · active path</p><div class="bubble"><p>R26 P03 Decision Class = </p>
+<p>        VAR _Outcome =</p>
+<p>            COALESCE (</p>
+<p>                SELECTEDVALUE (</p>
+<p>                    &#39;R1FactFinalDecision&#39;[governed_final_outcome_code]</p>
+<p>                ),</p>
+<p>                SELECTEDVALUE (</p>
+<p>                    &#39;R1DimApplicationScenario&#39;[governed_final_outcome_code]</p>
+<p>                )</p>
+<p>            )</p>
+<p>        RETURN</p>
+<p>            SWITCH (</p>
+<p>                TRUE (),</p>
+<p>                _Outcome</p>
+<p>                    IN {</p>
+<p>                        &quot;APPROVE_AS_REQUESTED_AUTHORIZED&quot;,</p>
+<p>                        &quot;COUNTEROFFER_AUTHORIZED&quot;</p>
+<p>                    }, &quot;AUTHORIZED&quot;,</p>
+<p>                _Outcome</p>
+<p>                    IN {</p>
+<p>                        &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;,</p>
+<p>                        &quot;MANUAL_UNDERWRITING_REVIEW_REQUIRED&quot;</p>
+<p>                    }, &quot;REVIEW&quot;,</p>
+<p>                _Outcome</p>
+<p>                    IN {</p>
+<p>                        &quot;DECLINE_INSUFFICIENT_EVIDENCE&quot;,</p>
+<p>                        &quot;DECLINE_NO_FEASIBLE_STRUCTURE&quot;,</p>
+<p>                        &quot;DECLINE_POLICY_HARD_STOP&quot;</p>
+<p>                    }, &quot;DECLINED&quot;,</p>
+<p>                BLANK ()</p>
+<p>            )                                                                         R26 P03 Decision Label = </p>
+<p>        VAR _Outcome =</p>
+<p>            COALESCE (</p>
+<p>                SELECTEDVALUE (</p>
+<p>                    &#39;R1FactFinalDecision&#39;[governed_final_outcome_code]</p>
+<p>                ),</p>
+<p>                SELECTEDVALUE (</p>
+<p>                    &#39;R1DimApplicationScenario&#39;[governed_final_outcome_code]</p>
+<p>                )</p>
+<p>            )</p>
+<p>        RETURN</p>
+<p>            SWITCH (</p>
+<p>                _Outcome,</p>
+<p>                &quot;APPROVE_AS_REQUESTED_AUTHORIZED&quot;, &quot;Approved as requested&quot;,</p>
+<p>                &quot;COUNTEROFFER_AUTHORIZED&quot;, &quot;Counteroffer authorized&quot;,</p>
+<p>                &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;, &quot;Counteroffer review&quot;,</p>
+<p>                &quot;MANUAL_UNDERWRITING_REVIEW_REQUIRED&quot;, &quot;Underwriting review&quot;,</p>
+<p>                &quot;DECLINE_INSUFFICIENT_EVIDENCE&quot;, &quot;Evidence decline&quot;,</p>
+<p>                &quot;DECLINE_NO_FEASIBLE_STRUCTURE&quot;, &quot;No feasible structure&quot;,</p>
+<p>                &quot;DECLINE_POLICY_HARD_STOP&quot;, &quot;Policy hard stop&quot;,</p>
+<p>                BLANK ()</p>
+<p>            )</p>
+</div></article><article id="m-f9b93f6e-3a63-430e-b552-a701a5144fc7" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00731 · 2026-09-02T15:15:03.639432-04:00 · active path</p><div class="bubble"><p>Yes. The problem is now visible in the DAX.</p>
+<p>The weakness is <strong>not the <code>SWITCH</code> mapping</strong>. Those outcome mappings are sensible. The problem is this construction in both measures:</p>
+<pre><code class="language-DAX">COALESCE (
+    SELECTEDVALUE ( &#39;R1FactFinalDecision&#39;[governed_final_outcome_code] ),
+    SELECTEDVALUE ( &#39;R1DimApplicationScenario&#39;[governed_final_outcome_code] )
+)
+</code></pre>
+<p>That means:</p>
+<blockquote>
+<p>“Use the final-decision fact if Power BI can resolve exactly one value; otherwise silently fall back to the application-scenario dimension.”</p>
+</blockquote>
+<p>For P03, that fallback is unsafe.</p>
+<p>For merchant <code>000738 / Baseline</code>, the evidence strongly suggests that <code>R1FactFinalDecision</code> is either returning blank/ambiguous in the current context, and then <code>R1DimApplicationScenario</code> is supplying an older/different <code>APPROVE_AS_REQUESTED_AUTHORIZED</code> value. That produces exactly the contradiction you&#39;re seeing:</p>
+<ul>
+<li>visible tile: <strong>AUTHORIZED / Approved as requested</strong></li>
+<li>recommendation: <strong>requires manual authorization</strong></li>
+<li>funding date: <strong>blank</strong></li>
+<li>existing state color: <strong>amber</strong></li>
+</ul>
+<p>The dimension fallback is effectively hiding a disagreement instead of exposing it.</p>
+<h2>Change both measures to the authoritative final-decision fact only</h2>
+<p>For <strong>Decision Class</strong>, replace the current measure with:</p>
+<pre><code class="language-DAX">R26 P03 Decision Class =
+VAR _Outcome =
+    SELECTEDVALUE (
+        &#39;R1FactFinalDecision&#39;[governed_final_outcome_code]
+    )
+RETURN
+    SWITCH (
+        TRUE (),
+        _Outcome IN {
+            &quot;APPROVE_AS_REQUESTED_AUTHORIZED&quot;,
+            &quot;COUNTEROFFER_AUTHORIZED&quot;
+        }, &quot;AUTHORIZED&quot;,
+
+        _Outcome IN {
+            &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;,
+            &quot;MANUAL_UNDERWRITING_REVIEW_REQUIRED&quot;
+        }, &quot;REVIEW&quot;,
+
+        _Outcome IN {
+            &quot;DECLINE_INSUFFICIENT_EVIDENCE&quot;,
+            &quot;DECLINE_NO_FEASIBLE_STRUCTURE&quot;,
+            &quot;DECLINE_POLICY_HARD_STOP&quot;
+        }, &quot;DECLINED&quot;,
+
+        BLANK ()
+    )
+</code></pre>
+<p>For <strong>Decision Label</strong>:</p>
+<pre><code class="language-DAX">R26 P03 Decision Label =
+VAR _Outcome =
+    SELECTEDVALUE (
+        &#39;R1FactFinalDecision&#39;[governed_final_outcome_code]
+    )
+RETURN
+    SWITCH (
+        _Outcome,
+        &quot;APPROVE_AS_REQUESTED_AUTHORIZED&quot;, &quot;Approved as requested&quot;,
+        &quot;COUNTEROFFER_AUTHORIZED&quot;, &quot;Counteroffer authorized&quot;,
+        &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;, &quot;Counteroffer review&quot;,
+        &quot;MANUAL_UNDERWRITING_REVIEW_REQUIRED&quot;, &quot;Underwriting review&quot;,
+        &quot;DECLINE_INSUFFICIENT_EVIDENCE&quot;, &quot;Evidence decline&quot;,
+        &quot;DECLINE_NO_FEASIBLE_STRUCTURE&quot;, &quot;No feasible structure&quot;,
+        &quot;DECLINE_POLICY_HARD_STOP&quot;, &quot;Policy hard stop&quot;,
+        BLANK ()
+    )
+</code></pre>
+<h3>Why this is the right behavior</h3>
+<p><code>R1FactFinalDecision</code> is the object whose name and semantics correspond to the thing the tile claims to show: the <strong>governed final outcome for this application/scenario</strong>.</p>
+<p><code>R1DimApplicationScenario</code> can still be useful elsewhere, but I would <strong>not allow it to backfill a final-decision visual</strong>. If the fact cannot resolve, P03 should show blank and make us investigate—not silently substitute a dimension value.</p>
+<h2>Immediately retest 000738 / Baseline</h2>
+<p>After replacing both measures, return to:</p>
+<p><strong>Merchant <code>000738</code> → Baseline</strong></p>
+<p>There are two useful possible outcomes.</p>
+<p>If the tile becomes:</p>
+<p><strong>REVIEW</strong><br>with either <strong>Counteroffer review</strong> or <strong>Underwriting review</strong></p>
+<p>then we&#39;ve found the defect, and that should also bring the tile semantically into agreement with the recommendation and blank funding date.</p>
+<p>If instead the tile becomes <strong>blank</strong>, that is also informative. It means <code>R1FactFinalDecision</code> is not resolving exactly one outcome for that merchant/scenario. In that case we should investigate the filter/grain rather than restore the fallback.</p>
+<p>I would <strong>not change anything else until you see which of those two happens</strong>.</p>
+<h2>One small diagnostic I strongly recommend</h2>
+<p>Create this temporary measure:</p>
+<pre><code class="language-DAX">R26 P03 DEBUG Final Outcome =
+SELECTEDVALUE (
+    &#39;R1FactFinalDecision&#39;[governed_final_outcome_code],
+    &quot;BLANK_OR_MULTIPLE&quot;
+)
+</code></pre>
+<p>Put it in a temporary card and test:</p>
+<ul>
+<li><code>000738 / Baseline</code></li>
+<li><code>000749 / Baseline</code></li>
+<li><code>000749 / Recession Energy</code></li>
+<li>your known decline case</li>
+</ul>
+<p>That tells us the exact fact-side state immediately.</p>
+<p>For <code>000738 / Baseline</code>, given the recommendation you&#39;ve shown, I expect either a review-required outcome or <code>BLANK_OR_MULTIPLE</code>. I would <strong>not expect <code>APPROVE_AS_REQUESTED_AUTHORIZED</code></strong> unless there is a deeper source contradiction.</p>
+<p>Also, keep the existing <code>R1DimApplicationScenario[governed_final_outcome_code]</code> untouched. We&#39;re fixing P03&#39;s authority resolution, not modifying source data.</p>
+</div></article><article id="m-d9a78b79-dfbd-4d47-94c9-9a0ff0416fe0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00732 · 2026-09-02T15:18:31.594000-04:00 · active path</p><div class="bubble"><p>can you help me identify one merchant for each of these decision class/decision label options that makes a good evidence case?  what data do you need me to provide (if any) to identify that?</p>
+</div></article><article id="m-24809661-bbdf-4563-add5-698db784a2e7" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00733 · 2026-09-02T15:18:42.759078-04:00 · active path</p><div class="bubble"><p>Yes. We can identify a strong evidence merchant for each of the seven decision outcomes, but I need a small slice of data that lets me evaluate both the <strong>decision state</strong> and whether the case is visually/economically illustrative.</p>
+<p>The seven targets are:</p>
+<ul>
+<li><code>APPROVE_AS_REQUESTED_AUTHORIZED</code> → <strong>AUTHORIZED / Approved as requested</strong></li>
+<li><code>COUNTEROFFER_AUTHORIZED</code> → <strong>AUTHORIZED / Counteroffer authorized</strong></li>
+<li><code>COUNTEROFFER_REVIEW_REQUIRED</code> → <strong>REVIEW / Counteroffer review</strong></li>
+<li><code>MANUAL_UNDERWRITING_REVIEW_REQUIRED</code> → <strong>REVIEW / Underwriting review</strong></li>
+<li><code>DECLINE_INSUFFICIENT_EVIDENCE</code> → <strong>DECLINED / Evidence decline</strong></li>
+<li><code>DECLINE_NO_FEASIBLE_STRUCTURE</code> → <strong>DECLINED / No feasible structure</strong></li>
+<li><code>DECLINE_POLICY_HARD_STOP</code> → <strong>DECLINED / Policy hard stop</strong></li>
+</ul>
+<p>The most useful thing you can provide is a <strong>small DAX Studio export at merchant + scenario grain</strong>. I would want these columns:</p>
+<pre><code class="language-text">merchant_id
+scenario
+governed_final_outcome_code
+
+requested_funding_amount
+requested_remittance_rate
+requested_payback_multiple
+requested_payoff_days
+requested_total_repayment
+
+governed_selected_funding_amount
+governed_selected_remittance_rate
+governed_selected_payback_multiple
+governed_selected_horizon_days
+governed_selected_total_repayment
+
+funding_date
+
+industry
+size_tier
+annual_sales_band
+relationship_stage
+relationship_quality
+prior_advance_count
+prior_funded_amount
+
+evidence narrative / evidence status if readily available
+underwriting narrative if readily available
+decision/recommendation narrative if readily available
+candidate-search summary if readily available
+</code></pre>
+<p>You do <strong>not</strong> need all of the narrative fields in the first pass. The minimum viable dataset is really:</p>
+<pre><code class="language-text">merchant_id
+scenario
+governed_final_outcome_code
+requested amount
+requested remittance
+requested payback multiple
+requested payoff days
+requested repayment
+selected/proposed amount
+selected/proposed remittance
+selected/proposed payback multiple
+selected/proposed horizon
+selected/proposed repayment
+funding date
+industry
+</code></pre>
+<p>With that, I can first identify 2–5 candidates for each outcome. Then we can inspect the narratives only for the finalists.</p>
+<p>What makes a <strong>good evidence case</strong> is not merely that it has the right code. I would prefer merchants where the page tells a clear story:</p>
+<ul>
+<li><strong>Approved as requested:</strong> request and proposed terms match, funding date exists, narrative clearly supports authorization.</li>
+<li><strong>Counteroffer authorized:</strong> request and proposal differ materially enough to be obvious, but the resulting structure is authorized and funded.</li>
+<li><strong>Counteroffer review:</strong> proposal differs meaningfully, but no funding date; recommendation clearly says authorization/review is required.</li>
+<li><strong>Underwriting review:</strong> economics/structure may be viable, but a separate underwriting condition drives review. We want a case that clearly distinguishes this from counteroffer review.</li>
+<li><strong>Evidence decline:</strong> operating/evidence narrative unmistakably shows missing or insufficient evidence.</li>
+<li><strong>No feasible structure:</strong> request fails and structure search cannot find a supportable alternative; ideally the narrative makes that explicit.</li>
+<li><strong>Policy hard stop:</strong> a clean case where the policy constraint itself is plainly the reason for decline, rather than weak economics or evidence.</li>
+</ul>
+<p>I would also deliberately avoid edge cases for the formal evidence set—for example, confusing mixed signals, exceptionally long narratives, unusual missing values, or cases where the proposed structure changes by only a trivial amount. We want <strong>canonical examples</strong> that make each governed outcome immediately understandable to a reviewer.</p>
+<p>If it&#39;s easiest, I can give you a <strong>single DAX Studio query</strong> that produces exactly the candidate-selection table I need from the current model. That is probably the fastest route.</p>
+</div></article><article id="m-56b0d002-5214-4679-9c9c-196a2262f166" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00734 · 2026-09-02T15:20:42.120000-04:00 · active path</p><div class="bubble"><p>yes, give me a single dax studio query and i&#39;ll return results</p>
+</div></article><article id="m-16a772b3-0617-47b6-9989-dfd694603c0d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00735 · 2026-09-02T15:20:50.511358-04:00 · active path</p><div class="bubble"><p>[export reference: message_reaction | 👍]Yes. Paste this <strong>single query into DAX Studio</strong> against the current Power BI model and return the results to me as CSV or pasted table.</p>
+<p>It is intentionally built from <code>R1FactFinalDecision</code> at its one-row-per-application/scenario grain and then looks up the corresponding request attributes from <code>R1DimApplicationScenario</code>. It covers all seven governed outcome codes and gives me enough economics, search, review, and narrative evidence to choose strong canonical examples.</p>
+<pre><code class="language-DAX">EVALUATE
+
+VAR _TargetOutcomes =
+    {
+        &quot;APPROVE_AS_REQUESTED_AUTHORIZED&quot;,
+        &quot;COUNTEROFFER_AUTHORIZED&quot;,
+        &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;,
+        &quot;MANUAL_UNDERWRITING_REVIEW_REQUIRED&quot;,
+        &quot;DECLINE_INSUFFICIENT_EVIDENCE&quot;,
+        &quot;DECLINE_NO_FEASIBLE_STRUCTURE&quot;,
+        &quot;DECLINE_POLICY_HARD_STOP&quot;
+    }
+
+VAR _Base =
+    FILTER (
+        &#39;R1FactFinalDecision&#39;,
+        &#39;R1FactFinalDecision&#39;[governed_final_outcome_code]
+            IN _TargetOutcomes
+    )
+
+RETURN
+    SELECTCOLUMNS (
+        _Base,
+
+        /* ================================================================
+           IDENTITY / OUTCOME
+           ================================================================ */
+
+        &quot;Merchant&quot;,
+            &#39;R1FactFinalDecision&#39;[merchant_id],
+
+        &quot;Scenario&quot;,
+            &#39;R1FactFinalDecision&#39;[scenario_code],
+
+        &quot;ApplicationScenarioKey&quot;,
+            &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey],
+
+        &quot;Governed Final Outcome&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_final_outcome_code],
+
+        &quot;Human Review Required&quot;,
+            &#39;R1FactFinalDecision&#39;[human_review_required_flag],
+
+        &quot;Selection Frontier&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selection_frontier],
+
+        &quot;Selected Candidate Type&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_candidate_type],
+
+        /* ================================================================
+           MERCHANT / SEGMENT CONTEXT
+           ================================================================ */
+
+        &quot;Industry&quot;,
+            LOOKUPVALUE (
+                &#39;R1DimApplicationScenario&#39;[industry_code],
+                &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            ),
+
+        &quot;Merchant Size Tier&quot;,
+            LOOKUPVALUE (
+                &#39;R1DimApplicationScenario&#39;[merchant_size_tier],
+                &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            ),
+
+        &quot;Relationship Stage&quot;,
+            LOOKUPVALUE (
+                &#39;R1DimApplicationScenario&#39;[relationship_stage],
+                &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            ),
+
+        &quot;Channel&quot;,
+            LOOKUPVALUE (
+                &#39;R1DimApplicationScenario&#39;[channel_type],
+                &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            ),
+
+        /* ================================================================
+           REQUESTED STRUCTURE
+           ================================================================ */
+
+        &quot;Requested Amount&quot;,
+            LOOKUPVALUE (
+                &#39;R1DimApplicationScenario&#39;[requested_amount],
+                &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            ),
+
+        &quot;Requested Remittance Rate&quot;,
+            LOOKUPVALUE (
+                &#39;R1DimApplicationScenario&#39;[requested_remittance_rate],
+                &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            ),
+
+        &quot;Requested Payback Multiple&quot;,
+            LOOKUPVALUE (
+                &#39;R1DimApplicationScenario&#39;[requested_payback_multiple],
+                &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            ),
+
+        &quot;Requested Horizon Days&quot;,
+            LOOKUPVALUE (
+                &#39;R1DimApplicationScenario&#39;[requested_horizon_days],
+                &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            ),
+
+        &quot;Requested Repayment&quot;,
+            LOOKUPVALUE (
+                &#39;R1DimApplicationScenario&#39;[requested_total_repayment_amount],
+                &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            ),
+
+        /* ================================================================
+           GOVERNED PROPOSED / SELECTED STRUCTURE
+           ================================================================ */
+
+        &quot;Proposed Amount&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_funding_amount],
+
+        &quot;Proposed Remittance Rate&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_remittance_rate],
+
+        &quot;Proposed Payback Multiple&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_payback_multiple],
+
+        &quot;Proposed Horizon Days&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_horizon_days],
+
+        &quot;Proposed Repayment&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_total_repayment_amount],
+
+        /* ================================================================
+           REQUEST -&gt; PROPOSAL CHANGES
+           ================================================================ */
+
+        &quot;Amount Change&quot;,
+            VAR _RequestedAmount =
+                LOOKUPVALUE (
+                    &#39;R1DimApplicationScenario&#39;[requested_amount],
+                    &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                    &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+                )
+            RETURN
+                IF (
+                    NOT ISBLANK (
+                        &#39;R1FactFinalDecision&#39;[governed_selected_funding_amount]
+                    ),
+                    &#39;R1FactFinalDecision&#39;[governed_selected_funding_amount]
+                        - _RequestedAmount
+                ),
+
+        &quot;Remittance Rate Change&quot;,
+            VAR _RequestedRate =
+                LOOKUPVALUE (
+                    &#39;R1DimApplicationScenario&#39;[requested_remittance_rate],
+                    &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                    &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+                )
+            RETURN
+                IF (
+                    NOT ISBLANK (
+                        &#39;R1FactFinalDecision&#39;[governed_selected_remittance_rate]
+                    ),
+                    &#39;R1FactFinalDecision&#39;[governed_selected_remittance_rate]
+                        - _RequestedRate
+                ),
+
+        &quot;Payback Multiple Change&quot;,
+            VAR _RequestedPBM =
+                LOOKUPVALUE (
+                    &#39;R1DimApplicationScenario&#39;[requested_payback_multiple],
+                    &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                    &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+                )
+            RETURN
+                IF (
+                    NOT ISBLANK (
+                        &#39;R1FactFinalDecision&#39;[governed_selected_payback_multiple]
+                    ),
+                    &#39;R1FactFinalDecision&#39;[governed_selected_payback_multiple]
+                        - _RequestedPBM
+                ),
+
+        &quot;Horizon Change Days&quot;,
+            VAR _RequestedHorizon =
+                LOOKUPVALUE (
+                    &#39;R1DimApplicationScenario&#39;[requested_horizon_days],
+                    &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                    &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+                )
+            RETURN
+                IF (
+                    NOT ISBLANK (
+                        &#39;R1FactFinalDecision&#39;[governed_selected_horizon_days]
+                    ),
+                    &#39;R1FactFinalDecision&#39;[governed_selected_horizon_days]
+                        - _RequestedHorizon
+                ),
+
+        &quot;Repayment Change&quot;,
+            VAR _RequestedRepayment =
+                LOOKUPVALUE (
+                    &#39;R1DimApplicationScenario&#39;[requested_total_repayment_amount],
+                    &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                    &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+                )
+            RETURN
+                IF (
+                    NOT ISBLANK (
+                        &#39;R1FactFinalDecision&#39;[governed_selected_total_repayment_amount]
+                    ),
+                    &#39;R1FactFinalDecision&#39;[governed_selected_total_repayment_amount]
+                        - _RequestedRepayment
+                ),
+
+        /* ================================================================
+           SEARCH / REVIEW / POLICY
+           ================================================================ */
+
+        &quot;Search Required&quot;,
+            &#39;R1FactFinalDecision&#39;[search_required_flag],
+
+        &quot;Search Attempted&quot;,
+            &#39;R1FactFinalDecision&#39;[search_attempted_flag],
+
+        &quot;Search Complete&quot;,
+            &#39;R1FactFinalDecision&#39;[search_complete_flag],
+
+        &quot;Evaluated Candidate Count&quot;,
+            LOOKUPVALUE (
+                &#39;R1DimApplicationScenario&#39;[evaluated_candidate_count],
+                &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey],
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            ),
+
+        &quot;Selected Review Gate Codes&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_candidate_review_gate_codes],
+
+        &quot;Selected Review Reason Codes&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_candidate_review_reason_codes],
+
+        &quot;Human Review Reason Codes&quot;,
+            &#39;R1FactFinalDecision&#39;[human_review_reason_codes],
+
+        &quot;Binding Policy Gate&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_binding_policy_gate_code],
+
+        &quot;Binding Policy Reason&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_binding_policy_reason_code],
+
+        &quot;Stress Floor Applied&quot;,
+            &#39;R1FactFinalDecision&#39;[stress_floor_applied_flag],
+
+        /* ================================================================
+           ECONOMIC / RISK CHARACTERISTICS OF PROPOSED STRUCTURE
+           ================================================================ */
+
+        &quot;Proposed Payment Coverage Ratio&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_payment_coverage_ratio],
+
+        &quot;Proposed Residual Daily Cash Flow&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_residual_daily_cash_flow],
+
+        &quot;Proposed Post-Financing Liquidity&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_post_financing_liquidity],
+
+        &quot;Proposed Buffer Days&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_post_financing_buffer_days],
+
+        &quot;Proposed Comparative Loss Rate&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_comparative_loss_rate],
+
+        &quot;Proposed Risk-Adjusted Contribution&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_risk_adjusted_contribution],
+
+        &quot;Proposed Annualized RAR&quot;,
+            &#39;R1FactFinalDecision&#39;[governed_selected_annualized_rar],
+
+        /* ================================================================
+           SOURCE-OWNED EXPLANATIONS
+           ================================================================ */
+
+        &quot;Evidence Narrative&quot;,
+            &#39;R1FactFinalDecision&#39;[evidence_why_text],
+
+        &quot;Risk Economics Assessment&quot;,
+            &#39;R1FactFinalDecision&#39;[underwriting_why_text],
+
+        &quot;Recommendation&quot;,
+            &#39;R1FactFinalDecision&#39;[decision_why_text]
+    )
+
+ORDER BY
+    [Governed Final Outcome],
+    [Scenario],
+    [Merchant]
+</code></pre>
+<h3>What to return</h3>
+<p>Run it with <strong>no report slicers applied</strong>. DAX Studio will query the full loaded R26 candidate model.</p>
+<p>The result should have approximately the full 1,500 application-scenario population partitioned across the seven outcomes—or at least every row whose outcome is one of those seven codes.</p>
+<p>Export:</p>
+<p><strong>Home → Output → File → CSV</strong></p>
+<p>and send me the CSV. Pasting the results is also fine, but CSV will be much easier if there are hundreds or thousands of rows.</p>
+<p>I deliberately <strong>did not include Funding date</strong> in this selection query. We already know the current P03 funding-date binding is suspect on review paths, and we do not need it to choose canonical outcome cases. Once I select the best candidate merchant for each of the seven outcomes, we&#39;ll test those seven physically in P03—including the controlled AUTHORIZED-only funding-date behavior.</p>
+<p>From the returned data I will choose one merchant/scenario for each outcome based on <strong>clarity rather than randomness</strong>: obvious request/proposal economics, clean narratives, meaningful candidate-search behavior where relevant, and minimal edge-case ambiguity.</p>
+</div></article><article id="m-b4c2c7e3-c58a-4dd0-83a2-df2ad9a8c410" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00736 · 2026-09-02T15:23:38.726000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: ed8d01ef-c2fa-4963-bc18-87ada9327b05.png; Pasted text(20260902-192331).txt</p><div class="bubble"><p>also your corrections to decision class / decision label did not work: </p>
+</div></article><article id="m-97bcec14-d3e8-4473-9bb5-bb51512bf869" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00737 · 2026-09-02T15:24:13.831631-04:00 · active path</p><div class="bubble"><p>[export reference: message_reaction | 👍]You are right that <strong>something is still wrong on the page</strong>, but the new 1,500-row extract lets us isolate it much more precisely. My earlier diagnosis of merchant <strong>000738 / Baseline</strong> was wrong.</p>
+<h3>000738 / Baseline is genuinely AUTHORIZED</h3>
+<p>The source row for this exact merchant/scenario says:</p>
+<ul>
+<li><code>APPROVE_AS_REQUESTED_AUTHORIZED</code></li>
+<li>Human review = <code>false</code></li>
+<li>Selection frontier = <code>REQUESTED_STRUCTURE</code></li>
+<li>Candidate type = <code>REQUESTED_STRUCTURE</code></li>
+<li>Requested amount = <strong>$25,000</strong></li>
+<li>Proposed amount = <strong>$25,000</strong></li>
+<li>Requested/proposed remittance = <strong>13.3991%</strong></li>
+<li>Requested/proposed payback multiple = <strong>1.208363</strong></li>
+<li>Requested/proposed horizon = <strong>60</strong></li>
+<li>Requested/proposed repayment = <strong>$30,209.08</strong></li>
+<li>Search not required</li>
+<li>All mandatory gates pass</li>
+<li>Recommendation = the independent scenario <strong>authorized the requested structure without a counteroffer</strong>. [export reference: filecite | turn131file0 | L40-L40]</li>
+</ul>
+<p>So <strong>do not change <code>R26 P03 Decision Class</code> or <code>R26 P03 Decision Label</code> again.</strong> For this case, your screenshot now shows the correct text:</p>
+<p><strong>AUTHORIZED</strong><br><strong>Approved as requested</strong></p>
+<p>The remaining defect is the <strong>yellow background</strong>. That means the tile&#39;s background conditional-formatting measure is still driven by stale/incorrect logic rather than the corrected Decision Class.</p>
+<h2>1. Fix the decision-tile background</h2>
+<p>Create or replace the color measure with this:</p>
+<pre><code class="language-DAX">R26 P03 Decision Tile Background =
+SWITCH (
+    [R26 P03 Decision Class],
+    &quot;AUTHORIZED&quot;, &quot;#2E7D32&quot;,
+    &quot;REVIEW&quot;,     &quot;#C58A00&quot;,
+    &quot;DECLINED&quot;,   &quot;#C62828&quot;,
+    &quot;#D9D9D9&quot;
+)
+</code></pre>
+<p>Then select the <strong>decision tile visual</strong>:</p>
+<p><strong>Format visual → Background → Color → fx</strong></p>
+<p>Set:</p>
+<ul>
+<li><strong>Format style:</strong> Field value</li>
+<li><strong>What field should we base this on:</strong> <code>R26 P03 Decision Tile Background</code></li>
+<li><strong>Summarization:</strong> First</li>
+</ul>
+<p>Do <strong>not</strong> base the background directly on <code>governed_final_outcome_code</code>, funding status, candidate type, recommendation text, or any old decision-color measure.</p>
+<p>For <strong>000738 / Baseline</strong>, the tile must immediately turn <strong>green</strong>.</p>
+<hr>
+<h2>2. The blank Funding date is a separate issue</h2>
+<p>This is important: <strong>a blank Funding date no longer proves that 000738 is REVIEW.</strong> The authoritative decision extract proves the opposite.</p>
+<p>Our agreed display rule remains simple:</p>
+<blockquote>
+<p><strong>AUTHORIZED → show Funding date. Anything else → blank.</strong></p>
+</blockquote>
+<p>But the DAX Studio extract I asked you to run did <strong>not contain a funding-date field</strong>, so I cannot yet tell whether:</p>
+<ol>
+<li>000738 has a physical funding record/date and our display measure is failing to retrieve it, or</li>
+<li>the underlying lifecycle population actually lacks a funding date despite its authorized decision.</li>
+</ol>
+<p>Those are materially different defects. We should not force <code>7/25/2026</code> into the visual merely because other funded accounts have that date.</p>
+<h3>Run this very small diagnostic next</h3>
+<p>Rather than guessing table names, first use DAX Studio to inspect the existing model measure that currently supplies Funding date. In Power BI, click the field/measure you are using for <strong>Funding date</strong> under Proposed structure and send me its DAX.</p>
+<p>If you are currently using the <code>R26 P03 ... Funding Date</code> measure we previously created, paste that measure here.</p>
+<p>I will then give you the exact corrected version and, if necessary, one targeted DAX Studio query to determine whether <strong>000738 / Baseline physically has a funding record</strong>.</p>
+<hr>
+<p>There is also a useful validation here: the extract demonstrates that the corrected Decision Class/Label architecture <strong>is now resolving the authoritative decision correctly</strong>. For example, the population cleanly distinguishes <code>COUNTEROFFER_AUTHORIZED</code>, <code>COUNTEROFFER_REVIEW_REQUIRED</code>, and <code>MANUAL_UNDERWRITING_REVIEW_REQUIRED</code>; the latter includes genuinely review-bound cases rather than treating every proposed structure as an authorization. [export reference: filecite | turn132file5 | L75-L77]</p>
+<p>So I would <strong>not undo the Decision Class/Label correction</strong>. Fix the <strong>background binding first</strong>, and send me the current <strong>Funding date DAX</strong>. Then we will close the remaining 000738 discrepancy cleanly.</p>
+</div></article><article id="m-fe5a3eb9-9adf-42e5-9070-13f67da433c5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00738 · 2026-09-02T15:38:57.138000-04:00 · active path</p><div class="bubble"><p>but if that&#39;s the case then the funding date logic is wrong (it wasn&#39;t populated) and the decision narrative is wrong.</p>
+</div></article><article id="m-1a68ecd5-37b2-4548-a28f-46aa84e4ac0f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00739 · 2026-09-02T15:39:27.164773-04:00 · active path</p><div class="bubble"><p>[export reference: message_reaction | 👍]Correct. Given the full evidence now in front of us, <strong>000738 / Baseline exposes more than a color-formatting issue.</strong> There are at least <strong>three page-level inconsistencies</strong> that need to be reconciled together.</p>
+<p>For <strong>000738 / Baseline</strong>, the authoritative decision record is unequivocal: <code>APPROVE_AS_REQUESTED_AUTHORIZED</code>, no human review, requested structure selected, no search required, all mandatory gates passed, and the recommendation says the requested structure was authorized without a counteroffer. [export reference: filecite | turn133file0 | L10-L10]</p>
+<p>So the page should behave coherently as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Correct 000738 / Baseline result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Decision class</td>
+<td><strong>AUTHORIZED</strong></td>
+</tr>
+<tr>
+<td>Decision label</td>
+<td><strong>Approved as requested</strong></td>
+</tr>
+<tr>
+<td>Tile color</td>
+<td><strong>Green</strong></td>
+</tr>
+<tr>
+<td>Proposed structure</td>
+<td>Same economics as Merchant request</td>
+</tr>
+<tr>
+<td>Recommendation</td>
+<td>Should communicate <strong>authorization as requested</strong>, not manual authorization/review</td>
+</tr>
+<tr>
+<td>Funding date</td>
+<td><strong>Populate if the lifecycle/funding record says it funded</strong></td>
+</tr>
+</tbody></table>
+<p>And that means the screenshot we had earlier—where the recommendation effectively said the structure still required manual authorization—<strong>cannot be the correct recommendation for 000738 / Baseline</strong>. The authoritative extract says the opposite: “authorized the requested structure without a counteroffer.” [export reference: filecite | turn133file0 | L10-L10]</p>
+<p>There is an especially useful clue here: <strong>000738 changes dramatically under Recession Energy</strong>. Under that scenario it becomes <code>DECLINE_INSUFFICIENT_EVIDENCE</code>, with no structure, because only 28 of the required 30 usable POS days were available. [export reference: filecite | turn133file0 | L22-L22] So this merchant is an excellent test case for whether your P03 visuals are truly respecting the <strong>Merchant + Scenario composite context</strong> rather than retrieving values from another scenario or from an improperly related table.</p>
+<p>That now becomes my leading suspicion.</p>
+<h3>What I think is happening</h3>
+<p>Your <strong>Decision Class / Label</strong> is resolving from <code>R1FactFinalDecision</code>, which apparently sees the correct Baseline row.</p>
+<p>But <strong>Recommendation</strong> and probably <strong>Funding date</strong> are being resolved through different tables or filter paths. One or both are likely suffering from one of these:</p>
+<ul>
+<li>merchant filtering without scenario filtering;</li>
+<li>scenario filtering that does not propagate to the lifecycle/funding table;</li>
+<li>a <code>SELECTEDVALUE</code>/<code>MAX</code>/<code>FIRSTNONBLANK</code> against a table containing both Baseline and Recession Energy;</li>
+<li>use of an older semantic-table narrative rather than the authoritative final-decision narrative;</li>
+<li>a relationship path keyed by Merchant rather than <code>ApplicationScenarioKey</code>.</li>
+</ul>
+<p>That would explain why one merchant/scenario page can simultaneously say:</p>
+<p><strong>AUTHORIZED / Approved as requested</strong></p>
+<p>while another visual says:</p>
+<p><strong>requires manual authorization</strong></p>
+<p>and Funding date stays blank.</p>
+<p>That is not acceptable page semantics. All three must resolve against the <strong>same selected application-scenario identity</strong>.</p>
+<h3>I would not patch these individually</h3>
+<p>We should correct this at the semantic-key level rather than writing another conditional workaround.</p>
+<p>For the narrative, the authoritative result already gives us the correct source column: <strong>Recommendation</strong>. In the extract, the Baseline recommendation for 000738 is the authorized-as-requested statement. There is no occurrence of “manual authorization” in this result set at all. [export reference: filecite | turn133file1 | L28-L30]</p>
+<p>So if your displayed Recommendation says manual authorization for this case, that visual is definitely <strong>not retrieving the correct final-decision row</strong>.</p>
+<p>For Funding date, we still need to determine whether 000738 actually has a funding record. I do <strong>not</strong> want to infer that simply from authorization, because authorization and funding are conceptually different events even though your display rule is “only show a date for AUTHORIZED.” We need the actual lifecycle evidence.</p>
+<h3>Next step — send me these two existing measures</h3>
+<p>Paste the DAX for:</p>
+<pre><code class="language-DAX">R26 P03 Recommendation
+</code></pre>
+<p>(or whatever measure is currently feeding the <strong>Recommendation</strong> narrative)</p>
+<p>and</p>
+<pre><code class="language-DAX">R26 P03 Funding Date
+</code></pre>
+<p>(or whatever measure currently feeds <strong>Funding date</strong>).</p>
+<p>If Recommendation is currently a raw column rather than a measure, tell me the exact table/column name shown in the visual&#39;s field well.</p>
+<p>I will inspect both together and give you <strong>one coordinated correction</strong> so Decision tile, Proposed structure, Recommendation, and Funding date all resolve from the exact same Merchant + Scenario application identity.</p>
+<p>We should treat <strong>000738 / Baseline as a regression test</strong> after that correction, because it is now a very strong evidence case: Baseline must show an authorized requested structure, while the same merchant under Recession Energy must show insufficient evidence and no proposed structure. [export reference: filecite | turn133file0 | L10-L10] [export reference: filecite | turn133file0 | L22-L22]</p>
+</div></article><article id="m-2edf483d-d28b-44dc-9b27-1d47093c2cc1" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00740 · 2026-09-02T15:44:49.234000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260902-194341).md</p><div class="bubble"><p>digest these tables versus your created measures: factapplicationscenario - in this 738 has manual_review_recommended_flag = True in both scenarios</p>
+</div></article><article id="m-3b95fe3d-987a-458d-84b8-add471aa1fe4" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00741 · 2026-09-02T15:44:59.384837-04:00 · active path</p><div class="bubble"><p>Yes — this table materially changes the diagnosis, and it explains why merchant 000738 looked contradictory.</p>
+<p>For <strong>000738 / Baseline</strong>, <code>FactApplicationScenario</code> is explicitly an <strong>upstream Module 1 assessment state</strong>, not the final governed M2 disposition. It says <code>verification_disposition = REVIEW</code>, <code>manual_review_recommended_flag = True</code>, <code>capacity_evidence_status = PARTIAL</code>, several other evidence statuses are <code>PARTIAL</code>, and the fallback path is <code>MANUAL_UNIT_ECONOMICS_REVIEW</code>. [export reference: filecite | turn134file0 | L3-L3]</p>
+<p>At the same time, the later <code>R1FactFinalDecision</code> row says that the <strong>final governed outcome is <code>APPROVE_AS_REQUESTED_AUTHORIZED</code></strong> and that the requested structure passed the final governed boundaries. That is not necessarily contradictory. It means the pipeline can legitimately be:</p>
+<p><strong>M1 preliminary/advisory assessment → manual review recommended → M2 performs the governed downstream evaluation → final outcome becomes AUTHORIZED.</strong></p>
+<p>That distinction is actually important to preserve.</p>
+<p>So I would now separate the semantics this way:</p>
+<table>
+<thead>
+<tr>
+<th>Object / field</th>
+<th>Meaning</th>
+<th>Should drive P03 final decision?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>FactApplicationScenario[manual_review_recommended_flag]</code></td>
+<td>Upstream M1 recommendation/advisory signal</td>
+<td><strong>No</strong></td>
+</tr>
+<tr>
+<td><code>FactApplicationScenario[verification_disposition] = REVIEW</code></td>
+<td>M1 verification/assessment disposition</td>
+<td><strong>No</strong></td>
+</tr>
+<tr>
+<td><code>FactApplicationScenario[fallback_path_code]</code></td>
+<td>Upstream fallback/assessment routing</td>
+<td><strong>No</strong></td>
+</tr>
+<tr>
+<td><code>R1FactFinalDecision[governed_final_outcome_code]</code></td>
+<td>Final M2 governed decision</td>
+<td><strong>Yes</strong></td>
+</tr>
+<tr>
+<td><code>R1FactFinalDecision[human_review_required_flag]</code></td>
+<td>Final-decision review requirement</td>
+<td><strong>Yes</strong></td>
+</tr>
+</tbody></table>
+<p>That means our revised <code>Decision Class</code> and <code>Decision Label</code> measures are conceptually correct to use <strong><code>R1FactFinalDecision</code> only</strong>.</p>
+<h3>What this tells us about the three apparent defects</h3>
+<p><strong>1. Decision class / label</strong></p>
+<p>For <code>000738 / Baseline</code>, <strong>AUTHORIZED / Approved as requested is correct</strong>.</p>
+<p>The M1 <code>manual_review_recommended_flag = True</code> does <strong>not</strong> override the later final governed outcome.</p>
+<p>So we should keep the corrected Decision Class/Label logic.</p>
+<p><strong>2. The yellow tile</strong></p>
+<p>Now we can explain it much more confidently: the existing background-color logic is almost certainly still referencing an <strong>upstream review indicator</strong> — very possibly <code>manual_review_recommended_flag</code>, <code>verification_disposition</code>, or some derivative thereof.</p>
+<p>That would produce exactly:</p>
+<blockquote>
+<p>M1 says REVIEW → yellow<br>M2 final decision says AUTHORIZED → visible text says AUTHORIZED</p>
+</blockquote>
+<p>So the background needs to be rebased to:</p>
+<pre><code class="language-DAX">R26 P03 Decision Tile Background =
+SWITCH (
+    [R26 P03 Decision Class],
+    &quot;AUTHORIZED&quot;, &quot;#2E7D32&quot;,
+    &quot;REVIEW&quot;,     &quot;#C58A00&quot;,
+    &quot;DECLINED&quot;,   &quot;#C62828&quot;,
+    &quot;#D9D9D9&quot;
+)
+</code></pre>
+<p>The final tile color should represent the <strong>final governed decision</strong>, not an earlier underwriting/advisory state.</p>
+<p><strong>3. The Recommendation narrative</strong></p>
+<p>This is now the more interesting issue.</p>
+<p>If your visible Recommendation for <code>000738 / Baseline</code> says something like:</p>
+<blockquote>
+<p>“…requires manual authorization.”</p>
+</blockquote>
+<p>then that text is almost certainly being sourced from or reconstructed using the <strong>upstream M1 manual-review state</strong>, rather than the final M2 decision narrative.</p>
+<p>That is wrong for a block named <strong>Recommendation</strong> on the finished application journey.</p>
+<p>The final-decision extract says the recommendation for this exact Baseline case is:</p>
+<blockquote>
+<p>“The independent scenario authorized the requested structure without a counteroffer.”</p>
+</blockquote>
+<p>So the P03 <strong>Recommendation</strong> block should resolve from the final-decision narrative (<code>decision_why_text</code> or the corresponding R26 presentation measure), not from <code>manual_review_recommended_flag</code> or an M1 fallback narrative.</p>
+<h3>And Funding date?</h3>
+<p>That remains unresolved, but it is now clearly a <strong>separate lifecycle-binding question</strong>.</p>
+<p>The blank date does <strong>not</strong> prove this application was never authorized. We have now established that authorization is a later M2 decision state, whereas the M1 table retains its earlier manual-review recommendation.</p>
+<p>We need to inspect the actual funding/activation table before saying whether <code>000738 / Baseline</code> should have a date. If it has a funding record, the P03 date measure is wrong. If it has no funding record despite an authorized decision, then the portfolio contains an <strong>authorized-but-not-funded</strong> state after all, and our earlier simple rule “AUTHORIZED → populate” would be factually wrong.</p>
+<h3>The larger semantic lesson</h3>
+<p>This is actually useful for P03 design. We have at least three distinct concepts that must not be collapsed:</p>
+<p><strong>Upstream review recommendation</strong><br>→ M1 says additional scrutiny/review is advisable.</p>
+<p><strong>Final governed decision</strong><br>→ M2 determines AUTHORIZED / REVIEW / DECLINED after applying the complete strategy.</p>
+<p><strong>Funding/activation</strong><br>→ whether an authorized decision actually became a funded account.</p>
+<p>Merchant 000738 is exposing places where some of our P03 measures are still mixing those layers.</p>
+<p>So I would now <strong>stop changing individual visuals and audit the P03 measures by semantic authority</strong>. Specifically, the next three formulas I want to inspect are:</p>
+<pre><code class="language-text">R26 P03 Decision Tile Background
+R26 P03 Recommendation
+R26 P03 Funding Date
+</code></pre>
+<p>The Decision Class and Decision Label can remain as currently corrected.</p>
+<p>This also means <code>manual_review_recommended_flag = True</code> in both scenarios for 000738 is not itself a defect. In Baseline it is an <strong>upstream condition subsequently resolved by the final governed decision</strong>; in Recession Energy, the downstream result instead becomes insufficient-evidence decline. That distinction is exactly the kind of lifecycle intelligence P03 should preserve rather than flatten. [export reference: filecite | turn134file0 | L3-L4]</p>
+</div></article><article id="m-751be992-5bb3-4fa2-81c8-a22234eb2511" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00742 · 2026-09-02T15:47:08.184000-04:00 · active path</p><div class="bubble"><p>STOP TRYING TO SOLVE AND JUST DIGEST INFORMATION I AM PROVIDING FIRST &gt; factfinaldecision: </p>
+<table>
+<thead>
+<tr>
+<th>module1_run_id contract_code contract_version schema_version methodology_version scenario_id scenario_code merchant_application_id population_id merchant_id as_of_date source_pricing_disposition_code final_decision_outcome_code final_decision_rank final_offer_authorized_flag counteroffer_review_required_flag decline_authorized_flag manual_review_required_flag final_offer_amount final_remittance_rate final_payback_multiple final_collection_horizon_days final_total_repayment_amount final_finance_charge_amount final_implied_daily_collection_amount final_implied_payoff_days final_offer_expiration_days final_authorization_evidence_status primary_decision_reason_code decision_reason_codes source_m2_2_contract_row_hash source_request_contract_row_hash source_g2_combined_hash source_snapshot_row_hash snapshot_row_hash policy_configuration_hash contract_row_hash created_at ApplicationKey RunScenarioKey ApplicationScenarioKey</th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>M2_FINAL_OFFER_DECISION_CONSUMPTION</td>
+<td>1</td>
+<td>M2_3_FINAL_DECISION_SCHEMA_V1</td>
+<td>M2_3_METHOD_V1</td>
+<td>5</td>
+<td>BASELINE</td>
+<td>MSBF_POP_0001_M000738_A01</td>
+<td>MSBF_POP_0001</td>
+<td>MSBF_POP_0001_M000738</td>
+<td>7/23/2026</td>
+<td>COUNTEROFFER_FOUNDATION_REVIEW</td>
+<td>COUNTEROFFER_REVIEW_REQUIRED</td>
+<td>2</td>
+<td>False</td>
+<td>True</td>
+<td>False</td>
+<td>True</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>REVIEW_REQUIRED</td>
+<td>M2_3_COUNTEROFFER_REVIEW_REQUIRED</td>
+<td>[&quot;M2_3_COUNTEROFFER_REVIEW_REQUIRED&quot;, &quot;M2_3_SOURCE_M2_2_ACCEPTED&quot;, &quot;M2_3_POLICY_BOUNDARY&quot;, &quot;M2_3_NO_BOOKING&quot;]</td>
+<td>c4c07417ff812531f0b17f6593ba764a</td>
+<td>9b1fe9d129dd8844e835bd40a247cc99</td>
+<td>e5ace7f32060ffb191c7bd0f8dd0c863</td>
+<td>618a2d021f9d7a66833a179a613322a7</td>
+<td>8741cf19f624231a4b9a7f7da68e994c</td>
+<td>b9b6a8f80012643f4bde45f48f3f2f9c</td>
+<td>c8d39de5cccf1bf23f357bdc500817c6</td>
+<td>7/31/2026</td>
+<td>1|MSBF_POP_0001_M000738_A01</td>
+<td>1|5</td>
+<td>1|5|MSBF_POP_0001_M000738_A01</td>
+</tr>
+<tr>
+<td>1</td>
+<td>M2_FINAL_OFFER_DECISION_CONSUMPTION</td>
+<td>1</td>
+<td>M2_3_FINAL_DECISION_SCHEMA_V1</td>
+<td>M2_3_METHOD_V1</td>
+<td>6</td>
+<td>RECESSION_ENERGY</td>
+<td>MSBF_POP_0001_M000738_A01</td>
+<td>MSBF_POP_0001</td>
+<td>MSBF_POP_0001_M000738</td>
+<td>7/23/2026</td>
+<td>NO_STRUCTURE_INSUFFICIENT_EVIDENCE</td>
+<td>DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED</td>
+<td>3</td>
+<td>False</td>
+<td>False</td>
+<td>True</td>
+<td>False</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>DECLINE_AUTHORIZED</td>
+<td>M2_3_INSUFFICIENT_EVIDENCE</td>
+<td>[&quot;M2_3_INSUFFICIENT_EVIDENCE&quot;, &quot;M2_3_SOURCE_M2_2_ACCEPTED&quot;, &quot;M2_3_POLICY_BOUNDARY&quot;, &quot;M2_3_NO_BOOKING&quot;]</td>
+<td>6dc10eb77f4091a91383be7f99acd3ca</td>
+<td>9b1fe9d129dd8844e835bd40a247cc99</td>
+<td>e5ace7f32060ffb191c7bd0f8dd0c863</td>
+<td>a619d7d314db67a77739df21a2dee258</td>
+<td>8d4f6dd7dee79a82bf7ca7cdeab132a0</td>
+<td>b9b6a8f80012643f4bde45f48f3f2f9c</td>
+<td>6a6ae067accb6c538a11c7e4d37452a1</td>
+<td>7/31/2026</td>
+<td>1|MSBF_POP_0001_M000738_A01</td>
+<td>1|6</td>
+<td>1|6|MSBF_POP_0001_M000738_A01</td>
+</tr>
+</tbody></table>
+</div></article><article id="m-60c4f927-2957-4d30-a4c7-15d6ade0bcbb" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00743 · 2026-09-02T15:47:16.827837-04:00 · active path</p><div class="bubble"><p>Understood. I’ll only digest and reconcile the source facts you provide for now.</p>
+<p>For merchant <strong>000738</strong>, the <code>FactFinalDecision</code> table says:</p>
+<ul>
+<li><p><strong>Baseline</strong></p>
+<ul>
+<li><code>source_pricing_disposition_code = COUNTEROFFER_FOUNDATION_REVIEW</code></li>
+<li><code>final_decision_outcome_code = COUNTEROFFER_REVIEW_REQUIRED</code></li>
+<li><code>final_offer_authorized_flag = False</code></li>
+<li><code>counteroffer_review_required_flag = True</code></li>
+<li><code>decline_authorized_flag = False</code></li>
+<li><code>manual_review_required_flag = True</code></li>
+<li>no final offer amount/terms populated</li>
+<li><code>final_authorization_evidence_status = REVIEW_REQUIRED</code></li>
+<li>primary reason = <code>M2_3_COUNTEROFFER_REVIEW_REQUIRED</code></li>
+<li>decision reasons include <code>M2_3_NO_BOOKING</code></li>
+</ul>
+</li>
+<li><p><strong>Recession Energy</strong></p>
+<ul>
+<li><code>source_pricing_disposition_code = NO_STRUCTURE_INSUFFICIENT_EVIDENCE</code></li>
+<li><code>final_decision_outcome_code = DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED</code></li>
+<li><code>final_offer_authorized_flag = False</code></li>
+<li><code>counteroffer_review_required_flag = False</code></li>
+<li><code>decline_authorized_flag = True</code></li>
+<li><code>manual_review_required_flag = False</code></li>
+<li>no final offer amount/terms populated</li>
+<li><code>final_authorization_evidence_status = DECLINE_AUTHORIZED</code></li>
+<li>primary reason = <code>M2_3_INSUFFICIENT_EVIDENCE</code></li>
+<li>decision reasons include <code>M2_3_NO_BOOKING</code></li>
+</ul>
+</li>
+</ul>
+<p>So, taken together with the <code>FactApplicationScenario</code> rows you just gave me, <strong>000738 / Baseline is consistently a review case at both stages</strong>, not an authorization case:</p>
+<p><code>FactApplicationScenario</code> → manual review recommended = True<br><code>FactFinalDecision</code> → counteroffer review required / manual review required = True</p>
+<p>And Recession Energy moves from that upstream review posture to an authorized evidence decline.</p>
+<p>I’m recording that as the current source truth for 000738 and will not try to resolve the Power BI measures until you finish providing the relevant tables.</p>
+</div></article><article id="m-a1eeb701-081b-498c-8df4-b9f95cf8c86e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00744 · 2026-09-02T15:51:45.629000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260902-195047).md</p><div class="bubble"><p>738 does not have a record in DimAccountAdvance. Then we get to the R1 tables and that&#39;s where we see a change and perhaps this is a good version 1 -&gt; version 2 of our Module 2 remediation/correction story. Here is R1FactFinalDecision: So in this case we need to make sure, it appears that we understand the tables that were not updated in the R1 remediation/correction and what to make sure we are utilizing for these power bi displays.</p>
+</div></article><article id="m-9b836a23-1c45-4203-83de-b44fcc0aa8a8" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00745 · 2026-09-02T15:51:54.266021-04:00 · active path</p><div class="bubble"><p>Yes — this is exactly the distinction we need to preserve before changing any more Power BI logic.</p>
+<p>What you have now shown for merchant <strong>000738</strong> is a very clean <strong>pre-remediation vs R1-remediated authority story</strong>:</p>
+<ul>
+<li><code>FactApplicationScenario</code> still reflects the earlier/upstream assessment state and has <code>manual_review_recommended_flag = True</code>.</li>
+<li>legacy <code>FactFinalDecision</code> still says <strong>Baseline = <code>COUNTEROFFER_REVIEW_REQUIRED</code></strong>, with manual review required and no booking.</li>
+<li><code>DimAccountAdvance</code> has <strong>no record</strong> for 000738.</li>
+<li>but <code>R1FactFinalDecision</code> says <strong>Baseline = <code>APPROVE_AS_REQUESTED_AUTHORIZED</code></strong>, requested structure selected, no review required, all mandatory gates pass, and the decision narrative explicitly says the requested structure was authorized without a counteroffer. [export reference: filecite | turn135file0 | L3-L3]</li>
+<li>under <strong>Recession Energy</strong>, <code>R1FactFinalDecision</code> instead gives <code>DECLINE_INSUFFICIENT_EVIDENCE</code>, with no selected structure and a specific evidence-availability explanation. [export reference: filecite | turn135file0 | L4-L4]</li>
+</ul>
+<p>That strongly suggests the R1 remediation/correction did <strong>not rewrite all predecessor semantic objects</strong>. Instead, it introduced successor <code>R1...</code> objects that carry the corrected decision authority while some legacy facts remain historically valid as predecessor-state evidence.</p>
+<p>So the key Power BI design principle should be:</p>
+<blockquote>
+<p><strong>For any display intended to represent the remediated/corrected Module 2 decision state, use the R1 successor objects as authority. Do not let unchanged predecessor facts silently override or backfill them.</strong></p>
+</blockquote>
+<p>And equally important:</p>
+<blockquote>
+<p><strong>Legacy facts are not necessarily “wrong” in the sense of corrupted data; they may be predecessor-state artifacts that were intentionally left unchanged. The mistake would be using them as if they were the post-remediation authority.</strong></p>
+</blockquote>
+<p>Merchant 000738 is therefore a very good <strong>Version 1 → Version 2 evidence case</strong>:</p>
+<p><strong>Version 1 / predecessor state</strong></p>
+<ul>
+<li>upstream review recommended</li>
+<li>final decision = counteroffer review required</li>
+<li>no booking/account record</li>
+</ul>
+<p><strong>Version 2 / R1 remediated state</strong></p>
+<ul>
+<li>requested structure is now supportable</li>
+<li>final governed outcome = approved as requested</li>
+<li>no human review required</li>
+<li>corrected decision narrative</li>
+<li>scenario-specific decline under Recession Energy remains possible</li>
+</ul>
+<p>That is a much more coherent interpretation than trying to force all tables to agree.</p>
+<p>The next thing I would do — but only when you want to move from digestion to implementation — is build a <strong>P03 authority map</strong> that classifies every visible element as one of:</p>
+<ul>
+<li>predecessor/upstream context,</li>
+<li>R1 corrected decision authority,</li>
+<li>R26 monitoring authority,</li>
+<li>downstream funded/account lifecycle authority.</li>
+</ul>
+<p>That will let us audit every current P03 field and measure systematically and prevent exactly this kind of mixed-version semantic leakage.</p>
+</div></article><article id="m-c0db7a1a-9c4b-46f3-8666-15ba4e12cebd" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00746 · 2026-09-02T15:54:10.617000-04:00 · active path</p><div class="bubble"><p>ok, knowing that, we need to update our proposed structure funding date column - it would seem 738 was indeed funded - so we need to find a more proper definition for funding date. second, we need to update the color logic for the decision cards</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

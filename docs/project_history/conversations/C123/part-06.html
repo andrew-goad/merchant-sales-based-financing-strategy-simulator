@@ -1,0 +1,1275 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5 — part 06 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5 — part 06</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-05.html">Previous part</a><a href="part-07.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-7b70860b-3e3d-4dd5-aabf-280e2aa1ad1d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00066 · 2026-09-10T08:27:17.752089-04:00 · active path</p><div class="bubble"><p>Phase D is <strong>cleanly closed as PASS</strong>. The receipt confirms that <code>D:\x\m</code> now contains exactly the R6 publication tree: <strong>2,884 files on each side, 0 missing, 0 extra, and 0 path/size/SHA mismatches</strong>, while <code>HEAD</code> remains the Phase-B predecessor commit <code>46fb1f...</code>. No commit, tag, push, or publication occurred. [export reference: filecite | turn24file4 | L6-L22] [export reference: filecite | turn24file5 | L1-L18]</p>
+<p>The reported 29 Git-status entries are also consistent with the intended R6 integration: 16 existing tracked files are modified and the remaining status entries are new R6 publication surfaces such as the guide, Power BI, visual, history, release-integration, reproducibility, and successor-candidate trees. [export reference: filecite | turn24file2 | L1-L29] The relatively large textual diff is concentrated where expected—particularly the governed manifests/inventories plus the rebuilt README/documentation surfaces—not evidence by itself of a mass technical rewrite. [export reference: filecite | turn24file1 | L1-L17]</p>
+<p>The Robocopy exit code of <code>3</code> is nonfatal here: the receipt records both dry-run and application code 3, followed by exact post-copy equality. The one directory reported as an &quot;extra&quot; during Robocopy is consistent with <code>.git</code>, which was explicitly excluded from the mirror; the final tree comparison excluded <code>.git</code> and found <strong>zero actual R6-tree extras</strong>. [export reference: filecite | turn24file4 | L15-L22]</p>
+<p>We now advance to <strong>Phase E — PRE-COMMIT PUBLICATION GATE</strong>. This phase is read-only with respect to repository content. It will write evidence <strong>outside</strong> <code>D:\x\m</code>, but it will not stage, commit, tag, push, resave PBIX, or publish anything.</p>
+<p>Paste this complete block into the <strong>same PowerShell</strong>:</p>
+<pre><code class="language-powershell">&amp; {
+    $ErrorActionPreference = &#39;Stop&#39;
+
+    # ============================================================
+    # MSBF PHASE E — PRE-COMMIT PUBLICATION GATE
+    # READ-ONLY AGAINST REPOSITORY CONTENT
+    # ============================================================
+
+    $Repo  = &#39;D:\x\m&#39;
+    $Stage = &#39;D:\MSBF_RELEASE_R6_STAGING_20260910T121241797Z_028c5f94&#39;
+
+    $ExpectedHead = &#39;46fb1f9198475678edc9cabdeefd2f91a59e49c2&#39;
+    $ExpectedFiles = 2884
+
+    $ExpectedPbixBytes = 27635305
+    $ExpectedPbixSha = &#39;ca46e8551860836a0cf4ff9239c42fcf8df02f1705596b9f8ca1bd047b5294e4&#39;
+    $ExpectedDataModelSha = &#39;24396d02c0fbcb782cc9918e842886711146b8ff9455c8822d2aeaf009b96061&#39;
+
+    $PbixRel = &#39;docs\power_bi\m2_v2_1\release\MSBF_Merchant_Credit_Intelligence_M2_v2.1.0-rc2.pbix&#39;
+
+    $Stamp = (Get-Date).ToUniversalTime().ToString(&#39;yyyyMMddTHHmmssfffZ&#39;)
+    $Suffix = [guid]::NewGuid().ToString(&#39;N&#39;).Substring(0,8)
+
+    $EvidenceDir = &quot;D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_E_${Stamp}_${Suffix}&quot;
+    New-Item -ItemType Directory -Path $EvidenceDir -Force | Out-Null
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;MSBF PHASE E — PRE-COMMIT PUBLICATION GATE&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;Repository: $Repo&quot;
+    Write-Host &quot;R6 stage:   $Stage&quot;
+    Write-Host &quot;Evidence:   $EvidenceDir&quot;
+    Write-Host &quot;&quot;
+
+    $Checks = New-Object System.Collections.Generic.List[object]
+
+    function Add-Check {
+        param(
+            [string]$Name,
+            [bool]$Pass,
+            [string]$Actual,
+            [string]$Expected
+        )
+
+        $Checks.Add([pscustomobject]@{
+            Check    = $Name
+            Expected = $Expected
+            Actual   = $Actual
+            Status   = $(if ($Pass) { &#39;PASS&#39; } else { &#39;FAIL&#39; })
+        })
+    }
+
+    function Get-TreeInventory {
+        param(
+            [Parameter(Mandatory=$true)][string]$Root,
+            [switch]$ExcludeGit
+        )
+
+        $rootFull = [IO.Path]::GetFullPath($Root).TrimEnd(&#39;\&#39;) + &#39;\&#39;
+        $files = @(Get-ChildItem -LiteralPath $Root -Recurse -File -Force)
+
+        if ($ExcludeGit) {
+            $gitPrefix = [IO.Path]::GetFullPath(
+                (Join-Path $Root &#39;.git&#39;)
+            ).TrimEnd(&#39;\&#39;) + &#39;\&#39;
+
+            $files = @(
+                $files | Where-Object {
+                    -not $_.FullName.StartsWith(
+                        $gitPrefix,
+                        [StringComparison]::OrdinalIgnoreCase
+                    )
+                }
+            )
+        }
+
+        foreach ($f in $files) {
+            $relative = $f.FullName.Substring($rootFull.Length).Replace(&#39;\&#39;,&#39;/&#39;)
+
+            [pscustomobject]@{
+                Path   = $relative
+                Bytes  = [int64]$f.Length
+                Sha256 = (
+                    Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256
+                ).Hash.ToLowerInvariant()
+            }
+        }
+    }
+
+    function Test-HashList {
+        param(
+            [Parameter(Mandatory=$true)][string]$BaseDir,
+            [Parameter(Mandatory=$true)][string]$HashFile,
+            [Parameter(Mandatory=$true)][string]$Label
+        )
+
+        if (-not (Test-Path -LiteralPath $HashFile -PathType Leaf)) {
+            Add-Check $Label $false &#39;HASH_FILE_MISSING&#39; $HashFile
+            return
+        }
+
+        $rows = New-Object System.Collections.Generic.List[object]
+        $bad = 0
+        $checked = 0
+
+        foreach ($line in Get-Content -LiteralPath $HashFile) {
+            $t = $line.Trim()
+
+            if (
+                [string]::IsNullOrWhiteSpace($t) -or
+                $t.StartsWith(&#39;#&#39;)
+            ) {
+                continue
+            }
+
+            # Supports common:
+            # &lt;sha256&gt;&lt;spaces&gt;*relative/path
+            if ($t -notmatch &#39;^([0-9a-fA-F]{64})\s+\*?(.+)$&#39;) {
+                continue
+            }
+
+            $expected = $Matches[1].ToLowerInvariant()
+            $rel = $Matches[2].Trim().Replace(&#39;/&#39;,&#39;\&#39;)
+            $path = Join-Path $BaseDir $rel
+
+            $exists = Test-Path -LiteralPath $path -PathType Leaf
+            $actual = $null
+            $pass = $false
+
+            if ($exists) {
+                $actual = (
+                    Get-FileHash -LiteralPath $path -Algorithm SHA256
+                ).Hash.ToLowerInvariant()
+                $pass = ($actual -ceq $expected)
+            }
+
+            if (-not $pass) { $bad++ }
+            $checked++
+
+            $rows.Add([pscustomobject]@{
+                RelativePath = $rel
+                Exists       = $exists
+                ExpectedSha  = $expected
+                ActualSha    = $actual
+                Status       = $(if ($pass) { &#39;PASS&#39; } else { &#39;FAIL&#39; })
+            })
+        }
+
+        $safeLabel = ($Label -replace &#39;[^A-Za-z0-9_.-]&#39;,&#39;_&#39;)
+
+        $rows |
+            Export-Csv `
+                -LiteralPath (Join-Path $EvidenceDir &quot;${safeLabel}.csv&quot;) `
+                -NoTypeInformation `
+                -Encoding UTF8
+
+        Add-Check `
+            $Label `
+            ($checked -gt 0 -and $bad -eq 0) `
+            &quot;Checked=$checked; Failed=$bad&quot; `
+            &#39;Failed=0&#39;
+    }
+
+    # ============================================================
+    # A. BASE REPOSITORY / HEAD / BRANCH / NO-STAGING CHECKS
+    # ============================================================
+
+    $Root = (&amp; git -C $Repo rev-parse --show-toplevel).Trim()
+    $Branch = (&amp; git -C $Repo branch --show-current).Trim()
+    $Head = (&amp; git -C $Repo rev-parse HEAD).Trim().ToLowerInvariant()
+
+    Add-Check &#39;REPOSITORY_ROOT&#39; `
+        ($Root -ceq &#39;D:/x/m&#39;) `
+        $Root `
+        &#39;D:/x/m&#39;
+
+    Add-Check &#39;CURRENT_BRANCH&#39; `
+        ($Branch -ceq &#39;main&#39;) `
+        $Branch `
+        &#39;main&#39;
+
+    Add-Check &#39;HEAD_UNCHANGED_FROM_PHASE_B&#39; `
+        ($Head -ceq $ExpectedHead) `
+        $Head `
+        $ExpectedHead
+
+    $CachedNames = @(&amp; git -C $Repo diff --cached --name-only)
+
+    Add-Check &#39;INDEX_UNSTAGED&#39; `
+        ($CachedNames.Count -eq 0) `
+        &quot;CachedPaths=$($CachedNames.Count)&quot; `
+        &#39;CachedPaths=0&#39;
+
+    # ============================================================
+    # B. EXACT R6 CHECKOUT EQUALITY — FRESH HASH PASS
+    # ============================================================
+
+    Write-Host &quot;Freshly hashing R6 stage...&quot;
+    $StageInv = @(Get-TreeInventory -Root $Stage)
+
+    Write-Host &quot;Freshly hashing actual checkout...&quot;
+    $RepoInv = @(Get-TreeInventory -Root $Repo -ExcludeGit)
+
+    $StageInv |
+        Sort-Object Path |
+        Export-Csv `
+            -LiteralPath (Join-Path $EvidenceDir &#39;R6_STAGE_FRESH_INVENTORY.csv&#39;) `
+            -NoTypeInformation `
+            -Encoding UTF8
+
+    $RepoInv |
+        Sort-Object Path |
+        Export-Csv `
+            -LiteralPath (Join-Path $EvidenceDir &#39;CHECKOUT_FRESH_INVENTORY.csv&#39;) `
+            -NoTypeInformation `
+            -Encoding UTF8
+
+    $StageMap = @{}
+    foreach ($x in $StageInv) {
+        $StageMap[$x.Path.ToLowerInvariant()] = $x
+    }
+
+    $RepoMap = @{}
+    foreach ($x in $RepoInv) {
+        $RepoMap[$x.Path.ToLowerInvariant()] = $x
+    }
+
+    $Missing = New-Object System.Collections.Generic.List[string]
+    $Extra = New-Object System.Collections.Generic.List[string]
+    $Mismatch = New-Object System.Collections.Generic.List[object]
+
+    foreach ($k in $StageMap.Keys) {
+        if (-not $RepoMap.ContainsKey($k)) {
+            $Missing.Add($StageMap[$k].Path)
+            continue
+        }
+
+        $s = $StageMap[$k]
+        $r = $RepoMap[$k]
+
+        if (
+            $s.Path -cne $r.Path -or
+            $s.Bytes -ne $r.Bytes -or
+            $s.Sha256 -cne $r.Sha256
+        ) {
+            $Mismatch.Add([pscustomobject]@{
+                StagePath   = $s.Path
+                RepoPath    = $r.Path
+                StageBytes  = $s.Bytes
+                RepoBytes   = $r.Bytes
+                StageSha256 = $s.Sha256
+                RepoSha256  = $r.Sha256
+            })
+        }
+    }
+
+    foreach ($k in $RepoMap.Keys) {
+        if (-not $StageMap.ContainsKey($k)) {
+            $Extra.Add($RepoMap[$k].Path)
+        }
+    }
+
+    $Missing |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;R6_EQUALITY_MISSING.txt&#39;) `
+            -Encoding UTF8
+
+    $Extra |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;R6_EQUALITY_EXTRA.txt&#39;) `
+            -Encoding UTF8
+
+    $Mismatch |
+        Export-Csv `
+            -LiteralPath (Join-Path $EvidenceDir &#39;R6_EQUALITY_MISMATCH.csv&#39;) `
+            -NoTypeInformation `
+            -Encoding UTF8
+
+    $TreeEqual = (
+        $StageInv.Count -eq $ExpectedFiles -and
+        $RepoInv.Count -eq $ExpectedFiles -and
+        $Missing.Count -eq 0 -and
+        $Extra.Count -eq 0 -and
+        $Mismatch.Count -eq 0
+    )
+
+    Add-Check &#39;R6_FILE_TREE_EQUALITY&#39; `
+        $TreeEqual `
+        &quot;Stage=$($StageInv.Count); Checkout=$($RepoInv.Count); Missing=$($Missing.Count); Extra=$($Extra.Count); Mismatch=$($Mismatch.Count)&quot; `
+        &quot;Stage=$ExpectedFiles; Checkout=$ExpectedFiles; Missing=0; Extra=0; Mismatch=0&quot;
+
+    # ============================================================
+    # C. GOVERNING VALIDATORS — DO NOT MODIFY THEM
+    # ============================================================
+
+    $PythonCmd = Get-Command python -ErrorAction Stop
+
+    function Invoke-Validator {
+        param(
+            [string]$Label,
+            [string]$RelPath,
+            [string]$ExpectedText1,
+            [string]$ExpectedText2
+        )
+
+        $path = Join-Path $Repo $RelPath
+
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+            Add-Check $Label $false &#39;VALIDATOR_MISSING&#39; $RelPath
+            return
+        }
+
+        Push-Location $Repo
+        try {
+            $output = @(&amp; $PythonCmd.Source $path 2&gt;&amp;1)
+            $code = $LASTEXITCODE
+        }
+        finally {
+            Pop-Location
+        }
+
+        $outPath = Join-Path $EvidenceDir &quot;$Label.txt&quot;
+        $output | Set-Content -LiteralPath $outPath -Encoding UTF8
+
+        $joined = $output -join &quot;`n&quot;
+
+        $pass = (
+            $code -eq 0 -and
+            $joined.Contains($ExpectedText1) -and
+            $joined.Contains($ExpectedText2)
+        )
+
+        Add-Check `
+            $Label `
+            $pass `
+            &quot;ExitCode=$code&quot; `
+            &quot;ExitCode=0; $ExpectedText1; $ExpectedText2&quot;
+    }
+
+    Invoke-Validator `
+        &#39;PUBLIC_RELEASE_VALIDATOR&#39; `
+        &#39;tools\validate_public_release.py&#39; `
+        &#39;Public release validation PASS&#39; `
+        &#39;Governed manifest files: 2880&#39;
+
+    Invoke-Validator `
+        &#39;RC1_OVERLAY_VALIDATOR&#39; `
+        &#39;successor_candidates\m2-g3-v2.1.0-rc1\tools\validate_candidate_overlay.py&#39; `
+        &#39;Candidate overlay validation PASS&#39; `
+        &#39;Governed candidate files: 235&#39;
+
+    Invoke-Validator `
+        &#39;RC2_OVERLAY_VALIDATOR&#39; `
+        &#39;successor_candidates\m2-g3-v2.1.0-rc2\tools\validate_candidate_overlay.py&#39; `
+        &#39;Candidate overlay validation PASS&#39; `
+        &#39;Governed candidate files: 248&#39;
+
+    # ============================================================
+    # D. PBIX + EMBEDDED DATAMODEL EXACT IDENTITY
+    # ============================================================
+
+    $Pbix = Join-Path $Repo $PbixRel
+
+    if (-not (Test-Path -LiteralPath $Pbix -PathType Leaf)) {
+        Add-Check &#39;PBIX_EXISTS&#39; $false &#39;MISSING&#39; $PbixRel
+    }
+    else {
+        $pbixItem = Get-Item -LiteralPath $Pbix
+        $pbixHash = (
+            Get-FileHash -LiteralPath $Pbix -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+
+        Add-Check &#39;PBIX_BYTES&#39; `
+            ($pbixItem.Length -eq $ExpectedPbixBytes) `
+            &quot;$($pbixItem.Length)&quot; `
+            &quot;$ExpectedPbixBytes&quot;
+
+        Add-Check &#39;PBIX_SHA256&#39; `
+            ($pbixHash -ceq $ExpectedPbixSha) `
+            $pbixHash `
+            $ExpectedPbixSha
+
+        # Read embedded DataModel without extraction/resave/modification.
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($Pbix)
+
+        try {
+            $dm = @(
+                $zip.Entries |
+                    Where-Object {
+                        $_.FullName -eq &#39;DataModel&#39; -or
+                        $_.FullName -like &#39;*/DataModel&#39;
+                    }
+            )
+
+            if ($dm.Count -ne 1) {
+                Add-Check &#39;PBIX_DATAMODEL_MEMBER_COUNT&#39; `
+                    $false `
+                    &quot;$($dm.Count)&quot; `
+                    &#39;1&#39;
+            }
+            else {
+                Add-Check &#39;PBIX_DATAMODEL_MEMBER_COUNT&#39; `
+                    $true `
+                    &#39;1&#39; `
+                    &#39;1&#39;
+
+                $sha = [System.Security.Cryptography.SHA256]::Create()
+                try {
+                    $stream = $dm[0].Open()
+                    try {
+                        $bytes = $sha.ComputeHash($stream)
+                        $dmHash = (
+                            [BitConverter]::ToString($bytes).Replace(&#39;-&#39;,&#39;&#39;)
+                        ).ToLowerInvariant()
+                    }
+                    finally {
+                        $stream.Dispose()
+                    }
+                }
+                finally {
+                    $sha.Dispose()
+                }
+
+                Add-Check &#39;PBIX_DATAMODEL_SHA256&#39; `
+                    ($dmHash -ceq $ExpectedDataModelSha) `
+                    $dmHash `
+                    $ExpectedDataModelSha
+            }
+        }
+        finally {
+            $zip.Dispose()
+        }
+    }
+
+    # ============================================================
+    # E. NESTED PROTECTED HASH CONTROLS
+    # ============================================================
+
+    Test-HashList `
+        -BaseDir (Join-Path $Repo &#39;docs\power_bi\m2_v2_1&#39;) `
+        -HashFile (Join-Path $Repo &#39;docs\power_bi\m2_v2_1\manifests\SHA256SUMS.txt&#39;) `
+        -Label &#39;POWER_BI_PROJECTION_SHA256SUMS&#39;
+
+    Test-HashList `
+        -BaseDir (Join-Path $Repo &#39;docs\portfolio_visuals\MSBF_VISUAL_PUBLIC_R1&#39;) `
+        -HashFile (Join-Path $Repo &#39;docs\portfolio_visuals\MSBF_VISUAL_PUBLIC_R1\SHA256SUMS.txt&#39;) `
+        -Label &#39;VISUAL_FAMILY_SHA256SUMS&#39;
+
+    Test-HashList `
+        -BaseDir (Join-Path $Repo &#39;docs\reproducibility\m2_v2_1\runbook&#39;) `
+        -HashFile (Join-Path $Repo &#39;docs\reproducibility\m2_v2_1\runbook\SHA256SUMS.txt&#39;) `
+        -Label &#39;RUNBOOK_SHA256SUMS&#39;
+
+    Test-HashList `
+        -BaseDir (Join-Path $Repo &#39;docs\project_history\chatgpt_logs_through_2026-09-09&#39;) `
+        -HashFile (Join-Path $Repo &#39;docs\project_history\chatgpt_logs_through_2026-09-09\SHA256SUMS.txt&#39;) `
+        -Label &#39;FROZEN_HISTORY_SHA256SUMS&#39;
+
+    Test-HashList `
+        -BaseDir (Join-Path $Repo &#39;docs\release_change_control\module_2_g3_v2_1&#39;) `
+        -HashFile (Join-Path $Repo &#39;docs\release_change_control\module_2_g3_v2_1\PUBLIC_SHA256SUMS.txt&#39;) `
+        -Label &#39;RELEASE_CHANGE_CONTROL_SHA256SUMS&#39;
+
+    # ============================================================
+    # F. R22 EXCLUSION-PROVENANCE DERIVATION
+    #
+    # We do not guess the eleven paths. Derive path-like strings only
+    # from exclusion/private/omission-related branches of the retained
+    # R18 provenance JSON, then require exactly 11 unique candidates.
+    # ============================================================
+
+    $ProvPath = Join-Path $Repo `
+        &#39;docs\release_integration\module_2_g3_v2_1\R18_PUBLIC_PROJECTION_PROVENANCE.json&#39;
+
+    $ExcludedCandidates = New-Object System.Collections.Generic.List[string]
+
+    function Walk-Json {
+        param(
+            $Node,
+            [string]$Context = &#39;&#39;
+        )
+
+        if ($null -eq $Node) { return }
+
+        if ($Node -is [string]) {
+            if (
+                $Context -match &#39;(?i)(exclude|excluded|private|omit|omission|removed|r22)&#39; -and
+                $Node -match &#39;[\\/]&#39; -and
+                $Node -notmatch &#39;^(https?|file):&#39;
+            ) {
+                $ExcludedCandidates.Add($Node.Trim())
+            }
+            return
+        }
+
+        if ($Node -is [System.Collections.IEnumerable] -and
+            -not ($Node -is [System.Management.Automation.PSCustomObject])) {
+
+            foreach ($item in $Node) {
+                Walk-Json -Node $item -Context $Context
+            }
+            return
+        }
+
+        foreach ($p in $Node.PSObject.Properties) {
+            $next = if ($Context) {
+                &quot;$Context.$($p.Name)&quot;
+            }
+            else {
+                $p.Name
+            }
+
+            Walk-Json -Node $p.Value -Context $next
+        }
+    }
+
+    if (-not (Test-Path -LiteralPath $ProvPath -PathType Leaf)) {
+        Add-Check &#39;R22_EXCLUSION_PROVENANCE_EXISTS&#39; `
+            $false `
+            &#39;MISSING&#39; `
+            $ProvPath
+    }
+    else {
+        Add-Check &#39;R22_EXCLUSION_PROVENANCE_EXISTS&#39; `
+            $true `
+            &#39;PRESENT&#39; `
+            &#39;PRESENT&#39;
+
+        $prov = Get-Content -LiteralPath $ProvPath -Raw | ConvertFrom-Json
+        Walk-Json -Node $prov
+
+        $ExcludedUnique = @(
+            $ExcludedCandidates |
+                ForEach-Object {
+                    $_.Replace(&#39;/&#39;,&#39;\&#39;).TrimStart(&#39;.\&#39;)
+                } |
+                Sort-Object -Unique
+        )
+
+        $ExcludedUnique |
+            Set-Content `
+                -LiteralPath (Join-Path $EvidenceDir &#39;R22_DERIVED_EXCLUDED_PATHS.txt&#39;) `
+                -Encoding UTF8
+
+        Add-Check &#39;R22_DERIVED_EXCLUDED_PATH_COUNT&#39; `
+            ($ExcludedUnique.Count -eq 11) `
+            &quot;$($ExcludedUnique.Count)&quot; `
+            &#39;11&#39;
+
+        $PresentExcluded = New-Object System.Collections.Generic.List[string]
+
+        foreach ($rel in $ExcludedUnique) {
+            $candidate = Join-Path $Repo $rel
+            if (Test-Path -LiteralPath $candidate) {
+                $PresentExcluded.Add($rel)
+            }
+        }
+
+        $PresentExcluded |
+            Set-Content `
+                -LiteralPath (Join-Path $EvidenceDir &#39;R22_EXCLUDED_PATHS_PRESENT.txt&#39;) `
+                -Encoding UTF8
+
+        Add-Check &#39;R22_EXCLUDED_PATHS_ABSENT&#39; `
+            (
+                $ExcludedUnique.Count -eq 11 -and
+                $PresentExcluded.Count -eq 0
+            ) `
+            &quot;Derived=$($ExcludedUnique.Count); Present=$($PresentExcluded.Count)&quot; `
+            &#39;Derived=11; Present=0&#39;
+    }
+
+    # ============================================================
+    # G. FORBIDDEN CARRIERS / STANDALONE FONT / ARCHIVE CHECK
+    # ============================================================
+
+    $AllRepoFiles = @(
+        Get-ChildItem -LiteralPath $Repo -Recurse -File -Force |
+        Where-Object {
+            $_.FullName -notlike &quot;$Repo\.git\*&quot;
+        }
+    )
+
+    $StandaloneFonts = @(
+        $AllRepoFiles |
+        Where-Object {
+            $_.Extension -match &#39;^\.(ttf|otf|woff|woff2|eot)$&#39;
+        }
+    )
+
+    Add-Check &#39;STANDALONE_FONT_FILES&#39; `
+        ($StandaloneFonts.Count -eq 0) `
+        &quot;$($StandaloneFonts.Count)&quot; `
+        &#39;0&#39;
+
+    $RepoZipFiles = @(
+        $AllRepoFiles |
+        Where-Object { $_.Extension -ieq &#39;.zip&#39; }
+    )
+
+    $RepoZipFiles.FullName |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;REPOSITORY_ZIP_FILES.txt&#39;) `
+            -Encoding UTF8
+
+    # Forbidden/private carrier naming screen.
+    $ForbiddenCarrierPattern = &#39;(?i)(private.*(audit|evidence|control|history)|desktop.*evidence|route.?b.*checkpoint|raw.*chat|editorial.*control|audit.*return|private.*cohort.*source|source.*repro.*carrier)&#39;
+
+    $ForbiddenNamed = @(
+        $AllRepoFiles |
+        Where-Object {
+            $_.Name -match $ForbiddenCarrierPattern -or
+            $_.FullName -match $ForbiddenCarrierPattern
+        }
+    )
+
+    $ForbiddenNamed.FullName |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;FORBIDDEN_NAMED_CARRIERS.txt&#39;) `
+            -Encoding UTF8
+
+    Add-Check &#39;FORBIDDEN_PRIVATE_RAW_CARRIERS&#39; `
+        ($ForbiddenNamed.Count -eq 0) `
+        &quot;$($ForbiddenNamed.Count)&quot; `
+        &#39;0&#39;
+
+    # ============================================================
+    # H. TARGETED CREDENTIAL / SECRET SCAN
+    #
+    # Do not print secret values. Evidence records only path + rule.
+    # ============================================================
+
+    $TextExtensions = @(
+        &#39;.md&#39;,&#39;.txt&#39;,&#39;.json&#39;,&#39;.jsonl&#39;,&#39;.csv&#39;,&#39;.yml&#39;,&#39;.yaml&#39;,
+        &#39;.py&#39;,&#39;.sql&#39;,&#39;.ps1&#39;,&#39;.html&#39;,&#39;.xml&#39;,&#39;.toml&#39;,&#39;.ini&#39;,&#39;.cfg&#39;,
+        &#39;.properties&#39;,&#39;.env&#39;
+    )
+
+    $SecretRules = [ordered]@{
+        &#39;GITHUB_CLASSIC_PAT&#39; = &#39;ghp_[A-Za-z0-9]{30,}&#39;
+        &#39;GITHUB_FINE_GRAINED_PAT&#39; = &#39;github_pat_[A-Za-z0-9_]{40,}&#39;
+        &#39;AWS_ACCESS_KEY&#39; = &#39;AKIA[0-9A-Z]{16}&#39;
+        &#39;PRIVATE_KEY_BLOCK&#39; = &#39;-----BEGIN (RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----&#39;
+        &#39;PASSWORD_ASSIGNMENT&#39; = &#39;(?i)(password|passwd|pwd)\s*[:=]\s*[&quot;&#39;&#39;][^&quot;&#39;&#39;]{4,}[&quot;&#39;&#39;]&#39;
+        &#39;SECRET_ASSIGNMENT&#39; = &#39;(?i)(client_secret|api_secret|access_token)\s*[:=]\s*[&quot;&#39;&#39;][^&quot;&#39;&#39;]{8,}[&quot;&#39;&#39;]&#39;
+    }
+
+    $SecretFindings = New-Object System.Collections.Generic.List[object]
+
+    foreach ($f in $AllRepoFiles) {
+        if ($TextExtensions -notcontains $f.Extension.ToLowerInvariant()) {
+            continue
+        }
+
+        # Bound scanner; huge binary-like text should already be governed
+        # by tree/hash validators.
+        if ($f.Length -gt 10MB) {
+            continue
+        }
+
+        try {
+            $content = Get-Content -LiteralPath $f.FullName -Raw -ErrorAction Stop
+        }
+        catch {
+            continue
+        }
+
+        foreach ($rule in $SecretRules.GetEnumerator()) {
+            if ($content -match $rule.Value) {
+                $rel = $f.FullName.Substring(
+                    ([IO.Path]::GetFullPath($Repo).TrimEnd(&#39;\&#39;) + &#39;\&#39;).Length
+                )
+
+                $SecretFindings.Add([pscustomobject]@{
+                    RelativePath = $rel
+                    Rule = $rule.Key
+                })
+            }
+        }
+    }
+
+    $SecretFindings |
+        Export-Csv `
+            -LiteralPath (Join-Path $EvidenceDir &#39;TARGETED_SECRET_SCAN_FINDINGS.csv&#39;) `
+            -NoTypeInformation `
+            -Encoding UTF8
+
+    Add-Check &#39;TARGETED_SECRET_SCAN&#39; `
+        ($SecretFindings.Count -eq 0) `
+        &quot;$($SecretFindings.Count)&quot; `
+        &#39;0&#39;
+
+    # ============================================================
+    # I. DOCUMENTATION / RELATIVE-LINK CHECK
+    # ============================================================
+
+    $MarkdownFiles = @(
+        Get-ChildItem -LiteralPath $Repo -Recurse -File -Filter &#39;*.md&#39; |
+        Where-Object {
+            $_.FullName -notlike &quot;$Repo\.git\*&quot;
+        }
+    )
+
+    $BrokenLinks = New-Object System.Collections.Generic.List[object]
+
+    foreach ($md in $MarkdownFiles) {
+        $text = Get-Content -LiteralPath $md.FullName -Raw
+
+        # Inline markdown links/images. Reference-style definitions
+        # are handled separately below.
+        $matches = [regex]::Matches(
+            $text,
+            &#39;!?\[[^\]]*\]\(([^)]+)\)&#39;
+        )
+
+        foreach ($m in $matches) {
+            $target = $m.Groups[1].Value.Trim()
+
+            # Strip optional title after URL/path conservatively.
+            if ($target -match &#39;^&lt;(.+)&gt;$&#39;) {
+                $target = $Matches[1]
+            }
+            elseif ($target -match &#39;^(\S+)\s+[&quot;&#39;&#39;].*[&quot;&#39;&#39;]$&#39;) {
+                $target = $Matches[1]
+            }
+
+            if (
+                [string]::IsNullOrWhiteSpace($target) -or
+                $target.StartsWith(&#39;#&#39;) -or
+                $target -match &#39;^(?i)(https?|mailto|tel|data):&#39;
+            ) {
+                continue
+            }
+
+            $pathPart = ($target -split &#39;#&#39;,2)[0]
+            $pathPart = [uri]::UnescapeDataString($pathPart)
+
+            if ([string]::IsNullOrWhiteSpace($pathPart)) {
+                continue
+            }
+
+            $resolved = Join-Path $md.DirectoryName $pathPart
+
+            if (-not (Test-Path -LiteralPath $resolved)) {
+                $relMd = $md.FullName.Substring(
+                    ([IO.Path]::GetFullPath($Repo).TrimEnd(&#39;\&#39;) + &#39;\&#39;).Length
+                )
+
+                $BrokenLinks.Add([pscustomobject]@{
+                    MarkdownFile = $relMd
+                    Target = $target
+                })
+            }
+        }
+
+        # Reference-style definitions: [id]: relative/path
+        $refMatches = [regex]::Matches(
+            $text,
+            &#39;(?m)^\s*\[[^\]]+\]:\s*(\S+)&#39;
+        )
+
+        foreach ($m in $refMatches) {
+            $target = $m.Groups[1].Value.Trim(&#39;&lt;&#39;,&#39;&gt;&#39;)
+
+            if (
+                $target.StartsWith(&#39;#&#39;) -or
+                $target -match &#39;^(?i)(https?|mailto|tel|data):&#39;
+            ) {
+                continue
+            }
+
+            $pathPart = ($target -split &#39;#&#39;,2)[0]
+            $pathPart = [uri]::UnescapeDataString($pathPart)
+
+            if ([string]::IsNullOrWhiteSpace($pathPart)) {
+                continue
+            }
+
+            $resolved = Join-Path $md.DirectoryName $pathPart
+
+            if (-not (Test-Path -LiteralPath $resolved)) {
+                $relMd = $md.FullName.Substring(
+                    ([IO.Path]::GetFullPath($Repo).TrimEnd(&#39;\&#39;) + &#39;\&#39;).Length
+                )
+
+                $BrokenLinks.Add([pscustomobject]@{
+                    MarkdownFile = $relMd
+                    Target = $target
+                })
+            }
+        }
+    }
+
+    $BrokenLinks |
+        Export-Csv `
+            -LiteralPath (Join-Path $EvidenceDir &#39;BROKEN_RELATIVE_MARKDOWN_LINKS.csv&#39;) `
+            -NoTypeInformation `
+            -Encoding UTF8
+
+    Add-Check &#39;RELATIVE_MARKDOWN_LINKS&#39; `
+        ($BrokenLinks.Count -eq 0) `
+        &quot;$($BrokenLinks.Count)&quot; `
+        &#39;0&#39;
+
+    # Explicit critical navigation surfaces.
+    $CriticalPaths = [ordered]@{
+        &#39;ROOT_README&#39; = &#39;README.md&#39;
+        &#39;DOC_PORTAL&#39; = &#39;docs\README.md&#39;
+        &#39;CURRENT_USE_GUIDE&#39; = &#39;docs\guide\CURRENT_USE.md&#39;
+        &#39;EXPLAINABILITY_GUIDE&#39; = &#39;docs\guide\EXPLAINABILITY.md&#39;
+        &#39;LEARNING_GUIDE_ROUTE&#39; = &#39;docs\guide\LEARNING.md&#39;
+        &#39;VISUAL_GUIDE&#39; = &#39;docs\guide\VISUALS.md&#39;
+        &#39;REQUIREMENTS_VALIDATION_GUIDE&#39; = &#39;docs\guide\REQUIREMENTS_AND_VALIDATION.md&#39;
+        &#39;SOURCE_VERSION_GUIDE&#39; = &#39;docs\guide\SOURCE_VERSIONS.md&#39;
+        &#39;POWER_BI_ROUTE&#39; = &#39;docs\power_bi\m2_v2_1\README.md&#39;
+        &#39;COHORT_ROUTE&#39; = &#39;docs\cohort\m2_v2_1\README.md&#39;
+        &#39;VISUAL_PORTFOLIO&#39; = &#39;docs\portfolio_visuals\MSBF_VISUAL_PUBLIC_R1\README.md&#39;
+        &#39;ENTERPRISE_ARCHITECTURE_ROUTE&#39; = &#39;docs\enterprise_architecture\README.md&#39;
+        &#39;MODULE1_LINEAGE_PNG&#39; = &#39;docs\enterprise_architecture\Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png&#39;
+        &#39;MODULE2_LINEAGE_PNG&#39; = &#39;docs\enterprise_architecture\Module_2_Governed_Decisioning_Operations_Portfolio_&amp;_G3_Acceptance_Lineage.png&#39;
+        &#39;P03_082&#39; = &#39;docs\power_bi\m2_v2_1\assets\power_bi\core\p03_application_journey_082_baseline.png&#39;
+        &#39;P03_738_BASELINE&#39; = &#39;docs\power_bi\m2_v2_1\assets\power_bi\core\p03_application_journey_738_baseline.png&#39;
+        &#39;P03_738_RECESSION&#39; = &#39;docs\power_bi\m2_v2_1\assets\power_bi\core\p03_application_journey_738_recession_energy.png&#39;
+        &#39;P03_749&#39; = &#39;docs\power_bi\m2_v2_1\assets\power_bi\core\p03_application_journey_749_baseline.png&#39;
+        &#39;POSTER_HOW&#39; = &#39;docs\portfolio_visuals\MSBF_VISUAL_PUBLIC_R1\assets\posters\MSBF_MCI_How_the_Governed_Decision_Engine_Works_v2_1_COPYFIX_R1.png&#39;
+        &#39;POSTER_AFTER&#39; = &#39;docs\portfolio_visuals\MSBF_VISUAL_PUBLIC_R1\assets\posters\MSBF_MCI_What_Happens_After_the_Decision_v2_1_COPYFIX_R1.png&#39;
+    }
+
+    $CriticalMissing = New-Object System.Collections.Generic.List[object]
+
+    foreach ($cp in $CriticalPaths.GetEnumerator()) {
+        $full = Join-Path $Repo $cp.Value
+        $exists = Test-Path -LiteralPath $full
+
+        if (-not $exists) {
+            $CriticalMissing.Add([pscustomobject]@{
+                Route = $cp.Key
+                RelativePath = $cp.Value
+            })
+        }
+    }
+
+    $CriticalMissing |
+        Export-Csv `
+            -LiteralPath (Join-Path $EvidenceDir &#39;CRITICAL_NAVIGATION_MISSING.csv&#39;) `
+            -NoTypeInformation `
+            -Encoding UTF8
+
+    Add-Check &#39;CRITICAL_NAVIGATION_TARGETS&#39; `
+        ($CriticalMissing.Count -eq 0) `
+        &quot;$($CriticalMissing.Count)&quot; `
+        &#39;0&#39;
+
+    # Stale local/session/temp links.
+    $StaleLinkFindings = New-Object System.Collections.Generic.List[object]
+    $StalePatterns = @(
+        &#39;localhost&#39;,
+        &#39;127\.0\.0\.1&#39;,
+        &#39;file:///&#39;,
+        &#39;[A-Za-z]:\\Users\\&#39;,
+        &#39;[session]/&#39;,
+        &#39;sandbox:/&#39;,
+        &#39;session[_-]&#39;,
+        &#39;temp[/\\]&#39;,
+        &#39;tmp[/\\]&#39;
+    )
+
+    foreach ($md in $MarkdownFiles) {
+        $text = Get-Content -LiteralPath $md.FullName -Raw
+
+        foreach ($pattern in $StalePatterns) {
+            if ($text -match $pattern) {
+                $relMd = $md.FullName.Substring(
+                    ([IO.Path]::GetFullPath($Repo).TrimEnd(&#39;\&#39;) + &#39;\&#39;).Length
+                )
+
+                $StaleLinkFindings.Add([pscustomobject]@{
+                    RelativePath = $relMd
+                    Pattern = $pattern
+                })
+            }
+        }
+    }
+
+    $StaleLinkFindings |
+        Export-Csv `
+            -LiteralPath (Join-Path $EvidenceDir &#39;STALE_LOCAL_LINK_FINDINGS.csv&#39;) `
+            -NoTypeInformation `
+            -Encoding UTF8
+
+    Add-Check &#39;STALE_LOCAL_TEMP_SESSION_LINKS&#39; `
+        ($StaleLinkFindings.Count -eq 0) `
+        &quot;$($StaleLinkFindings.Count)&quot; `
+        &#39;0&#39;
+
+    # ============================================================
+    # J. GIT DIFF / LINE ENDING / WHITESPACE / SIZE REVIEW
+    # ============================================================
+
+    $GitStatus = @(&amp; git -C $Repo status --short)
+    $GitStatusBranch = @(&amp; git -C $Repo status --short --branch)
+    $DiffStat = @(&amp; git -C $Repo diff --stat)
+    $DiffNameStatus = @(&amp; git -C $Repo diff --name-status)
+    $DiffNumStat = @(&amp; git -C $Repo diff --numstat)
+    $DiffCheck = @(&amp; git -C $Repo diff --check)
+    $DiffCheckCode = $LASTEXITCODE
+
+    # Include untracked paths in a full candidate list.
+    $TrackedChanged = @(&amp; git -C $Repo diff --name-only)
+    $UntrackedAll = @(&amp; git -C $Repo ls-files --others --exclude-standard)
+
+    $GitStatus |
+        Set-Content -LiteralPath (Join-Path $EvidenceDir &#39;GIT_STATUS_SHORT.txt&#39;) -Encoding UTF8
+
+    $GitStatusBranch |
+        Set-Content -LiteralPath (Join-Path $EvidenceDir &#39;GIT_STATUS_SHORT_BRANCH.txt&#39;) -Encoding UTF8
+
+    $DiffStat |
+        Set-Content -LiteralPath (Join-Path $EvidenceDir &#39;GIT_DIFF_STAT.txt&#39;) -Encoding UTF8
+
+    $DiffNameStatus |
+        Set-Content -LiteralPath (Join-Path $EvidenceDir &#39;GIT_DIFF_NAME_STATUS.txt&#39;) -Encoding UTF8
+
+    $DiffNumStat |
+        Set-Content -LiteralPath (Join-Path $EvidenceDir &#39;GIT_DIFF_NUMSTAT.txt&#39;) -Encoding UTF8
+
+    $DiffCheck |
+        Set-Content -LiteralPath (Join-Path $EvidenceDir &#39;GIT_DIFF_CHECK.txt&#39;) -Encoding UTF8
+
+    $UntrackedAll |
+        Set-Content -LiteralPath (Join-Path $EvidenceDir &#39;GIT_UNTRACKED_ALL_FILES.txt&#39;) -Encoding UTF8
+
+    Add-Check &#39;GIT_DIFF_CHECK&#39; `
+        ($DiffCheckCode -eq 0) `
+        &quot;ExitCode=$DiffCheckCode; Findings=$($DiffCheck.Count)&quot; `
+        &#39;ExitCode=0; Findings=0&#39;
+
+    # Detect paths that disappear when ignoring end-of-line whitespace.
+    # This is diagnostic rather than automatically fatal unless there is
+    # evidence of broad line-ending-only churn.
+    $NormalNames = @(&amp; git -C $Repo diff --name-only)
+    $IgnoreEolNames = @(&amp; git -C $Repo diff --ignore-space-at-eol --name-only)
+
+    $EolOnlyCandidates = @(
+        $NormalNames |
+        Where-Object { $_ -notin $IgnoreEolNames }
+    )
+
+    $EolOnlyCandidates |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;POSSIBLE_EOL_ONLY_CHANGED_PATHS.txt&#39;) `
+            -Encoding UTF8
+
+    # Fail closed only on mass EOL-only churn.
+    $MassEolRewrite = ($EolOnlyCandidates.Count -ge 10)
+
+    Add-Check &#39;NO_MASS_EOL_ONLY_REWRITE&#39; `
+        (-not $MassEolRewrite) `
+        &quot;PossibleEolOnlyPaths=$($EolOnlyCandidates.Count)&quot; `
+        &#39;&lt;10&#39;
+
+    # Unexpected very large untracked files: enumerate, but PBIX/visuals/
+    # cohort are expected R6 members. Exact R6 equality is the primary
+    # authorization for their presence.
+    $LargeFiles = @(
+        $AllRepoFiles |
+        Where-Object { $_.Length -ge 25MB } |
+        Sort-Object Length -Descending |
+        ForEach-Object {
+            [pscustomobject]@{
+                Bytes = $_.Length
+                RelativePath = $_.FullName.Substring(
+                    ([IO.Path]::GetFullPath($Repo).TrimEnd(&#39;\&#39;) + &#39;\&#39;).Length
+                )
+            }
+        }
+    )
+
+    $LargeFiles |
+        Export-Csv `
+            -LiteralPath (Join-Path $EvidenceDir &#39;FILES_GE_25MB.csv&#39;) `
+            -NoTypeInformation `
+            -Encoding UTF8
+
+    # ============================================================
+    # K. ENSURE VALIDATION DID NOT MUTATE THE R6 TREE
+    # ============================================================
+
+    Write-Host &quot;Re-hashing checkout after validators/scanners...&quot;
+    $RepoAfterValidation = @(Get-TreeInventory -Root $Repo -ExcludeGit)
+
+    $AfterMap = @{}
+    foreach ($x in $RepoAfterValidation) {
+        $AfterMap[$x.Path.ToLowerInvariant()] = $x
+    }
+
+    $PostMutationMismatch = 0
+
+    if ($AfterMap.Count -ne $StageMap.Count) {
+        $PostMutationMismatch++
+    }
+
+    foreach ($k in $StageMap.Keys) {
+        if (-not $AfterMap.ContainsKey($k)) {
+            $PostMutationMismatch++
+            continue
+        }
+
+        if (
+            $StageMap[$k].Bytes -ne $AfterMap[$k].Bytes -or
+            $StageMap[$k].Sha256 -cne $AfterMap[$k].Sha256 -or
+            $StageMap[$k].Path -cne $AfterMap[$k].Path
+        ) {
+            $PostMutationMismatch++
+        }
+    }
+
+    Add-Check &#39;VALIDATORS_LEFT_R6_TREE_UNCHANGED&#39; `
+        ($PostMutationMismatch -eq 0) `
+        &quot;$PostMutationMismatch&quot; `
+        &#39;0&#39;
+
+    # ============================================================
+    # L. FINAL INDEX / GIT SANITY
+    # ============================================================
+
+    $HeadFinal = (&amp; git -C $Repo rev-parse HEAD).Trim().ToLowerInvariant()
+    $CachedFinal = @(&amp; git -C $Repo diff --cached --name-only)
+
+    Add-Check &#39;HEAD_STILL_UNCHANGED&#39; `
+        ($HeadFinal -ceq $ExpectedHead) `
+        $HeadFinal `
+        $ExpectedHead
+
+    Add-Check &#39;NOTHING_STAGED_AFTER_PHASE_E&#39; `
+        ($CachedFinal.Count -eq 0) `
+        &quot;CachedPaths=$($CachedFinal.Count)&quot; `
+        &#39;CachedPaths=0&#39;
+
+    # ============================================================
+    # M. FINAL HARD-GATE DECISION + RECEIPT
+    # ============================================================
+
+    $Checks |
+        Export-Csv `
+            -LiteralPath (Join-Path $EvidenceDir &#39;PHASE_E_CHECK_REGISTER.csv&#39;) `
+            -NoTypeInformation `
+            -Encoding UTF8
+
+    $Failures = @($Checks | Where-Object { $_.Status -eq &#39;FAIL&#39; })
+
+    $PhaseStatus = if ($Failures.Count -eq 0) {
+        &#39;PASS&#39;
+    }
+    else {
+        &#39;FAIL&#39;
+    }
+
+    $Receipt = [ordered]@{
+        SchemaVersion = &#39;1.0&#39;
+        Task = &#39;MSBF_RELEASE_ENGINEERING_PHASE_E_PRE_COMMIT_GATE&#39;
+        GoverningDecision = &#39;IA-D-R20-INT-001&#39;
+        ConditionalAuthority = &#39;IA-PUB-R20-INTEGRATED-001&#39;
+
+        Repository = $Repo
+        SourceR6Stage = $Stage
+        EvidenceDirectory = $EvidenceDir
+
+        Branch = $Branch
+        Head = $HeadFinal
+
+        R6Tree = [ordered]@{
+            ExpectedFiles = $ExpectedFiles
+            StageFiles = $StageInv.Count
+            CheckoutFiles = $RepoInv.Count
+            Missing = $Missing.Count
+            Extra = $Extra.Count
+            Mismatch = $Mismatch.Count
+        }
+
+        Validators = [ordered]@{
+            PublicReleaseExpectedGovernedFiles = 2880
+            Rc1ExpectedGovernedFiles = 235
+            Rc2ExpectedGovernedFiles = 248
+        }
+
+        Pbix = [ordered]@{
+            RelativePath = $PbixRel
+            ExpectedBytes = $ExpectedPbixBytes
+            ExpectedSha256 = $ExpectedPbixSha
+            ExpectedDataModelSha256 = $ExpectedDataModelSha
+        }
+
+        R22DerivedExcludedPathCount = @($ExcludedUnique).Count
+        R22ExcludedPathsPresent = @($PresentExcluded).Count
+
+        SecretFindings = $SecretFindings.Count
+        BrokenRelativeMarkdownLinks = $BrokenLinks.Count
+        CriticalNavigationMissing = $CriticalMissing.Count
+        StaleLocalLinkFindings = $StaleLinkFindings.Count
+        PossibleEolOnlyChangedPaths = $EolOnlyCandidates.Count
+
+        GitStatusEntryCount = $GitStatus.Count
+        TrackedChangedPathCount = $TrackedChanged.Count
+        UntrackedFileCount = $UntrackedAll.Count
+        CachedPathCount = $CachedFinal.Count
+
+        CheckCount = $Checks.Count
+        FailureCount = $Failures.Count
+        FailedChecks = @($Failures | Select-Object Check,Actual,Expected)
+
+        CommitPerformed = $false
+        TagPerformed = $false
+        PushPerformed = $false
+        PublicationPerformed = $false
+
+        PreCommitGate = $PhaseStatus
+    }
+
+    $JsonPath = Join-Path $EvidenceDir `
+        &#39;MSBF_PHASE_E_PRE_COMMIT_GATE.json&#39;
+
+    $Receipt |
+        ConvertTo-Json -Depth 10 |
+        Set-Content -LiteralPath $JsonPath -Encoding UTF8
+
+    $SummaryPath = Join-Path $EvidenceDir `
+        &#39;MSBF_PHASE_E_SUMMARY.txt&#39;
+
+    $Summary = @(
+        &quot;PRE_COMMIT_GATE = $PhaseStatus&quot;,
+        &quot;Repository: $Repo&quot;,
+        &quot;Branch: $Branch&quot;,
+        &quot;HEAD: $HeadFinal&quot;,
+        &#39;&#39;,
+        &quot;R6 tree: Stage=$($StageInv.Count) Checkout=$($RepoInv.Count) Missing=$($Missing.Count) Extra=$($Extra.Count) Mismatch=$($Mismatch.Count)&quot;,
+        &quot;Hard checks: $($Checks.Count)&quot;,
+        &quot;Failures: $($Failures.Count)&quot;,
+        &#39;&#39;,
+        &quot;R22 excluded paths derived: $(@($ExcludedUnique).Count)&quot;,
+        &quot;R22 excluded paths present: $(@($PresentExcluded).Count)&quot;,
+        &quot;Secret findings: $($SecretFindings.Count)&quot;,
+        &quot;Broken relative Markdown links: $($BrokenLinks.Count)&quot;,
+        &quot;Critical navigation targets missing: $($CriticalMissing.Count)&quot;,
+        &quot;Stale local/temp/session link findings: $($StaleLinkFindings.Count)&quot;,
+        &quot;Possible EOL-only changed paths: $($EolOnlyCandidates.Count)&quot;,
+        &#39;&#39;,
+        &quot;Git status entries: $($GitStatus.Count)&quot;,
+        &quot;Tracked changed paths: $($TrackedChanged.Count)&quot;,
+        &quot;Untracked files: $($UntrackedAll.Count)&quot;,
+        &quot;Cached/staged paths: $($CachedFinal.Count)&quot;,
+        &#39;&#39;,
+        &#39;No commit performed.&#39;,
+        &#39;No tag created.&#39;,
+        &#39;No push performed.&#39;,
+        &#39;No publication performed.&#39;,
+        &#39;&#39;,
+        &quot;Receipt: $JsonPath&quot;
+    )
+
+    $Summary |
+        Set-Content -LiteralPath $SummaryPath -Encoding UTF8
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;============================================================&quot;
+    $Summary | ForEach-Object { Write-Host $_ }
+    Write-Host &quot;============================================================&quot;
+
+    if ($Failures.Count -gt 0) {
+        Write-Host &quot;&quot;
+        Write-Host &quot;FAILED CHECKS:&quot;
+        $Failures |
+            Format-Table Check,Expected,Actual,Status -AutoSize |
+            Out-Host
+
+        Write-Host &quot;&quot;
+        Write-Host &quot;PHASE E FAILED CLOSED.&quot;
+        Write-Host &quot;Do NOT stage, commit, tag, push, or publish.&quot;
+    }
+    else {
+        Write-Host &quot;&quot;
+        Write-Host &quot;PRE_COMMIT_GATE = PASS&quot;
+        Write-Host &quot;Stop here. Do NOT stage or commit yet.&quot;
+    }
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Return the JSON receipt, console summary, and any failed-check evidence.&quot;
+}
+</code></pre>
+<p>A few aspects of this gate are deliberately strict.</p>
+<p>First, we <strong>re-hash the full 2,884-file tree both before and after the validators</strong>. That gives us direct evidence that none of the validation utilities altered the checkout. Second, the embedded <code>DataModel</code> is read directly from the PBIX archive stream—there is <strong>no extraction to the repository, resave, or Power BI Desktop invocation</strong>. Third, the R22 check attempts to derive the eleven excluded paths from the retained provenance record rather than inventing them. If that derivation does not yield exactly eleven, the gate will stop and we will inspect that one bounded issue rather than weakening the test.</p>
+<p>The final outcome we want is approximately:</p>
+<pre><code class="language-text">PRE_COMMIT_GATE = PASS
+
+R6 tree:
+Stage=2884
+Checkout=2884
+Missing=0
+Extra=0
+Mismatch=0
+
+Public validator: PASS / 2880
+rc1 overlay: PASS / 235
+rc2 overlay: PASS / 248
+
+PBIX:
+27635305 bytes
+ca46e8551860836a0cf4ff9239c42fcf8df02f1705596b9f8ca1bd047b5294e4
+
+DataModel:
+24396d02c0fbcb782cc9918e842886711146b8ff9455c8822d2aeaf009b96061
+
+R22 excluded paths present: 0
+Secret findings: 0
+Broken relative Markdown links: 0
+Critical navigation targets missing: 0
+
+Cached/staged paths: 0
+HEAD:
+46fb1f9198475678edc9cabdeefd2f91a59e49c2
+</code></pre>
+<p>If Phase E passes, <strong>still do not run <code>git add</code> afterward</strong>. Send me the receipt. I will evaluate the actual check register and, only then, we move across the next mutation boundary into <strong>Phase F — staged-content validation and commit binding</strong>.</p>
+</div></article><article id="m-e50ef3ae-2eff-46e2-a02c-6f67d3b3b994" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00067 · 2026-09-10T08:34:34.247000-04:00 · active path</p><p class="note">Attachment references: MSBF_PHASE_E_PRE_COMMIT_GATE.json; MSBF_PHASE_E_SUMMARY.txt; R6_STAGE_FRESH_INVENTORY.csv; BROKEN_RELATIVE_MARKDOWN_LINKS.csv; CHECKOUT_FRESH_INVENTORY.csv; FROZEN_HISTORY_SHA256SUMS.csv; GIT_DIFF_CHECK.txt; GIT_UNTRACKED_ALL_FILES.txt</p><div class="bubble"><h1>============================================================
+MSBF PHASE E — PRE-COMMIT PUBLICATION GATE</h1>
+<p>Repository: D:\x\m
+R6 stage:   D:\MSBF_RELEASE_R6_STAGING_20260910T121241797Z_028c5f94
+Evidence:   D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_E_20260910T123054197Z_3a252164</p>
+<p>Freshly hashing R6 stage...
+Freshly hashing actual checkout...
+Re-hashing checkout after validators/scanners...</p>
+<p>============================================================
+PRE_COMMIT_GATE = FAIL
+Repository: D:\x\m
+Branch: main
+HEAD: 46fb1f9198475678edc9cabdeefd2f91a59e49c2</p>
+<p>R6 tree: Stage=2884 Checkout=2884 Missing=0 Extra=0 Mismatch=0
+Hard checks: 31
+Failures: 6</p>
+<p>R22 excluded paths derived: 16
+R22 excluded paths present: 5
+Secret findings: 0
+Broken relative Markdown links: 28
+Critical navigation targets missing: 0
+Stale local/temp/session link findings: 74
+Possible EOL-only changed paths: 0</p>
+<p>Git status entries: 29
+Tracked changed paths: 16
+Untracked files: 950
+Cached/staged paths: 0</p>
+<p>No commit performed.
+No tag created.
+No push performed.
+No publication performed.</p>
+<h1>Receipt: D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_E_20260910T123054197Z_3a252164\MSBF_PHASE_E_PRE_COMMIT_GATE.json</h1>
+<p>FAILED CHECKS:</p>
+<p>Check                           Expected               Actual                    Status</p>
+<hr>
+<p>R22_DERIVED_EXCLUDED_PATH_COUNT 11                     16                        FAIL
+R22_EXCLUDED_PATHS_ABSENT       Derived=11; Present=0  Derived=16; Present=5     FAIL
+FORBIDDEN_PRIVATE_RAW_CARRIERS  0                      6                         FAIL
+RELATIVE_MARKDOWN_LINKS         0                      28                        FAIL
+STALE_LOCAL_TEMP_SESSION_LINKS  0                      74                        FAIL
+GIT_DIFF_CHECK                  ExitCode=0; Findings=0 ExitCode=2; Findings=8658 FAIL</p>
+<p>PHASE E FAILED CLOSED.
+Do NOT stage, commit, tag, push, or publish.</p>
+<p>Return the JSON receipt, console summary, and any failed-check evidence.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

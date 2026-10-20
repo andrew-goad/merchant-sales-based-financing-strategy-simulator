@@ -1,0 +1,1335 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PostgreSQL M1.14 Execution — part 37 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>PostgreSQL M1.14 Execution — part 37</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-36.html">Previous part</a><a href="part-38.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-035021ac-fd7e-4282-a42b-12baeca015ac" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00536 · 2026-08-15T02:27:53.163079-04:00 · active path</p><div class="bubble"><p>That identifies the issue.</p>
+<p>Your first command proves the tag exists <strong>locally</strong>:</p>
+<pre><code class="language-text">module-2-g3-v2.0.0
+</code></pre>
+<p>But this command:</p>
+<pre><code class="language-powershell">git ls-remote --tags origin &quot;refs/tags/module-2-g3-v2.0.0&quot;
+</code></pre>
+<p>returned <strong>nothing</strong>.</p>
+<p>So the tag currently <strong>does not exist on GitHub</strong>. That explains exactly why the GitHub Release screen cannot find it.</p>
+<p>This means that somewhere during Steps 29–36, the old remote tag was successfully deleted, but the corrected tag was not successfully pushed back to GitHub—or the push did not persist. Your repository content and <code>main</code> are unaffected.</p>
+<h2>Do this now</h2>
+<h3>1. Verify the local tag still points to final <code>main</code></h3>
+<p>Run:</p>
+<pre><code class="language-powershell">git rev-list -n 1 module-2-g3-v2.0.0
+</code></pre>
+<p>It must return:</p>
+<pre><code class="language-text">500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+</code></pre>
+<p>Then run:</p>
+<pre><code class="language-powershell">git rev-parse HEAD
+</code></pre>
+<p>That must also return:</p>
+<pre><code class="language-text">500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+</code></pre>
+<h3>2. If those two hashes match, push the existing local tag</h3>
+<p>Run:</p>
+<pre><code class="language-powershell">git push origin refs/tags/module-2-g3-v2.0.0
+</code></pre>
+<p>We want to see something like:</p>
+<pre><code class="language-text">To https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git
+ * [new tag]         module-2-g3-v2.0.0 -&gt; module-2-g3-v2.0.0
+</code></pre>
+<h3>3. Immediately prove GitHub has the tag</h3>
+<p>Run:</p>
+<pre><code class="language-powershell">git ls-remote --tags origin &quot;refs/tags/module-2-g3-v2.0.0&quot;
+</code></pre>
+<p>This time there <strong>must be output</strong>. Because this is an annotated tag, the first hash may <strong>not</strong> be <code>500ec776...</code>; it can be the tag-object hash. That&#39;s normal.</p>
+<p>Then run:</p>
+<pre><code class="language-powershell">git ls-remote --tags origin &quot;refs/tags/module-2-g3-v2.0.0^{}&quot;
+</code></pre>
+<p>This second command must show:</p>
+<pre><code class="language-text">500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65    refs/tags/module-2-g3-v2.0.0^{}
+</code></pre>
+<p>That <code>^{}</code> result proves the annotated tag ultimately resolves to the correct final <code>main</code> commit.</p>
+<h3>4. Final automated check</h3>
+<p>Run this as one line:</p>
+<pre><code class="language-powershell">$FinalMain=(git rev-parse HEAD).Trim(); $RemoteTagCommit=((git ls-remote --tags origin &quot;refs/tags/module-2-g3-v2.0.0^{}&quot;) -split &#39;\s+&#39;)[0]; if ($RemoteTagCommit -ne $FinalMain) { throw &quot;Remote tag mismatch.&quot; } else { Write-Host &quot;REMOTE TAG / FINAL MAIN IDENTITY PASS&quot; -ForegroundColor Green }
+</code></pre>
+<p>You need:</p>
+<pre><code class="language-text">REMOTE TAG / FINAL MAIN IDENTITY PASS
+</code></pre>
+<h2>Then return to GitHub</h2>
+<p>Once that passes:</p>
+<ol>
+<li>Return to <strong>Draft a new release</strong>.</li>
+<li>Refresh with <code>Ctrl+F5</code>.</li>
+<li>Click <strong>Choose a tag</strong>.</li>
+<li>Search exactly:</li>
+</ol>
+<pre><code class="language-text">module-2-g3-v2.0.0
+</code></pre>
+<p>It should now appear.</p>
+<p><strong>Do not create a tag manually in the GitHub UI.</strong> We&#39;re fixing the missing remote tag from Git, using the already-validated local annotated tag.</p>
+<p>Run Steps 1–4 above and paste the PowerShell output here.</p>
+</div></article><article id="m-c5617b13-7b50-4a98-b7fd-c5bf0ad55a38" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00537 · 2026-08-15T02:55:37.315000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 09d14883-c257-4fdd-9f35-7914f0eb3907.png</p><div class="bubble"><p>the module 1 release title was a bit more detailed than just module 2 / g3 v2.0.0. thoughts? </p>
+</div></article><article id="m-dc11310e-e68c-4fa7-a000-686eab68560d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00538 · 2026-08-15T02:55:44.209934-04:00 · active path</p><div class="bubble"><p>I agree. <strong><code>Module 2 / G3 v2.0.0</code> is technically correct, but too sparse for the public-facing release title.</strong> Your Module 1 release established a better convention: product name → module/gate → concise description of what capability was delivered.</p>
+<p>The Module 1 title shown is:</p>
+<blockquote>
+<p><strong>Merchant Sales-Based Financing Strategy Simulator — Module 1 G2 — Governed Merchant Intelligence, Risk, Economics &amp; Acquisition Foundations</strong></p>
+</blockquote>
+<p>Module 2 should match that level of specificity while describing what Module 2 actually added.</p>
+<h3>Recommended Module 2 release title</h3>
+<blockquote>
+<p><strong>Merchant Sales-Based Financing Strategy Simulator — Module 2 G3 — Governed Decisioning, Operations, Portfolio Strategy &amp; Enterprise Certification</strong></p>
+</blockquote>
+<p>I strongly prefer that over simply <code>Module 2 / G3 v2.0.0</code>.</p>
+<p>It maps cleanly to the actual Module 2 story:</p>
+<ul>
+<li><strong>Governed Decisioning</strong> — eligibility, pricing, structure, counteroffers, final-offer authorization.</li>
+<li><strong>Operations</strong> — activation, simulated remittance/exposure state, monitoring, servicing, intervention, reconciliation.</li>
+<li><strong>Portfolio Strategy</strong> — analytics, strategy comparison, simulation, optimization/trade-offs.</li>
+<li><strong>Enterprise Certification</strong> — M2.12 and the accepted <code>G3_M2_CONTRACT</code> consumption boundary.</li>
+</ul>
+<p>It also pairs nicely with Module 1:</p>
+<p><strong>Module 1 G2</strong><br><em>Governed Merchant Intelligence, Risk, Economics &amp; Acquisition Foundations</em></p>
+<p><strong>Module 2 G3</strong><br><em>Governed Decisioning, Operations, Portfolio Strategy &amp; Enterprise Certification</em></p>
+<p>That reads like an intentional release series rather than two independently named releases.</p>
+<h3>What I would enter in GitHub</h3>
+<p>For the <strong>Release title</strong>, use:</p>
+<pre><code class="language-text">Merchant Sales-Based Financing Strategy Simulator — Module 2 G3 — Governed Decisioning, Operations, Portfolio Strategy &amp; Enterprise Certification
+</code></pre>
+<p>Keep the <strong>tag</strong> exactly as-is:</p>
+<pre><code class="language-text">module-2-g3-v2.0.0
+</code></pre>
+<p>And keep <code>v2.0.0</code> prominent in the release notes/metadata. The title does not need to end in <code>v2.0.0</code>; your Module 1 precedent already demonstrates that the descriptive release title and version/tag can serve different purposes.</p>
+<p>One other thing visible in your screenshot: <strong>Module 1 is still marked <code>Latest</code>.</strong> That&#39;s expected until we publish Module 2. When creating Module 2, make sure <strong>Set as latest release</strong> is selected. Once Module 2 is published, it should replace Module 1 as the Latest release.</p>
+<p>So yes—I would change the Module 2 title now, before publication, to the longer title above.</p>
+</div></article><article id="m-3653d6cb-92d9-4762-a4fc-b99dfa4718e2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00539 · 2026-08-15T03:06:42.555000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 3de1af42-f9d4-44b7-ba17-a17267211e62.png</p><div class="bubble"><p>update description and tags if necessary: </p>
+</div></article><article id="m-86a5709c-ebcb-4d7f-92ae-18a6a305dbd5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00540 · 2026-08-15T03:06:49.284920-04:00 · active path</p><div class="bubble"><p>Yes. The current <strong>About</strong> description and topics are still weighted toward Module 1. Now that Module 2/G3 is public, I would update both so the repository advertises the full platform rather than its original foundation.</p>
+<h3>Recommended About description</h3>
+<p>GitHub&#39;s description field is short, so I would use:</p>
+<blockquote>
+<p><strong>Governed PostgreSQL simulator for merchant sales-based financing: acquisition, pricing, decisioning, servicing, portfolio strategy, optimization, and G2/G3 assurance.</strong></p>
+</blockquote>
+<p>That is much stronger than the current description because it captures the progression from acquisition through enterprise portfolio strategy while retaining the governance/certification differentiator.</p>
+<p>I would <strong>not</strong> put <code>synthetic</code> in the short description. The README and documentation establish that boundary clearly; the scarce About space should communicate what the platform does.</p>
+<h3>Recommended topics</h3>
+<p>I would revise the topics to:</p>
+<pre><code class="language-text">credit-risk
+data-governance
+financial-services
+merchant-financing
+model-governance
+portfolio-analytics
+postgresql
+pricing-analytics
+risk-analytics
+sql
+strategy-simulation
+synthetic-data
+</code></pre>
+<p>That is <strong>12 topics</strong>, which is a good balance between discoverability and looking curated rather than keyword-stuffed.</p>
+<p>Specifically, I recommend these changes from what you have now:</p>
+<ul>
+<li><strong>Remove <code>marketing-attribution</code></strong> — acquisition attribution remains part of the platform, but it is no longer important enough to characterize the overall repository.</li>
+<li><strong>Remove <code>unit-economics</code></strong> — still a real capability, but similarly too Module-1-specific for the top-level taxonomy.</li>
+<li><strong>Add <code>pricing-analytics</code></strong> — materially important to Module 2 and highly relevant to the professional audience this project is intended to reach.</li>
+<li><strong>Add <code>strategy-simulation</code></strong> — one of the most important differentiators introduced by Module 2.</li>
+<li>Keep <code>credit-risk</code>, <code>data-governance</code>, <code>financial-services</code>, <code>merchant-financing</code>, <code>model-governance</code>, <code>portfolio-analytics</code>, <code>postgresql</code>, <code>risk-analytics</code>, <code>sql</code>, and <code>synthetic-data</code>.</li>
+</ul>
+<p>I considered <code>decisioning</code>, <code>servicing</code>, and <code>portfolio-optimization</code>, but I wouldn&#39;t add all of them. The About topics should communicate the project&#39;s <strong>professional/technical identity</strong>, not reproduce its entire capability map.</p>
+<h3>Exact GitHub change</h3>
+<p>Click the <strong>gear icon</strong> beside About.</p>
+<p>Replace the description with:</p>
+<pre><code class="language-text">Governed PostgreSQL simulator for merchant sales-based financing: acquisition, pricing, decisioning, servicing, portfolio strategy, optimization, and G2/G3 assurance.
+</code></pre>
+<p>Set the topics to:</p>
+<pre><code class="language-text">credit-risk
+data-governance
+financial-services
+merchant-financing
+model-governance
+portfolio-analytics
+postgresql
+pricing-analytics
+risk-analytics
+sql
+strategy-simulation
+synthetic-data
+</code></pre>
+<p>Then save.</p>
+<p>That gives the repository a much more accurate <strong>Module 1 + Module 2 identity</strong> while preserving the strongest search/discovery terms.</p>
+</div></article><article id="m-3b8a309e-dc72-4659-8048-bb3a8c6e977d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00541 · 2026-08-15T03:17:51.648000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260815-071723).md</p><div class="bubble"><p>advise updates to overall GitHub readme: </p>
+</div></article><article id="m-e3d66836-19ca-4726-8c15-2081c5d8c729" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00542 · 2026-08-15T03:25:15.525061-04:00 · active path</p><div class="bubble"><h1>Overall assessment</h1>
+<p>The profile README remains strong, but the <strong>Merchant Sales-Based Financing featured build is materially out of date</strong>. It still points to the historical architecture and eight-page brief, describes Module 2 as merely authorized, ends the platform narrative at G2, and repeats that older posture in both the repository map and the detailed portfolio-system entry. [export reference: filecite | turn218file0 | L37-L49] [export reference: filecite | turn218file0 | L51-L76]</p>
+<p>I recommend a <strong>targeted Module 2/G3 alignment pass</strong>, not a broad rewrite. The career narrative, professional foundation, toolkit, portfolio philosophy, and confidentiality boundary remain strong and do not need substantive changes.</p>
+<h2>Required updates</h2>
+<h3>1. Replace the historical visual and brief links</h3>
+<p>The featured image currently uses the unsuffixed historical architecture, and the strategy link points to the previous eight-page PDF. The link row also includes only the Module 1 lineage. [export reference: filecite | turn218file0 | L37-L45]</p>
+<p>Use these current assets:</p>
+<pre><code class="language-text">docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png
+
+docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio_v2.pdf
+
+docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_&amp;_G3_Acceptance_Lineage.png
+</code></pre>
+<h3>2. Replace the stale status statement</h3>
+<p>Current:</p>
+<pre><code class="language-text">Module 1 complete · G2_M1_CONTRACT = PASS ·
+Module 2 Strategy &amp; Offer Decisioning authorized
+</code></pre>
+<p>That no longer represents the repository. [export reference: filecite | turn218file0 | L47-L49]</p>
+<p>Recommended:</p>
+<pre><code class="language-text">Module 1 / G2 accepted · Module 2 / G3 accepted ·
+G2_M1_CONTRACT = PASS · G3_M2_CONTRACT = PASS ·
+Campaign Scale Certification current
+</code></pre>
+<h3>3. Extend the platform story through Module 2 and G3</h3>
+<p>The current narrative ends with acquisition, risk, economics, contracts, and G2 certification, then presents Module 2 as the next step. [export reference: filecite | turn218file0 | L49-L61]</p>
+<p>The replacement should show:</p>
+<pre><code class="language-text">Module 1 foundation
+→ G2 certification
+→ governed offers and decisioning
+→ simulated operating and servicing states
+→ portfolio analytics
+→ strategy simulation and optimization
+→ G3 enterprise certification
+→ campaign-scale certification
+</code></pre>
+<h3>4. Replace the Module 1-only evidence table</h3>
+<p>The current table is accurate for Module 1 but incomplete as the headline evidence section for the project. [export reference: filecite | turn218file0 | L64-L76]</p>
+<p>The final publication validator has confirmed:</p>
+<pre><code class="language-text">Governed manifest files: 1,930
+Module 2 stage folders: 12
+</code></pre>
+<p>and the final release commit passed the repository validator. [export reference: filecite | turn217file0 | L1089-L1096]</p>
+<p>Use a concise dual-boundary table rather than adding another large table.</p>
+<h3>5. Update the capability bullets</h3>
+<p>The current “What the Platform Demonstrates” list is still almost entirely Module 1/G2 oriented. [export reference: filecite | turn218file0 | L78-L91]</p>
+<p>It should now include:</p>
+<ul>
+<li>policy gates and eligibility;</li>
+<li>pricing, terms, and remittance design;</li>
+<li>counteroffers and alternatives;</li>
+<li>final-offer authorization and reasoned routing;</li>
+<li>simulated activation and operating states;</li>
+<li>early warning, intervention, and servicing;</li>
+<li>payment and account reconciliation;</li>
+<li>portfolio KPI and servicing analytics;</li>
+<li>strategy comparison, simulation, and optimization;</li>
+<li>enterprise G3 certification;</li>
+<li>campaign-scale governance.</li>
+</ul>
+<h3>6. Update both duplicated repository summaries</h3>
+<p>The repository-map row still describes only acquisition, risk/loss, unit economics, contracts, and G2 assurance. [export reference: filecite | turn218file0 | L189-L194]</p>
+<p>The detailed Portfolio Systems entry still says the project builds Module 1 “before authorizing offer strategy,” and its progression ends at Module 2 authorization. [export reference: filecite | turn218file0 | L206-L234]</p>
+<p>Both must now describe the accepted end-to-end platform.</p>
+<hr>
+<h1>Recommended replacement for the featured-build section</h1>
+<p>Replace the current content from:</p>
+<pre><code class="language-text">## Featured Build: Merchant Sales-Based Financing Strategy Simulator
+</code></pre>
+<p>through the current artifact-map links with the following.</p>
+<pre><code class="language-markdown">## Featured Build: Merchant Sales-Based Financing Strategy Simulator
+
+[View the repository](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator) ·
+[View the Module 2 / G3 release](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/releases/tag/module-2-g3-v2.0.0)
+
+[![Enterprise Merchant Sales-Based Financing Platform](https://raw.githubusercontent.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/main/docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png)](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/blob/main/docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png)
+
+[Open the enterprise architecture full size](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/blob/main/docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png) ·
+[Open the executive strategy brief](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/blob/main/docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio_v2.pdf) ·
+[Review the Module 1 lineage](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/blob/main/docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png) ·
+[Review the Module 2 lineage](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/blob/main/docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png)
+
+&gt; **Module 1 / G2 accepted · Module 2 / G3 accepted · `G2_M1_CONTRACT = PASS` · `G3_M2_CONTRACT = PASS` · Campaign Scale Certification current**
+
+A deterministic, synthetic, PostgreSQL 15 enterprise platform for merchant
+sales-based financing tied to daily point-of-sale activity and sales-linked
+repayment.
+
+Module 1 establishes governed acquisition, application, cash-flow, capacity,
+resilience, risk, loss, unit-economics, and certified G2 consumption
+foundations. Module 2 extends that foundation through eligibility and policy
+gates, pricing and counteroffers, final-offer authorization, simulated
+activation and operating states, monitoring, servicing, reconciliation,
+portfolio analytics, strategy comparison, optimization, and enterprise G3
+certification.
+
+The public build is pre-production and non-causal. It demonstrates governed
+simulation, evidence, validation, lineage, and contract-certified enterprise
+consumption—not live account operations, production credit policy, or
+autonomous strategy selection.
+
+```text
+Acquisition Source, Campaign &amp; Attribution
+→ Application &amp; Requested Structure
+→ POS, Settlement, Deposit &amp; Liquidity Evidence
+→ Cash-Flow, Capacity, Risk, Loss &amp; Unit Economics
+→ G2_M1_CONTRACT = PASS
+→ Eligibility, Policy, Pricing &amp; Counteroffers
+→ Final Offer Authorization
+→ Simulated Activation, Monitoring &amp; Servicing
+→ Payment Reconciliation &amp; Account-State Certification
+→ Portfolio Analytics, Strategy Simulation &amp; Optimization
+→ G3_M2_CONTRACT = PASS
+→ Campaign Scale Certification
+</code></pre>
+<h3>Accepted Platform Release</h3>
+<table>
+<thead>
+<tr>
+<th>Governed release fact</th>
+<th>Current result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Module 1 boundary</td>
+<td>G0, G1, and M1.2–M1.17 accepted</td>
+</tr>
+<tr>
+<td>Module 1 contract</td>
+<td><strong><code>G2_M1_CONTRACT = PASS</code></strong></td>
+</tr>
+<tr>
+<td>Module 2 boundary</td>
+<td>M2.1–M2.12 accepted</td>
+</tr>
+<tr>
+<td>Module 2 contract</td>
+<td><strong><code>G3_M2_CONTRACT = PASS</code></strong></td>
+</tr>
+<tr>
+<td>Public Module 2 stage tree</td>
+<td>12 / 12 stage folders</td>
+</tr>
+<tr>
+<td>Governed publication manifest</td>
+<td>1,930 files</td>
+</tr>
+<tr>
+<td>Current governed initiative</td>
+<td>Campaign Scale Certification</td>
+</tr>
+<tr>
+<td>Public operating boundary</td>
+<td>Deterministic synthetic, non-production, and non-causal</td>
+</tr>
+</tbody></table>
+<h3>What the Platform Demonstrates</h3>
+<ul>
+<li>governed acquisition-source taxonomy, campaign funnels, application
+touchpoints, deterministic attribution, and merchant-acquisition cost;</li>
+<li>daily POS, settlement, deposit, liquidity, exposure, and repayment evidence;</li>
+<li>source confidence, verification, fraud, processor continuity, cash-flow
+behavior, capacity, resilience, integrated risk, loss, and unit economics;</li>
+<li>immutable latest, archive, comparison, and companion consumption contracts;</li>
+<li>independently reconstructable physical-field hashes and accepted G2 lineage;</li>
+<li>eligibility and policy gates, pricing, terms, remittance design,
+counteroffers, alternatives, and final-offer authorization;</li>
+<li>governed simulated activation, operating, monitoring, early-warning,
+servicing, intervention, and reconciliation states;</li>
+<li>portfolio KPI and servicing analytics, matched strategy comparison,
+simulation, optimization, and explicit trade-off analysis;</li>
+<li>accepted enterprise G3 certification and contract-controlled consumption;</li>
+<li>fail-closed recovery classification, positive and negative controls,
+manifests, SHA-256 evidence, formal sign-offs, and retained provenance;</li>
+<li>executive strategy, enterprise architecture, Power BI-ready governed views,
+and a controlled campaign-scale roadmap.</li>
+</ul>
+<p><a href="https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/tree/main/Module_2">Explore the complete Module 2 stage tree</a> ·
+<a href="https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/tree/main/Module_2/2.12_Enterprise_Portfolio_Certification_and_G3_Contract">Review M2.12 enterprise G3 certification</a> ·
+<a href="https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/blob/main/docs/campaign_scale/CAMPAIGN_PRE_750_REPLAY_ROADMAP.md">Open the campaign-scale roadmap</a> ·
+<a href="https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/blob/main/PROJECT_ARTIFACT_MAP.md">Open the artifact map</a></p>
+<pre><code>
+The release link should be activated after the public GitHub Release is published.
+
+---
+
+# Repository Map replacement
+
+Replace row 1 with:
+
+```markdown
+| 1 | [merchant-sales-based-financing-strategy-simulator](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator) | PostgreSQL | End-to-end merchant-finance platform spanning acquisition attribution, POS and cash-flow evidence, risk/loss and unit economics, governed offer decisioning, simulated operating and servicing states, portfolio strategy, and G2/G3 enterprise certification |
+</code></pre>
+<p>That is materially more accurate than the current Module 1-only description. [export reference: filecite | turn218file0 | L189-L194]</p>
+<hr>
+<h1>Recommended replacement for Portfolio System 1</h1>
+<p>The profile README currently repeats much of the featured-build material. I would keep the featured section detailed and make the repository-map entry more concise.</p>
+<p>Replace the existing System 1 section with:</p>
+<pre><code class="language-markdown">### 1. [merchant-sales-based-financing-strategy-simulator](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator)
+
+**Merchant Sales-Based Financing Strategy Simulator — PostgreSQL 15**
+
+Governed, deterministic, synthetic enterprise platform for merchant financing
+tied to daily POS activity and sales-linked repayment.
+
+Module 1 establishes the acquisition, application, operating-evidence, risk,
+loss, economics, and G2 consumption foundation. Module 2 applies governed
+decisioning, simulated operating and servicing states, portfolio analytics,
+strategy comparison, optimization, and G3 enterprise certification.
+
+Demonstrates:
+
+- 750 deterministic merchants and applications across matched baseline and
+  adverse scenarios;
+- governed acquisition source, campaign, touchpoint, attribution, and
+  merchant-CAC evidence;
+- daily POS, settlement, deposit, liquidity, exposure, and repayment histories;
+- cash-flow, capacity, resilience, integrated risk, EAD, recovery/LGD,
+  comparative loss, and unit-economics foundations;
+- immutable G2 latest, archive, comparison, and companion contracts;
+- eligibility, policy, pricing, counteroffers, alternatives, and final-offer
+  authorization;
+- simulated account activation, monitoring, early warning, servicing,
+  intervention, payment reconciliation, and account-state certification;
+- portfolio KPI and servicing analytics, matched strategy comparison,
+  simulation, optimization, and trade-off evidence;
+- 12 accepted Module 2 stages and an accepted G3 enterprise consumption
+  boundary;
+- source provenance, recovery classification, positive and negative controls,
+  formal sign-offs, manifests, and SHA-256 evidence;
+- a governed campaign-scale roadmap without production, causal, or autonomous
+  decisioning claims.
+
+Current governed progression:
+
+```text
+G0 + G1
+→ M1.2 through M1.17
+→ G2_M1_CONTRACT = PASS
+→ M2.1 through M2.12
+→ G3_M2_CONTRACT = PASS
+→ Campaign Scale Certification
+</code></pre>
+<pre><code>
+---
+
+# Additional small improvements
+
+## Top navigation
+
+After the release is public, add the current release to the navigation row:
+
+```markdown
+Featured Build (historical reference: `#featured-build-merchant-sales-based-financing-strategy-simulator`; referenced bytes not established here) ·
+[Module 2 / G3 Release](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/releases/tag/module-2-g3-v2.0.0) ·
+Repository Map (historical reference: `#repository-map`; referenced bytes not established here) ·
+Professional Foundation (historical reference: `#professional-foundation`; referenced bytes not established here) ·
+Technical Toolkit (historical reference: `#technical-toolkit`; referenced bytes not established here) ·
+[LinkedIn](https://www.linkedin.com/in/andrewrgoad)
+</code></pre>
+<h2>Technical Toolkit</h2>
+<p>Add these terms where they fit naturally:</p>
+<pre><code class="language-text">Decision Routing
+Pricing Strategy
+Counteroffer Governance
+Servicing Analytics
+Portfolio Strategy Simulation
+Matched Strategy Comparison
+Portfolio Optimization
+Contract-Certified Consumption
+</code></pre>
+<h2>Avoid unnecessary expansion</h2>
+<p>The profile README is already extensive, and the featured MSBF project appears both as the primary featured build and again under Portfolio Systems. The best update is to:</p>
+<ul>
+<li>make the featured section authoritative and visually rich;</li>
+<li>keep the Portfolio Systems entry concise;</li>
+<li>link users into the repository for stage-level evidence;</li>
+<li>avoid reproducing all M2.1–M2.12 control counts in the profile.</li>
+</ul>
+<h2>Recommended disposition</h2>
+<pre><code class="language-text">Hero visual and links                   REQUIRED
+Featured-build status                   REQUIRED
+Featured-build narrative and flow       REQUIRED
+Accepted release summary                REQUIRED
+Capability bullets                      REQUIRED
+Repository Map row 1                    REQUIRED
+Portfolio Systems entry 1               REQUIRED
+Top navigation release link             RECOMMENDED
+Technical Toolkit additions             OPTIONAL
+Career and professional sections        NO CHANGE
+Other seven project sections            NO CHANGE
+</code></pre>
+<p>The current professional narrative and “No Cold Handoffs” positioning remain well aligned with the expanded project and should be preserved. [export reference: filecite | turn218file0 | L1-L27]</p>
+</div></article><article id="m-902dd432-8233-4eca-ae7a-d23d687c631e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00543 · 2026-08-15T08:59:26.089000-04:00 · active path</p><div class="bubble"><p>this feels light compared to what we used to have in the module 1 release. only one image? before we had some of the images from our executive brief also in the read me, along with more detail: # Merchant Sales-Based Financing Strategy Simulator</p>
+<h2>Governed Decisioning, Operating Intelligence, Portfolio Strategy, and Enterprise Certification</h2>
+<p><span class="note">[Historical image reference: Enterprise Merchant Sales-Based Financing Platform (historical reference: `./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png`; referenced bytes not established here); not loaded]</span></p>
+<p>Open the architecture full size (historical reference: <code>./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png</code>; referenced bytes not established here) · PDF (historical reference: <code>./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.pdf</code>; referenced bytes not established here) · Executive strategy brief (historical reference: <code>./docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio_v2.pdf</code>; referenced bytes not established here)</p>
+<blockquote>
+<p><strong>Current release:</strong> Module 1 / G2 accepted · Module 2 / G3 accepted · Campaign Scale Certification current</p>
+</blockquote>
+<p>This repository is a deterministic, synthetic PostgreSQL 15 platform for merchant sales-based financing. It governs the full chain from acquisition and application evidence through eligibility, pricing, counteroffers, final-offer authorization, simulated activation and operations, servicing, reconciliation, portfolio analytics, strategy simulation, optimization, and enterprise G3 certification.</p>
+<p>It is not a production lending system, deployed decision service, calibrated causal model, or autonomous strategy engine. Its purpose is to demonstrate enterprise-grade architecture, analytical discipline, reproducibility, evidence, controls, and release governance.</p>
+<h2>Release position</h2>
+<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Module 1 deterministic evidence</td>
+<td><strong>COMPLETE</strong></td>
+</tr>
+<tr>
+<td><code>G2_M1_CONTRACT</code></td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Module 2 stages M2.1–M2.12</td>
+<td><strong>ACCEPTED</strong></td>
+</tr>
+<tr>
+<td><code>G3_M2_CONTRACT</code></td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Campaign Scale Certification</td>
+<td><strong>CURRENT — PREPARATION</strong></td>
+</tr>
+<tr>
+<td>750 accepted-fidelity replay</td>
+<td><strong>NOT YET AUTHORIZED</strong></td>
+</tr>
+<tr>
+<td>Production deployment</td>
+<td><strong>NOT AUTHORIZED</strong></td>
+</tr>
+</tbody></table>
+<h2>What Module 2 adds</h2>
+<pre><code class="language-text">G2 certified evidence
+→ eligibility and policy gates
+→ pricing, structure, and counteroffers
+→ final-offer authorization
+→ simulated booking, funding, and activation
+→ daily remittance, exposure, and monitoring state
+→ early warning, servicing, intervention, and reconciliation
+→ portfolio KPI and servicing analytics
+→ strategy simulation and optimization
+→ G3 enterprise portfolio certification
+</code></pre>
+<h2>Review paths</h2>
+<table>
+<thead>
+<tr>
+<th>Reviewer</th>
+<th>Recommended path</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Executive / hiring leader</td>
+<td>Architecture (historical reference: <code>./docs/enterprise_architecture/README.md</code>; referenced bytes not established here) → 10-page strategy brief (historical reference: <code>./docs/executive_strategy/README.md</code>; referenced bytes not established here) → Release notes (historical reference: <code>./RELEASE_NOTES.md</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>Technical / architecture</td>
+<td>Module and release index (historical reference: <code>./MODULE_AND_RELEASE_INDEX.md</code>; referenced bytes not established here) → Module 2 (historical reference: <code>./Module_2/README.md</code>; referenced bytes not established here) → stage BRDs and accepted source</td>
+</tr>
+<tr>
+<td>Governance / validation</td>
+<td>Governance guide (historical reference: <code>./GOVERNANCE_AND_VALIDATION.md</code>; referenced bytes not established here) → BRD and validation index (historical reference: <code>./docs/BRD_AND_VALIDATION_INDEX.md</code>; referenced bytes not established here) → M2.12 acceptance evidence</td>
+</tr>
+<tr>
+<td>Campaign-scale reviewer</td>
+<td>Campaign Scale Certification (historical reference: <code>./docs/campaign_scale/README.md</code>; referenced bytes not established here) → governance boundary → pre-750 roadmap</td>
+</tr>
+<tr>
+<td>Development-history reviewer</td>
+<td>Project history (historical reference: <code>./docs/project_history/README.md</code>; referenced bytes not established here) → sanitized transcript archive</td>
+</tr>
+<tr>
+<td>Repository navigator</td>
+<td>Project artifact map (historical reference: <code>./PROJECT_ARTIFACT_MAP.md</code>; referenced bytes not established here)</td>
+</tr>
+</tbody></table>
+<h2>Principal release metrics</h2>
+<table>
+<thead>
+<tr>
+<th>Measure</th>
+<th align="right">Accepted result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Accepted Module 2 stages</td>
+<td align="right">12 / 12</td>
+</tr>
+<tr>
+<td>G2 integrated application/origination rows</td>
+<td align="right">1,500</td>
+</tr>
+<tr>
+<td>Operational-account rows</td>
+<td align="right">59</td>
+</tr>
+<tr>
+<td>Strategy/scope rows</td>
+<td align="right">24</td>
+</tr>
+<tr>
+<td>M2.11 positive controls</td>
+<td align="right">120 / 120 PASS</td>
+</tr>
+<tr>
+<td>M2.11 negative controls</td>
+<td align="right">20 / 20 PASS</td>
+</tr>
+<tr>
+<td>M2.11 acceptance prerequisites</td>
+<td align="right">45 / 45 PASS</td>
+</tr>
+<tr>
+<td>M2.12 positive controls</td>
+<td align="right">128 / 128 PASS</td>
+</tr>
+<tr>
+<td>M2.12 negative controls</td>
+<td align="right">20 / 20 PASS</td>
+</tr>
+<tr>
+<td>M2.12 acceptance requirements</td>
+<td align="right">48 / 48 PASS</td>
+</tr>
+<tr>
+<td>M2.12 governed report sets</td>
+<td align="right">24 / 24 PASS</td>
+</tr>
+<tr>
+<td>G3 contract</td>
+<td align="right"><code>G3_M2_CONTRACT — PASS</code></td>
+</tr>
+</tbody></table>
+<h2>Repository map</h2>
+<ul>
+<li><code>Module_0/</code> (historical reference: <code>./Module_0/</code>; referenced bytes not established here) — physical foundation and governed run control.</li>
+<li><code>Module_1/</code> (historical reference: <code>./Module_1/</code>; referenced bytes not established here) — deterministic merchant, operating, risk, economics, acquisition, contracts, and G2 assurance.</li>
+<li><code>Module_2/</code> (historical reference: <code>./Module_2/README.md</code>; referenced bytes not established here) — twelve accepted decisioning, operating, portfolio, and G3 stages.</li>
+<li><code>docs/enterprise_architecture/</code> (historical reference: <code>./docs/enterprise_architecture/README.md</code>; referenced bytes not established here) — current architecture and lineage exhibits.</li>
+<li><code>docs/executive_strategy/</code> (historical reference: <code>./docs/executive_strategy/README.md</code>; referenced bytes not established here) — Governed Build Edition v3.0 ten-page brief.</li>
+<li><code>docs/campaign_scale/</code> (historical reference: <code>./docs/campaign_scale/README.md</code>; referenced bytes not established here) — current campaign-readiness and pre-750 governance.</li>
+<li><code>docs/project_history/</code> (historical reference: <code>./docs/project_history/README.md</code>; referenced bytes not established here) — sanitized development-transparency archive.</li>
+<li><code>docs/BRD_AND_VALIDATION_INDEX.md</code> (historical reference: <code>./docs/BRD_AND_VALIDATION_INDEX.md</code>; referenced bytes not established here) — direct stage navigation.</li>
+</ul>
+<h2>Campaign scale path</h2>
+<p>The accepted architecture is being prepared for deterministic scale verification:</p>
+<pre><code class="language-text">750 accepted-fidelity replay
+→ 2,500 performance shakedown
+→ 25,000 full campaign
+</code></pre>
+<p>Each step requires a separate fail-closed readiness and authorization gate. Preparation does not imply execution, production fitness, causal inference, or Module 3 authorization.</p>
+<h2>Governance principles</h2>
+<pre><code class="language-text">Governed
+Deterministic
+Auditable
+Parameter-driven
+Evidence-based
+Reproducible
+Contract-certified
+Strategy-enabled
+</code></pre>
+<h2>Release and publication</h2>
+<ul>
+<li>Release: <strong>Module 2 / G3 v2.0.0</strong></li>
+<li>Tag: <strong><code>module-2-g3-v2.0.0</code></strong></li>
+<li>Visual edition: <strong>Governed Build Edition v3.0</strong></li>
+<li>Release date: <strong>2026-08-13</strong></li>
+</ul>
+<p>See Release Notes (historical reference: <code>./RELEASE_NOTES.md</code>; referenced bytes not established here), GitHub Publication Guide (historical reference: <code>./GITHUB_PUBLICATION_GUIDE.md</code>; referenced bytes not established here), and Reproducibility and Execution (historical reference: <code>./REPRODUCIBILITY_AND_EXECUTION.md</code>; referenced bytes not established here).</p>
+<h2>Interpretation boundary</h2>
+<p>All data are synthetic. This repository is not a financing offer, production underwriting system, calibrated probability-of-default model, CECL or regulatory-capital model, legal or accounting advice, causal optimization engine, or autonomous decision service. Power BI references describe governed, Power BI-ready views and publication visuals—not a production dashboard deployment.</p>
+</div></article><article id="m-735f5f63-a856-4ee5-9a21-cbc422557412" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00544 · 2026-08-15T09:09:05.477983-04:00 · active path</p><div class="bubble"><p>You are right. The current root README is accurate and well governed, but it reads more like a <strong>release index</strong> than a flagship portfolio landing page. It underuses the strongest marketing assets we just created.</p>
+<p>The attached profile featured block also currently embeds only the enterprise architecture and then links to the brief and lineage, rather than letting the visual narrative do more of the selling. [export reference: filecite | turn218file0 | L37-L45]</p>
+<p>For the repository root README, I recommend:</p>
+<ul>
+<li>the enterprise architecture as the hero;</li>
+<li>four selected executive-brief pages showing <strong>discipline, Module 2 delivery, proof, and future direction</strong>;</li>
+<li>the complete Module 2 lineage exhibit;</li>
+<li>a detailed accepted-stage table for M2.1–M2.12;</li>
+<li>separate Module 1/G2 and Module 2/G3 proof metrics;</li>
+<li>direct audience-based review paths;</li>
+<li>validation commands and source-classification boundaries;</li>
+<li>campaign-scale and project-history sections.</li>
+</ul>
+<p>That gives the README both <strong>executive impact</strong> and <strong>technical credibility</strong> without forcing readers into the folders before they understand the project.</p>
+<h1>Recommended replacement root README</h1>
+<pre><code class="language-markdown"># Merchant Sales-Based Financing Strategy Simulator
+
+## Governed Decisioning, Operating Intelligence, Portfolio Strategy, and Enterprise Certification
+
+![Enterprise Merchant Sales-Based Financing Platform (historical reference: `./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png`; referenced bytes not established here)](./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png)
+
+Open the architecture full size (historical reference: `./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png`; referenced bytes not established here) ·
+Architecture PDF (historical reference: `./docs/enterprise_architecture/Enterprise_Merchant_Sales_Based_Financing_Platform_v2.pdf`; referenced bytes not established here) ·
+Executive strategy brief (historical reference: `./docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio_v2.pdf`; referenced bytes not established here) ·
+Page gallery (historical reference: `./docs/executive_strategy/pages_v2/README.md`; referenced bytes not established here) ·
+[Module 2 / G3 release](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/releases/tag/module-2-g3-v2.0.0)
+
+&gt; **Current governed position:** Module 1 / G2 accepted · Module 2 / G3 accepted · `G2_M1_CONTRACT = PASS` · `G3_M2_CONTRACT = PASS` · Campaign Scale Certification current
+
+This repository is a deterministic, synthetic PostgreSQL 15 platform for
+merchant sales-based financing tied to daily point-of-sale activity and
+sales-linked repayment.
+
+The platform governs the complete analytical and strategy path from
+acquisition-source evidence and merchant applications through cash-flow,
+capacity, risk, economics, eligibility, pricing, counteroffers, final-offer
+authorization, simulated activation and operating states, servicing,
+reconciliation, portfolio analytics, strategy comparison, optimization, and
+enterprise G3 certification.
+
+It is not a production lending system, deployed decision service, calibrated
+causal model, or autonomous strategy engine. Its purpose is to demonstrate
+enterprise-grade architecture, analytical discipline, reproducibility,
+validation, evidence, controls, and governed handoffs.
+
+---
+
+## Executive Visual Story
+
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td width=&quot;50%&quot; valign=&quot;top&quot;&gt;
+
+&lt;a href=&quot;./docs/executive_strategy/pages_v2/02_launch_with_discipline.png&quot;&gt;
+&lt;img src=&quot;./docs/executive_strategy/pages_v2/02_launch_with_discipline.png&quot; alt=&quot;Launch With Discipline&quot;&gt;
+&lt;/a&gt;
+
+&lt;strong&gt;Launch With Discipline&lt;/strong&gt;
+
+Capability advances only after the preceding boundary is validated, evidenced,
+and contract-certified.
+
+&lt;/td&gt;
+&lt;td width=&quot;50%&quot; valign=&quot;top&quot;&gt;
+
+&lt;a href=&quot;./docs/executive_strategy/pages_v2/05_from_decision_to_enterprise_certification.png&quot;&gt;
+&lt;img src=&quot;./docs/executive_strategy/pages_v2/05_from_decision_to_enterprise_certification.png&quot; alt=&quot;From Decision to Enterprise Certification&quot;&gt;
+&lt;/a&gt;
+
+&lt;strong&gt;From Decision to Enterprise Certification&lt;/strong&gt;
+
+Module 2 converts accepted G2 evidence into governed offers, simulated
+operations, portfolio strategy, and an accepted G3 consumption boundary.
+
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td width=&quot;50%&quot; valign=&quot;top&quot;&gt;
+
+&lt;a href=&quot;./docs/executive_strategy/pages_v2/08_proof_before_scale.png&quot;&gt;
+&lt;img src=&quot;./docs/executive_strategy/pages_v2/08_proof_before_scale.png&quot; alt=&quot;Proof Before Scale&quot;&gt;
+&lt;/a&gt;
+
+&lt;strong&gt;Proof Before Scale&lt;/strong&gt;
+
+Every stage must generate, validate, challenge, reconcile, and certify before
+the enterprise boundary advances.
+
+&lt;/td&gt;
+&lt;td width=&quot;50%&quot; valign=&quot;top&quot;&gt;
+
+&lt;a href=&quot;./docs/executive_strategy/pages_v2/10_the_opportunity_ahead.png&quot;&gt;
+&lt;img src=&quot;./docs/executive_strategy/pages_v2/10_the_opportunity_ahead.png&quot; alt=&quot;The Opportunity Ahead&quot;&gt;
+&lt;/a&gt;
+
+&lt;strong&gt;The Opportunity Ahead&lt;/strong&gt;
+
+The next governed proof expands accepted-fidelity replay through performance
+shakedown and full-campaign certification.
+
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+
+Open the complete ten-page executive strategy brief (historical reference: `./docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio_v2.pdf`; referenced bytes not established here) ·
+View the ten-page contact sheet (historical reference: `./docs/executive_strategy/from_first_advance_to_intelligent_portfolio_contact_sheet_v2.png`; referenced bytes not established here)
+
+---
+
+## Release Position
+
+| Governed boundary | Current status |
+|---|---|
+| Module 0 physical foundation and run control | **ACCEPTED** |
+| Module 1 deterministic evidence | **COMPLETE** |
+| `G2_M1_CONTRACT` | **PASS** |
+| Module 2 stages M2.1–M2.12 | **12 / 12 ACCEPTED** |
+| `G3_M2_CONTRACT` | **PASS** |
+| Campaign Scale Certification | **CURRENT — PREPARATION** |
+| 750 accepted-fidelity replay | **NOT YET AUTHORIZED** |
+| 2,500 performance shakedown | **NOT YET AUTHORIZED** |
+| 25,000 full campaign | **NOT YET AUTHORIZED** |
+| Production deployment | **NOT AUTHORIZED** |
+| Module 3 execution | **NOT AUTHORIZED** |
+
+---
+
+## End-to-End Platform
+
+```text
+Acquisition Source, Campaign &amp; Attribution
+→ Application &amp; Requested Structure
+→ POS, Settlement, Deposit &amp; Liquidity Evidence
+→ Cash-Flow, Capacity &amp; Operating Resilience
+→ Integrated Risk, Exposure, Recovery &amp; Comparative Loss
+→ Unit Economics &amp; Merchant Acquisition Cost
+→ G2 Certified Consumption
+→ Eligibility &amp; Policy Gates
+→ Pricing, Structure &amp; Counteroffers
+→ Final-Offer Authorization
+→ Simulated Booking, Funding &amp; Activation
+→ Remittance, Exposure &amp; Portfolio Monitoring
+→ Early Warning, Servicing &amp; Intervention
+→ Payment Reconciliation &amp; Account-State Certification
+→ Portfolio KPI &amp; Servicing Analytics
+→ Strategy Comparison, Simulation &amp; Optimization
+→ G3 Enterprise Portfolio Certification
+→ Campaign Scale Certification
+```
+
+---
+
+## Accepted Release Evidence
+
+### Module 1 / G2
+
+| Measure | Accepted result |
+|---|---:|
+| Governed progression | G0, G1, and M1.2–M1.17 |
+| Designed data foundation | 110 parent/control/reference tables |
+| Designed columns | 2,138 |
+| Deterministic applications | 750 |
+| Matched scenarios | `BASELINE` and `RECESSION_ENERGY` |
+| Integrated application-scenario rows | 1,500 |
+| Accepted physical hash identities | 18 / 18 PASS |
+| Final positive controls | 128 / 128 PASS |
+| Final negative controls | 20 / 20 PASS |
+| Deterministic or archive mismatches | 0 |
+| Final contract | **`G2_M1_CONTRACT — PASS`** |
+
+### Module 2 / G3
+
+| Measure | Accepted result |
+|---|---:|
+| Accepted Module 2 stages | 12 / 12 |
+| Integrated application/origination rows | 1,500 |
+| Operational-account rows | 59 |
+| Strategy/scope rows | 24 |
+| M2.11 positive controls | 120 / 120 PASS |
+| M2.11 negative controls | 20 / 20 PASS |
+| M2.11 acceptance prerequisites | 45 / 45 PASS |
+| M2.11 matched strategy groups | 20 |
+| M2.11 risk scenarios | 19 |
+| M2.12 positive controls | 128 / 128 PASS |
+| M2.12 negative controls | 20 / 20 PASS |
+| M2.12 acceptance requirements | 48 / 48 PASS |
+| M2.12 governed report sets | 24 / 24 PASS |
+| Latest-versus-archive reconciliation | PASS |
+| Final contract | **`G3_M2_CONTRACT — PASS`** |
+| Governed publication manifest | 1,930 files |
+
+---
+
+## Module 2 Accepted Stage Chain
+
+| Stage | Governed capability | Accepted revision |
+|---|---|---|
+| M2.1 (historical reference: `./Module_2/2.01_Eligibility_Policy_Gates_and_Decision_Routing/`; referenced bytes not established here) | Eligibility, policy gates, and decision routing | `v0.2R7_ACCEPTED` |
+| M2.2 (historical reference: `./Module_2/2.02_Pricing_Structure_and_Counteroffer/`; referenced bytes not established here) | Pricing, structure, and counteroffers | `v0.2R2_ACCEPTED` |
+| M2.3 (historical reference: `./Module_2/2.03_Final_Offer_and_Decision_Authorization/`; referenced bytes not established here) | Final-offer and decision authorization | `v0.2R2_ACCEPTED` |
+| M2.4 (historical reference: `./Module_2/2.04_Booking_Funding_and_Portfolio_Activation/`; referenced bytes not established here) | Booking, funding, and portfolio activation | `v0.2_ACCEPTED` |
+| M2.5 (historical reference: `./Module_2/2.05_Daily_Remittance_Exposure_and_Portfolio_Monitoring/`; referenced bytes not established here) | Daily remittance, exposure, and portfolio monitoring | `v0.2R5_ACCEPTED` |
+| M2.6 (historical reference: `./Module_2/2.06_Early_Warning_Intervention_and_Servicing_Strategy/`; referenced bytes not established here) | Early warning, intervention, and servicing strategy | `v0.2R1_ACCEPTED` |
+| M2.7 (historical reference: `./Module_2/2.07_Operational_Activation_and_Account_Setup/`; referenced bytes not established here) | Operational activation and account setup | `v0.2R1_ACCEPTED` |
+| M2.8 (historical reference: `./Module_2/2.08_Servicing_Execution_Payment_and_Lifecycle_Control/`; referenced bytes not established here) | Servicing execution, payment, and lifecycle control | `v0.2_ACCEPTED` |
+| M2.9 (historical reference: `./Module_2/2.09_Payment_Reconciliation_and_Account_State_Certification/`; referenced bytes not established here) | Payment reconciliation and account-state certification | `v0.2R1_ACCEPTED` |
+| M2.10 (historical reference: `./Module_2/2.10_Portfolio_Performance_KPI_and_Servicing_Analytics/`; referenced bytes not established here) | Portfolio performance, KPIs, and servicing analytics | `v0.2R5_ACCEPTED` |
+| M2.11 (historical reference: `./Module_2/2.11_Portfolio_Optimization_and_Strategy_Simulation/`; referenced bytes not established here) | Portfolio optimization and strategy simulation | `v0.2R13_ACCEPTED` |
+| M2.12 (historical reference: `./Module_2/2.12_Enterprise_Portfolio_Certification_and_G3_Contract/`; referenced bytes not established here) | Enterprise portfolio certification and G3 contract | `v1_ACCEPTED` |
+
+&gt; **Simulation boundary:** Public Module 2 operating, activation, servicing,
+&gt; and portfolio states are deterministic synthetic simulation outputs. They
+&gt; are not evidence of live account processing or production deployment.
+
+Each stage provides a governed public projection containing:
+
+```text
+README
+→ BRD
+→ architecture
+→ validation and acceptance
+→ source provenance
+→ correction history
+→ catalogs
+→ current source
+→ reporting source
+→ recovery-only source
+→ final sign-off
+→ manifests and SHA-256 evidence
+```
+
+Open the complete Module 2 stage index (historical reference: `./Module_2/README.md`; referenced bytes not established here) ·
+Open the BRD and validation index (historical reference: `./docs/BRD_AND_VALIDATION_INDEX.md`; referenced bytes not established here)
+
+---
+
+## Architecture and Acceptance Lineage
+
+### Module 2 / G3
+
+![Module 2 Governed Decisioning, Operations, Portfolio and G3 Acceptance Lineage (historical reference: `./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png`; referenced bytes not established here)](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png)
+
+Open the Module 2 lineage full size (historical reference: `./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png`; referenced bytes not established here) ·
+PDF (historical reference: `./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.pdf`; referenced bytes not established here)
+
+&lt;details&gt;
+&lt;summary&gt;&lt;strong&gt;Open the accepted Module 1 / G2 evidence and contract lineage&lt;/strong&gt;&lt;/summary&gt;
+
+&lt;br&gt;
+
+![Module 1 Governed Evidence, Contract and Acceptance Lineage (historical reference: `./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png`; referenced bytes not established here)](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png)
+
+&lt;/details&gt;
+
+---
+
+## What the Platform Demonstrates
+
+### 1. Acquire and Establish Evidence
+
+- deterministic merchant, owner, processor, application, POS, settlement,
+  deposit, and liquidity foundations;
+- acquisition-source taxonomy, campaign funnels, application touchpoints,
+  deterministic attribution, and merchant-acquisition cost;
+- source confidence, verification evidence, fraud indicators, and processor
+  continuity;
+- matched baseline and adverse scenarios using the same governed merchant and
+  application identities.
+
+### 2. Decide and Structure
+
+- eligibility and policy gates;
+- pricing, terms, factor-rate and remittance design;
+- configurable counteroffers and alternative structures;
+- final-offer authorization;
+- transparent route, disposition, reason-code, and rationale evidence;
+- governed lineage from certified G2 input to merchant-level decision output.
+
+### 3. Operate and Service
+
+- deterministic simulated booking, funding, activation, and initial-limit
+  states;
+- simulated daily remittance, exposure, and performance monitoring;
+- early-warning indicators and intervention triggers;
+- servicing, restructures, collections, and lifecycle-control evidence;
+- payment-event reconciliation;
+- account-state certification;
+- complete source-to-operating-state lineage.
+
+### 4. Analyze, Compare, Optimize, and Certify
+
+- portfolio KPI and servicing analytics;
+- vintage, exposure, concentration, return, and risk-adjusted evidence;
+- matched baseline and challenger strategy comparison;
+- strategy simulation across governed scenarios and objectives;
+- portfolio optimization and trade-off analysis;
+- certified G3 enterprise consumption;
+- controlled preparation for the next governed campaign cycle.
+
+---
+
+## Proof Before Scale
+
+```text
+GENERATE
+→ VALIDATE
+→ CHALLENGE
+→ RECONCILE
+→ CERTIFY
+```
+
+The repository advances only after:
+
+- expected outcomes are explicitly defined;
+- positive controls prove intended behavior;
+- negative controls prove failure boundaries;
+- counts, grains, identities, hashes, and contracts reconcile;
+- recovery programs are isolated from normal execution;
+- accepted outputs are sealed through governed consumption contracts;
+- manifests and SHA-256 identities reproduce the physical release.
+
+```text
+Evidence first.
+Challenge everything.
+Reconcile all grains.
+Certify the contract.
+Scale only after proof.
+```
+
+---
+
+## Campaign Scale Certification
+
+The current governed initiative is preparation for deterministic scale
+verification:
+
+```text
+750 accepted-fidelity replay
+→ 2,500 performance shakedown
+→ 25,000 full campaign
+```
+
+Each scale step requires a separate fail-closed readiness and authorization
+gate.
+
+Preparation does not imply:
+
+- execution authorization;
+- production fitness;
+- causal inference;
+- calibrated credit performance;
+- autonomous decisioning;
+- Module 3 authorization.
+
+Open the campaign-scale documentation (historical reference: `./docs/campaign_scale/README.md`; referenced bytes not established here) ·
+Read the governance boundary (historical reference: `./docs/campaign_scale/CAMPAIGN_SCALE_GOVERNANCE_BOUNDARY.md`; referenced bytes not established here) ·
+Read the pre-750 roadmap (historical reference: `./docs/campaign_scale/CAMPAIGN_PRE_750_REPLAY_ROADMAP.md`; referenced bytes not established here)
+
+---
+
+## Choose a Review Path
+
+| Reviewer | Recommended path |
+|---|---|
+| Executive or hiring leader | Architecture (historical reference: `./docs/enterprise_architecture/README.md`; referenced bytes not established here) → 10-page strategy brief (historical reference: `./docs/executive_strategy/README.md`; referenced bytes not established here) → Release notes (historical reference: `./RELEASE_NOTES.md`; referenced bytes not established here) |
+| Product, pricing, or portfolio leader | Beyond Underwriting (historical reference: `./docs/executive_strategy/pages_v2/03_beyond_underwriting.png`; referenced bytes not established here) → Strategy Engine (historical reference: `./docs/executive_strategy/pages_v2/06_the_strategy_engine.png`; referenced bytes not established here) → Opportunity Ahead (historical reference: `./docs/executive_strategy/pages_v2/10_the_opportunity_ahead.png`; referenced bytes not established here) |
+| Technical or architecture reviewer | Module and release index (historical reference: `./MODULE_AND_RELEASE_INDEX.md`; referenced bytes not established here) → Module 2 stage tree (historical reference: `./Module_2/README.md`; referenced bytes not established here) → accepted stage source |
+| Governance or validation reviewer | Governance guide (historical reference: `./GOVERNANCE_AND_VALIDATION.md`; referenced bytes not established here) → BRD and validation index (historical reference: `./docs/BRD_AND_VALIDATION_INDEX.md`; referenced bytes not established here) → M2.12 acceptance (historical reference: `./Module_2/2.12_Enterprise_Portfolio_Certification_and_G3_Contract/`; referenced bytes not established here) |
+| Campaign-scale reviewer | Campaign Scale Certification (historical reference: `./docs/campaign_scale/README.md`; referenced bytes not established here) → governance boundary → pre-750 roadmap |
+| Development-history reviewer | Project history (historical reference: `./docs/project_history/README.md`; referenced bytes not established here) → sanitized transcript archive |
+| Repository navigator | Project artifact map (historical reference: `./PROJECT_ARTIFACT_MAP.md`; referenced bytes not established here) |
+
+---
+
+## Repository Map
+
+- `Module_0/` (historical reference: `./Module_0/`; referenced bytes not established here) — physical data foundation and governed run
+  control.
+- `Module_1/` (historical reference: `./Module_1/`; referenced bytes not established here) — deterministic merchant, application, operating,
+  risk, economics, acquisition, contract, and G2-assurance foundation.
+- `Module_2/` (historical reference: `./Module_2/README.md`; referenced bytes not established here) — twelve accepted decisioning, operating,
+  servicing, portfolio, strategy, and G3-certification stages.
+- `docs/enterprise_architecture/` (historical reference: `./docs/enterprise_architecture/README.md`; referenced bytes not established here) —
+  current enterprise architecture and Module 1/Module 2 lineage exhibits.
+- `docs/executive_strategy/` (historical reference: `./docs/executive_strategy/README.md`; referenced bytes not established here) — Governed
+  Build Edition v3.0 ten-page executive brief.
+- `docs/campaign_scale/` (historical reference: `./docs/campaign_scale/README.md`; referenced bytes not established here) — campaign
+  readiness, clean-build source closure, governance boundary, and pre-750
+  roadmap.
+- `docs/project_history/` (historical reference: `./docs/project_history/README.md`; referenced bytes not established here) — sanitized and
+  searchable development-transparency archive.
+- `docs/BRD_AND_VALIDATION_INDEX.md` (historical reference: `./docs/BRD_AND_VALIDATION_INDEX.md`; referenced bytes not established here) —
+  direct stage-level BRD, validation, and source navigation.
+- `PROJECT_ARTIFACT_MAP.md` (historical reference: `./PROJECT_ARTIFACT_MAP.md`; referenced bytes not established here) — repository-wide
+  artifact map.
+- `MODULE_AND_RELEASE_INDEX.md` (historical reference: `./MODULE_AND_RELEASE_INDEX.md`; referenced bytes not established here) — governed
+  module and release index.
+
+---
+
+## Validate the Public Release
+
+Clone the repository and run the publication validator:
+
+```bash
+git clone https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git
+cd merchant-sales-based-financing-strategy-simulator
+python tools/validate_public_release.py
+```
+
+Expected result for Module 2 / G3 v2.0.0:
+
+```text
+Public release validation PASS
+Governed manifest files: 1930
+Module 2 stage folders: 12
+```
+
+The validator checks repository navigation, manifests, governed file
+identities, required Module 2 stage structure, and publication boundaries.
+
+---
+
+## Source Classification
+
+Within each accepted Module 2 stage:
+
+| Source area | Classification |
+|---|---|
+| `src/current/` | Accepted normal-chain source |
+| `src/reporting/` | Reporting, detail-report, and evidence-export source |
+| `src/recovery/` | Contingency-only recovery source; excluded from normal execution |
+
+Recovery SQL is retained for provenance, reproducibility, and failure-mode
+transparency. It is not part of the normal execution chain.
+
+---
+
+## Transparency and Provenance
+
+The repository includes a sanitized, searchable development-history archive
+through August 12, 2026.
+
+It provides:
+
+- date-ordered Markdown transcripts;
+- machine-readable JSONL records;
+- project chronology;
+- milestone and decision indexes;
+- source-export identities;
+- duplicate-format classification;
+- deterministic redaction reporting;
+- an explicit authority hierarchy distinguishing working discussion from
+  accepted source and formal sign-off.
+
+Open the project-history guide (historical reference: `./docs/project_history/README.md`; referenced bytes not established here)
+
+Discussion history is supporting transparency evidence. Accepted SQL,
+manifests, BRDs, validation records, and formal sign-offs remain the governing
+authorities.
+
+---
+
+## Governance Principles
+
+```text
+Governed
+Deterministic
+Auditable
+Parameter-driven
+Evidence-based
+Reproducible
+Contract-certified
+Strategy-enabled
+```
+
+The governing philosophy is:
+
+&gt; **Logic, controls, validation, evidence, interpretation, and ownership travel together.**
+
+---
+
+## Release and Publication
+
+| Release element | Authority |
+|---|---|
+| Public release | **Module 2 / G3 v2.0.0** |
+| Release title | **Merchant Sales-Based Financing Strategy Simulator — Module 2 G3 — Governed Decisioning, Operations, Portfolio Strategy &amp; Enterprise Certification** |
+| Git tag | **`module-2-g3-v2.0.0`** |
+| Visual edition | **Governed Build Edition v3.0** |
+| Release date | **2026-08-13** |
+| Module 1 contract | **`G2_M1_CONTRACT — PASS`** |
+| Module 2 contract | **`G3_M2_CONTRACT — PASS`** |
+| Current initiative | **Campaign Scale Certification** |
+
+See:
+
+- Release Notes (historical reference: `./RELEASE_NOTES.md`; referenced bytes not established here)
+- GitHub Publication Guide (historical reference: `./GITHUB_PUBLICATION_GUIDE.md`; referenced bytes not established here)
+- Governance and Validation (historical reference: `./GOVERNANCE_AND_VALIDATION.md`; referenced bytes not established here)
+- Reproducibility and Execution (historical reference: `./REPRODUCIBILITY_AND_EXECUTION.md`; referenced bytes not established here)
+- Citation metadata (historical reference: `./CITATION.cff`; referenced bytes not established here)
+
+---
+
+## Interpretation Boundary
+
+All data are synthetic.
+
+This repository is not:
+
+- a financing offer;
+- a production underwriting system;
+- a deployed servicing platform;
+- a calibrated probability-of-default model;
+- a CECL or regulatory-capital model;
+- legal or accounting advice;
+- a causal optimization engine;
+- an autonomous decision service.
+
+Power BI references describe governed, Power BI-ready views and publication
+visuals—not a production dashboard deployment.
+
+The repository demonstrates transferable methodology, system architecture,
+governed simulation, validation discipline, evidence design, release
+governance, and executive communication.
+</code></pre>
+<h2>Why this version is stronger</h2>
+<p>It uses the README as a <strong>guided portfolio experience</strong>:</p>
+<ol>
+<li>The hero architecture establishes the platform.</li>
+<li>Four visual pages tell the executive story without requiring a PDF download.</li>
+<li>The release and evidence tables establish credibility.</li>
+<li>The M2.1–M2.12 table proves the depth of the build.</li>
+<li>The lineage exhibit demonstrates traceability.</li>
+<li>Review paths let different audiences self-select.</li>
+<li>Validation and source-classification sections make the repository usable—not merely attractive.</li>
+<li>The interpretation boundary prevents the marketing presentation from overstating what was built.</li>
+</ol>
+<h2>Important release-control consequence</h2>
+<p>The current tag already points to the present <code>main</code> merge commit. <strong>Do not publish the GitHub Release yet</strong> if this expanded README is intended to be part of Module 2/G3 v2.0.0.</p>
+<p>The correct order is:</p>
+<pre><code class="language-text">Replace README.md
+→ run publication validator
+→ commit on a small README release branch
+→ merge to main
+→ rerun validator
+→ repoint module-2-g3-v2.0.0 to the new final main commit
+→ draft and publish the GitHub Release
+</code></pre>
+<p>Otherwise, the public repository landing page may be improved after release, but the tagged v2.0.0 source snapshot will retain the lighter README.</p>
+</div></article><article id="m-ec56611d-d136-4df5-aa19-4f73c8ebfc83" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00545 · 2026-08-15T09:14:17.031000-04:00 · active path</p><div class="bubble"><p>why are we not also showing the module 1 architecture image in the readme? or do you think it is more powerful to lean on the module 2 design only here?</p>
+</div></article><article id="m-a78a72fd-54cf-4144-9069-9043f054ad4c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00546 · 2026-08-15T09:20:27.230429-04:00 · active path</p><div class="bubble"><p>You are right to challenge that. <strong>The root README should visibly show both Module 1 and Module 2 lineage.</strong> Leaning only on the Module 2 design would make the release feel current, but it would understate the most important architectural claim of the project: Module 2 is not a disconnected strategy layer—it is built on a fully accepted, contract-certified Module 1 evidence foundation.</p>
+<p>The earlier presentation used the enterprise architecture as the primary hero and treated Module 1 lineage as supporting proof. [export reference: filecite | turn218file0 | L37-L45] That was appropriate when Module 1 was the completed release and Module 2 was merely the next authorized step. The platform narrative itself ended at G2 and then pointed forward to Module 2. [export reference: filecite | turn218file0 | L49-L60] Now that both modules are accepted, the visual hierarchy should evolve.</p>
+<h2>Recommended visual hierarchy</h2>
+<h3>1. Keep the current full-platform architecture as the hero</h3>
+<p>Use:</p>
+<pre><code class="language-text">Enterprise_Merchant_Sales_Based_Financing_Platform_v2.png
+</code></pre>
+<p>This should remain the first image because it is <strong>not merely a Module 2 architecture</strong>. It is the current enterprise-platform view spanning:</p>
+<ul>
+<li>Module 1 foundation;</li>
+<li>G2 contract acceptance;</li>
+<li>Module 2 decisioning and operating layers;</li>
+<li>G3 certification;</li>
+<li>campaign-scale preparation;</li>
+<li>future strategy horizons.</li>
+</ul>
+<p>That is the best single visual summary for a hiring leader or first-time visitor.</p>
+<h3>2. Show both Module 1 and Module 2 lineage exhibits later at full width</h3>
+<p>The two lineage exhibits answer different questions:</p>
+<table>
+<thead>
+<tr>
+<th>Exhibit</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Module 1 Governed Evidence, Contract &amp; Acceptance Lineage</strong></td>
+<td>Where the trusted merchant, application, operating, risk, economics, acquisition, and G2 evidence originated</td>
+</tr>
+<tr>
+<td><strong>Module 2 Governed Decisioning, Operations, Portfolio &amp; G3 Acceptance Lineage</strong></td>
+<td>How that certified evidence was transformed into decisions, simulated operating states, portfolio strategy, and G3 enterprise consumption</td>
+</tr>
+</tbody></table>
+<p>Showing both makes the architectural progression explicit:</p>
+<pre><code class="language-text">Trusted evidence foundation
+→ certified G2 boundary
+→ governed decisions and simulated operations
+→ portfolio strategy
+→ certified G3 boundary
+</code></pre>
+<p>That progression is one of the strongest differentiators in the project.</p>
+<h2>What not to show</h2>
+<p>I would <strong>not</strong> restore the older unsuffixed:</p>
+<pre><code class="language-text">Enterprise_Merchant_Sales_Based_Financing_Platform.png
+</code></pre>
+<p>as a second enterprise-architecture image.</p>
+<p>That is a historical Module 1/G2-era architecture. Presenting it beside the current <code>_v2</code> architecture could:</p>
+<ul>
+<li>create confusion about which architecture is authoritative;</li>
+<li>visually regress the project to the pre-Module 2 state;</li>
+<li>duplicate content already covered more precisely by the Module 1 lineage exhibit;</li>
+<li>make readers compare versions rather than understand the current platform.</li>
+</ul>
+<p>So the distinction should be:</p>
+<pre><code class="language-text">Current full-platform architecture             SHOW AS HERO
+Module 1 evidence and acceptance lineage       SHOW IN BODY
+Module 2 decisioning and acceptance lineage    SHOW IN BODY
+Historical Module 1 enterprise architecture    LINK FROM ARCHIVE, DO NOT FEATURE
+</code></pre>
+<h2>Best README arrangement</h2>
+<p>I would structure the visual sequence as:</p>
+<pre><code class="language-text">1. Full-platform enterprise architecture
+2. Four-page executive visual story
+3. Accepted release metrics
+4. Module 1 lineage — full width
+5. Module 2 lineage — full width
+6. M2.1–M2.12 stage chain and technical navigation
+7. Campaign-scale roadmap
+</code></pre>
+<p>The lineage images are information-dense, so I would <strong>not place them side by side</strong>. At half-width, their text will become difficult to read in GitHub. Stack them vertically at full width.</p>
+<h2>Exact replacement section</h2>
+<p>Replace the prior Module-2-led lineage section with this:</p>
+<pre><code class="language-markdown">## Governed Evidence, Contract, and Acceptance Lineage
+
+The platform is governed across two accepted and connected certification
+boundaries.
+
+Module 1 establishes the deterministic merchant, application, operating,
+risk, economics, acquisition, and consumption evidence required by downstream
+strategy. Module 2 consumes that accepted foundation and extends it through
+decisioning, simulated operating states, portfolio analytics, strategy
+comparison, optimization, and G3 enterprise certification.
+
+### Module 1 / G2 — Deterministic Evidence Foundation
+
+![Module 1 Governed Evidence, Contract and Acceptance Lineage (historical reference: `./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png`; referenced bytes not established here)](./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png)
+
+Open the Module 1 lineage full size (historical reference: `./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.png`; referenced bytes not established here) ·
+PDF (historical reference: `./docs/enterprise_architecture/Module_1_Governed_Evidence_Contract_and_Acceptance_Lineage.pdf`; referenced bytes not established here) ·
+Review M1.17 G2 assurance (historical reference: `./Module_1/1.17_End_to_End_QA_and_G2_Acceptance/`; referenced bytes not established here)
+
+**What this boundary certifies**
+
+- deterministic merchant and application identities;
+- daily POS, settlement, deposit, liquidity, and cash-flow evidence;
+- capacity, resilience, integrated risk, exposure, loss, and unit economics;
+- acquisition source, attribution, confidence, and merchant CAC;
+- latest, archive, comparison, and companion consumption layers;
+- 18 / 18 accepted physical hash identities;
+- `G2_M1_CONTRACT — PASS`.
+
+### Module 2 / G3 — Decisioning, Operations, Portfolio Strategy, and Enterprise Certification
+
+![Module 2 Governed Decisioning, Operations, Portfolio and G3 Acceptance Lineage (historical reference: `./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png`; referenced bytes not established here)](./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png)
+
+Open the Module 2 lineage full size (historical reference: `./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.png`; referenced bytes not established here) ·
+PDF (historical reference: `./docs/enterprise_architecture/Module_2_Governed_Decisioning_Operations_Portfolio_%26_G3_Acceptance_Lineage.pdf`; referenced bytes not established here) ·
+Explore the complete Module 2 stage tree (historical reference: `./Module_2/README.md`; referenced bytes not established here)
+
+**What this boundary certifies**
+
+- eligibility, policy, pricing, structure, counteroffers, and alternatives;
+- final-offer authorization and decision rationale;
+- deterministic simulated activation and operating states;
+- monitoring, early warning, intervention, servicing, and reconciliation;
+- portfolio KPI and servicing analytics;
+- matched strategy comparison, simulation, optimization, and trade-offs;
+- 12 / 12 accepted Module 2 stages;
+- `G3_M2_CONTRACT — PASS`.
+
+```text
+MODULE 1 / G2
+Certified evidence foundation
+        ↓
+MODULE 2 / G3
+Governed decisioning, simulated operations, portfolio strategy,
+and enterprise certification
+        ↓
+CURRENT
+Campaign Scale Certification
+</code></pre>
+<blockquote>
+<p><strong>Authority boundary:</strong> The lineage exhibits summarize accepted synthetic,
+non-production evidence and contract boundaries. They do not represent live
+account processing, deployed credit policy, causal optimization, or
+autonomous decisioning.</p>
+</blockquote>
+<pre><code>
+## Final recommendation
+
+**Do not lean on Module 2 alone.** The strongest marketing story is:
+
+&gt; Module 1 proves the evidence can be trusted.  
+&gt; Module 2 proves that trusted evidence can drive governed strategy.  
+&gt; G2 and G3 prove that both boundaries are controlled and consumable.
+
+The current enterprise architecture should remain the hero, but both Module 1 and Module 2 lineage images should be prominently and visibly embedded in the root README. That better demonstrates the project’s scale, continuity, and “No Cold Handoffs” philosophy.
+</code></pre>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

@@ -1,0 +1,1820 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 28 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 28</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-27.html">Previous part</a><a href="part-29.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-572e7b4e-a355-4328-a0b0-66a6fa4fed0a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00601 · 2026-09-02T08:15:29.623904-04:00 · active path</p><div class="bubble"><p>You do <strong>not</strong> need to pre-build the <code>C:\MSBF\R26\power_bi\carrier</code> folder. The script creates that path for you. The only local prerequisite is that you have the <strong>exact R26 handoff ZIP</strong> somewhere on your PC and know its full path.</p>
+<p>The handoff package itself has already been verified as clean and candidate-only, with the expected SHA-256 and no publication authority. [export reference: filecite | turn99file0 | L2-L15]</p>
+<h3>Recommended local setup</h3>
+<p>I would keep it simple:</p>
+<pre><code class="language-text">C:\MSBF\R26\
+    MSBF_POWER_BI_R26_PARALLEL_HANDOFF_20260902.zip
+
+C:\MSBF\PowerBI\R26_Parallel\
+    MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY\
+        scripts\
+            00_PREPARE_R26_CARRIER.ps1
+        ...
+</code></pre>
+<p>But those exact locations are <strong>not required</strong>. The handoff ZIP could even remain in Downloads, because you pass its full path to the script.</p>
+<p>What matters is:</p>
+<ul>
+<li>the script file exists locally;</li>
+<li>the exact R26 handoff ZIP exists locally;</li>
+<li>you have write permission to <code>C:\MSBF</code>;</li>
+<li>Power BI is not actively refreshing from the carrier while you replace it.</li>
+</ul>
+<h3>Important behavior of the script</h3>
+<p>The script does four things automatically:</p>
+<ol>
+<li>Verifies the handoff ZIP itself against this exact SHA-256:</li>
+</ol>
+<pre><code class="language-text">53fd448b61b15b1e61ebd34e778cb00364169145c541467ea2a453cd1a9ec467
+</code></pre>
+<ol start="2">
+<li><p>Extracts the handoff ZIP into a temporary Windows folder.</p>
+</li>
+<li><p>Finds the embedded:</p>
+</li>
+</ol>
+<pre><code class="language-text">carrier\
+</code></pre>
+<p>folder and copies it to:</p>
+<pre><code class="language-text">C:\MSBF\R26\power_bi\carrier
+</code></pre>
+<ol start="4">
+<li>Then independently verifies:<ul>
+<li><code>SUCCESSOR_DATA_CATALOG.csv</code></li>
+<li><code>curated\R1FactDailyMonitoring.csv</code></li>
+<li>the unique <code>r26_policy_sha256</code> inside the monitoring file.</li>
+</ul>
+</li>
+</ol>
+<p>So you <strong>do not</strong> manually extract the handoff first. Give the script the ZIP itself.</p>
+<h3>One destructive behavior to be aware of</h3>
+<p>If this already exists:</p>
+<pre><code class="language-text">C:\MSBF\R26\power_bi\carrier
+</code></pre>
+<p>the script <strong>deletes that entire carrier folder first</strong> and replaces it with the verified copy from the handoff.</p>
+<p>That is intentional.</p>
+<p>It does <strong>not</strong> delete:</p>
+<pre><code class="language-text">C:\MSBF
+C:\MSBF\R26
+your current PBIP
+your old R22/R1 refinement project
+</code></pre>
+<p>Only the exact <code>carrier</code> folder supplied as <code>$CarrierRoot</code>.</p>
+<p>So if you happen to have manually put anything unique inside:</p>
+<pre><code class="language-text">C:\MSBF\R26\power_bi\carrier
+</code></pre>
+<p>move it first. Normally there should be nothing there that needs preserving.</p>
+<hr>
+<h2>Exact steps I recommend</h2>
+<h3>1. Put the handoff ZIP somewhere convenient</h3>
+<p>For example:</p>
+<pre><code class="language-text">C:\MSBF\R26\MSBF_POWER_BI_R26_PARALLEL_HANDOFF_20260902.zip
+</code></pre>
+<p>Do <strong>not</strong> unzip it.</p>
+<h3>2. Extract my delivery package</h3>
+<p>Extract:</p>
+<p>MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY.zip (historical reference: <code>sandbox:[session]/MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY.zip</code>; referenced bytes not established here)</p>
+<p>For example to:</p>
+<pre><code class="language-text">C:\MSBF\PowerBI\R26_Parallel\
+</code></pre>
+<p>After extraction you should have something like:</p>
+<pre><code class="language-text">C:\MSBF\PowerBI\R26_Parallel\
+    MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY\
+        00_START_HERE.md
+        evidence\
+        project\
+        scripts\
+        tests\
+</code></pre>
+<p>Inside <code>scripts</code>:</p>
+<pre><code class="language-text">00_PREPARE_R26_CARRIER.ps1
+</code></pre>
+<h3>3. Close or leave idle your currently open pre-R26 Power BI</h3>
+<p>I recommend <strong>saving and closing</strong> the current pre-R26 PBIP first.</p>
+<p>That preserves your exact pre-R26 working candidate as the comparison point.</p>
+<h3>4. Open a fresh PowerShell window</h3>
+<p>You do <strong>not</strong> need to run PowerShell as Administrator unless your Windows permissions specifically prevent writing under <code>C:\MSBF</code>.</p>
+<p>Then run:</p>
+<pre><code class="language-powershell">Set-Location &quot;C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY&quot;
+</code></pre>
+<p>Verify the two things we need:</p>
+<pre><code class="language-powershell">Test-Path &quot;.\scripts\00_PREPARE_R26_CARRIER.ps1&quot;
+Test-Path &quot;C:\MSBF\R26\MSBF_POWER_BI_R26_PARALLEL_HANDOFF_20260902.zip&quot;
+</code></pre>
+<p>Both should return:</p>
+<pre><code class="language-text">True
+</code></pre>
+<h3>5. Run the preparation script</h3>
+<p>Use:</p>
+<pre><code class="language-powershell">powershell.exe -NoProfile -ExecutionPolicy Bypass `
+    -File &quot;.\scripts\00_PREPARE_R26_CARRIER.ps1&quot; `
+    -HandoffZip &quot;C:\MSBF\R26\MSBF_POWER_BI_R26_PARALLEL_HANDOFF_20260902.zip&quot;
+</code></pre>
+<p>You do <strong>not</strong> need to specify <code>-CarrierRoot</code>, because the script defaults to:</p>
+<pre><code class="language-text">C:\MSBF\R26\power_bi\carrier
+</code></pre>
+<p>If successful, the last line should be:</p>
+<pre><code class="language-text">R26 carrier prepared and verified: C:\MSBF\R26\power_bi\carrier
+</code></pre>
+<p>If any hash or policy identity fails, the script stops rather than installing an unverified carrier.</p>
+<hr>
+<h2>6. Verify the result manually</h2>
+<p>After it finishes:</p>
+<pre><code class="language-powershell">Test-Path &quot;C:\MSBF\R26\power_bi\carrier&quot;
+Test-Path &quot;C:\MSBF\R26\power_bi\carrier\SUCCESSOR_DATA_CATALOG.csv&quot;
+Test-Path &quot;C:\MSBF\R26\power_bi\carrier\curated\R1FactDailyMonitoring.csv&quot;
+</code></pre>
+<p>All three should return:</p>
+<pre><code class="language-text">True
+</code></pre>
+<p>You can also confirm the monitoring header now has 47 fields:</p>
+<pre><code class="language-powershell">$Row = Import-Csv &quot;C:\MSBF\R26\power_bi\carrier\curated\R1FactDailyMonitoring.csv&quot; |
+    Select-Object -First 1
+
+$Row.PSObject.Properties.Name.Count
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">47
+</code></pre>
+<p>And confirm the R26 policy:</p>
+<pre><code class="language-powershell">Import-Csv &quot;C:\MSBF\R26\power_bi\carrier\curated\R1FactDailyMonitoring.csv&quot; |
+    Select-Object -ExpandProperty r26_policy_sha256 -Unique
+</code></pre>
+<p>Expected exactly:</p>
+<pre><code class="language-text">6c6a6f8103bb7276c5d1063d900d96070903e82b5f7143431bc150556e092027
+</code></pre>
+<h3>What you do <strong>not</strong> need to place there</h3>
+<p>Do <strong>not</strong> put any of these inside the carrier folder:</p>
+<ul>
+<li>your <code>.pbip</code>/report project;</li>
+<li>the SemanticModel folder;</li>
+<li>the Report folder;</li>
+<li>screenshots/evidence;</li>
+<li>old R22 carrier;</li>
+<li>old R1 carrier;</li>
+<li>DAX scripts.</li>
+</ul>
+<p><code>C:\MSBF\R26\power_bi\carrier</code> is purely the <strong>governed R26 source-data carrier</strong> Power Query will read.</p>
+<p>Your Power BI project remains separate.</p>
+<p>Once you get the <code>R26 carrier prepared and verified</code> message, the next step is opening the new R26 project and doing the physical <strong>Refresh All</strong>.</p>
+</div></article><article id="m-e8760874-3162-47bc-bd22-aa3ea2bc3b4d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00602 · 2026-09-02T08:20:56.376000-04:00 · active path</p><div class="bubble"><p>C:\MSBF\MSBF_POWER_BI_R26_PARALLEL_HANDOFF_20260902.zip &amp; C:\MSBF\PowerBI\R26_Parallel\     MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY... are established. re-provide updated powershell script</p>
+</div></article><article id="m-ea961c39-b351-40a6-b999-a965df7808a8" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00603 · 2026-09-02T08:21:00.001664-04:00 · active path</p><div class="bubble"><p>Yes. With those two locations established, use the following exactly from a <strong>fresh PowerShell window</strong>.</p>
+<p>Your paths are now:</p>
+<pre><code class="language-text">R26 handoff ZIP:
+C:\MSBF\MSBF_POWER_BI_R26_PARALLEL_HANDOFF_20260902.zip
+
+R26 Power BI delivery:
+C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY
+</code></pre>
+<h2>1. Start in a clean PowerShell session</h2>
+<p>Open <strong>Windows PowerShell</strong> normally. Administrator is not required unless Windows blocks writes under <code>C:\MSBF</code>.</p>
+<p>Run:</p>
+<pre><code class="language-powershell">Set-StrictMode -Version Latest
+$ErrorActionPreference = &quot;Stop&quot;
+$ProgressPreference = &quot;SilentlyContinue&quot;
+</code></pre>
+<p>Then establish the three working paths:</p>
+<pre><code class="language-powershell">$DeliveryRoot = &quot;C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY&quot;
+$HandoffZip   = &quot;C:\MSBF\MSBF_POWER_BI_R26_PARALLEL_HANDOFF_20260902.zip&quot;
+$CarrierRoot  = &quot;C:\MSBF\R26\power_bi\carrier&quot;
+</code></pre>
+<p>Move into the delivery package:</p>
+<pre><code class="language-powershell">Set-Location $DeliveryRoot
+</code></pre>
+<p>Confirm:</p>
+<pre><code class="language-powershell">Get-Location
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY
+</code></pre>
+<hr>
+<h2>2. Confirm all required inputs exist before doing anything</h2>
+<p>Run:</p>
+<pre><code class="language-powershell">$Checks = [ordered]@{
+    &quot;Delivery root&quot; = Test-Path $DeliveryRoot
+    &quot;R26 handoff ZIP&quot; = Test-Path $HandoffZip
+    &quot;Preparation script&quot; = Test-Path &quot;$DeliveryRoot\scripts\00_PREPARE_R26_CARRIER.ps1&quot;
+    &quot;R26 Desktop DAX checks&quot; = Test-Path &quot;$DeliveryRoot\tests\R26_DESKTOP_CHECKPOINTS.dax&quot;
+    &quot;Project folder&quot; = Test-Path &quot;$DeliveryRoot\project&quot;
+}
+
+$Checks.GetEnumerator() | Format-Table -AutoSize
+</code></pre>
+<p>Every line should say:</p>
+<pre><code class="language-text">True
+</code></pre>
+<p>If any line says <code>False</code>, stop there.</p>
+<hr>
+<h2>3. Independently verify the handoff ZIP hash before running the script</h2>
+<p>Run:</p>
+<pre><code class="language-powershell">$ExpectedHandoffSha = &quot;53fd448b61b15b1e61ebd34e778cb00364169145c541467ea2a453cd1a9ec467&quot;
+
+$ActualHandoffSha = (Get-FileHash -Algorithm SHA256 $HandoffZip).Hash.ToLower()
+
+[pscustomobject]@{
+    File     = $HandoffZip
+    Expected = $ExpectedHandoffSha
+    Actual   = $ActualHandoffSha
+    Match    = ($ActualHandoffSha -eq $ExpectedHandoffSha)
+} | Format-List
+</code></pre>
+<p>You want:</p>
+<pre><code class="language-text">Match : True
+</code></pre>
+<p>Do not continue if it returns <code>False</code>.</p>
+<p>The package receipt identifies that handoff as <code>PASS</code>, clean-extraction <code>PASS</code>, and candidate-only pending R26 focused audit. [export reference: filecite | turn99file0 | L2-L15]</p>
+<hr>
+<h1>4. Run the R26 carrier-preparation script</h1>
+<p>Now run:</p>
+<pre><code class="language-powershell">powershell.exe -NoProfile -ExecutionPolicy Bypass `
+    -File &quot;$DeliveryRoot\scripts\00_PREPARE_R26_CARRIER.ps1&quot; `
+    -HandoffZip &quot;$HandoffZip&quot; `
+    -CarrierRoot &quot;$CarrierRoot&quot;
+</code></pre>
+<p>Because we are explicitly passing both paths, there is no ambiguity about where the script reads from or writes to.</p>
+<p>The target is:</p>
+<pre><code class="language-text">C:\MSBF\R26\power_bi\carrier
+</code></pre>
+<h3>Expected successful ending</h3>
+<p>You should see something equivalent to:</p>
+<pre><code class="language-text">R26 carrier prepared and verified:
+C:\MSBF\R26\power_bi\carrier
+</code></pre>
+<p>If the script produces an error, <strong>do not manually copy the carrier as a workaround</strong>. Send me the full PowerShell error.</p>
+<hr>
+<h1>5. Verify the installed carrier</h1>
+<p>After the script completes successfully, run:</p>
+<pre><code class="language-powershell">$CarrierChecks = [ordered]@{
+    &quot;Carrier root&quot; = Test-Path $CarrierRoot
+    &quot;Catalog&quot; = Test-Path &quot;$CarrierRoot\SUCCESSOR_DATA_CATALOG.csv&quot;
+    &quot;Daily monitoring&quot; = Test-Path &quot;$CarrierRoot\curated\R1FactDailyMonitoring.csv&quot;
+}
+
+$CarrierChecks.GetEnumerator() | Format-Table -AutoSize
+</code></pre>
+<p>All should return:</p>
+<pre><code class="language-text">True
+</code></pre>
+<hr>
+<h2>6. Verify the R26 monitoring file has exactly 47 columns</h2>
+<p>Run:</p>
+<pre><code class="language-powershell">$MonitoringFile = &quot;$CarrierRoot\curated\R1FactDailyMonitoring.csv&quot;
+
+$FirstMonitoringRow = Import-Csv $MonitoringFile | Select-Object -First 1
+
+$MonitoringColumnCount = $FirstMonitoringRow.PSObject.Properties.Name.Count
+
+Write-Host &quot;R1FactDailyMonitoring column count: $MonitoringColumnCount&quot;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">R1FactDailyMonitoring column count: 47
+</code></pre>
+<p>Then verify the 11 new R26 fields physically exist:</p>
+<pre><code class="language-powershell">$RequiredR26Fields = @(
+    &quot;raw_alert_condition_count&quot;,
+    &quot;pace_family_active_flag&quot;,
+    &quot;pace_family_severity_code&quot;,
+    &quot;no_remittance_family_active_flag&quot;,
+    &quot;sales_dormancy_family_active_flag&quot;,
+    &quot;liquidity_family_active_flag&quot;,
+    &quot;horizon_family_active_flag&quot;,
+    &quot;operational_alert_family_count&quot;,
+    &quot;primary_operational_alert_family_code&quot;,
+    &quot;operational_alert_payload&quot;,
+    &quot;r26_policy_sha256&quot;
+)
+
+$ActualColumns = $FirstMonitoringRow.PSObject.Properties.Name
+
+$RequiredR26Fields | ForEach-Object {
+    [pscustomobject]@{
+        Field = $_
+        Present = ($_ -in $ActualColumns)
+    }
+} | Format-Table -AutoSize
+</code></pre>
+<p>Every row should show:</p>
+<pre><code class="language-text">Present = True
+</code></pre>
+<hr>
+<h1>7. Verify the monitoring population is 15,600 rows</h1>
+<p>Run:</p>
+<pre><code class="language-powershell">$MonitoringRows = @(Import-Csv $MonitoringFile).Count
+
+Write-Host &quot;Monitoring rows: $MonitoringRows&quot;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">Monitoring rows: 15600
+</code></pre>
+<hr>
+<h1>8. Verify the exact R26 policy SHA</h1>
+<p>Run:</p>
+<pre><code class="language-powershell">$ExpectedPolicySha = &quot;6c6a6f8103bb7276c5d1063d900d96070903e82b5f7143431bc150556e092027&quot;
+
+$PolicyValues = Import-Csv $MonitoringFile |
+    Select-Object -ExpandProperty r26_policy_sha256 |
+    Sort-Object -Unique
+
+Write-Host &quot;Unique R26 policy SHA values:&quot;
+$PolicyValues
+
+Write-Host &quot;&quot;
+Write-Host &quot;Unique policy count:&quot; $PolicyValues.Count
+Write-Host &quot;Exact policy match:&quot; ($PolicyValues.Count -eq 1 -and $PolicyValues[0] -eq $ExpectedPolicySha)
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">Unique policy count: 1
+Exact policy match: True
+</code></pre>
+<hr>
+<h1>9. Optional but useful — verify the carrier file count and size</h1>
+<p>Run:</p>
+<pre><code class="language-powershell">$CarrierFiles = Get-ChildItem $CarrierRoot -File -Recurse
+
+[pscustomobject]@{
+    CarrierRoot = $CarrierRoot
+    FileCount   = $CarrierFiles.Count
+    TotalBytes  = ($CarrierFiles | Measure-Object Length -Sum).Sum
+} | Format-List
+</code></pre>
+<p>This gives us a simple local receipt for what Power BI is about to consume.</p>
+<hr>
+<h1>10. Locate the new R26 Power BI project before opening Desktop</h1>
+<p>Run:</p>
+<pre><code class="language-powershell">Get-ChildItem &quot;$DeliveryRoot\project&quot; -Recurse -Filter definition.pbir |
+    Select-Object FullName
+</code></pre>
+<p>You should see the new R26 report project&#39;s <code>definition.pbir</code>.</p>
+<p>For convenience, set:</p>
+<pre><code class="language-powershell">$R26Pbir = (
+    Get-ChildItem &quot;$DeliveryRoot\project&quot; -Recurse -Filter definition.pbir |
+    Select-Object -First 1
+).FullName
+
+Write-Host $R26Pbir
+</code></pre>
+<p>Confirm:</p>
+<pre><code class="language-powershell">Test-Path $R26Pbir
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">True
+</code></pre>
+<hr>
+<h1>11. Open the R26 project</h1>
+<p>You can then launch it directly:</p>
+<pre><code class="language-powershell">Start-Process $R26Pbir
+</code></pre>
+<p>Power BI Desktop should open the <strong>new R26 parallel refinement</strong>, not your pre-R26 project.</p>
+<p>Before refreshing, verify visually that the project identity is the new:</p>
+<pre><code class="language-text">MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902
+</code></pre>
+<p>Then perform:</p>
+<pre><code class="language-text">Home → Refresh
+</code></pre>
+<p>or:</p>
+<pre><code class="language-text">Home → Refresh all
+</code></pre>
+<p>depending on how your Desktop build labels it.</p>
+<hr>
+<h2>The full copy/paste block</h2>
+<p>If you want to execute the carrier preparation in one controlled block, use this:</p>
+<pre><code class="language-powershell">Set-StrictMode -Version Latest
+$ErrorActionPreference = &quot;Stop&quot;
+$ProgressPreference = &quot;SilentlyContinue&quot;
+
+$DeliveryRoot = &quot;C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY&quot;
+$HandoffZip   = &quot;C:\MSBF\MSBF_POWER_BI_R26_PARALLEL_HANDOFF_20260902.zip&quot;
+$CarrierRoot  = &quot;C:\MSBF\R26\power_bi\carrier&quot;
+
+Set-Location $DeliveryRoot
+
+Write-Host &quot;=== INPUT CHECKS ===&quot;
+
+$Checks = [ordered]@{
+    &quot;Delivery root&quot;       = Test-Path $DeliveryRoot
+    &quot;R26 handoff ZIP&quot;     = Test-Path $HandoffZip
+    &quot;Preparation script&quot;  = Test-Path &quot;$DeliveryRoot\scripts\00_PREPARE_R26_CARRIER.ps1&quot;
+    &quot;Desktop DAX checks&quot;   = Test-Path &quot;$DeliveryRoot\tests\R26_DESKTOP_CHECKPOINTS.dax&quot;
+    &quot;Project folder&quot;       = Test-Path &quot;$DeliveryRoot\project&quot;
+}
+
+$Checks.GetEnumerator() | Format-Table -AutoSize
+
+if ($Checks.Values -contains $false) {
+    throw &quot;One or more required inputs are missing.&quot;
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;=== HANDOFF SHA-256 ===&quot;
+
+$ExpectedHandoffSha = &quot;53fd448b61b15b1e61ebd34e778cb00364169145c541467ea2a453cd1a9ec467&quot;
+$ActualHandoffSha = (Get-FileHash -Algorithm SHA256 $HandoffZip).Hash.ToLower()
+
+Write-Host &quot;Expected:&quot; $ExpectedHandoffSha
+Write-Host &quot;Actual:  &quot; $ActualHandoffSha
+
+if ($ActualHandoffSha -ne $ExpectedHandoffSha) {
+    throw &quot;R26 handoff SHA-256 mismatch.&quot;
+}
+
+Write-Host &quot;Handoff SHA-256: PASS&quot;
+
+Write-Host &quot;&quot;
+Write-Host &quot;=== PREPARE R26 CARRIER ===&quot;
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+    -File &quot;$DeliveryRoot\scripts\00_PREPARE_R26_CARRIER.ps1&quot; `
+    -HandoffZip &quot;$HandoffZip&quot; `
+    -CarrierRoot &quot;$CarrierRoot&quot;
+
+if ($LASTEXITCODE -ne 0) {
+    throw &quot;R26 carrier preparation script failed with exit code $LASTEXITCODE.&quot;
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;=== CARRIER VALIDATION ===&quot;
+
+$CatalogFile    = &quot;$CarrierRoot\SUCCESSOR_DATA_CATALOG.csv&quot;
+$MonitoringFile = &quot;$CarrierRoot\curated\R1FactDailyMonitoring.csv&quot;
+
+if (-not (Test-Path $CatalogFile)) {
+    throw &quot;SUCCESSOR_DATA_CATALOG.csv is missing.&quot;
+}
+
+if (-not (Test-Path $MonitoringFile)) {
+    throw &quot;R1FactDailyMonitoring.csv is missing.&quot;
+}
+
+$MonitoringRows = @(Import-Csv $MonitoringFile)
+$MonitoringCount = $MonitoringRows.Count
+$Columns = $MonitoringRows[0].PSObject.Properties.Name
+$ColumnCount = $Columns.Count
+
+Write-Host &quot;Monitoring rows:    $MonitoringCount&quot;
+Write-Host &quot;Monitoring columns: $ColumnCount&quot;
+
+if ($MonitoringCount -ne 15600) {
+    throw &quot;Unexpected R1FactDailyMonitoring row count.&quot;
+}
+
+if ($ColumnCount -ne 47) {
+    throw &quot;Unexpected R1FactDailyMonitoring column count.&quot;
+}
+
+$RequiredR26Fields = @(
+    &quot;raw_alert_condition_count&quot;,
+    &quot;pace_family_active_flag&quot;,
+    &quot;pace_family_severity_code&quot;,
+    &quot;no_remittance_family_active_flag&quot;,
+    &quot;sales_dormancy_family_active_flag&quot;,
+    &quot;liquidity_family_active_flag&quot;,
+    &quot;horizon_family_active_flag&quot;,
+    &quot;operational_alert_family_count&quot;,
+    &quot;primary_operational_alert_family_code&quot;,
+    &quot;operational_alert_payload&quot;,
+    &quot;r26_policy_sha256&quot;
+)
+
+$MissingFields = @(
+    $RequiredR26Fields | Where-Object { $_ -notin $Columns }
+)
+
+if ($MissingFields.Count -gt 0) {
+    throw &quot;Missing required R26 fields: $($MissingFields -join &#39;, &#39;)&quot;
+}
+
+$ExpectedPolicySha = &quot;6c6a6f8103bb7276c5d1063d900d96070903e82b5f7143431bc150556e092027&quot;
+
+$PolicyValues = @(
+    $MonitoringRows |
+        Select-Object -ExpandProperty r26_policy_sha256 |
+        Sort-Object -Unique
+)
+
+if ($PolicyValues.Count -ne 1) {
+    throw &quot;R26 monitoring carrier contains more than one policy SHA.&quot;
+}
+
+if ($PolicyValues[0] -ne $ExpectedPolicySha) {
+    throw &quot;R26 policy SHA mismatch.&quot;
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;R26 CARRIER VALIDATION: PASS&quot;
+Write-Host &quot;Carrier root: $CarrierRoot&quot;
+Write-Host &quot;Rows:         $MonitoringCount&quot;
+Write-Host &quot;Columns:      $ColumnCount&quot;
+Write-Host &quot;Policy SHA:   $($PolicyValues[0])&quot;
+</code></pre>
+<p>Once that ends with:</p>
+<pre><code class="language-text">R26 CARRIER VALIDATION: PASS
+</code></pre>
+<p>the source side is ready. The next controlled step is opening the R26 PBIP and performing <strong>Refresh All</strong>.</p>
+</div></article><article id="m-0b059880-6a5a-4a7b-bace-27d0ab3028e0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00604 · 2026-09-02T08:24:05.874000-04:00 · active path</p><div class="bubble"><p>PS C:\MSBF\R26_R3_RESUME&gt; Set-StrictMode -Version Latest</p>
+<blockquote>
+<blockquote>
+<p>$ErrorActionPreference = &quot;Stop&quot;
+$ProgressPreference = &quot;SilentlyContinue&quot;
+PS C:\MSBF\R26_R3_RESUME&gt; $DeliveryRoot = &quot;C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY&quot;</p>
+<blockquote>
+<p>$HandoffZip   = &quot;C:\MSBF\MSBF_POWER_BI_R26_PARALLEL_HANDOFF_20260902.zip&quot;
+$CarrierRoot  = &quot;C:\MSBF\R26\power_bi\carrier&quot;
+PS C:\MSBF\R26_R3_RESUME&gt; Set-Location $DeliveryRoot
+PS C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY&gt; Get-Location</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<h2>Path</h2>
+<p>C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY</p>
+<p>PS C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY&gt; $Checks = [ordered]@{</p>
+<blockquote>
+<blockquote>
+<pre><code>&quot;Delivery root&quot; = Test-Path $DeliveryRoot
+&quot;R26 handoff ZIP&quot; = Test-Path $HandoffZip
+&quot;Preparation script&quot; = Test-Path &quot;$DeliveryRoot\scripts\00_PREPARE_R26_CARRIER.ps1&quot;
+&quot;R26 Desktop DAX checks&quot; = Test-Path &quot;$DeliveryRoot\tests\R26_DESKTOP_CHECKPOINTS.dax&quot;
+&quot;Project folder&quot; = Test-Path &quot;$DeliveryRoot\project&quot;
+</code></pre>
+<p>}</p>
+<p>$Checks.GetEnumerator() | Format-Table -AutoSize</p>
+</blockquote>
+</blockquote>
+<p>Name                   Value</p>
+<hr>
+<p>Delivery root          True
+R26 handoff ZIP        True
+Preparation script     True
+R26 Desktop DAX checks True
+Project folder         True</p>
+<p>PS C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY&gt; $ExpectedHandoffSha = &quot;53fd448b61b15b1e61ebd34e778cb00364169145c541467ea2a453cd1a9ec467&quot;</p>
+<blockquote>
+<blockquote>
+<p>$ActualHandoffSha = (Get-FileHash -Algorithm SHA256 $HandoffZip).Hash.ToLower()</p>
+<p>[pscustomobject]@{
+    File     = $HandoffZip
+    Expected = $ExpectedHandoffSha
+    Actual   = $ActualHandoffSha
+    Match    = ($ActualHandoffSha -eq $ExpectedHandoffSha)
+} | Format-List</p>
+</blockquote>
+</blockquote>
+<p>File     : C:\MSBF\MSBF_POWER_BI_R26_PARALLEL_HANDOFF_20260902.zip
+Expected : 53fd448b61b15b1e61ebd34e778cb00364169145c541467ea2a453cd1a9ec467
+Actual   : 53fd448b61b15b1e61ebd34e778cb00364169145c541467ea2a453cd1a9ec467
+Match    : True</p>
+<p>PS C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY&gt; powershell.exe -NoProfile -ExecutionPolicy Bypass `</p>
+<blockquote>
+<blockquote>
+<pre><code>-File &quot;$DeliveryRoot\scripts\00_PREPARE_R26_CARRIER.ps1&quot; `
+-HandoffZip &quot;$HandoffZip&quot; `
+-CarrierRoot &quot;$CarrierRoot&quot;
+</code></pre>
+</blockquote>
+</blockquote>
+<p>R26 policy identity mismatch
+At C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY\scripts\00_PREPARE_R26_CARRIER.ps1:28 char:73</p>
+<ul>
+<li>... y[0] -ne $ExpectedPolicySha) { throw &quot;R26 policy identity mismatch&quot; }</li>
+<li><pre><code>                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+</code></pre>
+<ul>
+<li>CategoryInfo          : OperationStopped: (R26 policy identity mismatch:String) [], RuntimeException</li>
+<li>FullyQualifiedErrorId : R26 policy identity mismatch</li>
+</ul>
+</li>
+</ul>
+</div></article><article id="m-35d32fad-9336-4bd9-a1b1-02bc8488c1ec" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00605 · 2026-09-02T08:25:06.977827-04:00 · active path</p><div class="bubble"><p>This is <strong>a bug in my PowerShell verification script, not an R26 source/carrier contradiction</strong>.</p>
+<p>The handoff ZIP hash matched exactly before the script ran, and the script had already passed the catalog SHA and monitoring-file SHA checks before it reached the failing policy test. The package receipt independently reports the handoff as <code>PASS</code>, clean-extraction <code>PASS</code>, with the expected R26 result identity and candidate-only authority. [export reference: filecite | turn99file0 | L2-L15]</p>
+<p>The problem is this PowerShell behavior:</p>
+<pre><code class="language-powershell">$Policy = Import-Csv ... | Select-Object -ExpandProperty r26_policy_sha256 -Unique
+</code></pre>
+<p>When there is exactly <strong>one</strong> unique policy SHA, PowerShell stores <code>$Policy</code> as a scalar string, not an array. Then:</p>
+<pre><code class="language-powershell">$Policy[0]
+</code></pre>
+<p>returns the <strong>first character of the SHA</strong> (<code>&quot;6&quot;</code>), not the whole SHA string. So the script falsely throws <code>R26 policy identity mismatch</code>.</p>
+<p>I independently inspected the actual handoff carrier. It contains exactly one policy value:</p>
+<pre><code class="language-text">6c6a6f8103bb7276c5d1063d900d96070903e82b5f7143431bc150556e092027
+</code></pre>
+<p>which is the expected R26 policy.</p>
+<h2>First: verify the carrier that was already installed</h2>
+<p>The script copied the carrier before that final faulty check, and its <code>finally</code> block removes only the temporary extraction folder—not <code>C:\MSBF\R26\power_bi\carrier</code>.</p>
+<p>Run this now in your existing PowerShell session:</p>
+<pre><code class="language-powershell">$MonitoringFile = &quot;C:\MSBF\R26\power_bi\carrier\curated\R1FactDailyMonitoring.csv&quot;
+
+Test-Path $MonitoringFile
+
+$Policy = @(
+    Import-Csv $MonitoringFile |
+    Select-Object -ExpandProperty r26_policy_sha256 -Unique
+)
+
+$Policy
+
+Write-Host &quot;Unique policy count:&quot; $Policy.Count
+Write-Host &quot;Exact policy match:&quot; (
+    $Policy.Count -eq 1 -and
+    ([string]$Policy[0]).Trim().ToLowerInvariant() -eq
+    &quot;6c6a6f8103bb7276c5d1063d900d96070903e82b5f7143431bc150556e092027&quot;
+)
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">True
+
+6c6a6f8103bb7276c5d1063d900d96070903e82b5f7143431bc150556e092027
+
+Unique policy count: 1
+Exact policy match: True
+</code></pre>
+<p>Then run these two hash checks:</p>
+<pre><code class="language-powershell">(Get-FileHash -Algorithm SHA256 `
+    &quot;C:\MSBF\R26\power_bi\carrier\SUCCESSOR_DATA_CATALOG.csv&quot;).Hash.ToLower()
+
+(Get-FileHash -Algorithm SHA256 `
+    &quot;C:\MSBF\R26\power_bi\carrier\curated\R1FactDailyMonitoring.csv&quot;).Hash.ToLower()
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">c21530bc668e9559e9194dcaa21d612935420434a1c54ac8220f7f91b9733c6b
+
+900dec0ad182b696d426295c2f9825a5e6d29d270d5ef95605b85719e474ba59
+</code></pre>
+<p>If all of those match, <strong>the carrier currently on your drive is good</strong> and you do not actually need to recopy it.</p>
+<h2>Corrected preparation script</h2>
+<p>I also corrected the script so this cannot recur:</p>
+<p>Download corrected R26 carrier-preparation script (historical reference: <code>sandbox:[session]/00_PREPARE_R26_CARRIER_CORRECTED.ps1</code>; referenced bytes not established here)</p>
+<p>The critical fix is:</p>
+<pre><code class="language-powershell">$Policy = @(
+    Import-Csv (Join-Path $CarrierRoot &quot;curated\R1FactDailyMonitoring.csv&quot;) |
+    Select-Object -ExpandProperty r26_policy_sha256 -Unique
+)
+
+$PolicyValue =
+    if ($Policy.Count -eq 1) {
+        ([string]$Policy[0]).Trim().ToLowerInvariant()
+    }
+    else {
+        &quot;&quot;
+    }
+
+if (
+    $Policy.Count -ne 1 -or
+    $PolicyValue -ne $ExpectedPolicySha
+) {
+    throw &quot;R26 policy identity mismatch: count=$($Policy.Count); observed=[$PolicyValue]; expected=[$ExpectedPolicySha]&quot;
+}
+</code></pre>
+<h3>You have two valid paths now</h3>
+<p><strong>Fastest path:</strong> run the verification commands above. If they all pass, proceed to opening the R26 PBIP and Refresh All.</p>
+<p><strong>Clean audit path:</strong> replace:</p>
+<pre><code class="language-text">C:\MSBF\PowerBI\R26_Parallel\
+MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY\
+scripts\00_PREPARE_R26_CARRIER.ps1
+</code></pre>
+<p>with the corrected script, then rerun:</p>
+<pre><code class="language-powershell">powershell.exe -NoProfile -ExecutionPolicy Bypass `
+    -File &quot;$DeliveryRoot\scripts\00_PREPARE_R26_CARRIER.ps1&quot; `
+    -HandoffZip &quot;$HandoffZip&quot; `
+    -CarrierRoot &quot;$CarrierRoot&quot;
+</code></pre>
+<p>I prefer the <strong>clean audit path</strong>, because then your execution transcript ends with the script itself reporting:</p>
+<pre><code class="language-text">R26 carrier prepared and verified: C:\MSBF\R26\power_bi\carrier
+</code></pre>
+<p>rather than relying on a manual follow-up to compensate for the script defect.</p>
+</div></article><article id="m-e710781d-ee10-4df5-a0ee-0b3164b6c62b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00606 · 2026-09-02T08:28:31.631000-04:00 · active path</p><div class="bubble"><p>PS C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY&gt; $MonitoringFile = &quot;C:\MSBF\R26\power_bi\carrier\curated\R1FactDailyMonitoring.csv&quot; </p>
+<blockquote>
+<blockquote>
+<p>Test-Path $MonitoringFile </p>
+<p>$Policy = @( 
+    Import-Csv $MonitoringFile | 
+    Select-Object -ExpandProperty r26_policy_sha256 -Unique 
+) </p>
+<p>$Policy </p>
+<p>Write-Host &quot;Unique policy count:&quot; $Policy.Count 
+Write-Host &quot;Exact policy match:&quot; ( 
+    $Policy.Count -eq 1 -and 
+    ([string]$Policy[0]).Trim().ToLowerInvariant() -eq 
+    &quot;6c6a6f8103bb7276c5d1063d900d96070903e82b5f7143431bc150556e092027&quot; 
+) 
+True 
+6c6a6f8103bb7276c5d1063d900d96070903e82b5f7143431bc150556e092027 
+Unique policy count: 1 
+Exact policy match: True 
+PS C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY&gt; (Get-FileHash -Algorithm SHA256 ` </p>
+<blockquote>
+<pre><code>&quot;C:\MSBF\R26\power_bi\carrier\SUCCESSOR_DATA_CATALOG.csv&quot;).Hash.ToLower() 
+</code></pre>
+<p>(Get-FileHash -Algorithm SHA256 ` 
+    &quot;C:\MSBF\R26\power_bi\carrier\curated\R1FactDailyMonitoring.csv&quot;).Hash.ToLower() 
+c21530bc668e9559e9194dcaa21d612935420434a1c54ac8220f7f91b9733c6b 
+900dec0ad182b696d426295c2f9825a5e6d29d270d5ef95605b85719e474ba59            record this and let&#39;s move on.</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</div></article><article id="m-90f2758d-bb9a-4912-8161-4ba4891bc11c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00607 · 2026-09-02T08:28:35.510441-04:00 · active path</p><div class="bubble"><p>Recorded. The carrier-preparation checkpoint is now <strong>PASS by independent local verification</strong>, and the earlier script failure is classified as a verification-script defect only.</p>
+<pre><code class="language-text">R26 CARRIER PREPARATION — PASS
+
+Carrier root
+C:\MSBF\R26\power_bi\carrier
+
+R1FactDailyMonitoring present
+TRUE
+
+Unique R26 policy SHA count
+1
+
+Exact policy SHA
+6c6a6f8103bb7276c5d1063d900d96070903e82b5f7143431bc150556e092027
+PASS
+
+SUCCESSOR_DATA_CATALOG.csv SHA-256
+c21530bc668e9559e9194dcaa21d612935420434a1c54ac8220f7f91b9733c6b
+PASS
+
+R1FactDailyMonitoring.csv SHA-256
+900dec0ad182b696d426295c2f9825a5e6d29d270d5ef95605b85719e474ba59
+PASS
+
+Earlier preparation-script result
+FALSE FAIL caused by PowerShell scalar-array handling
+No source contradiction established
+</code></pre>
+<p>The outer R26 handoff had already independently matched its expected SHA and reported clean-extraction <code>PASS</code>, so the source side is sufficiently controlled to proceed. [export reference: filecite | turn99file0 | L2-L15]</p>
+<h2>Next: open the new R26 Power BI project</h2>
+<p>Keep your old pre-R26 refinement closed. In the same PowerShell window, run:</p>
+<pre><code class="language-powershell">$DeliveryRoot = &quot;C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY&quot;
+
+Get-ChildItem &quot;$DeliveryRoot\project&quot; -Recurse -Filter definition.pbir |
+    Select-Object FullName
+</code></pre>
+<p>We want the <code>definition.pbir</code> underneath the <strong>R26 Report</strong> folder.</p>
+<p>Then use:</p>
+<pre><code class="language-powershell">$R26Pbir = (
+    Get-ChildItem &quot;$DeliveryRoot\project&quot; -Recurse -Filter definition.pbir |
+    Where-Object { $_.FullName -match &quot;Report&quot; } |
+    Select-Object -First 1
+).FullName
+
+Write-Host &quot;Opening:&quot;
+Write-Host $R26Pbir
+
+Start-Process $R26Pbir
+</code></pre>
+<h3>Once Power BI opens</h3>
+<p>Before doing anything else, confirm it is the new branch and not yesterday&#39;s project. Then:</p>
+<ol>
+<li><strong>Home → Refresh</strong></li>
+<li>Let the entire refresh finish.</li>
+<li><strong>Do not start modifying visuals yet.</strong></li>
+<li>If any query fails, send me the <strong>exact query name + full error text</strong>.</li>
+</ol>
+<p>If refresh completes cleanly, our next operation is the supplied:</p>
+<pre><code class="language-text">tests\R26_DESKTOP_CHECKPOINTS.dax
+</code></pre>
+<p>That will be our first physical-model verification before we inspect P02.</p>
+</div></article><article id="m-66a8df2b-d864-47a4-a458-6866c820044d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00608 · 2026-09-02T08:30:27.330000-04:00 · active path</p><div class="bubble"><p>I also updated C:\MSBF\PowerBI\R26_Parallel\MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY\scripts\00_PREPARE_R26_CARRIER.ps1   for documentation purposes.</p>
+</div></article><article id="m-ae6c4a1b-dae9-497a-bbac-1968db988972" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00609 · 2026-09-02T08:30:30.704078-04:00 · active path</p><div class="bubble"><p>Good. Record that as part of the controlled evidence trail:</p>
+<pre><code class="language-text">DOCUMENTATION UPDATE — COMPLETE
+
+Corrected script retained at:
+C:\MSBF\PowerBI\R26_Parallel\
+MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY\
+scripts\00_PREPARE_R26_CARRIER.ps1
+
+Purpose:
+Preserve the corrected scalar-safe R26 policy identity verification in the delivery package.
+
+Status:
+Documentation/control improvement only.
+No carrier/source facts changed.
+No Power BI model/report logic changed.
+</code></pre>
+<p>That is the right thing to do because it prevents the delivery package from retaining a known false-fail condition in its own preparation script.</p>
+<p>We can move on to the <strong>physical Power BI refresh and R26 Desktop checkpoint</strong> now.</p>
+</div></article><article id="m-f3ca8dc8-2600-4fd3-bf4a-f843f790ce25" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00610 · 2026-09-02T08:41:17.071000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 347aff39-414f-40c6-93ce-c7be3dfbe6b8.png</p><div class="bubble"><p>looks like we may have an issue. please advise.</p>
+</div></article><article id="m-d79f328d-6d39-4a08-9414-1ae2fa1912dd" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00611 · 2026-09-02T08:43:04.324409-04:00 · active path</p><div class="bubble"><p>This looks like a <strong>single local source-mount problem</strong>, not 24 separate query defects and not an R26 carrier failure.</p>
+<p>The affected queries shown—<code>DimDate</code>, <code>DimAsOfDate</code>, <code>DimRunCampaign</code>, <code>DimScenario</code>, <code>DimMerchant</code>, etc.—are part of the <strong>pre-existing core Power BI model</strong>. That model still reads its base synthetic source through:</p>
+<pre><code class="language-text">pDataRoot  = \\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi
+pBuildRoot = \\localhost\MSBF_PBI_A1B_SYNTHETIC\build
+</code></pre>
+<p>That UNC share was intentionally mapped to the isolated local synthetic root:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\synthetic_root
+</code></pre>
+<p>with separate <code>pbi</code> and <code>build</code> subdirectories. [export reference: filecite | turn100file10 | L777-L802]</p>
+<p>R26 added a <strong>separate</strong> successor source root at <code>C:\MSBF\R26\power_bi\carrier</code>; it did not replace the core model&#39;s old source. So do <strong>not</strong> repoint <code>pDataRoot</code> to the R26 carrier.</p>
+<p>The message <strong>“The network name cannot be found”</strong> strongly indicates that the local SMB share <code>MSBF_PBI_A1B_SYNTHETIC</code> is no longer registered/available. The accepted model historically depended on that exact share. [export reference: filecite | turn100file4 | L302-L312]</p>
+<h3>First: click Cancel</h3>
+<p>On the Power BI error window, click <strong>Cancel</strong>. Do not edit any Power Query yet.</p>
+<p>Then run this <strong>read-only diagnostic</strong> in your existing PowerShell window:</p>
+<pre><code class="language-powershell">$SyntheticRoot = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\synthetic_root&quot;
+$ShareName     = &quot;MSBF_PBI_A1B_SYNTHETIC&quot;
+$UncRoot       = &quot;\\localhost\$ShareName&quot;
+
+Write-Host &quot;===== PHYSICAL SOURCE =====&quot;
+Write-Host &quot;Synthetic root exists:&quot; (Test-Path $SyntheticRoot)
+Write-Host &quot;PBI folder exists:     &quot; (Test-Path &quot;$SyntheticRoot\pbi&quot;)
+Write-Host &quot;Build folder exists:   &quot; (Test-Path &quot;$SyntheticRoot\build&quot;)
+Write-Host &quot;Core catalog exists:   &quot; (Test-Path &quot;$SyntheticRoot\pbi\data\POWER_BI_DATA_CATALOG.csv&quot;)
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== SMB SHARE =====&quot;
+
+$Share = Get-SmbShare -Name $ShareName -ErrorAction SilentlyContinue
+
+if ($null -eq $Share) {
+    Write-Host &quot;SMB share exists:       False&quot;
+}
+else {
+    Write-Host &quot;SMB share exists:       True&quot;
+    Write-Host &quot;SMB share path:         &quot; $Share.Path
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== UNC ACCESS =====&quot;
+Write-Host &quot;UNC root reachable:     &quot; (Test-Path $UncRoot)
+Write-Host &quot;UNC PBI reachable:      &quot; (Test-Path &quot;$UncRoot\pbi&quot;)
+Write-Host &quot;UNC Build reachable:    &quot; (Test-Path &quot;$UncRoot\build&quot;)
+Write-Host &quot;UNC catalog reachable:  &quot; (Test-Path &quot;$UncRoot\pbi\data\POWER_BI_DATA_CATALOG.csv&quot;)
+</code></pre>
+<h3>What I expect</h3>
+<p>Most likely you&#39;ll get something like:</p>
+<pre><code class="language-text">Synthetic root exists: True
+PBI folder exists:      True
+Build folder exists:    True
+Core catalog exists:    True
+
+SMB share exists:       False
+
+UNC root reachable:     False
+UNC PBI reachable:      False
+UNC Build reachable:    False
+UNC catalog reachable:  False
+</code></pre>
+<p>If so, this is straightforward: <strong>the underlying files are still there; only the local SMB share disappeared.</strong></p>
+<h3>If the physical folders are TRUE but SMB share is FALSE</h3>
+<p>Close Power BI Desktop first.</p>
+<p>Then open <strong>PowerShell as Administrator</strong> and run this exact block:</p>
+<pre><code class="language-powershell">Set-StrictMode -Version Latest
+$ErrorActionPreference = &quot;Stop&quot;
+
+$SyntheticRoot = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\synthetic_root&quot;
+$ShareName     = &quot;MSBF_PBI_A1B_SYNTHETIC&quot;
+$Identity      = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+
+if (-not (Test-Path &quot;$SyntheticRoot\pbi\data\POWER_BI_DATA_CATALOG.csv&quot;)) {
+    throw &quot;STOP: governing PBI source catalog is missing from the synthetic root.&quot;
+}
+
+if (-not (Test-Path &quot;$SyntheticRoot\build&quot;)) {
+    throw &quot;STOP: build root is missing from the synthetic root.&quot;
+}
+
+$ExistingShare = Get-SmbShare -Name $ShareName -ErrorAction SilentlyContinue
+
+if ($null -ne $ExistingShare) {
+    if ($ExistingShare.Path -ne $SyntheticRoot) {
+        throw &quot;STOP: share already exists but points to [$($ExistingShare.Path)] instead of [$SyntheticRoot].&quot;
+    }
+
+    Write-Host &quot;Existing share already points to the correct root.&quot;
+}
+else {
+    New-SmbShare `
+        -Name $ShareName `
+        -Path $SyntheticRoot `
+        -ReadAccess $Identity `
+        -CachingMode None |
+        Out-Null
+
+    Write-Host &quot;Created read-only local SMB share for:&quot; $Identity
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== SHARE IDENTITY =====&quot;
+Get-SmbShare -Name $ShareName |
+    Select-Object Name, Path, Description |
+    Format-List
+
+Write-Host &quot;===== SHARE ACCESS =====&quot;
+Get-SmbShareAccess -Name $ShareName |
+    Format-Table AccountName, AccessControlType, AccessRight -AutoSize
+
+Write-Host &quot;===== UNC VALIDATION =====&quot;
+Write-Host &quot;UNC root:   &quot; (Test-Path &quot;\\localhost\$ShareName&quot;)
+Write-Host &quot;UNC PBI:    &quot; (Test-Path &quot;\\localhost\$ShareName\pbi&quot;)
+Write-Host &quot;UNC Build:  &quot; (Test-Path &quot;\\localhost\$ShareName\build&quot;)
+Write-Host &quot;UNC Catalog:&quot; (Test-Path &quot;\\localhost\$ShareName\pbi\data\POWER_BI_DATA_CATALOG.csv&quot;)
+</code></pre>
+<p>The important final result is:</p>
+<pre><code class="language-text">UNC root:    True
+UNC PBI:     True
+UNC Build:   True
+UNC Catalog: True
+</code></pre>
+<p>The historic controlled source environment specifically used read access for the executing user rather than broad share access. [export reference: filecite | turn100file4 | L302-L310]</p>
+<h3>Then reopen R26 Power BI</h3>
+<p>Once all four UNC checks are <code>True</code>:</p>
+<ol>
+<li>Reopen the <strong>R26 parallel refinement</strong> project.</li>
+<li>Do not change any parameters.</li>
+<li>Run <strong>Home → Refresh</strong> again.</li>
+</ol>
+<p>At that point Power BI will have both source families available:</p>
+<pre><code class="language-text">CORE / PREDECESSOR MODEL
+\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi
+\\localhost\MSBF_PBI_A1B_SYNTHETIC\build
+
+R26 SUCCESSOR CARRIER
+C:\MSBF\R26\power_bi\carrier
+</code></pre>
+<p>That is the intended architecture.</p>
+<h3>One condition where we should stop</h3>
+<p>If your first diagnostic instead says:</p>
+<pre><code class="language-text">Synthetic root exists: False
+</code></pre>
+<p>or the root exists but:</p>
+<pre><code class="language-text">Core catalog exists: False
+</code></pre>
+<p><strong>do not create a new empty share and do not modify Power BI.</strong> That would mean the underlying accepted A1b synthetic source itself is missing, and we should restore the exact source carrier rather than fabricate a replacement path.</p>
+<p>Run the first diagnostic block and paste the output here. I expect we can resolve this without modifying any of yesterday&#39;s Power BI work.</p>
+</div></article><article id="m-265da0e8-c6cf-48c8-a63f-d2a53e8d505a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00612 · 2026-09-02T08:45:37.141000-04:00 · active path</p><div class="bubble"><p>===== PHYSICAL SOURCE =====
+Synthetic root exists: False
+PBI folder exists:      False
+Build folder exists:    False
+Core catalog exists:    False</p>
+<p>===== SMB SHARE =====
+SMB share exists:       False</p>
+<p>===== UNC ACCESS =====
+UNC root reachable:      False
+UNC PBI reachable:       False
+UNC Build reachable:     False
+UNC catalog reachable:   False</p>
+</div></article><article id="m-40d0ee9d-d779-4176-a5e3-4af1d9a086d5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00613 · 2026-09-02T08:46:57.679313-04:00 · active path</p><div class="bubble"><p>This confirms the issue is <strong>not R26 and not the Power BI model</strong>. The accepted legacy/core synthetic source tree itself is no longer on this machine at the path the model expects.</p>
+<p>We should restore the <strong>exact accepted source</strong>, not repoint Power BI or create replacement files. The best restoration authority is the later accepted <strong>A1b Focused R2 carrier</strong>, not the earlier failed R1 candidate. Independent Audit made Focused R2 the controlling A1b local-engine authority, and specifically confirmed that all <strong>222 synthetic-root files were unchanged</strong> from the accepted source. [export reference: filecite | turn103file1 | L61-L68] [export reference: filecite | turn103file1 | L88-L96]</p>
+<p>Its exact package identity is:</p>
+<pre><code class="language-text">MSBF_PBI_A1B_FOCUSED_R2_INDEPENDENT_AUDIT_SUBMISSION_20260821.zip
+
+Bytes:
+34,813,542
+
+SHA-256:
+8dddea7de21f1ead227d9ed9bd6fdcbe439b0e48aa11f3cb16023e0b77744b02
+
+ZIP members:
+441
+</code></pre>
+<p>That carrier passed archive validation and contains the <code>synthetic_root</code> we need. [export reference: filecite | turn103file6 | L527-L568]</p>
+<h2>First, keep Power BI closed</h2>
+<p>Cancel/close the failed R26 Power BI session. Do <strong>not save changes caused by this failed refresh</strong> if Desktop asks whether to save.</p>
+<p>We want the project untouched while we restore its source dependency.</p>
+<h2>Step 1 — find the accepted Focused R2 carrier on your PC</h2>
+<p>Open PowerShell and run:</p>
+<pre><code class="language-powershell">$TargetName = &quot;MSBF_PBI_A1B_FOCUSED_R2_INDEPENDENT_AUDIT_SUBMISSION_20260821.zip&quot;
+
+$SearchRoots = @(
+    &quot;C:\MSBF&quot;,
+    &quot;$env:USERPROFILE\Downloads&quot;,
+    &quot;$env:USERPROFILE\Desktop&quot;,
+    &quot;$env:USERPROFILE\Documents&quot;
+)
+
+$Found = foreach ($Root in $SearchRoots) {
+    if (Test-Path -LiteralPath $Root) {
+        Get-ChildItem `
+            -LiteralPath $Root `
+            -File `
+            -Recurse `
+            -Filter $TargetName `
+            -ErrorAction SilentlyContinue
+    }
+}
+
+$Found |
+    Select-Object FullName, Length, LastWriteTime |
+    Format-Table -AutoSize
+</code></pre>
+<h3>Ideal result</h3>
+<p>Something like:</p>
+<pre><code class="language-text">FullName
+--------
+C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_INDEPENDENT_AUDIT_SUBMISSION_20260821.zip
+</code></pre>
+<p>If that exact ZIP is found, verify it immediately:</p>
+<pre><code class="language-powershell">$ExpectedSha =
+    &quot;8dddea7de21f1ead227d9ed9bd6fdcbe439b0e48aa11f3cb16023e0b77744b02&quot;
+
+$CarrierZip = $Found[0].FullName
+
+$ActualSha = (
+    Get-FileHash `
+        -LiteralPath $CarrierZip `
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+[pscustomobject]@{
+    File     = $CarrierZip
+    Bytes    = (Get-Item -LiteralPath $CarrierZip).Length
+    Expected = $ExpectedSha
+    Actual   = $ActualSha
+    Match    = ($ActualSha -eq $ExpectedSha)
+} | Format-List
+</code></pre>
+<p>We require:</p>
+<pre><code class="language-text">Bytes : 34813542
+Match : True
+</code></pre>
+<p>Do <strong>not extract it yet if the hash does not match</strong>.</p>
+<hr>
+<h1>If the accepted carrier is found and matches</h1>
+<p>Then we can restore the dependency in one controlled action.</p>
+<p>The original accepted architecture was:</p>
+<pre><code class="language-text">UNC:
+\\localhost\MSBF_PBI_A1B_SYNTHETIC
+
+Physical:
+C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\synthetic_root
+
+Children:
+pbi
+build
+</code></pre>
+<p>That mapping and those exact parameter roots were part of the accepted A1b environment. [export reference: filecite | turn101file12 | L624-L649]</p>
+<h2>Step 2 — extract and verify the accepted synthetic root</h2>
+<p>Use an <strong>Administrator PowerShell</strong> for this complete block:</p>
+<pre><code class="language-powershell">Set-StrictMode -Version Latest
+$ErrorActionPreference = &quot;Stop&quot;
+$ProgressPreference = &quot;SilentlyContinue&quot;
+
+$CarrierZip = &quot;PUT_THE_EXACT_FOUND_ZIP_PATH_HERE&quot;
+
+$ExpectedCarrierSha =
+    &quot;8dddea7de21f1ead227d9ed9bd6fdcbe439b0e48aa11f3cb16023e0b77744b02&quot;
+
+$RestoreParent =
+    &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+
+$RestoreRoot =
+    &quot;$RestoreParent\synthetic_root&quot;
+
+$TempRoot =
+    &quot;C:\MSBF\_A1B_FOCUSED_R2_SOURCE_RESTORE_TEMP_20260902&quot;
+
+$ShareName =
+    &quot;MSBF_PBI_A1B_SYNTHETIC&quot;
+
+# ------------------------------------------------------------
+# 1. Verify sealed accepted carrier.
+# ------------------------------------------------------------
+
+if (-not (Test-Path -LiteralPath $CarrierZip)) {
+    throw &quot;STOP: accepted Focused R2 carrier ZIP not found.&quot;
+}
+
+$ActualCarrierSha = (
+    Get-FileHash `
+        -LiteralPath $CarrierZip `
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+if ($ActualCarrierSha -ne $ExpectedCarrierSha) {
+    throw &quot;STOP: Focused R2 carrier SHA-256 mismatch.&quot;
+}
+
+if ((Get-Item -LiteralPath $CarrierZip).Length -ne 34813542) {
+    throw &quot;STOP: Focused R2 carrier byte-size mismatch.&quot;
+}
+
+Write-Host &quot;Accepted Focused R2 carrier identity: PASS&quot;
+
+# ------------------------------------------------------------
+# 2. Fail closed if restoration target unexpectedly exists.
+# ------------------------------------------------------------
+
+if (Test-Path -LiteralPath $RestoreRoot) {
+    throw &quot;STOP: restoration target already exists. Do not overwrite it.&quot;
+}
+
+if (Test-Path -LiteralPath $TempRoot) {
+    Remove-Item `
+        -LiteralPath $TempRoot `
+        -Recurse `
+        -Force
+}
+
+New-Item `
+    -ItemType Directory `
+    -Path $TempRoot `
+    -Force |
+    Out-Null
+
+# ------------------------------------------------------------
+# 3. Extract accepted carrier to temporary location.
+# ------------------------------------------------------------
+
+Expand-Archive `
+    -LiteralPath $CarrierZip `
+    -DestinationPath $TempRoot `
+    -Force
+
+$ExtractedSyntheticRoot =
+    Join-Path $TempRoot &quot;synthetic_root&quot;
+
+if (-not (Test-Path -LiteralPath $ExtractedSyntheticRoot)) {
+    throw &quot;STOP: synthetic_root not found in accepted carrier.&quot;
+}
+
+if (-not (Test-Path -LiteralPath &quot;$ExtractedSyntheticRoot\pbi&quot;)) {
+    throw &quot;STOP: accepted synthetic_root\pbi missing.&quot;
+}
+
+if (-not (Test-Path -LiteralPath &quot;$ExtractedSyntheticRoot\build&quot;)) {
+    throw &quot;STOP: accepted synthetic_root\build missing.&quot;
+}
+
+# ------------------------------------------------------------
+# 4. Verify exact source population count.
+# ------------------------------------------------------------
+
+$SourceFiles = @(
+    Get-ChildItem `
+        -LiteralPath $ExtractedSyntheticRoot `
+        -File `
+        -Recurse `
+        -Force
+)
+
+Write-Host &quot;Synthetic-root file count:&quot; $SourceFiles.Count
+
+if ($SourceFiles.Count -ne 222) {
+    throw &quot;STOP: expected exactly 222 synthetic-root files.&quot;
+}
+
+# ------------------------------------------------------------
+# 5. Locate and enforce the supplied synthetic-root manifest.
+# ------------------------------------------------------------
+
+$ManifestFile = @(
+    Get-ChildItem `
+        -LiteralPath $TempRoot `
+        -File `
+        -Recurse `
+        -Force |
+    Where-Object {
+        $_.Name -eq &quot;synthetic_root_MANIFEST_SHA256.csv&quot;
+    }
+)
+
+if ($ManifestFile.Count -ne 1) {
+    throw &quot;STOP: expected exactly one synthetic-root SHA-256 manifest.&quot;
+}
+
+$ManifestRows = @(
+    Import-Csv -LiteralPath $ManifestFile[0].FullName
+)
+
+Write-Host &quot;Synthetic-root manifest rows:&quot; $ManifestRows.Count
+
+if ($ManifestRows.Count -ne 222) {
+    throw &quot;STOP: synthetic-root manifest does not contain 222 rows.&quot;
+}
+
+$ManifestFailures = @()
+
+foreach ($Row in $ManifestRows) {
+
+    $FilePath =
+        Join-Path $ExtractedSyntheticRoot $Row.relative_path
+
+    if (-not (Test-Path -LiteralPath $FilePath)) {
+        $ManifestFailures +=
+            &quot;MISSING: $($Row.relative_path)&quot;
+        continue
+    }
+
+    $File = Get-Item -LiteralPath $FilePath
+
+    if ([int64]$Row.bytes -ne $File.Length) {
+        $ManifestFailures +=
+            &quot;BYTE_MISMATCH: $($Row.relative_path)&quot;
+        continue
+    }
+
+    $ActualHash = (
+        Get-FileHash `
+            -LiteralPath $FilePath `
+            -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+
+    if ($ActualHash -ne $Row.sha256.ToLowerInvariant()) {
+        $ManifestFailures +=
+            &quot;HASH_MISMATCH: $($Row.relative_path)&quot;
+    }
+}
+
+if ($ManifestFailures.Count -gt 0) {
+    $ManifestFailures | Format-Table
+    throw &quot;STOP: accepted synthetic-root manifest verification failed.&quot;
+}
+
+Write-Host &quot;Synthetic-root manifest verification: PASS&quot;
+
+# ------------------------------------------------------------
+# 6. Restore exact accepted physical source tree.
+# ------------------------------------------------------------
+
+New-Item `
+    -ItemType Directory `
+    -Path $RestoreParent `
+    -Force |
+    Out-Null
+
+Copy-Item `
+    -LiteralPath $ExtractedSyntheticRoot `
+    -Destination $RestoreParent `
+    -Recurse
+
+$RestoredFiles = @(
+    Get-ChildItem `
+        -LiteralPath $RestoreRoot `
+        -File `
+        -Recurse `
+        -Force
+)
+
+if ($RestoredFiles.Count -ne 222) {
+    throw &quot;STOP: restored source does not contain exactly 222 files.&quot;
+}
+
+Write-Host &quot;Accepted physical synthetic source restored: PASS&quot;
+
+# ------------------------------------------------------------
+# 7. Restore exact local SMB share.
+# ------------------------------------------------------------
+
+$ExistingShare =
+    Get-SmbShare `
+        -Name $ShareName `
+        -ErrorAction SilentlyContinue
+
+if ($null -ne $ExistingShare) {
+    if ($ExistingShare.Path -ne $RestoreRoot) {
+        throw &quot;STOP: existing SMB share points to an unexpected path.&quot;
+    }
+}
+else {
+
+    $Identity =
+        [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+
+    New-SmbShare `
+        -Name $ShareName `
+        -Path $RestoreRoot `
+        -ReadAccess $Identity `
+        -CachingMode None |
+        Out-Null
+}
+
+# ------------------------------------------------------------
+# 8. Final physical / UNC validation.
+# ------------------------------------------------------------
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== RESTORED SOURCE =====&quot;
+
+Write-Host &quot;Physical root:&quot; `
+    (Test-Path $RestoreRoot)
+
+Write-Host &quot;Physical PBI:&quot; `
+    (Test-Path &quot;$RestoreRoot\pbi&quot;)
+
+Write-Host &quot;Physical build:&quot; `
+    (Test-Path &quot;$RestoreRoot\build&quot;)
+
+Write-Host &quot;File count:&quot; `
+    @(Get-ChildItem $RestoreRoot -File -Recurse).Count
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== SMB SHARE =====&quot;
+
+Get-SmbShare -Name $ShareName |
+    Select-Object Name,Path |
+    Format-List
+
+Get-SmbShareAccess -Name $ShareName |
+    Format-Table `
+        AccountName,
+        AccessControlType,
+        AccessRight `
+        -AutoSize
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== UNC ACCESS =====&quot;
+
+Write-Host &quot;UNC root:&quot; `
+    (Test-Path &quot;\\localhost\$ShareName&quot;)
+
+Write-Host &quot;UNC PBI:&quot; `
+    (Test-Path &quot;\\localhost\$ShareName\pbi&quot;)
+
+Write-Host &quot;UNC build:&quot; `
+    (Test-Path &quot;\\localhost\$ShareName\build&quot;)
+
+Write-Host &quot;&quot;
+Write-Host &quot;A1B ACCEPTED SOURCE RESTORE: PASS&quot;
+</code></pre>
+<h3>One thing to change before running it</h3>
+<p>Replace:</p>
+<pre><code class="language-powershell">$CarrierZip = &quot;PUT_THE_EXACT_FOUND_ZIP_PATH_HERE&quot;
+</code></pre>
+<p>with the path returned by Step 1.</p>
+<hr>
+<h2>Why this is preferable to changing the R26 model</h2>
+<p>The current R26 carrier is indeed a <strong>complete R20-derived successor carrier</strong>, but it contains the R4/R1 successor objects—not the older core <code>DimDate</code>, <code>DimMerchant</code>, <code>DimScenario</code>, etc. The R26 handoff says only the R26 monitoring object, six M2.11/M2.12 objects and candidate authority metadata are rebased; the remainder of that carrier is the R20-derived successor population. It does not replace the A1b core synthetic source.</p>
+<p>And the accepted Focused R2 authority explicitly states that the source carrier, both source-root parameters, and all 222 synthetic-root files remained unchanged. [export reference: filecite | turn103file5 | L420-L448]</p>
+<p>So our intended architecture remains:</p>
+<pre><code class="language-text">CORE POWER BI MODEL
+        ↓
+\\localhost\MSBF_PBI_A1B_SYNTHETIC
+        ↓
+accepted 222-file A1b synthetic_root
+
+
+R1/R26 SUCCESSOR MODEL
+        ↓
+C:\MSBF\R26\power_bi\carrier
+        ↓
+R4 + R17/R26 + M2.11/M2.12 successor facts
+</code></pre>
+<p>We should restore the first leg rather than collapse the two source boundaries.</p>
+<h3>For now</h3>
+<p>Run <strong>Step 1 only</strong> first—the ZIP search—and paste the result.</p>
+<p>If the exact Focused R2 ZIP is present and its SHA matches, recovery should be straightforward and should require <strong>zero Power BI semantic or visual rework</strong>.</p>
+</div></article><article id="m-b16c7ae9-4130-49c5-828a-41991f761377" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00614 · 2026-09-02T08:50:25.752000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: f4a18100-f62f-46df-8e7b-a4fdd0136df7.png</p><div class="bubble"><p>it is here: </p>
+</div></article><article id="m-a905de47-8dab-486d-bc7c-0ea53b203c66" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00615 · 2026-09-02T08:50:29.252507-04:00 · active path</p><div class="bubble"><p>Yes — that is the exact carrier we need. Windows Explorer is hiding the <code>.zip</code> extension, but your screenshot shows both the ZIP and its SHA sidecar in <code>C:\MSBF</code>.</p>
+<p>The accepted Focused R2 carrier should be exactly <strong>34,813,542 bytes</strong>, SHA-256 <code>8dddea7d...44b02</code>, with 441 members. [export reference: filecite | turn103file9 | L792-L801]</p>
+<h3>1. Verify the exact local ZIP first</h3>
+<p>Keep Power BI closed. In PowerShell run:</p>
+<pre><code class="language-powershell">$CarrierZip = &quot;C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_INDEPENDENT_AUDIT_SUBMISSION_20260821.zip&quot;
+
+Test-Path $CarrierZip
+
+$CarrierFile = Get-Item -LiteralPath $CarrierZip
+$CarrierHash = (
+    Get-FileHash -LiteralPath $CarrierZip -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+[pscustomobject]@{
+    Path          = $CarrierFile.FullName
+    Bytes         = $CarrierFile.Length
+    ExpectedBytes = 34813542
+    ByteMatch     = ($CarrierFile.Length -eq 34813542)
+    SHA256        = $CarrierHash
+    ExpectedSHA   = &quot;8dddea7de21f1ead227d9ed9bd6fdcbe439b0e48aa11f3cb16023e0b77744b02&quot;
+    HashMatch     = (
+        $CarrierHash -eq
+        &quot;8dddea7de21f1ead227d9ed9bd6fdcbe439b0e48aa11f3cb16023e0b77744b02&quot;
+    )
+} | Format-List
+</code></pre>
+<p>We require:</p>
+<pre><code class="language-text">True
+
+Bytes         : 34813542
+ByteMatch     : True
+HashMatch     : True
+</code></pre>
+<p>If those pass, proceed.</p>
+<h2>2. Restore the accepted 222-file source</h2>
+<p>For this next block, open <strong>PowerShell as Administrator</strong>.</p>
+<p>This version is slightly improved from my prior script: it does <strong>not</strong> assume the ZIP has no outer package directory. It discovers the one exact <code>synthetic_root</code> inside the accepted package.</p>
+<p>Copy/paste the entire block:</p>
+<pre><code class="language-powershell">Set-StrictMode -Version Latest
+$ErrorActionPreference = &quot;Stop&quot;
+$ProgressPreference = &quot;SilentlyContinue&quot;
+
+$CarrierZip =
+    &quot;C:\MSBF\MSBF_PBI_A1B_FOCUSED_R2_INDEPENDENT_AUDIT_SUBMISSION_20260821.zip&quot;
+
+$ExpectedCarrierSha =
+    &quot;8dddea7de21f1ead227d9ed9bd6fdcbe439b0e48aa11f3cb16023e0b77744b02&quot;
+
+$ExpectedCarrierBytes = 34813542
+
+$RestoreParent =
+    &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+
+$RestoreRoot =
+    Join-Path $RestoreParent &quot;synthetic_root&quot;
+
+$TempRoot =
+    &quot;C:\MSBF\_A1B_FOCUSED_R2_SOURCE_RESTORE_TEMP_20260902&quot;
+
+$ShareName =
+    &quot;MSBF_PBI_A1B_SYNTHETIC&quot;
+
+Write-Host &quot;===== 1. VERIFY ACCEPTED CARRIER =====&quot;
+
+if (-not (Test-Path -LiteralPath $CarrierZip)) {
+    throw &quot;STOP: Focused R2 carrier ZIP not found.&quot;
+}
+
+$CarrierItem = Get-Item -LiteralPath $CarrierZip
+
+if ($CarrierItem.Length -ne $ExpectedCarrierBytes) {
+    throw &quot;STOP: Focused R2 carrier byte-size mismatch.&quot;
+}
+
+$ActualCarrierSha = (
+    Get-FileHash `
+        -LiteralPath $CarrierZip `
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+if ($ActualCarrierSha -ne $ExpectedCarrierSha) {
+    throw &quot;STOP: Focused R2 carrier SHA-256 mismatch.&quot;
+}
+
+Write-Host &quot;Accepted Focused R2 carrier: PASS&quot;
+
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== 2. PREPARE TEMP EXTRACTION =====&quot;
+
+if (Test-Path -LiteralPath $RestoreRoot) {
+    throw &quot;STOP: restoration target already exists. Review before overwriting.&quot;
+}
+
+if (Test-Path -LiteralPath $TempRoot) {
+    Remove-Item `
+        -LiteralPath $TempRoot `
+        -Recurse `
+        -Force
+}
+
+New-Item `
+    -ItemType Directory `
+    -Path $TempRoot `
+    -Force |
+    Out-Null
+
+Expand-Archive `
+    -LiteralPath $CarrierZip `
+    -DestinationPath $TempRoot `
+    -Force
+
+Write-Host &quot;Carrier extracted.&quot;
+
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== 3. LOCATE ACCEPTED SYNTHETIC ROOT =====&quot;
+
+$SyntheticRoots = @(
+    Get-ChildItem `
+        -LiteralPath $TempRoot `
+        -Directory `
+        -Recurse `
+        -Force |
+    Where-Object {
+        $_.Name -eq &quot;synthetic_root&quot; -and
+        (Test-Path -LiteralPath (Join-Path $_.FullName &quot;pbi&quot;)) -and
+        (Test-Path -LiteralPath (Join-Path $_.FullName &quot;build&quot;))
+    }
+)
+
+if ($SyntheticRoots.Count -ne 1) {
+    throw &quot;STOP: expected exactly one valid synthetic_root; found $($SyntheticRoots.Count).&quot;
+}
+
+$ExtractedSyntheticRoot = $SyntheticRoots[0].FullName
+
+Write-Host &quot;Synthetic root:&quot;
+Write-Host $ExtractedSyntheticRoot
+
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== 4. VERIFY 222-FILE SOURCE POPULATION =====&quot;
+
+$SourceFiles = @(
+    Get-ChildItem `
+        -LiteralPath $ExtractedSyntheticRoot `
+        -File `
+        -Recurse `
+        -Force
+)
+
+Write-Host &quot;Synthetic-root files:&quot; $SourceFiles.Count
+
+if ($SourceFiles.Count -ne 222) {
+    throw &quot;STOP: expected exactly 222 synthetic-root files.&quot;
+}
+
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== 5. LOCATE AND VERIFY SOURCE MANIFEST =====&quot;
+
+$ManifestFiles = @(
+    Get-ChildItem `
+        -LiteralPath $TempRoot `
+        -File `
+        -Recurse `
+        -Force |
+    Where-Object {
+        $_.Name -eq &quot;synthetic_root_MANIFEST_SHA256.csv&quot;
+    }
+)
+
+if ($ManifestFiles.Count -ne 1) {
+    throw &quot;STOP: expected exactly one synthetic_root_MANIFEST_SHA256.csv; found $($ManifestFiles.Count).&quot;
+}
+
+$ManifestPath = $ManifestFiles[0].FullName
+$ManifestRows = @(Import-Csv -LiteralPath $ManifestPath)
+
+Write-Host &quot;Manifest rows:&quot; $ManifestRows.Count
+
+if ($ManifestRows.Count -ne 222) {
+    throw &quot;STOP: expected 222 manifest rows.&quot;
+}
+
+$ManifestFailures = @()
+
+foreach ($Row in $ManifestRows) {
+
+    $RelativePath = [string]$Row.relative_path
+    $ExpectedBytes = [int64]$Row.bytes
+    $ExpectedHash = ([string]$Row.sha256).ToLowerInvariant()
+
+    $PhysicalPath =
+        Join-Path $ExtractedSyntheticRoot $RelativePath
+
+    if (-not (Test-Path -LiteralPath $PhysicalPath)) {
+        $ManifestFailures += &quot;MISSING: $RelativePath&quot;
+        continue
+    }
+
+    $Item = Get-Item -LiteralPath $PhysicalPath
+
+    if ($Item.Length -ne $ExpectedBytes) {
+        $ManifestFailures += &quot;BYTE_MISMATCH: $RelativePath&quot;
+        continue
+    }
+
+    $ActualHash = (
+        Get-FileHash `
+            -LiteralPath $PhysicalPath `
+            -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+
+    if ($ActualHash -ne $ExpectedHash) {
+        $ManifestFailures += &quot;HASH_MISMATCH: $RelativePath&quot;
+    }
+}
+
+if ($ManifestFailures.Count -gt 0) {
+    $ManifestFailures
+    throw &quot;STOP: synthetic-root manifest verification failed.&quot;
+}
+
+Write-Host &quot;Synthetic-root manifest: PASS&quot;
+
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== 6. RESTORE PHYSICAL SOURCE =====&quot;
+
+New-Item `
+    -ItemType Directory `
+    -Path $RestoreParent `
+    -Force |
+    Out-Null
+
+Copy-Item `
+    -LiteralPath $ExtractedSyntheticRoot `
+    -Destination $RestoreParent `
+    -Recurse
+
+$RestoredFiles = @(
+    Get-ChildItem `
+        -LiteralPath $RestoreRoot `
+        -File `
+        -Recurse `
+        -Force
+)
+
+if ($RestoredFiles.Count -ne 222) {
+    throw &quot;STOP: restored source does not contain exactly 222 files.&quot;
+}
+
+Write-Host &quot;Physical source restored: PASS&quot;
+
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== 7. RESTORE LOCAL SMB SHARE =====&quot;
+
+$ExistingShare =
+    Get-SmbShare `
+        -Name $ShareName `
+        -ErrorAction SilentlyContinue
+
+if ($null -ne $ExistingShare) {
+
+    if (
+        [IO.Path]::GetFullPath($ExistingShare.Path).TrimEnd(&#39;\&#39;) -ne
+        [IO.Path]::GetFullPath($RestoreRoot).TrimEnd(&#39;\&#39;)
+    ) {
+        throw &quot;STOP: existing share points to [$($ExistingShare.Path)], not [$RestoreRoot].&quot;
+    }
+
+    Write-Host &quot;Existing SMB share already points to correct source.&quot;
+}
+else {
+
+    $Identity =
+        [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+
+    New-SmbShare `
+        -Name $ShareName `
+        -Path $RestoreRoot `
+        -ReadAccess $Identity `
+        -CachingMode None |
+        Out-Null
+
+    Write-Host &quot;SMB share created for:&quot; $Identity
+}
+
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== 8. FINAL SOURCE VALIDATION =====&quot;
+
+$UncRoot = &quot;\\localhost\$ShareName&quot;
+
+$FinalChecks = [ordered]@{
+    &quot;Physical root&quot;  = Test-Path $RestoreRoot
+    &quot;Physical pbi&quot;   = Test-Path &quot;$RestoreRoot\pbi&quot;
+    &quot;Physical build&quot; = Test-Path &quot;$RestoreRoot\build&quot;
+    &quot;UNC root&quot;       = Test-Path $UncRoot
+    &quot;UNC pbi&quot;        = Test-Path &quot;$UncRoot\pbi&quot;
+    &quot;UNC build&quot;      = Test-Path &quot;$UncRoot\build&quot;
+}
+
+$FinalChecks.GetEnumerator() |
+    Format-Table -AutoSize
+
+if ($FinalChecks.Values -contains $false) {
+    throw &quot;STOP: one or more final physical/UNC checks failed.&quot;
+}
+
+$FinalCount = @(
+    Get-ChildItem `
+        -LiteralPath $RestoreRoot `
+        -File `
+        -Recurse `
+        -Force
+).Count
+
+Write-Host &quot;&quot;
+Write-Host &quot;Restored source files:&quot; $FinalCount
+
+if ($FinalCount -ne 222) {
+    throw &quot;STOP: final restored source count is not 222.&quot;
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;SMB share:&quot;
+Get-SmbShare -Name $ShareName |
+    Select-Object Name, Path |
+    Format-List
+
+Write-Host &quot;Share permissions:&quot;
+Get-SmbShareAccess -Name $ShareName |
+    Format-Table AccountName, AccessControlType, AccessRight -AutoSize
+
+Write-Host &quot;&quot;
+Write-Host &quot;A1B ACCEPTED SOURCE RESTORE: PASS&quot;
+</code></pre>
+<p>The authoritative history confirms that this accepted source consisted of exactly <strong>222 synthetic-root files</strong>, with the UNC parameters remaining <code>\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi</code> and <code>...\build</code>. [export reference: filecite | turn103file5 | L420-L448]</p>
+<h3>What success should look like</h3>
+<p>At the end, we want something like:</p>
+<pre><code class="language-text">Physical root   True
+Physical pbi    True
+Physical build  True
+UNC root        True
+UNC pbi         True
+UNC build       True
+
+Restored source files: 222
+
+A1B ACCEPTED SOURCE RESTORE: PASS
+</code></pre>
+<p>Do <strong>not</strong> reopen Power BI until that final PASS appears.</p>
+<p>Once it does, we&#39;ll retry the R26 refresh with <strong>zero Power Query changes</strong>.</p>
+</div></article><article id="m-aba63a79-44b1-44d6-9880-15b3c92ff640" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00616 · 2026-09-02T08:54:27.620000-04:00 · active path</p><p class="note">9 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 4f96f2fa-47bd-4c6e-9a6d-bb475ae32790.png; 0cbd431c-8450-4ca1-b0c1-ffd7acc8c803.png; 24b96d5f-069e-4292-b844-2e210a7e2989.png; 685eff9c-b855-435c-9dfe-036737b1250a.png; bd4edd63-685e-476e-b94c-e286ca764154.png; 29b266eb-cbc7-49ba-9dd9-3e0399886ec1.png; d407f8bc-f0da-494b-8b45-33efe0170a3c.png; 817c2f7b-7693-4806-86c6-477abf0732df.png; b7ee93b6-2d75-4ebe-a1a9-40e81e81b7b6.png</p><div class="bubble"><p>also, before we do that, we had been working here. not sure if that is relevant or not.</p>
+</div></article><article id="m-957ae1b4-e859-47c0-9e56-6c119864a053" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00617 · 2026-09-02T08:54:31.232933-04:00 · active path</p><div class="bubble"><p>Yes — this is relevant, and it actually clarifies the architecture. <strong>Do not delete, move, or repoint anything under <code>C:\MSBF\R22\power_bi</code>.</strong> That tree is your preserved R22/R1 successor state and the working lineage we have been refining.</p>
+<p>What your screenshots show is that there are <strong>two different source families</strong> in this Power BI model.</p>
+<pre><code class="language-text">A. CORE / ORIGINAL POWER BI SOURCE
+   \\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi
+   \\localhost\MSBF_PBI_A1B_SYNTHETIC\build
+
+   Supplies things such as:
+   DimDate
+   DimAsOfDate
+   DimRunCampaign
+   DimScenario
+   DimMerchant
+   DimApplication
+   DimIndustry
+   DimAcquisitionSource
+   core validation/governance facts
+</code></pre>
+<p>That is the source that is currently missing. The accepted A1b design used exactly that UNC root and an underlying 222-file synthetic source tree. [export reference: filecite | turn103file5 | L420-L448]</p>
+<p>Separately:</p>
+<pre><code class="language-text">B. SUCCESSOR / R1-R26 SOURCE
+
+R22 predecessor:
+C:\MSBF\R22\power_bi\carrier
+
+R26 candidate:
+C:\MSBF\R26\power_bi\carrier
+</code></pre>
+<p>Your screenshots of <code>C:\MSBF\R22\power_bi\carrier</code> prove what it contains: <code>R1DimApplicationScenario</code>, <code>R1FactDailyMonitoring</code>, <code>R1FactFinalDecision</code>, offer candidates, strategy simulations, G3-v2 certification, R4/R17/R19 raw files, etc. That is the <strong>successor carrier</strong>, not the core A1b source.</p>
+<p>So the R22 folder is highly relevant to <strong>preserving our work and lineage</strong>, but it cannot fix the <code>DimDate / DimMerchant / DimScenario</code> refresh failure.</p>
+<h3>What the rest of R22 is</h3>
+<p>Your folders line up exactly with the history of our recent work:</p>
+<pre><code class="language-text">C:\MSBF\R22\power_bi\carrier
+    → accepted/pre-R26 successor data carrier
+
+C:\MSBF\R22\power_bi\pbip
+    → frozen R22 successor PBIP candidate
+
+C:\MSBF\R22\power_bi\desktop_working\
+    MSBF_PBI_R1_SUCCESSOR_CANDIDATE_R22\
+        MSBF_PBI_R1_PARALLEL_REFINEMENT_C1_20260901.Report
+        MSBF_PBI_R1_PARALLEL_REFINEMENT_C1_20260901.SemanticModel
+        MSBF_PBI_R1_PARALLEL_REFINEMENT_C1_20260901.pbip
+</code></pre>
+<p>That <code>desktop_working</code> branch is precisely the refinement candidate you were using before the R26 rebase. <strong>We want that entire tree preserved unchanged as the before-state.</strong></p>
+<p>It also explains why your report could work previously: Power BI had both:</p>
+<pre><code class="language-text">old core UNC source
++
+R22 successor carrier
+</code></pre>
+<p>R26 only replaced/rebased the second component. The R26 handoff was never intended to contain the original Dim/Fact core source.</p>
+<h2>One thing I would check before restoring anything</h2>
+<p>Since this is an important dependency boundary, let&#39;s confirm it directly from the actual R22 working semantic model.</p>
+<p>Run this read-only PowerShell block:</p>
+<pre><code class="language-powershell">$R22Working =
+    &quot;C:\MSBF\R22\power_bi\desktop_working\MSBF_PBI_R1_SUCCESSOR_CANDIDATE_R22&quot;
+
+Get-ChildItem `
+    -LiteralPath $R22Working `
+    -File `
+    -Recurse `
+    -ErrorAction Stop |
+Select-String `
+    -Pattern @(
+        &#39;MSBF_PBI_A1B_SYNTHETIC&#39;,
+        &#39;pDataRoot&#39;,
+        &#39;pBuildRoot&#39;,
+        &#39;R22\\power_bi\\carrier&#39;,
+        &#39;R1Successor&#39;
+    ) `
+    -SimpleMatch |
+Select-Object Path, LineNumber, Line |
+Format-List
+</code></pre>
+<p>I expect this to show two parallel dependencies:</p>
+<pre><code class="language-text">pDataRoot / pBuildRoot
+→ \\localhost\MSBF_PBI_A1B_SYNTHETIC\...
+
+successor carrier/root
+→ C:\MSBF\R22\power_bi\carrier
+</code></pre>
+<p>That gives us a nice before-state confirmation before restoring the missing A1b source.</p>
+<h3>What we should not do</h3>
+<p>Do <strong>not</strong>:</p>
+<ul>
+<li>point <code>pDataRoot</code> to <code>C:\MSBF\R22\power_bi\carrier</code>;</li>
+<li>point <code>pDataRoot</code> to <code>C:\MSBF\R26\power_bi\carrier</code>;</li>
+<li>copy R22 curated CSVs into the missing A1b source tree;</li>
+<li>rely on a <code>cache.abf</code> as a replacement for the governed source;</li>
+<li>modify the R22 working candidate.</li>
+</ul>
+<p>Those approaches could make visuals render but would collapse two distinct source boundaries and damage the audit lineage.</p>
+<h3>What we should do</h3>
+<p>The clean recovery remains:</p>
+<pre><code class="language-text">1. Preserve C:\MSBF\R22\power_bi exactly as-is.
+
+2. Preserve C:\MSBF\R26\power_bi\carrier exactly as already verified.
+
+3. Restore the accepted A1b 222-file synthetic_root from:
+   C:\MSBF\
+   MSBF_PBI_A1B_FOCUSED_R2_INDEPENDENT_AUDIT_SUBMISSION_20260821.zip
+
+4. Restore its expected physical path:
+   C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\synthetic_root
+
+5. Restore:
+   \\localhost\MSBF_PBI_A1B_SYNTHETIC
+
+6. Reopen R26 and Refresh All without changing any Power Query definitions.
+</code></pre>
+<p>The Focused R2 authority is particularly useful here because Independent Audit confirmed that its final carrier was the controlling A1b authority and that the 222 synthetic-root files/source roots were unchanged. [export reference: filecite | turn103file1 | L61-L68] [export reference: filecite | turn103file1 | L88-L96]</p>
+<p>So your R22 screenshots do <strong>not</strong> change the recovery plan, but they give us confidence that the missing UNC source is a <strong>separate environmental dependency</strong>, not evidence that we chose the wrong R26 carrier or accidentally bypassed your current refinement work.</p>
+<p>I would run the short read-only R22 parameter search above first. Then we can restore the A1b source with the exact accepted carrier.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

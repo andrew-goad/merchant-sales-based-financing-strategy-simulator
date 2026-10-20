@@ -1,0 +1,1359 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Merchant POS Lending Simulator — part 04 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>Merchant POS Lending Simulator — part 04</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-03.html">Previous part</a><a href="part-05.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-e91577af-3c71-4688-b7a0-afa84850bcf5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00020 · 2026-07-23T14:03:12.760519-04:00 · active path</p><div class="bubble"><p>Yes—this is almost certainly related, and it materially validates the direction we have converged on.</p>
+<p>The description matches the core mechanics of <strong>merchant cash advances and processor-embedded sales-based financing</strong>:</p>
+<ul>
+<li>upfront funding;</li>
+<li>repayment through a fixed percentage of daily processed sales;</li>
+<li>higher remittance on strong sales days and lower remittance on weak days;</li>
+<li>underwriting based heavily on transaction history and operating cash flow;</li>
+<li>a fixed financing fee or factor-style total repayment amount rather than conventional amortizing interest.</li>
+</ul>
+<p>Square states that its loans are repaid automatically through a fixed percentage of daily card sales, while Stripe Capital describes both loans and cash advances whose payments are deducted as a percentage of sales. The CFPB similarly describes a typical MCA as an upfront advance repaid with an additional amount determined by a factor or payback rate. [export reference: cite | turn534518search1 | turn534518search3 | turn534518search6]</p>
+<h2>My conclusion</h2>
+<p>The likely product family is:</p>
+<blockquote>
+<p><strong>Short-duration processor-linked merchant financing, structured either as a merchant cash advance, a sales-based business loan, or a closely related embedded working-capital product.</strong></p>
+</blockquote>
+<p>That is more precise than simply calling it “merchant POS lending.”</p>
+<p>However, I would <strong>not assume it is legally an MCA</strong>. Square explicitly calls its product a loan, while Stripe Capital offers either loans or merchant cash advances using very similar sales-percentage repayment mechanics. Economic behavior and legal form can differ. [export reference: cite | turn534518search1 | turn534518search11]</p>
+<p>That distinction matters because it affects:</p>
+<ul>
+<li>disclosures;</li>
+<li>accounting treatment;</li>
+<li>interest or fee terminology;</li>
+<li>default definitions;</li>
+<li>reconciliation rights;</li>
+<li>collateral and lien structure;</li>
+<li>state-law treatment;</li>
+<li>whether repayment is absolute or contingent on receivables;</li>
+<li>how the bank measures yield and regulatory risk.</li>
+</ul>
+<p>For our project, the correct design principle is:</p>
+<blockquote>
+<p><strong>Model the common economic mechanics explicitly, while allowing legal product structure to be configured.</strong></p>
+</blockquote>
+<hr>
+<h1>What the Google summary gets right</h1>
+<h2>1. POS transaction history is central</h2>
+<p>The processor has direct visibility into:</p>
+<ul>
+<li>daily sales;</li>
+<li>transaction counts;</li>
+<li>ticket size;</li>
+<li>refunds;</li>
+<li>chargebacks;</li>
+<li>seasonality;</li>
+<li>sales trajectory;</li>
+<li>no-sales days;</li>
+<li>processor tenure;</li>
+<li>deposit behavior;</li>
+<li>prior repayment behavior.</li>
+</ul>
+<p>That makes POS data both an underwriting source and a servicing mechanism.</p>
+<p>This strongly supports our daily POS fact table and trailing-window feature design.</p>
+<h2>2. Repayment is sales-linked</h2>
+<p>The expected remittance is generally:</p>
+<pre><code class="language-text">Eligible Daily Sales
+×
+Contractual Holdback or Repayment Rate
+=
+Daily Remittance
+</code></pre>
+<p>That confirms our decision to avoid treating the product as a conventional fixed-payment installment loan.</p>
+<h2>3. Cash flow matters more than consumer-style bureau variables</h2>
+<p>Personal credit, guarantees, and commercial bureau data may still matter, but operating sales and cash flow are likely the primary capacity signals.</p>
+<p>That means our hierarchy should be:</p>
+<pre><code class="language-text">POS and deposit cash flow
+→
+merchant stability and capacity
+→
+business and owner risk
+→
+collateral and covenant support
+→
+offer structure
+</code></pre>
+<p>not:</p>
+<pre><code class="language-text">personal score
+→
+loan decision
+</code></pre>
+<h2>4. Pricing may use a fixed fee or factor-like construct</h2>
+<p>For example:</p>
+<pre><code class="language-text">Funded Amount = $100,000
+Factor / Payback Multiple = 1.20
+Total Repayment Amount = $120,000
+</code></pre>
+<p>But the true economic cost depends heavily on how quickly that $120,000 is remitted. A fast payoff produces a much higher annualized cost than a slow payoff.</p>
+<p>Therefore, our pricing engine should preserve several distinct fields:</p>
+<pre><code class="language-text">funded_amount
+fixed_finance_fee
+total_repayment_amount
+payback_multiple
+remittance_percentage
+expected_payoff_days
+effective_annualized_cost
+</code></pre>
+<p>We should not treat factor rate and APR as equivalent.</p>
+<hr>
+<h1>Where the summary is too broad</h1>
+<h2>“These products use a factor rate”</h2>
+<p>That is often true for MCAs, but it is not universal across all processor-embedded financing. Providers may describe pricing as:</p>
+<ul>
+<li>a fixed fee;</li>
+<li>a loan fee;</li>
+<li>a total repayment amount;</li>
+<li>a factor or payback rate;</li>
+<li>interest plus fees.</li>
+</ul>
+<p>Stripe describes a flat fee, while Square describes a fixed loan fee. [export reference: cite | turn534518search3 | turn534518search1]</p>
+<p>Our project should therefore support a generalized pricing construct rather than hard-code a factor rate.</p>
+<h2>“Repayment is completely variable”</h2>
+<p>It is often variable with sales, but minimum repayment requirements may still apply. Square currently states that at least 1/18 of the initial balance must be repaid every 60 days. PayPal Working Capital states that borrowers must repay a minimum percentage of the total loan amount every 90 days, depending on the selected terms. [export reference: cite | turn534518search1 | turn534518search4]</p>
+<p>That is highly relevant.</p>
+<p>The project should model both:</p>
+<pre><code class="language-text">sales-linked daily remittance
+</code></pre>
+<p>and</p>
+<pre><code class="language-text">periodic minimum repayment requirement
+</code></pre>
+<p>This creates two separate performance tests:</p>
+<ol>
+<li>Is the merchant remitting the proper percentage of actual sales?</li>
+<li>Is the merchant meeting the contractual minimum progress requirement?</li>
+</ol>
+<p>A merchant could comply with the daily percentage but still fail a periodic minimum if sales collapse.</p>
+<hr>
+<h1>This improves our product design</h1>
+<p>I would now define the working demonstration product as:</p>
+<h2>Processor-Linked Merchant Working Capital Facility</h2>
+<p>A merchant receives an upfront advance or loan. Repayment occurs through an automatic percentage of eligible daily POS sales, subject to contractual minimum progress requirements and an expected 30-, 60-, or 90-day payoff horizon.</p>
+<p>The configurable legal structure would be:</p>
+<pre><code class="language-text">SALES_BASED_LOAN
+RECEIVABLES_PURCHASE
+HYBRID_OR_OTHER
+</code></pre>
+<p>The simulator would not make a legal conclusion about which structure applies.</p>
+<hr>
+<h1>Required changes to our outline</h1>
+<h2>Phase 1: Add a financing-structure matrix</h2>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Sales-based loan</th>
+<th>MCA/receivables purchase</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Upfront proceeds</td>
+<td>Loan principal</td>
+<td>Purchase price/advance</td>
+</tr>
+<tr>
+<td>Customer obligation</td>
+<td>Debt obligation</td>
+<td>Sale of future receivables, subject to contract</td>
+</tr>
+<tr>
+<td>Price</td>
+<td>Interest or fixed fee</td>
+<td>Factor/payback multiple</td>
+</tr>
+<tr>
+<td>Daily collection</td>
+<td>Percentage of sales</td>
+<td>Percentage of receivables</td>
+</tr>
+<tr>
+<td>Reconciliation</td>
+<td>Product-specific</td>
+<td>Often central to legal substance</td>
+</tr>
+<tr>
+<td>Minimum payment</td>
+<td>May apply</td>
+<td>Contract-specific</td>
+</tr>
+<tr>
+<td>Default concept</td>
+<td>Contractual loan default</td>
+<td>Breach/non-delivery/diversion under agreement</td>
+</tr>
+<tr>
+<td>Collateral</td>
+<td>Loan collateral and guarantees</td>
+<td>Purchased receivables, liens, guarantees, other support</td>
+</tr>
+</tbody></table>
+<h2>Module 1: Add processor and settlement mechanics</h2>
+<p>New fields should include:</p>
+<pre><code class="language-text">processor_id
+processor_tenure_months
+gross_processed_sales
+eligible_processed_sales
+batch_settlement_amount
+refund_amount
+chargeback_amount
+processor_fee_amount
+net_merchant_proceeds
+processor_continuity_status
+settlement_delay_days
+</code></pre>
+<h2>Module 2: Add full repayment-structure design</h2>
+<p>Each offer candidate should include:</p>
+<pre><code class="language-text">funded_amount
+finance_fee
+total_repayment_amount
+remittance_percentage
+expected_payoff_days
+minimum_periodic_payment
+minimum_payment_window_days
+estimated_annualized_cost
+reconciliation_allowed_flag
+</code></pre>
+<h2>Module 3: Separate three performance questions</h2>
+<h3>Sales-linked compliance</h3>
+<p>Did the correct percentage of actual sales remit?</p>
+<h3>Minimum-progress compliance</h3>
+<p>Has the merchant repaid the required minimum by the contractual checkpoint?</p>
+<h3>Expected-path performance</h3>
+<p>Is repayment proceeding close to the original projected payoff path?</p>
+<p>These should not be collapsed into one status.</p>
+<hr>
+<h1>Important implication for the “one-, two-, three-month” comment</h1>
+<p>This new information makes the interviewer&#39;s wording more understandable.</p>
+<p>They may not have meant legally fixed maturity dates. They may have meant:</p>
+<ul>
+<li>expected payoff windows;</li>
+<li>underwriting-duration bands;</li>
+<li>typical portfolio tenors;</li>
+<li>product structures designed around approximately one, two, or three months.</li>
+</ul>
+<p>Under sales-linked repayment, actual payoff can vary with realized sales unless the agreement imposes a fixed maturity or minimum progression requirement.</p>
+<p>Therefore, we should use:</p>
+<pre><code class="language-text">expected_payoff_horizon
+</code></pre>
+<p>rather than automatically calling it:</p>
+<pre><code class="language-text">contractual_term
+</code></pre>
+<p>until the legal mechanics are confirmed.</p>
+<p>That is a small terminology change with major analytical importance.</p>
+<hr>
+<h1>What this means for collateral, covenants, and line management</h1>
+<p>It also fits the later interview clues.</p>
+<h2>Collateral</h2>
+<p>Depending on the structure, support could include:</p>
+<ul>
+<li>future receivables;</li>
+<li>blanket UCC lien;</li>
+<li>deposit account;</li>
+<li>equipment;</li>
+<li>inventory;</li>
+<li>personal guarantee;</li>
+<li>reserve account;</li>
+<li>processor-controlled settlement.</li>
+</ul>
+<h2>Covenants</h2>
+<p>Likely relevant controls include:</p>
+<ul>
+<li>maintain approved processor;</li>
+<li>route eligible sales through the designated processor;</li>
+<li>do not divert receivables;</li>
+<li>maintain minimum processing activity;</li>
+<li>restrict stacking or additional financing;</li>
+<li>notify lender of material business or processor changes;</li>
+<li>maintain collateral and insurance;</li>
+<li>provide financial information;</li>
+<li>maintain required deposit relationships.</li>
+</ul>
+<h2>Dynamic lines</h2>
+<p>A processor-linked ecosystem is particularly suited to low-and-grow strategies because the lender continuously observes sales and repayment behavior.</p>
+<p>A strong merchant could receive:</p>
+<pre><code class="language-text">larger subsequent advance
+lower remittance percentage
+better fixed fee
+higher facility limit
+prequalified renewal
+</code></pre>
+<p>A deteriorating merchant could receive:</p>
+<pre><code class="language-text">lower available limit
+temporary freeze
+higher monitoring
+additional covenant
+additional collateral
+workout treatment
+</code></pre>
+<hr>
+<h2>Final assessment</h2>
+<p>The Google AI response is directionally sound and strongly supports our architecture. The key refinement is that <strong>sales-linked repayment does not determine legal form</strong>. The same operational model can support a merchant cash advance, a receivables purchase, or a processor-embedded business loan.</p>
+<p>For the project, I would lock in this working description:</p>
+<blockquote>
+<p><strong>A governed strategy platform for short-duration, processor-linked merchant financing in which repayment is automatically tied to eligible POS sales. The platform supports configurable loan and receivables-purchase structures, fixed-fee or factor-style pricing, expected 30/60/90-day payoff horizons, collateral and covenant controls, daily remittance monitoring, dynamic exposure management, loss mitigation, and economic stress testing.</strong></p>
+</blockquote>
+<p>That is now specific enough to start the detailed design without pretending we know the client&#39;s exact legal product structure.</p>
+</div></article><article id="m-fd969b8a-8349-4765-ab62-deeafa60293e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00021 · 2026-07-23T14:07:08.749000-04:00 · active path</p><div class="bubble"><p>wonderful. i agree with the direction and recommendations. let&#39;s begin the design work, including the appropriate next steps to start tackling this work.</p>
+</div></article><article id="m-8bd3f700-4495-4a8a-9128-77beea4dcc5f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00022 · 2026-07-23T14:18:15.938870-04:00 · active path</p><div class="bubble"><h1>Design work is underway</h1>
+<p>I have completed the <strong>design kickoff package v0.1</strong>. This closes the project-command-center phase, locks the working product mechanics, establishes the initial one-/three-/five-year strategy, and creates the controlled backlog we will use for the remainder of the build.</p>
+<p>The package explicitly incorporates EXL’s five-part strategy—rich multi-source data, merchant-specific precision, controlled low-and-grow expansion, credit-mix profitability, and multi-generational testing. [export reference: filecite | turn8file12 | turn8file0] It also carries forward the strongest architecture from your existing simulator: deterministic populations, centralized parameters, staged transformations, fail-fast validation, latest/archive separation, matched comparison, diagnostic QA, and requirements traceability. [export reference: filecite | turn8file1 | turn8file2 | turn8file4]</p>
+<h2>What is now locked</h2>
+<p>The working design uses:</p>
+<ul>
+<li><strong>Merchant Sales-Based Financing Strategy Simulator</strong> as the project title.</li>
+<li>A merchant-as-financing-recipient model, not consumer checkout financing.</li>
+<li>Upfront funding with automatic daily remittance based on eligible POS sales.</li>
+<li>Configurable legal structure: sales-based loan, receivables purchase, hybrid, or unspecified.</li>
+<li>Thirty-, sixty-, and ninety-day <strong>expected payoff horizons</strong>, distinct from contractual maturity.</li>
+<li>Fixed-fee, total-repayment, and payback-multiple economics, with annualized cost calculated only as an analytical comparison.</li>
+<li>Separate facility and advance entities, permitting dynamic line management later.</li>
+<li>Daily remittance fulfillment, payoff progress, processor continuity, covenants, and merchant health instead of relying on conventional 30/60/90 DPD.</li>
+<li>Collateral, covenants, price elasticity, adverse selection, loss mitigation, line management, wallet expansion, and network-based economic stress as first-class strategy areas.</li>
+<li>A four-module target state supported by a shared governance and evidence control plane.</li>
+<li>Synthetic, illustrative, non-production boundaries throughout.</li>
+</ul>
+<p>The exact legal product classification, contractual maturity rules, reconciliation provisions, and default definitions remain open discovery items. They are now recorded explicitly rather than being filled with unsupported assumptions.</p>
+<h2>Kickoff package</h2>
+<p>Download the complete design kickoff package (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1.zip</code>; referenced bytes not established here)</p>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Kickoff README (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1/KICKOFF_README.md</code>; referenced bytes not established here)</td>
+<td>Package navigation, accepted direction, and immediate critical path</td>
+</tr>
+<tr>
+<td>Project Charter (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1/00_PROJECT_CHARTER.md</code>; referenced bytes not established here)</td>
+<td>Business problem, thesis, audience, scope, modules, principles, deliverables, and definition of done</td>
+</tr>
+<tr>
+<td>Product Scope and Mechanics Decision Record (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1/01_PRODUCT_SCOPE_AND_MECHANICS_DECISION_RECORD.md</code>; referenced bytes not established here)</td>
+<td>Legal-neutral product structure, facility/advance mechanics, remittance formulas, pricing, collateral, covenants, performance states, and open product questions</td>
+</tr>
+<tr>
+<td>One-/Three-/Five-Year Strategy Roadmap (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1/02_ENTERPRISE_1_3_5_YEAR_STRATEGY_ROADMAP.md</code>; referenced bytes not established here)</td>
+<td>Year 1 quarterly launch plan, Years 2–3 optimization, Years 3–5 adaptive management, scale gates, KPIs, and capability maturity</td>
+</tr>
+<tr>
+<td>Project Plan and Work Breakdown (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1/03_PROJECT_PLAN_AND_WORK_BREAKDOWN.md</code>; referenced bytes not established here)</td>
+<td>Full phase plan, work packages, dependencies, deliverables, priorities, and acceptance gates</td>
+</tr>
+<tr>
+<td>Decision Register (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1/04_DECISION_REGISTER.md</code>; referenced bytes not established here)</td>
+<td>Twenty-two accepted decisions and ten controlled open decisions</td>
+</tr>
+<tr>
+<td>Assumption Register (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1/05_ASSUMPTION_REGISTER.md</code>; referenced bytes not established here)</td>
+<td>Thirty-four working assumptions with confidence, impact, and validation treatment</td>
+</tr>
+<tr>
+<td>RAID Log (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1/06_RAID_LOG.md</code>; referenced bytes not established here)</td>
+<td>Twenty major risks, six active issues, and ten cross-functional dependencies</td>
+</tr>
+<tr>
+<td>Project Artifact Map (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1/07_PROJECT_ARTIFACT_MAP.md</code>; referenced bytes not established here)</td>
+<td>Target repository, BRDs, dictionaries, implementation outputs, validation artifacts, Power BI, and presentation package</td>
+</tr>
+<tr>
+<td>Initial Requirements Backlog (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1/08_REQUIREMENTS_BACKLOG.md</code>; referenced bytes not established here)</td>
+<td>Initial product, data, risk, offer, lifecycle, stress, governance, and reporting requirements with acceptance criteria</td>
+</tr>
+<tr>
+<td>Terminology Glossary (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1/09_TERMINOLOGY_GLOSSARY.md</code>; referenced bytes not established here)</td>
+<td>Standard definitions for facility, advance, remittance, payoff horizon, payback multiple, reconciliation, default, covenants, collateral, elasticity, stress, and other critical terms</td>
+</tr>
+</tbody></table>
+<h2>Immediate next work block</h2>
+<p>We now proceed in this order:</p>
+<ol>
+<li><p><strong>Enterprise architecture and shared control plane</strong><br>Define the four modules, registries, latest/archive structures, evidence objects, and reporting layer.</p>
+</li>
+<li><p><strong>Module charters and intermodule contracts</strong><br>Lock each module’s business question, source inputs, processing boundary, output grain, downstream consumers, and exclusions.</p>
+</li>
+<li><p><strong>Logical data model and grain catalog</strong><br>Define merchant, application, facility, advance, POS-day, deposit-day, offer candidate, collateral, covenant, account-day, health, line action, workout, stress, and evidence entities.</p>
+</li>
+<li><p><strong>Parameter taxonomy and validation skeleton</strong><br>Establish the parameter families, fail-fast controls, requirements traceability, QA layers, and acceptance gates before the BRDs are expanded.</p>
+</li>
+<li><p><strong>Module 1 BRD</strong><br>Begin detailed design only after the architecture and grains are frozen.</p>
+</li>
+</ol>
+<p>No additional user decision is presently blocking this sequence. The next deliverable will be the <strong>enterprise architecture, logical data model, and module/intermodule charter package</strong>.</p>
+</div></article><article id="m-df74b556-3bac-4305-8680-ca672810dd2f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00023 · 2026-07-23T14:20:09.751000-04:00 · active path</p><div class="bubble"><p>thank you. a quick aside again: some information from Google on regulatory requirements: Operating a lending business tied to point-of-sale (POS) systems—whether structured as Merchant Cash Advances (MCAs) or embedded commercial loans—requires navigating a complex, rapidly evolving regulatory landscape.Because these products are heavily reliant on how they are legally structured (sale of receivables vs. a standard loan), compliance requirements vary significantly by state.1. Structure Definitions: The Loan vs. Asset DebateHow you legally frame your capital directly determines which regulatory frameworks you trigger:The MCA Classification: If structured as a &quot;purchase of future receivables,&quot; the transaction is legally a sales contract, not a loan. This traditionally exempts the product from state usury (interest rate) caps and traditional bank lending licenses.The True Sale Doctrine: Courts heavily scrutinize these agreements. To maintain an MCA classification, your contract must not have absolute repayment terms; the repayment must genuinely fluctuate based on the merchant’s POS sales volume. If you over-collateralize or penalize the merchant during slow sales weeks, a court may recharacterize your advance as an unauthorized, usurious loan.2. State-Level Commercial Financing Disclosure Laws (CFDLs)State governments heavily regulate alternative business lending by requiring consumer-style transparency disclosures for small business products. If you cross specific volume thresholds (usually funding more than 5 transactions per year in that state), you must provide pre-contract disclosures:APR Disclosure Requirements: States like California and New York strictly require alternative funders to calculate and disclose an estimated Annual Percentage Rate (APR) to the merchant, even for sales-based MCAs.Standard Disclosures: States including Utah, Virginia, Florida, Georgia, Connecticut, Kansas, Louisiana, and Missouri mandate upfront written disclosures detailing the total finance charge, total repayment amount, payment frequency, and any broker fees.Funding Caps: These state disclosure laws apply to transactions beneath specific dollar ceilings, ranging from $500,000 in Georgia up to $2.5 million in New York.3. Licensing and Registration RequirementsYou cannot legally fund businesses in certain jurisdictions without proper state oversight:Lender &amp; Broker Licenses: States like California, Connecticut, Utah, Missouri, and South Carolina require specialized commercial lending or financing licenses/registrations to operate.Broker Transparencies: If your POS financing relies on independent brokers to bring in merchants, states like Florida and Virginia mandate explicit broker registration and strict rules against collecting separate, hidden facilitation fees.4. Federal Rules &amp; Federal ExclusionsWhile states handle the bulk of alternative commercial financing rules, federal guardrails still apply:CFPB Section 1071 Exclusions: The Consumer Financial Protection Bureau (CFPB) finalized its revised small business data collection rules. True Merchant Cash Advances are officially excluded from these reporting mandates. However, if your POS funding is structured as a standard commercial loan, and you originate over 1,000 loans annually, you must collect and report borrower demographic data starting in 2028.FTC Act (Section 5): The Federal Trade Commission aggressively enforces rules against &quot;unfair or deceptive acts or practices.&quot; This means marketing materials, processing fee disclosures, and automatic daily withdrawal terms must be completely transparent and non-misleading.Confessions of Judgment (COJs): The federal government and various states heavily restrict or ban &quot;Confessions of Judgment&quot;—contract clauses where a merchant waives their right to a legal defense in court if they default.5. Risk and Operational ComplianceBank Secrecy Act (BSA/AML): If you partner with a depository bank to clear or fund the transactions, you must implement Know Your Customer (KYC) and Anti-Money Laundering (AML) programs to verify the merchant&#39;s business entity and beneficial owners.PCI-DSS Compliance: Because your repayment engine is directly integrated into the merchant’s POS batching or credit card processor, your software must maintain strict Payment Card Industry Data Security Standards to handle cardholder data safely.</p>
+</div></article><article id="m-e84b5f41-bd32-4a6c-a261-fbbec1a54d33" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00024 · 2026-07-23T14:20:10.065442-04:00 · active path</p><div class="bubble"><p>This is an excellent aside, and I actually think it strengthens the project considerably—but <strong>not</strong> in the way most people would use it.</p>
+<p>The temptation would be to build a &quot;regulatory compliance simulator.&quot; I don&#39;t think that&#39;s the right move.</p>
+<p>I think we should build a <strong>strategy platform that is regulation-aware but regulation-neutral.</strong></p>
+<p>Here&#39;s why.</p>
+<hr>
+<h1>This reinforces one of our core design principles</h1>
+<p>One thing that jumped out immediately is this sentence:</p>
+<blockquote>
+<p>&quot;How you legally frame your capital directly determines which regulatory frameworks you trigger.&quot;</p>
+</blockquote>
+<p>That&#39;s exactly why we decided <strong>not</strong> to hard-code the legal product.</p>
+<p>That decision now looks even stronger.</p>
+<p>Instead, I think we introduce a <strong>Product Configuration Layer</strong>.</p>
+<p>Instead of assuming</p>
+<pre><code>Merchant Cash Advance
+</code></pre>
+<p>we configure</p>
+<pre><code>PRODUCT_STRUCTURE
+
+SALES_BASED_LOAN
+
+RECEIVABLE_PURCHASE
+
+HYBRID
+</code></pre>
+<p>Then every downstream module inherits that configuration.</p>
+<hr>
+<h1>We should add an Enterprise Policy &amp; Regulatory Registry</h1>
+<p>I wasn&#39;t originally planning this.</p>
+<p>Now I think it belongs inside the Control Plane.</p>
+<pre><code>CONTROL PLANE
+
+Parameters
+
+Strategies
+
+Experiments
+
+Scenarios
+
+Risk Appetite
+
+↓
+
+Policy Registry
+
+↓
+
+Regulatory Registry
+
+↓
+
+Evidence Registry
+
+↓
+
+Run Registry
+</code></pre>
+<p>Notice something important.</p>
+<p>The registry doesn&#39;t make legal decisions.</p>
+<p>It stores</p>
+<ul>
+<li>assumptions</li>
+<li>applicable requirements</li>
+<li>policy selections</li>
+<li>version history</li>
+</ul>
+<p>Exactly how enterprise systems work.</p>
+<hr>
+<h1>We should NOT build state law logic</h1>
+<p>This is very important.</p>
+<p>We should absolutely <strong>not</strong> try to encode</p>
+<p>California</p>
+<p>New York</p>
+<p>Virginia</p>
+<p>etc.</p>
+<p>That becomes obsolete almost immediately.</p>
+<p>Instead</p>
+<p>we design</p>
+<pre><code>DISCLOSURE_REQUIRED_FLAG
+
+APR_DISCLOSURE_REQUIRED
+
+LICENSE_REQUIRED
+
+BROKER_DISCLOSURE_REQUIRED
+
+SMALL_BUSINESS_DISCLOSURE_REQUIRED
+</code></pre>
+<p>Those become</p>
+<p>configurable.</p>
+<p>The simulator then demonstrates</p>
+<p>how architecture accommodates changing regulations.</p>
+<p>That is much more impressive than trying to memorize statutes.</p>
+<hr>
+<h1>This changes Module 2 slightly</h1>
+<p>Offer generation should now produce</p>
+<p>two outputs.</p>
+<h2>Business Offer</h2>
+<pre><code>Amount
+
+Price
+
+Remittance
+
+Collateral
+
+Covenants
+
+Decision
+</code></pre>
+<h2>Compliance Package</h2>
+<pre><code>Required disclosures
+
+APR estimate (if applicable)
+
+Total repayment
+
+Estimated payoff
+
+Applicable product type
+
+Required documents
+
+Required licenses
+
+Required notices
+
+Broker disclosures
+</code></pre>
+<p>Notice</p>
+<p>the credit engine</p>
+<p>doesn&#39;t become</p>
+<p>a compliance engine.</p>
+<p>It simply knows</p>
+<p>what documentation</p>
+<p>must accompany</p>
+<p>that offer.</p>
+<hr>
+<h1>This actually improves the governance story</h1>
+<p>Suppose</p>
+<p>Strategy S17</p>
+<p>changes</p>
+<p>from</p>
+<pre><code>Receivable Purchase
+</code></pre>
+<p>to</p>
+<pre><code>Sales-Based Loan
+</code></pre>
+<p>The simulator should automatically identify</p>
+<pre><code>Regulatory Package Changed
+
+↓
+
+Additional Disclosures
+
+↓
+
+Additional Reporting
+
+↓
+
+Additional Documentation
+
+↓
+
+Version Change Logged
+</code></pre>
+<p>That&#39;s enterprise governance.</p>
+<hr>
+<h1>The Section 1071 observation is extremely interesting</h1>
+<p>You mentioned</p>
+<blockquote>
+<p>MCAs excluded</p>
+</blockquote>
+<blockquote>
+<p>loans may require reporting</p>
+</blockquote>
+<p>That&#39;s another argument</p>
+<p>for separating</p>
+<p>economic mechanics</p>
+<p>from</p>
+<p>legal classification.</p>
+<p>Module 4 could even answer</p>
+<pre><code>If we convert
+
+25%
+
+of products
+
+to commercial loans
+
+↓
+
+Estimated reporting impact
+
+↓
+
+Estimated compliance impact
+
+↓
+
+Portfolio composition
+</code></pre>
+<p>That&#39;s strategy.</p>
+<hr>
+<h1>KYC / AML</h1>
+<p>This absolutely belongs</p>
+<p>but not as</p>
+<p>fraud modeling.</p>
+<p>I would add</p>
+<p>Module 1</p>
+<pre><code>Verification Layer
+
+Business Identity
+
+Owner Identity
+
+Beneficial Ownership
+
+Processor Verification
+
+Bank Account Verification
+
+KYC Status
+
+AML Status
+</code></pre>
+<p>Those become</p>
+<p>eligibility gates</p>
+<p>before underwriting.</p>
+<hr>
+<h1>PCI</h1>
+<p>I would avoid going deep here.</p>
+<p>Just acknowledge</p>
+<pre><code>Processor Data
+
+↓
+
+Secure Tokenized Source
+
+↓
+
+Simulator
+
+(no cardholder data)
+</code></pre>
+<p>The project should never imply</p>
+<p>it stores</p>
+<p>actual payment card information.</p>
+<hr>
+<h1>FTC / Transparency</h1>
+<p>This is another governance opportunity.</p>
+<p>Every offer should satisfy</p>
+<pre><code>Explainable Decision
+
+↓
+
+Explainable Pricing
+
+↓
+
+Transparent Repayment
+
+↓
+
+Transparent Fees
+
+↓
+
+Transparent Covenants
+</code></pre>
+<p>That&#39;s a wonderful design principle.</p>
+<hr>
+<h1>One thing I especially liked</h1>
+<p>You mentioned</p>
+<p>Confessions of Judgment.</p>
+<p>I would <strong>not</strong> model those.</p>
+<p>Instead</p>
+<p>I&#39;d have</p>
+<pre><code>Unsupported Features
+
+COJs
+
+Consumer Lending
+
+Collections Litigation
+
+Bankruptcy Proceedings
+
+Tax Treatment
+
+Legal Advice
+
+Accounting Treatment
+</code></pre>
+<p>Explicit exclusions</p>
+<p>increase credibility.</p>
+<hr>
+<h1>One addition I&#39;d make to the roadmap</h1>
+<p>I now think the <strong>Control Plane</strong> should contain <strong>nine</strong> governed registries.</p>
+<pre><code>Parameter Registry
+
+Policy Registry
+
+Strategy Registry
+
+Experiment Registry
+
+Scenario Registry
+
+Risk Appetite Registry
+
+Regulatory Registry
+
+Evidence Registry
+
+Run Registry
+</code></pre>
+<p>Everything becomes versioned.</p>
+<p>Everything becomes reproducible.</p>
+<p>Everything becomes auditable.</p>
+<p>That is exactly what a mature financial institution wants.</p>
+<hr>
+<h1>My biggest takeaway</h1>
+<p>This regulatory research actually reinforces the philosophy we&#39;ve been developing over the last several hours:</p>
+<blockquote>
+<p><strong>Don&#39;t build a simulator around today&#39;s regulations. Build an enterprise architecture that can adapt as regulations, products, and strategies evolve.</strong></p>
+</blockquote>
+<p>That distinction is subtle, but it&#39;s exactly how large financial institutions design strategic decision platforms. Regulations change. Product structures evolve. State disclosure laws expand. Reporting obligations shift. A well-designed strategy platform shouldn&#39;t need to be rewritten every time that happens—it should absorb those changes through governed configuration, versioned policies, and clear separation between business strategy, legal structure, and operational execution.</p>
+<p>I think that&#39;s the design principle we should carry into every subsequent artifact. It will make the project feel like something an enterprise could genuinely grow with, rather than a point-in-time simulation.</p>
+</div></article><article id="m-b6033abe-cc14-4960-8b7c-7a6bc337c0f3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00025 · 2026-07-23T14:24:18.178000-04:00 · active path</p><div class="bubble"><p>thank you. with that in mind, update design kickoff package v0.1 accordingly and then proceed to deliver the enterprise architecture, logical data model, and module/intermodule charter package.</p>
+</div></article><article id="m-e55df750-5f2a-4cb3-a24b-6ee75729aa19" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00026 · 2026-07-23T15:02:58.666817-04:00 · active path</p><div class="bubble"><h1>Updated design delivery completed</h1>
+<p>I updated the kickoff package and completed the <strong>enterprise architecture, logical data model, and module/intermodule charter package</strong>.</p>
+<p>One material correction was necessary after validating the regulatory discussion against current official sources: the CFPB’s May 2026 reconsideration rule became effective June 30, 2026, and revised Regulation B expressly excludes a qualifying merchant cash advance—defined as a lump-sum payment exchanged for a percentage of the small business’s future sales or income up to a ceiling amount—from Section 1071 coverage. That does <strong>not</strong> automatically exclude every product marketed as POS financing, sales-based financing, or an MCA; sales-based loans, lines, and hybrid structures require their own approved classification. The CFPB’s current rulemaking page states that the compliance date for covered institutions is January 1, 2028. [export reference: cite | turn136416view0 | turn253306view0 | turn881954view1]</p>
+<p>The revised design therefore uses this principle throughout:</p>
+<pre><code class="language-text">Commercial product label
+≠
+approved legal and regulatory classification
+</code></pre>
+<p>Coverage, disclosures, permissions, reporting, and data-segregation treatment are resolved from an approved, effective-dated transaction profile rather than hard-coded from the words “loan” or “MCA.”</p>
+<h2>Primary delivery</h2>
+<p>Download the complete combined design delivery v0.1R2 (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_delivery_v0_1R2.zip</code>; referenced bytes not established here)</p>
+<p>This ZIP contains both the revised kickoff package and the complete architecture/data-model/module-charter package, including diagrams, machine-readable catalogs, manifests, and the QA report.</p>
+<hr>
+<h1>1. Revised design kickoff package v0.1R2</h1>
+<p>Download the revised kickoff package (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1R2.zip</code>; referenced bytes not established here)</p>
+<p>The revision contains 16 controlled design artifacts plus a cryptographic manifest.</p>
+<h2>Principal updates</h2>
+<h3>Regulatory and policy architecture</h3>
+<p>The package now includes:</p>
+<ul>
+<li>effective-dated product, legal-structure, operating-model, jurisdiction, regulatory-requirement, reporting, disclosure, permission, data-segregation, and record-retention profiles;</li>
+<li>transaction-classification evidence rather than product-name inference;</li>
+<li>separate credit and compliance dispositions;</li>
+<li>frozen compliance-package snapshots for final offers;</li>
+<li>fail-closed treatment for missing, stale, conflicting, unresolved, or unapproved profiles;</li>
+<li>official-source hierarchy and supersession controls;</li>
+<li>historical rule reconstruction;</li>
+<li>regulatory-change impact analysis;</li>
+<li>third-party role and responsibility mapping;</li>
+<li>financial-crime and payment-data-scope profiles;</li>
+<li>explicit exclusion of real payment account data from the public simulator.</li>
+</ul>
+<p>The financial-crime framework also recognizes that responsibilities must be effective-dated. For example, FinCEN issued 2026 relief from identifying and verifying beneficial owners every time an existing legal-entity customer opens another account, while retaining initial, reliability-triggered, and risk-based obligations. [export reference: cite | turn548002search6 | turn548002search0]</p>
+<h3>Regulatory change assessment</h3>
+<p>Open the regulatory change impact assessment (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1R2/13_REGULATORY_CHANGE_IMPACT_ASSESSMENT_2026_07_23.md</code>; referenced bytes not established here)</p>
+<p>This artifact classifies the supplied regulatory themes as:</p>
+<ul>
+<li>confirmed through current official sources;</li>
+<li>directionally valid but dependent on product or operating model;</li>
+<li>not exhaustively verified and therefore retained only as controlled discovery items.</li>
+</ul>
+<p>It specifically distinguishes between:</p>
+<pre><code class="language-text">Qualifying MCA under the current CFPB definition
+→ Section 1071 excluded transaction
+
+Sales-based loan, line, or hybrid
+→ separate coverage analysis required
+</code></pre>
+<p>It also records that New York’s current commercial-financing regulation contains specialized sales-based-financing disclosures, including an estimated APR and assumptions based on projected sales, while the architecture deliberately avoids treating one jurisdiction’s calculation or format as universally applicable. [export reference: cite | turn837260view1]</p>
+<p>FTC conduct-risk controls are represented separately because official enforcement materials document concerns including unauthorized withdrawals and misuse of confessions of judgment. [export reference: cite | turn837260view2]</p>
+<h3>Updated source-control note</h3>
+<p>Open the official-source and regulatory research note (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1R2/11_OFFICIAL_SOURCE_AND_REGULATORY_RESEARCH_NOTE.md</code>; referenced bytes not established here)</p>
+<p>This note now establishes:</p>
+<ul>
+<li>current-rule precedence over historical FAQs;</li>
+<li>final/effective/proposed/stayed/superseded status controls;</li>
+<li>official-source ownership;</li>
+<li>next-review dates;</li>
+<li>regulatory-change regression testing;</li>
+<li>explicit limits on the completeness of the jurisdictional survey.</li>
+</ul>
+<hr>
+<h1>2. Enterprise architecture, logical data model, and module-charter package</h1>
+<p>Download the architecture, data model, and module-charter package v0.1R1 (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_architecture_data_model_charters_v0_1R1.zip</code>; referenced bytes not established here)</p>
+<p>The package contains more than 2,500 lines of controlled design documentation and includes:</p>
+<table>
+<thead>
+<tr>
+<th>Design component</th>
+<th align="right">Delivered scope</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Analytical module charters</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td>Versioned intermodule contracts</td>
+<td align="right">12</td>
+</tr>
+<tr>
+<td>Logical table grains</td>
+<td align="right">86</td>
+</tr>
+<tr>
+<td>Shared control-plane registries</td>
+<td align="right">23</td>
+</tr>
+<tr>
+<td>Formal implementation build gates</td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td>Machine-readable catalogs</td>
+<td align="right">5</td>
+</tr>
+<tr>
+<td>Executive and logical diagrams</td>
+<td align="right">PNG, SVG, and Graphviz source</td>
+</tr>
+<tr>
+<td>Requirements traceability</td>
+<td align="right">Product, data, risk, lifecycle, stress, and regulatory requirements</td>
+</tr>
+<tr>
+<td>Implementation handoff</td>
+<td align="right">DDL order, vertical slice, acceptance gates, and exclusions</td>
+</tr>
+</tbody></table>
+<h2>Enterprise architecture diagram</h2>
+<p>Open the enterprise architecture diagram (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_architecture_data_model_charters_v0_1R1/diagrams/enterprise_architecture_v0_1R1.png</code>; referenced bytes not established here)</p>
+<p>The architecture now has four layers.</p>
+<h3>Source and integration layer</h3>
+<pre><code class="language-text">Merchant / Owner / Relationship
+POS / Settlement / Processor
+Deposits / Liquidity / Obligations
+Collateral / Guarantees / Covenants
+Competitor / Market / Industry
+Official Legal and Compliance Sources
+</code></pre>
+<p>All data enter through versioned source contracts. The public simulator is constrained to synthetic, aggregated, or tokenized information and does not store real cardholder account data. PCI DSS applies to environments where payment account data are stored, processed, or transmitted, supporting the design decision to keep that information outside the public artifact. [export reference: cite | turn837260view3]</p>
+<h3>Shared control plane</h3>
+<pre><code class="language-text">Product and Legal Structure
+Operating Model and Third-Party Roles
+Parameters and Policies
+Strategies and Experiments
+Economic Scenarios
+Risk Appetite
+Jurisdictions and Requirements
+Disclosures and Calculations
+Permissions and Registrations
+Reporting and Data Segregation
+Reason Codes
+Run and Contract Identity
+Evidence and Acceptance
+</code></pre>
+<p>Each analytical run receives a frozen snapshot of the applicable:</p>
+<ul>
+<li>source versions;</li>
+<li>parameter versions;</li>
+<li>policy profiles;</li>
+<li>strategy and experiment assignments;</li>
+<li>legal and operating-model profiles;</li>
+<li>jurisdiction and regulatory profiles;</li>
+<li>risk-appetite limits;</li>
+<li>code and data-contract versions.</li>
+</ul>
+<p>That snapshot prevents profile changes during a run and enables exact historical reconstruction.</p>
+<h3>Analytical modules</h3>
+<pre><code class="language-text">Module 1
+Merchant POS Cash Flow, Verification, and Base Risk
+
+→
+
+Module 2
+Offer, Pricing, Collateral, Covenants,
+Compliance Package, and Portfolio Allocation
+
+→
+
+Module 3
+Daily Performance, Merchant Health,
+Line Management, Renewal, and Loss Mitigation
+
+→
+
+Module 4
+Economic Stress, Industry Network,
+Strategy Robustness, and Capacity Allocation
+</code></pre>
+<h3>Accepted evidence and consumption</h3>
+<pre><code class="language-text">Latest analytical views
+Immutable archives
+Matched comparisons
+Power BI / Merchant 360
+Credit Committee evidence
+Legal and Compliance review
+Finance and Validation evidence
+1-Year / 3-Year / 5-Year strategy profiles
+</code></pre>
+<hr>
+<h1>3. Logical data model</h1>
+<p>Open the logical entity model (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_architecture_data_model_charters_v0_1R1/diagrams/logical_erd_v0_1R1.png</code>; referenced bytes not established here)</p>
+<p>The data model separates merchant identity, applications, facilities, advances, daily performance, and portfolio scenarios so that one business relationship can be followed across the entire lifecycle.</p>
+<h2>Merchant and application domain</h2>
+<p>Core entities include:</p>
+<pre><code class="language-text">merchant
+merchant_owner
+merchant_relationship_snapshot
+merchant_application
+processor_relationship
+partner_channel_relationship
+verification_result
+data_source_snapshot
+</code></pre>
+<p>This permits:</p>
+<ul>
+<li>multiple owners per merchant;</li>
+<li>multiple applications over time;</li>
+<li>changing processor and partner relationships;</li>
+<li>new versus repeat merchant treatment;</li>
+<li>low-and-grow and renewal histories;</li>
+<li>effective-dated merchant and relationship attributes.</li>
+</ul>
+<h2>Daily POS and liquidity domain</h2>
+<pre><code class="language-text">merchant_pos_daily
+merchant_deposit_daily
+merchant_obligation_snapshot
+merchant_pos_scenario_daily
+</code></pre>
+<p>The design preserves:</p>
+<ul>
+<li>gross sales;</li>
+<li>refunds;</li>
+<li>chargebacks;</li>
+<li>reversals;</li>
+<li>eligible sales;</li>
+<li>processor fees;</li>
+<li>settlement amounts;</li>
+<li>merchant proceeds;</li>
+<li>deposits;</li>
+<li>balances;</li>
+<li>NSFs;</li>
+<li>existing remittance obligations;</li>
+<li>processor continuity.</li>
+</ul>
+<p>Baseline daily history is kept separate from scenario-adjusted history so economic effects remain attributable.</p>
+<h2>Module 1 domain</h2>
+<pre><code class="language-text">merchant_feature_snapshot
+merchant_cashflow_archetype
+merchant_risk_snapshot
+expected_ead_schedule
+</code></pre>
+<p>The output separates:</p>
+<pre><code class="language-text">credit_risk_proxy
+fraud_risk_tier
+data_confidence_tier
+processor_continuity_risk
+capacity measures
+expected EAD
+LGD inputs
+comparative Expected Loss
+</code></pre>
+<p>These dimensions are not collapsed blindly into one score.</p>
+<h2>Module 2 domain</h2>
+<pre><code class="language-text">offer_candidate
+offer_candidate_collateral
+offer_candidate_covenant
+offer_candidate_economics
+offer_decision
+offer_reason
+regulatory_applicability_snapshot
+offer_compliance_package
+credit_facility
+financing_advance
+collateral_asset
+collateral_valuation
+account_covenant
+</code></pre>
+<p>This allows an offer to be treated as an integrated package:</p>
+<pre><code class="language-text">Funded Amount
++
+Remittance Percentage
++
+Expected Payoff Horizon
++
+Price / Fixed Fee
++
+Collateral
++
+Guarantees
++
+Covenants
++
+Compliance Disposition
++
+Expected Contribution
+</code></pre>
+<p>Credit feasibility and compliance readiness are stored as separate outcomes.</p>
+<h2>Module 3 domain</h2>
+<pre><code class="language-text">advance_performance_daily
+remittance_event
+minimum_progress_test
+covenant_test_result
+merchant_health_snapshot
+line_management_candidate
+line_management_action
+renewal_candidate
+loss_mitigation_candidate
+workout_action
+recovery_event
+</code></pre>
+<p>This replaces conventional monthly delinquency dependence with:</p>
+<ul>
+<li>actual versus expected remittance;</li>
+<li>cumulative fulfillment;</li>
+<li>repayment-progress index;</li>
+<li>consecutive interruption;</li>
+<li>percentage-of-life interruption severity;</li>
+<li>projected payoff slippage;</li>
+<li>sales-present/remittance-missing diagnostics;</li>
+<li>processor diversion or data-loss review;</li>
+<li>covenant breach and cure;</li>
+<li>merchant health and dynamic exposure action.</li>
+</ul>
+<h2>Module 4 domain</h2>
+<pre><code class="language-text">economic_scenario
+scenario_industry_shock
+industry_dependency
+stress_result
+portfolio_limit_status
+strategy_robustness_result
+capacity_allocation_candidate
+capacity_allocation_result
+portfolio_evidence
+</code></pre>
+<p>Industry-network stress can therefore transmit through:</p>
+<pre><code class="language-text">Direct shock
+→ Dependent industry
+→ Merchant sales and volatility
+→ Remittance and merchant health
+→ Risk / EAD / LGD
+→ Expected loss and contribution
+→ Concentration and risk appetite
+→ Management action
+</code></pre>
+<hr>
+<h1>4. Module and intermodule charters</h1>
+<p>Each module charter now specifies:</p>
+<ul>
+<li>its primary business question;</li>
+<li>source contracts;</li>
+<li>processing sequence;</li>
+<li>calculations it owns;</li>
+<li>calculations it may not perform;</li>
+<li>output grain;</li>
+<li>archive behavior;</li>
+<li>downstream consumers;</li>
+<li>fail-fast conditions;</li>
+<li>QA and acceptance criteria;</li>
+<li>production and interpretation boundaries.</li>
+</ul>
+<p>The intermodule contracts include immutable identity and temporal controls such as:</p>
+<pre><code class="language-text">population_id
+merchant_id
+merchant_application_id
+facility_id
+advance_id
+as_of_date
+performance_date
+scenario_id
+strategy_id
+profile_snapshot_id
+source_snapshot_id
+contract_version
+</code></pre>
+<h2>Critical contract rule</h2>
+<p>No downstream module is allowed to silently reinterpret an accepted upstream result.</p>
+<p>For example:</p>
+<ul>
+<li>Module 2 may construct an offer-specific risk overlay but may not rewrite Module 1 history.</li>
+<li>Module 3 may observe actual daily performance but may not retrospectively change the original underwriting snapshot.</li>
+<li>Module 4 may stress accepted exposures and strategies but may not overwrite baseline account history.</li>
+<li>Regulatory profile changes create new effective-dated records rather than rewriting prior offers.</li>
+</ul>
+<hr>
+<h1>5. Implementation handoff</h1>
+<p>Open the implementation handoff and next-step plan (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_architecture_data_model_charters_v0_1R1/13_IMPLEMENTATION_HANDOFF_AND_NEXT_STEPS.md</code>; referenced bytes not established here)</p>
+<p>The controlled implementation sequence is now:</p>
+<pre><code class="language-text">1. Physical PostgreSQL schemas and control tables
+2. Run, source, profile, and contract identity
+3. Merchant/application/facility/advance identities
+4. Deterministic merchant and daily POS generation
+5. Module 1 feature and risk snapshots
+6. Module 1 BRD and parameter dictionary
+7. Module 2 candidate-offer vertical slice
+8. One booked synthetic advance population
+9. Module 3 daily remittance-performance slice
+10. One Module 4 recession and industry-dependency scenario
+11. Validation evidence and source-to-report reconciliation
+</code></pre>
+<p>The thin vertical slice is deliberately constrained to:</p>
+<ul>
+<li>500–1,000 merchants;</li>
+<li>deterministic daily POS and deposit history;</li>
+<li>30-, 60-, and 90-day expected payoff structures;</li>
+<li>one baseline underwriting strategy;</li>
+<li>one price-elasticity test;</li>
+<li>one collateral/covenant configuration;</li>
+<li>one daily performance taxonomy;</li>
+<li>one direct economic stress;</li>
+<li>one propagated industry shock;</li>
+<li>one risk-appetite and strategy-robustness summary.</li>
+</ul>
+<hr>
+<h1>6. Package quality controls</h1>
+<p>Open the package validation report (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_delivery_v0_1R2/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<p>The delivered packages passed:</p>
+<ul>
+<li>Markdown table-structure validation;</li>
+<li>internal relative-link validation;</li>
+<li>placeholder scanning;</li>
+<li>manifest generation;</li>
+<li>byte-size and SHA-256 capture;</li>
+<li>ZIP archive integrity testing;</li>
+<li>cross-package version and dependency checks.</li>
+</ul>
+<p>Observed QA results:</p>
+<pre><code class="language-text">Markdown table issues:       0
+Broken relative links:       0
+TODO/FIXME/TBD placeholders: 0
+ZIP integrity errors:        0
+</code></pre>
+<p>The previous v0.1R1 regulatory interpretation remains visible only in its historical changelog and now carries a clear supersession notice.</p>
+<h2>Individual package links</h2>
+<ul>
+<li>Combined design delivery v0.1R2 (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_delivery_v0_1R2.zip</code>; referenced bytes not established here)</li>
+<li>Revised kickoff package v0.1R2 (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_design_kickoff_v0_1R2.zip</code>; referenced bytes not established here)</li>
+<li>Architecture, logical model, and charters v0.1R1 (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_architecture_data_model_charters_v0_1R1.zip</code>; referenced bytes not established here)</li>
+<li>Enterprise architecture PNG (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_architecture_data_model_charters_v0_1R1/diagrams/enterprise_architecture_v0_1R1.png</code>; referenced bytes not established here)</li>
+<li>Enterprise architecture SVG (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_architecture_data_model_charters_v0_1R1/diagrams/enterprise_architecture_v0_1R1.svg</code>; referenced bytes not established here)</li>
+<li>Logical entity model PNG (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_architecture_data_model_charters_v0_1R1/diagrams/logical_erd_v0_1R1.png</code>; referenced bytes not established here)</li>
+<li>Logical entity model SVG (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_architecture_data_model_charters_v0_1R1/diagrams/logical_erd_v0_1R1.svg</code>; referenced bytes not established here)</li>
+</ul>
+<p>The design foundation is now frozen sufficiently to begin the <strong>physical PostgreSQL schema, parameter dictionary, and detailed Module 1 BRD</strong> without reopening the core product, module, grain, or governance architecture.</p>
+</div></article><article id="m-a2f50e9a-c233-45f5-93b9-719ff7db13e7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00027 · 2026-07-23T15:41:07.891000-04:00 · active path</p><div class="bubble"><p>Great work! This is exactly what I was anticipating and then some. Proceed to build the physical PostgreSQL schema, parameter dictionary, and detailed Module 1 BRD.</p>
+</div></article><article id="m-4552e700-261e-44a1-bc3f-079ed40a7238" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00028 · 2026-07-23T16:08:17.514131-04:00 · active path</p><div class="bubble"><p>I’m building the governed parameter workbook with scoped values, feature lineage, validation rules, and change-control views aligned to the physical schema.</p>
+</div></article><article id="m-fec34d60-26b5-4cb1-942b-faccf8dc4916" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00029 · 2026-07-23T17:25:17.193930-04:00 · active path</p><div class="bubble"><h1>Module 1 physical-design foundation</h1>
+<p>The three core deliverables are built:</p>
+<ol>
+<li>A governed <strong>physical PostgreSQL schema</strong> and baseline reference/parameter seed.</li>
+<li>A formatted, machine-aligned <strong>Module 1 parameter dictionary</strong>.</li>
+<li>A detailed <strong>Module 1 BRD</strong>, including the physical architecture, processing stages, calculations, output contract, validation framework, boundaries, and implementation plan.</li>
+</ol>
+<h2>1. Physical PostgreSQL schema</h2>
+<p>The physical foundation contains:</p>
+<ul>
+<li><strong>8 PostgreSQL schemas</strong></li>
+<li><strong>70 physical tables</strong></li>
+<li><strong>1,041 columns</strong></li>
+<li><strong>141 foreign keys</strong></li>
+<li><strong>4 partitioned daily/archive fact structures</strong></li>
+<li><strong>5 governed views</strong></li>
+<li><strong>3 functions</strong></li>
+<li>Fully commented tables and critical columns</li>
+<li>Versioned control-plane entities for profiles, policies, parameters, strategies, scenarios, contracts, runs, evidence, and acceptance</li>
+<li>Reserved namespaces for Modules 2–4, reporting, and validation evidence</li>
+</ul>
+<h3>PostgreSQL files</h3>
+<ul>
+<li>Physical PostgreSQL schema v0.2 (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/sql/00_msbf_physical_schema_v0_2.sql</code>; referenced bytes not established here)</li>
+<li>Reference and parameter seed v0.2 (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/sql/01_msbf_reference_parameter_seed_v0_2.sql</code>; referenced bytes not established here)</li>
+<li>PostgreSQL static validation report (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/docs/POSTGRESQL_STATIC_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+</ul>
+<p>The schema separates:</p>
+<pre><code class="language-text">msbf_ref   Reference catalogs
+msbf_ctl   Shared governance and control plane
+msbf_m1    Module 1 operational and analytical objects
+msbf_m2    Reserved Module 2 namespace
+msbf_m3    Reserved Module 3 namespace
+msbf_m4    Reserved Module 4 namespace
+msbf_evd   Reserved evidence namespace
+msbf_rpt   Reserved reporting namespace
+</code></pre>
+<h3>Important physical-design controls</h3>
+<p>The latest revision includes several controls that go beyond basic table creation:</p>
+<ul>
+<li>Run-scoped source-quality snapshots.</li>
+<li>Same-run lineage between source evidence and features.</li>
+<li>Referential links from source evidence to obligation, collateral, guarantee, credit, and verification snapshots.</li>
+<li>Separate latest and immutable archive tables.</li>
+<li>A versioned <code>M1_APPLICATION_RISK_SNAPSHOT_V1</code> contract.</li>
+<li>Deterministic uniform and normal-distribution helper functions that do not use session-level <code>random()</code>.</li>
+<li>A latest-accepted view that uses the most recent acceptance-gate review rather than potentially duplicating rows across review versions.</li>
+<li>A reconciliation view that independently aggregates latest and archive counts, avoiding many-to-many count inflation.</li>
+</ul>
+<p>The contract-validation function now evaluates ten areas:</p>
+<pre><code class="language-text">RUN_EXISTS
+ROW_COUNT
+NO_FUTURE_DATA
+CONTRACT_IDENTITY
+RISK_PROXY_ORDERING
+EXPECTED_LOSS_IDENTITY
+EAD_PATH_COMPLETENESS
+EAD_PATH_WEIGHTS
+EAD_PATH_MONOTONICITY
+EAD_AMOUNT_RECONCILIATION
+</code></pre>
+<p>The SQL passed the delivered static validation suite with <strong>zero errors and zero warnings</strong>. A live PostgreSQL 14+ server was not available in the build environment, so clean-database execution remains an explicit mandatory implementation gate. I have not represented the SQL as live-executed.</p>
+<hr>
+<h2>2. Parameter dictionary</h2>
+<p>The governed parameter package contains:</p>
+<ul>
+<li><strong>155 parameter definitions</strong></li>
+<li><strong>397 approved baseline scoped values</strong></li>
+<li><strong>32 feature definitions</strong></li>
+<li><strong>13 parameter categories</strong></li>
+<li><strong>8 initial industry segments</strong></li>
+<li>Physical table and column catalogs</li>
+<li>Validation and change-control standards</li>
+<li>Parameter-resolution precedence</li>
+<li>Synthetic-use and production-use boundaries</li>
+</ul>
+<h3>Parameter artifacts</h3>
+<ul>
+<li>Formatted Module 1 parameter dictionary workbook (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/docs/Module1_Parameter_Dictionary_v0_2.xlsx</code>; referenced bytes not established here)</li>
+<li>Markdown parameter dictionary (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/docs/MODULE_1_PARAMETER_DICTIONARY.md</code>; referenced bytes not established here)</li>
+<li>Machine-readable parameter definitions (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/catalogs/parameter_dictionary.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable baseline values (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/catalogs/parameter_baseline_values.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable feature dictionary (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/catalogs/feature_dictionary.csv</code>; referenced bytes not established here)</li>
+<li>Combined parameter dictionary JSON (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/catalogs/parameter_dictionary.json</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Workbook sheets</h3>
+<pre><code class="language-text">Executive Summary
+Category Summary
+Parameter Definitions
+Baseline Scoped Values
+Feature Dictionary
+Industry Assumptions
+Validation &amp; Change Control
+Physical Tables
+Physical Columns
+</code></pre>
+<p>The workbook includes a governed resolution order:</p>
+<pre><code class="language-text">1. Non-overridable project boundaries
+2. Product and legal-structure profile
+3. Operating model and source contracts
+4. Jurisdiction and regulatory profiles
+5. Enterprise risk appetite
+6. Global parameter set
+7. Approved scoped overlays
+8. Frozen run snapshot
+</code></pre>
+<p>Parameter changes are classified as:</p>
+<ul>
+<li><code>STANDARD</code></li>
+<li><code>MATERIAL</code></li>
+<li><code>MODEL_LOGIC</code></li>
+<li><code>REGULATORY</code></li>
+<li><code>SECURITY</code></li>
+</ul>
+<p>The workbook was generated with the required spreadsheet tooling, inspected for formula errors, and visually rendered for quality review.</p>
+<hr>
+<h2>3. Detailed Module 1 BRD</h2>
+<p>The BRD now contains:</p>
+<ul>
+<li><strong>31 main sections</strong></li>
+<li><strong>6 appendices</strong></li>
+<li><strong>53 governed tables</strong></li>
+<li><strong>4 architecture and processing figures</strong></li>
+<li>Approximately <strong>73 rendered pages</strong></li>
+<li>Mixed portrait and landscape sections for detailed technical tables</li>
+<li>Repeating table headers</li>
+<li>Image alternative text</li>
+<li>A complete heading hierarchy and PDF outline</li>
+<li>Zero high-, medium-, or low-severity accessibility findings after the final header treatment</li>
+</ul>
+<h3>BRD deliverables</h3>
+<ul>
+<li>Detailed Module 1 BRD — Word (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/docs/Merchant_Sales_Based_Financing_Module1_BRD_v0_2.docx</code>; referenced bytes not established here)</li>
+<li>Detailed Module 1 BRD — Markdown (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/docs/Merchant_Sales_Based_Financing_Module1_BRD_v0_2.md</code>; referenced bytes not established here)</li>
+<li>Detailed Module 1 BRD — latest rendered PDF (historical reference: <code>sandbox:[session]/_qa_brd_v0_2/Merchant_Sales_Based_Financing_Module1_BRD_v0_2.pdf</code>; referenced bytes not established here)</li>
+</ul>
+<p>The BRD specifies the full processing sequence:</p>
+<pre><code class="language-text">M1.0   Scope and boundary
+M1.1   Run, profile, parameter, source, and contract gatekeeper
+M1.2   Deterministic merchant population
+M1.3   Application and requested sales-linked structure
+M1.4   Baseline daily POS and settlement history
+M1.5   Deposit and liquidity history
+M1.6   Matched scenario overlays
+M1.7   Source quality and data confidence
+M1.8   Verification, fraud, and processor continuity
+M1.9   As-of cash-flow features
+M1.10  Obligations and liquidity
+M1.11  Cash-flow archetype
+M1.12  Capacity and requested burden
+M1.13  Base merchant-risk proxy
+M1.14  Requested-structure risk overlay
+M1.15  Declining EAD and LGD inputs
+M1.16  Comparative Expected Loss
+M1.17  Latest and immutable archive
+M1.18  QA, evidence, and G2 contract acceptance
+</code></pre>
+<p>The BRD also formalizes the distinction among:</p>
+<pre><code class="language-text">credit_risk_proxy
+fraud_risk_tier
+data_confidence_tier
+processor_continuity_status
+</code></pre>
+<p>Those dimensions remain separate rather than being collapsed into one opaque score.</p>
+<p>The primary analytical transmission path is:</p>
+<pre><code class="language-text">Merchant and source evidence
+→ Eligible POS revenue
+→ Revenue trend and stability
+→ Liquidity and existing obligations
+→ Adjusted cash-flow capacity
+→ Requested sales-linked burden
+→ Base and requested-structure risk
+→ Declining expected exposure
+→ LGD input
+→ Comparative Expected Loss
+</code></pre>
+<hr>
+<h2>4. Physical catalogs and diagrams</h2>
+<h3>Physical catalogs</h3>
+<ul>
+<li>Physical table catalog (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/catalogs/physical_schema_table_catalog.csv</code>; referenced bytes not established here)</li>
+<li>Physical column catalog (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/catalogs/physical_schema_column_catalog.csv</code>; referenced bytes not established here)</li>
+<li>Physical schema build statistics (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/catalogs/physical_schema_build_stats.json</code>; referenced bytes not established here)</li>
+<li>Parameter build statistics (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/catalogs/parameter_build_stats.json</code>; referenced bytes not established here)</li>
+<li>SQL static-validation evidence (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/catalogs/sql_static_validation.json</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Diagrams</h3>
+<ul>
+<li>Physical schema overview (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/diagrams/physical_schema_overview_v0_2.png</code>; referenced bytes not established here)</li>
+<li>Module 1 physical ERD (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/diagrams/module1_physical_erd_v0_2.png</code>; referenced bytes not established here)</li>
+<li>Module 1 processing flow (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/diagrams/module1_processing_flow_v0_2.png</code>; referenced bytes not established here)</li>
+<li>Parameter-resolution precedence (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/diagrams/parameter_resolution_precedence_v0_2.png</code>; referenced bytes not established here)</li>
+</ul>
+<hr>
+<h2>Validation status and remaining work</h2>
+<p>The core artifacts requested are complete. The following packaging and execution items remain:</p>
+<ol>
+<li><p><strong>Live PostgreSQL execution</strong><br>The DDL and seed must be executed against a clean PostgreSQL 14+ database with <code>ON_ERROR_STOP</code>, followed by catalog, constraint, index, seed-idempotence, deterministic-function, and contract-function tests.</p>
+</li>
+<li><p><strong>Consolidated distribution package</strong><br>The final ZIP, file manifest, SHA-256 inventory, package README, and detailed PostgreSQL execution guide have not yet been assembled.</p>
+</li>
+<li><p><strong>Final PDF promotion</strong><br>The latest PDF is available from the completed render-and-inspection workflow above, but it has not yet been copied into the primary <code>docs</code> folder and included in a consolidated ZIP.</p>
+</li>
+<li><p><strong>Analytical stage implementation</strong><br>This delivery is the physical and business-design foundation. It does not yet populate merchants, POS history, features, risk snapshots, EAD paths, or archive rows. Those stage SQL components are the next implementation workstream.</p>
+</li>
+</ol>
+<p>The next controlled gate is therefore:</p>
+<pre><code class="language-text">Execute physical foundation
+→ Verify catalogs and deterministic functions
+→ Freeze G1 control-plane configuration
+→ Implement M1.2-M1.18 analytical SQL
+→ Run baseline and matched stress campaign
+→ Produce Module 1 Validation Summary
+→ Accept G2_M1_CONTRACT
+</code></pre>
+</div></article><article id="m-e057089d-455d-4bb5-b5f7-4e186ffdb91b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00030 · 2026-07-23T17:42:43.695000-04:00 · active path</p><div class="bubble"><p>Great work. Quick aside - Give me a detailed step by step on how to perform the live postgresql execution or is that something you can do?</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

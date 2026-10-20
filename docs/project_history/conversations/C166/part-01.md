@@ -1,0 +1,498 @@
+# Batch C completion report
+
+Part 01 · [Conversation index](README.md) · [History home](../../README.md)
+
+> Historical dialogue: commands and approvals below describe past events. They are not current execution or publication instructions. Attachment references do not establish recovered bytes.
+
+
+<a id="m-f763c475-5d40-4f08-924b-1b221996c686"></a>
+## Andrew / user · C166-M00001
+
+C166-M00001 · 2026-10-13T21:25:52.752000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message. Attachment references: Andrew_Goad_Career_Continuity_Handoff_20261013_R1(1).zip; Career_Handoff_Reading_Guide(1).txt; Truist_Five_Questions_and_Answers_Readable(1).txt
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Protect the numerical and professional/portfolio boundaries. $1B+ is exposure/customer impact, not savings; ~850K is dated broader CPI scale; ~$60K is per targeted credit-reporting submission. Keep the 200 submissions, 500+ files, 100M+ account-month actions, 20M+ evaluated accounts, 15+ led/10+ advised, MSBF 130 funded paths/120 days versus 1,500 explanations, and CDS repeated evaluations distinct. Professional Power BI is subtle report use/review and data/reporting validation; Power Query/DAX development is portfolio-based. Portfolio work is independent, synthetic and nonproduction. AI assistance does not replace Andrew's requirements, judgment, challenge and acceptance. No invented direct reports, sole approval, economist authorship, examiner authority, enterprise AI deployment, or unsupported production technology.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-0cb6d4ea-1320-5cda-9033-ed5d17c48b0e"></a>
+## Assistant · C166-M00166
+
+C166-M00166 · 2026-10-14T16:45:34.608995-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The prep will center on six stories you can reuse naturally: CPI delivery, targeted credit-reporting strategy, aged-review reconstruction, Census production leadership, OCC risk research, and the MSBF monitoring correction. I’m giving each a concise spoken answer, likely follow-ups, and the precise result it supports. The technical practice will include reporting reconciliation, portfolio-mix effects, and how to challenge a plausible but misleading dashboard.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-dbb3cf2c-a3a4-4adb-84a8-d5fee4b78737"></a>
+## Andrew / user · C166-M00223
+
+C166-M00223 · 2026-10-16T19:22:49.722000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Given the Global Risk & Analytics team's focus on Tableau and risk products, I invested time building a dashboard for my Merchant Credit Intelligence (MCI) portfolio, comparing application decisions across baseline and stress scenarios, including data-driven decision interpretation. You can interact with the Tableau dashboard here:
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-01d83955-75b1-5400-9236-97741093bf12"></a>
+## Assistant · C166-M00226
+
+C166-M00226 · 2026-10-16T19:25:21.513501-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Your emphasis on Tableau and risk products prompted me to build a dashboard for my independent Merchant Credit Intelligence (MCI) portfolio. Using synthetic data, it compares application decisions across baseline and stress scenarios, connecting portfolio-level changes to individual applications and data-driven explanations of their outcomes.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-9ea8b9b8-1b95-51f7-8a9a-7fc385bd3b01"></a>
+## Assistant · C166-M00228
+
+C166-M00228 · 2026-10-16T19:36:56.240790-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Your focus on Tableau and risk products inspired me to build a new dashboard for my independent Merchant Credit Intelligence portfolio. Using synthetic data, it connects baseline and stress-scenario decisions to the evidence behind each outcome:
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-ca313bfb-f1ea-462f-a827-1d4d7ef995b6"></a>
+## Andrew / user · C166-M00229
+
+C166-M00229 · 2026-10-16T19:56:57.838000-04:00 · active path
+
+Preceding visible parent: [C166-M00228](part-01.md#m-9ea8b9b8-1b95-51f7-8a9a-7fc385bd3b01)
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The team's focus on Tableau and risk products inspired me to build a new dashboard for my independent Merchant Credit Intelligence portfolio. Using synthetic data, it connects baseline and stress-scenario decisions to the evidence behind each outcome:
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-1705da10-7064-5734-b75c-1a0e710cc8a3"></a>
+## Assistant · C166-M00232
+
+C166-M00232 · 2026-10-16T19:58:52.635055-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The team’s focus on Tableau and risk products inspired me to build a new dashboard for my independent Merchant Credit Intelligence portfolio. Using synthetic data, it connects baseline and stress-scenario decisions to the evidence behind each outcome:
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-a27994ca-4a48-55c7-a554-a5cfebcc1d90"></a>
+## Assistant · C166-M00243
+
+C166-M00243 · 2026-10-16T20:06:58.427680-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The team’s focus on Tableau and risk products inspired me to build a new dashboard for my independent Merchant Credit Intelligence portfolio. Using synthetic data, it connects baseline and stress-scenario decisions to the evidence behind each outcome:
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-1bade18e-11cb-4e7e-9ef6-1101bc89729e"></a>
+## Andrew / user · C166-M00266
+
+C166-M00266 · 2026-10-16T21:40:00.755000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message. 2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: MSBF_MCI_What_Happens_After_the_Decision_v2_1_COPYFIX_R1 (2).png; MSBF_MCI_How_the_Governed_Decision_Engine_Works_v2_1_COPYFIX_R1 (2).png
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+i want to talk about whether this is the clearest it can be. Current -> Monitoring judgment: Built Power BI diagnostics after initial project acceptance to investigate early adverse classifications. Challenged assessment timing after funding, coordinated correction and separate AI-assisted review, and reconciled unchanged cash history and final outcomes across 130 funded scenario paths over 120 days.   I really question what are we trying to say by "reconciled unchanged cash history". more importantly, I just wonder if you truly understand what was impactful about the power bi and the work in merchant financing. this was the launch of a new, unique product.  look at these two posters that detail the project. then yes, there is a detailed power bi associated: [https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/tree/fd9f67b6d1d7fc848d315bcb696487b82c9a8046/docs/power_bi/m2_v2_1/assets/power_bi/core](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/tree/fd9f67b6d1d7fc848d315bcb696487b82c9a8046/docs/power_bi/m2_v2_1/assets/power_bi/core)    [https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/tree/fd9f67b6d1d7fc848d315bcb696487b82c9a8046/docs/power_bi/m2_v2_1/docs](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/tree/fd9f67b6d1d7fc848d315bcb696487b82c9a8046/docs/power_bi/m2_v2_1/docs)
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-2b4b6d3a-5bee-5a5a-a2f4-79713a0a152d"></a>
+## Assistant · C166-M00270
+
+C166-M00270 · 2026-10-16T21:43:16.378304-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+For example, the application view explains why merchant 738 is funded under Baseline but receives an evidence decline under Recession Energy: the stress case lacks the required usable history. That is meaningful decision interpretation. The report connects the outcome to its reason and correctly prevents an unfunded case from inheriting a repayment history. [Power BI requirements](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/blob/fd9f67b6d1d7fc848d315bcb696487b82c9a8046/docs/power_bi/m2_v2_1/docs/POWER_BI_BUSINESS_REQUIREMENTS.md)
+
+[Editorial omission: unrelated material between retained excerpts.]
+
+The supported result was **less premature monitoring noise while preserving critical risk signals and the underlying financial evidence.** That is the meaning the résumé should convey. [Change and reconciliation report, section 8](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/blob/ebffbf94789c14e64d22fe93551c206f29f0d64d/docs/release_change_control/module_2_g3_v2_1/reports/02_DETAILED_CHANGE_LOG_AND_DATA_RECONCILIATION_REPORT.md)
+
+[Editorial omission: unrelated material between retained excerpts.]
+
+I would revise the **two MSBF bullets together**, giving the product accomplishment first position and the judgment example second. Within the existing independent, synthetic, non-production portfolio section, my proposed wording is:
+
+[Editorial omission: unrelated material between retained excerpts.]
+
+> **MSBF · Merchant Credit Intelligence:** Designed and developed a merchant-financing product demonstration connecting sales-based repayment, cash-flow capacity and governed counteroffers to funding, monitoring and servicing. Built Power BI views linking portfolio performance to individual decisions, repayment behavior and servicing needs; added Tableau comparisons of baseline/stress treatments.
+>
+> **Product judgment and refinement:** Used Power BI diagnostics to challenge premature adverse classifications after initial project acceptance. Directed monitoring calibration around expected remittance timing and persistent shortfalls, reducing early alert noise while preserving critical risk triggers. Validated the changes across 130 funded scenario paths over 120 days.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-88d330a5-dd1f-49c6-b73c-ead66886607a"></a>
+## Andrew / user · C166-M00271
+
+C166-M00271 · 2026-10-16T21:49:35.059000-04:00 · active path
+
+Preceding visible parent: [C166-M00270](part-01.md#m-2b4b6d3a-5bee-5a5a-a2f4-79713a0a152d)
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message. Attachment references: Human_in_the_Loop_Analytical_Leadership (1).pdf
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+for the product judgement and refinement you are essentially trying to tell my Human in the Loop story, but doing so poorly: [https://github.com/andrew-goad/andrew-goad/blob/03cbea711f1b3d06ce1b77599286eb700dedb313/Human_in_the_Loop_Analytical_Leadership/Human_in_the_Loop_Analytical_Leadership.pdf](https://github.com/andrew-goad/andrew-goad/blob/03cbea711f1b3d06ce1b77599286eb700dedb313/Human_in_the_Loop_Analytical_Leadership/Human_in_the_Loop_Analytical_Leadership.pdf)           this is much more significant than the resume bullets lead on.  similarly for the credit decisioning strategy simulator bullet, I built an entire synthetic bank application portfolio and strategy testing engine. not only that, but extremely detailed business requirements and validation summaries proving that synthetic bank application portfolio, then ran 50k matched applications through a campaign of 39 different strategy scenarios - 1.95million decisions.  please really take time to explore and ingest my github in more detail, particularly these two features.    [https://github.com/andrew-goad/credit_decisioning_strategy](https://github.com/andrew-goad/credit_decisioning_strategy)
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-628a1921-9fa8-5074-b487-9b783f9efa4e"></a>
+## Assistant · C166-M00281
+
+C166-M00281 · 2026-10-16T21:57:15.078153-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The inventory is much larger than the earlier résumé treatment suggests: nine repositories with nearly 4,000 tracked files. MSBF alone includes staged requirements, implementation, acceptance evidence, operating guides, and preserved correction history.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-644e1f06-4596-5842-bbad-f35443c82d5e"></a>
+## Assistant · C166-M00288
+
+C166-M00288 · 2026-10-16T22:24:35.417041-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The candidate keeps the established career arc intact and concentrates the changes in the portfolio sections. CDS now leads with the five-product synthetic bank portfolio and strategy engine; MSBF leads with financing-product development and your two consequential challenges; Survival is described as a reusable framework.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-6ae794e2-9132-4c78-943e-139efce725ee"></a>
+## Andrew / user · C166-M00293
+
+C166-M00293 · 2026-10-17T05:55:07.017000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message. Attachment references: README_START_HERE (1)(1).md; 00_CONTROLLING_DISPOSITION (1)(1).md; 01_FULL_INDEPENDENT_AUDIT_REPORT (1)(1).md; 02_FINDINGS_REGISTER (1)(2).csv; 03_COMPONENT_DISPOSITIONS (1)(1).csv; 04_SIX_DIMENSION_ASSESSMENT (1)(1).csv; 08_EXACT_CORRECTION_DIRECTIVES(2).md; 09_CORRECTION_AND_ADOPTION_BOUNDARY(2).md; 11_RETURN_HANDOFF(2).txt; 12_ASTRA_OR_CORRECTION_OPENING_PROMPT(2).md; 05_INDEPENDENT_CHECK_REGISTER (1)(1).csv; 06_REVIEWED_IDENTITIES (1)(1).csv; 07_PORTFOLIO_FINDING_DISPOSITIONS(2).csv; 10_INDEPENDENT_VERIFICATION_EVIDENCE(2).json; PACKAGE_INDEX (1)(1).md; MANIFEST_SHA256 (1)(2).csv; MANIFEST_SHA256 (1)(2).json
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+# Independent Leap 16 R2 Audit: `PASS WITH FINDINGS`
+**Engagement:** `LEAP16_R2_COMPLETE_PACKAGE_INDEPENDENT_AUDIT_20261017_R1`  
+**Mode:** `BASELINE_CHANGE_GATE` — portfolio evidence, résumé family, LinkedIn, private guidance, and package integrity  
+**Findings:** `0 × S1 · 0 × S2 · 3 × S3 · 8 × S4`  
+**Focused correction cycle:** Required  
+**Owner adoption:** `NOT PERFORMED`  
+**LinkedIn/GitHub publication:** `NOT PERFORMED`  
+**Employer submission:** `NOT AUTHORIZED`
+## Bottom-line opinion
+The deeper review **does support a stronger analytical-product-development story**. The best evidence is not simply that Andrew has code, dashboards, validation documents, or large synthetic populations. It is that he repeatedly defines the business problem, designs the data and decision logic, directs AI-assisted implementation, challenges technically accepted behavior, validates corrections, and makes the result understandable to another user. That is a genuine improvement over describing the portfolio primarily as inspectable proof, policy tests, or monitoring diagnostics. Andrew_Goad_Leap16_R2_Portfolio…
+**Leap 16 R2 is directionally better than Final Leap 15 R3, but the exact frozen R2 package should not be adopted as-is.** Three localized wording regressions should be corrected first:
+1. Restore **“initial project acceptance”** in Enterprise, Credit Risk, and the private guidance.
+2. Replace **“Reduced premature alerts”** with evidence-precise monitoring-result language.
+3. Restore the adopted LinkedIn headline’s **“Enterprise Data Strategy & Decision Systems”** positioning rather than sacrificing `Enterprise` to add Tableau.
+After those corrections, Leap 16 would be a clear net improvement. No broad rewrite, new portfolio ingestion, or new résumé architecture is warranted.
+## Separate dispositions
+| Component | Verdict | Independent conclusion |
+|---|---|---|
+| **Senior Analytics résumé** | `PASS` | Product purpose, development ownership, and human judgment become clearer without weakening the professional arc. |
+| **Enterprise Data Strategy résumé** | `PASS_WITH_MINOR_CORRECTIONS` | The largest conceptual improvement, but the monitoring chronology and result language need repair. |
+| **Credit Risk Modeling résumé** | `PASS_WITH_MINOR_CORRECTIONS` | OCC-first authority remains strong; the portfolio improves, but the monitoring wording regresses. |
+| **LinkedIn About** | `PASS` | Stronger, more coherent product-development synthesis. |
+| **LinkedIn Featured description** | `PASS` | Accurate, concise, and well bounded. |
+| **LinkedIn headline** | `REVISE` | Adding Tableau does not justify weakening the enterprise-level market identity. |
+| **Private portfolio guidance** | `PASS_WITH_MINOR_CORRECTION` | Sound architecture; one chronology phrase must retain `project`. |
+| **Evidence crosswalk and skill supplement** | `PASS` | Current locators are added without rewriting immutable historical anchors. |
+| **25-finding portfolio review** | `PASS_WITH_OBSERVATIONS` | Career-supporting findings are sound; code, preview, and repository issues remain separate maintenance work. |
+| **Package and production integrity** | `PASS` | Manifest, source identity, pages, links, text, and rendering all passed independent checks. |
+| **Complete exact R2 package** | **`PASS WITH FINDINGS`** | Focused correction and closure required before owner adoption. |
+## Is Leap 16 truly better than Final Leap 15 R3?
+### Senior Analytics: **yes, meaningfully but modestly**
+The two-page résumé now tells the portfolio story through products and decisions:
+- MSBF is a merchant-financing product connecting evidence, terms, authority, and servicing.
+- The counteroffer and monitoring episodes become a recognizable Human-in-the-Loop judgment story.
+- CDS is a five-product synthetic bank application portfolio and configurable strategy engine.
+- Survival becomes a reusable framework rather than one model demonstration.
+- Tableau appears as a current interpretation surface alongside Power BI.
+The tradeoff is acceptable. The Senior résumé no longer states every hard-policy boundary, unchanged-outcome safeguard, and application-level example. Those remain in the longer résumés and evidence bank. The result is easier to remember and more relevant to senior analytics and product-oriented roles.
+**Independent score: 94 / A−**, versus 93 for adopted R3 under the same six-dimension rubric.
+### Enterprise Data Strategy: **better in concept; correct the exact wording**
+This family gains the most. It now presents a coherent sequence:
+```text
+Financing-product purpose
+→ business-facing Power BI and Tableau tools
+→ human policy challenge
+→ supported decision consequence
+→ post-acceptance monitoring challenge and controlled correction
+```
+The `143` result is useful because it makes the policy redesign consequential while retaining support/review and authorization boundaries. The source review expressly states that these were previously declined application-scenario cases moving to support or review—not 143 approvals. Andrew_Goad_Leap16_R2_Portfolio…
+The monitoring defects reduce precision enough that I do **not** accept the preparer’s 95 for the exact R2 file.
+**Independent score: 93 / A−** as submitted.
+### Credit Risk Modeling: **near parity, with a slight current-product gain**
+The résumé remains properly OCC-first. It retains detailed publication-specific model-data work, DFAST, CECL, recalculation, effective challenge, and economist/examination-team boundaries. The CDS and MSBF revisions improve current strategy and product relevance without implying professional production-model ownership.
+The monitoring phrase is more problematic here because “initial acceptance” can naturally be interpreted as credit or application acceptance.
+**Independent score: 92 / A−**, equal to adopted R3. Its benefit is better current-product framing—not stronger professional modeling authority.
+### LinkedIn: **About and Featured improve; the headline does not**
+The revised About more clearly states:
+- the five-product bank application portfolio and strategy engine;
+- merchant financing from cash-flow evidence through servicing;
+- the reusable Python time-to-event framework;
+- distinct Power BI and Tableau roles; and
+- human ownership of requirements, judgment, validation, and acceptance.
+The headline, however, drops `Enterprise` from a central market-identity phrase to fit Tableau. That is not a good trade.
+## Required corrections
+### `LEAP16-R2-F-001` — `S3`  
+### Restore **initial project acceptance**
+**Affected surfaces**
+- Enterprise résumé, page 3;
+- Credit Risk résumé, page 3;
+- `Portfolio_Career_Guidance_R2.txt`.
+The supporting chronology is explicit: Power BI exposed early adverse classifications **after initial project acceptance**, and Andrew continued challenging the product after that reviewed milestone. Andrew_Goad_Leap16_R2_Portfolio…
+Apply exactly:
+```text
+Enterprise lead-in:
+• Monitoring judgment after initial project acceptance:
+Credit Risk first sentence:
+After initial project acceptance, Power BI exposed premature adverse classifications.
+Private guidance:
+...challenge early monitoring judgments after initial project acceptance.
+```
+The correction matters because `acceptance` alone can sound like credit approval or application acceptance.
+---
+### `LEAP16-R2-F-002` — `S3`  
+### Replace **“Reduced premature alerts”**
+The evidence shows:
+- baseline peak adverse count changed from 41 on day 14 to 20 on day 33;
+- stress peak changed from 11 on day 14 to 4 on day 32;
+- recorded remittances, exposure histories, and final outcomes did not change; and
+- the comparison concerns classification policy, not better simulated cash or credit performance. Andrew_Goad_Leap16_R2_Portfolio…
+Replace the final sentence in both Enterprise and Credit Risk:
+```text
+Reduced premature alerts while preserving recorded remittances and final outcomes.
+```
+with:
+```text
+Reduced and delayed peak adverse counts while preserving recorded remittances and final outcomes.
+```
+That wording is more precise about both the measured result and its limitations.
+I tested both résumé corrections in temporary, non-release copies. Enterprise and Credit Risk each remained three pages with clean page-three layouts. The actual production workspace must still rebuild, hash, and rerender the corrected derivatives.
+---
+### `LEAP16-R2-F-003` — `S3`  
+### Restore the adopted LinkedIn headline
+**Current R2 headline — 217 characters**
+> Senior Analytics & Applied Data Science Leader | Consumer Credit & Risk Analytics | Data Strategy & Decision Systems | Data Governance | AI-Enabled Delivery | SAS • SQL • Python • Power BI • Tableau (GitHub Portfolio)
+This removes `Enterprise` from the adopted market identity solely to make room for Tableau. Tableau is already visible in the About, Featured description, résumés, toolkits, and public portfolio. The review supports Tableau as an additive baseline/stress interpretation view, but not as something that needs to displace enterprise positioning in the headline. Andrew_Goad_Leap16_R2_Portfolio…
+Restore the exact adopted R3 headline:
+> **Senior Analytics & Applied Data Science Leader | Consumer Credit & Risk Analytics | Enterprise Data Strategy & Decision Systems | Data Governance | AI-Enabled Delivery | SAS • SQL • Python • Power BI (GitHub Portfolio)**
+No broader LinkedIn rewrite is needed.
+## Product-evidence conclusions
+### MSBF
+The source record supports presenting MSBF as a configurable financing product and lifecycle demonstration—not merely a dashboard or policy-control example. Its evidence chain runs from merchant activity and cash-flow capacity through terms, authority, funding, monitoring, and servicing. Missing evidence remains distinct from a repairable financing structure, and review remains distinct from authorization. Andrew_Goad_Leap16_R2_Portfolio…
+The following populations remain correctly separate:
+```text
+750 matched merchants
+1,500 application-scenario decisions and narratives
+6,519 evaluated structures
+84,228 decision-gate rows
+130 funded scenario paths
+120 monitoring days
+```
+The candidate does not turn any of those into real borrowers, commercial lending, realized performance, or production deployment.
+### CDS
+The five-product portfolio and configurable strategy-engine description is supported. The retained campaign contains 39 slices of 50,000 rows—**1.95 million repeated decision evaluations**, not unique applicants. The same application IDs recur while source configurations may vary across the broader campaign. Formal Module 2 BRD and validation PDFs remain forthcoming, and R2 does not claim otherwise. Andrew_Goad_Leap16_R2_Portfolio…
+The separate SAS reconciliation and Power BI/DAX explanation story also remains important. It connects implementation change, validation, and user interpretation rather than flattening CDS into campaign volume alone. Andrew_Goad_Leap16_R2_Portfolio…
+### Survival Strategy Framework
+The framework language is stronger and supported. The evidence retains:
+- separate descriptive personas;
+- regularized CoxPH;
+- five-fold validation;
+- out-of-fold calibration;
+- proportional-hazards review;
+- dependency-safe same-cohort scenarios;
+- reports and run evidence; and
+- `PASS_WITH_REVIEW`, not universal approval.
+The scenarios remain model sensitivity—not causal retention improvement. Andrew_Goad_Leap16_R2_Portfolio…
+### Supporting repositories
+The review properly surfaces code, preview, release-state, and reproducibility limitations without importing them into résumé claims. In particular, some smaller-project graphics overstate automated repair, scale, financial benefit, machine learning, or monitoring; MSBF’s public source does not establish a complete cold-start rebuild; and selected SAS/Python utilities need focused execution or correction before being called ready-to-run. Andrew_Goad_Leap16_R2_Portfolio…
+Those are **separate repository-maintenance matters**, not reasons to discard the supported product story or hold the résumé package.
+## Professional-arc non-regression
+The candidate preserves the governing professional boundaries:
+- CPI remains the principal Wells Fargo story.
+- Seven years of CPI production, 15+ led workstreams, and 10+ advised/reviewed matters retain their correct cross-tenure scope.
+- `$1B+` remains exposure and customer impact—not savings.
+- `~850K`, `~200`, `500+`, `100M+`, `20M+`, and `~$60K per targeted submission` remain distinct.
+- OCC research remains economist-led and publication-specific.
+- No final-model, authorship, examiner, MRA, supervisory, direct-report, or sole-approval claim was introduced.
+- Census retains six-analyst operating leadership and manager/resource usefulness.
+- Professional Power BI use/review remains separate from portfolio Power Query/DAX development.
+- Portfolio work remains independent, synthetic, and non-production.
+- AI assistance remains disclosed while Andrew retains requirements, judgment, challenge, validation, and acceptance.
+The package’s own governing review correctly emphasizes that independent products extend rather than replace consequential professional delivery. Andrew_Goad_Leap16_R2_Portfolio…
+## Independent integrity and production results
+```text
+Outer ZIP bytes                         493,011,332
+Outer ZIP SHA-256                       fefb1493da44d5c14c84b62490856cac2370f82935adcb4d990d43f17a072fed
+ZIP entries                             7,753
+ZIP CRC                                 PASS
+Unsafe / duplicate / case collisions   0 / 0 / 0
+Manifest payloads                       7,752 / 7,752 exact
+Candidate identities                    21 / 21 exact
+Repository files                        3,930 / 3,930 exact
+Distinct source SHA-256 values          3,511
+Cataloged source bytes                  509,070,249
+Git blob mismatches                     0
+Pinned-tree omissions                   0
+```
+These independently reproduced the preparer’s saved-download identity and CRC results. Andrew_Goad_Leap16_R2_Saved_Dow…
+Résumé production:
+```text
+Page counts                             2 / 3 / 3
+Pages visually inspected               8 / 8
+US Letter geometry                      PASS
+Searchable PDFs                         3 / 3
+Comments / tracked changes / hidden     NONE
+Normalized DOCX/TXT parity              3 / 3 PASS
+DOCX/PDF substantive parity             3 / 3 PASS
+Active Word/PDF destination sets        3 / 3 PASS
+Clipping / overlap / broken glyphs      NONE OBSERVED
+```
+Fresh DOCX rendering found:
+- Enterprise: all three pages pixel-identical to the supplied PDF.
+- Credit Risk: all three pages pixel-identical.
+- Senior: résumé body identical; the only difference was in the unchanged page-number/footer region, approximately 0.219% of pixels per page.
+The source report inside the ZIP and the separately delivered report have different SHA-256 identities because the delivered PDF contains added provenance bytes. Their page text, hyperlinks, and 72-dpi rendered pixels are identical. This is a source-versus-delivery distinction, not cryptographic C2PA trust validation. Andrew_Goad_Leap16_R2_Saved_Dow…
+## Exact résumé identities reviewed
+| Family | DOCX SHA-256 | PDF SHA-256 |
+|---|---|---|
+| **Senior** | `856eaae0e6f0afa52ed02e0f64734bd9cc7b573ac8e8c055637ba1bc296e81de` | `8973ae9e758bd23c1a1c5da4d96794bbc268342fafadd391fb23c7f3a1296c06` |
+| **Enterprise** | `a16f9732c56ad5c4d0c070fe708ca77c5fa50fa6f0102321f310e81c472ca4a1` | `6a791c891d9bb005e6fd48a3ec1f048cbbf49e66b5396844eb225ef3d0b0f59a` |
+| **Credit Risk** | `11310fc9a87a1a0ba1963fdff2b5169f7a54870737a474d930c6fcb37c5112e7` | `d233c8c3fac1e79a08fa0068ca3a07348593081893b98f49af6dce686b77bd40` |
+## Limitations
+I did **not** perform a fresh end-to-end PostgreSQL, SAS, Power BI Desktop, or Tableau Desktop run. I did not independently adjudicate every historical conversation, SQL statement, or CSV cell. The source review itself expressly distinguishes complete artifact capture from blanket semantic or runtime certification. Andrew_Goad_Leap16_R2_Portfolio…
+I also did not verify:
+- current live LinkedIn installation;
+- current live GitHub state;
+- every Tableau interaction;
+- ATS performance;
+- recruiter-response or comprehension time; or
+- hiring outcomes.
+## Adoption boundary
+```text
+INDEPENDENT AUDIT                       COMPLETE / PASS WITH FINDINGS
+FINAL LEAP 15 R3                        GOVERNING
+EXACT LEAP 16 R2                        NOT READY FOR ADOPTION AS-IS
+FOCUSED CORRECTION DERIVATIVE           REQUIRED
+BROAD REWRITE / NEW INGESTION           NOT REQUIRED
+OWNER ADOPTION                          NOT PERFORMED
+NEUTRAL RELEASE PRODUCTION              NOT PERFORMED
+LINKEDIN / GITHUB PUBLICATION           NOT PERFORMED
+EMPLOYER SUBMISSION                     NOT AUTHORIZED
+```
+The next artifact should be a bounded `Leap16_R2_CORRECTED` or equivalent maintenance derivative implementing only the three findings above. Senior, LinkedIn About, Featured description, the six other LinkedIn fields, evidence crosswalk, skill supplement, repository source snapshot, and 25-finding record should remain unchanged.
+# Individual audit deliverables
+No ZIP is required.
+## Primary audit record
+- :chatgpt-content-reference{index="14"}Start guide (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/README_START_HERE.md`; referenced bytes not established here)
+- :chatgpt-content-reference{index="15"}Controlling disposition (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/00_CONTROLLING_DISPOSITION.md`; referenced bytes not established here)
+- :chatgpt-content-reference{index="16"}Full independent audit report (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/01_FULL_INDEPENDENT_AUDIT_REPORT.md`; referenced bytes not established here)
+- :chatgpt-content-reference{index="17"}Findings register (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/02_FINDINGS_REGISTER.csv`; referenced bytes not established here)
+- :chatgpt-content-reference{index="18"}Component dispositions (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/03_COMPONENT_DISPOSITIONS.csv`; referenced bytes not established here)
+- :chatgpt-content-reference{index="19"}Six-dimension assessment (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/04_SIX_DIMENSION_ASSESSMENT.csv`; referenced bytes not established here)
+- :chatgpt-content-reference{index="20"}Exact correction directives (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/08_EXACT_CORRECTION_DIRECTIVES.md`; referenced bytes not established here)
+- :chatgpt-content-reference{index="21"}Correction and adoption boundary (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/09_CORRECTION_AND_ADOPTION_BOUNDARY.md`; referenced bytes not established here)
+- :chatgpt-content-reference{index="22"}Concise return handoff (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/11_RETURN_HANDOFF.txt`; referenced bytes not established here)
+- :chatgpt-content-reference{index="23"}Astra/correction opening prompt (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/12_ASTRA_OR_CORRECTION_OPENING_PROMPT.md`; referenced bytes not established here)
+## Verification and evidence records
+- :chatgpt-content-reference{index="24"}Independent check register (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/05_INDEPENDENT_CHECK_REGISTER.csv`; referenced bytes not established here)
+- :chatgpt-content-reference{index="25"}Reviewed identities (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/06_REVIEWED_IDENTITIES.csv`; referenced bytes not established here)
+- :chatgpt-content-reference{index="26"}All 25 portfolio-finding dispositions (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/07_PORTFOLIO_FINDING_DISPOSITIONS.csv`; referenced bytes not established here)
+- :chatgpt-content-reference{index="27"}Machine-readable verification evidence (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/10_INDEPENDENT_VERIFICATION_EVIDENCE.json`; referenced bytes not established here)
+- :chatgpt-content-reference{index="28"}Package index (historical reference: `sandbox:[session]/Andrew_Goad_Leap16_R2_Independent_Audit_20261017_R1/PACKAGE_INDEX.md`; referenced bytes not established here)
+- :chatgpt-content-reference{index="29"}[SHA-256 manifest — CSV](sandbox:[session]/Andrew_Goad_Leap16_R2_
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-dbc8b8a5-2de9-54fa-951d-ffcf30ffa0ad"></a>
+## Assistant · C166-M00336
+
+C166-M00336 · 2026-10-17T08:16:04.680332-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+I would keep the MSBF Application Journey and Survival architecture images. They convey the product’s breadth better than a simpler chart. Tableau deserves its own optional interactive card when it is especially relevant to the roles you’re pursuing.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-1d75a90b-fd8d-5112-99a6-591525dbc21e"></a>
+## Assistant · C166-M00338
+
+C166-M00338 · 2026-10-17T08:24:42.316685-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The review is complete. I recommend the full 12-page recommendations PDF on LinkedIn, with its summary page first. The refreshed descriptions give MSBF and CDS their due as analytical products, while the guide flags older preview claims that need correction before reuse.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-44319816-20dc-4848-a04b-af994e43c198"></a>
+## Andrew / user · C166-M00341
+
+C166-M00341 · 2026-10-17T08:32:11.542000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+note, linkedin only allows one image for a feature link. i am confused by your guide stating multiple images for the msbf work or are you suggesting I have multiple features for that one project?
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-00a476f3-2d5b-5cda-88b8-0e966edd6364"></a>
+## Assistant · C166-M00342
+
+C166-M00342 · 2026-10-17T08:32:22.938017-04:00 · active path
+
+Preceding visible parent: [C166-M00341](part-01.md#m-44319816-20dc-4848-a04b-af994e43c198)
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+**My recommendation is one MSBF Featured link with one preview image.** The guide wasn’t clear enough about that.
+
+[Editorial omission: unrelated material between retained excerpts.]
+
+- **Image:** Keep the Power BI **Application Journey** image.
+- **Destination:** Your MSBF GitHub repository.
+- **Title/description:** Present the complete financing product and mention both Power BI and the additive Tableau comparison.
+
+[Editorial omission: unrelated material between retained excerpts.]
+
+The two MSBF posters were included as supporting resources for GitHub or future posts—not as additional images for that Featured link or a recommendation to create more cards.
+
+[Editorial omission: unrelated material between retained excerpts.]
+
+The separate Tableau card was **optional**. It would be a second feature for the same project, linking directly to the interactive dashboard. **I would skip that for your general profile** and let the main MSBF card represent the whole product. Consider the separate card only when you specifically want Tableau to receive more prominence.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-2ef78d7f-43ea-51f2-a9d2-9fbb6cb6084a"></a>
+## Assistant · C166-M00344
+
+C166-M00344 · 2026-10-17T08:33:19.554126-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+**Keep the current images** for MSBF, Survival, Human-in-the-Loop and your résumé. For Professional Recommendations, keep the existing summary as page one and upload the complete packet—no separate image redesign is needed.
+<!-- END_SOURCE_MESSAGE -->

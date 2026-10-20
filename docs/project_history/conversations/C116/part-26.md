@@ -1,0 +1,462 @@
+# Branch · MSBF - Power BI Executive Portfolio Intelligence Part 2
+
+Part 26 · [Conversation index](README.md) · [History home](../../README.md)
+
+> Historical dialogue: commands and approvals below describe past events. They are not current execution or publication instructions. Attachment references do not establish recovered bytes.
+
+[Previous part](part-25.md)
+
+<a id="m-1fb17a48-1cb3-4d34-bedb-d0ca9b17449c"></a>
+## Andrew / user · C116-M00751
+
+C116-M00751 · 2026-09-02T18:53:38.158000-04:00 · active path
+
+Preceding visible parent: [C116-M00750](part-25.md#m-5d97106a-bd5c-4d1e-b028-3095f0dfc102)
+
+**Editorial record note:** 2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 0a841554-bab4-40d3-b1d5-1c78557cdd23.png; d2272181-7517-4276-80c5-a2254c81d544.png
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00758](../C109/part-34.md#m-1fb17a48-1cb3-4d34-bedb-d0ca9b17449c). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-1fdf120e-22a4-4cc4-88be-b795eced4608"></a>
+## Assistant · C116-M00752
+
+C116-M00752 · 2026-09-02T18:54:17.125513-04:00 · active path
+
+Preceding visible parent: [C116-M00751](part-26.md#m-1fb17a48-1cb3-4d34-bedb-d0ca9b17449c)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00759](../C109/part-34.md#m-1fdf120e-22a4-4cc4-88be-b795eced4608). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-d9d96724-20ec-4750-b25b-217fd6a6b452"></a>
+## Andrew / user · C116-M00753
+
+C116-M00753 · 2026-09-02T19:14:12.289000-04:00 · active path
+
+Preceding visible parent: [C116-M00752](part-26.md#m-1fdf120e-22a4-4cc4-88be-b795eced4608)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00760](../C109/part-34.md#m-d9d96724-20ec-4750-b25b-217fd6a6b452). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-c47b9a9b-892f-4b92-82f1-973e76da448d"></a>
+## Assistant · C116-M00754
+
+C116-M00754 · 2026-09-02T19:14:38.208745-04:00 · active path
+
+Preceding visible parent: [C116-M00753](part-26.md#m-d9d96724-20ec-4750-b25b-217fd6a6b452)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00761](../C109/part-34.md#m-c47b9a9b-892f-4b92-82f1-973e76da448d). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-b3123996-5855-4301-9422-adadde1f55a7"></a>
+## Andrew / user · C116-M00755
+
+C116-M00755 · 2026-09-02T19:19:00.186000-04:00 · active path
+
+Preceding visible parent: [C116-M00754](part-26.md#m-c47b9a9b-892f-4b92-82f1-973e76da448d)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00762](../C109/part-34.md#m-b3123996-5855-4301-9422-adadde1f55a7). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-7d727534-495f-4271-9fee-f618f4824e6e"></a>
+## Assistant · C116-M00756
+
+C116-M00756 · 2026-09-02T19:19:03.839072-04:00 · active path
+
+Preceding visible parent: [C116-M00755](part-26.md#m-b3123996-5855-4301-9422-adadde1f55a7)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00763](../C109/part-35.md#m-7d727534-495f-4271-9fee-f618f4824e6e). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-dbba06fe-a410-43ec-b706-d6755316cbcc"></a>
+## Andrew / user · C116-M00757
+
+C116-M00757 · 2026-09-02T19:43:38.358000-04:00 · active path
+
+Preceding visible parent: [C116-M00756](part-26.md#m-7d727534-495f-4271-9fee-f618f4824e6e)
+
+**Editorial record note:** Attachment references: MSBF_R26_POWER_BI_FUNDED_LIFECYCLE_EXPORT_RESULT.zip; MSBF_R26_POWER_BI_FUNDED_LIFECYCLE_EXPORT_RESULT.zip.sha256
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00764](../C109/part-35.md#m-dbba06fe-a410-43ec-b706-d6755316cbcc). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-40c9d28c-ca7d-41e7-b480-e8c4229f5376"></a>
+## Assistant · C116-M00758
+
+C116-M00758 · 2026-09-02T19:45:30.607973-04:00 · active path
+
+Preceding visible parent: [C116-M00757](part-26.md#m-dbba06fe-a410-43ec-b706-d6755316cbcc)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00765](../C109/part-35.md#m-40c9d28c-ca7d-41e7-b480-e8c4229f5376). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-191e5f99-7ce6-4fa3-8633-6a3d059cb1d1"></a>
+## Andrew / user · C116-M00759
+
+C116-M00759 · 2026-09-02T20:14:46.135000-04:00 · active path
+
+Preceding visible parent: [C116-M00758](part-26.md#m-40c9d28c-ca7d-41e7-b480-e8c4229f5376)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00766](../C109/part-35.md#m-191e5f99-7ce6-4fa3-8633-6a3d059cb1d1). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-0e240f7d-9f86-4a68-8b68-eaa445f0f568"></a>
+## Assistant · C116-M00760
+
+C116-M00760 · 2026-09-02T20:14:49.676654-04:00 · active path
+
+Preceding visible parent: [C116-M00759](part-26.md#m-191e5f99-7ce6-4fa3-8633-6a3d059cb1d1)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00767](../C109/part-35.md#m-0e240f7d-9f86-4a68-8b68-eaa445f0f568). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-658423be-2d4c-425d-abaf-12ca739eecc5"></a>
+## Andrew / user · C116-M00761
+
+C116-M00761 · 2026-09-02T20:17:41.961000-04:00 · active path
+
+Preceding visible parent: [C116-M00760](part-26.md#m-0e240f7d-9f86-4a68-8b68-eaa445f0f568)
+
+**Editorial record note:** 1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 3c282d68-c9be-493b-843b-704fd5c169dc.png
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00768](../C109/part-35.md#m-658423be-2d4c-425d-abaf-12ca739eecc5). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-1a8b7fae-4a37-4e0d-8f84-b6f0fffa18a6"></a>
+## Assistant · C116-M00762
+
+C116-M00762 · 2026-09-02T20:17:47.318002-04:00 · active path
+
+Preceding visible parent: [C116-M00761](part-26.md#m-658423be-2d4c-425d-abaf-12ca739eecc5)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00769](../C109/part-35.md#m-1a8b7fae-4a37-4e0d-8f84-b6f0fffa18a6). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-546ef257-bfc1-4967-b484-9e15c86422eb"></a>
+## Andrew / user · C116-M00763
+
+C116-M00763 · 2026-09-02T20:25:59.850000-04:00 · active path
+
+Preceding visible parent: [C116-M00762](part-26.md#m-1a8b7fae-4a37-4e0d-8f84-b6f0fffa18a6)
+
+**Editorial record note:** 13 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 60b170ea-30ea-4d82-a9c5-65ca0f73fecb.png; 684c61bb-535e-4a5b-bcfc-cd69c20285ef.png; 6b77a01c-fd84-48f3-9119-cf03548277a9.png; 1fd4c917-34bf-480e-8ede-c1ddb6131c0f.png; 8147ac7f-cf06-4d6a-bb54-2e3bbf30148a.png; 7dd75412-a2ad-487e-9f23-28ffd097e8dc.png; 09ea21c7-8d3e-40e2-bb6d-4c5b1e37f76a.png; 107d2c17-1606-452a-9731-9cb59b4809ea.png; 3e0d5e04-281a-40b5-8587-83ff0dcf4f07.png; e0c5d86e-5693-4c9e-8e2c-3bbf991ed826.png; 42377b9f-6520-47a5-a4c0-75d6265b22f1.png; 663653c3-1842-4892-99eb-399ab30725ba.png; 12da5df5-9e69-4709-aac7-5c10dd8ce571.png
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00770](../C109/part-35.md#m-546ef257-bfc1-4967-b484-9e15c86422eb). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-161e67af-7209-4114-afa0-65cfe34fe8c1"></a>
+## Assistant · C116-M00764
+
+C116-M00764 · 2026-09-02T20:26:10.290377-04:00 · active path
+
+Preceding visible parent: [C116-M00763](part-26.md#m-546ef257-bfc1-4967-b484-9e15c86422eb)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00771](../C109/part-35.md#m-161e67af-7209-4114-afa0-65cfe34fe8c1). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-d89a066c-166c-4fac-8d33-4e804c32adcc"></a>
+## Andrew / user · C116-M00765
+
+C116-M00765 · 2026-09-02T20:32:17.281000-04:00 · active path
+
+Preceding visible parent: [C116-M00764](part-26.md#m-161e67af-7209-4114-afa0-65cfe34fe8c1)
+
+**Editorial record note:** 1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 12c24c25-e319-4900-9a2c-57e24a7afa6e.png
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00772](../C109/part-35.md#m-d89a066c-166c-4fac-8d33-4e804c32adcc). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-02a638f4-70e0-44e9-b413-358af6f67524"></a>
+## Assistant · C116-M00766
+
+C116-M00766 · 2026-09-02T20:32:21.471723-04:00 · active path
+
+Preceding visible parent: [C116-M00765](part-26.md#m-d89a066c-166c-4fac-8d33-4e804c32adcc)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00773](../C109/part-35.md#m-02a638f4-70e0-44e9-b413-358af6f67524). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-305a73de-ac86-4389-994f-8b44aa9f30fc"></a>
+## Andrew / user · C116-M00767
+
+C116-M00767 · 2026-09-02T20:45:04.116000-04:00 · active path
+
+Preceding visible parent: [C116-M00766](part-26.md#m-02a638f4-70e0-44e9-b413-358af6f67524)
+
+**Editorial record note:** 2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 116b9d75-5d38-498d-9320-eb8ed3457393.png; 76f53115-4196-4264-9da5-93b6c657a8f3.png
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00774](../C109/part-35.md#m-305a73de-ac86-4389-994f-8b44aa9f30fc). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-769b9114-b761-444e-b287-fcd13486577b"></a>
+## Assistant · C116-M00768
+
+C116-M00768 · 2026-09-02T20:45:07.652733-04:00 · active path
+
+Preceding visible parent: [C116-M00767](part-26.md#m-305a73de-ac86-4389-994f-8b44aa9f30fc)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00775](../C109/part-35.md#m-769b9114-b761-444e-b287-fcd13486577b). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-66fda1d2-8ce0-4c07-ba8d-ab6c6e464dd1"></a>
+## Andrew / user · C116-M00769
+
+C116-M00769 · 2026-09-02T20:54:35.278000-04:00 · active path
+
+Preceding visible parent: [C116-M00768](part-26.md#m-769b9114-b761-444e-b287-fcd13486577b)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00776](../C109/part-35.md#m-66fda1d2-8ce0-4c07-ba8d-ab6c6e464dd1). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-33342071-e602-4d9c-89f5-cd842667dde9"></a>
+## Assistant · C116-M00770
+
+C116-M00770 · 2026-09-02T20:54:39.364946-04:00 · active path
+
+Preceding visible parent: [C116-M00769](part-26.md#m-66fda1d2-8ce0-4c07-ba8d-ab6c6e464dd1)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00777](../C109/part-35.md#m-33342071-e602-4d9c-89f5-cd842667dde9). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-037987f9-b7e4-406e-9421-03851d95b2b1"></a>
+## Andrew / user · C116-M00771
+
+C116-M00771 · 2026-09-02T20:56:09.565000-04:00 · active path
+
+Preceding visible parent: [C116-M00770](part-26.md#m-33342071-e602-4d9c-89f5-cd842667dde9)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00778](../C109/part-35.md#m-037987f9-b7e4-406e-9421-03851d95b2b1). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-0294787a-b395-4795-8f87-cbe052f1ec6b"></a>
+## Assistant · C116-M00772
+
+C116-M00772 · 2026-09-02T20:56:13.221569-04:00 · active path
+
+Preceding visible parent: [C116-M00771](part-26.md#m-037987f9-b7e4-406e-9421-03851d95b2b1)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00779](../C109/part-36.md#m-0294787a-b395-4795-8f87-cbe052f1ec6b). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-67c761d2-a806-4448-957a-1b367bc053af"></a>
+## Andrew / user · C116-M00773
+
+C116-M00773 · 2026-09-02T23:10:41.070000-04:00 · active path
+
+Preceding visible parent: [C116-M00772](part-26.md#m-0294787a-b395-4795-8f87-cbe052f1ec6b)
+
+**Editorial record note:** Attachment references: MSBF_R26_P03_NARRATIVE_DAX_PACK_20260903(1).zip; MEASURE_TO_SOURCE_MAPPING(1).md; IMPLEMENTATION_GUIDE(1).md
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00780](../C109/part-36.md#m-67c761d2-a806-4448-957a-1b367bc053af). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-1daf4de9-8895-473d-846a-1617e3215adf"></a>
+## Assistant · C116-M00774
+
+C116-M00774 · 2026-09-02T23:23:52.501224-04:00 · active path
+
+Preceding visible parent: [C116-M00773](part-26.md#m-67c761d2-a806-4448-957a-1b367bc053af)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Inherited occurrence of [C109-M00781](../C109/part-36.md#m-1daf4de9-8895-473d-846a-1617e3215adf). The same native identity and source/public text hashes occur in both conversations; follow that link for the retained body. This occurrence and its branch position remain indexed.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-af0a464c-3778-4a84-aecb-b50ebfc130b6"></a>
+## Andrew / user · C116-M00775
+
+C116-M00775 · 2026-09-03T07:17:46.370000-04:00 · active path
+
+Preceding visible parent: [C116-M00774](part-26.md#m-1daf4de9-8895-473d-846a-1617e3215adf)
+
+**Editorial record note:** Attachment references: Pasted markdown(20260903-111633).md
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+This part 2 power bi chat has reached its maximum chat length. Please prepare a package and prompt for a part 3 MSBF Power BI chat. This package/prompt needs to include everything necessary for the part 3 chat to continue marching this MSBF power bi work to a successful conclusion. Make sure this handoff is professional, thorough, and missing no critical details. Currently, the remediation/correction chat is incorporating the latest feedback this part 2 chat provided regarding the P03 narratives. The QA on those narratives has passed and been captured. Following the chat limit, I branched this chat higher to perform this handoff request. Attached is the remainder of our conversation before that branching.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-59a9e054-9d34-475a-a61b-5ac81dcc895d"></a>
+## Assistant · C116-M00776
+
+C116-M00776 · 2026-09-03T07:23:10.594753-04:00 · active path
+
+Preceding visible parent: [C116-M00775](part-26.md#m-af0a464c-3778-4a84-aecb-b50ebfc130b6)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+I’m assembling a self-contained Part 3 handoff covering governing authority, current-state registers, exact P03 successor artifacts/evidence, remaining roadmap, and a copy/paste launch prompt.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-43efe4ec-ba8a-4ce3-9cfd-d3ef81eef35a"></a>
+## Assistant · C116-M00777
+
+C116-M00777 · 2026-09-03T08:02:37.866833-04:00 · active path
+
+Preceding visible parent: [C116-M00776](part-26.md#m-59a9e054-9d34-475a-a61b-5ac81dcc895d)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+# Part 3 handoff complete
+
+I prepared a controlled Part 2 → Part 3 continuation package that preserves the current R26 authority, source lineage, local environment history, completed P01/P02 work, P03 funded-lifecycle correction, corrected narrative-QA architecture, final R3 narrative patch, and the full remaining P04–P06 and integration-audit roadmap.
+
+The handoff uses the post-audit authority correctly: R26 is now the accepted technical M2.5–M2.12/G3-v2 successor baseline, version-separated Power BI integration is authorized, and public supersession or publication remains outside the current authority. [export reference: filecite | turn8file7 | L481-L509]
+
+It also locks the successor source map so Part 3 does not repeat the expensive version-mixing problem:
+
+- application/scenario profile and request → `R1DimApplicationScenario`
+- evidence availability → `R1FactFeatureAvailability`
+- final outcome and selected structure → `R1FactFinalDecision`
+- physical funding date → `R1FactFundedLifecycle`
+- exact technical explanations → R1 final-decision rationale fields [export reference: filecite | turn0file1 | L5-L15]
+
+The P03 handoff records the corrected semantic QA as clean—2-row scenario regression, zero genuine failures, and 1,500 unique application-scenario paths all passing—and treats the final R3 review-wording correction plus final physical evidence as the immediate Part 3 entry task. [export reference: filecite | turn0file0 | L247-L283] The remaining P03 work is deliberately bounded to the R3 patch, post-R3 QA, seven-outcome visual review, technical tooltip, current footer identity, accessibility, save/reopen evidence, and freeze—then progression to P04. [export reference: filecite | turn1file1 | L364-L416]
+
+## Primary deliverables
+
+Download the complete Part 3 continuation package (historical reference: `sandbox:[session]/MSBF_POWER_BI_PART3_CONTINUATION_HANDOFF_R1_20260903.zip`; referenced bytes not established here)
+
+Download the SHA-256 sidecar (historical reference: `sandbox:[session]/MSBF_POWER_BI_PART3_CONTINUATION_HANDOFF_R1_20260903.zip.sha256`; referenced bytes not established here)
+
+Open the Part 3 copy/paste prompt (historical reference: `sandbox:[session]/MSBF_POWER_BI_PART3_COPY_PASTE_PROMPT_20260903.md`; referenced bytes not established here)
+
+Open the start guide (historical reference: `sandbox:[session]/MSBF_POWER_BI_PART3_00_START_HERE_20260903.md`; referenced bytes not established here)
+
+Open the ZIP validation report (historical reference: `sandbox:[session]/MSBF_POWER_BI_PART3_CONTINUATION_HANDOFF_R1_20260903_ZIP_VALIDATION_REPORT.md`; referenced bytes not established here)
+
+Open the machine-readable validation report (historical reference: `sandbox:[session]/MSBF_POWER_BI_PART3_CONTINUATION_HANDOFF_R1_20260903_ZIP_VALIDATION_REPORT.json`; referenced bytes not established here)
+
+Open the machine-readable current-state record (historical reference: `sandbox:[session]/MSBF_POWER_BI_PART3_CONTINUATION_HANDOFF_R1_20260903/CURRENT_STATE.json`; referenced bytes not established here)
+
+## Package identity
+
+```text
+Package
+MSBF_POWER_BI_PART3_CONTINUATION_HANDOFF_R1_20260903.zip
+
+Bytes
+41,277,263
+
+SHA-256
+d43ee5d2cbebf3444676ee50030ca91a6f46177bc4c7828494aa5a57d99933a5
+
+ZIP entries
+49
+
+Payload manifest rows
+47
+
+ZIP CRC
+PASS
+
+Clean extraction
+PASS
+
+Manifest / SHA256SUMS reconciliation
+PASS
+
+Unsafe, duplicate, case-fold-colliding, symlink, or encrypted paths
+0
+
+Nested ZIP validation
+3 / 3 PASS
+```
+
+The nested packages are:
+
+```text
+R26 Power BI source handoff                 64 members — PASS
+R1 M2.4 funded-lifecycle export             12 members — PASS
+P03 pre-R3 owner evidence capture           10 members — PASS
+```
+
+## Material included in the package
+
+The package contains:
+
+- the R26 focused-audit report, machine decision, integration authorization, and status dashboard;
+- the streamlined Power BI operating-model decision and report-depth-wave authorization;
+- the accepted P01/P02 audit authority;
+- the exact 40.95 MB R26 carrier/source handoff;
+- the independently verified physical R1 M2.4 funded-lifecycle export;
+- the final three-measure P03 visible-narrative R3 patch;
+- the strengthened P03 QA R1 measure patch;
+- the corrected exact-key QA queries;
+- a consolidated 14-measure **Editorial R3 + QA R1** source file for final evidence;
+- the pre-R3 1,500-row narrative inventory and QA screenshots;
+- the existing P03 owner-evidence package;
+- canonical P03 outcome cases and P04 servicing cases;
+- detailed P01–P06 status, P03 finalization, P04–P06 roadmap, nonregression, hard-stop, and anti-circling guidance;
+- scripts to verify the handoff and capture the exact local Part 3 entry state;
+- the exact attached remainder of the Part 2 conversation.
+
+## Exact Part 3 entry point
+
+Part 3 should first verify the current local project—expected approximately as:
+
+```text
+MSBF_PBI_R26_PARALLEL_REFINEMENT_C2_20260902
+```
+
+It should then create a version-separated C3 working copy, verify whether the R3 patch is already installed, install exactly three measure changes if it is not, and rerun the corrected QA:
+
+```text
+Query 1    2 rows, both PASS
+Query 2    0 rows
+Query 3    1,500 rows, 1,500 unique keys, all PASS
+```
+
+The specific R3 regression case is merchant `000082 / Baseline`, where the Decision narrative must no longer contain the awkward `but ... but` construction.
+
+## Deliberate physical limitation
+
+The current PBIP/C2 working tree remains on the local Windows machine and was not attached to this handoff request. I have not represented it as included. The package instead makes exact physical-project identification, source-parameter capture, and creation of the C3 working copy mandatory first actions. The included `CAPTURE_PART3_ENTRY_STATE.ps1` script is designed to record that state before Part 3 changes anything.
+
+Start the new chat by attaching the complete ZIP and pasting the standalone Part 3 prompt.
+<!-- END_SOURCE_MESSAGE -->

@@ -1,0 +1,1401 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5 — part 36 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5 — part 36</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-35.html">Previous part</a><a href="part-37.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-044ac13c-dcc5-40be-9e4d-ded8845f8bf1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00416 · 2026-10-15T20:18:42.126987-04:00 · active path</p><div class="bubble"><p><strong>Start by getting the prepared data into Tableau and confirming the first number: 750 matched applications.</strong> That is our first checkpoint. No PostgreSQL connection, Python execution, or additional data joins are needed for this stage. The import file already places both scenarios and their narratives on one row per application. [export reference: filecite | turn103file0 | L23-L32]</p>
+<h2>1. Open Tableau Desktop Public Edition</h2>
+<p>If Tableau is already installed, go to Step 2.</p>
+<p>Otherwise, use Tableau’s <strong>Get Tableau Public</strong> download page and install <strong>Tableau Desktop Public Edition for Windows</strong>. Choose the Public desktop application—not Tableau Reader. The Public desktop application is free and supports local workbook saves. [export reference: cite | turn229110search0 | turn229110search9]</p>
+<p><strong>We will work locally. Do not publish anything to Tableau Public yet.</strong></p>
+<h2>2. Extract the complete starter package</h2>
+<p>Download this package if you have not already:</p>
+<p><strong>Download the Tableau starter package</strong> (historical reference: <code>sandbox:[session]/MCI_Tableau_Start_Here.zip</code>; referenced bytes not established here)</p>
+<p>In Windows File Explorer, right-click the ZIP, select <strong>Extract All</strong>, and use this destination:</p>
+<pre><code class="language-text">D:\MSBF_TABLEAU
+</code></pre>
+<p>Inside the extracted folder, locate:</p>
+<pre><code class="language-text">MCI_Tableau_Narrative_R1
+</code></pre>
+<p>The file we will connect is:</p>
+<pre><code class="language-text">D:\MSBF_TABLEAU\MCI_Tableau_Narrative_R1\data\MCI_Matched_Applications_With_Narratives.csv
+</code></pre>
+<p><strong>Leave the CSV unchanged.</strong> Connect it directly in Tableau rather than opening and resaving it through Excel. Keep the other package folders together; the <code>calculations</code> folder contains the narrative formulas we will use next. [export reference: filecite | turn103file0 | L19-L29]</p>
+<h2>3. Connect the CSV and check field types</h2>
+<p>On Tableau’s start screen, use:</p>
+<p><strong>Connect → To a File → Text File</strong></p>
+<p>Select <code>MCI_Matched_Applications_With_Narratives.csv</code> and click <strong>Open</strong>. Tableau should take you to the <strong>Data Source</strong> screen with a preview of the records. [export reference: cite | turn229110search2]</p>
+<p>Rename the data source at the top to:</p>
+<pre><code class="language-text">MCI — Matched Scenario Review
+</code></pre>
+<p>Keep <strong>just this one table</strong>. Do not add the source CSVs or the QA files as additional tables; they are not needed for the dashboard model. [export reference: filecite | turn103file0 | L25-L32]</p>
+<p>Before moving to a worksheet, check these types. Click the small type icon above a column to change it—<strong>Abc</strong> means text and <strong>#</strong> means a number. Tableau recommends correcting types before creating an extract. [export reference: cite | turn229110search7]</p>
+<table>
+<thead>
+<tr>
+<th>Fields</th>
+<th>Required type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Pair Key, Module1 Run ID, Application ID, Merchant ID, Merchant</strong></td>
+<td><strong>String</strong></td>
+</tr>
+<tr>
+<td>Decision labels, codes, reasons, hashes, and narrative fields</td>
+<td><strong>String</strong></td>
+</tr>
+<tr>
+<td>Fields ending in <strong>Flag, Sort, Days, Count</strong></td>
+<td><strong>Number (whole)</strong></td>
+</tr>
+<tr>
+<td>Amounts, repayment amounts, ratios, rates, and contributions</td>
+<td><strong>Number (decimal)</strong></td>
+</tr>
+<tr>
+<td><strong>Baseline Evidence Window End; Stress Evidence Window End</strong></td>
+<td><strong>Date</strong></td>
+</tr>
+</tbody></table>
+<p>These types follow the prepared package’s import instructions. <strong>Preserve the existing field names</strong>, because the supplied narrative calculations reference them. Leave unavailable selected terms as null rather than replacing them with zero. [export reference: filecite | turn103file0 | L26-L29]</p>
+<p>Pay particular attention to <strong>Merchant</strong>: it should retain values such as <code>000003</code>, not become the number <code>3</code>.</p>
+<h2>4. Create the first validation worksheet</h2>
+<p>Click <strong>Sheet 1</strong> at the bottom.</p>
+<p>Rename the sheet:</p>
+<pre><code class="language-text">00 — Population Check
+</code></pre>
+<p>From the top menu, choose <strong>Analysis → Create Calculated Field</strong>. Name the field:</p>
+<pre><code class="language-text">Matched Applications
+</code></pre>
+<p>Paste this formula:</p>
+<pre><code class="language-tableau">COUNTD([Pair Key])
+</code></pre>
+<p>Click <strong>OK</strong>. This counts distinct application-pair identifiers. [export reference: cite | turn415769view1 | turn415769view2]</p>
+<p>Drag <strong>Matched Applications</strong> from the left-hand Data pane onto <strong>Text</strong> on the <strong>Marks</strong> card. Leave <strong>Rows</strong>, <strong>Columns</strong>, and <strong>Filters</strong> empty.</p>
+<h3>Expected result</h3>
+<h1><strong>750</strong></h1>
+<p>That matches the population specified in the import package. We are expecting <strong>750 rows containing both scenario results</strong>, not 1,500 separate rows in this dashboard table. [export reference: filecite | turn103file0 | L14-L16] [export reference: filecite | turn103file0 | L32-L32]</p>
+<p>Save the workbook <strong>locally</strong> using <strong>File → Save As</strong>, with a name such as:</p>
+<pre><code class="language-text">MCI_Risk_Decision_Scenario_Review_R1
+</code></pre>
+<p>Tableau Desktop Public Edition permits local saving without publishing the workbook or data. [export reference: cite | turn229110search9]</p>
+<hr>
+<p><strong>Stop at this checkpoint and send a screenshot of the worksheet showing 750—or the screen where you encounter a problem.</strong> The next build step is the decision matrix and executive indicators, followed by the filter-responsive narrative interpretation that makes this distinctly your portfolio work.</p>
+</div></article><article id="m-de4393cf-8ad8-42b6-803b-1dc08920b3dc" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00417 · 2026-10-15T20:29:09.186000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-002905).png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-b3fa4fb3-367c-4be1-85e3-fa638f829bba" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00418 · 2026-10-15T20:35:06.103034-04:00 · active path</p><div class="bubble"><p><strong>That is the expected result: your screenshot shows 750 distinct application pairs, with no worksheet filters applied. The first Tableau checkpoint passes.</strong></p>
+<p>Keep <strong>00 — Population Check</strong> unchanged. Next, let’s build <strong>the comparison measures, the decision matrix, and your first data-driven narrative</strong> in one pass.</p>
+<p>Before starting, click <strong>Show Me</strong> at the upper right to close that panel. Widen the left-hand Data pane slightly so the field names are easier to distinguish.</p>
+<h2>1. Create the comparison measures</h2>
+<p>Use <strong>Analysis → Create Calculated Field</strong>, the same way you created <code>Matched Applications</code>. Create each field below separately, using the names exactly as shown. Tableau saves these calculations in the workbook for reuse across worksheets. [export reference: cite | turn123860search1]</p>
+<table>
+<thead>
+<tr>
+<th>New calculated-field name</th>
+<th>Formula</th>
+<th align="right">Expected full-population value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Different Decisions</strong></td>
+<td><code>SUM([Decision Changed Flag])</code></td>
+<td align="right"><strong>236</strong></td>
+</tr>
+<tr>
+<td><strong>Baseline Authorizations</strong></td>
+<td><code>SUM([Baseline Authorized Flag])</code></td>
+<td align="right"><strong>103</strong></td>
+</tr>
+<tr>
+<td><strong>Stress Authorizations</strong></td>
+<td><code>SUM([Stress Authorized Flag])</code></td>
+<td align="right"><strong>27</strong></td>
+</tr>
+</tbody></table>
+<p>Then create one more field.</p>
+<p><strong>Name</strong></p>
+<pre><code class="language-text">Different Decision Rate
+</code></pre>
+<p><strong>Formula</strong></p>
+<pre><code class="language-tableau">IF [Matched Applications] &gt; 0 THEN
+    [Different Decisions] / [Matched Applications]
+END
+</code></pre>
+<p>Right-click <strong>Different Decision Rate</strong> in the Data pane and choose <strong>Default Properties → Number Format → Percentage</strong>, with <strong>one decimal place</strong>. The expected display is <strong>31.5%</strong>, not <code>31.5</code> entered as a percentage. These controls match the prepared package’s reference population. [export reference: cite | turn233171search9] [export reference: filecite | turn105file0 | L54-L55]</p>
+<h3>Put the measures into a quick check sheet</h3>
+<p>Create a new worksheet using the <strong>New Worksheet</strong> icon immediately to the right of your existing sheet tab. Name it:</p>
+<pre><code class="language-text">01 — Scenario Controls
+</code></pre>
+<p>On that sheet:</p>
+<ol>
+<li>Drag <strong>Measure Names</strong> to <strong>Rows</strong>.</li>
+<li>Drag <strong>Measure Values</strong> to <strong>Text</strong> on the Marks card.</li>
+<li>Drag <strong>Measure Names</strong> to <strong>Filters</strong>. In the dialog, click <strong>None</strong>, then check only:<ul>
+<li><code>Matched Applications</code></li>
+<li><code>Different Decisions</code></li>
+<li><code>Different Decision Rate</code></li>
+<li><code>Baseline Authorizations</code></li>
+<li><code>Stress Authorizations</code></li>
+</ul>
+</li>
+<li>Click <strong>OK</strong>.</li>
+</ol>
+<p><code>Measure Names</code> and <code>Measure Values</code> are Tableau’s built-in fields for displaying several measures in one table. Their use here is just a quick reconciliation view; we will turn the relevant measures into polished dashboard indicators later. [export reference: cite | turn233171search1]</p>
+<p>You should see:</p>
+<pre><code class="language-text">Matched Applications       750
+Different Decisions        236
+Different Decision Rate    31.5%
+Baseline Authorizations    103
+Stress Authorizations       27
+</code></pre>
+<p>The display order is not important yet.</p>
+<hr>
+<h2>2. Build the Baseline-versus-stress decision matrix</h2>
+<p>Create another worksheet and name it:</p>
+<pre><code class="language-text">02 — Decision Matrix
+</code></pre>
+<h3>Place these exact fields</h3>
+<table>
+<thead>
+<tr>
+<th>Tableau location</th>
+<th>Field or setting</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Rows</strong></td>
+<td><code>Baseline Decision</code></td>
+</tr>
+<tr>
+<td><strong>Columns</strong></td>
+<td><code>Stress Decision</code></td>
+</tr>
+<tr>
+<td><strong>Marks type</strong></td>
+<td>Change <strong>Automatic</strong> to <strong>Square</strong></td>
+</tr>
+<tr>
+<td><strong>Color</strong></td>
+<td><code>Matched Applications</code></td>
+</tr>
+<tr>
+<td><strong>Label</strong></td>
+<td><code>Matched Applications</code></td>
+</tr>
+</tbody></table>
+<p>Drag <strong>Matched Applications</strong> from the Data pane twice—once onto <strong>Color</strong>, then again onto <strong>Label</strong>. Depending on the mark type, the label control may initially say <strong>Text</strong>.</p>
+<p>Use the readable fields <strong>Baseline Decision</strong> and <strong>Stress Decision</strong>, <strong>not</strong> the corresponding <code>Decision Code</code> or <code>Decision Narrative</code> fields. This follows Tableau’s highlight-table pattern: categories on Rows and Columns, with a measure controlling color. [export reference: cite | turn233171search0]</p>
+<h3>Give both axes the same meaningful order</h3>
+<p>Right-click the <strong>Baseline Decision</strong> pill on Rows and choose <strong>Sort</strong>:</p>
+<pre><code class="language-text">Sort order:  Ascending
+Sort by:     Field
+Field name:  Baseline Decision Sort
+Aggregation: Minimum
+</code></pre>
+<p>Repeat for <strong>Stress Decision</strong> on Columns:</p>
+<pre><code class="language-text">Sort order:  Ascending
+Sort by:     Field
+Field name:  Stress Decision Sort
+Aggregation: Minimum
+</code></pre>
+<p>Using the supplied sort fields keeps the two axes aligned rather than independently sorting their labels alphabetically or by frequency. Tableau supports these field-based sorts. [export reference: cite | turn233171search6]</p>
+<p>The order should be:</p>
+<pre><code class="language-text">Approve as requested — authorized
+Counteroffer — authorized
+Counteroffer review required
+Underwriting review required
+Evidence decline
+No feasible structure
+Policy hard stop
+</code></pre>
+<h3>Make the matrix readable</h3>
+<p>Change the toolbar dropdown currently showing <strong>Standard</strong> to <strong>Entire View</strong>. On the Marks card, increase <strong>Size</strong> until the cells form readable tiles. Keep <strong>Size</strong> free of data fields; we want equal-size cells, with <strong>color intensity representing application count</strong>.</p>
+<p>For now, use a <strong>single-color sequential palette</strong>, rather than red/green. Our intended encoding is “more or fewer applications,” not “good or bad credit.” Do not spend time perfecting the typography yet.</p>
+<p>Double-click the worksheet title and use:</p>
+<pre><code class="language-text">Decision comparison: Baseline vs. Recession Energy
+Rows = Baseline | Columns = Recession Energy
+</code></pre>
+<h3>Spot-check the populated cells</h3>
+<p>I rechecked the supplied import CSV. These are useful checks that the axes and counts are positioned correctly:</p>
+<table>
+<thead>
+<tr>
+<th>Baseline row</th>
+<th>Recession Energy column</th>
+<th align="right">Expected count</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Counteroffer review required</td>
+<td>Evidence decline</td>
+<td align="right"><strong>88</strong></td>
+</tr>
+<tr>
+<td>Counteroffer review required</td>
+<td>No feasible structure</td>
+<td align="right"><strong>51</strong></td>
+</tr>
+<tr>
+<td>Approve as requested — authorized</td>
+<td>Evidence decline</td>
+<td align="right"><strong>47</strong></td>
+</tr>
+<tr>
+<td>No feasible structure</td>
+<td>No feasible structure</td>
+<td align="right"><strong>290</strong></td>
+</tr>
+<tr>
+<td>Policy hard stop</td>
+<td>Policy hard stop</td>
+<td align="right"><strong>117</strong></td>
+</tr>
+</tbody></table>
+<p><strong>Read the diagonal as “same final decision category,” not necessarily identical terms or reasons.</strong> This is a comparison of alternative scenarios—not a timeline showing accounts deteriorating after origination. [export reference: filecite | turn105file0 | L70-L76]</p>
+<hr>
+<h2>3. Add your first live narrative now</h2>
+<p>This is the first implementation of your signature interpretation layer—not a static text box.</p>
+<p>Create a calculated field named:</p>
+<pre><code class="language-text">Narrative - Executive Readout
+</code></pre>
+<p>Paste this formula. It is the same executive-readout calculation included in the starter package:</p>
+<pre><code class="language-tableau">IF COUNTD([Pair Key]) = 0 THEN
+    &quot;No matched applications in this selection. Clear a filter to continue.&quot;
+ELSE
+    &quot;In this filtered portfolio of &quot;
+    + STR(COUNTD([Pair Key]))
+    + &quot; matched applications, &quot;
+    + STR(INT(SUM([Decision Changed Flag])))
+    + &quot; (&quot;
+    + STR(
+        ROUND(
+            100.0 * SUM([Decision Changed Flag])
+            / COUNTD([Pair Key]),
+            1
+        )
+      )
+    + &quot;%) have different final decision categories. Authorized: &quot;
+    + STR(INT(SUM([Baseline Authorized Flag])))
+    + &quot; in Baseline versus &quot;
+    + STR(INT(SUM([Stress Authorized Flag])))
+    + &quot; in Recession Energy. &quot;
+    + &quot;These are alternative scenarios, not before/after account history.&quot;
+END
+</code></pre>
+<p>Click <strong>OK</strong> after Tableau confirms that the calculation is valid. It combines aggregate calculations with text; it does not require the <code>Narrative Detail</code> parameter yet. That parameter will serve the later individual-application panels. [export reference: cite | turn123860search2] [export reference: filecite | turn105file0 | L26-L39]</p>
+<h3>Create its worksheet</h3>
+<p>Create a new worksheet named:</p>
+<pre><code class="language-text">03 — Executive Narrative
+</code></pre>
+<p>Set the Marks type to <strong>Text</strong>, then drag <strong>Narrative - Executive Readout</strong> onto <strong>Text</strong>.</p>
+<p><strong>Leave Rows, Columns, and Detail empty.</strong> We want one paragraph describing the worksheet’s population, not one paragraph per merchant. This matches the package’s narrative setup. [export reference: filecite | turn105file0 | L27-L36]</p>
+<p>Set the text to approximately <strong>12–14 points</strong>, left-aligned. Widen the text area as needed; final wrapping and placement will be handled when we assemble the dashboard.</p>
+<p>With no filters, the paragraph should read:</p>
+<blockquote>
+<p>In this filtered portfolio of <strong>750 matched applications, 236 (31.5%)</strong> have different final decision categories. Authorized: <strong>103 in Baseline versus 27 in Recession Energy</strong>. These are alternative scenarios, not before/after account history.</p>
+</blockquote>
+<p>This first paragraph establishes <strong>what differs and the comparison basis</strong>. The next narrative layer will explain <strong>the selected merchant’s operating evidence, assessment, and binding decision reasons</strong>—so the final dashboard does not stop at repeating totals.</p>
+<h2>Checkpoint for this pass</h2>
+<p>Save the workbook locally. You should now have four worksheets:</p>
+<pre><code class="language-text">00 — Population Check
+01 — Scenario Controls
+02 — Decision Matrix
+03 — Executive Narrative
+</code></pre>
+<p><strong>Send screenshots of the Decision Matrix and Executive Narrative, or the calculation error if Tableau flags one.</strong> That will let us verify the core comparison and narrative before wiring the merchant-level investigation and dashboard interactions.</p>
+</div></article><article id="m-58f01c9f-6b6b-4261-a6df-1f1bbc59f0a5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00419 · 2026-10-15T20:50:36.932000-04:00 · active path</p><p class="note">3 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-004212).png; image(20261016-005017).png; image(20261016-005030).png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-c7f51ecd-d051-4ade-92cc-43ba7676ee94" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00420 · 2026-10-15T20:51:28.527697-04:00 · active path</p><div class="bubble"><p>The controls, matrix, and executive narrative match expected results. Next we’ll link matrix selections to applications and paired Baseline/stress explanations for merchant-level investigation.</p>
+</div></article><article id="m-ea72c00e-19ad-4591-9e30-b1f5f4e39e26" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00421 · 2026-10-15T20:59:13.993924-04:00 · active path</p><div class="bubble"><p><strong>All three checkpoints pass for the unfiltered view.</strong> Your screenshots show the expected <strong>750 applications, 236 different decisions, 31.5%, 103 Baseline authorizations, and 27 stress authorizations</strong>. The matrix has the expected populated cells, and the executive narrative agrees with the controls. Those values match the package’s reference checks. [export reference: filecite | turn107file0 | L37-L40]</p>
+<p>The matrix’s blank cells are not a problem: those decision pairings have no represented applications in the current view. <strong>We should not add artificial records just to fill the grid.</strong></p>
+<p>Now let’s build the useful interaction:</p>
+<blockquote>
+<p><strong>Click a decision pairing → see the affected applications → select an application → read the Baseline and stress explanations side by side.</strong></p>
+</blockquote>
+<p>This pass will produce a working investigation dashboard. We will add the segment comparison and final executive styling after the interaction works.</p>
+<h2>1. Make two quick presentation corrections</h2>
+<p>Your counts currently display as <code>103.0</code>, <code>236.0</code>, and so forth. In the Data pane, right-click each of these four calculated fields and choose <strong>Default Properties → Number Format → Number (Custom) → 0 decimal places</strong>:</p>
+<p><code>Matched Applications</code>, <code>Different Decisions</code>, <code>Baseline Authorizations</code>, and <code>Stress Authorizations</code>.</p>
+<p>Leave <strong>Different Decision Rate</strong> as a percentage with one decimal place.</p>
+<p>On <strong>02 — Decision Matrix</strong>, click <strong>Label → Alignment</strong>, and center the numbers horizontally and vertically. The counts currently sit toward the right edge of each tile. These are formatting changes only; do not change the calculations. Tableau permits separate control of number formatting and text alignment. [export reference: cite | turn681205search3 | turn473560view2]</p>
+<h2>2. Create the narrative-detail selector</h2>
+<p>This will let the reviewer choose <strong>the decision, operating evidence, structure assessment, or technical source rationale</strong> without cramming all four onto the dashboard simultaneously. That follows the prepared narrative design. [export reference: filecite | turn107file0 | L21-L24]</p>
+<p>In the Data pane, right-click an empty area and select <strong>Create Parameter</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Name</strong></td>
+<td><code>Narrative Detail</code></td>
+</tr>
+<tr>
+<td><strong>Data type</strong></td>
+<td>String</td>
+</tr>
+<tr>
+<td><strong>Allowable values</strong></td>
+<td>List</td>
+</tr>
+<tr>
+<td><strong>Values</strong></td>
+<td><code>Decision</code>, <code>Evidence</code>, <code>Structure</code>, <code>Source rationale</code></td>
+</tr>
+<tr>
+<td><strong>Current value</strong></td>
+<td><code>Decision</code></td>
+</tr>
+</tbody></table>
+<p>Click <strong>OK</strong>, then right-click the parameter and choose <strong>Show Parameter</strong>. A parameter changes calculations that reference it; it does not filter out applications by itself. [export reference: cite | turn473560view3]</p>
+<h2>3. Create three narrative calculations</h2>
+<p>These calculations <strong>display the narrative fields already in your import</strong>, rather than inventing a fresh explanation in Tableau. The CSV contains the comparison narrative and separate evidence, structure, and decision narratives for both scenarios. [export reference: filecite | turn108file0 | L13-L16]</p>
+<p>Use <strong>Analysis → Create Calculated Field</strong> for each.</p>
+<h3>A. <code>Narrative - Selected Applications</code></h3>
+<p>This shows a population summary when several applications are in scope, then the comparison interpretation when exactly one application is selected.</p>
+<pre><code class="language-tableau">IF COUNTD([Pair Key]) = 0 THEN
+    &quot;No applications match the current selection. Clear the application selection or change the filters.&quot;
+
+ELSEIF COUNTD([Pair Key]) = 1 THEN
+    &quot;Application: &quot;
+    + MIN([Application ID])
+    + CHAR(10) + CHAR(10)
+    + IFNULL(
+        MIN([Comparison Narrative]),
+        &quot;The comparison narrative is unavailable in this source.&quot;
+      )
+
+ELSE
+    STR(COUNTD([Pair Key]))
+    + &quot; applications are in the current investigation selection. &quot;
+    + STR(INT(SUM([Decision Changed Flag])))
+    + &quot; have different final decision categories across the two scenarios. &quot;
+    + &quot;Select one application in the table to inspect its evidence and decision reasons.&quot;
+END
+</code></pre>
+<h3>B. <code>Narrative - Baseline Story</code></h3>
+<pre><code class="language-tableau">IF COUNTD([Pair Key]) = 0 THEN
+    &quot;No application matches the current selection.&quot;
+
+ELSEIF COUNTD([Pair Key]) &gt; 1 THEN
+    &quot;Select one application to read its Baseline explanation.&quot;
+
+ELSE
+    &quot;BASELINE | &quot;
+    + MIN([Baseline Decision])
+    + CHAR(10)
+    + &quot;Application: &quot; + MIN([Application ID])
+    + CHAR(10) + CHAR(10)
+
+    + IFNULL(
+        CASE [Narrative Detail]
+            WHEN &quot;Decision&quot; THEN
+                MIN([Baseline Decision Narrative])
+
+            WHEN &quot;Evidence&quot; THEN
+                MIN([Baseline Evidence Narrative])
+
+            WHEN &quot;Structure&quot; THEN
+                MIN([Baseline Structure Narrative])
+
+            WHEN &quot;Source rationale&quot; THEN
+                &quot;Technical source decision rationale; this may describe the independent scenario evaluation before final governance. &quot;
+                + MIN([Baseline Source Decision Why])
+        END,
+        &quot;The selected narrative is unavailable in this source.&quot;
+      )
+END
+</code></pre>
+<h3>C. <code>Narrative - Stress Story</code></h3>
+<pre><code class="language-tableau">IF COUNTD([Pair Key]) = 0 THEN
+    &quot;No application matches the current selection.&quot;
+
+ELSEIF COUNTD([Pair Key]) &gt; 1 THEN
+    &quot;Select one application to read its Recession Energy explanation.&quot;
+
+ELSE
+    &quot;RECESSION ENERGY | &quot;
+    + MIN([Stress Decision])
+    + CHAR(10)
+    + &quot;Application: &quot; + MIN([Application ID])
+    + CHAR(10) + CHAR(10)
+
+    + IFNULL(
+        CASE [Narrative Detail]
+            WHEN &quot;Decision&quot; THEN
+                MIN([Stress Decision Narrative])
+
+            WHEN &quot;Evidence&quot; THEN
+                MIN([Stress Evidence Narrative])
+
+            WHEN &quot;Structure&quot; THEN
+                MIN([Stress Structure Narrative])
+
+            WHEN &quot;Source rationale&quot; THEN
+                &quot;Technical source decision rationale; this may describe the independent scenario evaluation before final governance. &quot;
+                + MIN([Stress Source Decision Why])
+        END,
+        &quot;The selected narrative is unavailable in this source.&quot;
+      )
+END
+</code></pre>
+<p><strong>The single-application check is important.</strong> <code>MIN()</code> can return one string from a group, so the calculations use it for the individual narrative only after confirming that exactly one distinct <code>Pair Key</code> is present. That prevents a multi-application selection from displaying an arbitrary merchant’s explanation. [export reference: cite | turn681205search0]</p>
+<p>The source-rationale label also matters: the package distinguishes the final governed decision from technical text that can describe an earlier independent scenario evaluation. [export reference: filecite | turn107file0 | L53-L60]</p>
+<h2>4. Create the application list and narrative sheets</h2>
+<h3><code>04 — Application Detail</code></h3>
+<p>Create a new worksheet with that name.</p>
+<p>Drag the following fields to <strong>Rows</strong>, in this order:</p>
+<pre><code class="language-text">Merchant
+Industry
+Acquisition Source
+Baseline Decision
+Stress Decision
+</code></pre>
+<p>Then configure the Marks card:</p>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Field</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Marks type</strong></td>
+<td>Text</td>
+</tr>
+<tr>
+<td><strong>Text</strong></td>
+<td><code>Requested Amount</code></td>
+</tr>
+<tr>
+<td><strong>Detail</strong></td>
+<td><code>Pair Key</code></td>
+</tr>
+<tr>
+<td><strong>Tooltip</strong></td>
+<td><code>Application ID</code></td>
+</tr>
+<tr>
+<td><strong>Tooltip</strong></td>
+<td><code>Baseline Selected Amount</code></td>
+</tr>
+<tr>
+<td><strong>Tooltip</strong></td>
+<td><code>Stress Selected Amount</code></td>
+</tr>
+</tbody></table>
+<p>For <strong>Requested Amount</strong>, use <strong>Measure → Minimum</strong> from the pill menu. Format it as currency with no decimal places. The worksheet is an application list, not a portfolio sum.</p>
+<p>Keep <strong>Pair Key</strong> on Detail: that is the identifier we will pass to the narrative sheets when a row is selected. Use <strong>Fit Width</strong>, not <strong>Entire View</strong>—do not attempt to shrink 750 application rows onto one screen. Tableau text tables support dimensions with numeric text marks. [export reference: cite | turn681205search1]</p>
+<p>Do not put the long narrative fields into this table. They belong in the readable panels below it.</p>
+<h3>Create three narrative worksheets</h3>
+<p>The fastest approach is to <strong>duplicate your existing <code>03 — Executive Narrative</code></strong> three times. On each duplicate, remove the executive narrative pill from Text and replace it with the corresponding calculation.</p>
+<table>
+<thead>
+<tr>
+<th>Worksheet name</th>
+<th>Field on Text</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>05 — Selection Narrative</strong></td>
+<td><code>Narrative - Selected Applications</code></td>
+</tr>
+<tr>
+<td><strong>06 — Baseline Story</strong></td>
+<td><code>Narrative - Baseline Story</code></td>
+</tr>
+<tr>
+<td><strong>07 — Stress Story</strong></td>
+<td><code>Narrative - Stress Story</code></td>
+</tr>
+</tbody></table>
+<p>For these three sheets, leave <strong>Rows, Columns, and Detail empty</strong>. Keep the text left-aligned at a readable size. The intended result is one text mark describing the current selection, not one mark per application. [export reference: filecite | turn107file0 | L11-L13]</p>
+<p>Before any actions are connected, the two scenario panels should say to select one application. <strong>That is the correct initial behavior.</strong></p>
+<h2>5. Assemble the first working dashboard</h2>
+<p>Choose <strong>Dashboard → New Dashboard</strong> and name it:</p>
+<pre><code class="language-text">Risk Decision &amp; Scenario Review
+</code></pre>
+<p>For this working layout, use a <strong>Fixed size of 1300 × 1100</strong>. This is a starting layout, not the final design.</p>
+<p>Use <strong>Tiled</strong> objects. Add one <strong>Vertical</strong> layout container, then arrange these inside it:</p>
+<table>
+<thead>
+<tr>
+<th>Order</th>
+<th>Dashboard content</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Top</td>
+<td><strong>03 — Executive Narrative</strong></td>
+</tr>
+<tr>
+<td>Next</td>
+<td><strong>02 — Decision Matrix</strong></td>
+</tr>
+<tr>
+<td>Next</td>
+<td><strong>04 — Application Detail</strong></td>
+</tr>
+<tr>
+<td>Next</td>
+<td><strong>05 — Selection Narrative</strong></td>
+</tr>
+<tr>
+<td>Bottom</td>
+<td>A <strong>Horizontal</strong> container holding <strong>06 — Baseline Story</strong> and <strong>07 — Stress Story</strong> side by side</td>
+</tr>
+</tbody></table>
+<p>Give the matrix the most space, allow the application table to scroll, and give the two narrative panels enough height to read the default Decision text. Do not reduce the narrative font to make every possible paragraph fit; the selector is there to manage detail.</p>
+<p>Tableau’s dashboard containers let you group sheets vertically and horizontally while retaining their worksheet logic. [export reference: cite | turn473560view1]</p>
+<p>Show the <strong>Narrative Detail</strong> parameter on the dashboard using the dropdown menu on the Baseline Story sheet: <strong>Parameters → Narrative Detail</strong>. Only one visible parameter control is needed because both calculations reference it.</p>
+<p>Leave the population-check and scenario-controls worksheets out of the dashboard for now. Keep them as validation sheets.</p>
+<h2>6. Wire the two interactions deliberately</h2>
+<p><strong>Do not use the dashboard’s generic “Use as Filter” button here.</strong> We want explicit targets so a merchant selection cannot silently change the portfolio narrative.</p>
+<p>First, go back to <strong>02 — Decision Matrix</strong> and drag these two fields to <strong>Detail</strong>:</p>
+<pre><code class="language-text">Baseline Decision Code
+Stress Decision Code
+</code></pre>
+<p>Return to the dashboard. Use <strong>Dashboard → Actions → Add Action → Filter</strong>. Tableau filter actions pass selected field values from a source sheet to designated target sheets. [export reference: cite | turn473560view0]</p>
+<h3>Action 1 — Matrix selects the investigation population</h3>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Choose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Name</strong></td>
+<td><code>Select decision pairing</code></td>
+</tr>
+<tr>
+<td><strong>Source sheet</strong></td>
+<td><code>02 — Decision Matrix</code> only</td>
+</tr>
+<tr>
+<td><strong>Run action on</strong></td>
+<td>Select</td>
+</tr>
+<tr>
+<td><strong>Target sheets</strong></td>
+<td><code>04 — Application Detail</code>, <code>05 — Selection Narrative</code>, <code>06 — Baseline Story</code>, <code>07 — Stress Story</code></td>
+</tr>
+<tr>
+<td><strong>Clearing the selection</strong></td>
+<td>Show all values</td>
+</tr>
+<tr>
+<td><strong>Target filters</strong></td>
+<td>Selected Fields</td>
+</tr>
+</tbody></table>
+<p>Add these field mappings:</p>
+<pre><code class="language-text">Baseline Decision Code → Baseline Decision Code
+Stress Decision Code   → Stress Decision Code
+</code></pre>
+<p><strong>Do not target <code>03 — Executive Narrative</code>.</strong> It should continue describing the overall portfolio while the lower section describes the selected investigation population. This separation follows the package’s intended filter design. [export reference: filecite | turn107file0 | L17-L31]</p>
+<h3>Action 2 — Application selects its paired explanation</h3>
+<p>Create a second filter action:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Choose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Name</strong></td>
+<td><code>Inspect application</code></td>
+</tr>
+<tr>
+<td><strong>Source sheet</strong></td>
+<td><code>04 — Application Detail</code> only</td>
+</tr>
+<tr>
+<td><strong>Run action on</strong></td>
+<td>Select</td>
+</tr>
+<tr>
+<td><strong>Target sheets</strong></td>
+<td><code>05 — Selection Narrative</code>, <code>06 — Baseline Story</code>, <code>07 — Stress Story</code></td>
+</tr>
+<tr>
+<td><strong>Clearing the selection</strong></td>
+<td>Show all values</td>
+</tr>
+<tr>
+<td><strong>Target filters</strong></td>
+<td>Selected Fields</td>
+</tr>
+</tbody></table>
+<p>Add this mapping:</p>
+<pre><code class="language-text">Pair Key → Pair Key
+</code></pre>
+<p>Leave <strong>Single-select only</strong> unchecked for this action. The calculations explicitly handle multiple applications; we want them to show the selection guidance rather than retain a previous single-application explanation.</p>
+<p>Do not target the matrix, application list, or executive narrative with this second action. The package specifies this same application-key handoff. [export reference: filecite | turn107file0 | L29-L35]</p>
+<h2>7. Test the signature story</h2>
+<h3>Test A — Select the 88-application cell</h3>
+<p>Click the matrix cell at:</p>
+<pre><code class="language-text">Baseline: Counteroffer review required
+Stress:   Evidence decline
+</code></pre>
+<p>Your screenshot shows <strong>88</strong> in that cell.</p>
+<p>The application table should narrow to that pairing, and the selection narrative should report <strong>88 applications</strong>. The executive narrative at the top should still show <strong>750 / 236 / 103 / 27</strong> because you have changed the investigation selection, not the overall portfolio.</p>
+<h3>Test B — Select Merchant 003</h3>
+<p>In the resulting application list, find Merchant <strong>003 / 000003</strong>, depending on its current display formatting, and click the requested-amount mark in that row.</p>
+<p>The application identifier ends in:</p>
+<pre><code class="language-text">M000003_A01
+</code></pre>
+<p>With <strong>Narrative Detail = Decision</strong>, the panels should establish:</p>
+<table>
+<thead>
+<tr>
+<th>Baseline</th>
+<th>Recession Energy</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A <strong>$42,500</strong> potentially supportable structure is retained.</td>
+<td>The required sales window contains <strong>28 usable days against 30 required</strong>, including <strong>two processor-outage days</strong>.</td>
+</tr>
+<tr>
+<td>Specialist review remains necessary near the approved capacity boundary.</td>
+<td>The missing evidence prevents dependent assessment.</td>
+</tr>
+<tr>
+<td><strong>This is not an authorized offer.</strong></td>
+<td><strong>This does not prove that every alternative would fail.</strong></td>
+</tr>
+</tbody></table>
+<p>Those are the actual narratives and values in Merchant 003’s imported record. [export reference: filecite | turn108file0 | L16-L16]</p>
+<p>Switch <strong>Narrative Detail</strong> to <strong>Structure</strong>. Both panels should change together. Baseline should show the <strong>$61,300 request, 11 candidate evaluations, and $42,500 selected structure</strong>; stress should explain the blocked assessment and absence of a governed selected structure. [export reference: filecite | turn108file0 | L16-L16]</p>
+<h3>Test C — Clear the application selection</h3>
+<p>Click blank space in the application-list pane to clear its selected mark. The scenario panels should return to the single-application guidance while the matrix selection remains in effect.</p>
+<p><strong>Clear the application selection before selecting a different matrix cell.</strong> Two active filter actions can otherwise intersect and leave no matching application. An empty result must not be mistaken for a completed explanation; the setup guide specifically identifies this as a behavior to test in Tableau. [export reference: filecite | turn107file0 | L33-L35]</p>
+<hr>
+<p><strong>Save locally, then send one screenshot of the dashboard with Merchant 003 selected and Narrative Detail set to Decision.</strong> That will establish whether the matrix, application identity, and source-backed narrative work together—the core feature that makes this more than a collection of charts.</p>
+</div></article><article id="m-b2b0085c-1b95-4712-8c68-e5d24588a2d2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00422 · 2026-10-15T21:45:12.511000-04:00 · active path</p><p class="note">6 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-011753).png; image(20261016-011804).png; image(20261016-011815).png; image(20261016-011828).png; image(20261016-014452).png; image(20261016-014507).png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-9050718b-e204-4e27-b8a5-8d92280d0141" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00423 · 2026-10-15T21:51:45.344171-04:00 · active path</p><div class="bubble"><p><strong>The core investigation is working for the path you tested.</strong> Your dashboard screenshots show the <strong>88-application decision pairing</strong>, Merchant <strong>000003</strong> selected, and that application’s identity reaching the comparison and both scenario panels. The executive narrative correctly remains at <strong>750 applications / 236 different decisions / 103 Baseline authorizations / 27 stress authorizations</strong>.</p>
+<p><strong>The next issue is presentation, not the data connection:</strong> the explanations are getting trapped behind scrollbars, and the oversized tooltip obscures the reading area. I would fix that before adding another chart. The working layout I proposed needs more deliberate space allocation now that we can see the actual text.</p>
+<h2>What your screenshots establish</h2>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>What is visible</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Application-level view</td>
+<td>The original detail worksheet shows <strong>750 marks and 750 rows</strong>. Merchant identifiers retain leading zeros.</td>
+</tr>
+<tr>
+<td>Matrix selection</td>
+<td>The selected cell contains <strong>88</strong>, and the dashboard’s application list shows <strong>88 rows</strong> in its status bar.</td>
+</tr>
+<tr>
+<td>Application selection</td>
+<td>Merchant <strong>000003</strong>, requested amount <strong>$61,300</strong>, is selected.</td>
+</tr>
+<tr>
+<td>Narrative identity</td>
+<td>The selection, Baseline, and stress panels all identify <code>MSBF_POP_0001_M000003_A01</code>.</td>
+</tr>
+<tr>
+<td>Portfolio separation</td>
+<td>The executive narrative still describes the complete portfolio despite the application selection.</td>
+</tr>
+<tr>
+<td>Full narrative readability</td>
+<td><strong>Not yet established.</strong> The scenario paragraphs are clipped in the dashboard captures.</td>
+</tr>
+</tbody></table>
+<p><strong>Keep the existing actions and source data. We do not need to rebuild them.</strong></p>
+<h1>1. Remove the tooltip that is covering the narrative</h1>
+<p>For each of these worksheets, open <strong>Marks → Tooltip</strong>, clear <strong>Show tooltips</strong>, and click <strong>OK</strong>:</p>
+<pre><code class="language-text">03 — Executive Narrative
+05 — Selection Narrative
+06 — Baseline Story
+07 — Stress Story
+</code></pre>
+<p>Keep tooltips enabled on the matrix and application table. They are useful there; a tooltip that repeats an entire visible narrative is not. Tableau controls tooltip visibility separately for each worksheet. [export reference: cite | turn394060view1]</p>
+<h1>2. Make the selection band compact—keep the detailed explanations below it</h1>
+<p>Your current <strong>05 — Selection Narrative</strong> repeats much of the stress explanation immediately above the stress panel. That costs valuable space.</p>
+<p>Keep the existing <code>Narrative - Selected Applications</code> calculation, but create a new, shorter display calculation called:</p>
+<pre><code class="language-text">Narrative - Investigation Header
+</code></pre>
+<p>Paste:</p>
+<pre><code class="language-tableau">IF COUNTD([Pair Key]) = 0 THEN
+    &quot;No applications match the investigation selection. Clear the application selection or change the filters.&quot;
+
+ELSEIF COUNTD([Pair Key]) = 1 THEN
+    &quot;Merchant &quot;
+    + MIN([Merchant])
+    + &quot; | &quot;
+    + MIN([Industry])
+    + &quot; | &quot;
+    + MIN([Acquisition Source])
+    + CHAR(10)
+    + &quot;Baseline: &quot;
+    + MIN([Baseline Decision])
+    + &quot; | Recession Energy: &quot;
+    + MIN([Stress Decision])
+
+ELSE
+    STR(COUNTD([Pair Key]))
+    + &quot; applications in the current investigation; &quot;
+    + STR(INT(SUM([Decision Changed Flag])))
+    + &quot; have different final decision categories.&quot;
+    + CHAR(10)
+    + &quot;Select one requested-amount value in the table to read both scenario explanations.&quot;
+END
+</code></pre>
+<p>On <strong>05 — Selection Narrative</strong>, replace the existing field on <strong>Text</strong> with this new calculation. Leave <strong>Rows, Columns, and Detail empty</strong>.</p>
+<p>The individual fields are still displayed only after the calculation establishes one distinct <code>Pair Key</code>; <code>MIN()</code> is not being used to choose an arbitrary application from a larger selection. [export reference: cite | turn439511view2]</p>
+<p>For Merchant 003, the new band should read approximately:</p>
+<blockquote>
+<p><strong>Merchant 000003 | Healthcare Services | Digital Direct</strong><br>Baseline: Counteroffer review required | Recession Energy: Evidence decline</p>
+</blockquote>
+<p><strong>This changes the display emphasis, not the source narratives.</strong> The full comparison calculation remains in the workbook, and the Baseline/stress panels retain the detailed explanations.</p>
+<h1>3. Give the two scenario narratives enough space</h1>
+<h2>A. Correct the fit settings on the dashboard itself</h2>
+<p>Close the <strong>Format Alignment</strong> pane using its small <strong>×</strong> at the upper right, then return to the dashboard.</p>
+<p>Select each embedded worksheet and use its dropdown menu’s <strong>Fit</strong> setting:</p>
+<table>
+<thead>
+<tr>
+<th>Dashboard worksheet</th>
+<th>Setting for this pass</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>03 — Executive Narrative</strong></td>
+<td>Entire View</td>
+</tr>
+<tr>
+<td><strong>02 — Decision Matrix</strong></td>
+<td>Entire View</td>
+</tr>
+<tr>
+<td><strong>04 — Application Detail</strong></td>
+<td>Fit Width</td>
+</tr>
+<tr>
+<td><strong>05 — Selection Narrative</strong></td>
+<td>Entire View</td>
+</tr>
+<tr>
+<td><strong>06 — Baseline Story</strong></td>
+<td>Entire View</td>
+</tr>
+<tr>
+<td><strong>07 — Stress Story</strong></td>
+<td>Entire View</td>
+</tr>
+</tbody></table>
+<p>Tableau’s Fit options control how a view uses its available window. The application table should retain vertical scrolling; the single-paragraph narrative sheets should use the space allocated to them. <strong>Entire View is not proof that all text fits—we still need to inspect the resulting paragraphs.</strong> [export reference: cite | turn575204search1]</p>
+<p>One useful distinction: <strong>Format → Alignment → Wrap controls headers, not text marks.</strong> Do not spend time toggling that setting expecting it to repair these narrative cards. The relevant adjustments are the view’s fit, its available size, and the text formatting. [export reference: cite | turn142484search0]</p>
+<h2>B. Reallocate height rather than reducing the font</h2>
+<p>Keep the working dashboard at <strong>1300 × 1100</strong> for this pass. My proposed allocation is:</p>
+<table>
+<thead>
+<tr>
+<th>Region</th>
+<th align="right">Approximate height</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Executive narrative and top controls</td>
+<td align="right">100 px</td>
+</tr>
+<tr>
+<td>Decision matrix, including its title and headers</td>
+<td align="right">350 px</td>
+</tr>
+<tr>
+<td>Application table, including its title</td>
+<td align="right">180 px</td>
+</tr>
+<tr>
+<td>Compact investigation header</td>
+<td align="right">75 px</td>
+</tr>
+<tr>
+<td>Baseline/stress horizontal container</td>
+<td align="right"><strong>320 px</strong></td>
+</tr>
+<tr>
+<td>Remaining space</td>
+<td align="right">Padding and control spacing</td>
+</tr>
+</tbody></table>
+<p>These are layout targets, not exact requirements. The important change is giving the bottom comparison substantially more room.</p>
+<p>Select the bottom <strong>horizontal container</strong>, not just one narrative sheet. Use its menu’s <strong>Distribute Evenly</strong> to give Baseline and stress equal widths. Then resize the surrounding sections using their borders or available Layout size controls. Tableau containers support this grouped resizing and equal distribution. [export reference: cite | turn584341search0 | turn394060view0]</p>
+<p>For both scenario sheets, use approximately <strong>12-point text</strong>, left-aligned and top-aligned. Keep the text readable; do not shrink it to compensate for an undersized container.</p>
+<p><strong>Our immediate acceptance target is that both complete Decision narratives are visible without internal scrolling.</strong> Longer Structure or Source rationale text may need more room later.</p>
+<p>A fixed dashboard taller than the available window will still have an outer scrollbar. That is separate from the nested worksheet scrollbars currently interrupting the explanations. [export reference: cite | turn394060view0]</p>
+<h1>4. Put a real header over the requested amounts</h1>
+<p>The application table’s rightmost dollar column currently lacks a header. Let’s label it properly.</p>
+<p>On <strong>04 — Application Detail</strong>, retain the existing five fields on Rows and <code>Pair Key</code> on Detail. Then:</p>
+<ol>
+<li>Remove <code>MIN(Requested Amount)</code> from <strong>Text</strong>.</li>
+<li>Drag <strong>Measure Values</strong> onto <strong>Text</strong>.</li>
+<li>Drag <strong>Measure Names</strong> onto <strong>Columns</strong>, then also onto <strong>Filters</strong>. In the filter, choose only <strong>Requested Amount</strong>.</li>
+<li>On the <strong>Measure Values</strong> card, confirm that only Requested Amount remains and change its aggregation to <strong>Minimum</strong>.</li>
+</ol>
+<p>This uses Tableau’s built-in measure-name headers to display <strong>Requested Amount</strong> above the values. Keep the currency format with zero decimal places. [export reference: cite | turn439511view0]</p>
+<p>The <code>Pair Key</code> detail field and your existing application-selection action should remain untouched.</p>
+<h1>5. Clean the displayed titles without renaming the sheets</h1>
+<p>Edit the visible titles to make the dashboard read like a product rather than a workbook inventory:</p>
+<table>
+<thead>
+<tr>
+<th>Existing visible title</th>
+<th>Proposed display title</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>03 — Executive Narrative</code></td>
+<td><strong>Portfolio interpretation</strong></td>
+</tr>
+<tr>
+<td><code>04 — Application Detail</code></td>
+<td><strong>Applications — click a requested amount to investigate</strong></td>
+</tr>
+<tr>
+<td><code>05 — Selection Narrative</code></td>
+<td><strong>Investigation selection</strong></td>
+</tr>
+<tr>
+<td><code>06 — Baseline Story</code></td>
+<td><strong>Baseline</strong></td>
+</tr>
+<tr>
+<td><code>07 — Stress Story</code></td>
+<td><strong>Recession Energy</strong></td>
+</tr>
+</tbody></table>
+<p>Keep the numbered worksheet-tab names for authoring. Editing a worksheet title is separate from renaming its underlying sheet. [export reference: cite | turn584341search1]</p>
+<h1>6. Retest the same story after the layout changes</h1>
+<p>Use the existing <strong>88-application</strong> matrix cell and select Merchant <strong>000003</strong> again.</p>
+<p>With <strong>Narrative Detail = Decision</strong>, the complete panels should establish:</p>
+<table>
+<thead>
+<tr>
+<th>Baseline</th>
+<th>Recession Energy</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A potentially supportable <strong>$42,500</strong> structure is retained.</td>
+<td><strong>28 usable sales days versus 30 required</strong>, including <strong>two disconnected processor-outage days</strong>.</td>
+</tr>
+<tr>
+<td>Review remains necessary near the approved capacity boundary.</td>
+<td>Dependent assessment is withheld because required evidence is insufficient.</td>
+</tr>
+<tr>
+<td><strong>The result is not an authorized offer.</strong></td>
+<td><strong>The evidence gap does not establish that every alternative would fail.</strong></td>
+</tr>
+</tbody></table>
+<p>Those are the values and distinctions in the imported Merchant 003 record. [export reference: filecite | turn108file0 | L16-L16]</p>
+<p>Then switch the parameter to <strong>Evidence</strong>, and back to <strong>Decision</strong>. Both scenario panels should change together.</p>
+<p>Finally, clear the application selection within the table. The investigation header should return to <strong>88 applications</strong>, and the scenario panels should return to their select-one-application guidance. The action’s <strong>Show all values</strong> clearing behavior removes that action’s selection restriction; the separate matrix action should still define the investigation population. [export reference: cite | turn394060view2]</p>
+<hr>
+<p><strong>The foundation is now there: portfolio → decision pairing → application → explanation.</strong> This pass makes the explanation usable—the part that will distinguish your dashboard from a matrix with a detail table.</p>
+<p>Save locally, then send a dashboard screenshot with <strong>Merchant 003 selected and both complete Decision paragraphs visible</strong>. The next build pass will add the segment comparison and executive indicators without sacrificing this narrative space.</p>
+</div></article><article id="m-25530bbd-5056-44fe-b3c1-ff0a73f13dfa" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00424 · 2026-10-15T22:02:41.092000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-020142).png</p><div class="bubble"><p>seems like there is still duplicative information here. Do we need to start off baseline story with BASELINE | Counteroffer review required Application: MSBF..._A01 and similarly, do we need to start off stress story in that same fashion. It seems like this information is already within the Selection Narrative.</p>
+</div></article><article id="m-03949808-48ef-4177-9f70-df76d12a03df" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00425 · 2026-10-15T22:05:32.188933-04:00 · active path</p><div class="bubble"><p><strong>Yes. The repeated preambles should come out of both story panels.</strong> The shared selection band already provides the context, and the panel titles identify the scenarios. My earlier formulas unnecessarily repeated that information before reaching the explanation.</p>
+<p>The display should have three clear jobs:</p>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>What it should communicate</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Shared selection band</strong></td>
+<td>Which merchant/application is selected and the two decision outcomes.</td>
+</tr>
+<tr>
+<td><strong>Panel titles</strong></td>
+<td><strong>Baseline</strong> and <strong>Recession Energy</strong>.</td>
+</tr>
+<tr>
+<td><strong>Panel bodies</strong></td>
+<td>The actual explanation—decision rationale, operating evidence, or structure assessment.</td>
+</tr>
+</tbody></table>
+<p>The long technical application identifier can remain in the application-table tooltip. It does not need to consume two lines across both narrative panels.</p>
+<h2>1. Replace the two existing story calculations</h2>
+<p>In the Data pane, right-click each calculated field below and choose <strong>Edit</strong>. Keep its existing name and replace its formula. Tableau updates the views using that calculation automatically; you do not need to recreate the worksheets or re-add the fields. [export reference: cite | turn457795search0]</p>
+<h3><code>Narrative - Baseline Story</code></h3>
+<pre><code class="language-tableau">IF COUNTD([Pair Key]) = 0 THEN
+    &quot;No application matches the current selection.&quot;
+
+ELSEIF COUNTD([Pair Key]) &gt; 1 THEN
+    &quot;Select one application to read its Baseline explanation.&quot;
+
+ELSE
+    IFNULL(
+        CASE [Narrative Detail]
+            WHEN &quot;Decision&quot; THEN
+                MIN([Baseline Decision Narrative])
+
+            WHEN &quot;Evidence&quot; THEN
+                MIN([Baseline Evidence Narrative])
+
+            WHEN &quot;Structure&quot; THEN
+                MIN([Baseline Structure Narrative])
+
+            WHEN &quot;Source rationale&quot; THEN
+                &quot;Technical source decision rationale; this may describe the independent scenario evaluation before final governance. &quot;
+                + MIN([Baseline Source Decision Why])
+        END,
+        &quot;The selected narrative is unavailable in this source.&quot;
+    )
+END
+</code></pre>
+<h3><code>Narrative - Stress Story</code></h3>
+<pre><code class="language-tableau">IF COUNTD([Pair Key]) = 0 THEN
+    &quot;No application matches the current selection.&quot;
+
+ELSEIF COUNTD([Pair Key]) &gt; 1 THEN
+    &quot;Select one application to read its Recession Energy explanation.&quot;
+
+ELSE
+    IFNULL(
+        CASE [Narrative Detail]
+            WHEN &quot;Decision&quot; THEN
+                MIN([Stress Decision Narrative])
+
+            WHEN &quot;Evidence&quot; THEN
+                MIN([Stress Evidence Narrative])
+
+            WHEN &quot;Structure&quot; THEN
+                MIN([Stress Structure Narrative])
+
+            WHEN &quot;Source rationale&quot; THEN
+                &quot;Technical source decision rationale; this may describe the independent scenario evaluation before final governance. &quot;
+                + MIN([Stress Source Decision Why])
+        END,
+        &quot;The selected narrative is unavailable in this source.&quot;
+    )
+END
+</code></pre>
+<p>These replacements remove only the added scenario/status/application-ID preamble. They retain the single-application safeguard, all four <strong>Narrative Detail</strong> choices, the missing-narrative message, and the qualification on technical source rationale.</p>
+<p><strong>Leave the selection-header calculation and dashboard actions unchanged.</strong></p>
+<h2>2. Simplify the visible panel titles</h2>
+<p>Your screenshot still shows the authoring titles. On each worksheet, right-click the displayed title and select <strong>Edit Title</strong>, then replace the title text with:</p>
+<table>
+<thead>
+<tr>
+<th>Worksheet</th>
+<th>Displayed title</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>06 — Baseline Story</code></td>
+<td><strong>Baseline</strong></td>
+</tr>
+<tr>
+<td><code>07 — Stress Story</code></td>
+<td><strong>Recession Energy</strong></td>
+</tr>
+</tbody></table>
+<p>Keep the numbered worksheet-tab names for authoring. Tableau allows the displayed title to differ from the sheet name. [export reference: cite | turn457795search6 | turn457795search7]</p>
+<h2>What the reader should see afterward</h2>
+<p>The shared band identifies <strong>Merchant 000003</strong> and the two outcomes. Immediately below:</p>
+<p><strong>Baseline</strong></p>
+<blockquote>
+<p>Counteroffer review required. A potentially supportable $42,500.00 structure is retained. Review remains necessary because the proposed structure sits near the approved capacity boundary. This result is not an authorized offer.</p>
+</blockquote>
+<p><strong>Recession Energy</strong></p>
+<blockquote>
+<p>Declined because required decision evidence is insufficient. The required 30-day sales window has 28 usable days against 30 required, including 2 disconnected processor-outage day(s). The source withholds dependent assessment; missing evidence is not treated as zero or weak performance, and does not establish that every alternative would fail.</p>
+</blockquote>
+<p>Those are the existing imported explanations for Merchant 003; we are changing their presentation, not their meaning. [export reference: filecite | turn108file0 | L16-L16]</p>
+<p>I would <strong>keep the outcome wording when it is part of the explanation itself</strong>—such as “Counteroffer review required”—rather than mechanically stripping words from the source narrative. The unnecessary duplication is the extra header block above it.</p>
+<p><strong>This gives the explanation the space currently occupied by repeated labels and identifiers, without reducing the font or losing decision context.</strong></p>
+</div></article><article id="m-97f60ee6-c372-468f-8c6a-b70dce5f1647" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00426 · 2026-10-15T22:19:41.309000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-021935).png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-e96d5479-d40d-4f38-a2a1-ec0233fd70cb" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00427 · 2026-10-15T22:30:26.722996-04:00 · active path</p><div class="bubble"><p><strong>That fixes the duplication. Both complete Decision narratives are now readable, and the merchant identity appears once in the shared selection band.</strong> The screenshot also preserves the correct separation: the matrix selection is <strong>88 applications</strong>, Merchant <strong>000003</strong> is being investigated, and the executive narrative still describes the <strong>750-application portfolio</strong>.</p>
+<p>For this selected application, the narrative presentation now works. <strong>Leave those story calculations alone.</strong></p>
+<p>The next useful addition is the management question:</p>
+<blockquote>
+<p><strong>Where are the Baseline-versus-stress differences concentrated—by industry or acquisition source?</strong></p>
+</blockquote>
+<p>Let’s build that comparison, prepare the four executive indicators, and connect the portfolio filters. <strong>Keep the existing dashboard arrangement for now</strong> so we do not squeeze the narrative panels again.</p>
+<h2>1. Create two authorization-rate calculations</h2>
+<p>You already have the authorization counts and <code>Matched Applications</code>. These new measures divide each count by the matched population <strong>within the current segment and filter scope</strong>. Tableau’s aggregate calculations support this numerator/denominator pattern. [export reference: cite | turn832653view2]</p>
+<p>Use <strong>Analysis → Create Calculated Field</strong>.</p>
+<h3><code>Baseline Authorization Rate</code></h3>
+<pre><code class="language-tableau">IF [Matched Applications] &gt; 0 THEN
+    [Baseline Authorizations] / [Matched Applications]
+END
+</code></pre>
+<h3><code>Stress Authorization Rate</code></h3>
+<pre><code class="language-tableau">IF [Matched Applications] &gt; 0 THEN
+    [Stress Authorizations] / [Matched Applications]
+END
+</code></pre>
+<p>For both fields, set <strong>Default Properties → Number Format → Percentage → 1 decimal place</strong>. Leave the values as fractions; do not multiply the formulas by 100. Tableau’s percentage format handles that conversion. [export reference: cite | turn265860view1]</p>
+<p><strong>These are authorization rates—not funding or collection rates.</strong> The current extract does not establish cash transfers or servicing outcomes. [export reference: filecite | turn110file0 | L53-L59]</p>
+<h2>2. Create the industry/acquisition-source switch</h2>
+<p>Create a new parameter:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Name</strong></td>
+<td><code>Review Segment By</code></td>
+</tr>
+<tr>
+<td><strong>Data type</strong></td>
+<td>String</td>
+</tr>
+<tr>
+<td><strong>Allowable values</strong></td>
+<td>List</td>
+</tr>
+<tr>
+<td><strong>Values</strong></td>
+<td><code>Industry</code>, <code>Acquisition Source</code></td>
+</tr>
+<tr>
+<td><strong>Current value</strong></td>
+<td><code>Industry</code></td>
+</tr>
+</tbody></table>
+<p>Then create a calculated field named <strong><code>Review Segment</code></strong>:</p>
+<pre><code class="language-tableau">CASE [Review Segment By]
+    WHEN &quot;Industry&quot; THEN [Industry]
+    WHEN &quot;Acquisition Source&quot; THEN [Acquisition Source]
+END
+</code></pre>
+<p>Right-click the parameter and choose <strong>Show Parameter</strong>.</p>
+<p>This switches the grouping used by the chart; it does not change the policy or remove applications. Tableau documents this parameter-plus-<code>CASE</code> approach for allowing readers to change dimensions interactively. [export reference: cite | turn265860view3]</p>
+<h2>3. Build <code>08 — Segment Comparison</code></h2>
+<p>Create a <strong>new blank worksheet</strong>, not a duplicate of the filtered application-detail sheet. Name it:</p>
+<pre><code class="language-text">08 — Segment Comparison
+</code></pre>
+<p>Configure it as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Field or setting</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Rows, first pill</strong></td>
+<td><code>Review Segment</code></td>
+</tr>
+<tr>
+<td><strong>Rows, second pill</strong></td>
+<td><code>Measure Names</code></td>
+</tr>
+<tr>
+<td><strong>Columns</strong></td>
+<td><code>Measure Values</code></td>
+</tr>
+<tr>
+<td><strong>Marks type</strong></td>
+<td>Bar</td>
+</tr>
+<tr>
+<td><strong>Color</strong></td>
+<td><code>Measure Names</code></td>
+</tr>
+<tr>
+<td><strong>Label</strong></td>
+<td><code>Measure Values</code></td>
+</tr>
+<tr>
+<td><strong>Tooltip</strong></td>
+<td><code>Matched Applications</code></td>
+</tr>
+<tr>
+<td><strong>Tooltip</strong></td>
+<td><code>Baseline Authorizations</code></td>
+</tr>
+<tr>
+<td><strong>Tooltip</strong></td>
+<td><code>Stress Authorizations</code></td>
+</tr>
+</tbody></table>
+<p>Drag <strong>Measure Names</strong> onto <strong>Filters</strong>, select <strong>None</strong>, and then select only:</p>
+<pre><code class="language-text">Baseline Authorization Rate
+Stress Authorization Rate
+</code></pre>
+<p>On the <strong>Measure Values</strong> card, confirm that <strong>only those two rates remain</strong>. The result should be <strong>two horizontal bars per segment</strong>, sharing one rate axis—not stacked bars or two independently scaled axes. <code>Measure Names</code> and <code>Measure Values</code> are Tableau’s built-in mechanism for this multiple-measure view. [export reference: cite | turn832653view0]</p>
+<p>Use this displayed title:</p>
+<pre><code class="language-text">Authorization rates by segment
+Baseline vs. Recession Energy | Hover for application counts
+</code></pre>
+<p>For the initial presentation, sort segments alphabetically, use <strong>Entire View</strong>, and keep the shared rate axis starting at zero. Give the two scenarios distinct, restrained colors, such as navy and teal. The colors identify scenarios; they should not imply “safe” versus “unsafe.”</p>
+<h3>What to check</h3>
+<p>I recalculated the segment totals directly from your current import CSV. These are reference checks—not values to type into the chart:</p>
+<table>
+<thead>
+<tr>
+<th>Segment</th>
+<th align="right">Matched applications</th>
+<th align="right">Baseline authorized</th>
+<th align="right">Stress authorized</th>
+<th align="right">Baseline rate</th>
+<th align="right">Stress rate</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Healthcare Services</td>
+<td align="right">82</td>
+<td align="right">15</td>
+<td align="right">4</td>
+<td align="right"><strong>18.3%</strong></td>
+<td align="right"><strong>4.9%</strong></td>
+</tr>
+<tr>
+<td>Professional Services</td>
+<td align="right">112</td>
+<td align="right">30</td>
+<td align="right">8</td>
+<td align="right"><strong>26.8%</strong></td>
+<td align="right"><strong>7.1%</strong></td>
+</tr>
+<tr>
+<td>Digital Direct</td>
+<td align="right">150</td>
+<td align="right">17</td>
+<td align="right">2</td>
+<td align="right"><strong>11.3%</strong></td>
+<td align="right"><strong>1.3%</strong></td>
+</tr>
+</tbody></table>
+<p>With <strong>Review Segment By = Industry</strong>, you should have <strong>eight groups and sixteen bars</strong>. Switch to <strong>Acquisition Source</strong>, and you should have <strong>five groups and ten bars</strong>.</p>
+<p>Download the recalculated segment checks (historical reference: <code>sandbox:[session]/MCI_Tableau_Segment_Checks.csv</code>; referenced bytes not established here)</p>
+<p><strong>Do not connect that check file as another Tableau table.</strong> It is only a reconciliation reference.</p>
+<h2>4. Prepare four executive-indicator sheets</h2>
+<p>Use <strong>new blank worksheets</strong> for these, with <strong>Text</strong> marks and empty <strong>Rows, Columns, and Detail</strong>. That gives each sheet one aggregate value or value-and-rate combination. [export reference: cite | turn832653view2]</p>
+<table>
+<thead>
+<tr>
+<th>Worksheet</th>
+<th>Fields to place on Text</th>
+<th>Intended display</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>09 — KPI Matched Applications</strong></td>
+<td><code>Matched Applications</code></td>
+<td><strong>750</strong> / Matched applications</td>
+</tr>
+<tr>
+<td><strong>10 — KPI Different Decisions</strong></td>
+<td><code>Different Decisions</code>, <code>Different Decision Rate</code></td>
+<td><strong>236</strong> / Different category · <strong>31.5%</strong></td>
+</tr>
+<tr>
+<td><strong>11 — KPI Baseline Authorized</strong></td>
+<td><code>Baseline Authorizations</code>, <code>Baseline Authorization Rate</code></td>
+<td><strong>103</strong> / Baseline authorized · <strong>13.7%</strong></td>
+</tr>
+<tr>
+<td><strong>12 — KPI Stress Authorized</strong></td>
+<td><code>Stress Authorizations</code>, <code>Stress Authorization Rate</code></td>
+<td><strong>27</strong> / Stress authorized · <strong>3.6%</strong></td>
+</tr>
+</tbody></table>
+<p>Use approximately <strong>28-point text for the main number</strong> and <strong>11–12 points for its label</strong>. Center each card and turn off its tooltip.</p>
+<p>When editing the text, <strong>retain the inserted field tokens</strong>. Type only the descriptive labels, never the numbers. Keep counts at zero decimal places and rates at one decimal place. [export reference: cite | turn265860view1]</p>
+<p><strong>Do not place these sheets on the dashboard yet.</strong> First, we will verify that the indicators, matrix, segment chart, and narrative all respond to the same portfolio filters.</p>
+<h2>5. Add two shared portfolio filters</h2>
+<p>These filters define the population being reviewed. They are different from your existing matrix-cell and application-selection actions.</p>
+<p>On <strong>03 — Executive Narrative</strong>:</p>
+<ol>
+<li>Drag <strong>Industry</strong> to <strong>Filters</strong>, include all values, and select <strong>Show Filter</strong>.</li>
+<li>Do the same for <strong>Acquisition Source</strong>.</li>
+<li>For each filter pill, select <strong>Apply to Worksheets → Selected Worksheets</strong>.</li>
+<li>Select <strong>all analytical worksheets from 02 through 12</strong>.</li>
+</ol>
+<p>Leave <strong>00 — Population Check</strong> and <strong>01 — Scenario Controls</strong> unselected. Those two sheets will remain your unfiltered reference checks.</p>
+<p>Tableau’s <strong>Selected Worksheets</strong> option shares a filter across explicitly chosen sheets rather than applying it indiscriminately throughout the workbook. [export reference: cite | turn265860view2]</p>
+<p>On the dashboard, select the executive-narrative sheet’s dropdown menu and show <strong>Filters → Industry</strong> and <strong>Filters → Acquisition Source</strong>. Use dropdown filter cards to conserve space.</p>
+<p><strong>Keep both existing dashboard actions unchanged.</strong> In particular, do not add the new KPI or segment sheets as targets of the matrix or application actions. The intended behavior remains:</p>
+<table>
+<thead>
+<tr>
+<th>Interaction</th>
+<th>What changes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Industry or Acquisition Source filter</td>
+<td>Portfolio indicators, executive narrative, matrix, segment chart, application list, and individual stories</td>
+</tr>
+<tr>
+<td>Matrix-cell selection</td>
+<td>Investigation population and its detail—not portfolio totals</td>
+</tr>
+<tr>
+<td>Application selection</td>
+<td>Individual comparison and story panels—not portfolio totals</td>
+</tr>
+</tbody></table>
+<p>This preserves the filter separation specified in your setup guide. [export reference: filecite | turn110file0 | L17-L33]</p>
+<h2>6. Test the filtered portfolio before changing the layout</h2>
+<p><strong>Clear the selected application and matrix cell first.</strong> Otherwise, their existing action filters may intersect with the new portfolio filters. That intersection is a known behavior to check; an empty detail area must not be mistaken for a completed narrative. [export reference: filecite | turn110file0 | L29-L35]</p>
+<p>Then run these three checks:</p>
+<table>
+<thead>
+<tr>
+<th>Portfolio filter</th>
+<th align="right">Matched applications</th>
+<th align="right">Different decisions</th>
+<th align="right">Different rate</th>
+<th align="right">Baseline authorized</th>
+<th align="right">Stress authorized</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>All industries; all sources</td>
+<td align="right"><strong>750</strong></td>
+<td align="right"><strong>236</strong></td>
+<td align="right"><strong>31.5%</strong></td>
+<td align="right"><strong>103</strong></td>
+<td align="right"><strong>27</strong></td>
+</tr>
+<tr>
+<td>Healthcare Services; all sources</td>
+<td align="right"><strong>82</strong></td>
+<td align="right"><strong>29</strong></td>
+<td align="right"><strong>35.4%</strong></td>
+<td align="right"><strong>15</strong></td>
+<td align="right"><strong>4</strong></td>
+</tr>
+<tr>
+<td>Healthcare Services; Digital Direct</td>
+<td align="right"><strong>18</strong></td>
+<td align="right"><strong>7</strong></td>
+<td align="right"><strong>38.9%</strong></td>
+<td align="right"><strong>3</strong></td>
+<td align="right"><strong>1</strong></td>
+</tr>
+</tbody></table>
+<p>These filtered controls are included in the recalculated check file (historical reference: <code>sandbox:[session]/MCI_Tableau_Segment_Checks.csv</code>; referenced bytes not established here).</p>
+<p>Under <strong>Healthcare Services only</strong>, the executive narrative should say:</p>
+<blockquote>
+<p>In this filtered portfolio of <strong>82 matched applications, 29 (35.4%)</strong> have different final decision categories. Authorized: <strong>15 in Baseline versus 4 in Recession Energy</strong>.</p>
+</blockquote>
+<p>The corresponding KPI sheets should agree. Switching <code>Review Segment By</code> should change the grouping, <strong>not those overall filtered totals</strong>.</p>
+<h2>Where this leaves the build</h2>
+<p>Your current screenshot demonstrates the <strong>application-investigation layer</strong>. This next pass adds the <strong>portfolio-segmentation layer</strong> without disturbing the readable explanations.</p>
+<p>There is one small outstanding presentation item in the screenshot: the rightmost dollar column still needs its <strong>Requested Amount</strong> header. That is a labeling fix, not a reason to change the application data or selection action.</p>
+<p><strong>Save locally, then send the Segment Comparison worksheet and the executive narrative with Healthcare Services selected.</strong> Once those agree, we can place the executive indicators and segment view deliberately—without taking space back from the story panels we just fixed.</p>
+</div></article><article id="m-fb000dd5-783c-40a1-b598-9366a0ebc10d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00428 · 2026-10-15T22:39:59.533000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-023935).png; image(20261016-023952).png</p><div class="bubble"><p>have I set up these parameters correctly? it seems like nothing changes when I adjust the drop downs.</p>
+</div></article><article id="m-61ca33b0-fee7-4039-9bb4-693d26b2ff68" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00429 · 2026-10-15T22:43:08.564511-04:00 · active path</p><div class="bubble"><p><strong>Yes—both parameter definitions are correct in your screenshots. Do not recreate them.</strong> The question now is whether you are changing the active value and whether the displayed worksheets are using the calculations connected to that parameter.</p>
+<p>A Tableau parameter holds a value; it does <strong>not</strong> automatically change a chart or narrative. The worksheet must use a calculation that references it. [export reference: cite | turn507262search0]</p>
+<p>Here is what our two controls are intended to affect:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Should change</th>
+<th>Should not change</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Narrative Detail</strong></td>
+<td>The explanatory paragraphs in <strong>Baseline Story</strong> and <strong>Stress Story</strong>, when one application is selected.</td>
+<td>Executive totals, matrix, application list, or selection header.</td>
+</tr>
+<tr>
+<td><strong>Review Segment By</strong></td>
+<td>The grouping in <strong>08 — Segment Comparison</strong>: industry versus acquisition source.</td>
+<td>Overall portfolio totals, the decision matrix, or merchant narratives.</td>
+</tr>
+</tbody></table>
+<h2>1. First, use the parameter control—not the list in the editing window</h2>
+<p>Your screenshots show <strong>Edit Parameter</strong> dialogs.</p>
+<p>The grid under <strong>Allowable values</strong> defines the available choices. Clicking a row there is not the same as changing the active parameter value. The active choice is shown under <strong>Current value</strong>—currently <strong>Decision</strong> and <strong>Industry</strong> in your screenshots.</p>
+<p>For normal use:</p>
+<ol>
+<li>Click <strong>OK</strong> to close the editing dialog.</li>
+<li>In the worksheet’s Data pane, locate the parameter under <strong>Parameters</strong>.</li>
+<li>Right-click it and select <strong>Show Parameter</strong>.</li>
+<li>Change the selection in the small parameter card that appears beside the view.</li>
+</ol>
+<p>You can also change <strong>Current value</strong> in the editing dialog and click <strong>OK</strong>, but the visible parameter card is the intended interactive control. <strong>Leave “Fixed” selected</strong>: it fixes the list of available options, not the user’s ability to switch between them. [export reference: cite | turn507262search0]</p>
+<h2>2. Test <code>Narrative Detail</code> with Merchant 000003 selected</h2>
+<p>On your dashboard, select the <strong>88-application</strong> matrix cell, then select Merchant <strong>000003</strong> in the application table, as you did successfully before.</p>
+<p>Now use the <strong>Narrative Detail</strong> card to switch from <strong>Decision</strong> to <strong>Structure</strong>.</p>
+<p><strong>Watch the two story paragraphs at the bottom—not the executive paragraph or selection header.</strong> Our formulas intentionally leave those other elements unchanged.</p>
+<p>For Merchant 000003, these choices should produce noticeably different explanations:</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Expected content</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Decision</strong></td>
+<td>Baseline explains the <strong>$42,500 review-required alternative</strong>. Stress explains the insufficient-evidence decision.</td>
+</tr>
+<tr>
+<td><strong>Evidence</strong></td>
+<td>The paragraphs describe merchant operating facts, balances, verification, and sales-history availability.</td>
+</tr>
+<tr>
+<td><strong>Structure</strong></td>
+<td>Baseline starts with the <strong>$61,300 request</strong> and includes <strong>11 candidate evaluations</strong> and the <strong>$42,500 selected structure</strong>. Stress describes the blocked assessment and unavailable selected terms.</td>
+</tr>
+</tbody></table>
+<p>Those distinct paragraphs are present in the imported Merchant 003 record. [export reference: filecite | turn108file0 | L16-L16]</p>
+<h3>If the paragraphs remain identical</h3>
+<p>Open the individual worksheets and inspect <strong>Marks → Text</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Worksheet</th>
+<th>The field on Text must be</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>06 — Baseline Story</strong></td>
+<td><code>AGG(Narrative - Baseline Story)</code></td>
+</tr>
+<tr>
+<td><strong>07 — Stress Story</strong></td>
+<td><code>AGG(Narrative - Stress Story)</code></td>
+</tr>
+</tbody></table>
+<p>They must <strong>not</strong> use the raw fields <code>Baseline Decision Narrative</code> or <code>Stress Decision Narrative</code> directly. Those raw fields always contain the decision paragraph; the calculated fields select the paragraph according to the parameter.</p>
+<p>Then right-click each story calculation in the Data pane → <strong>Edit</strong>. Confirm it contains:</p>
+<pre><code class="language-tableau">CASE [Narrative Detail]
+</code></pre>
+<p>with branches for <code>Decision</code>, <code>Evidence</code>, <code>Structure</code>, and <code>Source rationale</code>. <strong>Do not remove the existing <code>COUNTD([Pair Key])</code> safeguards.</strong></p>
+<p>One important expected behavior: when multiple applications are in scope, our formulas display <strong>“Select one application…”</strong> regardless of the parameter choice. The detail selector only changes the story after exactly one application reaches that worksheet. The setup guide specifies this single-application interaction. [export reference: filecite | turn110file0 | L21-L24]</p>
+<h2>3. Test <code>Review Segment By</code> on the segment worksheet</h2>
+<p><strong>In the last dashboard screenshot you sent, the segment chart had not yet been added.</strong> Changing its parameter therefore would not visibly affect that dashboard’s existing matrix or narratives.</p>
+<p>Open <strong>08 — Segment Comparison</strong> directly.</p>
+<p>Its first Rows pill must be the <strong>calculated field <code>Review Segment</code></strong>, not the raw <code>Industry</code> field and not the parameter <code>Review Segment By</code>.</p>
+<p>The calculation should be:</p>
+<pre><code class="language-tableau">CASE [Review Segment By]
+    WHEN &quot;Industry&quot; THEN [Industry]
+    WHEN &quot;Acquisition Source&quot; THEN [Acquisition Source]
+END
+</code></pre>
+<p>The relevant worksheet arrangement should be:</p>
+<pre><code class="language-text">Rows:       Review Segment | Measure Names
+Columns:    Measure Values
+</code></pre>
+<p>Show the <strong>Review Segment By</strong> parameter card on that worksheet and switch to <strong>Acquisition Source</strong>. The row labels should change from industries such as <strong>Healthcare Services</strong> to sources such as <strong>Digital Direct</strong>.</p>
+<p>The essential connection is:</p>
+<p><strong>Parameter selection → <code>Review Segment</code> calculation → field actually used on Rows.</strong></p>
+<p>Creating the calculation without placing it in the view—or leaving <code>Industry</code> on Rows—does not make the chart switch. This is the same connection Tableau documents for parameter-driven dimension changes. [export reference: cite | turn507262search1]</p>
+<hr>
+<p><strong>Start with the simplest test: select Merchant 000003, then change Narrative Detail to Structure using the visible dashboard control.</strong> If its Baseline paragraph still starts “Counteroffer review required,” send the <strong>06 — Baseline Story worksheet</strong> with both its <strong>Marks card and Narrative Detail control visible</strong>. That will show whether the missing connection is the active parameter value or the field on Text.</p>
+</div></article><article id="m-b8aff37a-0fb8-49ba-b596-aaece8b018d7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00430 · 2026-10-15T23:30:16.815000-04:00 · active path</p><p class="note">3 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-032906).png; image(20261016-032933).png; image(20261016-032949).png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

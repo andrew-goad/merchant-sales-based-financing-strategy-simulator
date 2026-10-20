@@ -1,0 +1,1917 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PostgreSQL M1.14 Execution — part 36 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>PostgreSQL M1.14 Execution — part 36</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-35.html">Previous part</a><a href="part-37.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-57bfa47f-f570-4012-8b91-73492087b093" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00514 · 2026-08-14T23:21:56.399578-04:00 · active path</p><div class="bubble"><p>Good — if the automated script completed successfully, the difficult packaging/extraction problem is behind us. <strong>From this point forward, use only the extracted repository at:</strong></p>
+<pre><code class="language-text">C:\x\m
+</code></pre>
+<p>Keep your older repository at:</p>
+<pre><code class="language-text">C:\Git\merchant-sales-based-financing-strategy-simulator
+</code></pre>
+<p>untouched as a backup.</p>
+<p>The governing publication runbook expects the local validator to report <strong>1,930 governed manifest files and 12 Module 2 stage folders</strong>, then after staging exactly <strong>1,083 added files, 20 modified files, and 0 deleted files</strong>. [export reference: filecite | turn213file0 | L84-L118] [export reference: filecite | turn213file0 | L149-L169]</p>
+<p>I would now proceed exactly as follows.</p>
+<hr>
+<h1>1. Open PowerShell in the new repository</h1>
+<p>Open PowerShell and paste:</p>
+<pre><code class="language-powershell">Set-Location &quot;C:\x\m&quot;
+</code></pre>
+<p>Then confirm where you are:</p>
+<pre><code class="language-powershell">Get-Location
+</code></pre>
+<p>You should see:</p>
+<pre><code class="language-text">Path
+----
+C:\x\m
+</code></pre>
+<p>Do <strong>not</strong> continue from your old <code>C:\Git\...</code> folder.</p>
+<hr>
+<h1>2. Confirm this really is the Git repository we intend to publish</h1>
+<p>Paste:</p>
+<pre><code class="language-powershell">git status --short --branch
+git branch --show-current
+git remote -v
+git log -1 --oneline --decorate
+</code></pre>
+<p>You want to confirm three things:</p>
+<pre><code class="language-text">Current branch: main
+Remote: https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git
+Current baseline commit begins with: f43ea8c
+</code></pre>
+<p>It is <strong>normal</strong> for <code>git status</code> to show lots of modified and untracked files right now. Those are the Module 2/G3 release changes we intend to publish.</p>
+<hr>
+<h1>3. Make sure GitHub <code>main</code> has not changed since we built the package</h1>
+<p>Paste this entire block:</p>
+<pre><code class="language-powershell">git fetch origin --tags --prune
+
+if ($LASTEXITCODE -ne 0) {
+    throw &quot;git fetch failed. Stop here.&quot;
+}
+
+$ExpectedBase = &quot;f43ea8cb87523f477142fba2acea1be254c69e1a&quot;
+
+$LocalBase = (git rev-parse HEAD).Trim()
+$RemoteBase = (git rev-parse origin/main).Trim()
+
+Write-Host &quot;&quot;
+Write-Host &quot;Expected base: $ExpectedBase&quot;
+Write-Host &quot;Local base:    $LocalBase&quot;
+Write-Host &quot;Remote main:   $RemoteBase&quot;
+
+if ($LocalBase -ne $ExpectedBase) {
+    throw &quot;The extracted package is not on the expected baseline. Stop here.&quot;
+}
+
+if ($RemoteBase -ne $ExpectedBase) {
+    throw &quot;GitHub main changed since this package was built. Stop here.&quot;
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;BASELINE RECONCILIATION PASS&quot; -ForegroundColor Green
+</code></pre>
+<h3>What you want to see</h3>
+<p>All three hashes should be:</p>
+<pre><code class="language-text">f43ea8cb87523f477142fba2acea1be254c69e1a
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-text">BASELINE RECONCILIATION PASS
+</code></pre>
+<p><strong>If <code>Remote main</code> is different, stop and send me the PowerShell output. Do not pull or merge anything.</strong></p>
+<hr>
+<h1>4. Confirm the expected unpublished changes are present</h1>
+<p>Paste:</p>
+<pre><code class="language-powershell">$Status = git status --porcelain=v1
+
+$ModifiedCount = @(
+    $Status | Where-Object { $_ -match &#39;^ M &#39; }
+).Count
+
+$UntrackedCount = @(
+    $Status | Where-Object { $_ -match &#39;^\?\? &#39; }
+).Count
+
+$DeletedCount = @(
+    $Status | Where-Object { $_ -match &#39;^( D|D )&#39; }
+).Count
+
+Write-Host &quot;&quot;
+Write-Host &quot;Modified tracked files:   $ModifiedCount&quot;
+Write-Host &quot;Untracked paths:          $UntrackedCount&quot;
+Write-Host &quot;Deleted tracked files:    $DeletedCount&quot;
+
+if ($ModifiedCount -ne 20) {
+    throw &quot;Expected 20 modified tracked files.&quot;
+}
+
+if ($UntrackedCount -ne 15) {
+    throw &quot;Expected 15 collapsed untracked paths.&quot;
+}
+
+if ($DeletedCount -ne 0) {
+    throw &quot;Tracked deletions detected.&quot;
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;PRE-STAGING STATUS PASS&quot; -ForegroundColor Green
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">Modified tracked files:   20
+Untracked paths:          15
+Deleted tracked files:    0
+
+PRE-STAGING STATUS PASS
+</code></pre>
+<p>The <code>15</code> untracked entries are mostly whole directories. Once staged, they expand into many individual files.</p>
+<hr>
+<h1>5. Confirm the Publication Integrity workflow exists</h1>
+<p>Paste:</p>
+<pre><code class="language-powershell">Test-Path &quot;.github\workflows\publication_integrity.yml&quot;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">True
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">git status --short &quot;.github/workflows/publication_integrity.yml&quot;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">(no output)
+</code></pre>
+<p>That means we preserved the existing GitHub Action and are not changing or deleting it.</p>
+<hr>
+<h1>6. Run the full local publication validator again</h1>
+<p>Even though the extraction script already ran it successfully, run it once more immediately before staging.</p>
+<p>Try:</p>
+<pre><code class="language-powershell">python tools\validate_public_release.py
+</code></pre>
+<p>If Windows says <code>python</code> is not recognized, use:</p>
+<pre><code class="language-powershell">py -3 tools\validate_public_release.py
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">Public release validation PASS
+Governed manifest files: 1930
+Module 2 stage folders: 12
+</code></pre>
+<p>Those are the governing expected results for this package. [export reference: filecite | turn213file0 | L92-L118]</p>
+<p>If anything says <code>FAIL</code>, <strong>stop and send me the exact output</strong>.</p>
+<hr>
+<h1>7. Run Git&#39;s whitespace/error check</h1>
+<p>Paste:</p>
+<pre><code class="language-powershell">git diff --check
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">(no output)
+</code></pre>
+<p>No output is a PASS.</p>
+<p>Then:</p>
+<pre><code class="language-powershell">if ($LASTEXITCODE -ne 0) {
+    throw &quot;git diff --check failed.&quot;
+} else {
+    Write-Host &quot;GIT DIFF CHECK PASS&quot; -ForegroundColor Green
+}
+</code></pre>
+<hr>
+<h1>8. Confirm the root manifests have the correct counts</h1>
+<p>Paste:</p>
+<pre><code class="language-powershell">$ManifestCsvCount = (Import-Csv .\MANIFEST.csv).Count
+
+$ManifestJson = Get-Content .\manifest.json -Raw | ConvertFrom-Json
+$ManifestJsonCount = $ManifestJson.file_count
+
+Write-Host &quot;&quot;
+Write-Host &quot;MANIFEST.csv records: $ManifestCsvCount&quot;
+Write-Host &quot;manifest.json count:  $ManifestJsonCount&quot;
+
+if ($ManifestCsvCount -ne 1930) {
+    throw &quot;MANIFEST.csv should contain 1930 records.&quot;
+}
+
+if ($ManifestJsonCount -ne 1930) {
+    throw &quot;manifest.json should report 1930 records.&quot;
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;ROOT MANIFEST COUNT PASS&quot; -ForegroundColor Green
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">MANIFEST.csv records: 1930
+manifest.json count:  1930
+
+ROOT MANIFEST COUNT PASS
+</code></pre>
+<p>Now verify the GitHub workflow is actually included in the governed manifest:</p>
+<pre><code class="language-powershell">Select-String `
+    -Path .\MANIFEST.csv `
+    -Pattern &#39;^\.github/workflows/publication_integrity\.yml,&#39;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">.github/workflows/publication_integrity.yml,359,9c2535f1ab9d484b55fbaeff023e05bcd136cbeee7e43b407fc6073aa65587ed
+</code></pre>
+<hr>
+<h1>9. Create the release branch</h1>
+<p>We do <strong>not</strong> commit these changes directly on <code>main</code>.</p>
+<p>Paste:</p>
+<pre><code class="language-powershell">$Branch = &quot;release/module-2-g3-v2.0.0-final&quot;
+
+git switch -c $Branch
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">Switched to a new branch &#39;release/module-2-g3-v2.0.0-final&#39;
+</code></pre>
+<p>Verify:</p>
+<pre><code class="language-powershell">git branch --show-current
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">release/module-2-g3-v2.0.0-final
+</code></pre>
+<p>If Git says that branch already exists, <strong>stop and tell me</strong>. Do not delete it automatically.</p>
+<hr>
+<h1>10. Stage all intended repository changes</h1>
+<p>Paste:</p>
+<pre><code class="language-powershell">git add -A
+</code></pre>
+<p>Nothing has gone to GitHub yet. This only moves the changes into Git&#39;s local staging area.</p>
+<hr>
+<h1>11. Verify the exact staged file counts</h1>
+<p>Paste:</p>
+<pre><code class="language-powershell">$Staged = git diff --cached --name-status
+
+$AddedCount = @(
+    $Staged | Where-Object { $_ -match &#39;^A\s&#39; }
+).Count
+
+$ModifiedCount = @(
+    $Staged | Where-Object { $_ -match &#39;^M\s&#39; }
+).Count
+
+$DeletedCount = @(
+    $Staged | Where-Object { $_ -match &#39;^D\s&#39; }
+).Count
+
+$TotalCount = $AddedCount + $ModifiedCount + $DeletedCount
+
+Write-Host &quot;&quot;
+Write-Host &quot;Added:    $AddedCount&quot;
+Write-Host &quot;Modified: $ModifiedCount&quot;
+Write-Host &quot;Deleted:  $DeletedCount&quot;
+Write-Host &quot;Total:    $TotalCount&quot;
+
+if ($AddedCount -ne 1083) {
+    throw &quot;Expected exactly 1083 added files.&quot;
+}
+
+if ($ModifiedCount -ne 20) {
+    throw &quot;Expected exactly 20 modified files.&quot;
+}
+
+if ($DeletedCount -ne 0) {
+    throw &quot;Expected zero deleted files.&quot;
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;STAGED FILE COUNTS PASS&quot; -ForegroundColor Green
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">Added:    1083
+Modified: 20
+Deleted:  0
+Total:    1103
+
+STAGED FILE COUNTS PASS
+</code></pre>
+<p>These exact staged counts are part of the packaged release procedure. [export reference: filecite | turn213file0 | L136-L169]</p>
+<p>If your numbers are different, <strong>do not commit</strong>.</p>
+<hr>
+<h1>12. Make sure no ZIP file accidentally got staged</h1>
+<p>This is important.</p>
+<p>Paste:</p>
+<pre><code class="language-powershell">$StagedZips = @(
+    git diff --cached --name-only |
+        Select-String &#39;\.zip(\.sha256)?$&#39;
+)
+
+if ($StagedZips.Count -gt 0) {
+    $StagedZips
+    throw &quot;A ZIP or ZIP sidecar was accidentally staged.&quot;
+}
+
+Write-Host &quot;NO ZIP FILES STAGED — PASS&quot; -ForegroundColor Green
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">NO ZIP FILES STAGED — PASS
+</code></pre>
+<p>The big Windows release ZIP stays outside the repository and will be uploaded later through <strong>GitHub Releases</strong>.</p>
+<hr>
+<h1>13. Make sure nothing is staged for deletion</h1>
+<p>Paste:</p>
+<pre><code class="language-powershell">$Deletes = git diff --cached --name-status |
+    Where-Object { $_ -match &#39;^D\s&#39; }
+
+if ($Deletes) {
+    $Deletes
+    throw &quot;Files are staged for deletion. Stop.&quot;
+}
+
+Write-Host &quot;NO DELETIONS STAGED — PASS&quot; -ForegroundColor Green
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">NO DELETIONS STAGED — PASS
+</code></pre>
+<hr>
+<h1>14. Review the high-level staged summary</h1>
+<p>Paste:</p>
+<pre><code class="language-powershell">git diff --cached --stat
+</code></pre>
+<p>There will be a lot of output.</p>
+<p>The important final summary should correspond to:</p>
+<pre><code class="language-text">1103 files changed
+</code></pre>
+<p>and our exact control counts remain:</p>
+<pre><code class="language-text">1083 added
+20 modified
+0 deleted
+</code></pre>
+<p>You do <strong>not</strong> need to manually inspect all 1,103 files.</p>
+<hr>
+<h1>15. Inspect the most important repository-facing changes</h1>
+<p>Run these one at a time:</p>
+<pre><code class="language-powershell">git diff --cached -- README.md
+</code></pre>
+<pre><code class="language-powershell">git diff --cached -- RELEASE_NOTES.md
+</code></pre>
+<pre><code class="language-powershell">git diff --cached -- MODULE_AND_RELEASE_INDEX.md
+</code></pre>
+<pre><code class="language-powershell">git diff --cached -- PROJECT_ARTIFACT_MAP.md
+</code></pre>
+<pre><code class="language-powershell">git diff --cached -- Module_2/README.md
+</code></pre>
+<pre><code class="language-powershell">git diff --cached -- docs/README.md
+</code></pre>
+<p>You are just making sure they look like the Module 2/G3 update we have been building—not trying to audit every word again.</p>
+<hr>
+<h1>16. Commit the release</h1>
+<p>If Steps 1–15 all pass, paste:</p>
+<pre><code class="language-powershell">git commit -m &quot;Publish Module 2 / G3 v2.0.0&quot;
+</code></pre>
+<p>You should get a large commit summary.</p>
+<p>Now rerun the validator:</p>
+<pre><code class="language-powershell">python tools\validate_public_release.py
+</code></pre>
+<p>or, if needed:</p>
+<pre><code class="language-powershell">py -3 tools\validate_public_release.py
+</code></pre>
+<p>Again you need:</p>
+<pre><code class="language-text">Public release validation PASS
+Governed manifest files: 1930
+Module 2 stage folders: 12
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">git status --short --branch
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">## release/module-2-g3-v2.0.0-final
+</code></pre>
+<p>There should be <strong>nothing beneath it</strong>.</p>
+<p>That means the commit is complete and the branch is clean.</p>
+<hr>
+<h1>17. Push the release branch to GitHub</h1>
+<p>Paste:</p>
+<pre><code class="language-powershell">git push -u origin release/module-2-g3-v2.0.0-final
+</code></pre>
+<p>If a browser/Git Credential Manager login appears, authenticate.</p>
+<p>GitHub uses the standard <code>git push &lt;remote&gt; &lt;branch&gt;</code> workflow to publish a local branch. [export reference: cite | turn189635search0]</p>
+<p>Expected near the end:</p>
+<pre><code class="language-text">[new branch] release/module-2-g3-v2.0.0-final -&gt; release/module-2-g3-v2.0.0-final
+</code></pre>
+<p>At this point:</p>
+<ul>
+<li>the new branch is on GitHub;</li>
+<li><code>main</code> has <strong>not</strong> yet changed;</li>
+<li>this is exactly where we want to be.</li>
+</ul>
+<hr>
+<h1>18. Open GitHub and create the pull request</h1>
+<p>Go to your repository in your browser.</p>
+<p>GitHub should show a yellow banner for:</p>
+<pre><code class="language-text">release/module-2-g3-v2.0.0-final
+</code></pre>
+<p>Click:</p>
+<pre><code class="language-text">Compare &amp; pull request
+</code></pre>
+<p>GitHub&#39;s documented PR flow after pushing a branch is to use that banner, select the base and compare branches, then enter the title and description. [export reference: cite | turn189635search2]</p>
+<p>Make sure:</p>
+<pre><code class="language-text">base:    main
+compare: release/module-2-g3-v2.0.0-final
+</code></pre>
+<p>PR title:</p>
+<pre><code class="language-text">Publish Module 2 / G3 v2.0.0
+</code></pre>
+<p>Use this PR description:</p>
+<pre><code class="language-markdown">## Module 2 / G3 v2.0.0
+
+Publishes the accepted Module 2 stage chain through M2.12 and the
+G3_M2_CONTRACT enterprise consumption boundary.
+
+### Principal additions
+
+- complete M2.1–M2.12 public stage tree;
+- accepted source, BRDs, architecture, validation, provenance,
+  correction history, catalogs, recovery boundaries, and sign-offs;
+- Module 2/G3 enterprise architecture and lineage exhibits;
+- Governed Build Edition v3.0 ten-page executive brief;
+- campaign-readiness and pre-750 replay documentation;
+- sanitized ChatGPT project-history archive through 2026-08-12;
+- reconciled repository navigation and regenerated manifests.
+
+### Publication boundary
+
+- deterministic synthetic evidence only;
+- no production deployment;
+- no causal optimization claim;
+- no campaign execution authorized;
+- no Module 3 execution authorized.
+</code></pre>
+<p>Then click:</p>
+<pre><code class="language-text">Create pull request
+</code></pre>
+<p>Do <strong>not</strong> make it a draft PR.</p>
+<hr>
+<h1>19. Wait for the GitHub Action</h1>
+<p>On the PR page, look for the checks area.</p>
+<p>You need:</p>
+<pre><code class="language-text">Publication Integrity
+</code></pre>
+<p>to turn <strong>green</strong>.</p>
+<p>Do <strong>not</strong> merge while it says:</p>
+<pre><code class="language-text">Queued
+Pending
+In progress
+</code></pre>
+<p>If it turns red, click <strong>Details</strong> and send me the failure output.</p>
+<hr>
+<h1>20. Review the Files Changed tab before merging</h1>
+<p>Click:</p>
+<pre><code class="language-text">Files changed
+</code></pre>
+<p>You do not need to scroll all 1,103 files.</p>
+<p>Spot-check that these exist:</p>
+<pre><code class="language-text">Module_2/
+docs/campaign_scale/
+docs/project_history/
+docs/enterprise_architecture/
+docs/executive_strategy/
+</code></pre>
+<p>Also search the changed-files list for:</p>
+<pre><code class="language-text">publication_integrity.yml
+</code></pre>
+<p>It should <strong>not</strong> appear as deleted.</p>
+<p>Search for:</p>
+<pre><code class="language-text">.zip
+</code></pre>
+<p>There should be no big staging ZIP committed.</p>
+<hr>
+<h1>21. Merge the pull request</h1>
+<p>Once <code>Publication Integrity</code> is green:</p>
+<ol>
+<li>Go back to the PR <strong>Conversation</strong> tab.</li>
+<li>Click:</li>
+</ol>
+<pre><code class="language-text">Merge pull request
+</code></pre>
+<ol start="3">
+<li>Then:</li>
+</ol>
+<pre><code class="language-text">Confirm merge
+</code></pre>
+<p>Use the normal <strong>Merge pull request</strong> option.</p>
+<p>Do not choose:</p>
+<pre><code class="language-text">Rebase and merge
+</code></pre>
+<p>After GitHub confirms the PR is merged, click:</p>
+<pre><code class="language-text">Delete branch
+</code></pre>
+<p>That deletes the temporary remote release branch, not the merged content.</p>
+<hr>
+<h1>22. Bring your local <code>main</code> up to date</h1>
+<p>Return to PowerShell:</p>
+<pre><code class="language-powershell">Set-Location &quot;C:\x\m&quot;
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">git switch main
+git fetch origin --tags --prune
+git pull --ff-only origin main
+</code></pre>
+<p>Now run:</p>
+<pre><code class="language-powershell">python tools\validate_public_release.py
+</code></pre>
+<p>or:</p>
+<pre><code class="language-powershell">py -3 tools\validate_public_release.py
+</code></pre>
+<p>Again expect:</p>
+<pre><code class="language-text">Public release validation PASS
+Governed manifest files: 1930
+Module 2 stage folders: 12
+</code></pre>
+<p>Now verify local and GitHub <code>main</code> are identical:</p>
+<pre><code class="language-powershell">$FinalMain = (git rev-parse HEAD).Trim()
+$RemoteMain = (git rev-parse origin/main).Trim()
+
+Write-Host &quot;Local main:  $FinalMain&quot;
+Write-Host &quot;Remote main: $RemoteMain&quot;
+
+if ($FinalMain -ne $RemoteMain) {
+    throw &quot;Local main and origin/main do not match.&quot;
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;FINAL MAIN SYNCHRONIZATION PASS&quot; -ForegroundColor Green
+</code></pre>
+<p>Then save that commit hash:</p>
+<pre><code class="language-powershell">$FinalMain |
+    Set-Content &quot;C:\MSBF_RELEASE_FILES\FINAL_MAIN_COMMIT.txt&quot;
+</code></pre>
+<p>If you don&#39;t have <code>C:\MSBF_RELEASE_FILES</code>, create it first:</p>
+<pre><code class="language-powershell">New-Item -ItemType Directory `
+    -Path &quot;C:\MSBF_RELEASE_FILES&quot; `
+    -Force | Out-Null
+</code></pre>
+<p>Finally:</p>
+<pre><code class="language-powershell">git status
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">On branch main
+Your branch is up to date with &#39;origin/main&#39;.
+
+nothing to commit, working tree clean
+</code></pre>
+<hr>
+<h1>23. Deal with the old premature tag</h1>
+<p>We previously created this tag too early:</p>
+<pre><code class="language-text">module-2-g3-v2.0.0
+</code></pre>
+<p>Before touching it, open the GitHub repository and click:</p>
+<pre><code class="language-text">Releases
+</code></pre>
+<h3>If there is NO published GitHub Release associated with that tag</h3>
+<p>Proceed to Step 24.</p>
+<h3>If there IS already a GitHub Release named <code>Module 2 / G3 v2.0.0</code></h3>
+<p>Stop there and tell me whether it is:</p>
+<pre><code class="language-text">Draft
+Published
+Immutable
+</code></pre>
+<p>Do not delete an immutable published Release without checking first, because GitHub&#39;s immutable-release behavior can affect tag reuse.</p>
+<hr>
+<h1>24. Delete the premature tag</h1>
+<p>Assuming there is no existing published immutable Release, return to PowerShell and paste:</p>
+<pre><code class="language-powershell">Set-Location &quot;C:\x\m&quot;
+
+$Tag = &quot;module-2-g3-v2.0.0&quot;
+
+$LocalTag = git tag --list $Tag
+
+if ($LocalTag) {
+    git tag -d $Tag
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;Could not delete old local tag.&quot;
+    }
+}
+
+$RemoteTag = git ls-remote --tags origin &quot;refs/tags/$Tag&quot;
+
+if ($RemoteTag) {
+    git push origin &quot;:refs/tags/$Tag&quot;
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;Could not delete old remote tag.&quot;
+    }
+}
+
+Write-Host &quot;OLD PREMATURE TAG REMOVED&quot; -ForegroundColor Green
+</code></pre>
+<hr>
+<h1>25. Create the tag at the final release commit</h1>
+<p>Paste:</p>
+<pre><code class="language-powershell">$FinalMain = (
+    Get-Content `
+        &quot;C:\MSBF_RELEASE_FILES\FINAL_MAIN_COMMIT.txt&quot; `
+        -Raw
+).Trim()
+
+$Tag = &quot;module-2-g3-v2.0.0&quot;
+
+git tag -a $Tag -m &quot;Module 2 / G3 v2.0.0&quot;
+
+if ($LASTEXITCODE -ne 0) {
+    throw &quot;Could not create final tag.&quot;
+}
+
+git push origin $Tag
+
+if ($LASTEXITCODE -ne 0) {
+    throw &quot;Could not push final tag.&quot;
+}
+
+$TagCommit = (git rev-list -n 1 $Tag).Trim()
+
+Write-Host &quot;Final main: $FinalMain&quot;
+Write-Host &quot;Tag commit: $TagCommit&quot;
+
+if ($TagCommit -ne $FinalMain) {
+    throw &quot;Tag does not point to final main.&quot;
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;FINAL RELEASE TAG PASS&quot; -ForegroundColor Green
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">Final main: [hash]
+Tag commit: [same hash]
+
+FINAL RELEASE TAG PASS
+</code></pre>
+<hr>
+<h1>26. Prepare the actual GitHub Release asset</h1>
+<p>The file you upload as the primary Release ZIP is:</p>
+<pre><code class="language-text">MSBF_M2G3_RELEASE_WINDOWS_R1.zip
+</code></pre>
+<p><strong>Not</strong>:</p>
+<pre><code class="language-text">MSBF_M2G3_UPLOAD_WORKTREE_WINDOWS_R1.zip
+</code></pre>
+<p>The first is the public Release archive.</p>
+<p>The second contains <code>.git</code> and was only used to create your local worktree.</p>
+<p>Before uploading, verify the public Release ZIP again:</p>
+<pre><code class="language-powershell">$ReleaseZip = &quot;C:\MSBF_RELEASE_FILES\MSBF_M2G3_RELEASE_WINDOWS_R1.zip&quot;
+
+$ExpectedHash = &quot;da0bd1643d0851a1779e4ea476ae9e7b08528bd45d7b4548089734ace1acf209&quot;
+
+$ObservedHash = (
+    Get-FileHash `
+        -LiteralPath $ReleaseZip `
+        -Algorithm SHA256
+).Hash.ToLower()
+
+Write-Host &quot;Expected: $ExpectedHash&quot;
+Write-Host &quot;Observed: $ObservedHash&quot;
+
+if ($ObservedHash -ne $ExpectedHash) {
+    throw &quot;Release ZIP SHA-256 mismatch.&quot;
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;RELEASE ZIP HASH PASS&quot; -ForegroundColor Green
+</code></pre>
+<p>Expected hash:</p>
+<pre><code class="language-text">da0bd1643d0851a1779e4ea476ae9e7b08528bd45d7b4548089734ace1acf209
+</code></pre>
+<hr>
+<h1>27. Create the GitHub Release</h1>
+<p>On GitHub:</p>
+<ol>
+<li>Open the repository.</li>
+<li>Click:</li>
+</ol>
+<pre><code class="language-text">Releases
+</code></pre>
+<ol start="3">
+<li>Click:</li>
+</ol>
+<pre><code class="language-text">Draft a new release
+</code></pre>
+<ol start="4">
+<li>For <strong>Choose a tag</strong>, select the existing:</li>
+</ol>
+<pre><code class="language-text">module-2-g3-v2.0.0
+</code></pre>
+<p>Do not create a new tag in the Release screen.</p>
+<ol start="5">
+<li>Release title:</li>
+</ol>
+<pre><code class="language-text">Module 2 / G3 v2.0.0
+</code></pre>
+<ol start="6">
+<li>Make sure:</li>
+</ol>
+<pre><code class="language-text">Set as latest release      YES
+Pre-release                NO
+</code></pre>
+<p>GitHub Releases allow an existing tag to be selected, release notes added, and binary files attached before publishing. [export reference: cite | turn189635search3]</p>
+<hr>
+<h1>28. Use <code>RELEASE_NOTES.md</code> as the Release description</h1>
+<p>In PowerShell:</p>
+<pre><code class="language-powershell">Get-Content &quot;C:\x\m\RELEASE_NOTES.md&quot; -Raw | Set-Clipboard
+</code></pre>
+<p>Then click the GitHub Release description box and press:</p>
+<pre><code class="language-text">Ctrl + V
+</code></pre>
+<hr>
+<h1>29. Attach the Release assets</h1>
+<p>Attach these files:</p>
+<pre><code class="language-text">MSBF_M2G3_RELEASE_WINDOWS_R1.zip
+MSBF_M2G3_RELEASE_WINDOWS_R1.zip.sha256
+MSBF_GitHub_Publication_Candidate_UPLOAD_READY_v2.0.0_VALIDATION_REPORT.md
+MSBF_GitHub_Publication_Candidate_UPLOAD_READY_v2.0.0_VALIDATION_REPORT.json
+MSBF_Transparency_Campaign_Navigation_File_Inventory.csv
+</code></pre>
+<p>The first two are the essential release pair. The other three are validation/support artifacts. The runbook likewise separates the governed release asset pair from the local <code>.git</code> worktree ZIP. [export reference: filecite | turn213file0 | L232-L270]</p>
+<p>Do <strong>not</strong> attach:</p>
+<pre><code class="language-text">MSBF_M2G3_UPLOAD_WORKTREE_WINDOWS_R1.zip
+MSBF_M2G3_UPLOAD_WORKTREE_WINDOWS_R1.zip.sha256
+ChatGPT_Logs.zip
+MSBF_GitHub_UPLOAD_RUNBOOK_v2.0.0.md
+old overlay ZIPs
+</code></pre>
+<p>Wait for all uploads to finish.</p>
+<p>Then click:</p>
+<pre><code class="language-text">Save draft
+</code></pre>
+<p>Do not publish immediately.</p>
+<hr>
+<h1>30. Review the draft Release</h1>
+<p>Before publishing, verify:</p>
+<pre><code class="language-text">Tag:
+module-2-g3-v2.0.0
+
+Title:
+Module 2 / G3 v2.0.0
+
+Latest release:
+Yes
+
+Pre-release:
+No
+</code></pre>
+<p>Verify all five files appear.</p>
+<p>Verify no file still says:</p>
+<pre><code class="language-text">Uploading...
+</code></pre>
+<p>Then click:</p>
+<pre><code class="language-text">Publish release
+</code></pre>
+<hr>
+<h1>31. Perform a clean-clone verification</h1>
+<p>This is the final technical proof.</p>
+<p>Use a new short directory:</p>
+<pre><code class="language-text">C:\v
+</code></pre>
+<p>First ensure it does not already exist:</p>
+<pre><code class="language-powershell">if (Test-Path &quot;C:\v&quot;) {
+    throw &quot;C:\v already exists. Rename or remove it deliberately before continuing.&quot;
+}
+</code></pre>
+<p>Now clone the published tag:</p>
+<pre><code class="language-powershell">git clone `
+    --branch module-2-g3-v2.0.0 `
+    --depth 1 `
+    https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git `
+    C:\v
+</code></pre>
+<p>Enter it:</p>
+<pre><code class="language-powershell">Set-Location &quot;C:\v&quot;
+</code></pre>
+<p>Run:</p>
+<pre><code class="language-powershell">python tools\validate_public_release.py
+</code></pre>
+<p>or:</p>
+<pre><code class="language-powershell">py -3 tools\validate_public_release.py
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">Public release validation PASS
+Governed manifest files: 1930
+Module 2 stage folders: 12
+</code></pre>
+<p>Now compare the tag commit to the final <code>main</code> commit:</p>
+<pre><code class="language-powershell">$CloneHead = (git rev-parse HEAD).Trim()
+
+$FinalMain = (
+    Get-Content `
+        &quot;C:\MSBF_RELEASE_FILES\FINAL_MAIN_COMMIT.txt&quot; `
+        -Raw
+).Trim()
+
+Write-Host &quot;Published clone: $CloneHead&quot;
+Write-Host &quot;Final main:      $FinalMain&quot;
+
+if ($CloneHead -ne $FinalMain) {
+    throw &quot;Published tag does not match final main.&quot;
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;CLEAN CLONE TAG/MAIN IDENTITY PASS&quot; -ForegroundColor Green
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">git status --short --branch
+</code></pre>
+<p>Because you cloned a tag, something like:</p>
+<pre><code class="language-text">## HEAD (no branch)
+</code></pre>
+<p>is normal.</p>
+<p>The clean-clone validator and browser checks are the final steps in the governing runbook. [export reference: filecite | turn213file1 | L283-L314]</p>
+<hr>
+<h1>32. Final browser audit</h1>
+<p>On GitHub, verify these specific things:</p>
+<p><strong>Repository home:</strong> root README loads and describes Module 1/G2 and Module 2/G3 as accepted; campaign-scale certification is current.</p>
+<p><strong>Module 2:</strong> click <code>Module_2/</code>. You should see twelve accepted stages, M2.1 through M2.12.</p>
+<p><strong>Documentation:</strong> open each of these:</p>
+<pre><code class="language-text">docs/campaign_scale/
+docs/project_history/
+docs/enterprise_architecture/
+docs/executive_strategy/
+</code></pre>
+<p><strong>Actions:</strong> click <code>Actions</code>. The latest <strong>Publication Integrity</strong> run on <code>main</code> should be green.</p>
+<p><strong>Tag:</strong> <code>module-2-g3-v2.0.0</code> should point to the same commit you saved in:</p>
+<pre><code class="language-text">C:\MSBF_RELEASE_FILES\FINAL_MAIN_COMMIT.txt
+</code></pre>
+<p><strong>Release:</strong> verify:</p>
+<pre><code class="language-text">Module 2 / G3 v2.0.0
+Latest
+not Pre-release
+</code></pre>
+<p>and that the Windows R1 release ZIP plus sidecar are attached.</p>
+<hr>
+<h2>The next thing for you to do right now</h2>
+<p>You have already completed the automated extraction successfully.</p>
+<p>So <strong>start with Step 1 above at <code>C:\x\m</code>, then work through Step 16 only</strong>.</p>
+<p>Once you reach the point where:</p>
+<pre><code class="language-text">git commit -m &quot;Publish Module 2 / G3 v2.0.0&quot;
+</code></pre>
+<p>has completed, the validator passes again, and:</p>
+<pre><code class="language-powershell">git status --short --branch
+</code></pre>
+<p>shows only:</p>
+<pre><code class="language-text">## release/module-2-g3-v2.0.0-final
+</code></pre>
+<p>then you are ready for the first actual GitHub-changing command:</p>
+<pre><code class="language-powershell">git push -u origin release/module-2-g3-v2.0.0-final
+</code></pre>
+<p>If you want to minimize risk, send me a screenshot of the PowerShell window <strong>immediately before that push</strong> and I can verify the checkpoint before you change anything on GitHub.</p>
+</div></article><article id="m-bbb21181-d023-4822-93c8-8d244f991e13" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00515 · 2026-08-15T00:05:12.254329-04:00 · active path</p><div class="bubble"><p>PS C:\x\m&gt; Select-String `</p>
+<blockquote>
+<blockquote>
+<pre><code>-Path .\MANIFEST.csv `
+
+-Pattern &#39;^\.github/workflows/publication_integrity\.yml,&#39;
+</code></pre>
+</blockquote>
+</blockquote>
+<p>cmdlet Select-String at command pipeline position 1
+Supply values for the following parameters:
+Pattern[0]:           what do I do?</p>
+</div></article><article id="m-e8a35178-764d-4a25-9c74-58207b739e77" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00516 · 2026-08-15T00:05:18.486077-04:00 · active path</p><div class="bubble"><p>Nothing is wrong with the repository. PowerShell interpreted the pasted multiline command incorrectly and is now waiting for you to manually supply the <code>-Pattern</code> value.</p>
+<h3>Right now</h3>
+<p>At this prompt:</p>
+<pre><code class="language-text">Pattern[0]:
+</code></pre>
+<p>press:</p>
+<pre><code class="language-text">Ctrl+C
+</code></pre>
+<p>That will cancel the incomplete command and return you to:</p>
+<pre><code class="language-text">PS C:\x\m&gt;
+</code></pre>
+<h3>Then use this simpler one-line command</h3>
+<p>Copy and paste this <strong>as one line</strong>:</p>
+<pre><code class="language-powershell">Select-String -Path .\MANIFEST.csv -Pattern &#39;^\.github/workflows/publication_integrity\.yml,&#39;
+</code></pre>
+<p>Press <strong>Enter</strong>.</p>
+<h3>What we expect</h3>
+<p>You should get a result containing:</p>
+<pre><code class="language-text">.github/workflows/publication_integrity.yml
+</code></pre>
+<p>Ideally the complete line will be:</p>
+<pre><code class="language-text">.github/workflows/publication_integrity.yml,359,9c2535f1ab9d484b55fbaeff023e05bcd136cbeee7e43b407fc6073aa65587ed
+</code></pre>
+<p>If you get that, <strong>Step 8 passes and you can proceed to Step 9 (creating the release branch).</strong></p>
+<p>If you get <strong>no output</strong>, don&#39;t continue—paste what PowerShell shows me.</p>
+<p>The problem here was just the backtick-based multiline paste. For the remaining steps, I&#39;ll favor <strong>single-line PowerShell commands</strong> wherever practical so we don&#39;t run into this again.</p>
+</div></article><article id="m-fadd304f-180b-4802-9c8e-1c2deeb681ff" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00517 · 2026-08-15T00:24:06.477000-04:00 · active path</p><p class="note">Attachment references: Pasted text(20260815-042348).txt</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-dbc3c49e-2d2c-4b62-8673-51f123559eac" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00518 · 2026-08-15T00:24:22.554475-04:00 · active path</p><div class="bubble"><p>Yes — <strong>this passes the Step 14 staged-summary checkpoint.</strong> I reviewed the output you pasted. The final line is exactly:</p>
+<pre><code class="language-text">1103 files changed, 359879 insertions(+), 4325 deletions(-)
+</code></pre>
+<p>[export reference: filecite | turn215file0 | L1102-L1105]</p>
+<p>The contents also look structurally correct: the complete Module 2 public tree, campaign-scale documentation, updated architecture and executive-strategy assets, project-history archive, root manifests, release metadata, and validator are all represented in the staged change set. [export reference: filecite | turn215file0 | L1017-L1054] [export reference: filecite | turn215file0 | L1055-L1104]</p>
+<p>So <strong>do not change or unstage anything.</strong></p>
+<h3>Next: Step 15</h3>
+<p>You are still at:</p>
+<pre><code class="language-text">PS C:\x\m&gt;
+</code></pre>
+<p>Run these <strong>one at a time</strong>. Each command only displays the staged changes; it does not modify anything:</p>
+<pre><code class="language-powershell">git diff --cached -- README.md
+</code></pre>
+<p>When finished viewing it, if PowerShell puts you into a scrolling screen with a colon <code>:</code> at the bottom, press:</p>
+<pre><code class="language-text">q
+</code></pre>
+<p>Then run:</p>
+<pre><code class="language-powershell">git diff --cached -- RELEASE_NOTES.md
+</code></pre>
+<p>Press <code>q</code> when done if necessary.</p>
+<p>Then:</p>
+<pre><code class="language-powershell">git diff --cached -- MODULE_AND_RELEASE_INDEX.md
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">git diff --cached -- PROJECT_ARTIFACT_MAP.md
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">git diff --cached -- Module_2/README.md
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">git diff --cached -- docs/README.md
+</code></pre>
+<h3>What are you looking for?</h3>
+<p>You <strong>do not need to proofread hundreds of lines</strong>. For each, just confirm that:</p>
+<ul>
+<li>it is clearly describing the new <strong>Module 2 / G3 v2.0.0</strong> state;</li>
+<li>Module 2 is complete through <strong>M2.12</strong>;</li>
+<li>G2/G3 are accepted;</li>
+<li>campaign-scale work is the next/current governed initiative;</li>
+<li>the new Module 2, architecture, executive-strategy, campaign-scale, and project-history documentation is being referenced;</li>
+<li>nothing looks obviously corrupted or unrelated.</li>
+</ul>
+<h3>Then send me one thing</h3>
+<p>After looking through those six diffs, run:</p>
+<pre><code class="language-powershell">git status --short --branch
+</code></pre>
+<p>Paste that output here.</p>
+<p><strong>Do not run <code>git commit</code> yet.</strong> I&#39;ll check that final pre-commit status with you, and then I&#39;ll give you the exact next command.</p>
+</div></article><article id="m-031142cc-9ae1-4eb5-8899-7c18568cc21b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00519 · 2026-08-15T00:34:40.875000-04:00 · active path</p><p class="note">Attachment references: Pasted text(20260815-043428).txt</p><div class="bubble"><p>steps 1-15 were a  pass.  </p>
+</div></article><article id="m-6e42dea9-08ec-4d33-a78e-4f90bd4a5860" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00520 · 2026-08-15T00:34:56.628050-04:00 · active path</p><div class="bubble"><p>Excellent. I reviewed the status you supplied. You are on the correct release branch, and the expected staged publication payload is present. The status begins with <code>release/module-2-g3-v2.0.0-final</code> and shows the expected modified/new repository authorities rather than an unexpected branch state. [export reference: filecite | turn216file0 | L1-L9]</p>
+<p>Since <strong>Steps 1–15 all passed</strong>, we can now commit.</p>
+<h2>Step 16 — Commit the release</h2>
+<p>At:</p>
+<pre><code class="language-text">PS C:\x\m&gt;
+</code></pre>
+<p>paste this <strong>single line</strong>:</p>
+<pre><code class="language-powershell">git commit -m &quot;Publish Module 2 / G3 v2.0.0&quot;
+</code></pre>
+<p>This may take a little while because you are committing 1,103 files. Let it finish completely.</p>
+<h3>What success looks like</h3>
+<p>Near the beginning/end, you should see something resembling:</p>
+<pre><code class="language-text">[release/module-2-g3-v2.0.0-final &lt;new commit hash&gt;] Publish Module 2 / G3 v2.0.0
+</code></pre>
+<p>followed by a large summary.</p>
+<p>Do <strong>not</strong> worry about the exact new commit hash; Git generates that now.</p>
+<hr>
+<h2>Step 17 — Immediately validate the committed repository</h2>
+<p>When the commit finishes and you are back at:</p>
+<pre><code class="language-text">PS C:\x\m&gt;
+</code></pre>
+<p>run:</p>
+<pre><code class="language-powershell">python tools\validate_public_release.py
+</code></pre>
+<p>If <code>python</code> doesn&#39;t work, use:</p>
+<pre><code class="language-powershell">py -3 tools\validate_public_release.py
+</code></pre>
+<p>You need to see:</p>
+<pre><code class="language-text">Public release validation PASS
+Governed manifest files: 1930
+Module 2 stage folders: 12
+</code></pre>
+<p>If it says <code>FAIL</code>, <strong>stop there and send me the output. Do not push.</strong></p>
+<hr>
+<h2>Step 18 — Verify that the commit captured everything</h2>
+<p>Next run:</p>
+<pre><code class="language-powershell">git status --short --branch
+</code></pre>
+<p>You want <strong>only</strong>:</p>
+<pre><code class="language-text">## release/module-2-g3-v2.0.0-final
+</code></pre>
+<p>There should be <strong>no files listed underneath it</strong>.</p>
+<p>Then run:</p>
+<pre><code class="language-powershell">git log -1 --oneline
+</code></pre>
+<p>You should see:</p>
+<pre><code class="language-text">&lt;new-hash&gt; Publish Module 2 / G3 v2.0.0
+</code></pre>
+<hr>
+<h2>Step 19 — One final pre-push identity check</h2>
+<p>Run this single line:</p>
+<pre><code class="language-powershell">git diff --name-only HEAD
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">(no output)
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">git diff --cached --name-only
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">(no output)
+</code></pre>
+<p>That proves there are no unstaged or staged changes left behind after the commit.</p>
+<h3>Your checkpoint</h3>
+<p>If all of the following are true:</p>
+<pre><code class="language-text">Commit                                 SUCCESS
+Public release validation              PASS
+Governed manifest files                1930
+Module 2 stage folders                 12
+git status                             CLEAN
+git diff HEAD                          EMPTY
+git diff --cached                      EMPTY
+Latest commit message                  Publish Module 2 / G3 v2.0.0
+</code></pre>
+<p>then the local release commit is complete.</p>
+<p><strong>Stop there before pushing.</strong> Send me the output from:</p>
+<pre><code class="language-powershell">git status --short --branch
+git log -1 --oneline
+</code></pre>
+<p>I&#39;ll verify the commit checkpoint and then give you the exact push + GitHub PR steps from that point.</p>
+</div></article><article id="m-24f5b3b6-271a-41f2-b0de-2cd365f1d48d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00521 · 2026-08-15T00:47:19.124000-04:00 · active path</p><p class="note">Attachment references: Pasted text(20260815-044709).txt</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-402cb9fb-2c2e-4c0d-bb94-d1346a8bbb6a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00522 · 2026-08-15T00:47:25.581564-04:00 · active path</p><div class="bubble"><p><strong>Checkpoint passes completely. You are authorized to push the release branch.</strong></p>
+<p>Your output establishes all of the required pre-push conditions:</p>
+<ul>
+<li>Commit successfully created as <code>2c9b938</code> with the correct message. [export reference: filecite | turn217file0 | L9-L10]</li>
+<li>Post-commit validator: <strong>PASS</strong>.</li>
+<li>Governed manifest files: <strong>1,930</strong>.</li>
+<li>Module 2 stage folders: <strong>12</strong>. [export reference: filecite | turn217file0 | L1089-L1092]</li>
+<li>Branch is exactly <code>release/module-2-g3-v2.0.0-final</code>, with no residual working-tree changes. [export reference: filecite | turn217file0 | L1093-L1094]</li>
+<li>HEAD is <code>2c9b938 — Publish Module 2 / G3 v2.0.0</code>. [export reference: filecite | turn217file0 | L1095-L1096]</li>
+<li>Both unstaged and staged diffs are empty. [export reference: filecite | turn217file0 | L1097-L1099]</li>
+</ul>
+<h2>Step 20 — Push the release branch</h2>
+<p>At:</p>
+<pre><code class="language-text">PS C:\x\m&gt;
+</code></pre>
+<p>run this <strong>single command</strong>:</p>
+<pre><code class="language-powershell">git push -u origin release/module-2-g3-v2.0.0-final
+</code></pre>
+<p>This is the first operation that publishes the new Module 2/G3 commit to GitHub. It does <strong>not</strong> change <code>main</code>; it only creates the release branch on GitHub.</p>
+<p>If GitHub/Git Credential Manager opens a browser authentication window, approve it and return to PowerShell.</p>
+<h3>Expected successful ending</h3>
+<p>Something similar to:</p>
+<pre><code class="language-text">[new branch]      release/module-2-g3-v2.0.0-final -&gt; release/module-2-g3-v2.0.0-final
+branch &#39;release/module-2-g3-v2.0.0-final&#39; set up to track &#39;origin/release/module-2-g3-v2.0.0-final&#39;.
+</code></pre>
+<p>GitHub may also print a URL suggesting that you create a pull request. That&#39;s fine.</p>
+<h2>Step 21 — Verify the remote branch</h2>
+<p>After the push succeeds, run:</p>
+<pre><code class="language-powershell">git status --short --branch
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">## release/module-2-g3-v2.0.0-final...origin/release/module-2-g3-v2.0.0-final
+</code></pre>
+<p>Then run:</p>
+<pre><code class="language-powershell">git rev-parse HEAD
+</code></pre>
+<p>and:</p>
+<pre><code class="language-powershell">git rev-parse origin/release/module-2-g3-v2.0.0-final
+</code></pre>
+<p><strong>Those two full 40-character hashes must be identical.</strong></p>
+<p>Do not merge anything yet. Once those commands pass, the local-to-GitHub branch publication is proven and we&#39;ll create the PR against <code>main</code>.</p>
+</div></article><article id="m-43d4b59b-be01-4169-95ba-ddb3885c02be" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00523 · 2026-08-15T00:57:08.691000-04:00 · active path</p><div class="bubble"><p>PS C:\x\m&gt; git push -u origin release/module-2-g3-v2.0.0-final
+Enumerating objects: 1197, done.
+Counting objects: 100% (1197/1197), done.
+Delta compression using up to 4 threads
+Compressing objects: 100% (912/912), done.
+Writing objects: 100% (1175/1175), 27.05 MiB | 8.55 MiB/s, done.
+Total 1175 (delta 268), reused 1167 (delta 260), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (268/268), completed with 8 local objects.
+remote:
+remote: Create a pull request for &#39;release/module-2-g3-v2.0.0-final&#39; on GitHub by visiting:
+remote:      <a href="https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/pull/new/release/module-2-g3-v2.0.0-final">https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/pull/new/release/module-2-g3-v2.0.0-final</a>
+remote:
+To <a href="https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git">https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git</a></p>
+<ul>
+<li>[new branch]      release/module-2-g3-v2.0.0-final -&gt; release/module-2-g3-v2.0.0-final
+branch &#39;release/module-2-g3-v2.0.0-final&#39; set up to track &#39;origin/release/module-2-g3-v2.0.0-final&#39;.
+PS C:\x\m&gt; git status --short --branch</li>
+</ul>
+<h2>release/module-2-g3-v2.0.0-final...origin/release/module-2-g3-v2.0.0-final</h2>
+<p>PS C:\x\m&gt; git rev-parse HEAD
+2c9b93879ed3c98d4e38f0d42b3bedd16e79e62a
+PS C:\x\m&gt; git rev-parse origin/release/module-2-g3-v2.0.0-final
+2c9b93879ed3c98d4e38f0d42b3bedd16e79e62a</p>
+</div></article><article id="m-bb8f99a1-6ac1-4b30-826c-4794fbc6d1bf" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00524 · 2026-08-15T00:57:15.334448-04:00 · active path</p><div class="bubble"><p>Perfect. <strong>The push checkpoint is a complete PASS.</strong></p>
+<p>The critical identity check is exact:</p>
+<pre><code class="language-text">Local HEAD:
+2c9b93879ed3c98d4e38f0d42b3bedd16e79e62a
+
+GitHub release branch:
+2c9b93879ed3c98d4e38f0d42b3bedd16e79e62a
+</code></pre>
+<p>So GitHub now has an exact copy of the validated release commit. <strong><code>main</code> has not been changed yet.</strong></p>
+<h2>Next — Create the Pull Request</h2>
+<h3>1. Open the PR page</h3>
+<p>Git conveniently gave you the exact page. Open this in your browser:</p>
+<p>[export reference: url | Open the Module 2/G3 pull request page | <a href="https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/pull/new/release/module-2-g3-v2.0.0-final]">https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/pull/new/release/module-2-g3-v2.0.0-final]</a></p>
+<p>You should land on GitHub&#39;s <strong>Open a pull request</strong> screen.</p>
+<h3>2. Check the two branches at the top</h3>
+<p>Before typing anything, make sure it says:</p>
+<pre><code class="language-text">base: main
+
+compare: release/module-2-g3-v2.0.0-final
+</code></pre>
+<p>This is important.</p>
+<p>You want:</p>
+<p><strong>release branch → main</strong></p>
+<p>not the reverse.</p>
+<h3>3. Check that GitHub says the branches can be merged</h3>
+<p>Near the branch selectors, you should see something like:</p>
+<pre><code class="language-text">Able to merge.
+These branches can be automatically merged.
+</code></pre>
+<p>If GitHub instead reports a conflict, <strong>do not continue</strong>. Tell me what it says.</p>
+<h3>4. Enter this exact PR title</h3>
+<pre><code class="language-text">Publish Module 2 / G3 v2.0.0
+</code></pre>
+<h3>5. Put this in the description</h3>
+<p>Copy/paste:</p>
+<pre><code class="language-markdown">## Module 2 / G3 v2.0.0
+
+Publishes the accepted Module 2 stage chain through M2.12 and the
+G3_M2_CONTRACT enterprise consumption boundary.
+
+### Principal additions
+
+- complete M2.1–M2.12 public stage tree;
+- accepted source, BRDs, architecture, validation, provenance,
+  correction history, catalogs, recovery boundaries, and sign-offs;
+- Module 2/G3 enterprise architecture and lineage exhibits;
+- Governed Build Edition v3.0 ten-page executive brief;
+- campaign-readiness and pre-750 replay documentation;
+- sanitized ChatGPT project-history archive through 2026-08-12;
+- reconciled repository navigation and regenerated manifests.
+
+### Publication boundary
+
+- deterministic synthetic evidence only;
+- no production deployment;
+- no causal optimization claim;
+- no campaign execution authorized;
+- no Module 3 execution authorized.
+
+### Local publication validation
+
+- Public release validation: PASS
+- Governed manifest files: 1,930
+- Module 2 stage folders: 12
+- Release commit: `2c9b93879ed3c98d4e38f0d42b3bedd16e79e62a`
+- Local/remote release-branch identity: PASS
+</code></pre>
+<h3>6. Do not make this a Draft PR</h3>
+<p>You want a normal pull request.</p>
+<p>Click:</p>
+<pre><code class="language-text">Create pull request
+</code></pre>
+<hr>
+<h1>After you click Create pull request</h1>
+<p><strong>Do not click Merge yet.</strong></p>
+<p>GitHub should open the newly created PR page.</p>
+<p>We&#39;re specifically looking for the automated <strong>Publication Integrity</strong> check from the workflow we preserved.</p>
+<p>It may initially say something like:</p>
+<pre><code class="language-text">Some checks haven&#39;t completed yet
+
+Publication Integrity
+Expected — Waiting for status to be reported
+</code></pre>
+<p>or:</p>
+<pre><code class="language-text">Publication Integrity
+In progress
+</code></pre>
+<p>Give it time to run.</p>
+<h2>What we ultimately want</h2>
+<p>A green check beside:</p>
+<pre><code class="language-text">Publication Integrity
+</code></pre>
+<p>and ideally GitHub indicating:</p>
+<pre><code class="language-text">All checks have passed
+</code></pre>
+<hr>
+<h1>While it runs, check one more thing</h1>
+<p>On the PR page, click:</p>
+<pre><code class="language-text">Files changed
+</code></pre>
+<p>You do <strong>not</strong> need to review 1,103 files manually—we already did the governed local checks.</p>
+<p>Instead, use GitHub&#39;s file filter/search and spot-check these:</p>
+<pre><code class="language-text">README.md
+Module_2/README.md
+docs/README.md
+docs/campaign_scale/README.md
+docs/project_history/README.md
+docs/enterprise_architecture/
+docs/executive_strategy/
+</code></pre>
+<p>Also make sure there isn&#39;t an unexpected deletion of:</p>
+<pre><code class="language-text">.github/workflows/publication_integrity.yml
+</code></pre>
+<p>We already proved locally that it wasn&#39;t deleted, so this is simply a final GitHub-side sanity check.</p>
+<hr>
+<h2>Your current release status</h2>
+<pre><code class="language-text">Local release commit                 PASS
+Commit                               2c9b93879ed3c98d4e38f0d42b3bedd16e79e62a
+Local worktree                       CLEAN
+Local publication validator          PASS
+Governed manifest files              1,930
+Module 2 stages                      12
+Release branch pushed                PASS
+Remote tracking established          PASS
+Local HEAD = remote branch           EXACT MATCH
+main                                  UNCHANGED
+Pull request                          NEXT
+</code></pre>
+<p><strong>Create the PR now, but don&#39;t merge it yet.</strong> Once the PR exists, send me a screenshot of the PR page/checks area—or tell me exactly what GitHub shows for <strong>Publication Integrity</strong>—and we&#39;ll handle the merge checkpoint.</p>
+</div></article><article id="m-8eee3a22-c903-4ce8-9cb9-2df7b8517aa0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00525 · 2026-08-15T01:01:20.469000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: fba9648f-d001-42bb-90c1-800dd79057bf.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-164f068c-2f19-4538-b31e-8879306e2d04" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00526 · 2026-08-15T01:01:27.895302-04:00 · active path</p><div class="bubble"><p>Yes — <strong>this screen is exactly right.</strong> Do not change the branch selectors.</p>
+<p>I can see:</p>
+<pre><code class="language-text">base: main
+compare: release/module-2-g3-v2.0.0-final
+✓ Able to merge. These branches can be automatically merged.
+1 commit
+1,103 files changed
+</code></pre>
+<p>Those numbers line up exactly with our validated release candidate.</p>
+<p>Your title is also correct:</p>
+<pre><code class="language-text">Publish Module 2 / G3 v2.0.0
+</code></pre>
+<h3>1. Paste this into the Description box</h3>
+<pre><code class="language-markdown">## Module 2 / G3 v2.0.0
+
+Publishes the accepted Module 2 stage chain through M2.12 and the
+G3_M2_CONTRACT enterprise consumption boundary.
+
+### Principal additions
+
+- complete M2.1–M2.12 public stage tree;
+- accepted source, BRDs, architecture, validation, provenance,
+  correction history, catalogs, recovery boundaries, and sign-offs;
+- Module 2/G3 enterprise architecture and lineage exhibits;
+- Governed Build Edition v3.0 ten-page executive brief;
+- campaign-readiness and pre-750 replay documentation;
+- sanitized ChatGPT project-history archive through 2026-08-12;
+- reconciled repository navigation and regenerated manifests.
+
+### Publication boundary
+
+- deterministic synthetic evidence only;
+- no production deployment;
+- no causal optimization claim;
+- no campaign execution authorized;
+- no Module 3 execution authorized.
+
+### Publication validation
+
+- Public release validation: **PASS**
+- Governed manifest files: **1,930**
+- Module 2 stage folders: **12**
+- Release commit: `2c9b93879ed3c98d4e38f0d42b3bedd16e79e62a`
+- Local/remote release-branch identity: **PASS**
+</code></pre>
+<h3>2. Leave everything else alone</h3>
+<p>You do <strong>not</strong> need to set:</p>
+<ul>
+<li>Reviewers</li>
+<li>Assignees</li>
+<li>Labels</li>
+<li>Projects</li>
+<li>Milestone</li>
+</ul>
+<p>For this personal governed release, leaving those blank is fine.</p>
+<h3>3. Click the green <strong>Create pull request</strong> button</h3>
+<p>Use the main green button as shown in your screenshot. <strong>Do not use its dropdown to create a draft.</strong></p>
+<p>After clicking it, GitHub will take you to the newly created PR.</p>
+<h3>4. Then stop before merging</h3>
+<p>On the new PR page, we need to see what GitHub reports for the automated checks—particularly:</p>
+<pre><code class="language-text">Publication Integrity
+</code></pre>
+<p>It may initially show <strong>Pending</strong>, <strong>In progress</strong>, or <strong>Expected</strong>. That&#39;s normal.</p>
+<p><strong>Do not click Merge pull request yet.</strong></p>
+<p>Send me a screenshot of the PR page after you create it, particularly the lower section showing the checks/merge status. I&#39;ll verify that checkpoint before we merge into <code>main</code>.</p>
+</div></article><article id="m-c514f293-db1a-4a95-8cfb-b1526b0781e3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00527 · 2026-08-15T01:16:14.566000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: fc361077-f495-474b-a921-fc7caa3d36e6.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-aa099844-512c-49f8-a5fe-829ca06830b5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00528 · 2026-08-15T01:16:30.423797-04:00 · active path</p><div class="bubble"><p>This is exactly what we wanted. <strong>The GitHub pull-request gate is a PASS.</strong></p>
+<p>I can see in your screenshot:</p>
+<ul>
+<li>PR <strong>#1</strong> is open.</li>
+<li><code>main ← release/module-2-g3-v2.0.0-final</code> is the merge direction.</li>
+<li>GitHub reports <strong>Ready to merge</strong>.</li>
+<li><strong>All checks have passed</strong>.</li>
+<li><code>Publication Integrity / validate (pull_request)</code> completed successfully in <strong>15s</strong>.</li>
+<li>GitHub reports <strong>No conflicts with base branch</strong>.</li>
+<li>The PR still contains the expected <strong>1 commit / 1,103 files changed</strong>.</li>
+<li>The green <strong>Merge pull request</strong> button is enabled.</li>
+</ul>
+<p>So we can merge.</p>
+<h2>Step 22 — Merge the PR</h2>
+<p>Click the green:</p>
+<p><strong>Merge pull request</strong></p>
+<p>Do <strong>not</strong> use a dropdown to choose Squash or Rebase. We want the normal merge.</p>
+<p>GitHub should then change the button/area and ask you to confirm.</p>
+<p>Click:</p>
+<p><strong>Confirm merge</strong></p>
+<p>Wait until GitHub tells you the pull request was successfully merged.</p>
+<h3>Important</h3>
+<p>After the merge completes, GitHub will probably offer:</p>
+<p><strong>Delete branch</strong></p>
+<p>Go ahead and click <strong>Delete branch</strong>. That deletes the temporary remote branch:</p>
+<pre><code class="language-text">release/module-2-g3-v2.0.0-final
+</code></pre>
+<p>It does <strong>not</strong> delete the newly merged Module 2/G3 content from <code>main</code>.</p>
+<hr>
+<h2>Step 23 — Then return to PowerShell</h2>
+<p>Once GitHub says the PR is merged, return to:</p>
+<pre><code class="language-text">PS C:\x\m&gt;
+</code></pre>
+<p>Run these commands <strong>one at a time</strong>:</p>
+<pre><code class="language-powershell">git switch main
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">git fetch origin --tags --prune
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">git pull --ff-only origin main
+</code></pre>
+<p>Because GitHub will create a merge commit, your local <code>main</code> should fast-forward from the old baseline to the newly merged GitHub <code>main</code>.</p>
+<hr>
+<h2>Step 24 — Verify local <code>main</code> against GitHub</h2>
+<p>Run:</p>
+<pre><code class="language-powershell">git status
+</code></pre>
+<p>We want:</p>
+<pre><code class="language-text">On branch main
+Your branch is up to date with &#39;origin/main&#39;.
+
+nothing to commit, working tree clean
+</code></pre>
+<p>Then run:</p>
+<pre><code class="language-powershell">git rev-parse HEAD
+</code></pre>
+<p>Copy the resulting 40-character hash somewhere temporarily.</p>
+<p>Then run:</p>
+<pre><code class="language-powershell">git rev-parse origin/main
+</code></pre>
+<p>The two hashes must be <strong>identical</strong>.</p>
+<hr>
+<h2>Step 25 — Run the publication validator on final <code>main</code></h2>
+<p>Run:</p>
+<pre><code class="language-powershell">python tools\validate_public_release.py
+</code></pre>
+<p>If necessary:</p>
+<pre><code class="language-powershell">py -3 tools\validate_public_release.py
+</code></pre>
+<p>We need again:</p>
+<pre><code class="language-text">Public release validation PASS
+Governed manifest files: 1930
+Module 2 stage folders: 12
+</code></pre>
+<p>This is important because we are no longer validating the release branch—we are validating the actual repository <code>main</code> that the public will receive.</p>
+<hr>
+<h2>Step 26 — Save the final <code>main</code> commit identity</h2>
+<p>First create our release-control folder if it doesn&#39;t already exist:</p>
+<pre><code class="language-powershell">New-Item -ItemType Directory -Path &quot;C:\MSBF_RELEASE_FILES&quot; -Force | Out-Null
+</code></pre>
+<p>Then run this <strong>one-line command</strong>:</p>
+<pre><code class="language-powershell">git rev-parse HEAD | Set-Content &quot;C:\MSBF_RELEASE_FILES\FINAL_MAIN_COMMIT.txt&quot;
+</code></pre>
+<p>Now display what was saved:</p>
+<pre><code class="language-powershell">Get-Content &quot;C:\MSBF_RELEASE_FILES\FINAL_MAIN_COMMIT.txt&quot;
+</code></pre>
+<p>That hash becomes our authoritative final GitHub <code>main</code> identity for the tag check.</p>
+<hr>
+<h2>Step 27 — Final <code>main</code> checkpoint</h2>
+<p>Run:</p>
+<pre><code class="language-powershell">git status --short --branch
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">## main...origin/main
+</code></pre>
+<p>with <strong>nothing listed beneath it</strong>.</p>
+<p>Then run:</p>
+<pre><code class="language-powershell">git log -2 --oneline
+</code></pre>
+<p>Because we used a normal PR merge, I expect the top entry to be a GitHub-created merge commit, followed by your release commit <code>2c9b938</code>.</p>
+<hr>
+<h3>Stop after Step 27</h3>
+<p>Do <strong>not</strong> touch the old <code>module-2-g3-v2.0.0</code> tag yet.</p>
+<p>We need to establish the exact final <code>main</code> commit first because the old tag was created prematurely and will need to be repointed to this new final release identity.</p>
+<p>Once you&#39;ve:</p>
+<ol>
+<li>merged the PR;</li>
+<li>deleted the temporary GitHub branch;</li>
+<li>synchronized local <code>main</code>;</li>
+<li>rerun the validator;</li>
+<li>saved <code>FINAL_MAIN_COMMIT.txt</code>;</li>
+</ol>
+<p>send me the PowerShell output from:</p>
+<pre><code class="language-powershell">git status --short --branch
+git log -2 --oneline
+git rev-parse HEAD
+git rev-parse origin/main
+</code></pre>
+<p>Then I&#39;ll give you the exact old-tag correction steps.</p>
+</div></article><article id="m-a1fdb304-749e-4464-9875-30ef89a0bcb9" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00529 · 2026-08-15T01:29:12.759000-04:00 · active path</p><div class="bubble"><p>PS C:\x\m&gt; git status
+On branch main
+Your branch is up to date with &#39;origin/main&#39;.</p>
+<p>nothing to commit, working tree clean
+PS C:\x\m&gt; git rev-parse HEAD
+500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+PS C:\x\m&gt; git rev-parse origin/main
+500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+PS C:\x\m&gt; python tools\validate_public_release.py
+Public release validation PASS
+Governed manifest files: 1930
+Module 2 stage folders: 12
+PS C:\x\m&gt; New-Item -ItemType Directory -Path &quot;C:\MSBF_RELEASE_FILES&quot; -Force | Out-Null
+PS C:\x\m&gt; git rev-parse HEAD | Set-Content &quot;C:\MSBF_RELEASE_FILES\FINAL_MAIN_COMMIT.txt&quot;
+PS C:\x\m&gt; Get-Content &quot;C:\MSBF_RELEASE_FILES\FINAL_MAIN_COMMIT.txt&quot;
+500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+PS C:\x\m&gt; git status --short --branch</p>
+<h2>main...origin/main</h2>
+<p>PS C:\x\m&gt; git log -2 --oneline
+500ec77 (HEAD -&gt; main, origin/main, origin/HEAD) Merge pull request #1 from andrew-goad/release/module-2-g3-v2.0.0-final
+2c9b938 (origin/release/module-2-g3-v2.0.0-final, release/module-2-g3-v2.0.0-final) Publish Module 2 / G3 v2.0.0</p>
+</div></article><article id="m-25b0147e-b6ce-4cfe-9a34-316eff843e5d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00530 · 2026-08-15T01:29:19.327128-04:00 · active path</p><div class="bubble"><p>That is a <strong>complete PASS for final <code>main</code></strong>.</p>
+<p>Your authoritative state is now:</p>
+<pre><code class="language-text">Final main:
+500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+
+origin/main:
+500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+
+Release content commit:
+2c9b93879ed3c98d4e38f0d42b3bedd16e79e62a
+
+Publication validator:
+PASS
+
+Governed manifest files:
+1930
+
+Module 2 stage folders:
+12
+
+Working tree:
+CLEAN
+</code></pre>
+<p>The merge commit is exactly what we expected from the normal GitHub PR merge.</p>
+<p>Now we correct the <strong>premature tag</strong> so <code>module-2-g3-v2.0.0</code> points to <code>500ec776...</code>, not the older pre-publication state.</p>
+<h2>Step 28 — First check whether a GitHub Release already exists</h2>
+<p>Before running any tag commands, open your repository in GitHub and click <strong>Releases</strong>.</p>
+<p>You need to determine whether there is already a GitHub <strong>Release</strong> associated with:</p>
+<pre><code class="language-text">module-2-g3-v2.0.0
+</code></pre>
+<p>This is different from merely having a Git tag.</p>
+<h3>If you see no Release</h3>
+<p>Perfect. Continue to Step 29 below.</p>
+<h3>If you see a Release</h3>
+<p>Do <strong>not</strong> delete anything yet. Tell me whether GitHub shows it as:</p>
+<pre><code class="language-text">Draft
+Pre-release
+Published
+</code></pre>
+<p>and we&#39;ll handle that state deliberately.</p>
+<hr>
+<h1>Step 29 — Inspect the existing premature tag</h1>
+<p>Assuming there is <strong>no GitHub Release</strong>, return to:</p>
+<pre><code class="language-text">PS C:\x\m&gt;
+</code></pre>
+<p>Run:</p>
+<pre><code class="language-powershell">git tag --list module-2-g3-v2.0.0
+</code></pre>
+<p>I expect:</p>
+<pre><code class="language-text">module-2-g3-v2.0.0
+</code></pre>
+<p>Now determine where that old tag currently points:</p>
+<pre><code class="language-powershell">git rev-list -n 1 module-2-g3-v2.0.0
+</code></pre>
+<p>Write down or copy that hash.</p>
+<p>Then inspect the remote tag:</p>
+<pre><code class="language-powershell">git ls-remote --tags origin &quot;refs/tags/module-2-g3-v2.0.0^{}&quot;
+</code></pre>
+<p>Because this is an annotated tag, you should get output containing a commit hash followed by:</p>
+<pre><code class="language-text">refs/tags/module-2-g3-v2.0.0^{}
+</code></pre>
+<p>The commit will presumably <strong>not</strong> be:</p>
+<pre><code class="language-text">500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+</code></pre>
+<p>That&#39;s why we&#39;re correcting it.</p>
+<hr>
+<h1>Step 30 — Delete the premature local tag</h1>
+<p>Run this one line:</p>
+<pre><code class="language-powershell">git tag -d module-2-g3-v2.0.0
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">Deleted tag &#39;module-2-g3-v2.0.0&#39; (...)
+</code></pre>
+<p>This only deletes your local copy of the tag.</p>
+<p>It does <strong>not</strong> delete any repository content.</p>
+<hr>
+<h1>Step 31 — Delete the premature remote tag</h1>
+<p>Now run:</p>
+<pre><code class="language-powershell">git push origin :refs/tags/module-2-g3-v2.0.0
+</code></pre>
+<p>Expected near the end:</p>
+<pre><code class="language-text">- [deleted]         module-2-g3-v2.0.0
+</code></pre>
+<p>Now prove that GitHub no longer has it:</p>
+<pre><code class="language-powershell">git ls-remote --tags origin &quot;refs/tags/module-2-g3-v2.0.0*&quot;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">(no output)
+</code></pre>
+<p>If anything is returned, stop there.</p>
+<hr>
+<h1>Step 32 — Create the final annotated tag on <code>500ec776...</code></h1>
+<p>Before creating it, prove you&#39;re still sitting on final <code>main</code>:</p>
+<pre><code class="language-powershell">git rev-parse HEAD
+</code></pre>
+<p>Expected exactly:</p>
+<pre><code class="language-text">500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+</code></pre>
+<p>Now create the tag:</p>
+<pre><code class="language-powershell">git tag -a module-2-g3-v2.0.0 -m &quot;Module 2 / G3 v2.0.0&quot;
+</code></pre>
+<p>No output generally means success.</p>
+<hr>
+<h1>Step 33 — Prove the new local tag points to final <code>main</code></h1>
+<p>Run:</p>
+<pre><code class="language-powershell">git rev-list -n 1 module-2-g3-v2.0.0
+</code></pre>
+<p>Expected exactly:</p>
+<pre><code class="language-text">500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+</code></pre>
+<p>Now perform an automated identity check:</p>
+<pre><code class="language-powershell">$FinalMain = (Get-Content &quot;C:\MSBF_RELEASE_FILES\FINAL_MAIN_COMMIT.txt&quot; -Raw).Trim(); $TagCommit = (git rev-list -n 1 module-2-g3-v2.0.0).Trim(); if ($FinalMain -ne $TagCommit) { throw &quot;Tag does not point to final main.&quot; } else { Write-Host &quot;LOCAL TAG / FINAL MAIN IDENTITY PASS&quot; -ForegroundColor Green }
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">LOCAL TAG / FINAL MAIN IDENTITY PASS
+</code></pre>
+<hr>
+<h1>Step 34 — Push the corrected final tag</h1>
+<p>Now:</p>
+<pre><code class="language-powershell">git push origin module-2-g3-v2.0.0
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">[new tag]         module-2-g3-v2.0.0 -&gt; module-2-g3-v2.0.0
+</code></pre>
+<hr>
+<h1>Step 35 — Prove the GitHub tag points to final <code>main</code></h1>
+<p>Run:</p>
+<pre><code class="language-powershell">git ls-remote --tags origin &quot;refs/tags/module-2-g3-v2.0.0^{}&quot;
+</code></pre>
+<p>You want the first value to be:</p>
+<pre><code class="language-text">500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+</code></pre>
+<p>So the complete output should resemble:</p>
+<pre><code class="language-text">500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65    refs/tags/module-2-g3-v2.0.0^{}
+</code></pre>
+<p>Then run this automated remote check:</p>
+<pre><code class="language-powershell">$FinalMain = (Get-Content &quot;C:\MSBF_RELEASE_FILES\FINAL_MAIN_COMMIT.txt&quot; -Raw).Trim(); $RemoteTagCommit = ((git ls-remote --tags origin &quot;refs/tags/module-2-g3-v2.0.0^{}&quot;) -split &#39;\s+&#39;)[0]; if ($FinalMain -ne $RemoteTagCommit) { throw &quot;Remote release tag does not point to final main.&quot; } else { Write-Host &quot;REMOTE TAG / FINAL MAIN IDENTITY PASS&quot; -ForegroundColor Green }
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">REMOTE TAG / FINAL MAIN IDENTITY PASS
+</code></pre>
+<hr>
+<h1>Step 36 — One final repository check</h1>
+<p>Run:</p>
+<pre><code class="language-powershell">git status --short --branch
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">## main...origin/main
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">python tools\validate_public_release.py
+</code></pre>
+<p>Expected again:</p>
+<pre><code class="language-text">Public release validation PASS
+Governed manifest files: 1930
+Module 2 stage folders: 12
+</code></pre>
+<p>At that point we&#39;ll have:</p>
+<pre><code class="language-text">main                              PASS
+origin/main                       PASS
+Publication Integrity PR check    PASS
+Local validator                   PASS
+Final main                        500ec776...
+Local release tag                 500ec776...
+Remote release tag                500ec776...
+Working tree                      CLEAN
+</code></pre>
+<p>Then the <strong>only major publication step remaining is creating the actual GitHub Release and attaching <code>MSBF_M2G3_RELEASE_WINDOWS_R1.zip</code> plus its release-assurance artifacts.</strong></p>
+<p>Start with <strong>Step 28</strong> now. If there is no existing GitHub Release, you can proceed through Steps 29–36.</p>
+</div></article><article id="m-770a620b-33a2-404c-b64a-857e2e1b2b48" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00531 · 2026-08-15T01:54:21.414000-04:00 · active path</p><div class="bubble"><p>Thru Step 36 is complete and a pass.</p>
+</div></article><article id="m-3d5cc7bc-63bd-48e1-bf90-adc1cc0fc130" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00532 · 2026-08-15T01:54:34.977221-04:00 · active path</p><div class="bubble"><p>Excellent. That means the <strong>repository publication itself is now governed and synchronized</strong>:</p>
+<pre><code class="language-text">main / origin-main identity                 PASS
+Final main                                  500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+Publication Integrity                       PASS
+Public-release validator                    PASS
+Governed manifest files                     1,930
+Module 2 stage folders                      12
+Final local tag                             PASS
+Final remote tag                            PASS
+Tag = final main                            PASS
+Working tree                                CLEAN
+</code></pre>
+<p>We are now at the final major step: <strong>create the GitHub Release and attach the governed distribution artifacts.</strong></p>
+<h2>Step 37 — Verify the Release ZIP one last time</h2>
+<p>Your public distribution ZIP is:</p>
+<pre><code class="language-text">MSBF_M2G3_RELEASE_WINDOWS_R1.zip
+</code></pre>
+<p>Do <strong>not</strong> upload the <code>UPLOAD_WORKTREE</code> ZIP.</p>
+<p>In PowerShell, locate where you saved the release ZIP. If it is in:</p>
+<pre><code class="language-text">C:\MSBF_RELEASE_FILES
+</code></pre>
+<p>run this one-line command:</p>
+<pre><code class="language-powershell">Get-FileHash &quot;C:\MSBF_RELEASE_FILES\MSBF_M2G3_RELEASE_WINDOWS_R1.zip&quot; -Algorithm SHA256
+</code></pre>
+<p>You need:</p>
+<pre><code class="language-text">da0bd1643d0851a1779e4ea476ae9e7b08528bd45d7b4548089734ace1acf209
+</code></pre>
+<p>Then verify the sidecar exists:</p>
+<pre><code class="language-powershell">Test-Path &quot;C:\MSBF_RELEASE_FILES\MSBF_M2G3_RELEASE_WINDOWS_R1.zip.sha256&quot;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">True
+</code></pre>
+<hr>
+<h1>Step 38 — Copy the final Release notes</h1>
+<p>While still in:</p>
+<pre><code class="language-text">C:\x\m
+</code></pre>
+<p>run:</p>
+<pre><code class="language-powershell">Get-Content &quot;.\RELEASE_NOTES.md&quot; -Raw | Set-Clipboard
+</code></pre>
+<p>No output is expected.</p>
+<p>Your final <code>RELEASE_NOTES.md</code> is now on the clipboard.</p>
+<hr>
+<h1>Step 39 — Open GitHub Releases</h1>
+<p>Open your repository in GitHub.</p>
+<p>Click:</p>
+<p><strong>Releases</strong></p>
+<p>Then click:</p>
+<p><strong>Draft a new release</strong></p>
+<p>Do not use the old tag-creation workflow. We already have the correctly governed tag.</p>
+<hr>
+<h1>Step 40 — Select the existing tag</h1>
+<p>Click <strong>Choose a tag</strong>.</p>
+<p>Search for:</p>
+<pre><code class="language-text">module-2-g3-v2.0.0
+</code></pre>
+<p>Select that existing tag.</p>
+<h3>Important</h3>
+<p>Do <strong>not</strong> type a different tag.</p>
+<p>Do <strong>not</strong> click anything saying:</p>
+<blockquote>
+<p>Create new tag</p>
+</blockquote>
+<p>We already proved that this tag resolves to:</p>
+<pre><code class="language-text">500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+</code></pre>
+<hr>
+<h1>Step 41 — Set the Release title</h1>
+<p>Enter exactly:</p>
+<pre><code class="language-text">Module 2 / G3 v2.0.0
+</code></pre>
+<hr>
+<h1>Step 42 — Paste the Release notes</h1>
+<p>Click inside the large Release-description field.</p>
+<p>Press:</p>
+<pre><code class="language-text">Ctrl+V
+</code></pre>
+<p>You should see the contents of the repository&#39;s <code>RELEASE_NOTES.md</code>.</p>
+<p>Use those notes rather than GitHub&#39;s automatically generated notes.</p>
+<hr>
+<h1>Step 43 — Set the Release classification</h1>
+<p>Make sure:</p>
+<pre><code class="language-text">Set as the latest release     YES
+Set as a pre-release          NO
+</code></pre>
+<p>If GitHub presents a <strong>Create a discussion for this release</strong> option, leave it unchecked unless you specifically want one.</p>
+<hr>
+<h1>Step 44 — Attach the primary governed package</h1>
+<p>Find the section that says something similar to:</p>
+<blockquote>
+<p>Attach binaries by dropping them here or selecting them.</p>
+</blockquote>
+<p>Upload:</p>
+<pre><code class="language-text">MSBF_M2G3_RELEASE_WINDOWS_R1.zip
+</code></pre>
+<p>Wait until it finishes uploading.</p>
+<p>The file is about <strong>71 MB</strong>, so give it time.</p>
+<p>Do not publish while the upload is still in progress.</p>
+<hr>
+<h1>Step 45 — Attach the SHA-256 sidecar</h1>
+<p>Next upload:</p>
+<pre><code class="language-text">MSBF_M2G3_RELEASE_WINDOWS_R1.zip.sha256
+</code></pre>
+<p>This is important because it gives users a simple independent physical-identity check for the release archive.</p>
+<hr>
+<h1>Step 46 — Attach the validation artifacts</h1>
+<p>You previously downloaded the publication assurance files. I recommend attaching these three as well:</p>
+<pre><code class="language-text">MSBF_GitHub_Publication_Candidate_UPLOAD_READY_v2.0.0_VALIDATION_REPORT.md
+
+MSBF_GitHub_Publication_Candidate_UPLOAD_READY_v2.0.0_VALIDATION_REPORT.json
+
+MSBF_Transparency_Campaign_Navigation_File_Inventory.csv
+</code></pre>
+<p>So your final Release should have <strong>five manually attached assets</strong>:</p>
+<pre><code class="language-text">1. MSBF_M2G3_RELEASE_WINDOWS_R1.zip
+
+2. MSBF_M2G3_RELEASE_WINDOWS_R1.zip.sha256
+
+3. MSBF_GitHub_Publication_Candidate_UPLOAD_READY_v2.0.0_VALIDATION_REPORT.md
+
+4. MSBF_GitHub_Publication_Candidate_UPLOAD_READY_v2.0.0_VALIDATION_REPORT.json
+
+5. MSBF_Transparency_Campaign_Navigation_File_Inventory.csv
+</code></pre>
+<p>GitHub will separately provide its automatic <strong>Source code (zip)</strong> and <strong>Source code (tar.gz)</strong> downloads. Those are normal and are not substitutes for our governed ZIP.</p>
+<hr>
+<h1>Step 47 — Do NOT attach these</h1>
+<p>Do not upload:</p>
+<pre><code class="language-text">MSBF_M2G3_UPLOAD_WORKTREE_WINDOWS_R1.zip
+MSBF_M2G3_UPLOAD_WORKTREE_WINDOWS_R1.zip.sha256
+</code></pre>
+<p>Those contain the local Git worktree and <code>.git</code> state.</p>
+<p>Also do not attach:</p>
+<pre><code class="language-text">ChatGPT_Logs.zip
+</code></pre>
+<p>The sanitized project-history projection is already inside the repository.</p>
+<p>Do not attach old superseded candidates such as:</p>
+<pre><code class="language-text">MSBF_GitHub_Publication_Candidate_Transparency_Campaign_Reconciled...
+MSBF_GitHub_Publication_Candidate_UPLOAD_READY...
+MSBF_Transparency_Campaign_and_Navigation_Overlay...
+</code></pre>
+<p>The Release should look deliberate—not like a working directory dump.</p>
+<hr>
+<h1>Step 48 — Save the Release as a draft first</h1>
+<p>Once all five assets have finished uploading, <strong>do not publish immediately</strong>.</p>
+<p>Click:</p>
+<p><strong>Save draft</strong></p>
+<p>This gives us one last controlled checkpoint.</p>
+<hr>
+<h1>Step 49 — Reopen the draft and inspect it</h1>
+<p>Open the draft Release.</p>
+<p>Verify these fields exactly:</p>
+<pre><code class="language-text">Tag
+module-2-g3-v2.0.0
+
+Target
+main / 500ec776...
+
+Title
+Module 2 / G3 v2.0.0
+
+Latest release
+YES
+
+Pre-release
+NO
+</code></pre>
+<p>Then inspect the assets.</p>
+<p>You should have the five manually attached files above.</p>
+<p>There should be no <code>UPLOAD_WORKTREE</code> ZIP.</p>
+<p>There should be no raw ChatGPT export.</p>
+<p>There should be no old candidate ZIP.</p>
+<hr>
+<h1>Step 50 — Inspect the rendered Release notes</h1>
+<p>Scroll through the rendered notes.</p>
+<p>We are checking for obvious presentation problems only:</p>
+<ul>
+<li>Markdown headings render properly.</li>
+<li>No raw local Windows paths.</li>
+<li>No unresolved placeholders.</li>
+<li>Module 2/G3 is described as accepted.</li>
+<li>Campaign-scale certification is described as current/next, not already completed.</li>
+<li>No production deployment claim.</li>
+<li>No causal optimization claim.</li>
+<li>No Module 3 execution claim.</li>
+</ul>
+<p>Do not rewrite the Release notes at this stage unless there is an actual defect.</p>
+<hr>
+<h1>Step 51 — Publish the Release</h1>
+<p>If Steps 37–50 all pass, click:</p>
+<p><strong>Publish release</strong></p>
+<p>That is the final publication action.</p>
+<p>Once it succeeds, GitHub should take you to the public Release page.</p>
+<hr>
+<h1>Step 52 — Confirm GitHub identifies it correctly</h1>
+<p>On the published Release page, verify:</p>
+<pre><code class="language-text">Module 2 / G3 v2.0.0
+
+Latest
+</code></pre>
+<p>and that it is <strong>not</strong> labeled:</p>
+<pre><code class="language-text">Pre-release
+</code></pre>
+<p>Confirm the tag shown is:</p>
+<pre><code class="language-text">module-2-g3-v2.0.0
+</code></pre>
+<hr>
+<h1>Step 53 — Verify all five assets are downloadable</h1>
+<p>You should see:</p>
+<pre><code class="language-text">MSBF_M2G3_RELEASE_WINDOWS_R1.zip
+MSBF_M2G3_RELEASE_WINDOWS_R1.zip.sha256
+MSBF_GitHub_Publication_Candidate_UPLOAD_READY_v2.0.0_VALIDATION_REPORT.md
+MSBF_GitHub_Publication_Candidate_UPLOAD_READY_v2.0.0_VALIDATION_REPORT.json
+MSBF_Transparency_Campaign_Navigation_File_Inventory.csv
+</code></pre>
+<p>plus GitHub&#39;s automatic source-code downloads.</p>
+<p>Do not worry if GitHub displays file sizes differently from Windows because of MB/MiB conventions.</p>
+<hr>
+<h1>Step 54 — Final independent clean-clone test</h1>
+<p>After the Release is published, we&#39;ll perform one last independent test of what a stranger cloning the tag receives.</p>
+<p>First make sure this folder does not already exist:</p>
+<pre><code class="language-powershell">Test-Path &quot;C:\v&quot;
+</code></pre>
+<p>If it returns:</p>
+<pre><code class="language-text">False
+</code></pre>
+<p>continue.</p>
+<p>If it returns <code>True</code>, stop and rename/delete the old verification folder before continuing.</p>
+<p>Then run:</p>
+<pre><code class="language-powershell">git clone --branch module-2-g3-v2.0.0 --depth 1 https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git C:\v
+</code></pre>
+<p>When that finishes:</p>
+<pre><code class="language-powershell">Set-Location &quot;C:\v&quot;
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">python tools\validate_public_release.py
+</code></pre>
+<p>We need:</p>
+<pre><code class="language-text">Public release validation PASS
+Governed manifest files: 1930
+Module 2 stage folders: 12
+</code></pre>
+<hr>
+<h1>Step 55 — Prove the published tag still equals final <code>main</code></h1>
+<p>Run:</p>
+<pre><code class="language-powershell">git rev-parse HEAD
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">Get-Content &quot;C:\MSBF_RELEASE_FILES\FINAL_MAIN_COMMIT.txt&quot;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+</code></pre>
+<p>They must be identical.</p>
+<hr>
+<h1>Step 56 — Check the clean clone is untouched</h1>
+<p>Run:</p>
+<pre><code class="language-powershell">git status --short --branch
+</code></pre>
+<p>Because you cloned a tag, you may see:</p>
+<pre><code class="language-text">## HEAD (no branch)
+</code></pre>
+<p>That&#39;s fine.</p>
+<p>What matters is that there are <strong>no file changes beneath it</strong>.</p>
+<hr>
+<h1>Step 57 — Final GitHub browser audit</h1>
+<p>After the clean-clone test passes, inspect four places in GitHub.</p>
+<p><strong>Repository home:</strong> README renders correctly and communicates the accepted Module 2/G3 state.</p>
+<p><strong>Actions:</strong> the Publication Integrity workflow associated with the merged <code>main</code> state is green.</p>
+<p><strong>Module_2:</strong> all M2.1–M2.12 stage folders are present and navigable.</p>
+<p><strong>Release:</strong> <code>Module 2 / G3 v2.0.0</code> is public, latest, correctly tagged, and has the governed assets.</p>
+<p>At that point the publication is complete.</p>
+<h3>Your next action right now</h3>
+<p>Proceed through <strong>Steps 37–50 and save the GitHub Release as a draft</strong>.</p>
+<p>Before clicking <strong>Publish release</strong>, send me a screenshot of the draft Release page showing the tag/title and attached assets. I&#39;ll do the final pre-publication visual check with you.</p>
+</div></article><article id="m-cd4bf988-d14c-4b09-b1e4-a1f47220ebd8" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00533 · 2026-08-15T02:13:16.902000-04:00 · active path</p><div class="bubble"><p>in step 40 when drafting a new release, i do not see the module 2 tag when i search.</p>
+</div></article><article id="m-ef03df65-9b78-4a32-b9b6-5ba8f932f811" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00534 · 2026-08-15T02:13:22.993320-04:00 · active path</p><div class="bubble"><p>Do <strong>not</strong> create a new tag in the Release screen. Since Step 36 passed, we first need to determine why GitHub&#39;s Release UI isn&#39;t offering the tag.</p>
+<p>At <code>PS C:\x\m&gt;</code>, run these commands one at a time.</p>
+<ol>
+<li>Confirm the local tag exists:</li>
+</ol>
+<pre><code class="language-powershell">git tag --list module-2-g3-v2.0.0
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">module-2-g3-v2.0.0
+</code></pre>
+<ol start="2">
+<li>Confirm the remote tag exists:</li>
+</ol>
+<pre><code class="language-powershell">git ls-remote --tags origin &quot;refs/tags/module-2-g3-v2.0.0&quot;
+</code></pre>
+<p>You should get a line ending in:</p>
+<pre><code class="language-text">refs/tags/module-2-g3-v2.0.0
+</code></pre>
+<p>Because this is an <strong>annotated tag</strong>, the hash on that particular line is the tag-object hash—not necessarily <code>500ec776...</code>. That&#39;s normal.</p>
+<ol start="3">
+<li>Now verify the commit behind the annotated remote tag:</li>
+</ol>
+<pre><code class="language-powershell">git ls-remote --tags origin &quot;refs/tags/module-2-g3-v2.0.0^{}&quot;
+</code></pre>
+<p>This is the critical one. Expected:</p>
+<pre><code class="language-text">500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65    refs/tags/module-2-g3-v2.0.0^{}
+</code></pre>
+<h3>If all three commands pass</h3>
+<p>Then the tag <strong>is definitely on GitHub</strong>, and this is just a Release-page/UI selection issue.</p>
+<p>Open the repository&#39;s Tags page directly:</p>
+<p>[export reference: url | Repository tags | <a href="https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/tags]">https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/tags]</a></p>
+<p>You should see:</p>
+<pre><code class="language-text">module-2-g3-v2.0.0
+</code></pre>
+<p>and it should correspond to the final Module 2/G3 state.</p>
+<p>If it appears there, go back to <strong>Releases → Draft a new release</strong>, refresh the page with:</p>
+<pre><code class="language-text">Ctrl + F5
+</code></pre>
+<p>Then click <strong>Choose a tag</strong> and search again for the <strong>exact lowercase string</strong>:</p>
+<pre><code class="language-text">module-2-g3-v2.0.0
+</code></pre>
+<p>Do not include spaces and do not search for <code>Module 2 / G3 v2.0.0</code>, because that&#39;s the release title rather than the tag name.</p>
+<h3>If GitHub still doesn&#39;t show it</h3>
+<p>Don&#39;t create anything. Send me:</p>
+<ol>
+<li>the output of those three PowerShell commands, and</li>
+<li>a screenshot of the <strong>Choose a tag</strong> dropdown after searching.</li>
+</ol>
+<p>We&#39;ll diagnose that exact state rather than risk creating a duplicate or incorrectly targeted tag.</p>
+</div></article><article id="m-2797e26d-71e0-476a-a8f9-afad7b0104a6" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00535 · 2026-08-15T02:21:40.039000-04:00 · active path</p><div class="bubble"><p>PS C:\x\m&gt; git tag --list module-2-g3-v2.0.0
+module-2-g3-v2.0.0
+PS C:\x\m&gt; git ls-remote --tags origin &quot;refs/tags/module-2-g3-v2.0.0&quot;
+PS C:\x\m&gt;</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

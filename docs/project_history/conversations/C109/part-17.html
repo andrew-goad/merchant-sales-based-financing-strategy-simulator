@@ -1,0 +1,1365 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 17 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 17</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-16.html">Previous part</a><a href="part-18.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-752aa5ad-3e42-4a82-80ba-95d600ce5f7a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00455 · 2026-08-27T10:54:06.664721-04:00 · active path</p><div class="bubble"><p>This is working well. The causal story is now visible at a glance: the two accounts share <strong>Severe shortfall</strong>, but 000098 is held for review while 000312 receives an active temporary-payment treatment.</p>
+<p>I would make four refinements before calling this workbench done:</p>
+<ol>
+<li><p>Rename the visual from <strong>Monitoring exceptions</strong> to <strong>Account attention workbench</strong>. This table is broader than monitoring exceptions; it combines monitoring condition, servicing disposition, treatment, exposure, and lifecycle state.</p>
+</li>
+<li><p>Rename <strong><code>Serving disposition</code></strong> to <strong><code>Servicing disposition</code></strong> if that is the current header.</p>
+</li>
+<li><p>Drop either <strong>Shortfall</strong> or <strong>Attention exposure</strong>. In the current endpoint population they are identical for both actionable accounts:</p>
+<ul>
+<li>000098: $461.69 / $461.69</li>
+<li>000312: $518.04 / $518.04<br>I would keep <strong>Attention exposure</strong>, because it is more directly aligned to the page question, and remove <strong>Shortfall</strong> unless we later see a case where the two differ materially.</li>
+</ul>
+</li>
+<li><p>Rename <strong>Action</strong> to <strong>Treatment / action</strong> or simply <strong>Treatment</strong>. I prefer <strong>Treatment</strong> here:</p>
+<ul>
+<li>Hold for servicing review</li>
+<li>Temporary payment cycle</li>
+</ul>
+</li>
+</ol>
+<p>That would leave a very clean table:</p>
+<p><strong>Merchant | Monitoring status | Pace | Attention exposure | Servicing disposition | Treatment | Ending exposure | Lifecycle state</strong></p>
+<p>I would keep the row order exactly as shown, with the review-hold account first only if that sorting is intentional. Otherwise, I would sort by <strong>Attention exposure descending</strong>, which would naturally put 000312 first at $518.04, followed by 000098 at $461.69.</p>
+<p>After those edits, the next logical component is <strong>payment-exception history</strong>, but only as a compact secondary element because the current population contains just one resolved exception case.</p>
+</div></article><article id="m-e72c2a9a-3041-4836-8d85-c190b393e8f3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00456 · 2026-08-27T11:05:58.458000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: ecf06df3-07aa-437a-962c-b5d02a4326e1.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-7de1fb11-e737-4f5e-8eae-58dcf7fffe6a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00457 · 2026-08-27T11:06:01.431439-04:00 · active path</p><div class="bubble"><p>This is coming together very well. The page now has a clear hierarchy: <strong>portfolio posture → monitoring condition → servicing response → specific accounts requiring attention</strong>.</p>
+<p>A few observations before adding anything else:</p>
+<p><strong>First, <code>Unresolved exceptions</code> showing <code>--</code> should be fixed.</strong> Conceptually the answer is <strong>0</strong>, not blank. Modify the measure so zero displays explicitly:</p>
+<pre><code class="language-DAX">P04 Unresolved Exceptions =
+COALESCE (
+    CALCULATE (
+        DISTINCTCOUNT ( FactPaymentException[PaymentExceptionKey] ),
+        FactPaymentException[unresolved_exception_flag] = TRUE ()
+    ),
+    0
+)
+</code></pre>
+<p>That should give Baseline <strong>0</strong> rather than <code>--</code>.</p>
+<p><strong>Second, I like <code>Merchant Servicing &amp; Exceptions</code> better than the generic title.</strong> It tells the viewer immediately what population is being managed without implying a full production portfolio servicing platform.</p>
+<p><strong>Third, the workbench is now excellent.</strong> I would not put Shortfall back in. <code>Attention exposure → Ending exposure</code> is particularly effective: 000312 visibly moves from $518.04 to $323.79 through the temporary-payment treatment, whereas 000098 remains at $461.69 on review hold. That tells the story without another chart. The underlying servicing records substantiate those different treatment paths. [export reference: filecite | turn52file0 | L9-L10]</p>
+<h3>Next: Payment exception history</h3>
+<p>We have enough white space for one more <strong>compact table</strong>, and this is the right final analytical element because “Exceptions” is in the page title.</p>
+<p>I would place it below the Account attention workbench and call it:</p>
+<p><strong>Payment exception history</strong></p>
+<p>It should show only actual exception cases—not monitoring exceptions.</p>
+<p>Because <code>FactPaymentException</code> is its own fact grain, let&#39;s keep this simple rather than forcing it through the workbench.</p>
+<p>Create a readable status column:</p>
+<pre><code class="language-DAX">P04 Exception Status =
+SWITCH (
+    FactPaymentException[exception_status_code],
+    &quot;RESOLVED_BY_RETRY&quot;, &quot;Resolved by retry&quot;,
+    SUBSTITUTE (
+        FactPaymentException[exception_status_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<p>Create a readable resolution column:</p>
+<pre><code class="language-DAX">P04 Exception Resolution =
+SWITCH (
+    FactPaymentException[resolution_action_code],
+    &quot;RESOLVE_RETURN_WITH_RETRY&quot;, &quot;Return resolved by retry&quot;,
+    SUBSTITUTE (
+        FactPaymentException[resolution_action_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<p>For Merchant, I would create the same six-digit presentation column directly in <code>FactPaymentException</code> rather than introduce another cross-fact measure:</p>
+<pre><code class="language-DAX">P04 Exception Merchant =
+VAR _Application =
+    FactPaymentException[merchant_application_id]
+VAR _MerchantStart =
+    SEARCH ( &quot;_M&quot;, _Application, 1, BLANK () )
+RETURN
+    IF (
+        NOT ISBLANK ( _MerchantStart ),
+        MID ( _Application, _MerchantStart + 2, 6 ),
+        _Application
+    )
+</code></pre>
+<p>Then build a <strong>Table</strong> with:</p>
+<p><strong>Merchant | Originated | Amount | Status | Resolved | Open days | Resolution</strong></p>
+<p>using:</p>
+<ul>
+<li><code>P04 Exception Merchant</code></li>
+<li><code>originating_event_date</code></li>
+<li><code>exception_amount</code></li>
+<li><code>P04 Exception Status</code></li>
+<li><code>resolving_event_date</code></li>
+<li><code>exception_open_days</code></li>
+<li><code>P04 Exception Resolution</code></li>
+</ul>
+<p>Rename the headers as above.</p>
+<p>For the current Baseline population, this should produce the single 000312 case:</p>
+<p><strong>000312 | 7/27/2026 | $27.75 | Resolved by retry | 7/28/2026 | 1 | Return resolved by retry</strong></p>
+<p>That is actually enough. It shows that the active-servicing account had a payment exception, but the exception was resolved and therefore <strong>Unresolved exceptions = 0</strong>.</p>
+<p>I would <strong>not make a chart from one exception</strong>.</p>
+<p>After that table is built, I think we should stop adding analytical content and assess the whole page for whitespace/layout. We may find that the remaining room is better used to enlarge the workbench and exception table rather than squeeze another visual out of Module 2.</p>
+</div></article><article id="m-09f61ac8-b370-47c9-bd4b-49b17dd3086f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00458 · 2026-08-27T11:07:54.414000-04:00 · active path</p><div class="bubble"><p>and to be clear, which of the above are columns (in what table) and which are measures?</p>
+</div></article><article id="m-4dbfb21c-245d-4d98-beec-b819ee02fe95" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00459 · 2026-08-27T11:07:56.134505-04:00 · active path</p><div class="bubble"><p>For the <strong>Payment exception history</strong> addition, all three new presentation fields I proposed are <strong>calculated columns</strong>. There are <strong>no new measures required for the table itself</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Type</th>
+<th>Table</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>P04 Exception Status</code></td>
+<td><strong>Calculated column</strong></td>
+<td><code>FactPaymentException</code></td>
+</tr>
+<tr>
+<td><code>P04 Exception Resolution</code></td>
+<td><strong>Calculated column</strong></td>
+<td><code>FactPaymentException</code></td>
+</tr>
+<tr>
+<td><code>P04 Exception Merchant</code></td>
+<td><strong>Calculated column</strong></td>
+<td><code>FactPaymentException</code></td>
+</tr>
+<tr>
+<td><code>P04 Unresolved Exceptions</code></td>
+<td><strong>Measure</strong></td>
+<td>Your existing report-measure location</td>
+</tr>
+</tbody></table>
+<h3>1. COLUMN — <code>FactPaymentException[P04 Exception Status]</code></h3>
+<p>Create with <strong>New column</strong> while <code>FactPaymentException</code> is selected:</p>
+<pre><code class="language-DAX">P04 Exception Status =
+SWITCH (
+    FactPaymentException[exception_status_code],
+    &quot;RESOLVED_BY_RETRY&quot;, &quot;Resolved by retry&quot;,
+    SUBSTITUTE (
+        FactPaymentException[exception_status_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<h3>2. COLUMN — <code>FactPaymentException[P04 Exception Resolution]</code></h3>
+<p><strong>New column:</strong></p>
+<pre><code class="language-DAX">P04 Exception Resolution =
+SWITCH (
+    FactPaymentException[resolution_action_code],
+    &quot;RESOLVE_RETURN_WITH_RETRY&quot;, &quot;Return resolved by retry&quot;,
+    SUBSTITUTE (
+        FactPaymentException[resolution_action_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<h3>3. COLUMN — <code>FactPaymentException[P04 Exception Merchant]</code></h3>
+<p><strong>New column:</strong></p>
+<pre><code class="language-DAX">P04 Exception Merchant =
+VAR _Application =
+    FactPaymentException[merchant_application_id]
+VAR _MerchantStart =
+    SEARCH ( &quot;_M&quot;, _Application, 1, BLANK () )
+RETURN
+    IF (
+        NOT ISBLANK ( _MerchantStart ),
+        MID ( _Application, _MerchantStart + 2, 6 ),
+        _Application
+    )
+</code></pre>
+<p>This should turn:</p>
+<p><code>MSBF_POP_0001_M000312_A01</code></p>
+<p>into:</p>
+<p><code>000312</code></p>
+<h3>4. MEASURE — <code>P04 Unresolved Exceptions</code></h3>
+<p>This is the <strong>only measure in that set</strong>. Replace the existing version with:</p>
+<pre><code class="language-DAX">P04 Unresolved Exceptions =
+COALESCE (
+    CALCULATE (
+        DISTINCTCOUNT ( FactPaymentException[PaymentExceptionKey] ),
+        FactPaymentException[unresolved_exception_flag] = TRUE ()
+    ),
+    0
+)
+</code></pre>
+<p>Keep this wherever you&#39;ve been storing the P01–P04 report-owned measures.</p>
+<h3>Then the table itself</h3>
+<p>All seven table fields can come <strong>directly from <code>FactPaymentException</code></strong> because the visual is entirely at payment-exception grain:</p>
+<ol>
+<li><code>P04 Exception Merchant</code> — <strong>column</strong></li>
+<li><code>originating_event_date</code> — existing <strong>column</strong></li>
+<li><code>exception_amount</code> — existing <strong>column</strong></li>
+<li><code>P04 Exception Status</code> — <strong>column</strong></li>
+<li><code>resolving_event_date</code> — existing <strong>column</strong></li>
+<li><code>exception_open_days</code> — existing <strong>column</strong></li>
+<li><code>P04 Exception Resolution</code> — <strong>column</strong></li>
+</ol>
+<p>So unlike the Account Attention Workbench, <strong>we don&#39;t need account-level <code>SELECTEDVALUE</code> measures or <code>TREATAS</code> here</strong>. Everything belongs to the same fact and same exception-case grain.</p>
+<p>And I&#39;ll explicitly identify <strong>COLUMN vs MEASURE and its table</strong> as we create each new P04 object from here forward.</p>
+</div></article><article id="m-b9d64b2b-a1ea-4ef4-83dc-96ffc6f8c709" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00460 · 2026-08-27T11:22:33.188000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: fcdd18e3-4e72-42c8-b48b-a01a082823d3.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-bbbe9f33-34a2-47c0-85b1-3f14a66cbdec" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00461 · 2026-08-27T11:22:36.045439-04:00 · active path</p><div class="bubble"><p>This is a strong P04. The page now answers the intended operational question without trying to extract more analytical depth than Module 2 contains.</p>
+<p>The narrative reads cleanly:</p>
+<p><strong>2 accounts require attention → $979.73 exposure → both are severe shortfall → one receives active servicing and one is held for review → $785.48 remains after servicing → the one payment exception was resolved → zero unresolved exceptions.</strong></p>
+<p>I would make only a few refinements before accessibility/UAT.</p>
+<h3>1. The left rail is right</h3>
+<p>Keep it exactly conceptually as:</p>
+<p><strong>Requiring attention</strong><br><strong>Exposure</strong><br><strong>Active servicing</strong><br><strong>Review holds</strong><br><strong>Servicing exposure</strong><br><strong>Unresolved exceptions</strong></p>
+<p>I don&#39;t think it needs an <code>Operational posture</code> heading. The page title already establishes the context, and the rail reads naturally.</p>
+<h3>2. Monitoring posture — consider suppressing Paid off</h3>
+<p>This is the one design choice worth considering.</p>
+<p>Right now <strong>42 Paid off vs. 2 Severe shortfall</strong> accurately communicates how exceptional the attention population is. That&#39;s valuable context. On the other hand, the page is explicitly an exceptions workbench, so the large Paid-off bar visually dominates.</p>
+<p>I lean toward <strong>keeping it</strong>. The 42:2 relationship tells the viewer something important immediately: this isn&#39;t a distressed portfolio; these are two exceptional accounts in an overwhelmingly resolved endpoint population.</p>
+<h3>3. Servicing disposition is excellent as-is</h3>
+<p>The 1/1 split is simple, but it earns its place because it explains the bifurcation subsequently shown in the workbench.</p>
+<p>I would not add another “drivers” chart.</p>
+<h3>4. Account attention workbench is the centerpiece</h3>
+<p>This is now the strongest element on the page.</p>
+<p>The sequence is particularly good:</p>
+<p><strong>Monitoring status → Pace → Attention exposure → Servicing disposition → Treatment → Ending exposure → Lifecycle state</strong></p>
+<p>It lets the user compare the two cases without explanation.</p>
+<p>One tiny wording improvement: change <strong><code>Pace</code></strong> header to <strong><code>Remittance pace</code></strong> if it fits. <code>Pace</code> alone is understandable in context, but <code>Remittance pace</code> is unambiguous.</p>
+<h3>5. Payment exception history is appropriately restrained</h3>
+<p>Keep it exactly as a table. One event does not warrant another chart.</p>
+<p>I&#39;d format <strong>Amount</strong> as currency so <code>$27.75</code> appears rather than <code>27.75</code>.</p>
+<p>The resulting record then reads naturally:</p>
+<p><strong>000312 | 7/27/2026 | $27.75 | Resolved by retry | 7/28/2026 | 1 | Return resolved by retry</strong></p>
+<h3>6. One substantive change: the footer</h3>
+<p>The existing footer is inherited from P03 and isn&#39;t quite right for P04.</p>
+<p>P04 is specifically an <strong>endpoint operational view</strong>, so I would change the temporal boundary to:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Monitoring and servicing posture reflects the governed 2026-11-22 synthetic endpoint; payment exceptions reflect dated synthetic servicing events. <strong>Interpretation boundary:</strong> Deterministic synthetic evidence.</p>
+</blockquote>
+<p>That&#39;s substantially more precise than:</p>
+<blockquote>
+<p>Lifecycle dates after 2026-07-23...</p>
+</blockquote>
+<p>which made sense for P03&#39;s longitudinal charts but isn&#39;t the analytical contract of P04.</p>
+<p>Keep the provenance line above it unchanged.</p>
+<h3>Then we&#39;re nearly done</h3>
+<p>I would <strong>not add another substantive visual</strong>. There is white space, but that&#39;s preferable to manufacturing content. The page already has a complete operational story, and the restrained density is consistent with P01–P03.</p>
+<p>Next we should do exactly the P03 closeout sequence:</p>
+<p><strong>Alt text → Tooltips → Tab order → Scenario UAT → freeze/evidence.</strong></p>
+<p>For tooltips, this page should be especially light because most values are already visible. The two bar charts are the only obvious candidates for deliberate analytical tooltip treatment.</p>
+</div></article><article id="m-a667fc1b-fd3c-44e1-9f17-0a4c2d4c5375" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00462 · 2026-08-27T11:34:47.027000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 62a06a7d-5c82-4c8e-9fb4-587f352a18d9.png</p><div class="bubble"><p>review final visual then provide alt text / tooltips / tab order / evidence to capture</p>
+</div></article><article id="m-049b456e-d5aa-4aa1-b3d2-c088b03fdca3" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00463 · 2026-08-27T11:34:48.799722-04:00 · active path</p><div class="bubble"><p>The final visual is strong. I would <strong>freeze the substantive P04 design as shown</strong> after one tiny formatting fix: <code>Payment exception history → Amount</code> still displays <code>27.75</code>; format that field as <strong>Currency, 2 decimals</strong> so it reads <code>$27.75</code>. I would not add another visual or fill the remaining whitespace.</p>
+<p>The hierarchy is now excellent: left rail summarizes workload → Monitoring posture establishes severity → Servicing disposition shows governed routing → Account attention workbench explains the two cases → Payment exception history provides the actual exception event. The revised footer is also the correct P04 temporal contract.</p>
+<h2>1. Alt text</h2>
+<p>I count <strong>six substantive visual objects plus the title/subtitle</strong> that should receive alt text.</p>
+<p><strong>Title/subtitle</strong></p>
+<blockquote>
+<p><code>Merchant Servicing &amp; Exceptions. Identify accounts requiring operational attention, understand the drivers, and review governed servicing outcomes.</code></p>
+</blockquote>
+<p><strong>Left Operational Posture multi-card</strong></p>
+<blockquote>
+<p><code>Endpoint servicing summary for the selected scenario, showing accounts requiring attention, attention exposure, active servicing accounts, review holds, remaining servicing exposure, and unresolved payment exceptions.</code></p>
+</blockquote>
+<p><strong>Monitoring posture</strong></p>
+<blockquote>
+<p><code>Endpoint monitoring-status distribution for funded accounts in the selected scenario, showing the number of accounts by monitoring status.</code></p>
+</blockquote>
+<p>I deliberately would <strong>not hard-code “42 paid off and 2 severe shortfall” into alt text</strong> because those values change with Scenario.</p>
+<p><strong>Servicing disposition</strong></p>
+<blockquote>
+<p><code>Servicing disposition for accounts requiring operational attention in the selected scenario, showing counts of active servicing and review-hold accounts.</code></p>
+</blockquote>
+<p><strong>Account attention workbench</strong></p>
+<blockquote>
+<p><code>Account-level workbench for the selected scenario showing merchants requiring attention, monitoring status, remittance pace, attention exposure, servicing disposition, governed treatment, ending exposure, and lifecycle state.</code></p>
+</blockquote>
+<p><strong>Payment exception history</strong></p>
+<blockquote>
+<p><code>Payment-exception history for the selected scenario, showing merchant, origination date, exception amount, status, resolution date, open days, and resolution action.</code></p>
+</blockquote>
+<p>The <strong>Scenario slicer</strong> does not need custom alt text. The visible footer/provenance text doesn&#39;t need a separate alt-text object either; preserve it as readable text.</p>
+<hr>
+<h2>2. Tooltips</h2>
+<p>Keep these restrained.</p>
+<h3>Monitoring posture</h3>
+<p>The default tooltip already gives <strong>Monitoring status + Account count</strong>, which is essentially everything the chart represents.</p>
+<p>I would add only:</p>
+<ul>
+<li><code>[P04 Attention Exposure]</code> <strong>if it responds correctly to selection of a monitoring-status bar</strong>.</li>
+</ul>
+<p>That would let a user hover Severe shortfall and see:</p>
+<p><strong>Accounts: 2</strong><br><strong>Exposure: $979.73</strong></p>
+<p>If the measure doesn&#39;t inherit the status category cleanly, don&#39;t engineer around it. The left rail already provides the exposure.</p>
+<h3>Servicing disposition</h3>
+<p>The default tooltip provides:</p>
+<p><strong>Disposition + Account count</strong></p>
+<p>That&#39;s sufficient. Don&#39;t add treatment or ending exposure here because those differ at account grain and are already explained by the workbench.</p>
+<h3>Tables</h3>
+<p>No custom tooltip work needed for:</p>
+<ul>
+<li>Account attention workbench</li>
+<li>Payment exception history</li>
+<li>Operational Posture card</li>
+</ul>
+<p>Their important information is already visible.</p>
+<p>So P04 can legitimately have <strong>very little custom tooltip construction</strong>. That&#39;s good design, not an omission.</p>
+<hr>
+<h2>3. Tab order</h2>
+<p>Because P04 is a workbench rather than a single-account journey, I recommend this exact order:</p>
+<ol>
+<li><strong>Scenario slicer</strong></li>
+<li><strong>Operational Posture multi-card</strong></li>
+<li><strong>Monitoring posture</strong></li>
+<li><strong>Servicing disposition</strong></li>
+<li><strong>Account attention workbench</strong></li>
+<li><strong>Payment exception history</strong></li>
+</ol>
+<p>Then remove/exclude decorative or noninteractive objects from tab order where Power BI permits:</p>
+<ul>
+<li>title/subtitle</li>
+<li>vertical separator</li>
+<li>footer/provenance text</li>
+<li>decorative shapes/backgrounds</li>
+</ul>
+<p>This gives keyboard users the same analytical sequence as sighted users:</p>
+<p><strong>Choose scenario → understand workload → understand monitoring condition → understand servicing routing → inspect affected accounts → inspect payment exceptions.</strong></p>
+<hr>
+<h2>4. Final UAT / evidence capture</h2>
+<p>We don&#39;t need a huge evidence population because the physical population is small and well understood. I would capture <strong>six screenshots</strong>.</p>
+<p><strong>E01 — Baseline full-page final state</strong><br>Exactly what you&#39;ve shown here, after changing <code>$27.75</code> formatting. This is the principal P04 evidence.</p>
+<p><strong>E02 — Recession Energy full-page state</strong><br>Switch Scenario to <code>Recession Energy</code>. We expect:</p>
+<ul>
+<li>Requiring attention = 0</li>
+<li>Exposure = $0</li>
+<li>Active servicing = 0</li>
+<li>Review holds = 0</li>
+<li>Servicing exposure = $0</li>
+<li>Unresolved exceptions = 0</li>
+<li>Monitoring posture = 15 Paid off</li>
+<li>no actionable servicing dispositions</li>
+<li>empty workbench</li>
+<li>empty payment-exception history</li>
+</ul>
+<p>This is important because it demonstrates <strong>scenario-sensitive fail-empty behavior</strong>, rather than accidentally carrying Baseline servicing records into Recession Energy.</p>
+<p><strong>E03 — Baseline Monitoring posture tooltip</strong><br>Hover <strong>Severe shortfall</strong> and capture the tooltip. If you successfully add attention exposure, capture both account count and exposure; otherwise the native count tooltip is sufficient.</p>
+<p><strong>E04 — Baseline Servicing disposition tooltip</strong><br>Hover either <code>Active servicing</code> or <code>Review hold</code> and capture the native tooltip/count.</p>
+<p><strong>E05 — Alt-text evidence</strong><br>Use whatever accessibility/property view you used for P03 and capture enough to establish the final P04 alt-text population. If one screenshot cannot show all objects, use two. Don&#39;t contort the UI merely to force everything into one capture.</p>
+<p><strong>E06 — Tab-order evidence</strong><br>Capture the final tab-order pane showing the six-object sequence above.</p>
+<h3>One optional evidence capture</h3>
+<p>If clicking <strong>000312</strong> in the Account attention workbench cross-filters Payment exception history down to its <code>$27.75</code> exception cleanly, that is worth capturing as <strong>E07</strong> because it demonstrates a meaningful native interaction.</p>
+<p>But don&#39;t create a special interaction solely for evidence. Test the existing behavior first.</p>
+<hr>
+<h2>Final footer</h2>
+<p>I confirm the current wording:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Monitoring and servicing posture reflects the governed 2026-11-22 synthetic endpoint; payment exceptions reflect dated synthetic servicing events; <strong>Interpretation boundary:</strong> Deterministic synthetic evidence</p>
+</blockquote>
+<p>I would retain it exactly.</p>
+<p>The provenance line above it is also appropriate and consistent with the report family.</p>
+<h3>Freeze threshold</h3>
+<p>Once the currency format, Baseline/Recession UAT, alt text, tooltips and tab order are complete, <strong>P04 should freeze</strong>. I don&#39;t see a substantive reason to add anything else.</p>
+<p>P04 is doing something importantly different from P03: P03 explains <strong>one application/account journey</strong>; P04 finds the exceptional accounts across the endpoint population and explains <strong>why operational attention exists and what governed servicing did about it</strong>. That differentiation is now clear enough to justify both pages.</p>
+</div></article><article id="m-03e73959-5575-46f4-845e-d07a4baab13f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00464 · 2026-08-27T11:55:46.952000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: d9c7df66-ea05-4bef-b0a3-2af799b6d9ed.png</p><div class="bubble"><p>The recession energy full page exposed something we probably want to fix - the multi card nulls might be better as 0&#39;s:</p>
+</div></article><article id="m-4517134f-6162-485f-9b17-430ccc60b171" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00465 · 2026-08-27T11:55:48.770459-04:00 · active path</p><div class="bubble"><p>Yes. <strong>For these operational count/exposure KPIs, zero is semantically correct and materially better than <code>--</code>.</strong> Recession Energy has a valid governed population; it simply has <strong>no accounts requiring attention</strong>. Blank makes that look like missing data.</p>
+<p>I would make <strong>all six left-rail measures fail to zero</strong> where appropriate.</p>
+<h3>Update these five measures</h3>
+<p><strong>1. Accounts requiring attention</strong></p>
+<pre><code class="language-DAX">P04 Accounts Requiring Attention =
+COALESCE (
+    CALCULATE (
+        DISTINCTCOUNT ( FactMonitoringEndpoint[AccountKey] ),
+        FactMonitoringEndpoint[latest_monitoring_status_rank] &gt; 0
+    ),
+    0
+)
+</code></pre>
+<p><strong>2. Attention exposure</strong></p>
+<pre><code class="language-DAX">P04 Attention Exposure =
+COALESCE (
+    CALCULATE (
+        SUM ( FactMonitoringEndpoint[remaining_receivable_amount] ),
+        FactMonitoringEndpoint[latest_monitoring_status_rank] &gt; 0
+    ),
+    0
+)
+</code></pre>
+<p>Keep currency formatting.</p>
+<p><strong>3. Active servicing</strong></p>
+<pre><code class="language-DAX">P04 Active Servicing =
+COALESCE (
+    CALCULATE (
+        DISTINCTCOUNT ( FactServicingExecution[AccountKey] ),
+        FactServicingExecution[processing_authorized_flag] = TRUE ()
+    ),
+    0
+)
+</code></pre>
+<p><strong>4. Review holds</strong></p>
+<pre><code class="language-DAX">P04 Review Holds =
+COALESCE (
+    CALCULATE (
+        DISTINCTCOUNT ( FactServicingExecution[AccountKey] ),
+        FactServicingExecution[processing_review_required_flag] = TRUE ()
+    ),
+    0
+)
+</code></pre>
+<p><strong>5. Servicing exposure</strong></p>
+<pre><code class="language-DAX">P04 Servicing Exposure =
+COALESCE (
+    CALCULATE (
+        SUM ( FactServicingExecution[ending_simulated_exposure_amount] ),
+        FactServicingExecution[no_processing_required_flag] = FALSE ()
+    ),
+    0
+)
+</code></pre>
+<p>Keep currency formatting.</p>
+<p>Your revised <strong><code>P04 Unresolved Exceptions</code></strong> already has the correct <code>COALESCE(...,0)</code> treatment, which is why it correctly shows <code>0</code> in the screenshot.</p>
+<h3>Expected Recession Energy rail</h3>
+<p>After those changes:</p>
+<p><strong>Requiring attention</strong><br><code>0</code></p>
+<p><strong>Exposure</strong><br><code>$0.00</code></p>
+<p><strong>Active servicing</strong><br><code>0</code></p>
+<p><strong>Review holds</strong><br><code>0</code></p>
+<p><strong>Servicing exposure</strong><br><code>$0.00</code></p>
+<p><strong>Unresolved exceptions</strong><br><code>0</code></p>
+<p>That&#39;s much stronger. It communicates a legitimate <strong>zero-state scenario</strong>, while the Monitoring posture chart independently confirms why: all <strong>15 funded endpoint accounts are Paid off</strong>.</p>
+<p>I would leave the empty <strong>Servicing disposition</strong>, <strong>Account attention workbench</strong>, and <strong>Payment exception history</strong> exactly as they are. Empty visuals there correctly mean <strong>there are no applicable records</strong>; converting their contents into artificial zero rows would be misleading.</p>
+<p>One other thing your screenshot exposed: the provenance line still says <strong><code>M1_V0_2_BASELINE_BUILD</code> while Recession Energy is selected</strong>. We should investigate that before freezing P04. If <code>Run</code> is intended to identify the underlying common build rather than selected scenario, it may be correct; but the word <code>BASELINE</code> creates a potentially confusing apparent contradiction that deserves verification.</p>
+</div></article><article id="m-49384583-d977-448a-9cfe-7a0be3f08a38" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00466 · 2026-08-27T12:06:36.314000-04:00 · active path</p><div class="bubble"><p>My original build chat confirmed - <strong>Confirmed: do not treat this as a provenance defect.</strong> <code>M1_V0_2_BASELINE_BUILD</code> identifies the common governed Module 1 run/build and is intentionally shared by both <code>BASELINE</code> and <code>RECESSION_ENERGY</code>. Scenario is a separate dimension within that run, so selecting <code>RECESSION_ENERGY</code> should not change the run identity. The apparent contradiction comes from <code>BASELINE</code> being embedded in the historical run name, not from incorrect filtering or lineage.</p>
+<p>For P04, preserve the underlying run value exactly as governed rather than renaming it. If needed for executive clarity, change only the <strong>display label</strong> from <code>Run</code> to something more explicit such as <strong><code>Governed Run</code></strong> or <strong><code>Source Run</code></strong>, while continuing to show the actual value <code>M1_V0_2_BASELINE_BUILD</code>. Keep <code>Scenario</code> separately visible as <code>RECESSION_ENERGY</code>.</p>
+<p>Please verify the semantic model behaves accordingly—one governed run containing both scenario identities—and, assuming that passes, treat this item as <strong>verified / no blocker to P04 freeze</strong>.               Given that, I see no reason to change our provenance line</p>
+</div></article><article id="m-1e184f14-6513-4208-b25e-ae7171544304" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00467 · 2026-08-27T12:06:41.111709-04:00 · active path</p><div class="bubble"><p>Agreed. I would <strong>not change the provenance line</strong>.</p>
+<p>Your build-chat explanation resolves the apparent contradiction cleanly: <code>M1_V0_2_BASELINE_BUILD</code> is the governed run/build identity, while <code>BASELINE</code> and <code>RECESSION_ENERGY</code> are scenario identities within that same run. The Scenario slicer should therefore change scenario-qualified facts while the run value remains fixed.</p>
+<p>So for P04:</p>
+<ul>
+<li>keep <code>Run: M1_V0_2_BASELINE_BUILD</code> exactly as governed;</li>
+<li>keep <code>Scenario</code> separately visible in the slicer;</li>
+<li>do not relabel or rewrite the run value merely because the string contains <code>BASELINE</code>;</li>
+<li>treat the unchanged run identity under Recession Energy as <strong>verified expected behavior</strong>, not a lineage defect.</li>
+</ul>
+<p>I also agree there is no compelling need to change the display label from <code>Run</code> to <code>Governed Run</code> unless you later decide the portfolio audience may misread it. The existing provenance line is consistent with P01–P03 and is already compact.</p>
+<p>The only remaining P04 presentation fix exposed by the Recession Energy UAT is the left multi-card zero-state treatment. Once those five measures are wrapped in <code>COALESCE(...,0)</code>, I would regard the Recession Energy state as correct:</p>
+<p><strong>0 requiring attention / $0 exposure / 0 active servicing / 0 review holds / $0 servicing exposure / 0 unresolved exceptions</strong>, while Monitoring posture shows all 15 accounts Paid off.</p>
+<p>After that, complete the alt text/tooltips/tab order evidence captures we outlined and freeze P04.</p>
+</div></article><article id="m-a956fca0-3d04-44fb-8465-38285bf781db" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00468 · 2026-08-27T12:12:18.460000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 854e07b4-0fd9-4ae3-bd7f-c0d0ecd16988.png</p><div class="bubble"><p>E07 - Is this what you wanted to see? Any concerns: </p>
+</div></article><article id="m-1926c587-37ca-44fd-b42c-6bfce235931d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00469 · 2026-08-27T12:12:20.836673-04:00 · active path</p><div class="bubble"><p>Yes. <strong>This is exactly the E07 interaction I wanted to test</strong>, and it exposes one real issue.</p>
+<p>Selecting Merchant <strong>000312</strong> in the Account attention workbench correctly leaves its <code>$27.75</code> payment exception visible. That demonstrates the desired native cross-filter relationship between the account workbench and exception history.</p>
+<p>However, I <strong>would not use this screenshot as final E07 evidence yet</strong>, because the interaction is only partially propagating.</p>
+<p>Notice the inconsistency after selecting 000312:</p>
+<ul>
+<li><strong>Requiring attention = 1</strong> — correctly filtered.</li>
+<li><strong>Exposure = $518.04</strong> — correctly filtered to 000312.</li>
+<li><strong>Active servicing = 1</strong> — correct.</li>
+<li><strong>Review holds = 1</strong> — <strong>incorrect for the selected account</strong>.</li>
+<li><strong>Servicing exposure = $785.48</strong> — <strong>still the full two-account total</strong>, not 000312&#39;s $323.79.</li>
+<li>Servicing disposition still shows <strong>Active servicing = 1 and Review hold = 1</strong>, rather than only Active servicing.</li>
+</ul>
+<p>So the selection is filtering the monitoring-side facts but <strong>is not propagating from <code>FactMonitoringEndpoint</code> to <code>FactServicingExecution</code></strong>. That&#39;s the same cross-fact boundary we encountered when the workbench&#39;s servicing fields initially came back blank.</p>
+<p>This is <strong>not a defect in the underlying data</strong>. It&#39;s a visual-interaction/filter-propagation issue.</p>
+<h3>What I recommend</h3>
+<p>For P04, I actually <strong>do not think we should engineer additional cross-fact DAX merely to make clicking the workbench dynamically rewrite the entire page</strong>. The page&#39;s primary contract is scenario-level operational posture, and the workbench itself already reconciles the two facts correctly through our explicit <code>TREATAS</code> measures.</p>
+<p>Instead:</p>
+<ol>
+<li>Keep the Scenario slicer as the governing page control.</li>
+<li>Keep the Account attention workbench as the investigative table.</li>
+<li><strong>Disable the workbench&#39;s interaction with the left Operational Posture card and the two bar charts.</strong></li>
+<li><strong>Keep its interaction with Payment exception history enabled.</strong></li>
+</ol>
+<p>That creates a very intentional interaction contract:</p>
+<blockquote>
+<p>Clicking an account in the workbench does <strong>not redefine portfolio-level posture</strong>; it drills the associated exception history beneath the workbench.</p>
+</blockquote>
+<p>That is arguably better UX anyway. The left rail and charts remain <strong>portfolio/scenario context</strong>, while the bottom exception table becomes the selected-account detail.</p>
+<p>Then E07 becomes strong evidence:</p>
+<p><strong>Baseline portfolio remains 2 accounts / $979.73 / 1 active / 1 hold / $785.48</strong>, while selecting 000312 filters Payment exception history to its <code>$27.75</code> resolved-by-retry event.</p>
+<p>So go to <strong>Format → Edit interactions</strong>, select the Account attention workbench, and set:</p>
+<ul>
+<li>Operational Posture → <strong>None</strong></li>
+<li>Monitoring posture → <strong>None</strong></li>
+<li>Servicing disposition → <strong>None</strong></li>
+<li>Payment exception history → <strong>Filter</strong></li>
+</ul>
+<p>Then select 000312 again.</p>
+<p><strong>That resulting screenshot is the E07 I would retain.</strong> It demonstrates a deliberate master-detail interaction without producing internally inconsistent portfolio KPIs.</p>
+</div></article><article id="m-76d5ccab-58f8-4ae1-bf53-b0a1d0647cd3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00470 · 2026-08-27T12:16:56.373000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 6593624a-b4e0-4d7f-9e53-e7df5e287400.png; 0f9a4e06-227a-45cc-8bcd-85bc1807235e.png</p><div class="bubble"><p>Updated E07 - What should I call this evidence? My naming and folder so far: </p>
+</div></article><article id="m-07a4980d-16a2-48a2-9e30-928250d833d5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00471 · 2026-08-27T12:16:58.757704-04:00 · active path</p><div class="bubble"><p>Yes—this updated E07 is now exactly what we wanted. The portfolio-level context remains fixed at <strong>2 / $979.73 / 1 active / 1 hold / $785.48</strong>, while selecting Merchant <strong>000312</strong> filters only the Payment exception history to its <code>$27.75</code> case. That demonstrates the deliberate master-detail interaction cleanly.</p>
+<p>Your folder structure is also fine:</p>
+<p><code>C:\MSBF\P04_Evidence_Capture</code></p>
+<p>Given your existing naming convention, I would name E07:</p>
+<p><strong><code>P04_Baseline_Including_Account_Workbench_Interaction.png</code></strong></p>
+<p>That is more descriptive than calling it E07 and remains consistent with your other filenames:</p>
+<pre><code class="language-text">P04_Baseline.png
+P04_Baseline_Including_Alt_Text.png
+P04_Baseline_Including_Monitoring_posture_Tooltips.png
+P04_Baseline_Including_Servicing_disposition_Tooltips.png
+P04_Baseline_Including_Tab_Order.png
+P04_Recession_Energy.png
+P04_Baseline_Including_Account_Workbench_Interaction.png
+</code></pre>
+<p>I would keep those names rather than renumbering everything E01–E07. They are self-describing, which will be more useful when Audit opens the evidence package later.</p>
+<p>One small naming cleanup: for consistency, I&#39;d capitalize the visual names in the filenames if convenient:</p>
+<p><code>P04_Baseline_Including_Monitoring_Posture_Tooltip.png</code><br><code>P04_Baseline_Including_Servicing_Disposition_Tooltip.png</code></p>
+<p>Singular <strong>Tooltip</strong> is also slightly more accurate if each screenshot captures one hover state. But this is housekeeping only; I would not redo screenshots solely for filenames.</p>
+<p>With E07 captured, <strong>P04 UAT/evidence is substantively complete</strong>. Save the PBIP/project in this final state, and then we should create the P04 freeze/delta evidence package just as we did for P03 before moving into <strong>P05 — Risk, Economics &amp; Concentration</strong>.</p>
+</div></article><article id="m-42247a17-db70-45b5-aa08-f71e3d3a0c36" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00472 · 2026-08-27T12:20:55.259000-04:00 · active path</p><div class="bubble"><p>E07 captured. C:\MSBF\P04_Evidence_Capture includes all the requested evidence. Power BI project is saved. Let&#39;s freeze P04 and create the evidence package just as we did for P03. Provide the powershell commands, including initial commands to set up the powershell (I restarted my pc).</p>
+</div></article><article id="m-75854e0f-d538-40f1-b012-cd6b7e0af617" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00473 · 2026-08-27T12:21:00.424948-04:00 · active path</p><div class="bubble"><p>Yes. Since Power BI is saved and <code>C:\MSBF\P04_Evidence_Capture</code> contains the completed evidence set, we can freeze P04 exactly as we did P03.</p>
+<p>Because you restarted the PC, start with a fresh PowerShell session and run these blocks <strong>in order</strong>.</p>
+<h2>1. Initialize PowerShell and establish paths</h2>
+<p>Open <strong>PowerShell</strong> and run:</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+Set-StrictMode -Version Latest
+
+$ProjectRoot    = &quot;C:\MSBF\PBI_WP3_P01_CONSTRUCTION_R1\project&quot;
+$EvidenceSource = &quot;C:\MSBF\P04_Evidence_Capture&quot;
+$FreezeRoot     = &quot;C:\MSBF\PBI_WP3_P01_CONSTRUCTION_R1\evidence\P04_FREEZE&quot;
+
+New-Item -ItemType Directory -Force -Path $FreezeRoot | Out-Null
+New-Item -ItemType Directory -Force -Path &quot;$FreezeRoot\screenshots&quot; | Out-Null
+New-Item -ItemType Directory -Force -Path &quot;$FreezeRoot\delta&quot; | Out-Null
+New-Item -ItemType Directory -Force -Path &quot;$FreezeRoot\manifests&quot; | Out-Null
+
+Write-Host &quot;&quot;
+Write-Host &quot;Project root:   $ProjectRoot&quot;
+Write-Host &quot;Evidence source:$EvidenceSource&quot;
+Write-Host &quot;Freeze root:    $FreezeRoot&quot;
+Write-Host &quot;&quot;
+</code></pre>
+<p>Verify the two controlling inputs:</p>
+<pre><code class="language-powershell">if (-not (Test-Path -LiteralPath $ProjectRoot)) {
+    throw &quot;Project root not found: $ProjectRoot&quot;
+}
+
+if (-not (Test-Path -LiteralPath $EvidenceSource)) {
+    throw &quot;P04 evidence folder not found: $EvidenceSource&quot;
+}
+
+Write-Host &quot;P04 freeze inputs verified.&quot; -ForegroundColor Green
+</code></pre>
+<hr>
+<h1>2. Preserve the P04 evidence population</h1>
+<p>First copy the screenshots/evidence into the freeze structure.</p>
+<pre><code class="language-powershell">if (Test-Path -LiteralPath &quot;$FreezeRoot\screenshots&quot;) {
+    Remove-Item &quot;$FreezeRoot\screenshots&quot; -Recurse -Force
+}
+
+New-Item -ItemType Directory -Force -Path &quot;$FreezeRoot\screenshots&quot; | Out-Null
+
+Copy-Item `
+    -Path &quot;$EvidenceSource\*&quot; `
+    -Destination &quot;$FreezeRoot\screenshots&quot; `
+    -Recurse `
+    -Force
+</code></pre>
+<p>Confirm the captured files:</p>
+<pre><code class="language-powershell">Get-ChildItem &quot;$FreezeRoot\screenshots&quot; -Recurse -File |
+    Sort-Object Name |
+    Select-Object Name, Length |
+    Format-Table -AutoSize
+</code></pre>
+<p>You should see your P04 evidence set, including the Baseline full page, Recession Energy, alt text, both tooltip captures, tab order, and the Account Workbench interaction evidence.</p>
+<hr>
+<h1>3. Create the evidence carrier ZIP</h1>
+<p>Create a clean P04 evidence ZIP from the frozen copies:</p>
+<pre><code class="language-powershell">$EvidenceCarrier = &quot;$FreezeRoot\P04_Evidence_Capture.zip&quot;
+
+if (Test-Path -LiteralPath $EvidenceCarrier) {
+    Remove-Item -LiteralPath $EvidenceCarrier -Force
+}
+
+Compress-Archive `
+    -Path &quot;$FreezeRoot\screenshots\*&quot; `
+    -DestinationPath $EvidenceCarrier `
+    -CompressionLevel Optimal
+</code></pre>
+<p>Hash it:</p>
+<pre><code class="language-powershell">$EvidenceZipHash = (
+    Get-FileHash `
+        -LiteralPath $EvidenceCarrier `
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+[PSCustomObject]@{
+    File   = &quot;P04_Evidence_Capture.zip&quot;
+    Bytes  = (Get-Item $EvidenceCarrier).Length
+    SHA256 = $EvidenceZipHash
+} |
+    Export-Csv `
+        &quot;$FreezeRoot\manifests\P04_EVIDENCE_ZIP_SHA256.csv&quot; `
+        -NoTypeInformation
+
+Write-Host &quot;P04 evidence ZIP SHA-256: $EvidenceZipHash&quot;
+</code></pre>
+<hr>
+<h1>4. Create the screenshot/evidence manifest</h1>
+<pre><code class="language-powershell">$EvidenceManifest = Get-ChildItem &quot;$FreezeRoot\screenshots&quot; -Recurse -File |
+    Sort-Object FullName |
+    ForEach-Object {
+        $h = Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256
+
+        [PSCustomObject]@{
+            RelativePath = $_.FullName.Substring($FreezeRoot.Length + 1).Replace(&quot;\&quot;,&quot;/&quot;)
+            Bytes        = $_.Length
+            SHA256       = $h.Hash.ToLowerInvariant()
+        }
+    }
+
+$EvidenceManifest |
+    Export-Csv `
+        &quot;$FreezeRoot\manifests\P04_SCREENSHOT_MANIFEST.csv&quot; `
+        -NoTypeInformation
+</code></pre>
+<p>Show it:</p>
+<pre><code class="language-powershell">Import-Csv &quot;$FreezeRoot\manifests\P04_SCREENSHOT_MANIFEST.csv&quot; |
+    Format-Table -AutoSize
+</code></pre>
+<hr>
+<h1>5. Fingerprint the exact saved Power BI project</h1>
+<p>This creates the physical P04 freeze identity.</p>
+<pre><code class="language-powershell">$ProjectManifest = Get-ChildItem $ProjectRoot -Recurse -File |
+    Sort-Object FullName |
+    ForEach-Object {
+        $h = Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256
+
+        [PSCustomObject]@{
+            RelativePath = $_.FullName.Substring($ProjectRoot.Length + 1).Replace(&quot;\&quot;,&quot;/&quot;)
+            Bytes        = $_.Length
+            SHA256       = $h.Hash.ToLowerInvariant()
+        }
+    }
+
+$ProjectManifest |
+    Export-Csv `
+        &quot;$FreezeRoot\manifests\P04_PROJECT_FILE_MANIFEST.csv&quot; `
+        -NoTypeInformation
+</code></pre>
+<p>Now create the canonical project-manifest stream:</p>
+<pre><code class="language-powershell">$CanonicalLines = $ProjectManifest | ForEach-Object {
+    &quot;$($_.RelativePath)|$($_.Bytes)|$($_.SHA256)&quot;
+}
+
+$CanonicalText = ($CanonicalLines -join &quot;`n&quot;) + &quot;`n&quot;
+
+[System.IO.File]::WriteAllText(
+    &quot;$FreezeRoot\manifests\P04_PROJECT_MANIFEST_CANONICAL.txt&quot;,
+    $CanonicalText,
+    [System.Text.UTF8Encoding]::new($false)
+)
+</code></pre>
+<p>Hash that canonical manifest:</p>
+<pre><code class="language-powershell">$RootHash = (
+    Get-FileHash `
+        -LiteralPath &quot;$FreezeRoot\manifests\P04_PROJECT_MANIFEST_CANONICAL.txt&quot; `
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+&quot;Project manifest root SHA-256: $RootHash&quot; |
+    Set-Content `
+        &quot;$FreezeRoot\manifests\P04_PROJECT_ROOT_SHA256.txt&quot; `
+        -Encoding UTF8
+
+Get-Content &quot;$FreezeRoot\manifests\P04_PROJECT_ROOT_SHA256.txt&quot;
+</code></pre>
+<p>Keep that <code>$RootHash</code>; it is the identity of the saved project at the P04 freeze.</p>
+<hr>
+<h1>6. Capture the physical P04 report/model delta</h1>
+<p>Search the saved PBIP for the major P04 objects and source tables.</p>
+<pre><code class="language-powershell">$Patterns = @(
+    &quot;P04&quot;,
+    &quot;Merchant Servicing &amp; Exceptions&quot;,
+    &quot;Servicing &amp; Exceptions&quot;,
+    &quot;Monitoring posture&quot;,
+    &quot;Servicing disposition&quot;,
+    &quot;Account attention workbench&quot;,
+    &quot;Payment exception history&quot;,
+    &quot;FactMonitoringEndpoint&quot;,
+    &quot;FactServicingExecution&quot;,
+    &quot;FactServicingQueueEndpoint&quot;,
+    &quot;FactPaymentException&quot;,
+    &quot;P04 Accounts Requiring Attention&quot;,
+    &quot;P04 Attention Exposure&quot;,
+    &quot;P04 Active Servicing&quot;,
+    &quot;P04 Review Holds&quot;,
+    &quot;P04 Servicing Exposure&quot;,
+    &quot;P04 Unresolved Exceptions&quot;
+)
+
+$DeltaRefs = Get-ChildItem $ProjectRoot -Recurse -File |
+    Where-Object {
+        $_.Extension -in &quot;.tmdl&quot;, &quot;.json&quot;, &quot;.pbir&quot;, &quot;.bim&quot;, &quot;.pbip&quot;
+    } |
+    Select-String -Pattern $Patterns -SimpleMatch
+</code></pre>
+<p>Export machine-readable evidence:</p>
+<pre><code class="language-powershell">$DeltaRefs |
+    Select-Object Path, LineNumber, Line |
+    Export-Csv `
+        &quot;$FreezeRoot\delta\P04_PHYSICAL_DELTA_REFERENCES.csv&quot; `
+        -NoTypeInformation
+</code></pre>
+<p>And a human-readable version:</p>
+<pre><code class="language-powershell">$DeltaRefs |
+    Format-Table Path, LineNumber, Line -AutoSize |
+    Out-String -Width 4096 |
+    Set-Content `
+        &quot;$FreezeRoot\delta\P04_PHYSICAL_DELTA_REFERENCES.txt&quot; `
+        -Encoding UTF8
+</code></pre>
+<p>Inspect it:</p>
+<pre><code class="language-powershell">Get-Content &quot;$FreezeRoot\delta\P04_PHYSICAL_DELTA_REFERENCES.txt&quot;
+</code></pre>
+<p>A large result is normal because report-owned P04 measures/columns will appear in semantic-model definition files and page objects will appear in report JSON.</p>
+<hr>
+<h1>7. Capture the P04 report-owned semantic object population</h1>
+<p>This narrower search is useful for Audit because it isolates the objects explicitly named <code>P04</code>.</p>
+<pre><code class="language-powershell">$P04SemanticRefs = Get-ChildItem $ProjectRoot -Recurse -File |
+    Where-Object {
+        $_.Extension -in &quot;.tmdl&quot;, &quot;.bim&quot;, &quot;.json&quot;
+    } |
+    Select-String -Pattern &quot;P04 &quot; -SimpleMatch
+
+$P04SemanticRefs |
+    Select-Object Path, LineNumber, Line |
+    Export-Csv `
+        &quot;$FreezeRoot\delta\P04_REPORT_OWNED_OBJECT_REFERENCES.csv&quot; `
+        -NoTypeInformation
+
+$P04SemanticRefs |
+    Format-Table Path, LineNumber, Line -AutoSize |
+    Out-String -Width 4096 |
+    Set-Content `
+        &quot;$FreezeRoot\delta\P04_REPORT_OWNED_OBJECT_REFERENCES.txt&quot; `
+        -Encoding UTF8
+</code></pre>
+<p>This gives us a physical record of the P04 calculated columns and explicit measures without manually retyping every object into an evidence register.</p>
+<hr>
+<h1>8. Create the formal P04 freeze and delta note</h1>
+<p>Run this block:</p>
+<pre><code class="language-powershell">$FreezeTimestamp = Get-Date -Format &quot;yyyy-MM-ddTHH:mm:ssK&quot;
+
+@&#39;
+# P04 — Merchant Servicing &amp; Exceptions Construction Freeze
+
+## Freeze status
+
+P04 construction is frozen following physical Power BI construction and representative UAT.
+
+Final tab name:
+
+P04 - Servicing &amp; Exceptions
+
+Final page title:
+
+Merchant Servicing &amp; Exceptions
+
+Final page purpose:
+
+Identify accounts requiring operational attention, understand the drivers, and review governed servicing outcomes.
+
+## Analytical contract
+
+P04 is an endpoint operational workbench.
+
+It identifies scenario-qualified funded account paths requiring attention at the governed monitoring endpoint, distinguishes the associated servicing disposition and treatment path, presents remaining servicing exposure, and preserves dated payment-exception history.
+
+P04 is not an arbitrary historical as-of servicing reconstruction and does not imply that the endpoint servicing queue can be recomputed for every prior observation date.
+
+The page therefore uses Scenario as the governing analytical control and intentionally does not expose an Observation-date slicer.
+
+## Endpoint monitoring population
+
+The supplied current-model endpoint population supports two Baseline accounts requiring operational attention:
+
+- Merchant 000312 — Severe shortfall.
+- Merchant 000098 — Severe shortfall.
+
+The Recession Energy endpoint population contains no accounts requiring attention in the current governed build.
+
+The page preserves zero-state behavior explicitly for valid scenario populations with no attention accounts.
+
+## Governed servicing distinction
+
+The two Baseline severe-shortfall accounts follow different governed servicing paths.
+
+Merchant 000312:
+
+- enters the servicing layer with temporary-payment processing authorized;
+- receives an active synthetic temporary-payment treatment;
+- produces dated synthetic payment events;
+- contains one payment exception resolved by retry;
+- ends with reduced simulated exposure; and
+- remains due for reassessment.
+
+Merchant 000098:
+
+- requires operational/governance review;
+- does not receive synthetic payment processing;
+- remains on servicing review hold; and
+- retains its ending servicing exposure.
+
+The page therefore demonstrates that the same terminal monitoring condition does not independently determine servicing treatment; the downstream governed servicing layer controls execution versus review-hold behavior.
+
+## Physical construction delta
+
+P04 introduced or used report-owned presentation/context objects within the accepted source/model boundary.
+
+The construction includes:
+
+- endpoint monitoring presentation from FactMonitoringEndpoint;
+- servicing-execution presentation from FactServicingExecution;
+- payment-exception presentation from FactPaymentException;
+- servicing queue endpoint information inspected as part of construction;
+- explicit P04 measures required by the model&#39;s discourage-implicit-measures setting;
+- report-owned calculated presentation columns for readable monitoring, servicing, lifecycle and exception labels;
+- explicit cross-fact account retrieval using accepted AccountKey context where required;
+- zero-state presentation for operational count/exposure KPIs;
+- scenario-sensitive endpoint monitoring and servicing behavior;
+- a left-side operational summary rail;
+- Monitoring posture;
+- Servicing disposition;
+- Account attention workbench;
+- Payment exception history;
+- accessibility alt text;
+- representative analytical tooltips;
+- logical tab order; and
+- controlled native master-detail interaction from the Account attention workbench to Payment exception history.
+
+No accepted governed-measure formula was overwritten.
+
+No new business method, denominator, source, connector, Power Query business transformation, table relationship, privacy boundary, custom visual or external executable was introduced through P04 construction.
+
+## Interaction contract
+
+Scenario governs the page-level analytical population.
+
+The Account attention workbench does not redefine portfolio-level monitoring or servicing summary visuals.
+
+Selecting an account in the workbench may filter the associated Payment exception history while portfolio-level posture remains fixed to the selected Scenario.
+
+This preserves a deliberate portfolio-context / account-detail interaction model.
+
+## Provenance clarification
+
+The governed run identity M1_V0_2_BASELINE_BUILD is intentionally shared across BASELINE and RECESSION_ENERGY scenario identities.
+
+Scenario is a separate dimension within the governed run.
+
+Accordingly, selecting RECESSION_ENERGY does not change the governed Run value and this behavior is not treated as a provenance defect.
+
+## Temporal boundary
+
+Monitoring and servicing posture reflects the governed 2026-11-22 synthetic endpoint; payment exceptions reflect dated synthetic servicing events.
+
+Interpretation boundary: Deterministic synthetic evidence.
+
+## Evidence population
+
+Representative P04 evidence includes:
+
+- Baseline full-page endpoint state;
+- Recession Energy zero-attention state;
+- final accessibility alt text;
+- Monitoring posture tooltip behavior;
+- Servicing disposition tooltip behavior;
+- final tab order; and
+- native Account attention workbench to Payment exception history master-detail interaction.
+
+## Freeze determination
+
+P04 is frozen as the current construction candidate.
+
+Do not reopen P04 absent:
+
+- a material construction defect;
+- a hard-stop condition;
+- a coherent-wave remediation requirement; or
+- a later independently authorized model/method change.
+
+Continue the authorized current-model report-depth wave with P05 — Risk, Economics &amp; Concentration.
+&#39;@ |
+    Set-Content `
+        &quot;$FreezeRoot\P04_CONSTRUCTION_FREEZE_AND_DELTA.md&quot; `
+        -Encoding UTF8
+</code></pre>
+<p>Append timestamp and physical project identity:</p>
+<pre><code class="language-powershell">@&quot;
+
+## Frozen physical project identity
+
+Freeze timestamp:
+
+$FreezeTimestamp
+
+Project root:
+
+$ProjectRoot
+
+Project manifest root SHA-256:
+
+$RootHash
+
+P04 evidence carrier SHA-256:
+
+$EvidenceZipHash
+&quot;@ |
+    Add-Content `
+        &quot;$FreezeRoot\P04_CONSTRUCTION_FREEZE_AND_DELTA.md&quot; `
+        -Encoding UTF8
+</code></pre>
+<p>Inspect:</p>
+<pre><code class="language-powershell">Get-Content &quot;$FreezeRoot\P04_CONSTRUCTION_FREEZE_AND_DELTA.md&quot;
+</code></pre>
+<hr>
+<h1>9. Create a compact freeze summary</h1>
+<p>This gives us a machine-friendly metadata record in addition to the Markdown narrative.</p>
+<pre><code class="language-powershell">$FreezeSummary = [ordered]@{
+    page_id                    = &quot;P04&quot;
+    tab_name                   = &quot;P04 - Servicing &amp; Exceptions&quot;
+    page_title                 = &quot;Merchant Servicing &amp; Exceptions&quot;
+    freeze_timestamp           = $FreezeTimestamp
+    project_root               = $ProjectRoot
+    project_manifest_root_sha256 = $RootHash
+    evidence_zip               = &quot;P04_Evidence_Capture.zip&quot;
+    evidence_zip_sha256        = $EvidenceZipHash
+    temporal_contract          = &quot;Governed 2026-11-22 synthetic endpoint; dated synthetic payment exceptions&quot;
+    scenario_control           = &quot;Scenario&quot;
+    observation_date_control   = $false
+    publication_authorized     = $false
+    deployment_authorized      = $false
+    construction_status        = &quot;FROZEN_CANDIDATE&quot;
+}
+
+$FreezeSummary |
+    ConvertTo-Json -Depth 5 |
+    Set-Content `
+        &quot;$FreezeRoot\P04_FREEZE_SUMMARY.json&quot; `
+        -Encoding UTF8
+</code></pre>
+<p>Inspect it:</p>
+<pre><code class="language-powershell">Get-Content &quot;$FreezeRoot\P04_FREEZE_SUMMARY.json&quot;
+</code></pre>
+<hr>
+<h1>10. Build the final P04 freeze inventory</h1>
+<p>Do this <strong>after everything else above</strong>.</p>
+<pre><code class="language-powershell">$FreezeInventory = Get-ChildItem $FreezeRoot -Recurse -File |
+    Where-Object {
+        $_.FullName -ne &quot;$FreezeRoot\P04_FREEZE_INVENTORY.csv&quot;
+    } |
+    Sort-Object FullName |
+    ForEach-Object {
+        $h = Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256
+
+        [PSCustomObject]@{
+            RelativePath = $_.FullName.Substring($FreezeRoot.Length + 1).Replace(&quot;\&quot;,&quot;/&quot;)
+            Bytes        = $_.Length
+            SHA256       = $h.Hash.ToLowerInvariant()
+        }
+    }
+
+$FreezeInventory |
+    Export-Csv `
+        &quot;$FreezeRoot\P04_FREEZE_INVENTORY.csv&quot; `
+        -NoTypeInformation
+</code></pre>
+<p>Inspect the entire freeze package:</p>
+<pre><code class="language-powershell">Get-ChildItem $FreezeRoot -Recurse -File |
+    Sort-Object FullName |
+    Select-Object `
+        @{N=&quot;RelativePath&quot;;E={$_.FullName.Substring($FreezeRoot.Length + 1)}},
+        Length |
+    Format-Table -AutoSize
+</code></pre>
+<hr>
+<h1>11. Final integrity check</h1>
+<p>Verify that every file listed in the project manifest still matches the saved project.</p>
+<pre><code class="language-powershell">$ProjectCheck = Import-Csv &quot;$FreezeRoot\manifests\P04_PROJECT_FILE_MANIFEST.csv&quot; |
+    ForEach-Object {
+
+        $PhysicalPath = Join-Path $ProjectRoot ($_.RelativePath.Replace(&quot;/&quot;,&quot;\&quot;))
+
+        if (-not (Test-Path -LiteralPath $PhysicalPath)) {
+            [PSCustomObject]@{
+                RelativePath = $_.RelativePath
+                Result       = &quot;MISSING&quot;
+            }
+            return
+        }
+
+        $CurrentHash = (
+            Get-FileHash `
+                -LiteralPath $PhysicalPath `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+
+        [PSCustomObject]@{
+            RelativePath = $_.RelativePath
+            Result       = if ($CurrentHash -eq $_.SHA256) { &quot;PASS&quot; } else { &quot;HASH_MISMATCH&quot; }
+        }
+    }
+
+$ProjectCheck |
+    Export-Csv `
+        &quot;$FreezeRoot\manifests\P04_PROJECT_RECHECK.csv&quot; `
+        -NoTypeInformation
+
+$Failures = $ProjectCheck |
+    Where-Object { $_.Result -ne &quot;PASS&quot; }
+
+if ($Failures) {
+    Write-Host &quot;P04 FREEZE RECHECK FAILED&quot; -ForegroundColor Red
+    $Failures | Format-Table -AutoSize
+}
+else {
+    Write-Host &quot;P04 project recheck: ALL FILES PASS&quot; -ForegroundColor Green
+}
+</code></pre>
+<p>Because we are not editing Power BI during this freeze operation, every project file should return <code>PASS</code>.</p>
+<hr>
+<h1>12. Freeze completion output</h1>
+<p>Finally:</p>
+<pre><code class="language-powershell">Write-Host &quot;&quot;
+Write-Host &quot;========================================&quot; -ForegroundColor Green
+Write-Host &quot;P04 FREEZE COMPLETE&quot; -ForegroundColor Green
+Write-Host &quot;========================================&quot; -ForegroundColor Green
+Write-Host &quot;&quot;
+Write-Host &quot;Project manifest root:&quot;
+Write-Host $RootHash
+Write-Host &quot;&quot;
+Write-Host &quot;Evidence carrier SHA-256:&quot;
+Write-Host $EvidenceZipHash
+Write-Host &quot;&quot;
+Write-Host &quot;Freeze evidence root:&quot;
+Write-Host $FreezeRoot
+Write-Host &quot;&quot;
+Write-Host &quot;Next construction page:&quot;
+Write-Host &quot;P05 - Risk, Economics &amp; Concentration&quot;
+Write-Host &quot;&quot;
+</code></pre>
+<h3>After this</h3>
+<p>Do <strong>not</strong> reopen P04 for ordinary polishing, and do not ZIP the entire P04 freeze directory into a final Audit submission yet. The directory should remain the frozen P04 component alongside <code>P03_FREEZE</code>.</p>
+<p>Our construction state will then be:</p>
+<p><strong>P01</strong> accepted<br><strong>P02</strong> accepted<br><strong>P03</strong> frozen construction candidate<br><strong>P04</strong> frozen construction candidate<br><strong>P05</strong> next — Risk, Economics &amp; Concentration<br><strong>P06</strong> later — Governance &amp; Reconciliation</p>
+<p>Once P05 and P06 are built and frozen, we can assemble <strong>one coherent current-model report-depth wave package</strong> for Independent Audit rather than creating separate page-level audit submissions. [export reference: memcite]</p>
+</div></article><article id="m-160f0740-20cd-43e3-96e6-cf89c24a50df" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00474 · 2026-08-27T12:23:02.903000-04:00 · active path</p><div class="bubble"><p>wasn&#39;t there a privacy or profile, etc initial powershell command we had been using at the start of every powershell instance.</p>
+</div></article><article id="m-c75bfcb6-f75f-48d4-9945-95a64752bddd" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00475 · 2026-08-27T12:23:21.306354-04:00 · active path</p><div class="bubble"><p>Yes. You remembered correctly. We have consistently been starting the controlled MSBF PowerShell sessions with a <strong>process-scoped execution-policy bypass</strong>, often together with the stop-on-error setting.</p>
+<p>Use this <strong>before Step 1</strong> of the P04 freeze commands I just gave you:</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+Set-StrictMode -Version Latest
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+</code></pre>
+<p>The important command you were remembering is:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+</code></pre>
+<h3>Why we use <code>-Scope Process</code></h3>
+<p>It applies <strong>only to the current PowerShell process</strong>. When you close that PowerShell window, the bypass disappears. We are not changing your machine-wide or user-wide execution-policy configuration.</p>
+<p>In some of the earlier controlled construction workflows we also launched scripts explicitly with:</p>
+<pre><code class="language-powershell">pwsh -NoProfile -ExecutionPolicy Bypass ...
+</code></pre>
+<p>The <strong><code>-NoProfile</code></strong> part is probably the “profile/privacy” wording you were remembering. That is useful when launching a new PowerShell process to ensure your personal PowerShell profile doesn&#39;t alter the controlled execution environment.</p>
+<p>For the interactive session you&#39;re using now, start with:</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+Set-StrictMode -Version Latest
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+</code></pre>
+<p>Then proceed with my P04 freeze block beginning:</p>
+<pre><code class="language-powershell">$ProjectRoot    = &quot;C:\MSBF\PBI_WP3_P01_CONSTRUCTION_R1\project&quot;
+$EvidenceSource = &quot;C:\MSBF\P04_Evidence_Capture&quot;
+$FreezeRoot     = &quot;C:\MSBF\PBI_WP3_P01_CONSTRUCTION_R1\evidence\P04_FREEZE&quot;
+</code></pre>
+<p>So yes—I omitted the execution-policy initialization from the previous startup block. <strong>Add it back as part of our standard startup sequence.</strong> [export reference: memcite]</p>
+</div></article><article id="m-e0c87743-218b-449f-bddd-aa7ce9c70c47" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00476 · 2026-08-27T12:40:28.435000-04:00 · active path</p><div class="bubble"><p>P04 frozen construction candidate is complete. Let&#39;s discuss the story we&#39;ve told so far across P01 through P04 .  One thing I&#39;ve thought about is that P03 doesn&#39;t necessarily tell us explicitly why a loan was approved or not. What were the underlying metrics that led to the decision. Is that something we can easily improve on in P03, and should we? I think if I was in an interview they would want to know what were the underlying elements that I considered in my model that ultimately impacted that decision. Secondly, I think beyond risk I&#39;d want to know as an executive, what was the bottom line, what was our ROI. Are we telling that story in P05/P06 and should we? What is the remaining story to tell?</p>
+</div></article><article id="m-ccf60880-34c2-4b72-a180-8673b1902c4e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00477 · 2026-08-27T12:40:49.644033-04:00 · active path</p><div class="bubble"><p>Yes. I think you&#39;ve identified the <strong>two remaining questions that elevate this from a good Power BI portfolio into an executive credit-strategy story</strong>:</p>
+<ol>
+<li><strong>Why did we make the credit decision?</strong></li>
+<li><strong>Did the business make money for the risk it took?</strong></li>
+</ol>
+<p>P01–P04 already tell a coherent operational story, but those two questions are not yet prominent enough.</p>
+<h2>The story P01–P04 currently tells</h2>
+<p>I would characterize the report sequence this way:</p>
+<p><strong>P01 — Cohort Command Center:</strong> <em>What did we launch and what happened at a high level?</em> This is the executive entry point: population, decision/funding outcomes, portfolio scale and high-level reconciliation.</p>
+<p><strong>P02 — Cohort Lifecycle:</strong> <em>How did the funded cohort perform through time?</em> We move from origination into seasoning/performance and show how the fixed launch cohort develops.</p>
+<p><strong>P03 — Application Journey:</strong> <em>What happened to this particular application/account?</em> We now follow one merchant from contextual profile → request → decision → funded terms → receivable/remittance performance → monitoring → servicing.</p>
+<p><strong>P04 — Merchant Servicing &amp; Exceptions:</strong> <em>Where did the portfolio require operational attention, and what did we do about it?</em> This turns the account-level servicing experience into a portfolio operational workbench.</p>
+<p>That&#39;s already a good sequence:</p>
+<blockquote>
+<p><strong>Launch → Season → Investigate → Intervene</strong></p>
+</blockquote>
+<p>But there are two gaps:</p>
+<blockquote>
+<p><strong>Why did we decide?</strong><br><strong>Was it economically worthwhile?</strong></p>
+</blockquote>
+<p>Those are exactly the questions I would expect a strong interviewer—particularly in credit strategy, portfolio analytics, model governance, or executive analytics—to ask.</p>
+<hr>
+<h1>1. P03 should explain the decision</h1>
+<p>I think we should <strong>reopen P03 in a very bounded way</strong>.</p>
+<p>Not because P03 is defective. It is because physical construction has revealed an opportunity to make the page substantially more valuable.</p>
+<p>Right now P03 tells us:</p>
+<blockquote>
+<p>Merchant 000749 requested X → <strong>APPROVED / Final offer</strong></p>
+</blockquote>
+<p>or</p>
+<blockquote>
+<p>Merchant 000001 requested X → <strong>DECLINED / Evidence decline</strong></p>
+</blockquote>
+<p>But it doesn&#39;t adequately answer:</p>
+<blockquote>
+<p><strong>Why?</strong></p>
+</blockquote>
+<p>That&#39;s a material analytical gap in an application journey.</p>
+<p>And your underlying model is much richer than what P03 currently exposes. The project contains cash-flow capacity, resilience, integrated risk, exposure, recovery/LGD, comparative loss and related underwriting/economic evidence. The broader strategy design also includes eligibility, pricing/structure, approve/counteroffer/manual-review/decline logic. [export reference: memcite]</p>
+<h3>What I would add to P03</h3>
+<p>Not another giant table and definitely not a fake “model score.”</p>
+<p>I would add a compact section between <strong>Merchant context/request</strong> and the downstream lifecycle called something like:</p>
+<h3><strong>Decision profile</strong></h3>
+<p>Its job is to expose perhaps <strong>5–7 governed decision-relevant metrics</strong>.</p>
+<p>Conceptually:</p>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Example of what we want</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Capacity</td>
+<td>Cash-flow / repayment capacity</td>
+</tr>
+<tr>
+<td>Resilience</td>
+<td>Merchant resilience measure/tier</td>
+</tr>
+<tr>
+<td>Risk</td>
+<td>Integrated risk tier/measure</td>
+</tr>
+<tr>
+<td>Exposure</td>
+<td>Exposure / affordability relationship</td>
+</tr>
+<tr>
+<td>Loss</td>
+<td>Comparative loss / expected-loss evidence if actually decision-relevant</td>
+</tr>
+<tr>
+<td>Economics</td>
+<td>Unit-economic or pricing measure if actually used upstream</td>
+</tr>
+<tr>
+<td>Evidence</td>
+<td>Sufficiency/eligibility state</td>
+</tr>
+</tbody></table>
+<p>Then the viewer gets:</p>
+<p><strong>Merchant characteristics</strong><br>↓<br><strong>Requested structure</strong><br>↓<br><strong>Decision profile</strong><br>↓<br><strong>APPROVED / REVIEW / DECLINED</strong><br>↓<br><strong>Funded terms</strong><br>↓<br><strong>Performance</strong></p>
+<p>That would transform P03 from a transaction trace into an <strong>underwriting narrative</strong>.</p>
+<h3>But there is an important constraint</h3>
+<p>We should <strong>not infer that every available risk metric caused the decision</strong>.</p>
+<p>Before building this section, we should inspect the actual decision/candidate/eligibility facts and documentation and identify:</p>
+<ul>
+<li>which variables genuinely feed the decision;</li>
+<li>which are merely descriptive;</li>
+<li>what thresholds or gates exist;</li>
+<li>what causes policy decline;</li>
+<li>what causes evidence decline;</li>
+<li>what causes counteroffer review;</li>
+<li>what permits final-offer authorization.</li>
+</ul>
+<p>That&#39;s particularly important for an interview. You want to be able to say:</p>
+<blockquote>
+<p>“These are the governed inputs and gates that drove the synthetic decision.”</p>
+</blockquote>
+<p>rather than:</p>
+<blockquote>
+<p>“These are some risk metrics that happened to be available on the merchant.”</p>
+</blockquote>
+<p>The former demonstrates <strong>credit strategy design</strong>. The latter is just dashboarding.</p>
+<p>So yes: <strong>I recommend a bounded P03 enhancement, but only after physical inspection of the decision-driving structures.</strong></p>
+<hr>
+<h1>2. P05 absolutely should answer “Did we make money?”</h1>
+<p>This should become one of P05&#39;s principal jobs.</p>
+<p>Our working title:</p>
+<h3><strong>Risk, Economics &amp; Concentration</strong></h3>
+<p>is actually very good because those three concepts belong together.</p>
+<p>The executive question isn&#39;t merely:</p>
+<blockquote>
+<p>“How risky was the portfolio?”</p>
+</blockquote>
+<p>It&#39;s:</p>
+<blockquote>
+<p><strong>“What return did we generate for the risk and capital/exposure we took, and where is that result concentrated?”</strong></p>
+</blockquote>
+<p>The model already contains unit economics, merchant acquisition cost, exposure, recovery/LGD and comparative-loss evidence. [export reference: memcite]</p>
+<p>So I would structure P05 around three executive questions.</p>
+<h3>A. Economics — What was the bottom line?</h3>
+<p>This should be prominent, potentially the <strong>left summary rail</strong>.</p>
+<p>We need to inspect the actual economic facts before choosing the exact metrics, but conceptually I want:</p>
+<p><strong>Funded principal / deployed capital</strong><br><strong>Finance charge / contractual revenue</strong><br><strong>Realized or simulated collections</strong><br><strong>Loss / unrecovered exposure</strong><br><strong>Acquisition cost</strong><br><strong>Net economics</strong><br><strong>ROI / return on deployed capital</strong></p>
+<p>Possibly contribution margin or another accepted economic metric if the model contains it.</p>
+<p>The important thing is that we should <strong>not invent a new ROI methodology in Power BI</strong>. If Module 2 contains an accepted economics method from which ROI can be truthfully calculated, use it. If not, we expose the accepted economic components and defer the derived ROI until the method is governed.</p>
+<h3>B. Risk — What did we earn for the risk?</h3>
+<p>This is where the page gets much more interesting than a standard portfolio dashboard.</p>
+<p>We want to answer things like:</p>
+<ul>
+<li>economic outcome by risk tier;</li>
+<li>loss/exposure by risk tier;</li>
+<li>economics by merchant size;</li>
+<li>economics by industry;</li>
+<li>economics by acquisition channel;</li>
+<li>potentially economics by decision/offer structure.</li>
+</ul>
+<p>Then the executive can see:</p>
+<blockquote>
+<p>“This segment generated more contractual revenue, but did the incremental risk justify it?”</p>
+</blockquote>
+<p>That is the core portfolio-management question.</p>
+<h3>C. Concentration — Where are we exposed?</h3>
+<p>Industry, merchant size, acquisition source/channel, risk tier, perhaps geography if supported.</p>
+<p>But concentration shouldn&#39;t just be:</p>
+<blockquote>
+<p>“28% of balances are restaurants.”</p>
+</blockquote>
+<p>It becomes much more useful if we can show:</p>
+<blockquote>
+<p><strong>Exposure share + economic contribution + risk/loss</strong></p>
+</blockquote>
+<p>for the same segment.</p>
+<p>That lets an executive distinguish:</p>
+<p><strong>large and profitable</strong><br>from<br><strong>large and risky</strong><br>from<br><strong>small but disproportionately loss-producing</strong>.</p>
+<p>That&#39;s a very credible executive portfolio-management experience.</p>
+<hr>
+<h1>3. P06 should NOT become another economics page</h1>
+<p>I would preserve:</p>
+<h3><strong>P06 — Governance &amp; Reconciliation</strong></h3>
+<p>as the final answer to:</p>
+<blockquote>
+<p><strong>“Can I trust everything I just saw?”</strong></p>
+</blockquote>
+<p>That gives the entire report a satisfying close.</p>
+<p>P06 should deal with things like:</p>
+<p><strong>source → model → report reconciliation</strong><br><strong>certification status</strong><br><strong>control results</strong><br><strong>unresolved reconciliation exceptions</strong><br><strong>model/source release identity</strong><br><strong>governed evidence boundaries</strong></p>
+<p>In other words:</p>
+<blockquote>
+<p>P05 tells the executive whether the business worked.<br>P06 tells the executive whether the evidence supporting that conclusion is controlled and trustworthy.</p>
+</blockquote>
+<p>I would not dilute P06 with ROI.</p>
+<hr>
+<h1>The revised six-page narrative</h1>
+<p>With the bounded P03 improvement, I think we arrive at a remarkably coherent six-page report:</p>
+<table>
+<thead>
+<tr>
+<th>Page</th>
+<th>Executive question</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>P01 — Cohort Command Center</strong></td>
+<td><strong>What did we launch and what happened?</strong></td>
+</tr>
+<tr>
+<td><strong>P02 — Cohort Lifecycle</strong></td>
+<td><strong>How did the funded cohort perform over time?</strong></td>
+</tr>
+<tr>
+<td><strong>P03 — Application Journey</strong></td>
+<td><strong>Why did we make this decision, and what happened afterward?</strong></td>
+</tr>
+<tr>
+<td><strong>P04 — Servicing &amp; Exceptions</strong></td>
+<td><strong>Where did performance require intervention, and what did we do?</strong></td>
+</tr>
+<tr>
+<td><strong>P05 — Risk, Economics &amp; Concentration</strong></td>
+<td><strong>Did we make money for the risk we took, and where is that risk/return concentrated?</strong></td>
+</tr>
+<tr>
+<td><strong>P06 — Governance &amp; Reconciliation</strong></td>
+<td><strong>Can we trust the numbers and trace them to governed evidence?</strong></td>
+</tr>
+</tbody></table>
+<p>And that gives us an even cleaner verbal story:</p>
+<blockquote>
+<p><strong>Originate → Perform → Explain → Intervene → Evaluate → Trust</strong></p>
+</blockquote>
+<p>That is much stronger than simply having six attractive dashboards.</p>
+<h2>What I would do next</h2>
+<p>I would <strong>not start P05 quite yet</strong>.</p>
+<p>First, perform a very bounded investigation for P03: inspect the physical tables/documentation that contain the actual <strong>eligibility, capacity, resilience, integrated-risk, loss/economic and decision-gate evidence</strong> and determine exactly which metrics caused or governed Final Offer, Counteroffer Review, Policy Decline and Evidence Decline.</p>
+<p>If the model supports what I suspect it does, we add one compact <strong>Decision profile</strong> section to P03, UAT the four decision paths again, update the P03 freeze delta as a coherent-wave refinement, and refreeze it.</p>
+<p>Then we move to P05 and inspect the physical <strong>economics/risk/concentration facts</strong> before designing that page. That&#39;s where I would explicitly investigate whether Module 2 already supports a defensible <strong>ROI/net economics</strong> calculation or whether we should tell the bottom-line story through its governed components instead.</p>
+<p>That sequence closes the two most important unanswered executive questions before P06 closes the report on governance. [export reference: memcite]</p>
+</div></article><article id="m-8201fece-242c-47c2-9f38-8dcdef225aa3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00478 · 2026-08-27T12:49:51.675000-04:00 · active path</p><div class="bubble"><p>Help me build this: What I would add to P03
+Not another giant table and definitely not a fake “model score.”</p>
+<p>I would add a compact section between <strong>Merchant context/request</strong> and the downstream lifecycle called something like:</p>
+<h3><strong>Decision profile</strong></h3>
+<p>Its job is to expose perhaps <strong>5–7 governed decision-relevant metrics</strong>.</p>
+<p>Conceptually:</p>
+<table>
+<thead>
+<tr>
+<th>DimensionExample of what we want</th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Capacity</td>
+<td>Cash-flow / repayment capacity</td>
+</tr>
+<tr>
+<td>Resilience</td>
+<td>Merchant resilience measure/tier</td>
+</tr>
+<tr>
+<td>Risk</td>
+<td>Integrated risk tier/measure</td>
+</tr>
+<tr>
+<td>Exposure</td>
+<td>Exposure / affordability relationship</td>
+</tr>
+<tr>
+<td>Loss</td>
+<td>Comparative loss / expected-loss evidence if actually decision-relevant</td>
+</tr>
+<tr>
+<td>Economics</td>
+<td>Unit-economic or pricing measure if actually used upstream</td>
+</tr>
+<tr>
+<td>Evidence</td>
+<td>Sufficiency/eligibility state</td>
+</tr>
+</tbody></table>
+<p>Then the viewer gets:</p>
+<p><strong>Merchant characteristics</strong></p>
+<p>↓</p>
+<p><strong>Requested structure</strong></p>
+<p>↓</p>
+<p><strong>Decision profile</strong></p>
+<p>↓</p>
+<p><strong>APPROVED / REVIEW / DECLINED</strong></p>
+<p>↓</p>
+<p><strong>Funded terms</strong></p>
+<p>↓</p>
+<p><strong>Performance</strong></p>
+<p>That would transform P03 from a transaction trace into an <strong>underwriting narrative</strong>.</p>
+<h3>But there is an important constraint</h3>
+<p>We should <strong>not infer that every available risk metric caused the decision</strong>.</p>
+<p>Before building this section, we should inspect the actual decision/candidate/eligibility facts and documentation and identify:</p>
+<ul>
+<li>which variables genuinely feed the decision; </li>
+<li>which are merely descriptive; </li>
+<li>what thresholds or gates exist; </li>
+<li>what causes policy decline; </li>
+<li>what causes evidence decline; </li>
+<li>what causes counteroffer review; </li>
+<li>what permits final-offer authorization.</li>
+</ul>
+<p>That&#39;s particularly important for an interview. You want to be able to say:</p>
+<blockquote>
+<p>“These are the governed inputs and gates that drove the synthetic decision.”</p>
+</blockquote>
+<p>rather than:</p>
+<blockquote>
+<p>“These are some risk metrics that happened to be available on the merchant.”</p>
+</blockquote>
+<p>The former demonstrates <strong>credit strategy design</strong>. The latter is just dashboarding.</p>
+<p>So yes: <strong>I recommend a bounded P03 enhancement, but only after physical inspection of the decision-driving structures.              NOTE, I&#39;m thinking we can create a similar table to Merchant request (with no title) and place it directly under that current table). Essentially it&#39;ll be like a second set of columns/1 x row under that same Merchant request section. I think I can fit that into the white space there.</strong></p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

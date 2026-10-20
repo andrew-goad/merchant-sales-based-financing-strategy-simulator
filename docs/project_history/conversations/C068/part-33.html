@@ -1,0 +1,1500 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Merchant POS Lending Simulator — part 33 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>Merchant POS Lending Simulator — part 33</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-32.html">Previous part</a><a href="part-34.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-b8da88fe-f1f0-4799-a4d1-9349e7e06c8e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00423 · 2026-07-30T19:24:46.362450-04:00 · active path</p><div class="bubble"><h1>M2.2 diagnosis: the selected stress structure bypassed the original per-template floor</h1>
+<p>The v0.2R1 target-typed hash correction worked: Program 142 progressed beyond the prior 806-row reconciliation problem. It then reached the next governed control and correctly stopped because <strong>nine selected stress structures were more favorable than their matched baseline structures</strong>. [export reference: filecite | turn84file0]</p>
+<p>This is a separate business-logic defect—not a hash defect and not related to selecting <strong>Yes to All</strong> for the temporary-table updates.</p>
+<h2>Exact root cause</h2>
+<p>The original stress floor compared baseline and stress candidates at this grain:</p>
+<pre><code class="language-text">merchant_application_id
++
+candidate_template_code
+</code></pre>
+<p>That works when baseline and stress select the <strong>same candidate template</strong>.</p>
+<p>However, the accepted M2.1 route evidence contains ten applications that migrate from:</p>
+<pre><code class="language-text">Baseline    ELIGIBLE_FOR_OFFER_DESIGN
+Stress      MANUAL_REVIEW
+</code></pre>
+<p>See the accepted M2.1 matched-route migration evidence (historical reference: <code>sandbox:[session]/MSBF_M2_1_Eligibility_Policy_Gates_Decision_Routing_Foundations_Detail_Report_v0_2R7_Matched_Baseline_Stress_Route_Migration_20260730.csv</code>; referenced bytes not established here).</p>
+<p>That route migration changes the selected template family:</p>
+<pre><code class="language-text">Baseline selected template
+ELIGIBLE_REQUEST_REFERENCE
+
+Stress selected template
+REVIEW_CAPACITY_ALIGNED
+</code></pre>
+<p>Because the template codes differ, the original per-template floor does not pair those selected candidates. Nine of the ten migrated applications therefore retained at least one structure component that was more favorable under stress:</p>
+<pre><code class="language-text">Higher funding amount
+Lower remittance rate
+Lower payback multiple
+Lower collection horizon
+</code></pre>
+<p>The governed assertion correctly caught those nine cases.</p>
+<p>The previously completed Program 140B recovery result (historical reference: <code>sandbox:[session]/140B_msbf_m2_2_failed_numeric_typmod_hash_recovery_check_v0_2R1_results_20260730.csv</code>; referenced bytes not established here) also confirms the expected accepted source population:</p>
+<pre><code class="language-text">Routing rows                    1,500
+Eligible rows                      59
+Manual-review rows                190
+Candidate-bearing rows            249
+Expected candidate rows           557
+Expected canonical entities     7,336
+</code></pre>
+<h1>Transactional impact</h1>
+<p>Program 142 runs in one explicit transaction. The stress assertion occurred before <code>COMMIT</code>, so its generated M2.2 records did not commit.</p>
+<p>Click:</p>
+<pre><code class="language-text">Stop
+</code></pre>
+<p>Do not use:</p>
+<pre><code class="language-text">Retry
+Skip
+Skip All
+</code></pre>
+<p>Then execute:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>Programs 140 and 141 remain valid and should <strong>not</strong> be rerun.</p>
+<p>The expected persistent state after rollback is:</p>
+<pre><code class="language-text">Run status                         M2_1_ACCEPTED
+M2.2 policy                        APPROVED
+
+Request snapshot rows              0
+Request latest rows                0
+Request archive rows               0
+Candidate rows                     0
+Pricing snapshot rows              0
+Pricing latest rows                0
+Pricing archive rows               0
+Registry rows                      0
+M2.2 evidence rows                 0
+M2.2 acceptance rows               0
+</code></pre>
+<hr>
+<h1>M2.2 v0.2R2 consolidated hotfix</h1>
+<p>Download M2.2 v0.2R2 — Selected-Structure Stress-Floor Hotfix (historical reference: <code>sandbox:[session]/MSBF_M2_2_v0_2R2_Selected_Structure_Stress_Floor_Hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M2_2_v0_2R2_Selected_Structure_Stress_Floor_Hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+0b05b5f3257855d5048804c6b796bbb993955444c7ef7c9e660958d3cc6c5662
+
+Archive files
+99
+
+ZIP CRC
+PASS
+</code></pre>
+<p>Canonical byte-identical copy:</p>
+<p>Download the canonical M2.2 v0.2R2 hotfix (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m2_2_v0_2R2_selected_structure_stress_floor_hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m2_2_v0_2R2_selected_structure_stress_floor_hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<h2>Key files</h2>
+<ul>
+<li>140C — Failed-generation recovery and route-transition check (historical reference: <code>sandbox:[session]/MSBF_M2_2_v0_2R2_Selected_Structure_Stress_Floor_Hotfix/live_recovery/tests/140C_msbf_m2_2_failed_selected_stress_nonimprovement_recovery_check_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>142 — Corrected deterministic generation (historical reference: <code>sandbox:[session]/MSBF_M2_2_v0_2R2_Selected_Structure_Stress_Floor_Hotfix/live_recovery/sql/142_msbf_m2_2_pricing_structure_generation_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>143 — Strengthened positive validation (historical reference: <code>sandbox:[session]/MSBF_M2_2_v0_2R2_Selected_Structure_Stress_Floor_Hotfix/live_recovery/sql/143_msbf_m2_2_pricing_structure_validation_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>144 — Negative controls (historical reference: <code>sandbox:[session]/MSBF_M2_2_v0_2R2_Selected_Structure_Stress_Floor_Hotfix/live_recovery/sql/144_msbf_m2_2_negative_control_tests_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>145 — Strengthened acceptance finalizer (historical reference: <code>sandbox:[session]/MSBF_M2_2_v0_2R2_Selected_Structure_Stress_Floor_Hotfix/live_recovery/sql/145_msbf_m2_2_acceptance_finalize_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>146 — Master report (historical reference: <code>sandbox:[session]/MSBF_M2_2_v0_2R2_Selected_Structure_Stress_Floor_Hotfix/live_recovery/tests/146_MSBF_M2_2_Master_Report_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>147 — Detailed report (historical reference: <code>sandbox:[session]/MSBF_M2_2_v0_2R2_Selected_Structure_Stress_Floor_Hotfix/live_recovery/tests/147_MSBF_M2_2_Detail_Report_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>Execution guide (historical reference: <code>sandbox:[session]/MSBF_M2_2_v0_2R2_Selected_Structure_Stress_Floor_Hotfix/docs/M2_2_v0_2R2_EXECUTION_GUIDE.md</code>; referenced bytes not established here)</li>
+<li>Root-cause and stress-floor audit (historical reference: <code>sandbox:[session]/MSBF_M2_2_v0_2R2_Selected_Structure_Stress_Floor_Hotfix/docs/M2_2_v0_2R2_ROOT_CAUSE_AND_STRESS_FLOOR_AUDIT.md</code>; referenced bytes not established here)</li>
+<li>Package-validation report (historical reference: <code>sandbox:[session]/MSBF_M2_2_v0_2R2_Selected_Structure_Stress_Floor_Hotfix/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+</ul>
+<hr>
+<h1>What the v0.2R2 correction does</h1>
+<p>After candidate ranking, Program 142 now materializes the <strong>selected</strong> baseline and stress candidates at matched application grain.</p>
+<p>For only the nine offending stress candidates, it applies:</p>
+<pre><code class="language-text">Stress funding amount
+= least(stress amount, baseline amount)
+
+Stress remittance rate
+= greatest(stress rate, baseline rate)
+
+Stress payback multiple
+= greatest(stress multiple, baseline multiple)
+
+Stress collection horizon
+= greatest(stress horizon, baseline horizon)
+</code></pre>
+<p>It then recalculates all dependent fields before hashing:</p>
+<pre><code class="language-text">Total repayment
+Finance charge
+Implied daily collection
+Implied payoff days
+Amount-to-request ratio
+Capacity-alignment ratio
+Stress-load rate
+Risk-load rate
+Candidate eligibility
+</code></pre>
+<p>The correction does <strong>not</strong>:</p>
+<ul>
+<li>add or remove candidates;</li>
+<li>alter the 557-row candidate count;</li>
+<li>change route logic;</li>
+<li>change candidate-template definitions;</li>
+<li>change candidate ranking;</li>
+<li>change the 750-row comparison grain;</li>
+<li>change the 7,336-entity canonical universe;</li>
+<li>authorize a final offer or decision.</li>
+</ul>
+<p>The field:</p>
+<pre><code class="language-text">stress_nonimprovement_applied_flag
+</code></pre>
+<p>now identifies only structures that were actually adjusted. Its expected count is nine, rather than every candidate-bearing stress row.</p>
+<p>Program 143 and Program 145 were also strengthened to reconcile every selected structure term to its selected candidate—not merely its row hash and selection flag.</p>
+<hr>
+<h1>Exact execution sequence</h1>
+<h2>1. Roll back Program 142</h2>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<h2>2. Run Program 140C</h2>
+<pre><code class="language-text">140C_msbf_m2_2_failed_selected_stress_nonimprovement_recovery_check_v0_2R2.sql
+</code></pre>
+<p>This is read-only.</p>
+<p>Required result:</p>
+<pre><code class="language-text">run_status                           M2_1_ACCEPTED
+policy_status                        APPROVED
+configuration_hash                   non-null
+
+expected_candidate_rows              557
+expected_canonical_entities        7,336
+
+matched_applications                 750
+stress_candidate_bearing_rows         66
+eligible_to_review_transition_rows    10
+
+request_snapshot_rows                  0
+request_latest_rows                    0
+request_archive_rows                   0
+candidate_rows                         0
+pricing_snapshot_rows                  0
+pricing_latest_rows                    0
+pricing_archive_rows                   0
+registry_rows                          0
+evidence_rows                          0
+acceptance_rows                        0
+blocking_errors                        0
+
+recovery_status                     PASS
+</code></pre>
+<p>Stop if <code>recovery_status</code> is not <code>PASS</code>.</p>
+<h2>3. Run Program 142 v0.2R2</h2>
+<pre><code class="language-text">142_msbf_m2_2_pricing_structure_generation_v0_2R2.sql
+</code></pre>
+<p>DBeaver will probably display the same warnings for whole-table updates of temporary <code>_m2_2_*</code> staging tables. Select:</p>
+<pre><code class="language-text">Yes to All
+</code></pre>
+<p>Those updates remain intentional and session-temporary.</p>
+<h3>Required stress-floor diagnostics</h3>
+<pre><code class="language-text">matched_selected_structure_rows       66
+eligible_to_review_transition_rows    10
+pre_floor_improvement_rows             9
+stress_floor_applied_rows              9
+post_floor_improvement_rows            0
+</code></pre>
+<p>Program 142 will also return the pre-floor dimensional counts for:</p>
+<pre><code class="language-text">Amount improvements
+Remittance improvements
+Payback improvements
+Horizon improvements
+</code></pre>
+<p>Those are diagnostic; the hard requirement is:</p>
+<pre><code class="language-text">9 pre-floor
+9 adjusted
+0 post-floor
+</code></pre>
+<h3>Required generation checkpoint</h3>
+<pre><code class="language-text">run_status                       M2_2_GENERATED
+
+policy_rows                      1
+template_rows                    5
+reason_rows                     18
+disposition_rows                 4
+
+request_snapshot_rows          750
+request_latest_rows            750
+request_archive_rows           750
+
+candidate_rows                 557
+
+pricing_snapshot_rows        1,500
+pricing_latest_rows          1,500
+pricing_archive rows         1,500
+comparison_rows                750
+
+expected_canonical_entities  7,336
+actual_canonical_entities    7,336
+row_level_mismatches             0
+
+all governed set hashes       non-null
+generation_status             PASS
+</code></pre>
+<p>After successful commit, do not rerun Program 142.</p>
+<h2>4. Continue with Programs 143–147 v0.2R2</h2>
+<pre><code class="language-text">143_msbf_m2_2_pricing_structure_validation_v0_2R2.sql
+
+144_msbf_m2_2_negative_control_tests_v0_2R2.sql
+
+145_msbf_m2_2_acceptance_finalize_v0_2R2.sql
+
+146_MSBF_M2_2_Master_Report_v0_2R2.sql
+
+147_MSBF_M2_2_Detail_Report_v0_2R2.sql
+</code></pre>
+<p>Expected results:</p>
+<pre><code class="language-text">Program 143
+120 / 120 positive controls PASS
+run_status = M2_2_VALIDATED
+
+Program 144
+20 / 20 negative controls PASS
+
+Program 145
+M2_2_PRICING_STRUCTURE_COUNTEROFFER = PASS
+run_status = M2_2_ACCEPTED
+request contract = ACCEPTED
+pricing contract = ACCEPTED
+
+Program 146
+overall_m2_2_status = PASS
+
+Program 147
+24 governed result sets
+</code></pre>
+<p>The final two detailed-report outputs must retain their headers and contain zero rows:</p>
+<pre><code class="language-text">Result Set 23
+Deterministic Mismatches
+
+Result Set 24
+Blocking Errors and Stage-Boundary Violations
+</code></pre>
+<p>The v0.2R2 source passed static source, control-inventory, manifest, ZIP CRC, and full-extraction validation. Live PostgreSQL execution remains the required proof that the nine selected structures are adjusted and the post-floor improvement count reaches zero.</p>
+</div></article><article id="m-05c7fa70-5571-45f9-a5c5-1b3fc73e34f4" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00424 · 2026-07-30T22:50:15.700000-04:00 · active path</p><p class="note">Attachment references: MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Candidate_Remittance_And_Payback_Distribution_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Candidate_Amount_Distribution_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Candidate_Count_By_Template_And_Scenario_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Requested_Structure_Distribution_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Entity_Cardinality_And_Grains_20260730(1).csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Disposition_Definitions_20260730(1).csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Reason_Definitions_20260730(1).csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Policy_And_Stage_Boundary_20260730(1).csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Master_Report_v0_2R2_20260730(1).csv</p><div class="bubble"><p>Here is the batch 1 of 2 for M2.2 execution evidence. Do not do anything but intake at this point until after I issue batch 2 of 2 and further instructions.</p>
+</div></article><article id="m-5b3a07e1-c18c-446d-b9e0-0c44d23e9545" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00425 · 2026-07-30T22:52:02.496394-04:00 · active path</p><div class="bubble"><p>Received <strong>batch 1 of 2</strong> for the M2.2 execution evidence.</p>
+<p>This batch includes:</p>
+<ul>
+<li>Program 146 v0.2R2 master report</li>
+<li>Program 147 v0.2R2 detailed-report evidence for:<ul>
+<li>Policy and stage boundary</li>
+<li>Reason definitions</li>
+<li>Disposition definitions</li>
+<li>Entity cardinality and governed grains</li>
+<li>Requested-structure distribution</li>
+<li>Candidate counts by template and scenario</li>
+<li>Candidate amount distribution</li>
+<li>Candidate remittance and payback distribution</li>
+</ul>
+</li>
+</ul>
+<p>I will not analyze the evidence, determine M2.2 acceptance, issue sign-off, or update the repository until you provide <strong>batch 2 of 2</strong> and further instructions.</p>
+</div></article><article id="m-84519e15-2d46-4e20-96bb-73aaa5bbab01" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00426 · 2026-07-30T22:59:11.755000-04:00 · active path</p><p class="note">Attachment references: MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Contract_Registry_And_Hash_Summary_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Latest_Archive_Reproduction_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Acquisition_Economics_Distribution_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_M2_1_Route_To_M2_2_Disposition_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Stress_Non_Improvement_Diagnostics_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Matched_Baseline_Stress_Structure_Migration_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Primary_Reason_Distribution_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Selected_Template_Distribution_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Pricing_Disposition_By_Scenario_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Blocking_Errors_And_Stage_Boundary_Violations_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Deterministic_Mismatches_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Sample_Pricing_And_Structure_Profiles_20260730.csv; MSBF_M2_2_Pricing_Structure_&amp;_Counteroffer_Foundations_Detail_Report_v0_2R2_Governed_M2_2_Evidence_Summary_20260730.csv</p><div class="bubble"><p>Remainder of M2.2 evidence. Validate M2.2 is a success. If it is approved, sign off M2.2 and update full project zip.</p>
+</div></article><article id="m-7a0ff2fd-9f1b-4081-9fe0-0338ef23984e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00427 · 2026-07-30T23:28:50.557799-04:00 · active path</p><div class="bubble"><h1>M2.2 final determination: <strong>Passed and formally accepted</strong></h1>
+<p>The complete M2.2 execution evidence supports formal acceptance of:</p>
+<blockquote>
+<p><strong>M2.2 — Pricing, Structure &amp; Counteroffer Foundations</strong><br><strong>Accepted package revision:</strong> <code>v0.2R2</code><br><strong>Methodology:</strong> <code>M2_2_METHOD_V1</code><br><strong>Requested-structure contract:</strong> <code>M2_REQUEST_STRUCTURE_CONSUMPTION v1</code><br><strong>Pricing-structure contract:</strong> <code>M2_PRICING_STRUCTURE_CONSUMPTION v1</code><br><strong>Acceptance gate:</strong> <code>M2_2_PRICING_STRUCTURE_COUNTEROFFER</code></p>
+</blockquote>
+<p>The final governed state is:</p>
+<pre><code class="language-text">Run status                  M2_2_ACCEPTED
+Contract status             ACCEPTED
+Acceptance-gate status      PASS
+Master-report status        PASS
+</code></pre>
+<p>I performed <strong>214 independent cross-checks</strong> across lifecycle, policy boundaries, reference definitions, cardinality, candidate construction, requested and selected structure economics, matched-scenario behavior, stress floors, latest/archive reproduction, deterministic identities, evidence counts, and stage-boundary controls. All 214 passed.</p>
+<p>The complete review is documented in the formal M2.2 evidence review and sign-off (historical reference: <code>sandbox:[session]/M2_2_LIVE_EXECUTION_EVIDENCE_REVIEW_AND_SIGNOFF.md</code>; referenced bytes not established here) and machine-readable validation summary (historical reference: <code>sandbox:[session]/M2_2_LIVE_EXECUTION_VALIDATION_SUMMARY_v0_2R2.json</code>; referenced bytes not established here).</p>
+<h2>Acceptance results</h2>
+<table>
+<thead>
+<tr>
+<th>Validation area</th>
+<th align="right">Final result</th>
+<th>Disposition</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Final run status</td>
+<td align="right"><code>M2_2_ACCEPTED</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Contract lifecycle</td>
+<td align="right"><code>ACCEPTED</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Acceptance gate</td>
+<td align="right"><code>M2_2_PRICING_STRUCTURE_COUNTEROFFER — PASS</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Policy profiles</td>
+<td align="right">1</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Candidate templates</td>
+<td align="right">5</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Reason definitions</td>
+<td align="right">18</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Disposition definitions</td>
+<td align="right">4</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Request snapshots</td>
+<td align="right">750</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Request latest rows</td>
+<td align="right">750</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Request archive rows</td>
+<td align="right">750</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Candidate structures</td>
+<td align="right">557</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Pricing snapshots</td>
+<td align="right">1,500</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Pricing latest rows</td>
+<td align="right">1,500</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Pricing archive rows</td>
+<td align="right">1,500</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Matched comparisons</td>
+<td align="right">750</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Canonical entities</td>
+<td align="right">7,336</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Positive controls</td>
+<td align="right">120 of 120 PASS</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Negative controls</td>
+<td align="right">20 of 20 PASS</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Generation evidence</td>
+<td align="right">20 PASS</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Acceptance evidence</td>
+<td align="right">1 PASS</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Failed current evidence</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Latest/archive mismatches</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Deterministic mismatches</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Blocking or boundary violations</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Stress structure improvements</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Master report</td>
+<td align="right"><code>overall_m2_2_status = PASS</code></td>
+<td>Pass</td>
+</tr>
+</tbody></table>
+<p>Key physical evidence includes:</p>
+<ul>
+<li>M2.2 master report (historical reference: <code>sandbox:[session]/MSBF_M2_2_Pricing_Structure_%26_Counteroffer_Foundations_Master_Report_v0_2R2_20260730%281%29.csv</code>; referenced bytes not established here)</li>
+<li>Contract registry and hash summary (historical reference: <code>sandbox:[session]/MSBF_M2_2_Pricing_Structure_%26_Counteroffer_Foundations_Detail_Report_v0_2R2_Contract_Registry_And_Hash_Summary_20260730.csv</code>; referenced bytes not established here)</li>
+<li>Latest/archive reproduction (historical reference: <code>sandbox:[session]/MSBF_M2_2_Pricing_Structure_%26_Counteroffer_Foundations_Detail_Report_v0_2R2_Latest_Archive_Reproduction_20260730.csv</code>; referenced bytes not established here)</li>
+<li>Stress non-improvement diagnostics (historical reference: <code>sandbox:[session]/MSBF_M2_2_Pricing_Structure_%26_Counteroffer_Foundations_Detail_Report_v0_2R2_Stress_Non_Improvement_Diagnostics_20260730.csv</code>; referenced bytes not established here)</li>
+<li>Deterministic mismatches — headers, zero rows (historical reference: <code>sandbox:[session]/MSBF_M2_2_Pricing_Structure_%26_Counteroffer_Foundations_Detail_Report_v0_2R2_Deterministic_Mismatches_20260730.csv</code>; referenced bytes not established here)</li>
+<li>Blocking and stage-boundary violations — headers, zero rows (historical reference: <code>sandbox:[session]/MSBF_M2_2_Pricing_Structure_%26_Counteroffer_Foundations_Detail_Report_v0_2R2_Blocking_Errors_And_Stage_Boundary_Violations_20260730.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Accepted pricing and structure results</h1>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th align="right">Structure ready</th>
+<th align="right">Counteroffer-foundation review</th>
+<th align="right">Insufficient evidence</th>
+<th align="right">Policy decline</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Baseline</td>
+<td align="right">44</td>
+<td align="right">139</td>
+<td align="right">43</td>
+<td align="right">524</td>
+</tr>
+<tr>
+<td>Recession / energy stress</td>
+<td align="right">15</td>
+<td align="right">51</td>
+<td align="right">135</td>
+<td align="right">549</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td align="right"><strong>59</strong></td>
+<td align="right"><strong>190</strong></td>
+<td align="right"><strong>178</strong></td>
+<td align="right"><strong>1,073</strong></td>
+</tr>
+</tbody></table>
+<p>M2.2 generated:</p>
+<pre><code class="language-text">Candidate structures                         557
+Selected scenario-specific structures        249
+Distinct applications with a selected
+structure                                    183
+</code></pre>
+<p>The selected templates were:</p>
+<pre><code class="language-text">ELIGIBLE_REQUEST_REFERENCE
+REVIEW_CAPACITY_ALIGNED
+</code></pre>
+<p>No selected structure was an authorized final counteroffer. The accepted disposition <code>COUNTEROFFER_FOUNDATION_REVIEW</code> means that a governed structure may proceed to later decision authorization; it is not a customer offer or credit decision.</p>
+<h1>Stress-floor certification</h1>
+<p>The v0.2R2 selected-structure correction performed exactly as intended:</p>
+<pre><code class="language-text">Matched applications                         750
+Stress route or disposition worsenings       127
+Stress structure improvements                  0
+
+Stress-floor applications                      9
+
+Funding-amount non-improvement rows           750
+Remittance-rate non-improvement rows          750
+Payback-multiple non-improvement rows         750
+Collection-horizon non-improvement rows       750
+</code></pre>
+<p>The nine structures that had bypassed the original same-template stress floor were adjusted, all dependent economics were recalculated, and no favorable stress structure remained.</p>
+<p>Open the matched baseline/stress structure migration evidence (historical reference: <code>sandbox:[session]/MSBF_M2_2_Pricing_Structure_%26_Counteroffer_Foundations_Detail_Report_v0_2R2_Matched_Baseline_Stress_Structure_Migration_20260730.csv</code>; referenced bytes not established here).</p>
+<h1>Final deterministic identities</h1>
+<pre><code class="language-text">Policy set
+1f8e0767a6e303f61bb8f02b0a2e3ee1
+
+Template set
+33c6799d1d2313f8678b36bb1ff305cf
+
+Reason set
+ada593b22cfef8d536441fe3aed32542
+
+Disposition set
+5745602b67bc23754290897cd3d868cc
+
+Request snapshot set
+62c280bbad89b62b3b43475f8adf560c
+
+Request latest set
+da27dcb509a8c0bf3bc7a046242a2c02
+
+Request archive set
+c397c86ab234243dc11ab84b9e98eb6f
+
+Candidate set
+4d54c81fc0630b644f952e5336336d32
+
+Pricing snapshot set
+f7d062a39cc3b3ab10941c197b715aa2
+
+Pricing latest set
+a69d1fca447bb573040bf697c43ce1af
+
+Pricing archive set
+9e43326cd8f79b98c19f02f971fb077f
+
+Request contract set
+89d21438326f33a6df82ee667590497b
+
+Pricing contract set
+e2d8c2eeaddbb1a8f7d2baa10b4cdbd3
+
+Combined M2.2 canonical set
+bbe83b187b31ea561789797322031fc6
+</code></pre>
+<p>The final identities reconcile across the contract registry, master report, latest/archive evidence, deterministic controls, and complete package manifests.</p>
+<h1>Stage-boundary certification</h1>
+<p>M2.2 is accepted as a governed <strong>pricing and structure foundation</strong>. It does not issue:</p>
+<pre><code class="language-text">Final approval
+Final decline
+Final counteroffer
+Production adverse-action notice
+Booking decision
+Funding outcome
+Legal or regulatory conclusion
+</code></pre>
+<p>All four disposition definitions retain:</p>
+<pre><code class="language-text">final_decision_flag = false
+booking_funding_flag = false
+</code></pre>
+<p>All 18 reason definitions retain:</p>
+<pre><code class="language-text">production_adverse_action_flag = false
+</code></pre>
+<p>M2.3 remains responsible for final offer and decision authorization.</p>
+<h1>Evidence-export completeness</h1>
+<p>Program 147 defines 24 result sets. The two evidence batches contained <strong>21 direct detail-report CSV exports</strong>.</p>
+<p>These three were not separately exported:</p>
+<pre><code class="language-text">01 — Run, Contract Lifecycle and Acceptance Gate
+03 — Candidate Template Definitions
+11 — Candidate Horizon and Payoff Diagnostics
+</code></pre>
+<p>I did not fabricate those exports. The omission is documented in the M2.2 evidence index (historical reference: <code>sandbox:[session]/M2_2_EVIDENCE_INDEX.md</code>; referenced bytes not established here) and source-provenance and packaging note (historical reference: <code>sandbox:[session]/M2_2_SOURCE_PROVENANCE_AND_PACKAGE_NOTE.md</code>; referenced bytes not established here).</p>
+<p>This is not an acceptance blocker because their acceptance-critical content is independently and redundantly established by:</p>
+<ul>
+<li>the accepted master report;</li>
+<li>the contract registry;</li>
+<li>the governed policy, template, reason, and disposition catalogs;</li>
+<li>candidate amount, remittance, payback, and selected-template distributions;</li>
+<li>120 of 120 positive controls;</li>
+<li>20 of 20 negative controls;</li>
+<li>zero deterministic mismatches;</li>
+<li>zero blocking or stage-boundary violations.</li>
+</ul>
+<h1>Correction-history closure</h1>
+<p>The accepted repository preserves the full fail-closed correction trail.</p>
+<h2>Target-typed hash reconciliation</h2>
+<p>The initial generation reached the correct 7,336-entity population but found 806 hash mismatches because candidate and selected-pricing numeric values were hashed before physical typmod coercion.</p>
+<p>v0.2R1 corrected the process to:</p>
+<pre><code class="language-text">Calculate values
+→ coerce into exact persistent numeric types
+→ calculate row hashes
+→ persist
+</code></pre>
+<p>This resolved all candidate and selected-pricing hash mismatches without changing candidate formulas or counts.</p>
+<h2>Selected-structure stress floor</h2>
+<p>The original same-template floor did not cover applications whose selected template changed after a baseline-to-stress route migration. Nine stress structures consequently retained at least one favorable component.</p>
+<p>v0.2R2 added a matched selected-structure floor across:</p>
+<pre><code class="language-text">Funding amount
+Remittance rate
+Payback multiple
+Collection horizon
+</code></pre>
+<p>All nine were corrected, all dependent economic fields were recalculated, and post-floor improvements reached zero.</p>
+<p>The final accepted package is therefore:</p>
+<blockquote>
+<p><strong>M2.2 v0.2R2 — Pricing, Structure &amp; Counteroffer Foundations</strong></p>
+</blockquote>
+<hr>
+<h1>Updated full-project repository</h1>
+<h2>Recommended Windows-compatible delivery</h2>
+<p>Download MSBF Project v0.2 — M2.2 Complete FINAL (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M2_2_COMPLETE_FINAL_Windows.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M2_2_COMPLETE_FINAL_Windows.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+f8de9069553c77f0d766d90bcafd292da41e6a30b84766c3ac8ff3ecacfccce1
+
+Archive size
+15,319,656 bytes
+
+Archive files
+3,072
+
+Maximum internal path
+218 characters
+</code></pre>
+<p>The archive passed:</p>
+<pre><code class="language-text">CRC validation                         PASS
+Complete extraction                    PASS
+Source/archive inventory match         PASS
+In-archive SHA-256 reconciliation      PASS
+Extracted-file SHA-256 reconciliation  PASS
+Windows/DOS ZIP metadata               PASS
+</code></pre>
+<p>All accepted predecessor project stages—including the accepted M2.1 directory—were preserved byte for byte. The standalone M2.2 package and the embedded project module are also byte-identical. The full validation record is available here:</p>
+<p>Open the complete delivery-validation report (historical reference: <code>sandbox:[session]/M2_2_COMPLETE_DELIVERY_VALIDATION.json</code>; referenced bytes not established here)</p>
+<p>Extract near the drive root, preferably:</p>
+<pre><code class="language-text">C:\MSBF\
+</code></pre>
+<h2>Canonical full-project copy</h2>
+<p>Download the canonical M2.2-complete project repository (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M2_2_COMPLETE_FINAL.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M2_2_COMPLETE_FINAL.zip.sha256</code>; referenced bytes not established here)</p>
+<p>The canonical and Windows-compatible full-project archives are byte-identical.</p>
+<hr>
+<h1>Standalone accepted M2.2 package</h1>
+<p>Download the standalone M2.2 v0.2R2 Complete package (historical reference: <code>sandbox:[session]/MSBF_M2_2_v0_2R2_COMPLETE_FINAL.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M2_2_v0_2R2_COMPLETE_FINAL.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+d8e95975aa0661d461511b805ae5faf39e10057f4117a6b37ae41268dd5a0f12
+
+Archive size
+654,494 bytes
+
+Archive files
+264
+
+Maximum internal path
+201 characters
+</code></pre>
+<p>Canonical byte-identical copy:</p>
+<p>Download the canonical standalone M2.2 package (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m2_2_pricing_structure_counteroffer_foundations_v0_2R2_COMPLETE_FINAL.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m2_2_pricing_structure_counteroffer_foundations_v0_2R2_COMPLETE_FINAL.zip.sha256</code>; referenced bytes not established here)</p>
+<h1>Key acceptance and handoff records</h1>
+<ul>
+<li>Formal M2.2 evidence review and sign-off (historical reference: <code>sandbox:[session]/M2_2_LIVE_EXECUTION_EVIDENCE_REVIEW_AND_SIGNOFF.md</code>; referenced bytes not established here)</li>
+<li>Machine-readable validation summary (historical reference: <code>sandbox:[session]/M2_2_LIVE_EXECUTION_VALIDATION_SUMMARY_v0_2R2.json</code>; referenced bytes not established here)</li>
+<li>Complete evidence index (historical reference: <code>sandbox:[session]/M2_2_EVIDENCE_INDEX.md</code>; referenced bytes not established here)</li>
+<li>Validation and correction history (historical reference: <code>sandbox:[session]/M2_2_VALIDATION_HISTORY.md</code>; referenced bytes not established here)</li>
+<li>Source-provenance and packaging note (historical reference: <code>sandbox:[session]/M2_2_SOURCE_PROVENANCE_AND_PACKAGE_NOTE.md</code>; referenced bytes not established here)</li>
+<li>Completed M2.2 acceptance milestone (historical reference: <code>sandbox:[session]/MSBF_M2_2_Pricing_Structure_Counteroffer_Foundations_Build_Acceptance_Milestone_v0_2R2.txt</code>; referenced bytes not established here)</li>
+<li>Updated project status (historical reference: <code>sandbox:[session]/PROJECT_STATUS_M2_2_COMPLETE.md</code>; referenced bytes not established here)</li>
+<li>M2.3 authorized-stage handoff (historical reference: <code>sandbox:[session]/CURRENT_NEXT_STEP_M2_3_FINAL_OFFER_DECISION_AUTHORIZATION.md</code>; referenced bytes not established here)</li>
+<li>Complete package-build report (historical reference: <code>sandbox:[session]/MSBF_M2_2_COMPLETE_BUILD_REPORT.json</code>; referenced bytes not established here)</li>
+<li>Complete delivery-validation report (historical reference: <code>sandbox:[session]/M2_2_COMPLETE_DELIVERY_VALIDATION.json</code>; referenced bytes not established here)</li>
+<li>Final delivery summary (historical reference: <code>sandbox:[session]/M2_2_FINAL_DELIVERY_SUMMARY.md</code>; referenced bytes not established here)</li>
+</ul>
+<blockquote>
+<p><strong>M2.2 is formally passed and accepted. Both M2.2 consumption contracts are accepted, the M2.2 acceptance gate is PASS, and M2.3 — Final Offer &amp; Decision Authorization is authorized for governed development.</strong></p>
+</blockquote>
+<pre><code class="language-text">G0 Physical Foundation
+PASS
+
+→
+
+G1 Governed Run Control
+PASS
+
+→
+
+M1.2–M1.17
+PASS
+
+→
+
+G2_M1_CONTRACT
+PASS
+
+→
+
+M2.1 Eligibility, Policy Gates
+&amp; Decision Routing Foundations
+PASS
+
+→
+
+M2.2 Pricing, Structure
+&amp; Counteroffer Foundations
+PASS
+
+→
+
+M2_2_PRICING_STRUCTURE_COUNTEROFFER
+PASS
+
+→
+
+M2.3 Final Offer
+&amp; Decision Authorization
+AUTHORIZED
+</code></pre>
+</div></article><article id="m-25ee9dbf-360e-40ae-883f-0657f0e1e27f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00428 · 2026-07-30T23:42:26.775000-04:00 · active path</p><div class="bubble"><p>Proceed to build M2.3 — Final Offer &amp; Decision Authorization as a complete governed module. Use the accepted M2.2 repository as the baseline. Produce architecture, schema changes, parameter dictionary, preflight, generation, validation, negative controls, acceptance, master report, detail reports, documentation, manifest, SHA-256, and updated full-project ZIP. Apply the error resolution lessons, comment/header/format lessons, and performance lessons from prior modules proactively: no unnecessary blueprint regeneration, materialize expensive intermediates once, avoid self-joins where window functions suffice, index and ANALYZE before downstream joins, separate persisted generation from read-only validation, and include recovery behavior. Do not stop for interim design approval unless a material ambiguity would change the module’s business purpose. Review errors made across recent modules (For example, M1.17 and M2.1 had a significant increase in hot fixes required) and try to build cleaner. Make sure headers and comments are up to our standard. Noticed less of a focus on comments/headers in recent modules.</p>
+</div></article><article id="m-c41d8b5c-f968-4a46-9602-ca6f8f7d0de8" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00429 · 2026-07-31T00:12:31.646326-04:00 · active path</p><div class="bubble"><h1>M2.3 build complete</h1>
+<p>M2.3 — <strong>Final Offer &amp; Decision Authorization</strong> is built, statically validated, integrated into the accepted M2.2 repository, and packaged for live PostgreSQL execution.</p>
+<p>Status: <strong>ready for live execution; not yet accepted</strong>.</p>
+<h2>Primary delivery — full project</h2>
+<p>Download MSBF Project v0.2 — M2.3 Ready for Execution (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M2_3_READY_FOR_EXECUTION_Windows.zip</code>; referenced bytes not established here)</p>
+<p>Download SHA-256 (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M2_3_READY_FOR_EXECUTION_Windows.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+765c19cb4f7979337367529e1884e5690dfd7d5dfb709a9abe2b4dd7a5e29cc0
+
+Archive size
+15,591,500 bytes
+
+Files
+3,149
+</code></pre>
+<p>Canonical copy:</p>
+<p>Download canonical full-project ZIP (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M2_3_READY_FOR_EXECUTION.zip</code>; referenced bytes not established here)</p>
+<p>Download canonical SHA-256 (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M2_3_READY_FOR_EXECUTION.zip.sha256</code>; referenced bytes not established here)</p>
+<h2>Standalone M2.3 package</h2>
+<p>Download MSBF M2.3 v0.2 (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2.zip</code>; referenced bytes not established here)</p>
+<p>Download SHA-256 (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+2cab69e151b53b884a939d15690b2e9d9723fdbe717216aba59a73af7250f4bf
+
+Archive size
+231,519 bytes
+
+Files
+71
+</code></pre>
+<p>Canonical copy:</p>
+<p>Download canonical standalone M2.3 ZIP (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m2_3_final_offer_decision_authorization_v0_2.zip</code>; referenced bytes not established here)</p>
+<p>Download canonical SHA-256 (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m2_3_final_offer_decision_authorization_v0_2.zip.sha256</code>; referenced bytes not established here)</p>
+<h2>Build records</h2>
+<ul>
+<li>Package build report (historical reference: <code>sandbox:[session]/MSBF_M2_3_PACKAGE_BUILD_REPORT.json</code>; referenced bytes not established here)</li>
+<li>Delivery validation (historical reference: <code>sandbox:[session]/M2_3_COMPLETE_DELIVERY_VALIDATION.json</code>; referenced bytes not established here)</li>
+<li>Delivery index (historical reference: <code>sandbox:[session]/M2_3_DELIVERY_INDEX.md</code>; referenced bytes not established here)</li>
+<li>Final delivery summary (historical reference: <code>sandbox:[session]/M2_3_FINAL_DELIVERY_SUMMARY.md</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Execution sequence</h2>
+<p>Run in order:</p>
+<pre><code class="language-text">148 → 149 → 150 → 151 → 152 → 153 → 154 → 155
+</code></pre>
+<p>Recovery programs included:</p>
+<pre><code class="language-text">148A — failed generation recovery check
+150A — generation result reconstruction
+</code></pre>
+<h2>Key governed counts</h2>
+<pre><code class="language-text">Final decision rows              1,500
+Latest contract rows             1,500
+Archive rows                     1,500
+Matched comparisons                750
+Canonical entities               6,029
+Positive controls                  120
+Negative controls                   20
+Detail report result sets           24
+</code></pre>
+<p>The module was built under:</p>
+<pre><code class="language-text">22_M2_3
+</code></pre>
+<p>Accepted predecessor preservation passed for M1.14, M1.15, M1.16, M1.17, M2.1, and M2.2. Standalone and embedded M2.3 source trees are byte-identical.</p>
+</div></article><article id="m-bc4164b4-46a4-407e-971a-2086c08bcb19" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00430 · 2026-07-31T00:17:42.443000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(201).png</p><div class="bubble"><p>error in program 148:</p>
+</div></article><article id="m-b348cf0c-67a3-49f0-9c09-98e7aec2c07b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00431 · 2026-07-31T00:41:36.885785-04:00 · active path</p><div class="bubble"><h1>M2.3 Program 148 diagnosis</h1>
+<p>This <strong>does require a code hotfix</strong>.</p>
+<p>The table constraint requires both hashes to be 32-character lowercase hexadecimal values:</p>
+<pre><code class="language-sql">CONSTRAINT ck_m2_3_policy_hashes CHECK
+(
+    length(configuration_hash) = 32
+    AND configuration_hash ~ &#39;^[0-9a-f]+$&#39;
+    AND length(row_hash) = 32
+    AND row_hash ~ &#39;^[0-9a-f]+$&#39;
+)
+</code></pre>
+<p>The original Program 148 attempted to insert:</p>
+<pre><code class="language-text">row_hash = TEMP_HASH
+</code></pre>
+<p>and planned to replace it with a deterministic hash in the following <code>UPDATE</code>. PostgreSQL evaluates the check constraint <strong>during the insert</strong>, so the row is rejected before that update can run.</p>
+<p>The error is therefore entirely consistent with the source:</p>
+<pre><code class="language-text">SQLSTATE 23514
+ck_m2_3_policy_hashes
+row_hash = TEMP_HASH
+</code></pre>
+<h2>Immediate DBeaver action</h2>
+<p>Click:</p>
+<pre><code class="language-text">Stop
+</code></pre>
+<p>Do not select:</p>
+<pre><code class="language-text">Retry
+Skip
+Skip All
+</code></pre>
+<p>Then execute:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>Program 148 begins with an explicit <code>BEGIN</code>, and PostgreSQL DDL is transactional. After rollback, the M2.3 tables, functions, views, policy row, and definitions created by the failed script should all be absent. The accepted M2.2 state remains unchanged.</p>
+<p>Do not rerun the original Program 148.</p>
+<hr>
+<h1>Additional downstream defect prevented</h1>
+<p>During the full Program 148–155 audit, I identified another issue that had not yet surfaced:</p>
+<pre><code class="language-text">M2_3_FINAL_OFFER_DECISION_AUTHORIZATION
+</code></pre>
+<p>was not registered in:</p>
+<pre><code class="language-text">msbf_ref.acceptance_gate_catalog
+</code></pre>
+<p>Program 153 later inserts an acceptance result whose <code>gate_id</code> has a foreign key to that catalog. Without correction, M2.3 would likely have reached final acceptance and then failed with a foreign-key error.</p>
+<p>The consolidated v0.2R1 hotfix fixes both issues:</p>
+<ol>
+<li>The policy row hash is calculated from an exact target-typed physical seed <strong>before insertion</strong>.</li>
+<li>The M2.3 acceptance gate is registered and verified by the Program 148 checkpoint and Program 149 preflight.</li>
+</ol>
+<p>No policy value, final-decision mapping, reason definition, expected count, or business methodology changed.</p>
+<h1>M2.3 v0.2R1 hotfix</h1>
+<p>Download M2.3 v0.2R1 — Policy Physical Row Hash &amp; Gate Registration Hotfix (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+22ba2a7a533c7927ecc1d83044378ec4fee65956d9e56f4f17f831802fbee8aa
+</code></pre>
+<p>Canonical byte-identical copy:</p>
+<p>Download the canonical M2.3 v0.2R1 hotfix (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m2_3_v0_2R1_policy_physical_row_hash_and_gate_registration_hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m2_3_v0_2R1_policy_physical_row_hash_and_gate_registration_hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<h2>Key live-recovery files</h2>
+<ul>
+<li>148B — Failed policy-hash/schema recovery check (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix/live_recovery/tests/148B_msbf_m2_3_failed_policy_hash_schema_recovery_check_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>148 — Corrected schema, policy, definitions, contracts, and views (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix/live_recovery/sql/148_msbf_m2_3_schema_policy_decision_contract_extension_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>149 — Strengthened preflight (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix/live_recovery/tests/149_msbf_m2_3_preflight_validation_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>150 — Generation (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix/live_recovery/sql/150_msbf_m2_3_final_offer_decision_generation_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>151 — Positive validation (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix/live_recovery/sql/151_msbf_m2_3_final_offer_decision_validation_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>152 — Negative controls (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix/live_recovery/sql/152_msbf_m2_3_negative_control_tests_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>153 — Acceptance finalizer (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix/live_recovery/sql/153_msbf_m2_3_acceptance_finalize_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>154 — Master report (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix/live_recovery/tests/154_MSBF_M2_3_Master_Report_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>155 — Detailed report (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix/live_recovery/tests/155_MSBF_M2_3_Detail_Report_v0_2R1.sql</code>; referenced bytes not established here)</li>
+</ul>
+<p>Supporting documentation:</p>
+<ul>
+<li>Execution guide (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix/docs/M2_3_v0_2R1_EXECUTION_GUIDE.md</code>; referenced bytes not established here)</li>
+<li>Root-cause and downstream audit (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix/docs/M2_3_v0_2R1_ROOT_CAUSE_AND_DOWNSTREAM_AUDIT.md</code>; referenced bytes not established here)</li>
+<li>Exact Program 148 source diff (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix/docs/M2_3_v0_2R1_PROGRAM_148_DIFF.txt</code>; referenced bytes not established here)</li>
+<li>Package-validation report (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R1_Policy_Physical_Row_Hash_And_Gate_Registration_Hotfix/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+</ul>
+<hr>
+<h1>Exact recovery sequence</h1>
+<h2>1. Roll back the failed Program 148 transaction</h2>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>A “no transaction in progress” notice would be harmless if DBeaver already cleared the failed transaction.</p>
+<h2>2. Run Program 148B</h2>
+<pre><code class="language-text">148B_msbf_m2_3_failed_policy_hash_schema_recovery_check_v0_2R1.sql
+</code></pre>
+<p>This is read-only.</p>
+<p>Required source state:</p>
+<pre><code class="language-text">run_status                         M2_2_ACCEPTED
+
+source_registry_rows               1
+source_contract_status             ACCEPTED
+source_contract_code               M2_PRICING_STRUCTURE_CONSUMPTION
+source_contract_version            1
+source_schema_version              M2_2_PRICING_STRUCTURE_SCHEMA_V1
+source_combined_hash               bbe83b187b31ea561789797322031fc6
+
+source_gate_rows                   1
+source_gate_status                 PASS
+</code></pre>
+<p>All M2.3 object-existence fields should be:</p>
+<pre><code class="language-text">0
+</code></pre>
+<p>That includes:</p>
+<pre><code class="language-text">policy_table_exists
+outcome_table_exists
+reason_table_exists
+source_table_exists
+decision_table_exists
+latest_table_exists
+archive_table_exists
+registry_table_exists
+latest_view_exists
+comparison_view_exists
+</code></pre>
+<p>Persistent M2.3 state should also be:</p>
+<pre><code class="language-text">evidence_rows                      0
+acceptance_rows                    0
+m2_3_gate_catalog_rows             0
+
+recovery_status                    PASS
+</code></pre>
+<p>Stop if <code>recovery_status</code> is not <code>PASS</code>.</p>
+<h2>3. Run corrected Program 148 v0.2R1</h2>
+<pre><code class="language-text">148_msbf_m2_3_schema_policy_decision_contract_extension_v0_2R1.sql
+</code></pre>
+<p>The corrected policy sequence is now:</p>
+<pre><code class="language-text">Construct exact target-typed policy seed
+→ calculate configuration hash
+→ calculate physical row hash
+→ insert a valid 32-character hash
+</code></pre>
+<p>There is no executable <code>TEMP_HASH</code> placeholder and no post-insert hash repair.</p>
+<p>Required checkpoint:</p>
+<pre><code class="language-text">policy_status                       APPROVED
+methodology_version                 M2_3_METHOD_V1
+contract_code                       M2_FINAL_OFFER_DECISION_CONSUMPTION
+contract_version                    1
+schema_version                      M2_3_FINAL_DECISION_SCHEMA_V1
+source_m2_2_combined_hash           bbe83b187b31ea561789797322031fc6
+
+configuration_hash                  non-null 32-character hash
+acceptance_gate_catalog_rows        1
+outcome_definition_rows             5
+reason_definition_rows              22
+
+schema_policy_status                PASS
+</code></pre>
+<h2>4. Continue with the v0.2R1 sequence</h2>
+<pre><code class="language-text">149_msbf_m2_3_preflight_validation_v0_2R1.sql
+
+150_msbf_m2_3_final_offer_decision_generation_v0_2R1.sql
+
+151_msbf_m2_3_final_offer_decision_validation_v0_2R1.sql
+
+152_msbf_m2_3_negative_control_tests_v0_2R1.sql
+
+153_msbf_m2_3_acceptance_finalize_v0_2R1.sql
+
+154_MSBF_M2_3_Master_Report_v0_2R1.sql
+
+155_MSBF_M2_3_Detail_Report_v0_2R1.sql
+</code></pre>
+<p>Program 149 now separately requires:</p>
+<pre><code class="language-text">gate_catalog_rows = 1
+</code></pre>
+<p>before generation can begin.</p>
+<p>Do not run Program 148A at this stage. Program 148A is reserved for a <strong>failed Program 150 generation attempt</strong>, not a failed Program 148 schema/policy transaction.</p>
+<h1>Package validation</h1>
+<p>The v0.2R1 package passed:</p>
+<pre><code class="language-text">Invalid executable TEMP_HASH placeholders        0
+Pre-insert physical policy hash                  PASS
+M2.3 gate registration                          PASS
+Program 149 gate-catalog preflight               PASS
+
+Positive-control inventory                       120
+Negative-control inventory                        20
+Detailed-report result sets                    01–24
+
+Policy values changed                           false
+Expected counts changed                         false
+Business logic changed                          false
+
+ZIP CRC                                          PASS
+Complete extraction                              PASS
+Manifest and SHA-256 inventory                   PASS
+</code></pre>
+</div></article><article id="m-a14f9b73-9c0f-46d4-8220-5fdb87333c62" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00432 · 2026-07-31T20:43:31.181000-04:00 · active path</p><div class="bubble"><p>error in program 152_msbf_m2_3_negative_control_tests_v0_2R1.sql: SQL Error [P0001]: ERROR: M2.3 negative controls failed pass 19, fail 1. Where : PL/pgSQL function inline_code_block line 58 at RAISE. programs 148 to 151 worked fine.</p>
+</div></article><article id="m-2f23eb53-dfc4-401b-bed2-84b18621e540" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00433 · 2026-07-31T21:07:31.258572-04:00 · active path</p><div class="bubble"><p>I isolated the 19/20 failure to the external-notice payload boundary and am packaging a controlled repair preserving the successful M2.3 generation and positive validation.</p>
+</div></article><article id="m-3821413d-8f77-4591-b9cf-eeace169d630" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00434 · 2026-07-31T21:25:51.340000-04:00 · active path</p><div class="bubble"><p>error in program 152_msbf_m2_3_negative_control_tests_v0_2R1.sql: SQL Error [P0001]: ERROR: M2.3 negative controls failed pass 19, fail 1. Where : PL/pgSQL function inline_code_block line 58 at RAISE. programs 148 to 151 worked fine.</p>
+</div></article><article id="m-0829bf9a-9f8b-4f8c-93bd-1d03bd6a7aa9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00435 · 2026-07-31T21:26:02.825272-04:00 · active path</p><div class="bubble"><h1>M2.3 diagnosis: the failed control is <code>M2_3_NEG_019_EXTERNAL_NOTICE_PAYLOAD</code></h1>
+<p>The exact v0.2R1 source isolates the 19-of-20 result to one vocabulary mismatch.</p>
+<p>The committed boundary function prohibited:</p>
+<pre><code class="language-text">external_notice
+</code></pre>
+<p>But Negative Control 019 tested:</p>
+<pre><code class="language-json">{&quot;external_notice_payload&quot;: {}}
+</code></pre>
+<p>Because the function compares exact JSON key names, <code>external_notice_payload</code> was not rejected. The control therefore correctly recorded <code>FAIL</code>, while the other 19 mutations were rejected.</p>
+<p>The relevant v0.2R1 function contained:</p>
+<pre><code class="language-sql">WHERE lower(key) IN
+(
+    &#39;booking&#39;,
+    &#39;booking_status&#39;,
+    &#39;funding&#39;,
+    &#39;funding_status&#39;,
+    &#39;funded_amount&#39;,
+    &#39;production_adverse_action_notice&#39;,
+    &#39;external_notice&#39;,
+    &#39;account_opened&#39;,
+    &#39;loan_number&#39;
+)
+</code></pre>
+<p>The corrected function includes:</p>
+<pre><code class="language-sql">&#39;external_notice&#39;,
+&#39;external_notice_payload&#39;,
+&#39;account_opened&#39;,
+&#39;account_number&#39;,
+&#39;loan_number&#39;
+</code></pre>
+<p><code>account_number</code> was also added proactively because the M2.3 physical prohibited-column controls already treat it as an impermissible downstream payload field.</p>
+<h2>Transactional impact</h2>
+<p>Program 152 runs inside one explicit transaction. Its final inventory exception aborted that transaction. Therefore:</p>
+<ul>
+<li>all temporary negative-control mutations rolled back;</li>
+<li>no <code>M2_3_NEG_*</code> evidence committed;</li>
+<li>the attempted <code>M2_3_FAILED</code> lifecycle change did not commit;</li>
+<li>Programs 148–151 remain authoritative;</li>
+<li>all generated rows and deterministic hashes remain unchanged.</li>
+</ul>
+<p>After rollback, the expected state remains:</p>
+<pre><code class="language-text">Run status                    M2_3_VALIDATED
+Contract status               VALIDATED
+
+Positive controls             120
+Positive passes               120
+Positive failures               0
+
+Negative evidence rows          0
+Acceptance rows                 0
+
+Source snapshots             1,500
+Decision snapshots           1,500
+Latest rows                  1,500
+Archive rows                 1,500
+Matched comparisons            750
+Canonical entities           6,029
+</code></pre>
+<h1>Immediate DBeaver action</h1>
+<p>Click <strong>Stop</strong>.</p>
+<p>Do not select:</p>
+<pre><code class="language-text">Retry
+Skip
+Skip All
+</code></pre>
+<p>Then execute:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>Do <strong>not</strong> rerun Programs 148, 149, 150, or 151.</p>
+<hr>
+<h1>M2.3 v0.2R2 consolidated hotfix</h1>
+<p>Download M2.3 v0.2R2 — External-Notice Payload Boundary Hotfix (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+6b7d68ebd260d517628260c919a014bad463c30f3b05a71ffccff02112b0701d
+
+Archive size
+287,846 bytes
+
+Files
+90
+</code></pre>
+<p>Canonical byte-identical copy:</p>
+<p>Download the canonical M2.3 v0.2R2 hotfix (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m2_3_v0_2R2_external_notice_payload_boundary_hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m2_3_v0_2R2_external_notice_payload_boundary_hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<h2>Key live-recovery files</h2>
+<ul>
+<li>148C — Failed external-notice payload boundary recovery (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/live_recovery/tests/148C_msbf_m2_3_failed_external_notice_payload_boundary_recovery_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>152 — Negative controls v0.2R2 (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/live_recovery/sql/152_msbf_m2_3_negative_control_tests_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>153 — Acceptance finalizer v0.2R2 (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/live_recovery/sql/153_msbf_m2_3_acceptance_finalize_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>154 — Master report v0.2R2 (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/live_recovery/tests/154_MSBF_M2_3_Master_Report_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>155 — Detailed report v0.2R2 (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/live_recovery/tests/155_MSBF_M2_3_Detail_Report_v0_2R2.sql</code>; referenced bytes not established here)</li>
+</ul>
+<p>Supporting records:</p>
+<ul>
+<li>Execution guide (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/docs/M2_3_v0_2R2_EXECUTION_GUIDE.md</code>; referenced bytes not established here)</li>
+<li>Root-cause and downstream audit (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/docs/M2_3_v0_2R2_ROOT_CAUSE_AND_DOWNSTREAM_AUDIT.md</code>; referenced bytes not established here)</li>
+<li>Program 148 source diff (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/docs/M2_3_v0_2R2_PROGRAM_148_DIFF.txt</code>; referenced bytes not established here)</li>
+<li>Program 152 source diff (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/docs/M2_3_v0_2R2_PROGRAM_152_DIFF.txt</code>; referenced bytes not established here)</li>
+<li>Package-validation report (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+</ul>
+<hr>
+<h1>Exact recovery and continuation sequence</h1>
+<h2>1. Run Program 148C</h2>
+<p>After <code>ROLLBACK</code>, execute:</p>
+<pre><code class="language-text">148C_msbf_m2_3_failed_external_notice_payload_boundary_recovery_v0_2R2.sql
+</code></pre>
+<p>Program 148C verifies the committed Programs 148–151 state, replaces only the payload-boundary function, and proves both newly aligned keys fail closed.</p>
+<h3>Required prior-state fields</h3>
+<pre><code class="language-text">prior_run_status                         M2_3_VALIDATED
+prior_contract_status                    VALIDATED
+
+canonical_entities                       6,029
+
+positive_checks                            120
+positive_passes                            120
+positive_failures                            0
+negative_evidence_rows                       0
+
+source_rows                              1,500
+snapshot_rows                            1,500
+latest_rows                              1,500
+archive_rows                             1,500
+comparison_rows                            750
+
+acceptance_rows                              0
+blocking_errors                              0
+
+prior_external_notice_payload_guard       false
+prior_account_number_guard                false
+</code></pre>
+<h3>Required final fields</h3>
+<pre><code class="language-text">final_external_notice_payload_guard       true
+final_account_number_guard                true
+
+external_notice_payload_rejected          true
+account_number_rejected                   true
+
+final_run_status                          M2_3_VALIDATED
+final_contract_status                     VALIDATED
+final_positive_passes                     120
+final_negative_evidence_rows                0
+
+recovery_status                           PASS
+</code></pre>
+<p>Stop immediately if <code>recovery_status</code> is not <code>PASS</code>.</p>
+<h2>2. Run Program 152 v0.2R2</h2>
+<pre><code class="language-text">152_msbf_m2_3_negative_control_tests_v0_2R2.sql
+</code></pre>
+<p>Required:</p>
+<pre><code class="language-text">20 negative controls
+20 PASS
+0 FAIL
+</code></pre>
+<p>Specifically:</p>
+<pre><code class="language-text">M2_3_NEG_019_EXTERNAL_NOTICE_PAYLOAD
+PASS
+</code></pre>
+<p>Its interpretation should show that the corrected function rejected:</p>
+<pre><code class="language-text">external_notice_payload
+</code></pre>
+<h2>3. Run Program 153 v0.2R2</h2>
+<pre><code class="language-text">153_msbf_m2_3_acceptance_finalize_v0_2R2.sql
+</code></pre>
+<p>Required pre-acceptance evidence:</p>
+<pre><code class="language-text">Positive controls             120 / 120 PASS
+Negative controls              20 / 20 PASS
+
+Policy rows                     1
+Outcome definitions             5
+Reason definitions             22
+
+Source rows                  1,500
+Decision snapshots          1,500
+Latest rows                 1,500
+Archive rows                1,500
+Comparisons                   750
+Canonical entities          6,029
+
+Final-offer rows                59
+Manual-review rows             190
+Insufficient-evidence declines 178
+Policy declines              1,073
+
+Stress improvements              0
+Non-offer term violations        0
+Prohibited outcome flags         0
+Prohibited reason flags          0
+Archive mismatches               0
+Existing acceptance rows         0
+
+acceptance_status              PASS
+</code></pre>
+<p>Required final state:</p>
+<pre><code class="language-text">final_run_status              M2_3_ACCEPTED
+final_contract_status         ACCEPTED
+gate_status                   PASS
+</code></pre>
+<h2>4. Run Programs 154 and 155 v0.2R2</h2>
+<pre><code class="language-text">154_MSBF_M2_3_Master_Report_v0_2R2.sql
+
+155_MSBF_M2_3_Detail_Report_v0_2R2.sql
+</code></pre>
+<p>Required master result:</p>
+<pre><code class="language-text">overall_m2_3_status = PASS
+</code></pre>
+<p>Program 155 should return 24 result sets. The final two must retain their headers and contain zero rows:</p>
+<pre><code class="language-text">Result Set 23
+Deterministic Mismatches
+
+Result Set 24
+Blocking Errors and Stage-Boundary Violations
+</code></pre>
+<h1>What changed—and what did not</h1>
+<p>The hotfix changes only:</p>
+<pre><code class="language-text">msbf_ctl.m2_3_assert_no_booking_payload(jsonb)
+</code></pre>
+<p>The prohibited-key list now consistently covers:</p>
+<pre><code class="language-text">external_notice
+external_notice_payload
+account_number
+</code></pre>
+<p>It does not alter:</p>
+<ul>
+<li>the 1,500 generated source snapshots;</li>
+<li>the 1,500 decision snapshots;</li>
+<li>the 1,500 latest decision rows;</li>
+<li>the 1,500 immutable archive rows;</li>
+<li>the 750 matched comparisons;</li>
+<li>the 6,029 canonical entities;</li>
+<li>any row hash or set hash;</li>
+<li>any policy value;</li>
+<li>any outcome or reason definition;</li>
+<li>any final-offer term;</li>
+<li>any decision mapping;</li>
+<li>the 120 positive-control results;</li>
+<li>accepted M2.2 predecessor data.</li>
+</ul>
+<p>Programs 152–155 v0.2R2 are executable-logic equivalent to v0.2R1 apart from revision labels. The negative-control method itself did not need to change; the boundary function it was correctly testing needed to be aligned.</p>
+</div></article><article id="m-11909bbe-0ddf-4b69-9c73-790233fd42fe" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00436 · 2026-07-31T21:46:51.370418-04:00 · active path</p><div class="bubble"><h1>M2.3 negative-control diagnosis</h1>
+<p>Programs <strong>148 through 151 remain successful and authoritative</strong>. Program 152 failed because one prohibited-payload test was not rejected by the v0.2R1 assertion function.</p>
+<p>The exact source mismatch is:</p>
+<pre><code class="language-text">Function prohibited key:  external_notice
+Negative-control key:     external_notice_payload
+</code></pre>
+<p>Program 152 tests:</p>
+<pre><code class="language-sql">PERFORM msbf_ctl.m2_3_assert_no_booking_payload
+(
+    &#39;{&quot;external_notice_payload&quot;:{}}&#39;::jsonb
+);
+</code></pre>
+<p>But the committed v0.2R1 function checked only:</p>
+<pre><code class="language-text">booking
+booking_status
+funding
+funding_status
+funded_amount
+production_adverse_action_notice
+external_notice
+account_opened
+loan_number
+</code></pre>
+<p>Because the function uses <strong>exact top-level JSON-key matching</strong>, <code>external_notice_payload</code> passed through without raising an exception. The control therefore recorded:</p>
+<pre><code class="language-text">M2_3_NEG_019_EXTERNAL_NOTICE_PAYLOAD = FAIL
+</code></pre>
+<p>This is the source-level explanation for the reported:</p>
+<pre><code class="language-text">19 PASS
+1 FAIL
+</code></pre>
+<p>The other three prohibited-payload controls use keys already present in the function:</p>
+<pre><code class="language-text">booking_status
+funding_status
+production_adverse_action_notice
+</code></pre>
+<p>The audit also found that <code>account_number</code> was already prohibited by the physical schema-boundary scans in Programs 149, 151, and 155, but was missing from the JSON assertion. The consolidated correction aligns that key proactively.</p>
+<h2>Transactional impact</h2>
+<p>Program 152 begins with an explicit transaction. Its final 19-of-20 exception occurred before <code>COMMIT</code>.</p>
+<p>After rollback, none of these should have persisted:</p>
+<ul>
+<li>temporary negative-control mutations;</li>
+<li><code>M2_3_NEG_*</code> evidence;</li>
+<li>the attempted <code>M2_3_FAILED</code> lifecycle update.</li>
+</ul>
+<p>The expected persistent state remains:</p>
+<pre><code class="language-text">run_status                  M2_3_VALIDATED
+contract_status             VALIDATED
+
+positive controls           120
+positive passes             120
+positive failures             0
+
+negative evidence rows        0
+acceptance rows               0
+
+source rows                 1,500
+decision snapshots          1,500
+latest contract rows        1,500
+archive rows                1,500
+matched comparisons           750
+canonical entities          6,029
+</code></pre>
+<p>Do <strong>not</strong> rerun Programs 148, 149, 150, or 151.</p>
+<hr>
+<h1>M2.3 v0.2R2 consolidated hotfix</h1>
+<p>Download M2.3 v0.2R2 — External-Notice Payload Boundary Hotfix (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+b8544924cee66bb84ea5e0dee31fbb85d62a3056564f7cbf0c1e6bea9a27bf02
+
+Archive size
+291,115 bytes
+
+Files
+92
+</code></pre>
+<p>Canonical byte-identical copy:</p>
+<p>Download the canonical M2.3 v0.2R2 hotfix (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m2_3_v0_2R2_external_notice_payload_boundary_hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m2_3_v0_2R2_external_notice_payload_boundary_hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<h2>Current-database recovery files</h2>
+<ul>
+<li>148C — Failed external-notice payload recovery and function repair (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/live_recovery/tests/148C_msbf_m2_3_failed_external_notice_payload_boundary_recovery_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>152 — Negative controls v0.2R2 (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/live_recovery/sql/152_msbf_m2_3_negative_control_tests_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>153 — Acceptance finalizer v0.2R2 (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/live_recovery/sql/153_msbf_m2_3_acceptance_finalize_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>154 — Master report v0.2R2 (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/live_recovery/tests/154_MSBF_M2_3_Master_Report_v0_2R2.sql</code>; referenced bytes not established here)</li>
+<li>155 — Detailed report v0.2R2 (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/live_recovery/tests/155_MSBF_M2_3_Detail_Report_v0_2R2.sql</code>; referenced bytes not established here)</li>
+</ul>
+<p>Supporting records:</p>
+<ul>
+<li>Execution guide (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/docs/M2_3_v0_2R2_EXECUTION_GUIDE.md</code>; referenced bytes not established here)</li>
+<li>Root-cause and downstream audit (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/docs/M2_3_v0_2R2_ROOT_CAUSE_AND_DOWNSTREAM_AUDIT.md</code>; referenced bytes not established here)</li>
+<li>Exact Program 148 source diff (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/docs/M2_3_v0_2R2_PROGRAM_148_DIFF.txt</code>; referenced bytes not established here)</li>
+<li>Package-validation report (historical reference: <code>sandbox:[session]/MSBF_M2_3_v0_2R2_External_Notice_Payload_Boundary_Hotfix/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+</ul>
+<p>The ZIP also contains a synchronized <code>clean_build</code> directory for a pristine M2.3 execution. Do not use its Program 148 against the current database; use the <code>live_recovery</code> path below.</p>
+<hr>
+<h1>Exact recovery and execution sequence</h1>
+<h2>1. Stop and roll back failed Program 152</h2>
+<p>In DBeaver, click:</p>
+<pre><code class="language-text">Stop
+</code></pre>
+<p>Do not select:</p>
+<pre><code class="language-text">Retry
+Skip
+Skip All
+</code></pre>
+<p>Then execute:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>A “no transaction in progress” notice is harmless if DBeaver already cleared the failed transaction.</p>
+<h2>2. Run Program 148C</h2>
+<p>Execute:</p>
+<pre><code class="language-text">148C_msbf_m2_3_failed_external_notice_payload_boundary_recovery_v0_2R2.sql
+</code></pre>
+<p>Program 148C:</p>
+<ol>
+<li>verifies the current generated and validated population;</li>
+<li>verifies 120 of 120 positive controls remain committed;</li>
+<li>verifies no negative evidence or acceptance record persisted;</li>
+<li>confirms the prior function contains <code>external_notice</code> but not <code>external_notice_payload</code>;</li>
+<li>replaces only <code>m2_3_assert_no_booking_payload(jsonb)</code>;</li>
+<li>proves all required keys now fail closed;</li>
+<li>proves a harmless synthetic metadata key remains allowed;</li>
+<li>confirms the run and contract remain validated.</li>
+</ol>
+<h3>Required Program 148C result</h3>
+<pre><code class="language-text">prior_run_status                         M2_3_VALIDATED
+prior_contract_status                    VALIDATED
+canonical_entities                       6,029
+
+positive_checks                          120
+positive_passes                          120
+positive_failures                          0
+negative_evidence_rows                     0
+
+source_rows                              1,500
+snapshot_rows                            1,500
+latest_rows                              1,500
+archive_rows                             1,500
+comparison_rows                            750
+acceptance_rows                              0
+
+prior_external_notice_guard              true
+prior_external_notice_payload_guard      false
+prior_account_number_guard               false
+
+final_external_notice_guard              true
+final_external_notice_payload_guard      true
+final_account_number_guard               true
+
+booking_status_rejected                  true
+funding_status_rejected                  true
+external_notice_payload_rejected         true
+account_number_rejected                  true
+production_adverse_action_rejected       true
+harmless_payload_allowed                 true
+
+final_run_status                         M2_3_VALIDATED
+final_contract_status                    VALIDATED
+final_positive_passes                    120
+final_negative_evidence_rows               0
+final_acceptance_rows                       0
+
+recovery_status                          PASS
+</code></pre>
+<p>Stop if <code>recovery_status</code> is not <code>PASS</code>.</p>
+<h2>3. Run Program 152 v0.2R2</h2>
+<pre><code class="language-text">152_msbf_m2_3_negative_control_tests_v0_2R2.sql
+</code></pre>
+<p>Required:</p>
+<pre><code class="language-text">20 negative controls
+20 PASS
+0 FAIL
+</code></pre>
+<p>Specifically:</p>
+<pre><code class="language-text">M2_3_NEG_019_EXTERNAL_NOTICE_PAYLOAD
+PASS
+</code></pre>
+<p>Its interpretation should contain the rejection message for:</p>
+<pre><code class="language-text">external_notice_payload
+</code></pre>
+<h2>4. Run Program 153 v0.2R2</h2>
+<pre><code class="language-text">153_msbf_m2_3_acceptance_finalize_v0_2R2.sql
+</code></pre>
+<p>Required:</p>
+<pre><code class="language-text">positive_checks             120
+positive_passes             120
+positive_failures             0
+
+negative_checks              20
+negative_passes              20
+negative_failures             0
+
+source_rows               1,500
+snapshot_rows             1,500
+latest_rows               1,500
+archive_rows              1,500
+comparison_rows             750
+canonical_entities        6,029
+
+stress_improvement_rows        0
+nonoffer_term_rows             0
+prohibited_outcome_flags       0
+prohibited_reason_flags        0
+archive_mismatches             0
+
+acceptance_status           PASS
+final_run_status            M2_3_ACCEPTED
+final_contract_status       ACCEPTED
+gate_status                 PASS
+</code></pre>
+<p>After successful commit, do not rerun Program 153.</p>
+<h2>5. Run Programs 154 and 155 v0.2R2</h2>
+<pre><code class="language-text">154_MSBF_M2_3_Master_Report_v0_2R2.sql
+
+155_MSBF_M2_3_Detail_Report_v0_2R2.sql
+</code></pre>
+<p>Required master-report result:</p>
+<pre><code class="language-text">overall_m2_3_status = PASS
+</code></pre>
+<p>Program 155 should return 24 governed result sets.</p>
+<p>The final two must retain their headers and contain zero data rows:</p>
+<pre><code class="language-text">Result Set 23
+Deterministic Mismatches
+
+Result Set 24
+Blocking Errors and Stage-Boundary Violations
+</code></pre>
+<hr>
+<h1>What changed—and what did not</h1>
+<p>The repaired prohibited payload vocabulary is:</p>
+<pre><code class="language-text">booking
+booking_status
+funding
+funding_status
+funded_amount
+production_adverse_action_notice
+external_notice
+external_notice_payload
+account_opened
+account_number
+loan_number
+</code></pre>
+<p>The hotfix changes <strong>one assertion function only</strong> in the current database.</p>
+<p>It does not change:</p>
+<ul>
+<li>any of the 1,500 source records;</li>
+<li>any of the 1,500 decision snapshots;</li>
+<li>any latest or archive contract row;</li>
+<li>any matched-scenario result;</li>
+<li>any final-offer amount or term;</li>
+<li>any decision outcome;</li>
+<li>any reason definition;</li>
+<li>any policy value;</li>
+<li>any deterministic hash;</li>
+<li>the 6,029 canonical entities;</li>
+<li>the 120 positive controls;</li>
+<li>M2.2 accepted history.</li>
+</ul>
+<p>Programs 152–155 v0.2R2 are executable-logic equivalent to their v0.2R1 versions apart from revision labels. The clean-build Program 148 contains the corrected key list so the same defect cannot recur during a pristine execution.</p>
+<h1>Package validation</h1>
+<pre><code class="language-text">Positive-control inventory                    120
+Negative-control inventory                     20
+Detailed-report result sets                 01–24
+
+v0.2R1 function contains external_notice      PASS
+v0.2R1 function lacks tested payload key      CONFIRMED
+v0.2R2 external_notice_payload guard          PASS
+v0.2R2 account_number alignment               PASS
+Recovery function proofs                      PASS
+
+Programs 152–155 logic-equivalent to v0.2R1  PASS
+Live and clean continuation sources identical PASS
+
+Generated data changed                        false
+Hashes changed                                false
+Positive evidence changed                     false
+Decision mapping changed                      false
+Business logic changed                        false
+
+ZIP CRC                                       PASS
+Complete extraction                           PASS
+Manifest and SHA-256 inventory                PASS
+</code></pre>
+</div></article><article id="m-3a5ba3c6-06fd-43c4-9e68-b4ccb32e2760" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00437 · 2026-08-01T08:22:36.304000-04:00 · active path</p><p class="note">Attachment references: module_M2_3_evidence.zip</p><div class="bubble"><p>M2.3 Execution Evidence attached. Validate that M2.3 is a success. If it is approved, sign off M2.3 and update full project zip.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

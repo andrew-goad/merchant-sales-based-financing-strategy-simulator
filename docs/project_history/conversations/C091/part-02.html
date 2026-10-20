@@ -1,0 +1,1797 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence — part 02 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence — part 02</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-01.html">Previous part</a><a href="part-03.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-225867d9-2d54-41b6-ba3c-069153681087" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00025 · 2026-08-18T20:11:55.376652-04:00 · active path</p><div class="bubble"><h1>A1a local Power BI Desktop setup</h1>
+<p>Treat this as a <strong>controlled local-engine evidence run</strong>, not ordinary report development. The authorized boundary is exactly:</p>
+<pre><code class="language-text">14 semantic tables
+6 relationships
+47 Power Query queries
+0 measures
+0 report pages
+A1b NOT STARTED
+</code></pre>
+<p>The audit expressly prohibits A1b, measures, report pages, PBI-WP2 acceptance, or claims that the full dashboard has been built or validated. [export reference: filecite | turn9file1 | L55-L74] The three controls below must remain open until the Independent Audit reviews the physical evidence:</p>
+<pre><code class="language-text">AUD-SCN-004   HOLD_LOCAL_DESKTOP_EVIDENCE
+AUD-REL-005   HOLD_LOCAL_DESKTOP_EVIDENCE
+AUD-ASOF-003  HOLD_LOCAL_DESKTOP_EVIDENCE
+</code></pre>
+<p>[export reference: filecite | turn9file1 | L45-L53]</p>
+<p>The run must also preserve <code>module1_run_id</code>, <code>scenario_id</code>, the run/scenario/application account grain, the 59-path/44-identity population interpretation, the July 23, 2026 source cutoff, and the thirteen endpoint-only/no-back-casting controls. [export reference: filecite | turn9file0 | L11-L24]</p>
+<h2>Files to download first</h2>
+<p>Download these five files into your Windows <strong>Downloads</strong> folder:</p>
+<ol>
+<li>A1a local-construction package (historical reference: <code>sandbox:[session]/MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818.zip</code>; referenced bytes not established here)</li>
+<li>Package SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818.zip.sha256</code>; referenced bytes not established here)</li>
+<li>Desktop execution and evidence runbook (historical reference: <code>sandbox:[session]/MSBF_PBI_A1A_LOCAL_DESKTOP_EXECUTION_AND_EVIDENCE_RUNBOOK_20260818.md</code>; referenced bytes not established here)</li>
+<li>Corrected E12 post-save manifest helper (historical reference: <code>sandbox:[session]/Export-A1aPostSaveManifest_FIXED.ps1</code>; referenced bytes not established here)</li>
+<li>Supplemental E08 orphan and filter-behavior DAX queries (historical reference: <code>sandbox:[session]/A1A_E08_ORPHAN_AND_FILTER_BEHAVIOR_QUERIES.dax</code>; referenced bytes not established here)</li>
+</ol>
+<p>Use the corrected E12 helper rather than the copy inside the ZIP. The packaged E12 script has an erroneous leading backslash that prevents it from parsing. The supplemental DAX file supplies the six orphan and filter-behavior tests not present in the original evidence-query file.</p>
+<hr>
+<h2>1. Install or verify the required software</h2>
+<h3>Power BI Desktop</h3>
+<p>Use the current <strong>standard 64-bit Power BI Desktop</strong>, installed from Microsoft’s normal Power BI Desktop distribution—not <strong>Power BI Desktop optimized for Power BI Report Server</strong>. Microsoft no longer supports 32-bit Desktop, and PBIP projects are not supported in the Report Server-optimized edition. [export reference: cite | turn892161search14 | turn977778view0]</p>
+<p>Open <strong>Help → About</strong> in Desktop and verify that the product name does <strong>not</strong> say:</p>
+<pre><code class="language-text">Power BI Desktop optimized for Power BI Report Server
+</code></pre>
+<h3>PowerShell 7</h3>
+<p>Open Windows Terminal or PowerShell and run:</p>
+<pre><code class="language-powershell">winget install --id Microsoft.PowerShell --source winget
+</code></pre>
+<p>Microsoft identifies WinGet as the recommended PowerShell installation route on Windows clients. [export reference: cite | turn685883view0]</p>
+<p>After installation, open <strong>PowerShell 7</strong> from the Start menu and verify:</p>
+<pre><code class="language-powershell">$PSVersionTable.PSVersion
+</code></pre>
+<p>The major version must be <code>7</code>.</p>
+<h3>DAX Studio</h3>
+<p>Run this from an elevated Windows Terminal or PowerShell window:</p>
+<pre><code class="language-powershell">winget install daxstudio.daxstudio --scope machine
+</code></pre>
+<p>The machine/all-users installation is important because it registers DAX Studio in Power BI Desktop’s <strong>External Tools</strong> ribbon. The current-user and portable installations do not provide that same integration. [export reference: cite | turn427188search0 | turn427188search10]</p>
+<p>Restart Power BI Desktop after installing DAX Studio.</p>
+<p><strong>Tabular Editor is not required for this A1a run.</strong> Do not use it to alter the model.</p>
+<hr>
+<h2>2. Verify the package and extract it to a short local path</h2>
+<p>Do not extract the project under OneDrive, SharePoint, a network drive, or a deeply nested Downloads folder. Microsoft documents a default 260-character PBIP path limit and recommends a short local root; it also warns that locally synchronized OneDrive folders can cause save failures. [export reference: cite | turn977778view0]</p>
+<p>Open <strong>PowerShell 7</strong> and run this entire block:</p>
+<pre><code class="language-powershell">$downloads = Join-Path $HOME &quot;Downloads&quot;
+
+$zip = Join-Path $downloads `
+    &quot;MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818.zip&quot;
+
+$sidecar = Join-Path $downloads `
+    &quot;MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818.zip.sha256&quot;
+
+$knownHash = `
+    &quot;9f6b5366f113ffbca3f4585fa372484dfb69d04a8a54a6d60c25e23764a28b1a&quot;
+
+if (-not (Test-Path -LiteralPath $zip)) {
+    throw &quot;ZIP not found: $zip&quot;
+}
+
+if (-not (Test-Path -LiteralPath $sidecar)) {
+    throw &quot;SHA-256 sidecar not found: $sidecar&quot;
+}
+
+$sidecarHash = (
+    (Get-Content -LiteralPath $sidecar -Raw).Trim() -split &quot;\s+&quot;
+)[0].ToLowerInvariant()
+
+$actualHash = (
+    Get-FileHash -LiteralPath $zip -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+if ($sidecarHash -ne $knownHash) {
+    throw &quot;The sidecar does not contain the governing SHA-256. Stop.&quot;
+}
+
+if ($actualHash -ne $knownHash) {
+    throw &quot;The ZIP SHA-256 does not match the governing identity. Stop.&quot;
+}
+
+Write-Host &quot;SHA-256 PASS: $actualHash&quot;
+
+# Remove the Windows downloaded-file block from the verified carrier.
+Unblock-File -LiteralPath $zip
+
+# Use the short governed local root.
+New-Item -ItemType Directory -Force -Path &quot;C:\MSBF&quot; | Out-Null
+
+Expand-Archive `
+    -LiteralPath $zip `
+    -DestinationPath &quot;C:\MSBF&quot; `
+    -Force
+
+$root = &quot;C:\MSBF\MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818&quot;
+
+$projectFile = Join-Path $root `
+    &quot;project\MSBF_PBI_A1A_Local_Construction_R1.pbip&quot;
+
+if (-not (Test-Path -LiteralPath $projectFile)) {
+    throw &quot;PBIP project was not extracted to the expected location.&quot;
+}
+
+Write-Host &quot;Package root: $root&quot;
+Write-Host &quot;Project file: $projectFile&quot;
+</code></pre>
+<p>If Windows denies creation of <code>C:\MSBF</code>, reopen PowerShell 7 with <strong>Run as administrator</strong>, create the directory, and then continue under your normal Windows account.</p>
+<hr>
+<h2>3. Create the evidence-return directory</h2>
+<p>Continue in the same PowerShell 7 window:</p>
+<pre><code class="language-powershell">$ev = Join-Path $root &quot;evidence\local_engine_return&quot;
+
+New-Item -ItemType Directory -Force -Path $ev | Out-Null
+
+Get-ChildItem -Path &quot;$root\tools\*.ps1&quot; -File |
+    Unblock-File
+
+Unblock-File -LiteralPath `
+    &quot;$HOME\Downloads\Export-A1aPostSaveManifest_FIXED.ps1&quot;
+
+Write-Host &quot;Evidence directory: $ev&quot;
+</code></pre>
+<p>Downloaded scripts can retain a Windows Internet-zone marker. <code>Unblock-File</code> removes that marker without requiring a permanent relaxation of the machine’s execution policy. [export reference: cite | turn709858search3 | turn709858search11]</p>
+<p>If PowerShell still reports that script execution is disabled, set a session-only policy:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy `
+    -Scope Process `
+    -ExecutionPolicy RemoteSigned
+</code></pre>
+<p>The <code>Process</code> scope expires when that PowerShell window closes. [export reference: cite | turn709858search7]</p>
+<hr>
+<h2>4. Patch the governed local data paths</h2>
+<p>Run:</p>
+<pre><code class="language-powershell">&amp; &quot;$root\tools\Set-A1aLocalPaths.ps1&quot; `
+    -PackageRoot $root
+</code></pre>
+<p>Expected output:</p>
+<pre><code class="language-text">Patched pDataRoot:  C:\MSBF\MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818\inputs\pbi
+Patched pBuildRoot: C:\MSBF\MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818\inputs\build
+Model:              ...\model.bim
+</code></pre>
+<p>This changes only the two local root parameters inside the TMSL <code>model.bim</code>. It does not add a table, query, relationship, measure, or report page.</p>
+<hr>
+<h2>5. Run the mandatory pre-open boundary test</h2>
+<p>Run:</p>
+<pre><code class="language-powershell">&amp; &quot;$root\tools\Verify-A1aSourceProject.ps1&quot; `
+    -PackageRoot $root *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$ev\E01_SOURCE_PROJECT_BOUNDARY.txt&quot;
+</code></pre>
+<p>The result must show:</p>
+<pre><code class="language-json">{
+  &quot;tables&quot;: 14,
+  &quot;relationships&quot;: 6,
+  &quot;named_expressions&quot;: 33,
+  &quot;table_partitions&quot;: 14,
+  &quot;power_query_queries&quot;: 47,
+  &quot;measures&quot;: 0,
+  &quot;page_directories&quot;: 0,
+  &quot;a1b_tokens&quot;: 0
+}
+</code></pre>
+<p>followed by:</p>
+<pre><code class="language-text">A1a source-project boundary PASS.
+</code></pre>
+<h3>Hard stop</h3>
+<p>Do not open Power BI Desktop if any value differs. Preserve the console output and stop.</p>
+<hr>
+<h2>6. Configure Power BI Desktop before opening the project</h2>
+<p>Start Power BI Desktop <strong>without opening the project yet</strong>.</p>
+<p>Go to:</p>
+<pre><code class="language-text">File
+→ Options and settings
+→ Options
+→ Preview features
+</code></pre>
+<p>Set the following:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Required state</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Power BI Project (.pbip) save option</td>
+<td>Enabled</td>
+</tr>
+<tr>
+<td>Store reports using enhanced metadata format (PBIR)</td>
+<td>Enabled if displayed</td>
+</tr>
+<tr>
+<td>Store semantic model using TMDL format</td>
+<td><strong>Disabled</strong></td>
+</tr>
+</tbody></table>
+<p>PBIP project support currently requires its preview option, and a <code>.pbip</code> file opens the referenced report and semantic model. [export reference: cite | turn977778view0] The supplied report uses the PBIR folder format, for which Microsoft exposes a separate preview setting. [export reference: cite | turn685883view1]</p>
+<p>The semantic model is intentionally supplied as <strong>TMSL in <code>model.bim</code></strong>. Do not convert it to TMDL. Microsoft notes that a TMDL upgrade replaces <code>model.bim</code>, and the conversion cannot be reversed through Desktop; when prompted, the correct choice is <strong>Keep current format</strong>. [export reference: cite | turn977778view1]</p>
+<p>Restart Power BI Desktop after changing preview settings.</p>
+<hr>
+<h2>7. Open the governed PBIP file</h2>
+<p>Open this exact file:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818
+\project
+\MSBF_PBI_A1A_Local_Construction_R1.pbip
+</code></pre>
+<p>You can double-click the <code>.pbip</code> file or use <strong>File → Open → Browse</strong>. Microsoft documents both <code>.pbip</code> and <code>.pbir</code> as valid project-opening entry points. [export reference: cite | turn977778view0]</p>
+<h3>Respond to prompts as follows</h3>
+<table>
+<thead>
+<tr>
+<th>Prompt or behavior</th>
+<th>Required action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Upgrade semantic model to TMDL</td>
+<td>Select <strong>Keep current format</strong></td>
+</tr>
+<tr>
+<td>Convert or save as PBIX</td>
+<td>Cancel</td>
+</tr>
+<tr>
+<td>Publish to Power BI Service</td>
+<td>Cancel</td>
+</tr>
+<tr>
+<td>Repair or upgrade the zero-page report</td>
+<td>Capture screenshot; close without saving; stop</td>
+</tr>
+<tr>
+<td>Desktop automatically creates a blank page</td>
+<td>Capture screenshot; close without saving; stop</td>
+</tr>
+<tr>
+<td>Add or auto-detect another relationship</td>
+<td>Decline or cancel</td>
+</tr>
+<tr>
+<td>Create a measure, quick measure, column, or table</td>
+<td>Cancel</td>
+</tr>
+</tbody></table>
+<p>The zero-page condition is intentional. Do not create a blank page and then delete it as a workaround. If Desktop cannot open and preserve the zero-page report physically, that behavior is evidence of a HOLD.</p>
+<hr>
+<h2>8. Verify all 47 Power Query objects</h2>
+<p>In Desktop, select:</p>
+<pre><code class="language-text">Home
+→ Transform data
+</code></pre>
+<p>Compare the Queries pane against:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818
+\catalogs
+\A1A_POWER_QUERY_CATALOG_47.csv
+</code></pre>
+<p>The exact inventory is:</p>
+<table>
+<thead>
+<tr>
+<th>Query class</th>
+<th align="right">Count</th>
+<th>Load state</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Parameters</td>
+<td align="right">9</td>
+<td>Not loaded</td>
+</tr>
+<tr>
+<td>Functions</td>
+<td align="right">5</td>
+<td>Not loaded</td>
+</tr>
+<tr>
+<td>Staging queries</td>
+<td align="right">19</td>
+<td>Enable load off</td>
+</tr>
+<tr>
+<td>Semantic queries</td>
+<td align="right">14</td>
+<td>Enable load on</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td align="right"><strong>47</strong></td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p>The fourteen loaded semantic queries must be:</p>
+<pre><code class="language-text">ModelParameters
+DimDate
+DimAsOfDate
+DimRunCampaign
+DimScenario
+DimMerchant
+DimApplication
+DimAccountAdvance
+DimIndustry
+DimRegion
+DimAcquisitionSource
+FactGovernanceControl
+FactSourceReconciliation
+FactValidationResult
+</code></pre>
+<p>Do not change query names, types, load settings, M code, or query order.</p>
+<h3>E02 evidence</h3>
+<p>Capture enough screenshots to show the complete Queries pane. Save the primary screenshot as:</p>
+<pre><code class="language-text">E02_POWER_QUERY_QUERY_PANE.png
+</code></pre>
+<p>Additional screenshots may be named:</p>
+<pre><code class="language-text">E02_POWER_QUERY_QUERY_PANE_02.png
+E02_POWER_QUERY_QUERY_PANE_03.png
+</code></pre>
+<p>Crop screenshots so that local data-root paths are not exposed.</p>
+<hr>
+<h2>9. Refresh the A1a model</h2>
+<p>While still in Power Query:</p>
+<ol>
+<li>Select <strong>Home → Refresh Preview → Refresh All</strong>.</li>
+<li>Confirm that no query shows an error.</li>
+<li>Select <strong>Close &amp; Apply</strong>.</li>
+<li>After the model loads, select <strong>Home → Refresh</strong> in Power BI Desktop.</li>
+</ol>
+<p>If Power BI asks for privacy levels, assign the same non-public privacy classification to both local roots and record the selection in the refresh log. Do not choose an option that globally ignores privacy checks.</p>
+<h3>Hard-stop errors</h3>
+<p>Stop rather than bypassing any of the following:</p>
+<pre><code class="language-text">missing source file
+header mismatch
+row-count mismatch
+SHA-256 or catalog mismatch
+selected-run mismatch
+duplicate-key failure
+orphan-key failure
+Formula.Firewall or privacy error that cannot be governed
+unexpected table, relationship, or page creation
+</code></pre>
+<h3>E03 evidence</h3>
+<p>Capture:</p>
+<pre><code class="language-text">E03_REFRESH_SUCCESS.png
+E03_REFRESH_LOG.txt
+</code></pre>
+<p>The text log should record:</p>
+<pre><code class="language-text">Desktop version:
+Refresh date/time:
+Refresh result:
+Loaded semantic tables: 14
+Power Query objects: 47
+Query errors: 0
+Measures: 0
+Pages: 0
+Notes:
+</code></pre>
+<p>Do not place your Windows username, full local path, or machine name in the evidence log.</p>
+<hr>
+<h2>10. Verify the model view and six relationships</h2>
+<p>Open <strong>Model view</strong>.</p>
+<p>There must be exactly fourteen table boxes and six relationship lines. Capture:</p>
+<pre><code class="language-text">E04_MODEL_VIEW.png
+</code></pre>
+<p>Then open <strong>Manage relationships</strong> and verify these exact relationships:</p>
+<table>
+<thead>
+<tr>
+<th>One side</th>
+<th>Many side</th>
+<th align="right">Active</th>
+<th>Cardinality</th>
+<th>Direction</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>DimIndustry[industry_code]</code></td>
+<td><code>DimMerchant[industry_code]</code></td>
+<td align="right">Yes</td>
+<td>1:*</td>
+<td>Single</td>
+</tr>
+<tr>
+<td><code>DimRegion[region_code]</code></td>
+<td><code>DimMerchant[region_code]</code></td>
+<td align="right">Yes</td>
+<td>1:*</td>
+<td>Single</td>
+</tr>
+<tr>
+<td><code>DimMerchant[MerchantKey]</code></td>
+<td><code>DimApplication[MerchantKey]</code></td>
+<td align="right">Yes</td>
+<td>1:*</td>
+<td>Single</td>
+</tr>
+<tr>
+<td><code>DimAcquisitionSource[primary_source_code]</code></td>
+<td><code>DimApplication[primary_source_code]</code></td>
+<td align="right">Yes</td>
+<td>1:*</td>
+<td>Single</td>
+</tr>
+<tr>
+<td><code>DimApplication[ApplicationKey]</code></td>
+<td><code>DimAccountAdvance[ApplicationKey]</code></td>
+<td align="right">Yes</td>
+<td>1:*</td>
+<td>Single</td>
+</tr>
+<tr>
+<td><code>DimScenario[RunScenarioKey]</code></td>
+<td><code>DimAccountAdvance[RunScenarioKey]</code></td>
+<td align="right">Yes</td>
+<td>1:*</td>
+<td>Single</td>
+</tr>
+</tbody></table>
+<p>Do not edit or recreate a relationship even if it appears visually inconvenient. A discrepancy is a HOLD, not an invitation to repair the model locally.</p>
+<hr>
+<h2>11. Connect DAX Studio and export the model metadata</h2>
+<p>With the PBIP still open, select:</p>
+<pre><code class="language-text">External Tools
+→ DAX Studio
+</code></pre>
+<p>An all-users DAX Studio installation should launch with the open Power BI model already connected. [export reference: cite | turn892161search1]</p>
+<p>Open:</p>
+<pre><code class="language-text">$root\tools\A1A_LOCAL_ENGINE_DMV_QUERIES.sql
+</code></pre>
+<p>Run each <code>SELECT</code> statement separately. Use DAX Studio’s <strong>File</strong> output mode and select CSV; DAX Studio supports direct CSV output without applying display formatting. [export reference: cite | turn559735search0]</p>
+<p>Save the outputs as:</p>
+<pre><code class="language-text">E05_TMSCHEMA_RELATIONSHIPS.csv
+E06_TMSCHEMA_TABLES.csv
+E06_TMSCHEMA_MEASURES.csv
+E06_TMSCHEMA_PARTITIONS.csv
+E06_TMSCHEMA_EXPRESSIONS.csv
+</code></pre>
+<p>Also run this supplemental DMV so the relationship column IDs can be resolved to physical column names:</p>
+<pre><code class="language-sql">SELECT * FROM $SYSTEM.TMSCHEMA_COLUMNS;
+</code></pre>
+<p>Save it as:</p>
+<pre><code class="language-text">E05_TMSCHEMA_COLUMNS.csv
+</code></pre>
+<p>Expected metadata counts:</p>
+<pre><code class="language-text">Tables               14
+Relationships          6
+Measures               0
+Partitions            14
+Named expressions     33
+Partitions + expressions = 47
+</code></pre>
+<p>After exporting the CSVs, run this in PowerShell 7:</p>
+<pre><code class="language-powershell">$counts = [ordered]@{
+    tables = @(
+        Import-Csv &quot;$ev\E06_TMSCHEMA_TABLES.csv&quot;
+    ).Count
+
+    relationships = @(
+        Import-Csv &quot;$ev\E05_TMSCHEMA_RELATIONSHIPS.csv&quot;
+    ).Count
+
+    measures = @(
+        Import-Csv &quot;$ev\E06_TMSCHEMA_MEASURES.csv&quot;
+    ).Count
+
+    partitions = @(
+        Import-Csv &quot;$ev\E06_TMSCHEMA_PARTITIONS.csv&quot;
+    ).Count
+
+    named_expressions = @(
+        Import-Csv &quot;$ev\E06_TMSCHEMA_EXPRESSIONS.csv&quot;
+    ).Count
+
+    report_pages = 0
+}
+
+$counts[&quot;power_query_queries&quot;] = `
+    $counts.partitions + $counts.named_expressions
+
+$counts |
+    ConvertTo-Json |
+    Set-Content `
+        -LiteralPath &quot;$ev\E06_MODEL_OBJECT_COUNTS.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Open <code>E06_MODEL_OBJECT_COUNTS.json</code> and verify:</p>
+<pre><code class="language-json">{
+  &quot;tables&quot;: 14,
+  &quot;relationships&quot;: 6,
+  &quot;measures&quot;: 0,
+  &quot;partitions&quot;: 14,
+  &quot;named_expressions&quot;: 33,
+  &quot;report_pages&quot;: 0,
+  &quot;power_query_queries&quot;: 47
+}
+</code></pre>
+<hr>
+<h2>12. Run the read-only DAX evidence queries</h2>
+<p>Open this file in DAX Studio:</p>
+<pre><code class="language-text">$root\tools\A1A_LOCAL_ENGINE_EVIDENCE_QUERIES.dax
+</code></pre>
+<p>Run <strong>one <code>EVALUATE</code> block at a time</strong>. Do not run the whole file as one batch and do not create persistent measures.</p>
+<p>Export the results as:</p>
+<table>
+<thead>
+<tr>
+<th>Block</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E07 semantic row counts</td>
+<td><code>E07_SEMANTIC_ROW_COUNTS.csv</code></td>
+</tr>
+<tr>
+<td>E08 key uniqueness</td>
+<td><code>E08_TABLE_KEY_RESULTS.csv</code></td>
+</tr>
+<tr>
+<td>E09 lifecycle authority</td>
+<td><code>E09_AUTHORITATIVE_LIFECYCLE.csv</code></td>
+</tr>
+<tr>
+<td>E10 scenario isolation</td>
+<td><code>E10_SCENARIO_ISOLATION.csv</code></td>
+</tr>
+<tr>
+<td>E11 date spine</td>
+<td><code>E11_ASOF_DATE_SPINE.csv</code></td>
+</tr>
+</tbody></table>
+<p>Then open the downloaded supplemental file:</p>
+<pre><code class="language-text">A1A_E08_ORPHAN_AND_FILTER_BEHAVIOR_QUERIES.dax
+</code></pre>
+<p>Run its two blocks separately and export:</p>
+<pre><code class="language-text">E08_RELATIONSHIP_ORPHANS.csv
+E08_RELATIONSHIP_FILTER_BEHAVIOR.csv
+</code></pre>
+<h3>Expected E07 row counts</h3>
+<table>
+<thead>
+<tr>
+<th>Table</th>
+<th align="right">Rows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ModelParameters</td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td>DimDate</td>
+<td align="right">123</td>
+</tr>
+<tr>
+<td>DimAsOfDate</td>
+<td align="right">123</td>
+</tr>
+<tr>
+<td>DimRunCampaign</td>
+<td align="right">1</td>
+</tr>
+<tr>
+<td>DimScenario</td>
+<td align="right">2</td>
+</tr>
+<tr>
+<td>DimMerchant</td>
+<td align="right">750</td>
+</tr>
+<tr>
+<td>DimApplication</td>
+<td align="right">750</td>
+</tr>
+<tr>
+<td>DimAccountAdvance</td>
+<td align="right">59</td>
+</tr>
+<tr>
+<td>DimIndustry</td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td>DimRegion</td>
+<td align="right">5</td>
+</tr>
+<tr>
+<td>DimAcquisitionSource</td>
+<td align="right">18</td>
+</tr>
+<tr>
+<td>FactGovernanceControl</td>
+<td align="right">9</td>
+</tr>
+<tr>
+<td>FactSourceReconciliation</td>
+<td align="right">214</td>
+</tr>
+<tr>
+<td>FactValidationResult</td>
+<td align="right">533</td>
+</tr>
+</tbody></table>
+<h3>Expected E08 results</h3>
+<p>For every table key:</p>
+<pre><code class="language-text">Rows = DistinctKeys
+NullKeys = 0
+</code></pre>
+<p>For all six relationships:</p>
+<pre><code class="language-text">OrphanDistinctKeys = 0
+GroupedChildRows = TotalChildRows
+</code></pre>
+<h3>Expected E09 lifecycle results</h3>
+<p>The engine evidence must establish:</p>
+<pre><code class="language-text">run_status                 M2_12_ACCEPTED
+latest G2 result           PASS
+latest G3 result           PASS
+G2 registry status         ACCEPTED
+G3 registry status         ACCEPTED
+NotesUsedForStatus          false
+</code></pre>
+<p>The stale narrative notes field must not control lifecycle status.</p>
+<h3>Expected E10 scenario results</h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th align="right">Account paths</th>
+<th align="right">Distinct applications</th>
+<th align="right">Funded amount</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BASELINE</td>
+<td align="right">44</td>
+<td align="right">44</td>
+<td align="right">$472,000</td>
+</tr>
+<tr>
+<td>RECESSION_ENERGY</td>
+<td align="right">15</td>
+<td align="right">15</td>
+<td align="right">$195,600</td>
+</tr>
+</tbody></table>
+<p>Combined interpretation:</p>
+<pre><code class="language-text">59 scenario-qualified paths
+44 distinct applications/merchants
+15 matched stress overlays
+</code></pre>
+<p>Do not describe these as 59 distinct merchants.</p>
+<h3>Expected E11 date-spine results</h3>
+<pre><code class="language-text">DimDateRows             123
+MinimumDate             2026-07-23
+MaximumDate             2026-11-22
+SourceAsOfRows          1
+EvidenceEndpointRows    1
+DimAsOfDateRows         123
+DefaultAsOfRows         1
+</code></pre>
+<p><strong>Known package discrepancy:</strong> the packaged static expected <code>DimDate</code> CSV appears to leave <code>IsSourceRunAsOf</code> false throughout. Do not change the model to reproduce that static-file defect. The governing source cutoff is July 23, 2026, so the physical engine result should contain exactly one source-as-of row. Record the discrepancy in the evidence notes for Independent Audit review.</p>
+<hr>
+<h2>13. Complete the supplied evidence templates</h2>
+<p>The templates are located at:</p>
+<pre><code class="language-text">$root\evidence\local_engine_pending
+</code></pre>
+<p>Copy them into:</p>
+<pre><code class="language-text">$root\evidence\local_engine_return
+</code></pre>
+<p>Remove <code>_TEMPLATE</code> from the copied filenames. Complete at least:</p>
+<pre><code class="language-text">A1A_EVIDENCE_INDEX.csv
+A1A_POWER_QUERY_REFRESH_EVIDENCE.csv
+A1A_SEMANTIC_TABLE_RECONCILIATION.csv
+A1A_KEY_UNIQUENESS_AND_ORPHAN.csv
+A1A_RELATIONSHIP_INSTANTIATION.csv
+A1A_RUN_LINEAGE_ALIAS_CONTROL.csv
+A1A_SOURCE_RECONCILIATION.csv
+A1A_LOCAL_EVIDENCE_PACKAGE_MANIFEST.csv
+</code></pre>
+<p>For each completed control, enter:</p>
+<pre><code class="language-text">actual result
+status
+evidence filename
+tester
+tested date/time
+notes or limitation
+</code></pre>
+<h3>Hold handling</h3>
+<p>The source-owner evidence may say that the result matched the expected value, but do <strong>not</strong> mark these controls closed:</p>
+<pre><code class="language-text">AUD-SCN-004
+AUD-REL-005
+AUD-ASOF-003
+</code></pre>
+<p>Use language such as:</p>
+<pre><code class="language-text">PHYSICAL_EVIDENCE_CAPTURED_PENDING_INDEPENDENT_DISPOSITION
+</code></pre>
+<p>The Independent Audit—not the source-owner workstream—makes the closure decision.</p>
+<hr>
+<h2>14. Save only if the boundary is still exact</h2>
+<p>Before saving, verify:</p>
+<pre><code class="language-text">14 tables
+6 relationships
+47 queries
+0 measures
+0 pages
+no A1b objects
+</code></pre>
+<p>Then select:</p>
+<pre><code class="language-text">File
+→ Save
+</code></pre>
+<p>Do not use:</p>
+<pre><code class="language-text">Save As PBIX
+Publish
+New measure
+New column
+New table
+New page
+</code></pre>
+<p>If prompted to upgrade the semantic model to TMDL, choose <strong>Keep current format</strong>.</p>
+<p>Close Power BI Desktop completely.</p>
+<hr>
+<h2>15. Perform the post-save boundary test</h2>
+<p>Back in PowerShell 7:</p>
+<pre><code class="language-powershell">&amp; &quot;$root\tools\Verify-A1aSourceProject.ps1&quot; `
+    -PackageRoot $root *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$ev\E01_POST_SAVE_SOURCE_PROJECT_BOUNDARY.txt&quot;
+</code></pre>
+<p>It must still return:</p>
+<pre><code class="language-text">tables                 14
+relationships            6
+power_query_queries      47
+measures                  0
+page_directories          0
+a1b_tokens                0
+A1a source-project boundary PASS
+</code></pre>
+<p>Any post-save change to those values is a HOLD.</p>
+<hr>
+<h2>16. Generate the E12 post-save manifest</h2>
+<p>Do <strong>not</strong> run the defective <code>Export-A1aPostSaveManifest.ps1</code> from the extracted package.</p>
+<p>Run the corrected downloaded helper:</p>
+<pre><code class="language-powershell">&amp; &quot;$HOME\Downloads\Export-A1aPostSaveManifest_FIXED.ps1&quot; `
+    -PackageRoot $root `
+    -OutputDirectory $ev
+</code></pre>
+<p>Expected outputs:</p>
+<pre><code class="language-text">E12_POST_SAVE_MANIFEST.csv
+E12_POST_SAVE_SHA256SUMS.txt
+</code></pre>
+<p>The corrected helper excludes Power BI’s machine-specific local settings and model cache from the manifest. Microsoft also identifies <code>localSettings.json</code> and <code>cache.abf</code> as local or cache artifacts that should normally be excluded from source-controlled PBIP content. [export reference: cite | turn977778view0 | turn977778view1]</p>
+<hr>
+<h2>17. Confirm the final stopping state</h2>
+<p>Your final local status must read:</p>
+<pre><code class="language-text">A1a project opened in Power BI Desktop
+47 Power Query objects physically refreshed
+14 semantic tables physically loaded
+6 relationships physically instantiated
+0 measures
+0 calculated columns
+0 calculated tables
+0 report pages
+A1b not started
+
+AUD-SCN-004   HOLD_PENDING_INDEPENDENT_REVIEW
+AUD-REL-005   HOLD_PENDING_INDEPENDENT_REVIEW
+AUD-ASOF-003  HOLD_PENDING_INDEPENDENT_REVIEW
+PBI-WP2       HOLD
+</code></pre>
+<p>Return the saved <code>project</code> directory and the completed <code>evidence\local_engine_return</code> directory. Do not begin A1b, create a report page, add a measure, convert the project to PBIX/TMDL, publish it, or characterize the Power BI solution as accepted.</p>
+</div></article><article id="m-036de414-482c-44af-813b-00ed75a3938b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00026 · 2026-08-19T06:32:31.685000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 687b645a-179d-4a56-a64a-7366ff15034f.png</p><div class="bubble"><p>step 7: ActivePageName not found
+The report has no pages. Reports must have at least one page                     no prompts came up besides this.</p>
+</div></article><article id="m-6062460d-731e-4aea-b7c7-f12131d450fa" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00027 · 2026-08-19T06:38:00.940053-04:00 · active path</p><div class="bubble"><h2>Stop here—do <strong>not</strong> click <strong>Continue</strong></h2>
+<p>This is the exact zero-page hard stop anticipated in the runbook. Your screenshot confirms a genuine incompatibility between:</p>
+<pre><code class="language-text">Audit-authorized A1a boundary: 0 report pages
+Power BI Desktop report requirement: at least 1 report page
+</code></pre>
+<p>The audit authorized <strong>14 tables, 6 relationships, 47 queries, 0 measures, and 0 report pages</strong>, and explicitly prohibited adding any report page. [export reference: filecite | turn9file1 | L55-L74] Microsoft’s current Desktop documentation states that a report starts with at least one blank page; PBIP opens a report and its referenced semantic model together rather than opening the semantic model by itself. [export reference: cite | turn831800view0 | turn831800view1]</p>
+<p>The two errors are related:</p>
+<pre><code class="language-text">The report has no pages
+→ there is no valid page that can be identified as ActivePageName
+</code></pre>
+<p>Microsoft identifies invalid <code>activePageName</code> metadata as something Desktop may automatically repair, but continuing and later saving could persist an automatic report-definition change. [export reference: cite | turn831800view2] Under the current authorization, that change must not be allowed.</p>
+<h2>Do this now</h2>
+<h3>1. Copy the full diagnostic details</h3>
+<p>Click:</p>
+<pre><code class="language-text">Copy details to clipboard
+</code></pre>
+<p>Do this <strong>before</strong> closing Desktop.</p>
+<h3>2. Save the clipboard output as evidence</h3>
+<p>Open PowerShell 7 and run:</p>
+<pre><code class="language-powershell">$root = &quot;C:\MSBF\MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818&quot;
+$ev   = Join-Path $root &quot;evidence\local_engine_return&quot;
+
+New-Item -ItemType Directory -Force -Path $ev | Out-Null
+
+Get-Clipboard |
+    Set-Content `
+        -LiteralPath &quot;$ev\E00_DESKTOP_ZERO_PAGE_OPEN_ERROR.txt&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Open the resulting text file and confirm that it contains the two errors.</p>
+<h3>3. Save the screenshot locally</h3>
+<p>Save a screenshot of the exact dialog as:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818
+\evidence\local_engine_return
+\E00_DESKTOP_ZERO_PAGE_OPEN_ERROR.png
+</code></pre>
+<p>The screenshot you posted captures the necessary content:</p>
+<pre><code class="language-text">ActivePageName not found
+The report has no pages. Reports must have at least one page.
+</code></pre>
+<h3>4. Click <strong>Close Desktop</strong></h3>
+<p>Select:</p>
+<pre><code class="language-text">Close Desktop
+</code></pre>
+<p>Do <strong>not</strong> select <strong>Continue</strong>.</p>
+<p>If Power BI asks whether to save changes, select:</p>
+<pre><code class="language-text">Don&#39;t Save
+</code></pre>
+<p>Do not create a page, let Desktop repair the report, or save the project.</p>
+<h3>5. Re-run the boundary verifier</h3>
+<p>After Desktop is fully closed, run:</p>
+<pre><code class="language-powershell">$root = &quot;C:\MSBF\MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818&quot;
+$ev   = Join-Path $root &quot;evidence\local_engine_return&quot;
+
+&amp; &quot;$root\tools\Verify-A1aSourceProject.ps1&quot; `
+    -PackageRoot $root *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$ev\E00_POST_FAILED_OPEN_BOUNDARY.txt&quot;
+</code></pre>
+<p>It must still report:</p>
+<pre><code class="language-text">tables                 14
+relationships           6
+power_query_queries    47
+measures                0
+page_directories        0
+a1b_tokens              0
+
+A1a source-project boundary PASS
+</code></pre>
+<p>If the page count is no longer zero, do not manually repair it. Delete the extracted working copy and re-extract the verified ZIP to restore the governed state.</p>
+<h2>What this result means</h2>
+<p>This is <strong>physical Power BI Desktop evidence</strong>, but only of a report-container constraint:</p>
+<pre><code class="language-text">PBIP report opened far enough for Desktop validation
+Desktop rejected the zero-page report definition
+No refresh occurred
+No relationships were instantiated
+No DAX was compiled
+No page was authorized or constructed
+No A1b work occurred
+</code></pre>
+<p>It does <strong>not</strong> close any of the three local-engine controls:</p>
+<pre><code class="language-text">AUD-SCN-004   HOLD_LOCAL_DESKTOP_EVIDENCE
+AUD-REL-005   HOLD_LOCAL_DESKTOP_EVIDENCE
+AUD-ASOF-003  HOLD_LOCAL_DESKTOP_EVIDENCE
+</code></pre>
+<p>Those holds require scenario-isolation, instantiated-relationship, and as-of/endpoint behavior evidence that has not yet been reached. [export reference: filecite | turn9file1 | L45-L53]</p>
+<p>No other prompt appearing before this error does not establish that the queries, tables, sources, or relationships loaded successfully. Desktop stopped at report-definition validation before the authorized refresh and engine tests could be completed.</p>
+<h2>Required audit decision before proceeding</h2>
+<p>The current package cannot complete a Desktop run while simultaneously retaining an exact zero-page report definition. Microsoft’s PBIR structure treats report pages as part of the report definition, with a pages folder and one page folder for each page. [export reference: cite | turn251776view0]</p>
+<p>The Independent Audit therefore needs to authorize one of these two bounded remedies:</p>
+<ol>
+<li><p><strong>Preferred:</strong> permit one empty technical shell page solely to satisfy Desktop, with:</p>
+<pre><code class="language-text">1 technical page
+0 visuals
+0 measures
+no substantive report-page construction
+no navigation
+no formatting work
+A1b still prohibited
+</code></pre>
+</li>
+<li><p>Authorize a different semantic-model-only local-engine route instead of the currently authorized PBIP/Desktop report-opening route.</p>
+</li>
+</ol>
+<p>The exact update to send the Independent Audit is:</p>
+<pre><code class="language-text">A1a Desktop entry encountered a physical zero-page PBIP constraint. Power BI
+Desktop reported “ActivePageName not found” and “The report has no pages.
+Reports must have at least one page.” Desktop was closed without continuing or
+saving. The governed source project remains 14 tables, 6 relationships,
+47 queries, 0 measures, and 0 pages; A1b was not started.
+
+Please issue a specific boundary decision authorizing either:
+
+1. one blank technical shell page with zero visuals and no substantive report
+   construction solely to permit Desktop semantic-model execution; or
+2. an alternate semantic-model-only local-engine evidence route.
+
+Until that decision, A1a remains stopped and AUD-SCN-004, AUD-REL-005, and
+AUD-ASOF-003 remain HOLD_LOCAL_DESKTOP_EVIDENCE.
+</code></pre>
+</div></article><article id="m-c01dbc72-33db-48be-86dc-daa78806e213" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00028 · 2026-08-19T07:05:56.568000-04:00 · active path</p><p class="note">Attachment references: 01_IA_WP2A_A1A_ZERO_PAGE_CONSTRAINT_BOUNDARY_DECISION(1).md; 02_IA_WP2A_A1A_ZERO_PAGE_CONSTRAINT_MACHINE_SUMMARY(1).json; 04_A1A_TECHNICAL_SHELL_EVIDENCE_CHECKLIST(1).md; MSBF_IA_POWER_BI_A1A_ZERO_PAGE_BOUNDARY_DECISION_20260819(1).zip; MSBF_IA_POWER_BI_A1A_ZERO_PAGE_BOUNDARY_DECISION_20260819.zip(1).sha256; MSBF_IA_POWER_BI_A1A_ZERO_PAGE_BOUNDARY_DECISION_20260819_ZIP_VALIDATION_REPORT(1).md</p><div class="bubble"><h1>A1a boundary decision issued</h1>
+<p><strong>Decision:</strong> <strong>Option 1 is authorized.</strong></p>
+<p>Power BI A1a may resume using <strong>exactly one blank technical shell page</strong> solely to satisfy the Power BI Desktop report-container requirement and permit local semantic-engine execution.</p>
+<p>The prior audit required a specific A1a Desktop-entry decision while preserving the A1a/A1b boundary and the three local-engine holds. The earlier Power BI submission also contained no report/page assets and expressly retained the local-engine hold, so this is recorded as a new bounded compatibility exception rather than a reinterpretation of an existing page artifact.</p>
+<h2>Authorized page</h2>
+<pre><code>A1A_TECHNICAL_SHELL_NO_VISUALS
+</code></pre>
+<p>Required classification:</p>
+<pre><code>TECHNICAL_CONTAINER_ONLY
+NON_SUBSTANTIVE
+NOT_REPORT_DESIGN
+NOT_PUBLIC_CLAIMABLE
+</code></pre>
+<h2>Exact authorized A1a state</h2>
+<table>
+<thead>
+<tr>
+<th>ComponentAuthorized count</th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Semantic tables</td>
+<td>14</td>
+</tr>
+<tr>
+<td>Relationships</td>
+<td>6</td>
+</tr>
+<tr>
+<td>Power Query queries</td>
+<td>47</td>
+</tr>
+<tr>
+<td>Explicit DAX measures</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Substantive report pages</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Technical shell pages</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Total physical report pages</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Visual objects</td>
+<td>0</td>
+</tr>
+<tr>
+<td>A1b objects</td>
+<td>0</td>
+</tr>
+</tbody></table>
+<p>The governed <strong>semantic activation footprint remains 67 objects</strong>: 14 tables, 6 relationships, and 47 queries. The technical shell is a separately governed execution-enabling container; it is not a substantive activation object.</p>
+<p>Once the shell is saved, the physical project must no longer be described simply as having “zero pages.” The exact representation is:</p>
+<blockquote>
+<p><strong>One physical technical shell page, zero substantive report pages, and zero visuals.</strong></p>
+</blockquote>
+<h2>Shell-page controls</h2>
+<p>The page must:</p>
+<ol>
+<li>Be the only physical report page.</li>
+<li>Use the exact display name <code>A1A_TECHNICAL_SHELL_NO_VISUALS</code>.</li>
+<li>Be the valid target of the report’s active-page reference.</li>
+<li>Contain zero visuals, including text boxes, shapes, buttons, images, slicers, tables, cards, or charts.</li>
+<li>Contain no bookmarks, navigation, tooltip configuration, drillthrough destination, mobile layout, or substantive report filter.</li>
+<li>Introduce no measure or A1b object.</li>
+<li>Remain visibly identifiable as technical-only and never be presented as a dashboard or report page.</li>
+</ol>
+<p>Default metadata that Desktop requires to maintain the empty report container is permissible, but it must be inventoried in the evidence submission.</p>
+<h2>Authorized operations</h2>
+<p>The Power BI workstream may now:</p>
+<ul>
+<li>Create the shell in a <strong>derived working copy</strong>, leaving accepted predecessor packages unchanged.</li>
+<li>Open, save, close, and reopen the PBIP.</li>
+<li>Construct and execute only the governed 14 tables, 6 relationships, and 47 queries.</li>
+<li>Refresh or evaluate the bounded A1a model solely to produce local-engine evidence.</li>
+<li>Capture screenshots, metadata, logs, hashes, counts, reconciliations, and relationship/filter results.</li>
+</ul>
+<p>If Desktop creates any unauthorized object, the workstream must stop and preserve the resulting artifact. It must not silently remove the object and submit a cleaned version as though it were the executed state.</p>
+<h2>Unchanged holds and prohibitions</h2>
+<pre><code>AUD-SCN-004   HOLD_LOCAL_DESKTOP_EVIDENCE
+AUD-REL-005   HOLD_LOCAL_DESKTOP_EVIDENCE
+AUD-ASOF-003  HOLD_LOCAL_DESKTOP_EVIDENCE
+
+PBI-WP2       HOLD
+A1b           NOT_AUTHORIZED
+Public claims NOT_AUTHORIZED
+</code></pre>
+<p>The shell authorization does not close any local-engine control, accept a PBIP, validate a refresh, accept instantiated relationship behavior, or authorize report construction.</p>
+<p>The reported zero-page error, the no-save condition, and the statement that A1b was not started remain source-owner assertions until supported by the physical evidence package.</p>
+<h2>Alternate route decision</h2>
+<p><strong>Option 2 is not authorized through this decision.</strong></p>
+<p>A semantic-model-only alternate route would introduce a different toolchain and evidence contract that have not been designed or independently audited. The one-page shell is the smallest sufficient deviation from the accepted boundary.</p>
+<h2>Exact permitted next action</h2>
+<blockquote>
+<p>Create one blank page named <code>A1A_TECHNICAL_SHELL_NO_VISUALS</code> in a derived A1a working PBIP; keep it at zero visuals and create no other report objects; construct only the governed 14 tables, 6 relationships, and 47 queries with zero explicit measures; save, close, and reopen solely to execute and capture A1a local-engine evidence; retain <code>AUD-SCN-004</code>, <code>AUD-REL-005</code>, and <code>AUD-ASOF-003</code> as holds; submit the complete physical evidence package; do not begin A1b.</p>
+</blockquote>
+<h2>Audit addendum package</h2>
+<pre><code>Package:
+MSBF_IA_POWER_BI_A1A_ZERO_PAGE_BOUNDARY_DECISION_20260819.zip
+
+SHA-256:
+605f37d03bf3e9b40abcd8a7d9fed00eee23792f069e7c1c30ae13697c64b460
+
+ZIP CRC:
+PASS
+
+Unsafe paths:
+0
+
+Duplicate paths:
+0
+
+Case-fold duplicate paths:
+0
+
+Symlinks:
+0
+
+Encrypted entries:
+0
+</code></pre>
+<p>Download the complete boundary-decision package (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_A1A_ZERO_PAGE_BOUNDARY_DECISION_20260819.zip</code>; referenced bytes not established here)</p>
+<p>Download the SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_A1A_ZERO_PAGE_BOUNDARY_DECISION_20260819.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Open the formal boundary-decision report (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_A1A_ZERO_PAGE_BOUNDARY_DECISION_20260819/01_IA_WP2A_A1A_ZERO_PAGE_CONSTRAINT_BOUNDARY_DECISION.md</code>; referenced bytes not established here)</p>
+<p>Open the A1a evidence checklist (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_A1A_ZERO_PAGE_BOUNDARY_DECISION_20260819/04_A1A_TECHNICAL_SHELL_EVIDENCE_CHECKLIST.md</code>; referenced bytes not established here)</p>
+<p>Open the machine-readable decision summary (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_A1A_ZERO_PAGE_BOUNDARY_DECISION_20260819/02_IA_WP2A_A1A_ZERO_PAGE_CONSTRAINT_MACHINE_SUMMARY.json</code>; referenced bytes not established here)</p>
+<p>Open the external ZIP validation report (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_A1A_ZERO_PAGE_BOUNDARY_DECISION_20260819_ZIP_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+</div></article><article id="m-a2ff2d13-06cf-4930-a436-acba954914ef" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00029 · 2026-08-19T07:26:15.290714-04:00 · active path</p><div class="bubble"><h1>Resume A1a under the technical-shell exception</h1>
+<p>The prior instruction <strong>not to click Continue</strong> is superseded, but only within a <strong>derived working copy</strong> and only to create the authorized shell. The governing physical state is now:</p>
+<pre><code class="language-text">14 semantic tables
+6 relationships
+47 Power Query queries
+0 explicit DAX measures
+0 substantive report pages
+1 technical shell page
+1 total physical report page
+0 visual objects
+0 A1b objects
+</code></pre>
+<p>The page must be named exactly <code>A1A_TECHNICAL_SHELL_NO_VISUALS</code> and remain technical-only, non-substantive, non-report-design, and not publicly claimable. [export reference: filecite | turn9file0 | L42-L79]</p>
+<h2>Download the shell-control helpers</h2>
+<p>Save these three files in your Windows <strong>Downloads</strong> folder:</p>
+<ul>
+<li>Initialize the derived A1a working copy (historical reference: <code>sandbox:[session]/Initialize-A1aTechnicalShellWorkingCopy.ps1</code>; referenced bytes not established here)</li>
+<li>Update the A1a boundary annotation (historical reference: <code>sandbox:[session]/Set-A1aTechnicalShellAnnotation.ps1</code>; referenced bytes not established here)</li>
+<li>Verify the authorized technical-shell boundary (historical reference: <code>sandbox:[session]/Verify-A1aTechnicalShellBoundary.ps1</code>; referenced bytes not established here)</li>
+</ul>
+<p>The original <code>Verify-A1aSourceProject.ps1</code> remains useful only <strong>before</strong> the shell is created because it still requires zero page directories. Do not use it as the post-shell verifier.</p>
+<hr>
+<h2>1. Preserve and close the failed zero-page attempt</h2>
+<p>If the original error dialog is still open:</p>
+<ol>
+<li>Select <strong>Copy details to clipboard</strong>.</li>
+<li>Preserve the screenshot already taken.</li>
+<li>Select <strong>Close Desktop</strong>.</li>
+<li>If asked to save, choose <strong>Don’t Save</strong>.</li>
+</ol>
+<p>Do not create the shell in that original extracted project. The audit requires the shell to be created in a derived working copy and requires evidence that the first failed attempt did not mutate the governed project. [export reference: filecite | turn9file0 | L104-L109]</p>
+<hr>
+<h2>2. Create the derived working copy</h2>
+<p>Open <strong>PowerShell 7</strong> and run:</p>
+<pre><code class="language-powershell">$downloads = Join-Path $HOME &quot;Downloads&quot;
+
+$initialize = Join-Path $downloads `
+    &quot;Initialize-A1aTechnicalShellWorkingCopy.ps1&quot;
+
+Unblock-File -LiteralPath $initialize
+
+&amp; $initialize
+</code></pre>
+<p>The helper will:</p>
+<ul>
+<li>verify that Power BI Desktop is closed;</li>
+<li>compare the current source project against the governed release manifest;</li>
+<li>create a new derived working root;</li>
+<li>verify the copied project before altering local parameters;</li>
+<li>repatch the local data and build roots for the derived copy;</li>
+<li>capture pre-shell manifests and hashes;</li>
+<li>run the original zero-page boundary verifier one final time;</li>
+<li>create the derived working-copy identity record.</li>
+</ul>
+<p>Expected working root:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819
+</code></pre>
+<p>Expected PBIP:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819
+\project
+\MSBF_PBI_A1A_Local_Construction_R1.pbip
+</code></pre>
+<p>Expected evidence directory:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819
+\evidence
+\local_engine_return
+</code></pre>
+<h3>If the script says the working root already exists</h3>
+<p>Do not delete or overwrite it. Preserve it and use a new identity:</p>
+<pre><code class="language-powershell">&amp; $initialize `
+    -WorkingRoot `
+    &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R2_20260819&quot;
+</code></pre>
+<hr>
+<h2>3. Open only the derived PBIP</h2>
+<p>Open:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819
+\project
+\MSBF_PBI_A1A_Local_Construction_R1.pbip
+</code></pre>
+<p>The same zero-page dialog will probably appear again. That is expected because the derived report definition still contains zero pages at this point.</p>
+<p>At the dialog:</p>
+<ol>
+<li>Select <strong>Copy details to clipboard</strong>.</li>
+<li>Save the diagnostic in PowerShell:</li>
+</ol>
+<pre><code class="language-powershell">$work = `
+    &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+
+$ev = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+Get-Clipboard |
+    Set-Content `
+        -LiteralPath `
+        &quot;$ev\E00_ZERO_PAGE_DIAGNOSTIC_DERIVED_WORKING_COPY.txt&quot; `
+        -Encoding utf8
+
+[pscustomobject]@{
+    event = &quot;ZERO_PAGE_DIALOG_DISPLAYED&quot;
+    timestamp_local = (Get-Date).ToString(&quot;o&quot;)
+    timestamp_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+    project = &quot;MSBF_PBI_A1A_Local_Construction_R1.pbip&quot;
+    working_root = $work
+} |
+    ConvertTo-Json |
+    Set-Content `
+        -LiteralPath &quot;$ev\E00_ZERO_PAGE_EVENT_TIMESTAMP.json&quot; `
+        -Encoding utf8
+</code></pre>
+<ol start="3">
+<li>Capture a screenshot as:</li>
+</ol>
+<pre><code class="language-text">E00_ZERO_PAGE_DIAGNOSTIC_DERIVED_WORKING_COPY.png
+</code></pre>
+<ol start="4">
+<li><strong>Now select Continue.</strong></li>
+</ol>
+<p>Continue is authorized only because decision <code>IA-D-R3A-PBI-001</code> permits exactly one blank technical shell page. The semantic-model-only alternate route remains unauthorized. [export reference: filecite | turn9file0 | L40-L61]</p>
+<hr>
+<h2>4. Create exactly one blank page</h2>
+<p>After selecting <strong>Continue</strong>, inspect the bottom of the report canvas.</p>
+<h3>If Desktop automatically created one page</h3>
+<p>Do <strong>not</strong> create another page. Proceed directly to renaming it.</p>
+<h3>If no page tab exists</h3>
+<p>Create one page exactly once:</p>
+<pre><code class="language-text">Insert
+→ New page
+→ Blank page
+</code></pre>
+<p>You may alternatively use the <code>+</code> beside the report-page tabs. Microsoft documents both routes for adding a blank Desktop report page. [export reference: cite | turn877051search5]</p>
+<h3>If two or more pages appear</h3>
+<p>Stop immediately:</p>
+<ol>
+<li>Do not delete either page.</li>
+<li>Do not save.</li>
+<li>Capture screenshots.</li>
+<li>Close Desktop without saving.</li>
+<li>Preserve the resulting evidence.</li>
+</ol>
+<p>The audit expressly prohibits silently deleting an unauthorized object and submitting a cleaned state as though it were the executed state. [export reference: filecite | turn9file0 | L113-L123]</p>
+<hr>
+<h2>5. Rename the single page</h2>
+<p>Right-click the single page tab and select <strong>Rename Page</strong>. Enter exactly:</p>
+<pre><code class="language-text">A1A_TECHNICAL_SHELL_NO_VISUALS
+</code></pre>
+<p>Press <strong>Enter</strong>.</p>
+<p>Do not abbreviate, add spaces, alter capitalization, or append a version identifier. Power BI supports renaming a page from its tab context menu. [export reference: cite | turn877051search0]</p>
+<p>Leave this page selected when saving so that it becomes the active page. The post-save verifier will independently confirm that:</p>
+<pre><code class="language-text">pages.json pageOrder
+=
+the page’s internal identifier
+=
+pages.json activePageName
+</code></pre>
+<p>PBIR stores the active page and page order in <code>pages.json</code>, while each physical page has its own page folder and <code>page.json</code>. [export reference: cite | turn198476search1]</p>
+<hr>
+<h2>6. Keep the shell completely empty</h2>
+<p>Do not click or use any of the following:</p>
+<pre><code class="language-text">New visual
+Text box
+Shape
+Button
+Image
+Slicer
+Table
+Card
+Chart
+Page navigator
+Bookmark navigator
+Drillthrough
+Tooltip
+Mobile layout
+Page filter
+Report filter
+New measure
+Quick measure
+New column
+New table
+</code></pre>
+<p>The shell must contain:</p>
+<pre><code class="language-text">Visuals                         0
+Bookmarks                       0
+Navigation objects              0
+Tooltip configuration           0
+Drillthrough configuration       0
+Substantive filters             0
+Additional pages                0
+Explicit measures               0
+A1b objects                     0
+</code></pre>
+<p>These are explicit shell controls, not optional presentation preferences. [export reference: filecite | turn9file0 | L85-L98]</p>
+<h3>Inspect the empty state</h3>
+<p>Open the <strong>Selection</strong> pane using the View menu or pane switcher. It must contain no report objects.</p>
+<p>Open the <strong>Bookmarks</strong> pane. It must contain no bookmarks.</p>
+<p>Capture:</p>
+<pre><code class="language-text">E01_TECHNICAL_SHELL_BLANK_CANVAS.png
+E01_TECHNICAL_SHELL_EMPTY_SELECTION_PANE.png
+E01_TECHNICAL_SHELL_EMPTY_BOOKMARKS_PANE.png
+</code></pre>
+<p>The screenshots should show:</p>
+<ul>
+<li>the exact page name;</li>
+<li>one page tab only;</li>
+<li>blank canvas;</li>
+<li>zero objects in Selection;</li>
+<li>zero bookmarks;</li>
+<li>the derived working-project title where visible.</li>
+</ul>
+<hr>
+<h2>7. Save and close the shell state</h2>
+<p>With the single technical page selected:</p>
+<pre><code class="language-text">File
+→ Save
+</code></pre>
+<p>Then record the save time:</p>
+<pre><code class="language-powershell">[pscustomobject]@{
+    event = &quot;FIRST_TECHNICAL_SHELL_SAVE_COMPLETED&quot;
+    timestamp_local = (Get-Date).ToString(&quot;o&quot;)
+    timestamp_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+} |
+    ConvertTo-Json |
+    Set-Content `
+        -LiteralPath &quot;$ev\E01_FIRST_SHELL_SAVE_TIMESTAMP.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Close Power BI Desktop completely.</p>
+<p>Record the close time:</p>
+<pre><code class="language-powershell">[pscustomobject]@{
+    event = &quot;DESKTOP_CLOSED_AFTER_FIRST_SHELL_SAVE&quot;
+    timestamp_local = (Get-Date).ToString(&quot;o&quot;)
+    timestamp_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+} |
+    ConvertTo-Json |
+    Set-Content `
+        -LiteralPath &quot;$ev\E01_FIRST_SHELL_CLOSE_TIMESTAMP.json&quot; `
+        -Encoding utf8
+</code></pre>
+<hr>
+<h2>8. Correct the predecessor’s stale zero-page annotation</h2>
+<p>The predecessor PBIR contains this internal annotation:</p>
+<pre><code class="language-text">MSBF_A1aBoundary = ZERO_REPORT_PAGES
+</code></pre>
+<p>That label cannot remain unqualified after the shell is saved because the new decision requires the working project to be represented as:</p>
+<blockquote>
+<p>One physical technical shell page, zero substantive report pages, and zero visuals.</p>
+</blockquote>
+<p>[export reference: filecite | turn9file0 | L81-L83]</p>
+<p>Run the bounded annotation helper while Desktop is closed:</p>
+<pre><code class="language-powershell">$annotationScript = Join-Path $downloads `
+    &quot;Set-A1aTechnicalShellAnnotation.ps1&quot;
+
+Unblock-File -LiteralPath $annotationScript
+
+&amp; $annotationScript `
+    -PackageRoot $work
+</code></pre>
+<p>It changes only the existing boundary annotation to the machine-safe equivalent:</p>
+<pre><code class="language-text">ONE_PHYSICAL_TECHNICAL_SHELL_ZERO_SUBSTANTIVE_REPORT_PAGES_ZERO_VISUALS
+</code></pre>
+<p>It does not add a page, visual, measure, query, relationship, or A1b object.</p>
+<hr>
+<h2>9. Run the shell-aware verifier</h2>
+<p>Run:</p>
+<pre><code class="language-powershell">$verifier = Join-Path $downloads `
+    &quot;Verify-A1aTechnicalShellBoundary.ps1&quot;
+
+Unblock-File -LiteralPath $verifier
+
+&amp; $verifier `
+    -PackageRoot $work `
+    -SourceRoot `
+    &quot;C:\MSBF\MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818&quot;
+</code></pre>
+<p>Expected final lines:</p>
+<pre><code class="language-text">A1a technical-shell boundary PASS.
+One physical technical shell page, zero substantive report pages, and zero visuals.
+</code></pre>
+<p>The verifier checks:</p>
+<pre><code class="language-text">Semantic tables                  14
+Relationships                     6
+Power Query queries              47
+Explicit measures                 0
+Semantic activation objects      67
+
+Physical report pages             1
+Technical shell pages             1
+Substantive report pages          0
+Visual objects                    0
+Bookmarks                         0
+Page/report filters               0
+Mobile visual layouts             0
+A1b tokens                        0
+
+Display name                      A1A_TECHNICAL_SHELL_NO_VISUALS
+Active page mapping               Valid
+Boundary annotation               Current
+</code></pre>
+<p>It also creates:</p>
+<pre><code class="language-text">E01_A1A_TECHNICAL_SHELL_BOUNDARY.json
+E01_A1A_TECHNICAL_SHELL_BOUNDARY.csv
+E01_A1A_TECHNICAL_SHELL_BOUNDARY.txt
+E01_REPORT_DEFINITION_AFTER_SHELL_MANIFEST.csv
+E01_REPORT_DEFINITION_BEFORE_AFTER_DIFF.csv
+</code></pre>
+<h3>If the verifier returns HOLD</h3>
+<p>Do not manually delete or “fix” any object. Preserve:</p>
+<ul>
+<li>the working project;</li>
+<li>the verifier output;</li>
+<li>the report-definition diff;</li>
+<li>screenshots;</li>
+<li>the complete evidence directory.</li>
+</ul>
+<p>A verifier HOLD is a reportable executed-state variance.</p>
+<hr>
+<h2>10. Reopen the derived PBIP</h2>
+<p>Open the same derived PBIP again:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819
+\project
+\MSBF_PBI_A1A_Local_Construction_R1.pbip
+</code></pre>
+<p>Record the reopen time:</p>
+<pre><code class="language-powershell">[pscustomobject]@{
+    event = &quot;TECHNICAL_SHELL_PROJECT_REOPENED&quot;
+    timestamp_local = (Get-Date).ToString(&quot;o&quot;)
+    timestamp_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+} |
+    ConvertTo-Json |
+    Set-Content `
+        -LiteralPath &quot;$ev\E01_SHELL_REOPEN_TIMESTAMP.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>The project should now open without the zero-page error and show exactly one blank page with the authorized name.</p>
+<p>Stop without saving if Desktop:</p>
+<ul>
+<li>displays another repair dialog;</li>
+<li>creates another page;</li>
+<li>creates a visual;</li>
+<li>changes the shell name;</li>
+<li>changes the page into a tooltip;</li>
+<li>creates any report experience object.</li>
+</ul>
+<hr>
+<h2>11. Continue the original runbook from Power Query inspection</h2>
+<p>Once the reopened shell is stable, resume at the prior runbook’s <strong>Power Query verification</strong> step:</p>
+<ol>
+<li>Open <strong>Transform data</strong>.</li>
+<li>Confirm exactly 47 Power Query objects:<ul>
+<li>9 parameters;</li>
+<li>5 functions;</li>
+<li>19 load-disabled staging queries;</li>
+<li>14 load-enabled semantic queries.</li>
+</ul>
+</li>
+<li>Refresh Preview.</li>
+<li>Select <strong>Close &amp; Apply</strong>.</li>
+<li>Perform the Desktop refresh.</li>
+<li>Capture refresh evidence.</li>
+<li>Verify 14 semantic tables and 6 relationships.</li>
+<li>Use DAX Studio for DMV and read-only DAX evidence.</li>
+<li>Complete the row-count, uniqueness, orphan, lifecycle, scenario, and as-of controls.</li>
+</ol>
+<p>Do not add a measure or use a visual to conduct any test. All testing remains through Power Query, model metadata, DMV queries, and read-only DAX queries.</p>
+<hr>
+<h2>12. Amend the prior object-count evidence</h2>
+<p>Any earlier evidence template or command that says only:</p>
+<pre><code class="language-text">report_pages = 0
+</code></pre>
+<p>is now obsolete.</p>
+<p>Use these fields instead:</p>
+<pre><code class="language-json">{
+  &quot;semantic_tables&quot;: 14,
+  &quot;relationships&quot;: 6,
+  &quot;power_query_queries&quot;: 47,
+  &quot;explicit_measures&quot;: 0,
+  &quot;semantic_activation_objects&quot;: 67,
+  &quot;substantive_report_pages&quot;: 0,
+  &quot;technical_shell_pages&quot;: 1,
+  &quot;total_physical_report_pages&quot;: 1,
+  &quot;visual_objects&quot;: 0,
+  &quot;a1b_objects&quot;: 0
+}
+</code></pre>
+<p>The checklist requires proof of the single page, zero visuals, active-page mapping, Desktop timestamps, manifests, before/after report-definition diff, model counts, source reconciliation, and the three local-engine test populations. [export reference: filecite | turn9file2 | L3-L24]</p>
+<hr>
+<h2>13. Final post-execution checks</h2>
+<p>After refresh, DAX Studio testing, and evidence capture:</p>
+<ol>
+<li>Save.</li>
+<li>Close Desktop completely.</li>
+<li>Run <code>Verify-A1aTechnicalShellBoundary.ps1</code> again.</li>
+<li>Run the corrected <code>Export-A1aPostSaveManifest_FIXED.ps1</code>.</li>
+<li>Package the complete working <code>project</code> folder and <code>evidence\local_engine_return</code> folder.</li>
+<li>Retain the exact disposition:</li>
+</ol>
+<pre><code class="language-text">AUD-SCN-004   PHYSICAL_EVIDENCE_CAPTURED_PENDING_INDEPENDENT_DISPOSITION
+AUD-REL-005   PHYSICAL_EVIDENCE_CAPTURED_PENDING_INDEPENDENT_DISPOSITION
+AUD-ASOF-003  PHYSICAL_EVIDENCE_CAPTURED_PENDING_INDEPENDENT_DISPOSITION
+
+PBI-WP2       HOLD
+A1b           NOT_AUTHORIZED
+Public claims NOT_AUTHORIZED
+</code></pre>
+<p>The shell authorization resumes Desktop entry but does not itself close any hold, accept the model, validate refresh behavior, authorize A1b, or authorize public claims. [export reference: filecite | turn9file0 | L141-L155]</p>
+<p>After the shell is visible and before running refresh, send one screenshot showing the exact page tab, blank canvas, and empty Selection pane.</p>
+</div></article><article id="m-3c384f31-945f-4719-a6a5-bfa62c83bd82" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00030 · 2026-08-19T07:47:42.460000-04:00 · active path</p><div class="bubble"><p>step 2: PS C:\Windows\System32&gt; $downloads = Join-Path $HOME &quot;Downloads&quot;</p>
+<blockquote>
+<blockquote>
+<p>$initialize = Join-Path $downloads `
+    &quot;Initialize-A1aTechnicalShellWorkingCopy.ps1&quot;</p>
+<p>Unblock-File -LiteralPath $initialize</p>
+<p>&amp; $initialize
+Patched pDataRoot:  C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819\inputs\pbi
+Patched pBuildRoot: C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819\inputs\build
+Model:              C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819\project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim
+ForEach-Object: C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819\tools\Verify-A1aSourceProject.ps1:9
+Line |
+   9 |  $measures=@($tables | ForEach-Object { $_.measures } | Where-Object { …
+     |                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The property &#39;measures&#39; cannot be found on this object. Verify that the property exists.</p>
+</blockquote>
+</blockquote>
+</div></article><article id="m-63ded749-0612-4138-9b53-2d964676bdcc" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00031 · 2026-08-19T07:48:01.065564-04:00 · active path</p><div class="bubble"><p>That error is from the <strong>pre-shell verifier script</strong>, not from your Power BI model. The working copy was created and the local paths were patched successfully before the verifier failed.</p>
+<p>The issue is this line in the packaged verifier:</p>
+<pre><code class="language-powershell">$measures=@($tables | ForEach-Object { $_.measures } | Where-Object { $_ })
+</code></pre>
+<p>Some of the 14 table JSON objects have no <code>measures</code> property at all. Under your current PowerShell behavior, referencing a missing property throws instead of simply returning <code>$null</code>. That is consistent with A1a having <strong>zero measures</strong>; it is not evidence that a measure exists or that the model is malformed.</p>
+<p>Do <strong>not</strong> open Power BI Desktop yet. The audit requires the derived working copy and pre-shell evidence to be established before shell creation. [export reference: filecite | turn9file0 | L104-L109]</p>
+<h2>1. Keep the working copy you just created</h2>
+<p>Do <strong>not</strong> rerun <code>Initialize-A1aTechnicalShellWorkingCopy.ps1</code>. It correctly stopped after creating:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819
+</code></pre>
+<p>Rerunning the initializer would now fail because that governed working-root identity already exists.</p>
+<h2>2. Patch the verifier in the derived copy only</h2>
+<p>In the same PowerShell 7 window, copy/paste this whole block:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+
+$verifier = Join-Path $work `
+    &quot;tools\Verify-A1aSourceProject.ps1&quot;
+
+$backup = &quot;$verifier.PRE_FIX_20260819&quot;
+
+# Preserve the exact verifier that encountered the error.
+Copy-Item `
+    -LiteralPath $verifier `
+    -Destination $backup `
+    -Force
+
+$fixedVerifier = @&#39;
+param(
+    [Parameter(Mandatory=$false)]
+    [string]$PackageRoot = (Split-Path -Parent $PSScriptRoot)
+)
+
+$ErrorActionPreference = &#39;Stop&#39;
+
+$modelPath = Join-Path $PackageRoot `
+    &#39;project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&#39;
+
+$model = Get-Content -LiteralPath $modelPath -Raw |
+    ConvertFrom-Json
+
+$tables = @($model.model.tables)
+$rels = @($model.model.relationships)
+$expressions = @($model.model.expressions)
+
+$partitions = @(
+    $tables |
+        ForEach-Object {
+            if ($null -ne $_.PSObject.Properties[&#39;partitions&#39;]) {
+                @($_.partitions)
+            }
+        }
+)
+
+$measures = @(
+    $tables |
+        ForEach-Object {
+            if ($null -ne $_.PSObject.Properties[&#39;measures&#39;]) {
+                @($_.measures)
+            }
+        } |
+        Where-Object { $null -ne $_ }
+)
+
+$pagesRoot = Join-Path $PackageRoot `
+    &#39;project\MSBF_PBI_A1A_Local_Construction_R1.Report\definition\pages&#39;
+
+$pageFiles = @(
+    Get-ChildItem `
+        -LiteralPath $pagesRoot `
+        -Directory `
+        -ErrorAction SilentlyContinue
+)
+
+$modelRaw = Get-Content -LiteralPath $modelPath -Raw
+
+$result = [ordered]@{
+    tables              = $tables.Count
+    relationships       = $rels.Count
+    named_expressions   = $expressions.Count
+    table_partitions    = $partitions.Count
+    power_query_queries = $expressions.Count + $partitions.Count
+    measures            = $measures.Count
+    page_directories    = $pageFiles.Count
+    a1b_tokens          = (
+        [regex]::Matches(
+            $modelRaw,
+            &#39;&quot;MSBF_ActivationWave&quot;\s*,\s*&quot;value&quot;\s*:\s*&quot;A1b&quot;&#39;
+        )
+    ).Count
+}
+
+$result | ConvertTo-Json
+
+if (
+    $result.tables -ne 14 -or
+    $result.relationships -ne 6 -or
+    $result.power_query_queries -ne 47 -or
+    $result.measures -ne 0 -or
+    $result.page_directories -ne 0 -or
+    $result.a1b_tokens -ne 0
+) {
+    throw &#39;A1a boundary validation failed.&#39;
+}
+
+Write-Host &#39;A1a source-project boundary PASS.&#39;
+&#39;@
+
+Set-Content `
+    -LiteralPath $verifier `
+    -Value $fixedVerifier `
+    -Encoding utf8
+
+Write-Host &quot;Verifier patched:&quot;
+Write-Host $verifier
+Write-Host &quot;&quot;
+Write-Host &quot;Original preserved:&quot;
+Write-Host $backup
+</code></pre>
+<p>This is a <strong>tooling repair only</strong>. It does not alter <code>model.bim</code>, the report definition, any query, table, relationship, measure, or page.</p>
+<h2>3. Preserve the verifier-error evidence</h2>
+<p>Now create a short evidence record of what happened:</p>
+<pre><code class="language-powershell">$ev = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+$errorRecord = @&#39;
+A1A PRE-SHELL VERIFIER TOOLING OBSERVATION
+
+Date: 2026-08-19
+
+Operation:
+Initialize-A1aTechnicalShellWorkingCopy.ps1
+
+Observed error:
+The packaged Verify-A1aSourceProject.ps1 attempted to access the
+&quot;measures&quot; property on every table object directly. Some A1a table
+objects contain no measures property because A1a has zero explicit
+measures. The verifier therefore stopped on a missing-property access.
+
+The error occurred after:
+- creation of the derived working copy;
+- successful pDataRoot patch;
+- successful pBuildRoot patch.
+
+No Power BI Desktop entry occurred.
+No shell page was created.
+No semantic-model object was changed by the verifier repair.
+
+Remediation:
+The verifier was patched in the derived working copy only to test for
+property existence before enumerating measures. The original verifier
+was preserved as Verify-A1aSourceProject.ps1.PRE_FIX_20260819.
+&#39;@
+
+Set-Content `
+    -LiteralPath &quot;$ev\E00_PRE_SHELL_VERIFIER_TOOLING_OBSERVATION.txt&quot; `
+    -Value $errorRecord `
+    -Encoding utf8
+</code></pre>
+<p>This is useful because the audit requires a manifest and evidence of what actually happened in the derived working project; we should not hide a tooling failure. [export reference: filecite | turn9file0 | L127-L138]</p>
+<h2>4. Run the corrected pre-shell verifier manually</h2>
+<p>Now run:</p>
+<pre><code class="language-powershell">&amp; &quot;$work\tools\Verify-A1aSourceProject.ps1&quot; `
+    -PackageRoot $work *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath `
+        &quot;$ev\E00_PRE_SHELL_ZERO_PAGE_BOUNDARY.txt&quot;
+</code></pre>
+<p>You should get output equivalent to:</p>
+<pre><code class="language-json">{
+  &quot;tables&quot;: 14,
+  &quot;relationships&quot;: 6,
+  &quot;named_expressions&quot;: 33,
+  &quot;table_partitions&quot;: 14,
+  &quot;power_query_queries&quot;: 47,
+  &quot;measures&quot;: 0,
+  &quot;page_directories&quot;: 0,
+  &quot;a1b_tokens&quot;: 0
+}
+</code></pre>
+<p>and then:</p>
+<pre><code class="language-text">A1a source-project boundary PASS.
+</code></pre>
+<p>That is the exact pre-shell state we need. The authorized exception only permits the later transition from zero physical pages to exactly one technical shell page while keeping the semantic footprint at 14/6/47/0. [export reference: filecite | turn9file0 | L63-L79]</p>
+<h2>5. If it passes, create the missing working-copy identity file</h2>
+<p>Because the initializer terminated before its final section, it likely did <strong>not</strong> create:</p>
+<pre><code class="language-text">E00_DERIVED_WORKING_COPY_IDENTITY.json
+</code></pre>
+<p>Check:</p>
+<pre><code class="language-powershell">Test-Path `
+    &quot;$ev\E00_DERIVED_WORKING_COPY_IDENTITY.json&quot;
+</code></pre>
+<p>If that returns:</p>
+<pre><code class="language-text">False
+</code></pre>
+<p>tell me. I’ll give you the exact recovery command to complete the initializer’s remaining evidence-only steps <strong>without recreating or overwriting the working copy</strong>.</p>
+<p>For now, please run <strong>Step 4 only</strong> and paste the resulting JSON/PASS output here. Do not open Desktop yet.</p>
+</div></article><article id="m-aff94e30-f032-4fcf-84c1-076b0a1f829a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00032 · 2026-08-19T07:51:26.014000-04:00 · active path</p><div class="bubble"><p>PS C:\Windows\System32&gt; $work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;</p>
+<blockquote>
+<blockquote>
+<p>$verifier = Join-Path $work `
+    &quot;tools\Verify-A1aSourceProject.ps1&quot;</p>
+<p>$backup = &quot;$verifier.PRE_FIX_20260819&quot;</p>
+<h1>Preserve the exact verifier that encountered the error.</h1>
+<p>Copy-Item <code>    -LiteralPath $verifier</code>
+    -Destination $backup `
+    -Force</p>
+<p>$fixedVerifier = @&#39;
+param(
+    [Parameter(Mandatory=$false)]
+    [string]$PackageRoot = (Split-Path -Parent $PSScriptRoot)
+)</p>
+<p>$ErrorActionPreference = &#39;Stop&#39;</p>
+<p>$modelPath = Join-Path $PackageRoot `
+    &#39;project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&#39;</p>
+<p>$model = Get-Content -LiteralPath $modelPath -Raw |
+    ConvertFrom-Json</p>
+<p>$tables = @($model.model.tables)
+$rels = @($model.model.relationships)
+$expressions = @($model.model.expressions)</p>
+<p>$partitions = @(
+    $tables |
+        ForEach-Object {
+            if ($null -ne $<em>.PSObject.Properties[&#39;partitions&#39;]) {
+                @($</em>.partitions)
+            }
+        }
+)</p>
+<p>$measures = @(
+    $tables |
+        ForEach-Object {
+            if ($null -ne $<em>.PSObject.Properties[&#39;measures&#39;]) {
+                @($</em>.measures)
+            }
+        } |
+        Where-Object { $null -ne $_ }
+)</p>
+<p>$pagesRoot = Join-Path $PackageRoot `
+    &#39;project\MSBF_PBI_A1A_Local_Construction_R1.Report\definition\pages&#39;</p>
+<p>$pageFiles = @(
+    Get-ChildItem <code>        -LiteralPath $pagesRoot</code>
+        -Directory `
+        -ErrorAction SilentlyContinue
+)</p>
+<p>$modelRaw = Get-Content -LiteralPath $modelPath -Raw</p>
+<p>$result = [ordered]@{
+    tables              = $tables.Count
+    relationships       = $rels.Count
+    named_expressions   = $expressions.Count
+    table_partitions    = $partitions.Count
+    power_query_queries = $expressions.Count + $partitions.Count
+    measures            = $measures.Count
+    page_directories    = $pageFiles.Count
+    a1b_tokens          = (
+        [regex]::Matches(
+            $modelRaw,
+            &#39;&quot;MSBF_ActivationWave&quot;\s*,\s*&quot;value&quot;\s*:\s*&quot;A1b&quot;&#39;
+        )
+    ).Count
+}</p>
+<p>$result | ConvertTo-Json</p>
+<p>if (
+    $result.tables -ne 14 -or
+    $result.relationships -ne 6 -or
+    $result.power_query_queries -ne 47 -or
+    $result.measures -ne 0 -or
+    $result.page_directories -ne 0 -or
+    $result.a1b_tokens -ne 0
+) {
+    throw &#39;A1a boundary validation failed.&#39;
+}</p>
+<p>Write-Host &#39;A1a source-project boundary PASS.&#39;
+&#39;@</p>
+<p>Set-Content <code>    -LiteralPath $verifier</code>
+    -Value $fixedVerifier `
+    -Encoding utf8</p>
+<p>Write-Host &quot;Verifier patched:&quot;
+Write-Host $verifier
+Write-Host &quot;&quot;
+Write-Host &quot;Original preserved:&quot;
+Write-Host $backup
+Verifier patched:
+C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819\tools\Verify-A1aSourceProject.ps1</p>
+</blockquote>
+</blockquote>
+<p>Original preserved:
+C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819\tools\Verify-A1aSourceProject.ps1.PRE_FIX_20260819
+PS C:\Windows\System32&gt; $ev = Join-Path $work &quot;evidence\local_engine_return&quot;</p>
+<blockquote>
+<blockquote>
+<p>$errorRecord = @&#39;
+A1A PRE-SHELL VERIFIER TOOLING OBSERVATION</p>
+<p>Date: 2026-08-19</p>
+<p>Operation:
+Initialize-A1aTechnicalShellWorkingCopy.ps1</p>
+<p>Observed error:
+The packaged Verify-A1aSourceProject.ps1 attempted to access the
+&quot;measures&quot; property on every table object directly. Some A1a table
+objects contain no measures property because A1a has zero explicit
+measures. The verifier therefore stopped on a missing-property access.</p>
+<p>The error occurred after:</p>
+<ul>
+<li>creation of the derived working copy;</li>
+<li>successful pDataRoot patch;</li>
+<li>successful pBuildRoot patch.</li>
+</ul>
+<p>No Power BI Desktop entry occurred.
+No shell page was created.
+No semantic-model object was changed by the verifier repair.</p>
+<p>Remediation:
+The verifier was patched in the derived working copy only to test for
+property existence before enumerating measures. The original verifier
+was preserved as Verify-A1aSourceProject.ps1.PRE_FIX_20260819.
+&#39;@</p>
+<p>Set-Content <code>    -LiteralPath &quot;$ev\E00_PRE_SHELL_VERIFIER_TOOLING_OBSERVATION.txt&quot;</code>
+    -Value $errorRecord <code>    -Encoding utf8 PS C:\Windows\System32&gt; &amp; &quot;$work\tools\Verify-A1aSourceProject.ps1&quot;</code></p>
+<blockquote>
+<pre><code>-PackageRoot $work *&gt;&amp;1 |
+Tee-Object `
+    -FilePath `
+    &quot;$ev\E00_PRE_SHELL_ZERO_PAGE_BOUNDARY.txt&quot;
+</code></pre>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>{
+  &quot;tables&quot;: 14,
+  &quot;relationships&quot;: 6,
+  &quot;named_expressions&quot;: 33,
+  &quot;table_partitions&quot;: 14,
+  &quot;power_query_queries&quot;: 47,
+  &quot;measures&quot;: 0,
+  &quot;page_directories&quot;: 0,
+  &quot;a1b_tokens&quot;: 0
+}
+A1a source-project boundary PASS.
+PS C:\Windows\System32&gt; Test-Path `</p>
+<blockquote>
+<blockquote>
+<pre><code>&quot;$ev\E00_DERIVED_WORKING_COPY_IDENTITY.json&quot;
+</code></pre>
+</blockquote>
+</blockquote>
+<p>False</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

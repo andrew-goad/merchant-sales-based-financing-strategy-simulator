@@ -1,0 +1,842 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 11 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 11</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-10.html">Previous part</a><a href="part-12.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-47585754-fd25-45e0-9573-4d61681e5acf" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00277 · 2026-08-26T16:28:23.701105-04:00 · active path</p><div class="bubble"><p>Yes. We can pick up from here, and I would make <strong>one small correction to the slicers first</strong>.</p>
+<p>Your first slicer is clearly the merchant selector, but its visible title currently says <strong>Scenario</strong>. Your second slicer shows <code>ScenarioLabel</code>. Rename the displayed slicer titles so the top row reads:</p>
+<p><strong>Merchant | Scenario | Observation date</strong></p>
+<p>That is the only change I would make to the header right now. The overall title/subtitle are good.</p>
+<h2>Step 1 — Build the Merchant Profile block</h2>
+<p>Create a <strong>New card</strong> visual beneath the title area, on the left side of the page.</p>
+<p>For the first pass, add these measures in this order:</p>
+<pre><code class="language-text">P03 Merchant Name
+P03 Industry
+P03 Merchant Size Tier
+P03 Annual Sales Band
+P03 Relationship Stage
+P03 Relationship Quality
+P03 Prior Advance Count
+P03 Prior Funded Amount
+</code></pre>
+<p>Do not add more yet.</p>
+<h3>Rename the displayed labels</h3>
+<p>In the card, use these user-facing labels:</p>
+<pre><code class="language-text">Merchant
+Industry
+Size tier
+Annual sales
+Relationship stage
+Relationship quality
+Prior advances
+Prior funded
+</code></pre>
+<p>We want executive language, not semantic-model field names.</p>
+<h3>Format the card</h3>
+<p>Start with:</p>
+<ul>
+<li><strong>Title:</strong> <code>Merchant profile</code></li>
+<li><strong>Visual background:</strong> Off / white</li>
+<li><strong>Border:</strong> Off</li>
+<li><strong>Category labels:</strong> On</li>
+<li><strong>Values:</strong> On</li>
+<li><strong>Callout/value font:</strong> approximately the same hierarchy as the P01/P02 cards</li>
+<li><strong>Grid:</strong> 2 columns if the New Card visual allows it cleanly</li>
+<li><strong>Padding:</strong> modest; don&#39;t make every field its own giant tile</li>
+</ul>
+<p>Conceptually:</p>
+<pre><code class="language-text">Merchant profile
+
+Merchant                  Industry
+Synthetic Merchant 000001 Construction &amp; Skilled Trades
+
+Size tier                 Annual sales
+Mid-Market                $5M–$10M
+
+Relationship stage        Relationship quality
+Existing                  Strong
+
+Prior advances            Prior funded
+2                         $37K
+</code></pre>
+<p>The exact values will obviously depend on the selected merchant.</p>
+<h3>Important design point</h3>
+<p><code>P03 Merchant Name</code> may feel slightly redundant because the Merchant slicer already displays the selected business. <strong>Keep it for this first physical pass.</strong> Once we see the page, we can decide whether the merchant name belongs inside the profile or should become a stronger merchant-header element.</p>
+<hr>
+<h1>Step 2 — Test the Merchant Profile before building anything else</h1>
+<p>Once the card is populated:</p>
+<ol>
+<li>Select <code>Synthetic Merchant 000001</code>.</li>
+<li>Note the profile values.</li>
+<li>Change to 2–3 other merchants.</li>
+<li>Confirm all eight values change appropriately.</li>
+<li>Change Scenario from Baseline to Recession Energy.</li>
+</ol>
+<p>For the profile attributes such as Industry, Size and Relationship Stage, I expect most to remain unchanged because they are merchant characteristics.</p>
+<p>That is desirable.</p>
+<p>If something unexpectedly blanks or changes under Scenario, tell me before we continue because that would reveal a context issue worth understanding.</p>
+<hr>
+<h1>Step 3 — Create a second block: Acquisition &amp; application</h1>
+<p>Once the profile works, move right of the profile and add a section heading:</p>
+<p><strong>Acquisition &amp; application</strong></p>
+<p>For this section, we should <strong>not yet create measures blindly</strong>. First let&#39;s see which application fields behave naturally for the selected merchant.</p>
+<p>The high-level story we want is:</p>
+<blockquote>
+<p>How did this merchant come to us, what did they ask for, and when?</p>
+</blockquote>
+<p>The physical model gives us fields such as:</p>
+<pre><code class="language-text">application_date
+requested_funding_amount
+requested_remittance_rate
+requested_expected_payoff_days
+requested_use_of_proceeds
+application_channel
+application_status
+primary_source_code
+accepted_channel_type
+attribution_confidence_tier
+</code></pre>
+<p>But a merchant may have more than one application, which means a Card could become misleading.</p>
+<p>So for this section I recommend a <strong>Table visual first</strong>, not a Card.</p>
+<h3>Add a Table visual</h3>
+<p>Use these raw columns as rows/columns in a standard Table visual:</p>
+<pre><code class="language-text">DimApplication[application_date]
+DimApplication[application_status]
+DimApplication[requested_funding_amount]
+DimApplication[application_channel]
+DimApplication[primary_source_code]
+</code></pre>
+<p>If Power BI gives you the same implicit-measure error for numeric columns, don&#39;t fight it. Tell me which fields fail and we&#39;ll make explicit P03 measures only where appropriate.</p>
+<p>The purpose of this first table is diagnostic as much as presentational:</p>
+<blockquote>
+<p>Does the selected merchant have one application or several?</p>
+</blockquote>
+<p>That decision affects almost everything else on Merchant 360.</p>
+<hr>
+<h1>Step 4 — What I expect after we inspect the application population</h1>
+<p>There are two possible architectures.</p>
+<h3>If merchants generally have one application</h3>
+<p>Then we can make <strong>Acquisition &amp; application</strong> a polished card containing:</p>
+<ul>
+<li>Application date</li>
+<li>Acquisition source</li>
+<li>Application channel</li>
+<li>Requested funding</li>
+<li>Requested remittance rate</li>
+<li>Requested payoff days</li>
+<li>Use of proceeds</li>
+<li>Status</li>
+</ul>
+<h3>If merchants can have multiple applications</h3>
+<p>Then the better Merchant 360 architecture is:</p>
+<blockquote>
+<p><strong>Merchant profile → Application history table/timeline → select/drill into application</strong></p>
+</blockquote>
+<p>That is actually more powerful because it turns Merchant 360 into a relationship-history view rather than pretending each merchant has only one financing event.</p>
+<p>We need the physical data to tell us which is correct.</p>
+<hr>
+<h1>Step 5 — Do not build the performance chart yet</h1>
+<p>I know the natural temptation is to immediately add another Exposure or Remittance chart.</p>
+<p>Hold that for one checkpoint.</p>
+<p>The critical question now is:</p>
+<blockquote>
+<p><strong>What is the actual merchant → application → advance cardinality in this model?</strong></p>
+</blockquote>
+<p>Once we see that, we can decide whether P03 should show:</p>
+<ul>
+<li>lifetime merchant totals,</li>
+<li>selected-application/account performance,</li>
+<li>multiple advances simultaneously,</li>
+<li>or a merchant-level timeline with drillthrough.</li>
+</ul>
+<p>That is exactly the kind of issue Audit now wants us to discover empirically rather than trying to predesign from a catalog. The operating model expressly permits us to build and UAT the coherent experience this way. [export reference: filecite | turn34file1 | L8-L21]</p>
+<h2>So your immediate steps are</h2>
+<ol>
+<li>Rename the slicer titles to <strong>Merchant | Scenario | Observation date</strong>.</li>
+<li>Create the <strong>Merchant profile</strong> New Card with the eight <code>P03</code> measures above.</li>
+<li>Test it across several merchants and both scenarios.</li>
+<li>Add a temporary <strong>Acquisition &amp; application</strong> Table with the five application fields above.</li>
+<li>Send me a screenshot of the full page and, ideally, show me a merchant that has multiple application rows if one exists.</li>
+</ol>
+<p>At that point we&#39;ll know how to structure the center of Merchant Relationship 360 instead of guessing.</p>
+</div></article><article id="m-75657ca9-7b24-4a9a-ab98-a7dd2bb7bbb0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00278 · 2026-08-26T16:35:10.870000-04:00 · active path</p><div class="bubble"><p>The P03 Merchant Name - All the merchants in my data begin with the same Synthetic_Merchant ... I think we should parse just the number suffix for this card.</p>
+</div></article><article id="m-8308714a-4536-476a-9c65-10f8d365dd24" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00279 · 2026-08-26T16:35:17.462280-04:00 · active path</p><div class="bubble"><p>Agreed. On the card, repeating <code>Synthetic Merchant</code> adds no information. Since the prefix is common to every row, the executive-facing display should show just the merchant identifier suffix.</p>
+<p>I would <strong>modify the existing <code>P03 Merchant Name</code> measure</strong> rather than create another one. That keeps the adapter layer cleaner.</p>
+<p>If the stored value is consistently something like:</p>
+<pre><code class="language-text">Synthetic Merchant 000001
+</code></pre>
+<p>use:</p>
+<pre><code class="language-DAX">P03 Merchant Name =
+VAR _Merchant =
+    SELECTEDVALUE (
+        &#39;DimMerchant&#39;[synthetic_business_name]
+    )
+RETURN
+    IF (
+        ISBLANK ( _Merchant ),
+        &quot;SELECT ONE MERCHANT&quot;,
+        TRIM (
+            SUBSTITUTE (
+                _Merchant,
+                &quot;Synthetic Merchant&quot;,
+                &quot;&quot;
+            )
+        )
+    )
+</code></pre>
+<p>That would display:</p>
+<pre><code class="language-text">000001
+</code></pre>
+<p>If your actual physical values instead contain underscores, such as:</p>
+<pre><code class="language-text">Synthetic_Merchant_000001
+</code></pre>
+<p>then use:</p>
+<pre><code class="language-DAX">P03 Merchant Name =
+VAR _Merchant =
+    SELECTEDVALUE (
+        &#39;DimMerchant&#39;[synthetic_business_name]
+    )
+RETURN
+    IF (
+        ISBLANK ( _Merchant ),
+        &quot;SELECT ONE MERCHANT&quot;,
+        TRIM (
+            SUBSTITUTE (
+                _Merchant,
+                &quot;Synthetic_Merchant_&quot;,
+                &quot;&quot;
+            )
+        )
+    )
+</code></pre>
+<p>I would then change the card label from <strong>Merchant</strong> to:</p>
+<p><strong>Merchant ID</strong></p>
+<p>That makes the display semantically cleaner:</p>
+<blockquote>
+<p>Merchant ID<br><strong>000001</strong></p>
+</blockquote>
+<p>while the slicer can still retain the full synthetic business name if that helps identification.</p>
+<p>This is exactly the kind of report-owned presentation cleanup Audit has authorized: it preserves the accepted source value and only changes how it is displayed. [export reference: filecite | turn34file1 | L42-L50]</p>
+</div></article><article id="m-717be45b-8b38-44ff-b780-dff425231269" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00280 · 2026-08-26T16:46:31.175000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: fb42e2a7-7187-4176-a184-b1e2f81005f0.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-db988874-1713-4b7b-838c-d79401819e54" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00281 · 2026-08-26T16:46:57.788910-04:00 · active path</p><div class="bubble"><p>This first pass is useful. The card is working, but it has exposed <strong>two things we should fix before building further</strong>.</p>
+<p>First, <strong>Industry = NOT AVAILABLE is a filter-direction issue, not missing data.</strong> The accepted relationship is <code>DimIndustry[industry_code] → DimMerchant[industry_code]</code>, so filtering one merchant does not propagate backward from <code>DimMerchant</code> into <code>DimIndustry</code>. The relationship itself is valid and intentionally single-direction. [export reference: filecite | turn35file9 | L671-L695]</p>
+<p>Replace <code>P03 Industry</code> with this report-owned adapter:</p>
+<pre><code class="language-DAX">P03 Industry =
+VAR _IndustryCode =
+    SELECTEDVALUE ( &#39;DimMerchant&#39;[industry_code] )
+RETURN
+    IF (
+        ISBLANK ( _IndustryCode ),
+        &quot;NOT AVAILABLE&quot;,
+        CALCULATE (
+            SELECTEDVALUE ( &#39;DimIndustry&#39;[industry_name] ),
+            TREATAS (
+                { _IndustryCode },
+                &#39;DimIndustry&#39;[industry_code]
+            )
+        )
+    )
+</code></pre>
+<p>That uses the selected merchant&#39;s accepted <code>industry_code</code> to retrieve the matching dimension label; it does <strong>not</strong> alter the relationship or model semantics. The model explicitly validates <code>DimMerchant[industry_code]</code> against <code>DimIndustry[industry_code]</code> with no orphan logic in that relationship. [export reference: filecite | turn35file1 | L40-L66]</p>
+<p>Second, the card is showing <strong>semantic codes rather than executive labels</strong>:</p>
+<ul>
+<li><code>LOWER_MIDDLE</code></li>
+<li><code>1M_TO_5M</code></li>
+<li><code>NEW</code></li>
+<li><code>2.00</code></li>
+<li><code>0.00</code></li>
+</ul>
+<p>Those are truthful, but we can make them much more polished.</p>
+<p>For <code>P03 Merchant Size Tier</code>, use:</p>
+<pre><code class="language-DAX">P03 Merchant Size Tier =
+VAR _Value =
+    SELECTEDVALUE ( &#39;DimMerchant&#39;[merchant_size_tier] )
+RETURN
+    SWITCH (
+        _Value,
+        &quot;LOWER_MIDDLE&quot;, &quot;Lower middle&quot;,
+        &quot;UPPER_MIDDLE&quot;, &quot;Upper middle&quot;,
+        &quot;SMALL&quot;, &quot;Small&quot;,
+        &quot;LARGE&quot;, &quot;Large&quot;,
+        IF (
+            ISBLANK ( _Value ),
+            &quot;NOT AVAILABLE&quot;,
+            SUBSTITUTE ( _Value, &quot;_&quot;, &quot; &quot; )
+        )
+    )
+</code></pre>
+<p>For <code>P03 Annual Sales Band</code>, I would translate the code rather than show <code>1M_TO_5M</code>:</p>
+<pre><code class="language-DAX">P03 Annual Sales Band =
+VAR _Value =
+    SELECTEDVALUE ( &#39;DimMerchant&#39;[annual_sales_band] )
+RETURN
+    SWITCH (
+        _Value,
+        &quot;UNDER_1M&quot;, &quot;&lt; $1M&quot;,
+        &quot;1M_TO_5M&quot;, &quot;$1M–$5M&quot;,
+        &quot;5M_TO_10M&quot;, &quot;$5M–$10M&quot;,
+        &quot;10M_TO_25M&quot;, &quot;$10M–$25M&quot;,
+        &quot;25M_PLUS&quot;, &quot;$25M+&quot;,
+        IF (
+            ISBLANK ( _Value ),
+            &quot;NOT AVAILABLE&quot;,
+            SUBSTITUTE ( _Value, &quot;_&quot;, &quot; &quot; )
+        )
+    )
+</code></pre>
+<p>For <code>P03 Relationship Stage</code>:</p>
+<pre><code class="language-DAX">P03 Relationship Stage =
+VAR _Value =
+    SELECTEDVALUE ( &#39;DimMerchant&#39;[relationship_stage] )
+RETURN
+    IF (
+        ISBLANK ( _Value ),
+        &quot;NOT AVAILABLE&quot;,
+        SWITCH (
+            _Value,
+            &quot;NEW&quot;, &quot;New&quot;,
+            &quot;EXISTING&quot;, &quot;Existing&quot;,
+            &quot;RETURNING&quot;, &quot;Returning&quot;,
+            SUBSTITUTE ( _Value, &quot;_&quot;, &quot; &quot; )
+        )
+    )
+</code></pre>
+<p>The more interesting one is <strong>Relationship quality = <code>2.00</code></strong>. That strongly suggests <code>relationship_quality_tier</code> may not actually be a descriptive text tier in this physical source; it may be numerically encoded. I would <strong>not invent “Good,” “Strong,” etc.</strong> until we inspect the actual allowed values/meaning. For the moment, rename the card label:</p>
+<p><strong>Relationship quality score</strong></p>
+<p>and format it as:</p>
+<pre><code class="language-text">2.0
+</code></pre>
+<p>rather than <code>2.00</code>.</p>
+<p>For Prior funded, format the existing measure as currency with no unnecessary decimals:</p>
+<pre><code class="language-text">$0
+</code></pre>
+<p>instead of <code>0.00</code>.</p>
+<p>Similarly:</p>
+<p><strong>Prior advances:</strong> <code>0</code></p>
+<h3>One design change I recommend now</h3>
+<p>Change the visible first label from:</p>
+<p><strong>Merchant</strong></p>
+<p>to:</p>
+<p><strong>Merchant ID</strong></p>
+<p>because <code>000001</code> is an identifier, not a merchant name. That will read much more naturally.</p>
+<p>So this card becomes approximately:</p>
+<pre><code class="language-text">Merchant ID
+000001
+
+Industry
+Construction &amp; Skilled Trades
+
+Size tier
+Lower middle
+
+Annual sales
+$1M–$5M
+
+Relationship stage
+New
+
+Relationship quality score
+2.0
+
+Prior advances
+0
+
+Prior funded
+$0
+</code></pre>
+<p>That is already a credible relationship profile.</p>
+<h3>Then resume construction</h3>
+<p>Once those display corrections are made, <strong>do not add more profile fields yet</strong>. Next, create the temporary <strong>Acquisition &amp; application</strong> table to establish the real merchant→application cardinality.</p>
+<p>Use these columns:</p>
+<pre><code class="language-text">DimApplication[application_date]
+DimApplication[application_status]
+DimApplication[requested_funding_amount]
+DimApplication[application_channel]
+DimApplication[primary_source_code]
+</code></pre>
+<p>A standard <strong>Table</strong> visual should permit raw columns because it is not trying to collapse them to one scalar Card value. If Power BI objects to any specific numeric column because of the model setting, tell me exactly which one rather than creating measures preemptively.</p>
+<p>Then switch among several merchants and answer one question:</p>
+<blockquote>
+<p><strong>Does a selected merchant ever produce more than one application row?</strong></p>
+</blockquote>
+<p>That will determine whether the center of Merchant Relationship 360 should be a polished one-application summary or an actual application-history/timeline experience.</p>
+</div></article><article id="m-e61cb04a-ab15-4de8-969a-55ca077bdf35" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00282 · 2026-08-26T16:55:36.070000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 48bce55b-e0f8-49fa-9d5c-d159055620f2.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-3422c5d4-21c1-4b4f-a203-0e8aa4de05e2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00283 · 2026-08-26T16:55:43.666042-04:00 · active path</p><div class="bubble"><p>That answers the question. <strong><code>relationship_quality_tier</code> is not a text tier at all—it is an ordinal numeric classification with values 1 through 5.</strong> So we should correct our presentation rather than treating <code>2.00</code> as a formatting anomaly.</p>
+<p>I recommend displaying it as:</p>
+<p><strong>Relationship quality</strong><br><strong>Tier 2</strong></p>
+<p>rather than inventing qualitative meanings such as “Good” or “Strong.” The physical data proves the 1–5 scale, but this screenshot alone does not establish what each tier semantically means.</p>
+<p>Update the existing measure to:</p>
+<pre><code class="language-DAX">P03 Relationship Quality =
+VAR _Tier =
+    SELECTEDVALUE ( &#39;DimMerchant&#39;[relationship_quality_tier] )
+RETURN
+    IF (
+        ISBLANK ( _Tier ),
+        &quot;NOT AVAILABLE&quot;,
+        &quot;Tier &quot; &amp; FORMAT ( _Tier, &quot;0&quot; )
+    )
+</code></pre>
+<p>That will give us:</p>
+<blockquote>
+<p>Relationship quality<br><strong>Tier 2</strong></p>
+</blockquote>
+<p>which is accurate and polished.</p>
+<p>I also notice something useful in your Data view: for the merchants shown, <code>prior_advance_count</code>, <code>total_prior_funded_amount</code>, and <code>total_prior_repaid_amount</code> are all zero, while <code>merchant_services_relationship_flag</code> is frequently <code>True</code> and <code>wallet_share_proxy</code> varies. So <strong>relationship history here is broader than prior financing history</strong>. That&#39;s useful for Merchant 360: later we may want the profile to distinguish existing banking/merchant-services relationship from prior-advance experience rather than implying “new” means entirely new to the institution.</p>
+<p>For now, make the Relationship Quality measure change above, plus the other display cleanups from my prior response. Then proceed to the temporary <strong>Acquisition &amp; application</strong> table. That table is the next important empirical test because the accepted relationship is explicitly <code>DimMerchant[MerchantKey] → DimApplication[MerchantKey]</code>, and we need to see whether our physical merchant population actually contains multiple applications per merchant. [export reference: filecite | turn35file1 | L97-L123]</p>
+</div></article><article id="m-e3714ee5-72fe-4699-b893-87f8b17b2ed1" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00284 · 2026-08-26T16:57:50.990000-04:00 · active path</p><p class="note">Attachment references: Pasted text(20260826-205740).txt</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-d21fda05-8504-4a9c-8ad5-a84031cbcbdd" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00285 · 2026-08-26T16:57:54.215447-04:00 · active path</p><div class="bubble"><p>Yes — the full <code>DimMerchant</code> extract materially improves our interpretation, and it corrects one important point from my prior response.</p>
+<p><code>relationship_quality_tier</code> is clearly an <strong>ordinal risk/relationship-quality classification where lower appears better</strong>, not merely an unexplained 1–5 label. The evidence is strong: Tier 1 merchants are overwhelmingly <code>RETURNING_GOOD</code>, with high wallet-share proxies and clean prior histories, while Tier 5 merchants shown have prior defaults/payment interruptions and incomplete repayment histories. For example, Merchant 000221 is Tier 5 with both prior-default and prior-payment-interruption flags, whereas the later Tier 1 population is dominated by <code>RETURNING_GOOD</code> relationships. [export reference: filecite | turn36file0 | L506-L506] [export reference: filecite | turn36file0 | L634-L651]</p>
+<p>However, I <strong>still would not invent labels</strong> such as Excellent/Good/Fair/Poor unless the governed documentation defines them. So keep the safe presentation:</p>
+<pre><code class="language-DAX">P03 Relationship Quality =
+VAR _Tier =
+    SELECTEDVALUE ( &#39;DimMerchant&#39;[relationship_quality_tier] )
+RETURN
+    IF (
+        ISBLANK ( _Tier ),
+        &quot;NOT AVAILABLE&quot;,
+        &quot;Tier &quot; &amp; FORMAT ( _Tier, &quot;0&quot; )
+    )
+</code></pre>
+<h3>More importantly: our Merchant 360 test merchant should change</h3>
+<p>Merchant <strong>000001 is a poor construction/UAT merchant</strong>. It is <code>NEW</code>, has zero prior advances, zero prior funded/repaid amount, no deposit relationship, and Tier 2. [export reference: filecite | turn36file0 | L289-L289] That explains why the first profile looked rather uninteresting.</p>
+<p>For P03 construction, I recommend we deliberately use a merchant with a <strong>rich relationship history</strong> while we build. A particularly useful candidate is <strong>Merchant 000012</strong>:</p>
+<ul>
+<li>Relationship stage = <code>RETURNING_MIXED</code></li>
+<li>Prior advances = <strong>4</strong></li>
+<li>Completed advances = <strong>3</strong></li>
+<li>Prior default = No</li>
+<li>Prior payment interruption = <strong>Yes</strong></li>
+<li>Prior funded = <strong>$138,403.13</strong></li>
+<li>Prior repaid = <strong>$133,405.17</strong></li>
+<li>Merchant-services relationship = Yes</li>
+<li>Wallet share proxy = 0.434448</li>
+<li>Relationship quality = <strong>Tier 4</strong> [export reference: filecite | turn36file0 | L483-L483]</li>
+</ul>
+<p>That is much better for discovering whether Merchant Relationship 360 actually tells the story we intend. Later we&#39;ll UAT merchants from several archetypes, including clean returning, troubled returning, and genuinely new relationships.</p>
+<p>Also, the extract confirms why the page should eventually distinguish <strong>relationship profile</strong> from <strong>financing history</strong>. There are merchants classified <code>RETURNING_GOOD</code> even where the current extract shows zero prior advances, so <code>relationship_stage</code> plainly should not be interpreted as synonymous with “prior MSBF financing.” [export reference: filecite | turn36file0 | L285-L288]</p>
+<h2>Next construction step</h2>
+<p>Do <strong>not</strong> spend more time polishing the left card yet.</p>
+<ol>
+<li>Change the Merchant slicer temporarily to <strong>Synthetic Merchant 000012</strong>.</li>
+<li>Confirm the profile changes to Tier 4, 4 prior advances, and approximately $138.4K prior funded.</li>
+<li>Leave the profile card in place.</li>
+<li>Create a <strong>temporary Table visual</strong> in the large open body of P03.</li>
+<li>Title it temporarily <strong>Acquisition &amp; application — physical model test</strong>.</li>
+<li>From <code>DimApplication</code>, add the raw fields that identify the application and its chronology/status. Start with:<ul>
+<li><code>application_id</code> or equivalent application identifier</li>
+<li><code>application_date</code> / submitted date</li>
+<li>application status</li>
+<li>requested amount</li>
+<li>acquisition source</li>
+<li>decision/final outcome, <strong>if those fields actually reside in <code>DimApplication</code></strong></li>
+</ul>
+</li>
+</ol>
+<p>Don&#39;t create new measures for these yet.</p>
+<p>What I want to establish empirically is:</p>
+<blockquote>
+<p><strong>When Merchant 000012 is selected, how many application records does Power BI physically return, and what fields are actually populated?</strong></p>
+</blockquote>
+<p>Once you show me that temporary table, we&#39;ll know whether P03 should present the acquisition/application portion as a <strong>single current application</strong>, a <strong>multi-application history</strong>, or something richer. That is exactly the build-first approach Audit has now authorized. [export reference: memcite]</p>
+</div></article><article id="m-98efc9a4-cbb7-4ffe-bf73-f55fef38da42" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00286 · 2026-08-26T17:02:14.739000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 7066c2bc-eea4-4ad5-b661-1e3c700d2a7a.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-8e2417a6-9ecd-4e3e-9ab0-4963390c562b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00287 · 2026-08-26T17:02:17.609384-04:00 · active path</p><div class="bubble"><p>Perfect. This is exactly the profile behavior we wanted to confirm.</p>
+<p>The card now resolves Merchant <strong>000012</strong> correctly and gives us a substantially richer test case: Restaurant &amp; Food Service, Small, $250K–$1M annual sales, Returning Mixed, Tier 4, four prior advances, and $138.40K prior funded. Those displayed values reconcile to the underlying merchant record. [export reference: filecite | turn36file0 | L483-L483]</p>
+<p>I would <strong>freeze this card structurally for now</strong>. We can improve formatting later; there is no reason to burn time polishing it while we&#39;re still discovering what P03 can physically support.</p>
+<h3>Next: build the temporary application-history diagnostic</h3>
+<p>In the large blank area immediately to the right of this profile:</p>
+<ol>
+<li>Add a <strong>Table</strong> visual.</li>
+<li>Give it plenty of width—we are diagnosing the model, not designing the finished visual yet.</li>
+<li>Leave Merchant = <strong>000012</strong> selected.</li>
+<li>Expand <strong><code>DimApplication</code></strong> in the Data pane.</li>
+<li>Tell me—or screenshot—the fields available in <code>DimApplication</code>.</li>
+</ol>
+<p><strong>Don&#39;t guess which fields to add yet.</strong> My previous list was conceptual. Now that we&#39;re physically inside the model, I want to use its actual field names and grain rather than manufacture a mapping in advance.</p>
+<p>Once I see <code>DimApplication</code>, I&#39;ll tell you exactly which fields to drag into the table and in what order. Then we&#39;ll answer the first important P03 modeling question:</p>
+<p><strong>Does selecting Merchant 000012 propagate cleanly into its complete application history, and what does that history actually contain?</strong></p>
+<p>That will determine the next section of Merchant Relationship 360.</p>
+</div></article><article id="m-c3d3131b-3c50-401e-ba78-54e888226a1f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00288 · 2026-08-26T17:02:54.216000-04:00 · active path</p><p class="note">Attachment references: Pasted text(20260826-210249).txt</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-22dccd33-aad2-4a1b-97ef-46fb07b0e9cd" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00289 · 2026-08-26T17:03:23.428389-04:00 · active path</p><div class="bubble"><p>Yes — this is enough. You exported the actual <code>DimApplication</code> population, and it answers the field question cleanly. The table has the application grain and includes the requested economics, use of proceeds, channel, attribution, and evidence-status fields we need. [export reference: filecite | turn37file0 | L1-L8]</p>
+<p>For <strong>Merchant 000012</strong>, I also located its application in the supplied data. It has one <code>A01</code> application in this population: <strong>7/23/2026, $13,100 requested, 13.9062% requested remittance rate, 60 expected payoff days, $16,635.79 requested total repayment, $3,535.79 finance charge, Working Capital, Processor Embedded, Submitted, sourced through the processor portal.</strong> Its attribution confidence is Medium / Partial at 0.75.</p>
+<h3>Next step — build the Application History table</h3>
+<p>Keep Merchant <strong>000012</strong> selected. In your existing temporary Table visual, add these <code>DimApplication</code> fields <strong>in this exact order</strong>:</p>
+<ol>
+<li><code>application_date</code></li>
+<li><code>requested_funding_amount</code></li>
+<li><code>requested_use_of_proceeds</code></li>
+<li><code>application_channel</code></li>
+<li><code>requested_remittance_rate</code></li>
+<li><code>requested_expected_payoff_days</code></li>
+<li><code>requested_total_repayment_amount</code></li>
+<li><code>requested_finance_charge_amount</code></li>
+<li><code>application_status</code></li>
+<li><code>primary_source_code</code></li>
+</ol>
+<p>For now, <strong>do not add</strong> the IDs, hashes, keys, attribution-method fields, or evidence-status fields. They&#39;re useful for governance/reconciliation, but they&#39;ll overwhelm the merchant story.</p>
+<h3>What I expect to happen</h3>
+<p>With Merchant <strong>000012</strong> selected, the table should collapse to <strong>one application row</strong>. That row should approximately show:</p>
+<p><strong>7/23/2026 | $13.10K | WORKING_CAPITAL | PROCESSOR_EMBEDDED | 13.91% | 60 | $16.64K | $3.54K | SUBMITTED | SRC_PROC_PORTAL</strong></p>
+<p>This is an important physical-model test. The supplied source shows <code>MerchantKey = 1|MSBF_POP_0001_M000012</code>, so if the merchant slicer propagates correctly through the model, that one application should be isolated automatically.</p>
+<p><strong>Stop there once those 10 fields are in the table.</strong> Send me a screenshot of what Power BI renders. I want to inspect whether the Merchant filter propagation works and whether any fields aggregate incorrectly before we turn this diagnostic into the polished <strong>Application &amp; Acquisition History</strong> section of Merchant Relationship 360. [export reference: memcite]</p>
+</div></article><article id="m-98715005-2134-4f1c-b1a8-45a0cc61ffd9" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00290 · 2026-08-26T17:04:37.673000-04:00 · active path</p><div class="bubble"><p>sorry, explain this. are we moving on from the card and now creating a table? Keep Merchant <strong>000012</strong> selected. In your existing temporary Table visual, add these <code>DimApplication</code> fields <strong>in this exact order</strong>:  </p>
+</div></article><article id="m-1eeca347-3ee2-4dc6-8c10-45db90a87836" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00291 · 2026-08-26T17:04:40.690737-04:00 · active path</p><div class="bubble"><p>Yes. <strong>The merchant-profile card is complete for now.</strong> We are moving to the <strong>next visual on P03</strong>, which will be a table showing that merchant&#39;s application history.</p>
+<p>My wording about an &quot;<strong>existing temporary Table visual</strong>&quot; was confusing. You do <strong>not</strong> need to have already created one. I meant that our next construction step is to create one.</p>
+<h3>Where we are on P03</h3>
+<p>You have completed the top-level controls and the left-side <strong>Merchant Profile</strong> card:</p>
+<ul>
+<li>Merchant</li>
+<li>Industry</li>
+<li>Size tier</li>
+<li>Annual sales</li>
+<li>Relationship stage</li>
+<li>Relationship quality</li>
+<li>Prior advances</li>
+<li>Prior funded</li>
+</ul>
+<p>That card answers: <strong>&quot;Who is this merchant, and what relationship did we have with them coming into the current funding journey?&quot;</strong></p>
+<p>Now we start telling the actual <strong>360° history</strong>.</p>
+<h3>Next visual: Application History</h3>
+<p>Yes — create a <strong>Table</strong> visual.</p>
+<p>For the first pass, this is deliberately a physical-model diagnostic as well as a useful report component. We want to see whether selecting Merchant <code>000012</code> correctly retrieves that merchant&#39;s application records before spending time making the visual beautiful.</p>
+<p>With Merchant <strong>000012 still selected</strong>:</p>
+<ol>
+<li><p>Click a blank area of the canvas.</p>
+</li>
+<li><p>In <strong>Visualizations</strong>, select <strong>Table</strong>.</p>
+</li>
+<li><p>Resize it to give us reasonable working room.</p>
+</li>
+<li><p>Add these fields from <code>DimApplication</code>, in this order:</p>
+<p><code>application_date</code><br><code>requested_funding_amount</code><br><code>requested_use_of_proceeds</code><br><code>application_channel</code><br><code>requested_remittance_rate</code><br><code>requested_expected_payoff_days</code><br><code>requested_total_repayment_amount</code><br><code>requested_finance_charge_amount</code><br><code>application_status</code><br><code>primary_source_code</code></p>
+</li>
+</ol>
+<p>Don&#39;t worry about formatting, column names, widths, capitalization, or making it executive-ready yet.</p>
+<p>The source data confirms that <code>DimApplication</code> contains precisely this application-level information and a <code>MerchantKey</code>, which is why this is the right next physical test. [export reference: filecite | turn37file0 | L1-L8]</p>
+<p>Once you add those fields, <strong>stop and show me the result</strong>. I specifically want to inspect the row population and filtering behavior before we decide what the polished application-history visual should look like.</p>
+<p>So, in short: <strong>yes, card finished → now table.</strong> [export reference: memcite]</p>
+</div></article><article id="m-0e7fa5e8-1290-4f3f-91d7-fa61a6ab1435" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00292 · 2026-08-26T17:05:06.648000-04:00 · active path</p><div class="bubble"><p>and why is it temporary? is it not going to be part of the final build?</p>
+</div></article><article id="m-9fac82a0-904e-491f-a59f-fd4c9b6073bd" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00293 · 2026-08-26T17:05:09.329224-04:00 · active path</p><div class="bubble"><p>Potentially yes — and I should not have called it “temporary” without explaining the distinction.</p>
+<p>The <strong>Application History concept is intended to be part of the final P03 build</strong>. What is temporary is only its <strong>first physical form</strong>: a wide, minimally formatted table containing enough fields to let us understand how the merchant→application relationship behaves.</p>
+<p>Why start this way? Because before deciding whether the final experience should be a table, timeline, compact history strip, or application selector/detail combination, we need to see the actual data behavior. In particular, we need to learn whether merchants commonly have one application or multiple applications, how much variation exists across those applications, and which fields are genuinely useful together.</p>
+<p>So the workflow is:</p>
+<p><strong>Merchant Profile</strong> → essentially accepted as a final component, subject to later visual polish.</p>
+<p><strong>Application History</strong> → definitely part of the P03 story, but we first construct it as a plain table to understand the physical data.</p>
+<p>Then, based on what we see, we might decide:</p>
+<ul>
+<li><strong>Keep the table</strong> and polish it if merchants commonly have multiple applications and the rows tell the story well.</li>
+<li>Turn it into a <strong>compact application timeline/history</strong> if chronology is more important.</li>
+<li>Use an <strong>application selector + detail panel</strong> if merchants have many applications and each carries substantial information.</li>
+<li>Replace the wide diagnostic table with a smaller executive visual if most merchants only have one relevant application.</li>
+</ul>
+<p>This is precisely where the new build-first operating model helps us. We don&#39;t need to decide the final native visual before seeing the data behave in Power BI.</p>
+<p>So yes: <strong>we are building a real final section called something like <code>Application history</code> or <code>Acquisition &amp; applications</code>. We just aren&#39;t committing yet to a Table as its final presentation.</strong></p>
+<p>And I would change one thing from my previous instruction: don&#39;t worry about carefully sizing or positioning this table on the final canvas yet. Give it enough room to inspect the records. Once we understand what Merchant 000012—and several other merchants—produce, we&#39;ll design that section properly.</p>
+</div></article><article id="m-30080ec1-0e20-46fd-8737-23ae6128dff9" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00294 · 2026-08-26T18:05:08.678000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 593360ac-500f-4bf0-943b-5562d30fdede.png</p><div class="bubble"><p>i split into two tables so they screen would show all details at once and i added merchant_application_id for now</p>
+</div></article><article id="m-4c14816b-ca75-4fdf-b75d-7588763c9784" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00295 · 2026-08-26T18:05:11.805615-04:00 · active path</p><div class="bubble"><p>Yes—this was a good way to inspect it. And adding <code>merchant_application_id</code> was useful because it confirms the grain unequivocally.</p>
+<p>For Merchant <strong>000012</strong>, we now physically see one application:</p>
+<ul>
+<li><code>MSBF_POP_0001_M000012_A01</code></li>
+<li>Application date: <strong>7/23/2026</strong></li>
+<li>Requested funding: <strong>$13,100</strong></li>
+<li>Use: <strong>Working Capital</strong></li>
+<li>Channel: <strong>Processor Embedded</strong></li>
+<li>Requested remittance rate: <strong>14%</strong></li>
+<li>Expected payoff: <strong>60 days</strong></li>
+<li>Requested repayment: <strong>$16,635.79</strong></li>
+<li>Finance charge: <strong>$3,535.79</strong></li>
+<li>Status: <strong>Submitted</strong></li>
+<li>Source: <code>SRC_PROC_PORTAL</code></li>
+</ul>
+<p>That tells us the filtering works and gives us the next important design insight.</p>
+<h3>Before designing the final section, test cardinality</h3>
+<p>Don&#39;t format these two tables yet. Keep them exactly as diagnostic tables and use the <strong>Merchant slicer</strong> to click through perhaps 10–15 merchants, especially merchants with prior advances.</p>
+<p>Watch only the <code>merchant_application_id</code> column and answer:</p>
+<blockquote>
+<p><strong>Do any selected merchants produce more than one row/application?</strong></p>
+</blockquote>
+<p>You don&#39;t need to document every merchant. We&#39;re simply looking for evidence of <code>A02</code>, <code>A03</code>, etc.</p>
+<p>Why this matters is significant. <code>000012</code> has <strong>4 prior advances</strong>, but the current application table shows only <code>A01</code>. That suggests the “prior advances” in <code>DimMerchant</code> may represent <strong>relationship history entering this modeled run</strong>, while <code>DimApplication</code> may contain only the applications generated within the current synthetic population/run. If so, we should <strong>not call this section “Application History”</strong>, because that would imply the model contains historical applications corresponding to those four prior advances when it may not.</p>
+<p>Instead, the P03 story becomes more precise:</p>
+<p><strong>Prior relationship</strong> → summarized from <code>DimMerchant</code></p>
+<p><strong>Current application</strong> → <code>DimApplication</code></p>
+<p><strong>Current decision / offer</strong> → <code>FactFinalDecision</code></p>
+<p><strong>Current funded advance</strong> → <code>DimAccountAdvance</code></p>
+<p><strong>Current performance and servicing</strong> → account facts</p>
+<p>That would actually make Merchant Relationship 360 better: it separates <strong>pre-existing relationship history</strong> from the <strong>current financing journey</strong> rather than blending them.</p>
+<p>So leave your two tables as-is and click through several merchants. If they all return exactly one <code>_A01</code> row, tell me that. If you find an <code>_A02</code> or multiple rows, show me that merchant.</p>
+<p>Then we&#39;ll know whether these two diagnostic tables have done their job and can replace them with the polished <strong>Current application</strong> section.</p>
+</div></article><article id="m-890a840b-078f-4947-8892-63f6a79487e3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00296 · 2026-08-26T18:05:57.722000-04:00 · active path</p><div class="bubble"><p>you have all the merchant data. is there a good few merchants that you&#39;d like me to test</p>
+</div></article><article id="m-dcdfeaf9-bcf8-48a9-a651-b75053c08cf6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00297 · 2026-08-26T18:06:14.943620-04:00 · active path</p><div class="bubble"><p>Yes. Since we have the merchant population, we can be deliberate rather than randomly clicking 15 merchants.</p>
+<p>For <strong>this particular test</strong>, though, I can simplify it even further: the accepted model documentation already tells us the relationship is <strong>one merchant → potentially many applications</strong>, but notes that multiple applications are anticipated for future campaigns. [export reference: filecite | turn38file12 | L726-L753] That makes it quite plausible that this current run has only one application per merchant. So we don&#39;t need an exhaustive hunt.</p>
+<p>I&#39;d test these <strong>four archetypes</strong>:</p>
+<ul>
+<li><strong>000012</strong> — our <code>RETURNING_MIXED</code> case: 4 prior advances, Tier 4, meaningful prior funding. We already know it produces <code>_A01</code>.</li>
+<li><strong>000221</strong> — deliberately adverse prior-history case: prior default + prior payment interruption and Tier 5. This tests whether a troubled relationship still produces the same current-run application grain.</li>
+<li><strong>000001</strong> — genuinely <code>NEW</code>, no prior advances. This is our clean new-relationship control.</li>
+<li><strong>One <code>RETURNING_GOOD</code> / Tier 1 merchant</strong> from the later population — use one of the merchants you see when filtering <code>relationship_stage = RETURNING_GOOD</code> and <code>relationship_quality_tier = 1</code>. This gives us the opposite end of the relationship spectrum.</li>
+</ul>
+<p>For each, you only need to look at <strong><code>merchant_application_id</code></strong>. Don&#39;t inspect all ten columns.</p>
+<p>We&#39;re testing whether you see:</p>
+<pre><code class="language-text">..._A01
+</code></pre>
+<p>only, or whether any merchant produces:</p>
+<pre><code class="language-text">..._A01
+..._A02
+</code></pre>
+<p>etc.</p>
+<p>If all four produce exactly one <code>_A01</code>, <strong>stop testing</strong>. I will treat the physical current-run contract as one application per merchant for this population, while preserving the model&#39;s future-capable 1:* merchant→application relationship.</p>
+<p>That distinction is important for our final page language. The design authority already describes <code>[Merchant Applications]</code> simply as applications for the selected merchant and explicitly warns that the relationship evidence is bounded rather than a complete historical ledger. [export reference: filecite | turn38file0 | L17-L23]</p>
+<p>So if these four all return one row, our P03 story should become:</p>
+<p><strong>Relationship history</strong><br>→ bounded prior relationship snapshot from <code>DimMerchant</code></p>
+<p><strong>Current application</strong><br>→ this run&#39;s <code>DimApplication</code> record</p>
+<p><strong>Current decision &amp; offer</strong><br>→ scenario-qualified decision facts</p>
+<p><strong>Current advance</strong><br>→ funded account/activation, where applicable</p>
+<p><strong>Performance &amp; servicing</strong><br>→ lifecycle through the selected observation date</p>
+<p>That is cleaner and more truthful than calling the current-run row an <strong>Application History</strong>.</p>
+</div></article><article id="m-967bc0dc-7d8e-4084-8cde-e55794dffe40" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00298 · 2026-08-26T18:09:24.862000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 96964b70-4d45-4815-bd30-f7d4c7a4b487.png; 098da978-8d99-41ad-890c-fc6953ac201a.png</p><div class="bubble"><p>oddly, only the first table showed any data for these two</p>
+</div></article><article id="m-8f41d0eb-dd71-4858-a3d2-dc7e52b7a7cb" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00299 · 2026-08-26T18:09:28.058454-04:00 · active path</p><div class="bubble"><p>Yes — and this is actually a useful discovery. <strong>The second table going completely blank is not because those merchants lack the data.</strong> For Merchant 000221, for example, the first table proves <code>DimApplication</code> has a matching application row, so other columns from that same row should not disappear merely because they&#39;re in a second Table visual.</p>
+<p>The most likely cause is <strong>visual interaction/filter state</strong>, especially because we have been working with Edit Interactions. Notice that the second table is not merely showing blanks in some columns—it has <strong>no row at all</strong>. That points to the visual being filtered out rather than those fields being null.</p>
+<h3>First diagnostic — very quick</h3>
+<p>For Merchant <strong>000221</strong>, select the <strong>second table</strong> and check the Filters pane:</p>
+<p><strong>Filters on this visual</strong></p>
+<p>Look for anything besides the fields that belong naturally to the table. In particular, see whether <code>merchant_application_id</code>, Scenario, or another field has acquired a visual-level selection/filter.</p>
+<p>If you see anything unexpected, screenshot it.</p>
+<h3>Then check interactions</h3>
+<p>This is the more likely culprit.</p>
+<ol>
+<li>Click the <strong>Merchant slicer</strong>.</li>
+<li>Go to <strong>Format → Edit interactions</strong>.</li>
+<li>Look at the icons above the <strong>second table</strong>.</li>
+<li>It should be set to <strong>Filter</strong> (the funnel), not <strong>None</strong>.</li>
+<li>Do the same for the <strong>Scenario slicer</strong>.</li>
+</ol>
+<p>Then turn Edit interactions back off.</p>
+<p>Your screenshot actually shows interaction icons around the visuals, so we know interaction editing has been active during this construction. It&#39;s quite possible the two tables do not currently have identical interaction behavior.</p>
+<h3>Easiest definitive test</h3>
+<p>If both of those look normal, don&#39;t spend 15 minutes debugging this diagnostic visual.</p>
+<p>Take the <strong>first table that works</strong>, duplicate it with <code>Ctrl+C</code> / <code>Ctrl+V</code>, and then on the duplicate:</p>
+<ol>
+<li><p>Remove:</p>
+<ul>
+<li><code>application_date</code></li>
+<li><code>requested_funding_amount</code></li>
+<li><code>requested_use_of_proceeds</code></li>
+<li><code>application_channel</code></li>
+<li><code>requested_remittance_rate</code></li>
+</ul>
+</li>
+<li><p>Keep <code>merchant_application_id</code>.</p>
+</li>
+<li><p>Add:</p>
+<ul>
+<li><code>requested_expected_payoff_days</code></li>
+<li><code>requested_total_repayment_amount</code></li>
+<li><code>requested_finance_charge_amount</code></li>
+<li><code>application_status</code></li>
+<li><code>primary_source_code</code></li>
+</ul>
+</li>
+</ol>
+<p>If that duplicate populates, we know the issue was simply some configuration/state on the original second visual.</p>
+<h3>More importantly, we&#39;ve already learned something</h3>
+<p>Both <strong>000001</strong> and <strong>000221</strong> return exactly one:</p>
+<pre><code class="language-text">..._A01
+</code></pre>
+<p>And 000012 did too.</p>
+<p>So we now have three materially different merchant archetypes all behaving as:</p>
+<p><strong>one selected merchant → one current-run application</strong></p>
+<p>That aligns with the model documentation: the relationship is intentionally 1:* because <strong>future campaigns may have multiple applications</strong>, rather than because this particular current population necessarily contains multiple applications. [export reference: filecite | turn38file12 | L726-L753]</p>
+<p>I don&#39;t think we need to keep hunting for 15 merchants.</p>
+<p>Let&#39;s diagnose the second table using the steps above. Once it displays correctly, test <strong>one Returning Good / Tier 1 merchant</strong> as our final control. If that also returns one <code>_A01</code>, we&#39;re done with cardinality testing and can convert this diagnostic into the polished <strong>Current application</strong> section.</p>
+</div></article><article id="m-1557f28b-6882-4f9e-8325-e00f8dc53d30" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00300 · 2026-08-26T18:14:17.130000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 20950e4e-dba9-4458-90be-f69aca5748ef.png</p><div class="bubble"><p>i followed that definitive test in creating it and we see it does show data for 12 (still does):</p>
+</div></article><article id="m-ced62b48-4cbf-4f9e-a76b-a5187fc706f4" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00301 · 2026-08-26T18:14:20.340237-04:00 · active path</p><div class="bubble"><p>Good. That tells us the <strong>second-table construction itself is valid</strong>. For Merchant 000012, both halves resolve to the same application ID and the complete application record is present.</p>
+<p>The interesting part is now why the second table disappeared for 000001 and 000221. Given what we&#39;re seeing, I think there is a much simpler explanation than an interaction defect:</p>
+<p><strong>one or more of the fields in Table 2 is blank for those applications, and Power BI&#39;s table is suppressing the row because the combination of displayed fields has no reportable values under the current context.</strong></p>
+<p>But rather than speculate, we can identify the exact field in about a minute.</p>
+<h3>Do this with Merchant 000221</h3>
+<p>Keep the <strong>working duplicated second table</strong>.</p>
+<p>Switch Merchant to <strong>000221</strong>. If the row disappears, remove the Table 2 fields <strong>one at a time</strong>, starting from the right:</p>
+<ol>
+<li><code>primary_source_code</code></li>
+<li><code>application_status</code></li>
+<li><code>requested_finance_charge_amount</code></li>
+<li><code>requested_total_repayment_amount</code></li>
+<li><code>requested_expected_payoff_days</code></li>
+</ol>
+<p>Keep <code>merchant_application_id</code> throughout.</p>
+<p>The moment the row reappears, tell me which field you just removed.</p>
+<p>Then repeat only that check for 000001 if necessary.</p>
+<h3>Why I want to resolve this</h3>
+<p>This isn&#39;t just debugging. It tells us something about the <strong>evidence boundary of the current application</strong>.</p>
+<p>For example, if a merchant has:</p>
+<pre><code class="language-text">requested funding     $5,000
+channel               BROKER_REFERRAL
+</code></pre>
+<p>but no requested repayment economics, that could be meaningful. It may indicate those terms exist only for certain application/decision paths. We shouldn&#39;t force them into a final Current Application card if they aren&#39;t universally applicable.</p>
+<p>For 000012, we now know the complete requested structure exists:</p>
+<pre><code class="language-text">Requested amount       $13,100
+Use                     Working capital
+Channel                 Processor embedded
+Requested remittance    14%
+Expected payoff         60 days
+Total repayment         $16,635.79
+Finance charge          $3,535.79
+Status                  Submitted
+Source                   SRC_PROC_PORTAL
+</code></pre>
+<p>So <strong>don&#39;t format these tables yet</strong>. Switch to 000221 and remove those five fields one at a time until the application row returns. That will tell us exactly what we&#39;re dealing with.</p>
+</div></article><article id="m-007faaf2-9878-41e6-9b1a-23a20069e59e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00302 · 2026-08-26T18:20:25.944000-04:00 · active path</p><p class="note">3 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 9ab1d2e2-1735-47f1-9a3c-ab282b2a1612.png; 38a1c33d-93eb-4042-ab84-623b21d45f1d.png; 0d3c90c8-09fb-4050-8218-f196b546ac9c.png</p><div class="bubble"><p>sometimes you just have to delete and recreate. i deleted tables and now they are working. i wonder if the prior advances are data points used in evaluation but do not necessarily mean they have 4 advances in our current cohort and detail.</p>
+</div></article><article id="m-8d843fda-2c3a-47cc-99c1-27f3c25485fd" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00303 · 2026-08-26T18:20:29.162098-04:00 · active path</p><div class="bubble"><p>Yes — that is the correct interpretation, and the model documentation supports it.</p>
+<p><code>prior_advance_count</code>, <code>completed_advance_count</code>, <code>total_prior_funded_amount</code>, and <code>total_prior_repaid_amount</code> are <strong>bounded prior-relationship attributes carried into <code>DimMerchant</code></strong>. They are not four account/advance records that we should expect to find in the current modeled cohort. The design authority explicitly describes current-run funded amount as being combined with an <strong>“accepted prior funded amount snapshot”</strong> and warns that this is bounded relationship evidence, <strong>“not a complete historical ledger.”</strong> Likewise, prior repayment is supplied as a snapshot; the individual prior remittance events are unavailable. [export reference: filecite | turn38file10 | L657-L662]</p>
+<p>That resolves the apparent contradiction with Merchant 000012:</p>
+<pre><code class="language-text">Prior relationship entering this run
+Prior advances       4
+Prior funded         $138.4K
+Prior repaid         $133.4K
+Payment interruption Yes
+Relationship tier    4
+
+Current modeled run
+Application          ...M000012_A01
+Application date     7/23/2026
+Requested amount     $13.1K
+...
+</code></pre>
+<p>So <strong>we should absolutely not try to find those four prior advances elsewhere in the current cohort.</strong></p>
+<p>This also gives P03 a stronger conceptual architecture.</p>
+<h3>The page should explicitly separate past relationship from current journey</h3>
+<p>The left-hand Merchant Profile should probably evolve into <strong>Relationship profile</strong>, because that&#39;s really what those attributes represent:</p>
+<p><strong>Merchant profile</strong>
+Industry, size, annual sales</p>
+<p><strong>Prior relationship</strong>
+Relationship stage, quality tier, prior advances, prior funded</p>
+<p>Then everything to the right tells the <strong>current financing journey</strong>:</p>
+<p><strong>Current application</strong><br>→ <strong>Decision &amp; offer</strong><br>→ <strong>Funding / advance</strong><br>→ <strong>Performance through selected date</strong><br>→ <strong>Servicing / exceptions</strong></p>
+<p>That&#39;s a genuine Merchant Relationship 360 rather than simply another account dashboard.</p>
+<h3>And we&#39;re finished with the cardinality diagnostic</h3>
+<p>The recreated visuals prove that 000001, 000012 and 000221 all resolve cleanly to one <code>_A01</code> current-run application. We don&#39;t need to test more merchants just to establish this point. The model intentionally retains a 1:* Merchant→Application relationship because future campaigns may contain multiple applications, so we should preserve that future capability without pretending the current population contains historical application rows that aren&#39;t there. [export reference: filecite | turn38file12 | L726-L753]</p>
+<p>Your observation about deleting/recreating the Power BI visuals is also useful: the prior blank table was clearly a <strong>visual-state artifact</strong>, not a data deficiency. We should not design around it.</p>
+<h2>Next construction step: turn these diagnostics into <code>Current application</code></h2>
+<p>Now we know what the data represents, so <strong>the two diagnostic tables have served their purpose</strong>.</p>
+<p>Don&#39;t polish them. We&#39;re going to replace them with a much more compact <strong>Current application</strong> presentation.</p>
+<p>I would retain these eight pieces of information:</p>
+<pre><code class="language-text">Application ID       A01
+Applied              7/23/2026
+Requested            $13.1K
+Use of proceeds      Working capital
+
+Channel              Processor embedded
+Requested remittance 14.0%
+Expected payoff      60 days
+Requested repayment  $16.6K
+</code></pre>
+<p>I would <strong>not</strong> give valuable page real estate to:</p>
+<ul>
+<li><code>application_status = SUBMITTED</code> — likely not especially informative once we&#39;re showing the subsequent decision/funding journey;</li>
+<li><code>requested_finance_charge_amount</code> — derivable from requested amount/repayment and less important than the other terms;</li>
+<li><code>primary_source_code = SRC_PROC_PORTAL</code> — technical code; acquisition/channel can be represented more meaningfully elsewhere;</li>
+<li>the full <code>MSBF_POP_0001_M000012_A01</code> string — executive clutter.</li>
+</ul>
+<p>For Application ID, we can parse the suffix exactly as we did for Merchant ID and display simply:</p>
+<p><strong>Application ID: A01</strong></p>
+<h3>But there&#39;s one thing I want to inspect before we build that card</h3>
+<p>Now that we&#39;ve established the <strong>requested</strong> terms, the natural next question is:</p>
+<blockquote>
+<p><strong>What actually happened to this application under the selected Scenario?</strong></p>
+</blockquote>
+<p>That means our next physical source is <strong><code>FactFinalDecision</code></strong>, because the comparison between <strong>Requested → Decision/Offer → Funded</strong> is potentially the heart of this page.</p>
+<p>So before creating another eight P03 display measures, let&#39;s inspect <code>FactFinalDecision</code> for Merchant 000012 / Application A01 under Baseline.</p>
+<p>If the fields are as rich as the physical model suggested, we may discover that the better middle-of-page experience isn&#39;t separate “Application” and “Decision” cards at all. It may be a very effective <strong>Request → Decision → Funding</strong> progression showing how the merchant&#39;s ask became the actual financing structure.</p>
+<p>That&#39;s the next thing I would build.</p>
+</div></article><article id="m-861c11dc-dcb2-4888-84fc-f25c1c3a7a5a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00304 · 2026-08-26T18:23:06.694000-04:00 · active path</p><div class="bubble"><p>we should create a measure for application or try to understand the components of merchant_application_id better. it seems like there is a population component. in this case they are all population 0001 , then we have merchant id (12) and then comes the application id A01.</p>
+</div></article><article id="m-47cc9c5c-e437-4c3d-9cb5-6d03e2a11c16" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00305 · 2026-08-26T18:23:27.923061-04:00 · active path</p><div class="bubble"><p>Yes — your read of the identifier is correct, and the model documentation confirms the identity rule.</p>
+<p><code>merchant_application_id</code> is the <strong>scenario-invariant application identifier</strong>. The accepted semantic model defines:</p>
+<pre><code class="language-text">ApplicationKey = run_id | merchant_application_id
+</code></pre>
+<p>and explicitly says application identity is stable across scenarios. [export reference: filecite | turn39file0 | L9-L12]</p>
+<p>For a value like:</p>
+<pre><code class="language-text">MSBF_POP_0001_M000012_A01
+</code></pre>
+<p>the components are effectively:</p>
+<pre><code class="language-text">MSBF_POP_0001   = population identifier
+M000012         = merchant identifier within that population
+A01             = application sequence / application identifier
+</code></pre>
+<p>The raw application extract reinforces that structure because it separately carries <code>population_id</code>, <code>merchant_id</code>, and <code>merchant_application_id</code>. [export reference: filecite | turn39file1 | L22-L27]</p>
+<p>So I agree we should create a <strong>clean P03 Application ID measure</strong> and display only <code>A01</code> on the executive page.</p>
+<p>Use:</p>
+<pre><code class="language-DAX">P03 Application ID =
+VAR _Application =
+    SELECTEDVALUE (
+        &#39;DimApplication&#39;[merchant_application_id]
+    )
+VAR _LastUnderscore =
+    SEARCH (
+        &quot;|&quot;,
+        SUBSTITUTE ( _Application, &quot;_&quot;, &quot;|&quot;, LEN ( _Application ) - LEN ( SUBSTITUTE ( _Application, &quot;_&quot;, &quot;&quot; ) ) ),
+        1,
+        0
+    )
+RETURN
+    IF (
+        ISBLANK ( _Application ),
+        &quot;NOT AVAILABLE&quot;,
+        RIGHT (
+            _Application,
+            LEN ( _Application ) - _LastUnderscore
+        )
+    )
+</code></pre>
+<p>But because the identifier format appears governed and consistently ends in <code>_Axx</code>, we can make this much simpler and more readable:</p>
+<pre><code class="language-DAX">P03 Application ID =
+VAR _Application =
+    SELECTEDVALUE (
+        &#39;DimApplication&#39;[merchant_application_id]
+    )
+RETURN
+    IF (
+        ISBLANK ( _Application ),
+        &quot;NOT AVAILABLE&quot;,
+        RIGHT ( _Application, 3 )
+    )
+</code></pre>
+<p>For the current population that yields:</p>
+<pre><code class="language-text">A01
+</code></pre>
+<p>I prefer the simpler version <strong>only if we are comfortable that <code>A01</code>, <code>A02</code>, etc. are always fixed at three characters</strong>. The model documentation proves application identity and the current data strongly supports that naming convention, but it does not explicitly state that future application sequences can never exceed <code>A99</code>.</p>
+<p>So the safer presentation adapter is to extract everything after the final underscore:</p>
+<pre><code class="language-DAX">P03 Application ID =
+VAR _Application =
+    SELECTEDVALUE (
+        &#39;DimApplication&#39;[merchant_application_id]
+    )
+VAR _Marker =
+    SEARCH (
+        &quot;_A&quot;,
+        _Application,
+        1,
+        0
+    )
+RETURN
+    IF (
+        ISBLANK ( _Application ) || _Marker = 0,
+        &quot;NOT AVAILABLE&quot;,
+        MID (
+            _Application,
+            _Marker + 1,
+            LEN ( _Application )
+        )
+    )
+</code></pre>
+<p>For:</p>
+<pre><code class="language-text">MSBF_POP_0001_M000012_A01
+</code></pre>
+<p>it returns:</p>
+<pre><code class="language-text">A01
+</code></pre>
+<p>That is the version I recommend.</p>
+<p>One subtle point: <strong>Population ID should not be displayed on Merchant Relationship 360 right now.</strong> It is part of the governed identity and matters for lineage, but all of our current rows are in <code>MSBF_POP_0001</code>, so showing it would add technical clutter without helping the executive user. It belongs in Governance/Reconciliation or a tooltip if we later need it.</p>
+<p>The clean hierarchy for P03 should therefore be:</p>
+<pre><code class="language-text">Population       hidden lineage/context
+Merchant ID      000012
+Application ID   A01
+Scenario         Baseline
+</code></pre>
+<p>That preserves the real identity structure without exposing the entire concatenated technical key.</p>
+</div></article><article id="m-106029e1-4bd7-4b05-bb64-3314f712144d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00306 · 2026-08-26T18:33:08.036000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: b7006f80-8b8a-455a-ae25-ceeef6b7c5f3.png; 381f1b76-52e9-4bc5-8665-2adb2dd155e3.png</p><div class="bubble"><p>your P03 application id expands the table:</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

@@ -1,0 +1,1333 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 30 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 30</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-29.html">Previous part</a><a href="part-31.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-ca777b1c-94de-45e5-ac62-9395200fcddd" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00631 · 2026-09-02T09:53:30.965613-04:00 · active path</p><div class="bubble"><p>These screenshots are very useful. We have a <strong>localized Power BI DAX defect</strong>, not an R26 source failure.</p>
+<p>The physical refresh succeeded, the model has the expected <strong>54 tables / 54 relationships / 262 measures</strong>, the R26 measures are present, and Result 2 is behaving correctly: <strong>70 PASS / 0 FAIL</strong>, with the R26 certification/authority state loaded. The problem is isolated to the four new P02 monitoring measures.</p>
+<p>The reason is now exact: the supplied R26 recommendation uses:</p>
+<pre><code class="language-DAX">VAR _LatestDate = [R1 P01 __Latest Monitoring Date As Of]
+</code></pre>
+<p>once at the aggregate scenario level. But that helper itself requires:</p>
+<pre><code class="language-DAX">SELECTEDVALUE ( &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey] )
+</code></pre>
+<p>So at a whole-scenario level—100 Baseline paths or 25 Recession paths—there is no single <code>ApplicationScenarioKey</code>; <code>_LatestDate</code> becomes BLANK. The four R26 measures therefore filter on a blank monitoring date and return zero.</p>
+<p>That is why:</p>
+<pre><code class="language-text">Active paths = 100 / 25
+</code></pre>
+<p>works—the denominator already iterates path by path—while all four newly added R26 measures return zero.</p>
+<p>The R26 handoff&#39;s supplied recommendation has the same aggregate-context incompatibility. So we should classify this as:</p>
+<pre><code class="language-text">R26 P02 MEASURE IMPLEMENTATION DEFECT
+Localized aggregate-grain incompatibility
+
+R26 source contradiction:                 NO
+R26 carrier defect:                       NO
+Power Query R26 field-load defect:        NO evidence
+R26 G3-v2 identity defect:                NO
+Underlying operational-family logic:      UNCHANGED
+Required correction:                      four P02 DAX aggregators only
+</code></pre>
+<h2>Fix the four measures</h2>
+<p>Keep Power BI open.</p>
+<p>Go to <strong>DAX Query View → New query</strong> and paste this whole replacement block. These measures preserve the source-owned R26 fields; they simply evaluate them at the same governed <strong>one-account-path-at-a-time as-of grain</strong> already used elsewhere in P01/P02.</p>
+<pre><code class="language-DAX">DEFINE
+
+    MEASURE &#39;R1Measures&#39;[R26 P02 Accounts with Operational Alerts As Of] =
+        IF (
+            [R1 P01 As Of Evidence Status] = &quot;VALID&quot;,
+            COALESCE (
+                SUMX (
+                    VALUES (
+                        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+                    ),
+                    VAR _LatestDate =
+                        CALCULATE (
+                            [R1 P01 __Latest Monitoring Date As Of]
+                        )
+                    VAR _PaidOffFlag =
+                        CALCULATE (
+                            [R1 P02 __Paid-Off Flag As Of]
+                        )
+                    VAR _OperationalFamilyCount =
+                        IF (
+                            NOT ISBLANK ( _LatestDate ),
+                            CALCULATE (
+                                MAX (
+                                    &#39;R1FactDailyMonitoring&#39;[operational_alert_family_count]
+                                ),
+                                FILTER (
+                                    ALL (
+                                        &#39;R1FactDailyMonitoring&#39;[monitoring_date]
+                                    ),
+                                    &#39;R1FactDailyMonitoring&#39;[monitoring_date]
+                                        = _LatestDate
+                                )
+                            )
+                        )
+                    RETURN
+                        IF (
+                            NOT ISBLANK ( _LatestDate )
+                                &amp;&amp; COALESCE ( _PaidOffFlag, &quot;f&quot; ) &lt;&gt; &quot;t&quot;
+                                &amp;&amp; COALESCE ( _OperationalFamilyCount, 0 ) &gt; 0,
+                            1,
+                            0
+                        )
+                ),
+                0
+            )
+        )
+
+
+    MEASURE &#39;R1Measures&#39;[R26 P02 Accounts in Adverse Monitoring Status As Of] =
+        IF (
+            [R1 P01 As Of Evidence Status] = &quot;VALID&quot;,
+            COALESCE (
+                SUMX (
+                    VALUES (
+                        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+                    ),
+                    VAR _LatestDate =
+                        CALCULATE (
+                            [R1 P01 __Latest Monitoring Date As Of]
+                        )
+                    VAR _MonitoringStatus =
+                        CALCULATE (
+                            [R1 P02 __Monitoring Status As Of]
+                        )
+                    VAR _PaidOffFlag =
+                        CALCULATE (
+                            [R1 P02 __Paid-Off Flag As Of]
+                        )
+                    RETURN
+                        IF (
+                            NOT ISBLANK ( _LatestDate )
+                                &amp;&amp; COALESCE ( _PaidOffFlag, &quot;f&quot; ) &lt;&gt; &quot;t&quot;
+                                &amp;&amp; _MonitoringStatus
+                                    IN {
+                                        &quot;UNDERPERFORMING&quot;,
+                                        &quot;SEVERE_SHORTFALL&quot;,
+                                        &quot;DORMANT_NO_REMITTANCE&quot;
+                                    },
+                            1,
+                            0
+                        )
+                ),
+                0
+            )
+        )
+
+
+    MEASURE &#39;R1Measures&#39;[R26 P02 Raw Alert Conditions As Of] =
+        IF (
+            [R1 P01 As Of Evidence Status] = &quot;VALID&quot;,
+            COALESCE (
+                SUMX (
+                    VALUES (
+                        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+                    ),
+                    VAR _LatestDate =
+                        CALCULATE (
+                            [R1 P01 __Latest Monitoring Date As Of]
+                        )
+                    VAR _PaidOffFlag =
+                        CALCULATE (
+                            [R1 P02 __Paid-Off Flag As Of]
+                        )
+                    VAR _RawConditionCount =
+                        IF (
+                            NOT ISBLANK ( _LatestDate ),
+                            CALCULATE (
+                                MAX (
+                                    &#39;R1FactDailyMonitoring&#39;[raw_alert_condition_count]
+                                ),
+                                FILTER (
+                                    ALL (
+                                        &#39;R1FactDailyMonitoring&#39;[monitoring_date]
+                                    ),
+                                    &#39;R1FactDailyMonitoring&#39;[monitoring_date]
+                                        = _LatestDate
+                                )
+                            )
+                        )
+                    RETURN
+                        IF (
+                            NOT ISBLANK ( _LatestDate )
+                                &amp;&amp; COALESCE ( _PaidOffFlag, &quot;f&quot; ) &lt;&gt; &quot;t&quot;,
+                            COALESCE ( _RawConditionCount, 0 ),
+                            0
+                        )
+                ),
+                0
+            )
+        )
+
+
+    MEASURE &#39;R1Measures&#39;[R26 P02 Operational Alert Families As Of] =
+        IF (
+            [R1 P01 As Of Evidence Status] = &quot;VALID&quot;,
+            COALESCE (
+                SUMX (
+                    VALUES (
+                        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+                    ),
+                    VAR _LatestDate =
+                        CALCULATE (
+                            [R1 P01 __Latest Monitoring Date As Of]
+                        )
+                    VAR _PaidOffFlag =
+                        CALCULATE (
+                            [R1 P02 __Paid-Off Flag As Of]
+                        )
+                    VAR _OperationalFamilyCount =
+                        IF (
+                            NOT ISBLANK ( _LatestDate ),
+                            CALCULATE (
+                                MAX (
+                                    &#39;R1FactDailyMonitoring&#39;[operational_alert_family_count]
+                                ),
+                                FILTER (
+                                    ALL (
+                                        &#39;R1FactDailyMonitoring&#39;[monitoring_date]
+                                    ),
+                                    &#39;R1FactDailyMonitoring&#39;[monitoring_date]
+                                        = _LatestDate
+                                )
+                            )
+                        )
+                    RETURN
+                        IF (
+                            NOT ISBLANK ( _LatestDate )
+                                &amp;&amp; COALESCE ( _PaidOffFlag, &quot;f&quot; ) &lt;&gt; &quot;t&quot;,
+                            COALESCE ( _OperationalFamilyCount, 0 ),
+                            0
+                        )
+                ),
+                0
+            )
+        )
+
+EVALUATE
+ROW (
+    &quot;Operationally alerted&quot;,
+        [R26 P02 Accounts with Operational Alerts As Of],
+    &quot;Adverse&quot;,
+        [R26 P02 Accounts in Adverse Monitoring Status As Of],
+    &quot;Raw conditions&quot;,
+        [R26 P02 Raw Alert Conditions As Of],
+    &quot;Operational families&quot;,
+        [R26 P02 Operational Alert Families As Of]
+)
+</code></pre>
+<h3>Apply them</h3>
+<p>At the top of DAX Query View, click:</p>
+<p><strong>Update model with changes</strong></p>
+<p>Power BI should show the four existing measures as modified. Accept/update them.</p>
+<p>Do <strong>not</strong> change:</p>
+<pre><code class="language-text">R26 P02 Active Non-Paid-Off Paths As Of
+R26 P02 Raw Conditions per Operationally Alerted Account
+R26 P02 Operational Families per Alerted Account
+R26 P02 Monitoring Breadth Severity Alt Text
+</code></pre>
+<p>The two ratio measures will automatically inherit the corrected base measures, and the alt-text measure references the corrected account measures.</p>
+<h2>Then rerun the existing checkpoint unchanged</h2>
+<p>Go back to:</p>
+<pre><code class="language-text">R26_DESKTOP_CHECKPOINTS.dax
+</code></pre>
+<p>and click <strong>Run</strong> again.</p>
+<p>Result 1 should now be:</p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Date</th>
+<th align="right">Active paths</th>
+<th align="right">Operationally alerted</th>
+<th align="right">Adverse</th>
+<th align="right">Raw conditions</th>
+<th align="right">Operational families</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Baseline</td>
+<td>8/8/2026</td>
+<td align="right"><strong>100</strong></td>
+<td align="right"><strong>12</strong></td>
+<td align="right"><strong>11</strong></td>
+<td align="right"><strong>102</strong></td>
+<td align="right"><strong>23</strong></td>
+</tr>
+<tr>
+<td>Recession Energy</td>
+<td>8/8/2026</td>
+<td align="right"><strong>25</strong></td>
+<td align="right"><strong>2</strong></td>
+<td align="right"><strong>2</strong></td>
+<td align="right"><strong>18</strong></td>
+<td align="right"><strong>4</strong></td>
+</tr>
+</tbody></table>
+<p>Those are the exact carrier checkpoint populations.</p>
+<p>Result 2 should remain:</p>
+<pre><code class="language-text">G3-v2 pass controls     70
+G3-v2 fail controls      0
+Certification ID         G3V2_R26_C053DC064AB32A4D21864F94
+Authority state          CANDIDATE_ONLY_PENDING...
+</code></pre>
+<h3>Why this correction is safe</h3>
+<p>It does <strong>not</strong> recreate operational-family logic in DAX.</p>
+<p>For each governed path and its governed latest date, Power BI merely reads:</p>
+<pre><code class="language-text">operational_alert_family_count
+raw_alert_condition_count
+monitoring_status_code
+paid_off_flag
+</code></pre>
+<p>directly from <code>R1FactDailyMonitoring</code>.</p>
+<p>The actual source-owned classifications remain untouched. The correction only changes <strong>how those source facts are aggregated across multiple account paths</strong>.</p>
+<p>That is exactly analogous to the already-working older P01/P02 measures, which use:</p>
+<pre><code class="language-DAX">SUMX (
+    VALUES ( &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey] ),
+    ...
+)
+</code></pre>
+<p>for precisely this reason.</p>
+<h2>Also record the initial failed checkpoint</h2>
+<p>Do not discard the screenshots you just captured. They are useful evidence:</p>
+<pre><code class="language-text">R26 DESKTOP CHECKPOINT R1
+
+Physical refresh:                  PASS
+Active path population:            100 / 25 — PASS
+G3-v2:                             70 / 0 — PASS
+R26 certification identity:        PRESENT
+New R26 P02 aggregators:            FAIL — zeroed aggregate context
+
+Root cause:
+R1 P01 __Latest Monitoring Date As Of is intentionally
+ApplicationScenarioKey-scoped, but the supplied R26 P02 recommendation
+invoked it once at multi-path scenario grain.
+
+Disposition:
+LOCALIZED DAX AGGREGATION CORRECTION
+NO SOURCE OR POLICY CHANGE
+</code></pre>
+<p>Your screenshots also establish that the candidate physically contains <strong>54 tables, 54 relationships, 262 measures</strong>, plus the expected R26 P02 and deprecated-pre-R26 measure populations. That is useful before-state evidence.</p>
+<p>Apply the four replacements and rerun the exact same checkpoint. If it returns <strong>100/12/11/102/23</strong> and <strong>25/2/2/18/4</strong>, we&#39;re through the substantive R26 P02 semantic issue.</p>
+</div></article><article id="m-b6020ddc-a4ac-4bbc-8b2f-059448c9463f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00632 · 2026-09-02T09:57:36.042000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 1325f372-107e-4bb9-aa3d-250f3c3ff6e0.png; 5d7a44bd-c46f-47ad-9ec1-e995792605ee.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-04b06b89-4282-4590-9e82-b315e20ae3c2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00633 · 2026-09-02T09:57:39.596472-04:00 · active path</p><div class="bubble"><p>The corrected R26 Desktop checkpoint now <strong>passes exactly</strong>.</p>
+<pre><code class="language-text">R26 DESKTOP CHECKPOINT R2 — PASS
+
+Baseline — 2026-08-08
+Active paths                 100
+Operationally alerted         12
+Adverse                       11
+Raw conditions               102
+Operational families          23
+
+Recession Energy — 2026-08-08
+Active paths                  25
+Operationally alerted          2
+Adverse                        2
+Raw conditions                18
+Operational families           4
+
+G3-v2
+Pass controls                 70
+Fail controls                  0
+
+Certification
+G3V2_R26_C053DC064AB32A4D21864F94
+
+Authority
+CANDIDATE_ONLY_PENDING_R26_FOCUSED_INDEPENDENT_AUDIT
+</code></pre>
+<p>This closes the localized DAX issue. The correction changed only the <strong>account-path aggregation context</strong>; it did not change R26 policy, source facts, operational-family definitions, or monitoring logic.</p>
+<h2>Next — physically validate P02</h2>
+<p>Return to <strong>Report view → P02 – Cohort Lifecycle</strong>.</p>
+<h3>1. Baseline state</h3>
+<p>Set:</p>
+<pre><code class="language-text">Scenario:            Baseline
+Industry:            All
+Acquisition source:  All
+Observation period:  7/23/2026 – 11/22/2026
+</code></pre>
+<p>Confirm the upper-right monitoring chart is titled:</p>
+<pre><code class="language-text">Monitoring breadth and severity
+</code></pre>
+<p>and its legend contains exactly:</p>
+<pre><code class="language-text">Accounts with operational alerts
+Accounts in adverse monitoring status
+</code></pre>
+<p>It should <strong>not</strong> have <code>Active alert flags</code> as a primary plotted line.</p>
+<p>Take one full-page screenshot.</p>
+<h3>2. Baseline tooltip</h3>
+<p>Hover the monitoring chart at <strong>8/8/2026</strong>.</p>
+<p>The important tooltip values should be:</p>
+<pre><code class="language-text">Accounts with operational alerts       12
+Accounts in adverse monitoring status  11
+Raw alert conditions                  102
+Operational alert families             23
+Active / non-paid-off accounts        100
+</code></pre>
+<p>If the tooltip also shows density measures, expected:</p>
+<pre><code class="language-text">Raw conditions per operationally alerted account
+102 / 12 = 8.50
+
+Operational families per alerted account
+23 / 12 ≈ 1.92
+</code></pre>
+<p>Take one screenshot of that tooltip.</p>
+<h3>3. Recession Energy</h3>
+<p>Change only:</p>
+<pre><code class="language-text">Scenario → Recession Energy
+</code></pre>
+<p>Keep all other slicers unchanged.</p>
+<p>Take one full-page screenshot.</p>
+<p>Then hover <strong>8/8/2026</strong> and confirm:</p>
+<pre><code class="language-text">Accounts with operational alerts        2
+Accounts in adverse monitoring status   2
+Raw alert conditions                    18
+Operational alert families               4
+Active / non-paid-off accounts          25
+</code></pre>
+<p>The basic inequalities now already pass at the required checkpoint:</p>
+<pre><code class="language-text">Baseline:
+11 adverse &lt;= 12 operationally alerted &lt;= 100 active
+
+Recession:
+2 adverse &lt;= 2 operationally alerted &lt;= 25 active
+</code></pre>
+<h2>Also check the existing P02 behavior</h2>
+<p>While you&#39;re there, verify nothing regressed:</p>
+<ul>
+<li><strong>Receivable runoff</strong> still shows both Baseline and Recession Energy despite the Scenario slicer.</li>
+<li>The fixed cohort-profile card changes with Scenario but <strong>not</strong> with Observation period.</li>
+<li>Remittance fulfillment and payoff timing respond normally.</li>
+<li>Industry and Acquisition source continue filtering the page appropriately.</li>
+<li><code>P02-DIAG – Attention States</code> remains hidden from normal navigation.</li>
+</ul>
+<p>Do <strong>not</strong> change P03–P06 yet.</p>
+<p>Send me the <strong>Baseline P02 screenshot, Baseline 8/8 tooltip, and Recession P02 screenshot</strong>. If those look correct, we&#39;ll freeze P02 under R26 and move to the remaining R26 physical nonregression / P05-P06 identity checks before save-close-reopen.</p>
+</div></article><article id="m-9e2831f7-b952-47e9-9bcf-5f43e8df775e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00634 · 2026-09-02T10:23:31.092000-04:00 · active path</p><p class="note">12 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: P01_Baseline_Full_Page(2).png; P01_Industry_Slicer_Interaction(2).png; P01_Recession_Energy_Full_Page(2).png; P01_Tab_Order(3).png; P01_Tooltip_Evidence(2).png; P02_Acquisition_Source_Slicer_Interaction(2).png; P02_Baseline_Full_Page(2).png; P02_Industry_Slicer_Interaction(2).png; P02_Recession_Energy_Full_Page(2).png; P01_Acquisition_Source_Slicer_Interaction(2).png; P01_Alt_Text(3).png; P02_Tooltip_Evidence(2).png</p><div class="bubble"><p>Attached are screenshots to showcase our updates. I did not finalize the full P02 set as I think we need changes to the subtitle (since we renamed Monitoring breadth... and our subtitle still references attention signals).</p>
+</div></article><article id="m-25144578-ae56-48c5-a3d8-4f3b5f1ac636" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00635 · 2026-09-02T10:25:01.421005-04:00 · active path</p><div class="bubble"><p>Yes — your instinct is right. The P02 subtitle should be updated before we call the page finished.</p>
+<p>The current subtitle still says:</p>
+<blockquote>
+<p>Track the selected synthetic funded cohort from activation through receivable runoff, remittance performance, <strong>attention signals</strong>, and payoff timing.</p>
+</blockquote>
+<p>That language belongs to the pre-R26 interpretation. The new R26 chart is deliberately separating <strong>operational alert breadth</strong> from <strong>adverse monitoring status</strong>, so <code>attention signals</code> is now too vague.</p>
+<p>I recommend replacing the P02 subtitle with:</p>
+<blockquote>
+<p><strong>Track the selected synthetic funded cohort from activation through receivable runoff, remittance performance, monitoring breadth and adverse status, and payoff timing.</strong></p>
+</blockquote>
+<p>I prefer <strong>“monitoring breadth and adverse status”</strong> over simply copying the chart title “monitoring breadth and severity.” It is more technically exact because the second line is a count of accounts in an adverse status; it is not a continuous severity score.</p>
+<h3>What I see in the screenshots</h3>
+<p>The R26 P02 visual itself now looks right. The main chart has the correct two account-grain series:</p>
+<pre><code class="language-text">Accounts with operational alerts
+Accounts in adverse monitoring status
+</code></pre>
+<p>and the tooltip successfully exposes the deeper condition/family detail without putting incompatible grains on the main canvas. Your 9/12 tooltip is particularly good evidence: it clearly distinguishes 23 alerted accounts, 8 adverse-status accounts, 53 raw conditions, 23 operational families, and 55 active/non-paid-off accounts.</p>
+<p>P01 also looks preserved correctly across Baseline, Recession Energy, industry/acquisition filtering, tooltip behavior, tab order, and accessibility evidence. I see no reason to reopen P01 for design changes.</p>
+<h2>Before final P02 evidence capture</h2>
+<p>I would make exactly these remaining P02 changes/checks:</p>
+<ol>
+<li><strong>Change the subtitle</strong> to the wording above.</li>
+<li>Confirm the monitoring visual&#39;s dynamic alt text is based on:<pre><code class="language-text">R26 P02 Monitoring Breadth Severity Alt Text
+</code></pre>
+not the old <code>R1 P02 Attention Signals Alt Text</code>.</li>
+<li>Keep the chart title:<pre><code class="language-text">Monitoring breadth and severity
+</code></pre>
+</li>
+<li>Keep the tooltip fields exactly as currently shown.</li>
+<li>Preserve <code>P02-DIAG - Attention States</code> hidden as engineering evidence.</li>
+</ol>
+<p>Then capture the final P02 set.</p>
+<h3>One evidence item still worth capturing exactly</h3>
+<p>Your current tooltip screenshot proves the corrected measures work, but the R26 checkpoint specifically calls out <strong>Baseline 8/8/2026</strong>.</p>
+<p>So for final evidence, hover the monitoring chart on <strong>8/8/2026</strong> and capture:</p>
+<pre><code class="language-text">Accounts with operational alerts       12
+Accounts in adverse monitoring status  11
+Raw alert conditions                  102
+Operational alert families             23
+Active / non-paid-off accounts        100
+</code></pre>
+<p>That ties the executive visual directly to the already-passed physical DAX checkpoint.</p>
+<p>For Recession Energy, the full-page screenshot you supplied is sufficient visually; if convenient, capture an 8/8 tooltip too, but I would not overdo the evidence.</p>
+<h3>P02 final wording set</h3>
+<p>I would lock it as:</p>
+<p><strong>Title</strong></p>
+<pre><code class="language-text">Merchant Financing Cohort Lifecycle
+</code></pre>
+<p><strong>Subtitle</strong></p>
+<pre><code class="language-text">Track the selected synthetic funded cohort from activation through receivable runoff, remittance performance, monitoring breadth and adverse status, and payoff timing.
+</code></pre>
+<p><strong>Upper-right visual</strong></p>
+<pre><code class="language-text">Monitoring breadth and severity
+</code></pre>
+<p><strong>Primary series</strong></p>
+<pre><code class="language-text">Accounts with operational alerts
+Accounts in adverse monitoring status
+</code></pre>
+<p>That gives the page a much cleaner semantic progression:</p>
+<p><strong>cohort → runoff → payment performance → monitoring breadth/adverse status → payoff timing</strong></p>
+<p>Make that subtitle and alt-text check, then capture the final Baseline P02 + 8/8 tooltip. After that, I would consider <strong>P02 R26 construction/evidence frozen</strong>, subject only to the eventual save/close/reopen nonregression check.</p>
+</div></article><article id="m-cd9d89d6-aa43-43cb-8eac-394879d35ae0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00636 · 2026-09-02T10:50:39.111000-04:00 · active path</p><p class="note">7 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: P01_Observation_Period_Test.png; P02_Tooltip_Evidence(3).png; da112eda-a8a3-4a66-8ed8-91c75aae3cd3.png; 3ec9dacd-c2a0-4794-9155-abbe89364796.png; b1918395-813d-498e-b4a7-7bc37d821580.png; be8f5c1f-8a3a-40f8-b7ab-91351898a186.png; 69f505e9-241e-44cc-ae00-3e78ce019771.png</p><div class="bubble"><p>The operational attention card set on P01 I think needs updated. It still shows &gt;100 active alerts.</p>
+</div></article><article id="m-d33e354c-c13d-40b5-af6a-49f9c170a697" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00637 · 2026-09-02T10:50:44.043038-04:00 · active path</p><div class="bubble"><p>Yes. Your 8/8 P01 screenshot exposes the problem clearly: <strong>Endpoint reconciliation is correctly blank/HOLD away from the governed endpoint, while “Active alerts” still shows 102 raw conditions.</strong> That mixes both <strong>grain</strong> and <strong>time authority</strong> inside the same lower-right executive block.</p>
+<p>I would make a <strong>small, controlled P01 correction</strong>, not redesign the page.</p>
+<h3>Recommended P01 treatment</h3>
+<p>Keep the three existing endpoint measures:</p>
+<pre><code class="language-text">Open servicing
+Review holds
+Servicing burden
+</code></pre>
+<p>Replace only:</p>
+<pre><code class="language-text">Active alerts
+</code></pre>
+<p>with an <strong>endpoint-gated account-path measure</strong>:</p>
+<pre><code class="language-DAX">R26 P01 Endpoint Operationally Alerted Paths =
+IF (
+    [R1 P01 Endpoint Evidence Available] = 1,
+    [R26 P02 Accounts with Operational Alerts As Of]
+)
+</code></pre>
+<p>Put it in:</p>
+<pre><code class="language-text">P01 | Cohort Command Center
+</code></pre>
+<p>Then replace the first field in that four-card visual:</p>
+<pre><code class="language-text">R1 P01 Active Alert Flags As Of
+</code></pre>
+<p>with:</p>
+<pre><code class="language-text">R26 P01 Endpoint Operationally Alerted Paths
+</code></pre>
+<p>Rename for this visual:</p>
+<pre><code class="language-text">Alerted accounts
+</code></pre>
+<p>I would also rename the section heading from:</p>
+<pre><code class="language-text">Operational attention
+</code></pre>
+<p>to:</p>
+<pre><code class="language-text">Endpoint operational attention
+</code></pre>
+<p>That makes the contract explicit.</p>
+<h3>Why this is the right fix</h3>
+<p>At the default 11/22 endpoint, the block becomes internally coherent:</p>
+<pre><code class="language-text">Alerted accounts       account paths at endpoint
+Open servicing         endpoint paths
+Review holds           endpoint paths
+Servicing burden       endpoint workload units
+</code></pre>
+<p>At an earlier date such as <strong>8/8</strong>, all four should become blank/<code>--</code> while:</p>
+<pre><code class="language-text">Endpoint gate = HOLD
+</code></pre>
+<p>Exactly like the adjacent Endpoint reconciliation block.</p>
+<p>That is much better than showing:</p>
+<pre><code class="language-text">Active alerts = 102
+Open servicing = --
+Review holds = --
+Servicing burden = --
+</code></pre>
+<p>which currently implies those 102 are operational cases. They are actually <strong>raw alert conditions</strong>, and multiple conditions can occur on one account.</p>
+<p>The source measure remains valid—we simply stop using it as an executive account-count card.</p>
+<h3>Do not delete the old measure</h3>
+<p>Keep:</p>
+<pre><code class="language-text">R1 P01 Active Alert Flags As Of
+</code></pre>
+<p>for lineage/nonregression. It just should no longer drive this P01 card. R26 already gives us the superior source-owned distinction between raw conditions and operational alert families/accounts.</p>
+<h3>Update the block&#39;s alt text too</h3>
+<p>If the four-card visual currently has static alt text, replace it with:</p>
+<blockquote>
+<p>Endpoint operational attention showing operationally alerted account paths, open servicing paths, review holds, and servicing burden at the governed lifecycle endpoint. Values are withheld outside endpoint evidence.</p>
+</blockquote>
+<p>That makes the endpoint behavior intentional rather than looking broken to an accessibility user.</p>
+<h3>Expected QA</h3>
+<p>At <strong>8/8/2026 Baseline</strong>, I expect:</p>
+<pre><code class="language-text">Endpoint gate                  HOLD
+
+Endpoint reconciliation
+Reconciled paths               --
+Ending exposure                --
+Variance                       --
+Exceptions                     --
+
+Endpoint operational attention
+Alerted accounts               --
+Open servicing                 --
+Review holds                   --
+Servicing burden               --
+</code></pre>
+<p>At <strong>11/22/2026 Baseline</strong>, all endpoint blocks should populate again. The new <code>Alerted accounts</code> value should be an account count and should never exceed the active/non-paid-off population.</p>
+<p>I would make this correction before freezing P01. Your observation caught a genuine <strong>Power BI semantic/time-grain presentation defect</strong>, but not an R26 source or strategy defect. After this, P01 and P02 will use the R26 monitoring semantics consistently.</p>
+</div></article><article id="m-ba3e34c7-e84a-4a15-8e11-7d6a5b99da76" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00638 · 2026-09-02T10:55:58.846000-04:00 · active path</p><div class="bubble"><p>I do not like Alerted accounts. Is Active alerts really that bad of a title there? Also, changing this to endpoint...does that mean they will not be able to see the situation as of observation date? so we should turn off interaction with that?</p>
+</div></article><article id="m-ad12f0df-a1fa-440d-8649-55e6145f728e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00639 · 2026-09-02T10:56:02.538975-04:00 · active path</p><div class="bubble"><p>Yes — I would <strong>keep the title “Active alerts.”</strong> The real problem was not the wording; it was that the card was using a <strong>raw condition count</strong> and therefore showing 102 against a 100-account active population.</p>
+<p>If we change the underlying measure to:</p>
+<pre><code class="language-DAX">R26 P02 Accounts with Operational Alerts As Of
+</code></pre>
+<p>then “Active alerts” becomes a reasonable executive shorthand for <strong>distinct active accounts with one or more operational alerts</strong>.</p>
+<p>And I would <strong>not endpoint-gate that card</strong>.</p>
+<p>Your concern is exactly right: if we make the whole <code>Operational attention</code> block endpoint-only, then the Observation date slicer stops telling the user what is happening at the selected date. That weakens P01, because one of its core jobs is to show the cohort <strong>as of the selected observation date</strong>.</p>
+<p>So my revised recommendation is:</p>
+<h3>Keep the section title</h3>
+<pre><code class="language-text">Operational attention
+</code></pre>
+<h3>Keep the first card label</h3>
+<pre><code class="language-text">Active alerts
+</code></pre>
+<p>but change its field from:</p>
+<pre><code class="language-text">R1 P01 Active Alert Flags As Of
+</code></pre>
+<p>to:</p>
+<pre><code class="language-text">R26 P02 Accounts with Operational Alerts As Of
+</code></pre>
+<p>That means at 8/8 the card should show:</p>
+<pre><code class="language-text">Active alerts = 12
+</code></pre>
+<p>not 102.</p>
+<h3>Keep Observation date interaction ON</h3>
+<p>Do <strong>not</strong> turn off interaction between the Observation date slicer and this card visual.</p>
+<p>That way:</p>
+<ul>
+<li>8/8 shows the actual account-level alert population at 8/8.</li>
+<li>11/22 shows the endpoint account-level alert population.</li>
+<li>The metric remains useful throughout the lifecycle.</li>
+</ul>
+<p>The other three cards are different:</p>
+<pre><code class="language-text">Open servicing
+Review holds
+Servicing burden
+</code></pre>
+<p>Those are sourced from endpoint-oriented servicing/performance facts, so they legitimately go blank away from the governed endpoint.</p>
+<p>That gives us a mixed but defensible block:</p>
+<table>
+<thead>
+<tr>
+<th>Card</th>
+<th>Temporal meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Active alerts</td>
+<td>As of selected Observation date</td>
+</tr>
+<tr>
+<td>Open servicing</td>
+<td>Governed endpoint only</td>
+</tr>
+<tr>
+<td>Review holds</td>
+<td>Governed endpoint only</td>
+</tr>
+<tr>
+<td>Servicing burden</td>
+<td>Governed endpoint only</td>
+</tr>
+</tbody></table>
+<p>I would <strong>not</strong> force the whole block to endpoint merely to make all four temporally identical. We would lose more information than we gain.</p>
+<p>The important thing is to make that distinction explicit in the accessibility/tooltip treatment rather than in the visible labels.</p>
+<p>For the visual&#39;s alt text, I would use something like:</p>
+<blockquote>
+<p>Operational attention. Active alerts counts distinct active, non-paid-off account paths with one or more operational monitoring alerts at the selected observation date. Open servicing, review holds, and servicing burden are governed endpoint measures and are unavailable before the lifecycle endpoint.</p>
+</blockquote>
+<p>That explains exactly why the first card remains populated at 8/8 while the other three show <code>--</code>.</p>
+<p>So the correction I would make now is only:</p>
+<pre><code class="language-text">OLD FIELD
+R1 P01 Active Alert Flags As Of
+
+NEW FIELD
+R26 P02 Accounts with Operational Alerts As Of
+
+VISIBLE LABEL
+Active alerts
+</code></pre>
+<p>No interaction change. No section-title change. No endpoint wrapper measure.</p>
+<p>That is cleaner and preserves the intended usefulness of the Observation date slicer.</p>
+</div></article><article id="m-637f245c-fdec-48f5-9782-65f001193ec1" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00640 · 2026-09-02T10:57:52.628000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 656c6498-4702-47b7-b7f9-1a6233cdafd7.png</p><div class="bubble"><p>seems to show null: </p>
+</div></article><article id="m-295bb59a-0c80-47f2-88d5-8fd1b518dce1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00641 · 2026-09-02T10:57:56.645851-04:00 · active path</p><div class="bubble"><p>Exactly — the null is expected <strong>because that second field is the endpoint-gated measure I initially suggested</strong>:</p>
+<pre><code class="language-text">R26 P01 Endpoint Operationally Alerted Paths
+</code></pre>
+<p>At <strong>8/8/2026</strong>, <code>Endpoint Evidence Available = 0/HOLD</code>, so that measure intentionally returns blank. We should <strong>not use that measure here</strong>.</p>
+<p>What you want on the P01 card is the ordinary <strong>as-of observation-date account count</strong>, which should be <strong>12 at 8/8/2026</strong>.</p>
+<h3>Fix the P01 card</h3>
+<p>Select the <strong>Operational attention</strong> card visual.</p>
+<p>In <strong>Values</strong>:</p>
+<ol>
+<li><p>Remove:</p>
+<pre><code class="language-text">R1 P01 Active Alert Flags As Of
+</code></pre>
+<p>— this is the raw condition count producing <code>102</code>.</p>
+</li>
+<li><p>Also remove:</p>
+<pre><code class="language-text">R26 P01 Endpoint Operationally Alerted Paths
+</code></pre>
+<p>— this is the blank endpoint-only measure.</p>
+</li>
+<li><p>Add:</p>
+<pre><code class="language-text">R26 P02 Accounts with Operational Alerts As Of
+</code></pre>
+</li>
+<li><p>Right-click that field in the visual well → <strong>Rename for this visual</strong> → enter:</p>
+<pre><code class="language-text">Active alerts
+</code></pre>
+</li>
+</ol>
+<p>At <strong>Baseline / 8/8/2026</strong>, the card should then show:</p>
+<pre><code class="language-text">Active alerts
+12
+</code></pre>
+<p>That matches the R26 checkpoint.</p>
+<h3>Keep the Observation date interaction ON</h3>
+<p>Yes — <strong>do not disable the Observation date interaction</strong> for this card.</p>
+<p>The intended P01 behavior should be:</p>
+<pre><code class="language-text">Active alerts
+→ changes with selected Observation date
+
+Open servicing
+Review holds
+Servicing burden
+→ endpoint-governed measures; may show -- before endpoint
+</code></pre>
+<p>That gives the executive both the <strong>current monitoring situation</strong> and the <strong>endpoint operational disposition</strong> without pretending they are the same thing.</p>
+<p>If you prefer not to have a P02-named measure sitting in a P01 visual, create a simple P01 alias:</p>
+<pre><code class="language-DAX">R26 P01 Active Alerts As Of =
+[R26 P02 Accounts with Operational Alerts As Of]
+</code></pre>
+<p>Put that in <code>P01 | Cohort Command Center</code>, use it in the visual, and keep the visible label <strong>Active alerts</strong>.</p>
+<p>I slightly prefer that alias because it makes the model easier to maintain, but functionally either approach is identical.</p>
+</div></article><article id="m-ddd89dd3-a5b9-41af-be40-1b449a1d8f29" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00642 · 2026-09-02T11:00:06.465000-04:00 · active path</p><div class="bubble"><p>should I delete the Endpoint Operationally Alerted Paths completely from the model?</p>
+</div></article><article id="m-6388273b-d43b-458c-8677-bb888dbe77cf" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00643 · 2026-09-02T11:00:09.813836-04:00 · active path</p><div class="bubble"><p>Yes. Since we have decided not to use it anywhere, I would delete <code>R26 P01 Endpoint Operationally Alerted Paths</code> from the model.</p>
+<p>It was a short-lived implementation measure based on the earlier endpoint-gating idea, and keeping an unused measure would just create ambiguity later.</p>
+<p>Before deleting it, do one quick dependency check:</p>
+<ol>
+<li>In the <strong>Data/Model pane</strong>, right-click <code>R26 P01 Endpoint Operationally Alerted Paths</code>.</li>
+<li>Choose <strong>View dependencies</strong> if your Desktop build exposes that option.</li>
+<li>Confirm no visual, measure, tooltip, or alt-text measure references it.</li>
+</ol>
+<p>If there are no dependencies, delete it.</p>
+<p>Then keep the P01 implementation as:</p>
+<pre><code class="language-DAX">R26 P01 Active Alerts As Of =
+[R26 P02 Accounts with Operational Alerts As Of]
+</code></pre>
+<p>and bind the P01 card to that alias, with visible label:</p>
+<pre><code class="language-text">Active alerts
+</code></pre>
+<p>That leaves the semantic model cleaner:</p>
+<ul>
+<li><code>R26 P02 Accounts with Operational Alerts As Of</code> = canonical R26 account-level monitoring measure.</li>
+<li><code>R26 P01 Active Alerts As Of</code> = P01 presentation alias.</li>
+<li><code>R26 P01 Endpoint Operationally Alerted Paths</code> = removed as obsolete.</li>
+<li><code>R1 P01 Active Alert Flags As Of</code> = retained for lineage/raw-condition use, but no longer used as the P01 executive account card.</li>
+</ul>
+</div></article><article id="m-fa7affbf-f6d2-45a5-a0dd-20b0aaf9ef81" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00644 · 2026-09-02T11:06:31.628000-04:00 · active path</p><div class="bubble"><p>what about open servicing, review holds, and servicing burden. i do not see them being populated.</p>
+</div></article><article id="m-b9b1e3d0-bb20-4e4f-a102-b64d0ac35c8d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00645 · 2026-09-02T11:06:35.493490-04:00 · active path</p><div class="bubble"><p>They are blank because those three measures are <strong>endpoint-only by construction</strong>.</p>
+<p>At your current Observation date of <strong>8/8/2026</strong>, this gate is still closed:</p>
+<pre><code class="language-DAX">[R1 P01 Endpoint Evidence Available] = 0
+</code></pre>
+<p>and the existing measures are defined roughly as:</p>
+<pre><code class="language-DAX">R1 P01 Open Servicing Paths =
+IF (
+    [R1 P01 Endpoint Evidence Available] = 1,
+    ...
+)
+</code></pre>
+<p>with the same endpoint gate applied to:</p>
+<pre><code class="language-text">R1 P01 Review-Hold Paths
+R1 P01 Servicing Burden Units
+</code></pre>
+<p>So <code>--</code> on 8/8 is expected. At the governed endpoint <strong>11/22/2026</strong>, Baseline should repopulate approximately as before:</p>
+<pre><code class="language-text">Open servicing      4
+Review holds        3
+Servicing burden   17
+</code></pre>
+<p>while Recession Energy should be 0 / 0 / 0.</p>
+<h3>The more important design question</h3>
+<p>Now that <code>Active alerts</code> is correctly an <strong>as-of account count</strong>, the block contains two different temporal concepts:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Active alerts</strong></td>
+<td>As of selected Observation date</td>
+</tr>
+<tr>
+<td>Open servicing</td>
+<td>Governed endpoint only</td>
+</tr>
+<tr>
+<td>Review holds</td>
+<td>Governed endpoint only</td>
+</tr>
+<tr>
+<td>Servicing burden</td>
+<td>Governed endpoint only</td>
+</tr>
+</tbody></table>
+<p>That is legitimate, but I agree it can look strange when the user selects 8/8 and sees:</p>
+<pre><code class="language-text">Active alerts   12
+Open servicing  --
+Review holds    --
+Servicing burden --
+</code></pre>
+<p>I would <strong>not create historical versions of those three measures</strong> unless the source actually provides historical M2.6 servicing states. The current servicing facts are endpoint/disposition facts; deriving an 8/8 servicing queue from M2.5 monitoring statuses would reconstruct upstream operational logic in DAX, which we specifically want to avoid.</p>
+<p>So I see two clean options.</p>
+<p><strong>Preferred:</strong> keep the measures endpoint-only but make the labels communicate that boundary:</p>
+<pre><code class="language-text">Active alerts
+Endpoint servicing
+Endpoint review holds
+Endpoint burden
+</code></pre>
+<p>That lets the Observation-date slicer remain fully active while making <code>--</code> at earlier dates self-explanatory.</p>
+<p>A slightly less explicit alternative is to keep the existing short labels and rely on alt text/tooltip explaining that the latter three are endpoint outcomes. I think the first option is stronger for an executive dashboard because the user does not have to infer why three cards are blank.</p>
+<p>I would therefore use:</p>
+<pre><code class="language-text">Active alerts
+Endpoint servicing
+Endpoint review holds
+Endpoint burden
+</code></pre>
+<p>and <strong>leave the Observation date interaction ON</strong>. At 11/22 all four populate; at earlier dates only Active alerts changes dynamically and the endpoint measures remain unavailable by design.</p>
+<p>That preserves both the live monitoring value of P01 and the integrity of the governed M2.6 endpoint facts.</p>
+</div></article><article id="m-77694f9d-479b-4d19-952e-9cfb1b0c943d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00646 · 2026-09-02T11:10:19.179000-04:00 · active path</p><div class="bubble"><p>should i turn off observation date interaction with the endpoint reconciliation? - also why not combine these three with that card and have active alerts as a color button sort of like in P04 (where had green/yellow/red -&gt; this could just be orange or yellow)</p>
+</div></article><article id="m-e5c4f0c9-3959-4cc1-8b48-607d3193f0cf" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00647 · 2026-09-02T11:10:23.137769-04:00 · active path</p><div class="bubble"><p>Yes — I think your proposed redesign is better than what we have now.</p>
+<h2>1. Turn <strong>off</strong> Observation date interaction with Endpoint reconciliation</h2>
+<p>I would do that.</p>
+<p><code>Endpoint reconciliation</code> is explicitly an <strong>endpoint control</strong>, not an as-of monitoring visual. Letting the Observation date slicer filter it creates the current behavior where selecting 8/8 causes:</p>
+<pre><code class="language-text">Reconciled paths   --
+Ending exposure    --
+Variance           --
+Exceptions         --
+</code></pre>
+<p>That is technically correct but not especially useful. The title already says <strong>Endpoint reconciliation</strong>, so it is reasonable for that block to remain fixed at the governed lifecycle endpoint while the rest of the page moves through time.</p>
+<p>So:</p>
+<ol>
+<li>Select <strong>Observation date</strong> slicer.</li>
+<li>Ribbon → <strong>Format → Edit interactions</strong>.</li>
+<li>Above the Endpoint reconciliation visual, click <strong>None</strong>.</li>
+<li>Leave Observation date filtering the rest of the as-of/lifecycle content.</li>
+</ol>
+<p>Then test 8/8. I expect the endpoint block to continue showing the 11/22 endpoint values because without the slicer context the endpoint measures resolve to the evidence-max date.</p>
+<p>If it does not, we can make that explicit with fixed-endpoint measures, but I expect the existing logic to behave correctly.</p>
+<hr>
+<h1>2. Yes — combine the other three endpoint measures into that same block</h1>
+<p>This is a cleaner semantic architecture.</p>
+<p>Right now we have:</p>
+<p><strong>Endpoint reconciliation</strong></p>
+<ul>
+<li>Reconciled paths</li>
+<li>Ending exposure</li>
+<li>Variance</li>
+<li>Exceptions</li>
+</ul>
+<p><strong>Operational attention</strong></p>
+<ul>
+<li>Active alerts — as-of</li>
+<li>Open servicing — endpoint</li>
+<li>Review holds — endpoint</li>
+<li>Servicing burden — endpoint</li>
+</ul>
+<p>That second block is mixing two temporal grains.</p>
+<p>Your solution fixes that elegantly.</p>
+<p>I would create one block titled:</p>
+<h2><strong>Endpoint reconciliation &amp; servicing</strong></h2>
+<p>with:</p>
+<pre><code class="language-text">Reconciled paths
+Ending exposure
+Variance
+Exceptions
+Open servicing
+Review holds
+Servicing burden
+</code></pre>
+<p>All seven are endpoint-governed facts.</p>
+<p>Then turn <strong>Observation date interaction OFF for that entire visual</strong>.</p>
+<p>That gives the user a stable endpoint reference regardless of which observation date they are examining.</p>
+<hr>
+<h1>3. Pull Active alerts out as its own as-of indicator</h1>
+<p>This is the right place for the dynamic monitoring metric.</p>
+<p>Use:</p>
+<pre><code class="language-text">R26 P01 Active Alerts As Of
+</code></pre>
+<p>or directly:</p>
+<pre><code class="language-text">R26 P02 Accounts with Operational Alerts As Of
+</code></pre>
+<p>Visible label:</p>
+<pre><code class="language-text">Active alerts
+</code></pre>
+<p>and <strong>leave Observation date interaction ON</strong>.</p>
+<p>So at Baseline 8/8:</p>
+<pre><code class="language-text">Active alerts
+12
+</code></pre>
+<p>At 11/22 it changes to whatever the endpoint as-of account count is.</p>
+<p>This gives P01 two very distinct concepts:</p>
+<pre><code class="language-text">AS-OF MONITORING
+Active alerts
+     ↑
+changes with Observation date
+
+
+FIXED ENDPOINT CONTROL
+Endpoint reconciliation &amp; servicing
+     ↑
+does not change with Observation date
+</code></pre>
+<p>That is much easier to explain.</p>
+<hr>
+<h2>4. The P04-style colored indicator is a good idea</h2>
+<p>I would make <strong>Active alerts</strong> visually different from the endpoint block — similar to the attention/status treatment you built on P04.</p>
+<p>But I would <strong>not use red/yellow/green severity thresholds here</strong>, because R26 has not given us governed portfolio-level thresholds saying, for example, 12 alerts = yellow and 25 = red.</p>
+<p>That would create new policy semantics in Power BI.</p>
+<p>Instead I recommend:</p>
+<ul>
+<li><strong>&gt; 0 active alerts:</strong> amber/yellow emphasis</li>
+<li><strong>0 active alerts:</strong> neutral/quiet state</li>
+</ul>
+<p>No red.</p>
+<p>That communicates:</p>
+<blockquote>
+<p>“There is monitoring activity worth noticing”</p>
+</blockquote>
+<p>without claiming:</p>
+<blockquote>
+<p>“The portfolio is in a red-risk state.”</p>
+</blockquote>
+<p>You could even make it a compact card/button:</p>
+<pre><code class="language-text">ACTIVE ALERTS
+     12
+</code></pre>
+<p>with an amber background/accent.</p>
+<p>The tooltip or alt text can carry the precise definition:</p>
+<blockquote>
+<p>Distinct active, non-paid-off account paths with one or more R26 operational alert families at the selected observation date.</p>
+</blockquote>
+<hr>
+<h1>5. My preferred final P01 lower-right layout</h1>
+<p>Something like:</p>
+<pre><code class="language-text">┌───────────────────────────────────────────────┐
+│ Endpoint reconciliation &amp; servicing           │
+├─────────────┬─────────────┬───────────┬────────┤
+│ Reconciled  │ Ending      │ Variance  │ Except │
+│ paths       │ exposure    │           │ ions   │
+│ 103         │ $6.06K      │ $0.00     │ 0      │
+├─────────────┼─────────────┼───────────┴────────┤
+│ Open        │ Review      │ Servicing burden   │
+│ servicing   │ holds       │                    │
+│ 4           │ 3           │ 17                 │
+└─────────────┴─────────────┴────────────────────┘
+
+                       ┌─────────────────────┐
+                       │ ACTIVE ALERTS       │
+                       │        12           │
+                       │  as of 8/8/2026     │
+                       └─────────────────────┘
+</code></pre>
+<p>You don&#39;t necessarily need the literal <code>as of 8/8/2026</code> printed in the card because the Observation date slicer is already obvious, but conceptually that is what the metric means.</p>
+<h2>Interaction contract</h2>
+<p>I would lock P01 as:</p>
+<table>
+<thead>
+<tr>
+<th>Visual</th>
+<th>Observation date</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Current exposure</td>
+<td><strong>Filter</strong></td>
+</tr>
+<tr>
+<td>Remittance fulfillment</td>
+<td><strong>Filter</strong></td>
+</tr>
+<tr>
+<td>Active alerts indicator</td>
+<td><strong>Filter</strong></td>
+</tr>
+<tr>
+<td>Endpoint reconciliation &amp; servicing</td>
+<td><strong>None</strong></td>
+</tr>
+<tr>
+<td>Decision/funding KPIs</td>
+<td>effectively fixed by measure design</td>
+</tr>
+<tr>
+<td>Decision outcomes</td>
+<td>fixed decision evidence</td>
+</tr>
+<tr>
+<td>Funding by source</td>
+<td>fixed funding evidence</td>
+</tr>
+<tr>
+<td>Industry risk/economics</td>
+<td>fixed decision/economic evidence</td>
+</tr>
+</tbody></table>
+<p>That separation is very strong conceptually:</p>
+<p><strong>Decision/funding facts are fixed → lifecycle monitoring moves with Observation date → endpoint reconciliation stays fixed at endpoint.</strong></p>
+<p>So yes: <strong>I would implement exactly the redesign you proposed.</strong> It is cleaner than trying to force four temporally incompatible metrics into the current Operational attention card.</p>
+</div></article><article id="m-eda75709-92f3-4e44-8210-3a8353e6909c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00648 · 2026-09-02T11:12:14.040000-04:00 · active path</p><div class="bubble"><p>one more question - what does servicing burden = 17 imply? and why so much higher than the 4 for endpoint servicing and 3 for review holds?</p>
+</div></article><article id="m-6ddb9843-04a1-40c0-843c-2bec443170b1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00649 · 2026-09-02T11:13:50.944013-04:00 · active path</p><div class="bubble"><p><code>Servicing burden = 17</code> is <strong>not 17 accounts</strong>. It is a weighted workload score.</p>
+<p>The M2.10 source defines the servicing burden weights by performance tier as:</p>
+<ul>
+<li><code>CLOSED_STABLE</code> = <strong>0 units</strong></li>
+<li><code>ACTIVE_RECONCILED</code> = <strong>2 units</strong></li>
+<li><code>CONTROLLED_REVIEW</code> = <strong>5 units</strong> [export reference: filecite | turn107file10 | L609-L623]</li>
+</ul>
+<p>Your P01 measures then do three different things:</p>
+<ul>
+<li><strong>Open servicing</strong> = distinct account paths where <code>servicing_queue_code &lt;&gt; NO_SERVICING_REQUIRED</code></li>
+<li><strong>Review holds</strong> = distinct account paths where <code>servicing_queue_code = GOVERNANCE_REVIEW_HOLD</code></li>
+<li><strong>Servicing burden</strong> = sum of <code>servicing_burden_units</code> across the endpoint population. [export reference: filecite | turn106file0 | L65-L98]</li>
+</ul>
+<p>So with your Baseline endpoint:</p>
+<pre><code class="language-text">Open servicing = 4
+Review holds   = 3
+Burden units   = 17
+</code></pre>
+<p>the numbers reconcile very naturally as:</p>
+<pre><code class="language-text">3 controlled-review accounts × 5 units = 15
+1 active-reassessment account × 2 units =  2
+                                      ----
+Total servicing burden                  17
+</code></pre>
+<p>In other words, the <strong>3 review holds are a subset of the 4 open-servicing accounts</strong>, not an additional 3 accounts on top of the 4.</p>
+<p>So the business interpretation is:</p>
+<blockquote>
+<p>Four accounts still require servicing attention at the endpoint. Three are in the more resource-intensive governance-review posture, while one is in the lighter active-reassessment posture. Their weighted operational workload totals 17 burden units.</p>
+</blockquote>
+<p>That is why 17 is much larger than 4: it measures <strong>effort intensity</strong>, not population.</p>
+<p>I actually think this makes <code>Servicing burden</code> a useful card, but the word <strong>units</strong> matters. I would label it:</p>
+<pre><code class="language-text">Servicing burden
+17 units
+</code></pre>
+<p>or perhaps:</p>
+<pre><code class="language-text">Servicing workload
+17 units
+</code></pre>
+<p>The latter may be more intuitive to an executive, because the source itself defines <code>SERVICING_BURDEN_UNITS</code> as <strong>“Governed servicing workload units.”</strong> [export reference: filecite | turn107file10 | L581-L596]</p>
+<p>And this supports your idea of folding the three endpoint servicing metrics into the reconciliation block: together they tell a coherent story:</p>
+<pre><code class="language-text">Open servicing      4 accounts
+Review holds        3 accounts
+Servicing workload 17 units
+</code></pre>
+<p>rather than making 17 look like another account count.</p>
+</div></article><article id="m-ae3ce8e7-4846-443d-a4f1-f840cea213d8" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00650 · 2026-09-02T11:15:50.056000-04:00 · active path</p><div class="bubble"><p>from a user standpoint, do they care about servicing workload? i would think the others provides the detail necessary for an executive and that servicing burden calculation seems too technical. also a card of 2 rows x 3 columns (6 measures) fits more cleanly.</p>
+</div></article><article id="m-54c01aad-09fa-4cbc-aab1-f7451626ca91" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00651 · 2026-09-02T11:15:53.171768-04:00 · active path</p><div class="bubble"><p>I agree. For <strong>P01</strong>, <code>Servicing burden</code> is probably too technical for the executive story.</p>
+<p>The other endpoint measures already answer the questions an executive is likely to care about:</p>
+<ul>
+<li><strong>Did the portfolio reconcile?</strong></li>
+<li><strong>How many accounts remain open?</strong></li>
+<li><strong>How much exposure remains?</strong></li>
+<li><strong>Are there unresolved exceptions?</strong></li>
+<li><strong>How many accounts still require servicing?</strong></li>
+<li><strong>How many are on review hold?</strong></li>
+</ul>
+<p><code>17 burden units</code> requires knowing the weighting scheme behind the number before it becomes meaningful. That makes it more appropriate for <strong>P04 / servicing operations</strong>, a tooltip, or technical drillthrough—not prime real estate on the Command Center.</p>
+<p>I would therefore make the endpoint card exactly <strong>2 rows × 3 columns</strong>:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Reconciled paths</strong></td>
+<td><strong>Ending exposure</strong></td>
+<td><strong>Variance</strong></td>
+</tr>
+<tr>
+<td><strong>Exceptions</strong></td>
+<td><strong>Open servicing</strong></td>
+<td><strong>Review holds</strong></td>
+</tr>
+</tbody></table>
+<p>For Baseline endpoint, that would read roughly:</p>
+<pre><code class="language-text">Reconciled paths   103      Ending exposure   $6.06K     Variance       $0.00
+Exceptions           0      Open servicing         4     Review holds      3
+</code></pre>
+<p>That is immediately interpretable.</p>
+<p>Then keep <strong>Active alerts</strong> outside that card as the observation-date-sensitive indicator:</p>
+<pre><code class="language-text">ACTIVE ALERTS
+12
+</code></pre>
+<p>with the Observation date interaction <strong>ON</strong>.</p>
+<p>For the 2×3 endpoint card, turn Observation date interaction <strong>OFF</strong> so it remains a fixed lifecycle-endpoint reference.</p>
+<p>I would title the 2×3 block either:</p>
+<p><strong>Endpoint reconciliation &amp; servicing</strong></p>
+<p>or, slightly cleaner:</p>
+<p><strong>Endpoint status</strong></p>
+<p>I prefer <strong>Endpoint status</strong> on P01. It is shorter and the six metrics explain themselves.</p>
+<p>Do <strong>not delete</strong> <code>Servicing Burden Units</code> from the model. Keep it available for P04, tooltips, and operational analysis. It is useful—just not useful enough for this executive page.</p>
+<p>That gives P01 a very clean hierarchy:</p>
+<p><strong>As-of monitoring</strong>
+→ Active alerts</p>
+<p><strong>Fixed endpoint</strong>
+→ Reconciliation + remaining exposure + exceptions + servicing/review counts</p>
+<p>I think that is stronger than the current layout.</p>
+</div></article><article id="m-e54baec1-3f85-4d91-9f17-67b2fdb05c4f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00652 · 2026-09-02T11:21:41.576000-04:00 · active path</p><div class="bubble"><p>let&#39;s talk active alerts background color and how to make that look nice. i have the endpoint status complete</p>
+</div></article><article id="m-e2bb0fce-5cc8-402c-a45e-86a403a348f7" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00653 · 2026-09-02T11:21:45.339156-04:00 · active path</p><div class="bubble"><p>I’d make <strong>Active alerts</strong> look like an attention indicator, not like another KPI card and not like a risk-grade signal.</p>
+<p>The cleanest treatment for P01 is a <strong>small amber status card</strong> sitting beside or just above the new Endpoint status block.</p>
+<h3>Recommended visual treatment</h3>
+<p>For any value greater than zero:</p>
+<ul>
+<li>background: very light amber</li>
+<li>border: medium amber</li>
+<li>value: dark amber/brown</li>
+<li>label: dark navy/charcoal</li>
+<li>rounded corners</li>
+<li>no heavy shadow</li>
+<li>keep the card compact</li>
+</ul>
+<p>For zero alerts, I would switch it back to a neutral light gray/blue rather than green. Zero alerts is quiet, but we have no governed rule saying it represents a “green” portfolio condition.</p>
+<p>Visually, think:</p>
+<pre><code class="language-text">╭──────────────────────╮
+│ ACTIVE ALERTS         │
+│                      │
+│         12           │
+│  as of observation   │
+╰──────────────────────╯
+</code></pre>
+<p>with a pale amber fill.</p>
+<h3>I would also add the temporal cue</h3>
+<p>Since this is now the one item in that area that responds to Observation date, I’d make that explicit with a small secondary label:</p>
+<p><strong>Active alerts</strong><br><strong>12</strong><br><em>as of observation date</em></p>
+<p>That solves a lot of the conceptual burden. The executive immediately understands why this card moves while Endpoint status does not.</p>
+<h3>Dynamic background</h3>
+<p>Create this measure in <code>P01 | Cohort Command Center</code>:</p>
+<pre><code class="language-DAX">R26 P01 Active Alerts Background =
+VAR _Alerts =
+    [R26 P01 Active Alerts As Of]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _Alerts ), &quot;#F2F4F7&quot;,
+        _Alerts &gt; 0,          &quot;#FFF3CD&quot;,
+        &quot;#EEF2F6&quot;
+    )
+</code></pre>
+<p>And this for the value color:</p>
+<pre><code class="language-DAX">R26 P01 Active Alerts Value Color =
+VAR _Alerts =
+    [R26 P01 Active Alerts As Of]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _Alerts ), &quot;#667085&quot;,
+        _Alerts &gt; 0,          &quot;#8A5600&quot;,
+        &quot;#344054&quot;
+    )
+</code></pre>
+<p>Those colors are deliberately restrained. I would <strong>not</strong> use bright yellow, orange, or red.</p>
+<h3>Power BI setup</h3>
+<p>Select the Active alerts card and go to <strong>Format visual</strong>.</p>
+<p>For the card/container background:</p>
+<ol>
+<li><strong>General → Effects → Background</strong></li>
+<li>Click <strong>fx</strong></li>
+<li>Format style → <strong>Field value</strong></li>
+<li>What field should we base this on? → <code>R26 P01 Active Alerts Background</code></li>
+<li>Apply.</li>
+</ol>
+<p>For the main numeric value:</p>
+<ol>
+<li>Go to <strong>Callout value</strong> or the corresponding value formatting section.</li>
+<li>Color → <strong>fx</strong></li>
+<li>Format style → <strong>Field value</strong></li>
+<li>Use <code>R26 P01 Active Alerts Value Color</code>.</li>
+</ol>
+<p>Then I’d use approximately:</p>
+<pre><code class="language-text">Corner radius     8–12 px
+Border            On
+Border color      #E5B94C
+Border width      1 px
+Shadow            Off, or extremely subtle
+Value size        slightly larger than neighboring KPI values
+Label             semibold
+</code></pre>
+<h3>One thing I would avoid</h3>
+<p>I would not make the entire card solid orange.</p>
+<p>That would visually overstate the condition and make <code>12</code> look like an escalation threshold or failure status. R26 only tells us there are 12 operationally alerted account paths at that date; it does not say that 12 itself is severe.</p>
+<p>So the visual semantics should be:</p>
+<p><strong>amber = attention exists</strong>, not <strong>amber = portfolio risk grade</strong>.</p>
+<h3>Placement</h3>
+<p>Since your Endpoint status is now a clean 2×3 block, I’d position Active alerts as a <strong>compact standalone card immediately adjacent to it</strong>, perhaps the same height as one row of Endpoint status rather than another large four-card panel.</p>
+<p>That will make the bottom-right area feel much cleaner:</p>
+<pre><code class="language-text">[ ACTIVE ALERTS ]   [        ENDPOINT STATUS        ]
+[      12       ]   [ 3 columns × 2 rows of metrics ]
+</code></pre>
+<p>I think that is the strongest version of P01.</p>
+</div></article><article id="m-1eabb34b-cee4-4db5-ab65-41f9c3491eaa" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00654 · 2026-09-02T11:31:45.165000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 88458934-88bb-45eb-8cf6-9dd11293c9aa.png</p><div class="bubble"><p>i followed these steps: Power BI setup
+Select the Active alerts card and go to <strong>Format visual</strong>.</p>
+<p>For the card/container background:</p>
+<ol>
+<li><strong>General → Effects → Background</strong> </li>
+<li>Click <strong>fx</strong> </li>
+<li>Format style → <strong>Field value</strong> </li>
+<li>What field should we base this on? → <code>R26 P01 Active Alerts Background</code> </li>
+<li>Apply.</li>
+</ol>
+<p>For the main numeric value:</p>
+<ol>
+<li>Go to <strong>Callout value</strong> or the corresponding value formatting section. </li>
+<li>Color → <strong>fx</strong> </li>
+<li>Format style → <strong>Field value</strong> </li>
+<li>Use <code>R26 P01 Active Alerts Value Color</code>.       give me more step by step instructions for the rest of active alerts. here is what it currently looks like:</li>
+</ol>
+</div></article><article id="m-b80f2739-2045-4770-86b2-1b85f39fa616" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00655 · 2026-09-02T11:31:56.920161-04:00 · active path</p><div class="bubble"><p>Your current card is structurally fine, but it still looks like a default card dropped into the space rather than a deliberate <strong>attention indicator</strong>. I would refine it in-place rather than redesign the whole lower-right area.</p>
+<p>Do this in Power BI with the <strong>Active alerts</strong> card selected.</p>
+<ol>
+<li><p>Go to <strong>Format visual</strong> → <strong>Visual</strong>. Under <strong>Callout value</strong>, set the font size to about <strong>20–24 pt</strong>. Keep it smaller than your large left-side KPI figures, because this is a status indicator, not the page’s primary KPI. Set the font weight to <strong>Semibold</strong> if available. You already have the dynamic color applied; keep that.</p>
+</li>
+<li><p>Still under <strong>Visual</strong>, open <strong>Category label</strong>. Turn it <strong>On</strong> if needed. Set the text size to about <strong>10–11 pt</strong>, font weight <strong>Semibold</strong>, and keep the label text as <code>Active alerts</code>. I would use a dark neutral text color, not amber, so the number carries the attention emphasis.</p>
+</li>
+<li><p>Under <strong>Visual → Layout</strong> or the card’s alignment controls, set the value and category alignment to <strong>Left</strong> rather than centered. Your Endpoint Status block is left-oriented, so matching that will make the two elements read as one designed system. If your card version gives you separate horizontal alignment for the label and value, set both to left.</p>
+</li>
+<li><p>Under <strong>General → Effects → Background</strong>, keep the field-value background measure you already added, but set the background transparency to <strong>0%</strong> or very close to it. Your screenshot looks almost white right now, so the amber treatment is too subtle to distinguish the card from the canvas.</p>
+</li>
+<li><p>Under <strong>General → Effects → Border</strong>, turn Border <strong>On</strong>. Use a thin <strong>1 px</strong> border. I would use a restrained amber such as <code>#E5B94C</code>. If your version offers corner radius here, set it around <strong>6–8 px</strong>. I would not go heavily rounded because the rest of P01 is fairly square and analytical.</p>
+</li>
+<li><p>Under <strong>General → Effects → Shadow</strong>, turn it <strong>Off</strong>. The endpoint matrix already has strong structural lines; a shadow on this small card would make it feel like a floating button rather than part of the dashboard.</p>
+</li>
+<li><p>Under <strong>General → Properties</strong>, reduce the card’s width substantially. In your screenshot it is currently nearly the height of the entire 2×3 Endpoint Status block and has a lot of dead white space. I would make it approximately the width of <strong>one endpoint-status column</strong>, perhaps slightly wider, and approximately the height of <strong>one endpoint-status row</strong>. Visually, aim for something like:</p>
+</li>
+</ol>
+<pre><code class="language-text">┌────────────────────┐
+│ Active alerts      │
+│ 4                  │
+│ as of observation  │
+└────────────────────┘
+</code></pre>
+<p>Rather than the tall vertical box you currently have.</p>
+<ol start="8">
+<li>Add the temporal cue. The easiest way is to create a small text box immediately beneath the card value, inside the same visual area if your card supports a subtitle, or as a separate tiny text box if it does not. Use:</li>
+</ol>
+<pre><code class="language-text">as of observation date
+</code></pre>
+<p>Set that text to about <strong>8–9 pt</strong>, regular weight, muted gray. This is important because the Endpoint Status block beside it is fixed while this card changes with the Observation date slicer.</p>
+<ol start="9">
+<li><p>Position the card <strong>directly to the right of Endpoint Status</strong>, vertically aligned with either the top row or centered against the 2×3 block. I would not make it the same full height as the Endpoint Status block. The current screenshot makes Active alerts visually compete with the much more substantive endpoint block.</p>
+</li>
+<li><p>Keep the visual header icons <strong>Off</strong> for this card if possible. It should read as a status tile, not an interactive analytic visual. You can leave tooltips enabled.</p>
+</li>
+</ol>
+<p>For the tooltip, I would keep it concise. You already have the detailed monitoring story on P02, so P01 does not need to repeat all of it. I would include only:</p>
+<pre><code class="language-text">Active alerts
+Active / non-paid-off accounts
+Operational alert families
+Raw alert conditions
+</code></pre>
+<p>That gives an executive enough context to understand whether <code>4</code> means four accounts versus four conditions.</p>
+<p>I would also update the alt text for this card to something like:</p>
+<blockquote>
+<p>Active alerts shows the number of distinct active, non-paid-off account paths with one or more operational alert families at the selected observation date.</p>
+</blockquote>
+<p>The biggest visual change I would make from your current screenshot is <strong>size</strong>: make the tile shorter and more compact. The pale amber background should provide the status cue, while the smaller footprint tells the user that this is a current-state indicator sitting next to the more important fixed Endpoint Status summary.</p>
+</div></article><article id="m-ec365dfb-2afb-4f8e-8de4-ff87958d5245" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00656 · 2026-09-02T11:44:17.268000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 03a42b0a-9a98-4c48-a86a-3a66c464c384.png</p><div class="bubble"><p>thoughts. I almost wonder if I should remove the label and have Active alerts in a text box above on one line with the as of observation date in that same text box but on a line two - then have the card just be the number. I think this would align visually better. Now I think the as of observation date conflicts with the bottom footnote and the Active alerts almost seems like it&#39;s part of the Endpoint status.</p>
+</div></article><article id="m-f3bb5c6f-c4a1-4ce8-80c4-944ec36cc4e6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00657 · 2026-09-02T11:44:21.400526-04:00 · active path</p><div class="bubble"><p>I agree with your diagnosis. The <strong>number card itself now looks good</strong>, but the labeling is creating two unintended associations:</p>
+<ol>
+<li><code>Active alerts</code> visually reads as a <strong>seventh Endpoint status metric</strong> because its heading sits inside the amber box at approximately the same vertical level as the endpoint cells.</li>
+<li><code>as of observation date</code> is floating too close to the footer and reads almost like another governance footnote.</li>
+</ol>
+<p>Your proposed solution fixes both.</p>
+<h3>I would separate the label from the card</h3>
+<p>Make the amber visual <strong>number-only</strong> and put a two-line text box immediately above it:</p>
+<p><strong>Active alerts</strong><br><em>As of observation date</em></p>
+<p>That creates two distinct blocks:</p>
+<pre><code class="language-text">Endpoint status                         Active alerts
+                                        As of observation date
+┌──────────┬──────────┬──────────┐      ┌─────────────┐
+│Reconciled│ Ending   │ Variance │      │             │
+│paths  103│$6.06K    │$0.00     │      │      4      │
+├──────────┼──────────┼──────────┤      │             │
+│Exceptions│ Open     │ Review   │      └─────────────┘
+│0         │servicing4│holds 3   │
+└──────────┴──────────┴──────────┘
+</code></pre>
+<p>That is materially better information architecture.</p>
+<h3>Exact Power BI changes</h3>
+<p>Select the amber card first. Under <strong>Format visual → Visual → Category label</strong>, turn <strong>Category label = Off</strong>. Leave only the <code>4</code>.</p>
+<p>Then increase the callout slightly now that it is the only content in the card. I would use approximately <strong>22–26 pt</strong>, semibold, vertically and horizontally centered. Keep the dynamic amber/brown value color.</p>
+<p>Keep your current pale amber background and thin amber border. They look appropriate in this screenshot. I would <strong>not make the fill darker</strong>.</p>
+<p>Then reduce the card height slightly. The current box is about right in width, but once the label disappears it can be a little shorter. Aim for approximately the height of <strong>one Endpoint status row</strong>, perhaps 5–10% taller.</p>
+<h3>Add the separate heading</h3>
+<p>Insert → <strong>Text box</strong>.</p>
+<p>Use:</p>
+<blockquote>
+<p><strong>Active alerts</strong><br><em>As of observation date</em></p>
+</blockquote>
+<p>Formatting:</p>
+<ul>
+<li><code>Active alerts</code>: same font size/weight as <strong>Endpoint status</strong> — approximately 12–13 pt semibold.</li>
+<li><code>As of observation date</code>: approximately 8–9 pt, regular, muted gray.</li>
+<li>Left aligned.</li>
+<li>No background.</li>
+<li>No border.</li>
+</ul>
+<p>Position its left edge <strong>exactly aligned with the amber card&#39;s left edge</strong>.</p>
+<p>Most importantly, put this text box <strong>above</strong> the amber card, at approximately the same vertical level as the <code>Endpoint status</code> heading.</p>
+<p>That makes the architecture immediately obvious:</p>
+<p><strong>Endpoint status</strong> | <strong>Active alerts</strong><br>fixed endpoint | selected observation date</p>
+<h3>I would make one wording refinement</h3>
+<p>Capitalize <code>As</code>:</p>
+<blockquote>
+<p><strong>Active alerts</strong><br>As of observation date</p>
+</blockquote>
+<p>Don&#39;t italicize it if that starts looking decorative. A smaller gray regular font is sufficient.</p>
+<h3>The overall lower-right composition</h3>
+<p>Your new Endpoint status block is excellent. The 2×3 structure is much cleaner than the previous two-card arrangement, and every number is immediately understandable.</p>
+<p>I&#39;d align the new Active alerts structure like this:</p>
+<ul>
+<li><code>Endpoint status</code> heading and <code>Active alerts</code> heading: same baseline.</li>
+<li>Top of Endpoint status matrix and top of amber number card: same baseline.</li>
+<li>Bottom of amber card: approximately bottom of first Endpoint row, <strong>not</strong> bottom of the entire Endpoint block.</li>
+</ul>
+<p>That last point is important. It makes Active alerts clearly a separate observation-date indicator rather than a seventh endpoint metric.</p>
+<h3>One other thing I like about this design</h3>
+<p>You now have a very clean temporal hierarchy across P01:</p>
+<p><strong>Top:</strong> Observation date selector<br>↓<br><strong>Main page:</strong> portfolio state as of that date<br>↓<br><strong>Active alerts:</strong> explicitly observation-date-sensitive<br>↓<br><strong>Endpoint status:</strong> stable lifecycle destination/control state<br>↓<br><strong>Footer:</strong> source/temporal/interpretation governance</p>
+<p>So yes — <strong>remove the category label from the card and move both lines into a separate heading above it.</strong> I think that will finish this area substantially better than the current version.</p>
+</div></article><article id="m-13031569-d9a5-4e0d-805d-3e5200ec14d4" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00658 · 2026-09-02T11:49:11.054000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: a6da219d-0920-4377-86ac-7e3750d84bf8.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-05873528-74cb-42a5-9f6a-44664bf2b45c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00659 · 2026-09-02T11:49:14.268867-04:00 · active path</p><div class="bubble"><p>Yes. <strong>This is substantially better.</strong> The separation now reads correctly at first glance:</p>
+<ul>
+<li><strong>Endpoint status</strong> = fixed lifecycle-endpoint information.</li>
+<li><strong>Active alerts</strong> = current/as-of monitoring indicator.</li>
+<li>The amber treatment gives alerts attention without implying a governed risk grade.</li>
+</ul>
+<p>I would keep this architecture.</p>
+<p>There are only a few finishing adjustments I would make.</p>
+<h3>Active alerts</h3>
+<p>The hierarchy is right, but the number <code>4</code> is floating a little low/isolated inside a fairly large box. I would either reduce the card height by roughly <strong>10–15%</strong>, or increase the <code>4</code> slightly to around <strong>24–26 pt</strong>. I prefer reducing the height slightly. The card should feel like an indicator rather than an empty container.</p>
+<p>I also like the two-line heading exactly where it is:</p>
+<p><strong>Active alerts</strong><br><code>as of observation date</code></p>
+<p>I would leave <code>as of observation date</code> lowercase as you have it. It reads as subordinate explanatory text rather than another heading.</p>
+<h3>Alignment</h3>
+<p>There is one small alignment improvement worth making: align the <strong>top of the amber card</strong> precisely with the <strong>top of the Endpoint status matrix</strong>, which you are already extremely close to doing. Then align the <code>Active alerts</code> heading baseline with <code>Endpoint status</code>.</p>
+<p>That creates a very intentional two-column structure:</p>
+<pre><code class="language-text">Endpoint status                       Active alerts
+                                      as of observation date
+┌───────────────────────────────┐     ┌──────────────┐
+│ Reconciled │ Exposure │ Var.  │     │              │
+│    103     │ $6.06K   │ $0.00 │     │      4       │
+├────────────┼──────────┼───────┤     │              │
+│ Exceptions │ Servicing│ Holds │     └──────────────┘
+│      0     │    4     │   3   │
+└───────────────────────────────┘
+</code></pre>
+<h3>Border/background</h3>
+<p>The current amber is restrained enough. <strong>Do not make it darker.</strong> At this point the card attracts exactly enough attention.</p>
+<p>If anything, the border may be a touch more prominent than necessary. If Power BI lets you easily reduce it to 1 px, do so. Otherwise I would leave it rather than spend time chasing cosmetics.</p>
+<h3>One important QA point</h3>
+<p>Now test the visual at <strong>8/8/2026</strong>.</p>
+<p>You should get:</p>
+<ul>
+<li><strong>Active alerts = 12</strong></li>
+<li>Endpoint status remains <strong>103 / $6.06K / $0 / 0 / 4 / 3</strong>, because we intentionally disabled Observation-date interaction with that endpoint block.</li>
+</ul>
+<p>That is the screenshot that will really demonstrate why this redesign works:</p>
+<blockquote>
+<p>The executive can move through the lifecycle and see contemporaneous alert prevalence while retaining a stable view of where the cohort ultimately reconciles.</p>
+</blockquote>
+<p>Also test <strong>Recession Energy</strong> at a couple of dates to make sure the amber card changes with the slicer while Endpoint status remains fixed to that scenario&#39;s endpoint.</p>
+<h3>One terminology thought</h3>
+<p>I would <strong>not</strong> change <code>Open servicing</code> or <code>Review holds</code>. With <code>Servicing burden</code> removed, those two are immediately understandable. The 2×3 endpoint block is now much stronger than the prior version.</p>
+<p>And I would definitely keep the six-cell layout. There is no reason to put servicing workload back onto P01.</p>
+<p>At this point, assuming the interaction QA behaves as above, I would consider the <strong>P01 visual design complete</strong>. The remaining work should be validation/evidence rather than more aesthetic iteration.</p>
+</div></article><article id="m-2981f8b0-028f-4353-be7f-262e2040ae2d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00660 · 2026-09-02T11:50:47.566000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: fb0f9179-fcd6-4dd9-919c-189ff862d8de.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

@@ -1,0 +1,1063 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Campaign Scale 750 - 2,500 - 25,000 Part 2 — part 10 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Campaign Scale 750 - 2,500 - 25,000 Part 2 — part 10</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-09.html">Previous part</a><a href="part-11.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-10f4d1e9-33e4-4b84-8e35-cdccbaf66b8e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00209 · 2026-09-13T17:08:40.015000-04:00 · active path</p><div class="bubble"><p>what is different versus when i ran this in dbeaver? dbeaver did not take this long. far from it. let&#39;s discuss each thing that could be different could contribute to longer run times. for one, obviously 750-&gt;2,500.</p>
+</div></article><article id="m-6f2286fb-5f3a-4ef9-b33a-83edda1b423c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00210 · 2026-09-13T17:08:41.824146-04:00 · active path</p><div class="bubble"><p>The biggest difference is probably <strong>not DBeaver versus Python</strong>; it is the <strong>execution context around PostgreSQL</strong>. I’ll separate factors that can genuinely multiply runtime from ones that are mostly cosmetic, and rank them by likely impact.</p>
+</div></article><article id="m-e57b2cec-01e8-4be2-a4b8-ce6174716056" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00211 · 2026-09-13T17:09:17.540126-04:00 · active path</p><div class="bubble"><p>Yes. The <strong>750 → 2,500 increase is only the first explanation</strong>, and by itself it probably does <strong>not</strong> explain a jump from “reasonably quick in DBeaver” to individual scripts taking roughly an hour.</p>
+<p>The important distinction is that <strong>DBeaver versus <code>psql</code> is probably near the bottom of the list</strong>. Both ultimately send SQL to PostgreSQL. The big differences are population scale, query design, session/planner settings, storage/cache state, and how the fresh campaign is being executed.</p>
+<p>Here is how I would rank the possibilities.</p>
+<table>
+<thead>
+<tr>
+<th>Factor</th>
+<th>Likely impact</th>
+<th>Why it matters here</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>1. 750 → 2,500 population</strong></td>
+<td><strong>Very high</strong></td>
+<td>3.33× merchants means M1.4 POS history grows from <strong>135,000 → 450,000 rows</strong>. Similar multiplication happens throughout histories and scenarios.</td>
+</tr>
+<tr>
+<td><strong>2. Published validation recomputes expensive blueprints repeatedly</strong></td>
+<td><strong>Very high</strong></td>
+<td>The current POS31 control independently calls the expected and actual snapshot functions and FULL JOINs them. POS32 then calls both functions <strong>again</strong> to calculate set hashes. [export reference: filecite</td>
+</tr>
+<tr>
+<td><strong>3. The original M1.4 design was not optimized for this scale</strong></td>
+<td><strong>Very high</strong></td>
+<td>Later published M1.7 explicitly says its performance design was <strong>“learned from M1.6”</strong> and instructs later stages to materialize expected/actual snapshots once and never rebuild wide upstream blueprints. [export reference: filecite</td>
+</tr>
+<tr>
+<td><strong>4. Crossing memory/planner thresholds can make 3.33× data cost far more than 3.33× time</strong></td>
+<td><strong>High</strong></td>
+<td>Sorts, joins, hashes, aggregates, and function evaluations can change execution plans or spill once data no longer fits comfortably in memory/cache.</td>
+</tr>
+<tr>
+<td><strong>5. Current session settings may differ from your DBeaver sessions</strong></td>
+<td><strong>Potentially high</strong></td>
+<td><code>work_mem</code>, JIT, parallelism, planner flags, and related GUCs can materially change execution time. M1.4 validation itself does <strong>not</strong> set these explicitly. [export reference: filecite</td>
+</tr>
+<tr>
+<td><strong>6. Storage location / I/O characteristics</strong></td>
+<td><strong>Potentially high overall</strong></td>
+<td>The current PostgreSQL cluster lives on the large D: drive. If the original <code>msbf_strategy</code> cluster you used in DBeaver was on the SSD, history generation/indexing could be much faster there. Current POS31 itself, however, is showing CPU-running rather than an I/O wait.</td>
+</tr>
+<tr>
+<td><strong>7. Fresh database vs mature/warm database</strong></td>
+<td><strong>Moderate</strong></td>
+<td>The old development database may have had warm OS/PostgreSQL cache, mature statistics, and repeatedly accessed objects. This fresh subject begins relatively cold.</td>
+</tr>
+<tr>
+<td><strong>8. Statistics / ANALYZE differences</strong></td>
+<td><strong>Moderate to high</strong></td>
+<td>Planner estimates affect join strategies dramatically. A freshly populated 450k-row table with different stats can get a much worse plan than the original 135k-row accepted table.</td>
+</tr>
+<tr>
+<td><strong>9. Parallel execution differences</strong></td>
+<td><strong>Potentially high</strong></td>
+<td>One environment may permit useful parallel scans/joins while the current function/plan may effectively run largely on one backend/core. Your current observation <code>ACTIVE - CPU/RUNNING</code> is consistent with CPU computation, but does not tell us how many workers are assisting.</td>
+</tr>
+<tr>
+<td><strong>10. Controller/evidence overhead</strong></td>
+<td><strong>Low to moderate</strong></td>
+<td>Campaign Scale adds receipts, source checks, frozen-context validation, exports, etc., but that cannot explain a single SQL statement consuming 40+ minutes.</td>
+</tr>
+<tr>
+<td><strong>11. <code>psql</code> versus DBeaver itself</strong></td>
+<td><strong>Low</strong></td>
+<td>For the literal SQL scripts we&#39;re running, client choice should not produce an order-of-magnitude difference unless it also changes session settings or transaction behavior.</td>
+</tr>
+</tbody></table>
+<h3>1. Scale is definitely real — but the cost may be superlinear</h3>
+<p>Your original published M1.4 generation target was:</p>
+<pre><code class="language-text">750 merchants × 180 days = 135,000 rows
+</code></pre>
+<p>The execution guide confirms exactly that. [export reference: filecite | turn57file1 | L61-L71]</p>
+<p>Now:</p>
+<pre><code class="language-text">2,500 × 180 = 450,000 rows
+</code></pre>
+<p>That&#39;s <strong>3.333×</strong>.</p>
+<p>If everything were simple sequential scans, I would expect something vaguely around 3.3× runtime.</p>
+<p>But POS31 is not simply scanning one table. It does:</p>
+<pre><code class="language-sql">expected_snapshot(...)
+FULL JOIN
+actual_snapshot(...)
+USING(entity_key)
+</code></pre>
+<p>and compares their row hashes. [export reference: filecite | turn55file2 | L25-L32]</p>
+<p>So PostgreSQL must potentially:</p>
+<ol>
+<li>regenerate 450,000 expected rows;</li>
+<li>construct/hash their entity keys and row hashes;</li>
+<li>read/reconstruct 450,000 actual rows;</li>
+<li>join two 450,000-row sets;</li>
+<li>compare them;</li>
+<li>count discrepancies.</li>
+</ol>
+<p>And then POS32 immediately regenerates expected and actual again for ordered set hashing. [export reference: filecite | turn55file2 | L34-L41]</p>
+<p>That is much more than “scan 3.33× more rows.”</p>
+<hr>
+<h2>2. I think we have now found an important historical design clue</h2>
+<p>This may be the biggest explanation.</p>
+<p>M1.4 validation creates <code>_m1_4_blueprint</code> as a materialized temporary table at the beginning. [export reference: filecite | turn55file1 | L8-L18]</p>
+<p>But POS31 does <strong>not simply compare against that already-materialized blueprint</strong>. It calls:</p>
+<pre><code class="language-text">m1_4_expected_pos_snapshot(...)
+m1_4_actual_pos_snapshot(...)
+</code></pre>
+<p>again.</p>
+<p>Then POS32 invokes those functions <strong>again</strong>.</p>
+<p>So there is published validation logic that may perform repeated expensive deterministic reconstruction.</p>
+<p>And by M1.7, your own published code explicitly says:</p>
+<blockquote>
+<p>performance design learned from M1.6</p>
+</blockquote>
+<p>and then specifies:</p>
+<ul>
+<li>read accepted physical histories directly;</li>
+<li>materialize bounded aggregations;</li>
+<li><strong>never rebuild M1.4/M1.5/M1.6 wide blueprints</strong>;</li>
+<li><strong>materialize expected and actual canonical snapshots exactly once</strong>. [export reference: filecite | turn54file2 | L99-L105]</li>
+</ul>
+<p>That is extremely informative.</p>
+<p>It says the project itself had already learned, during later Module 1 development, that repeated upstream regeneration was a performance problem.</p>
+<p>At <strong>750</strong>, the M1.4/M1.6 design may have been perfectly tolerable.</p>
+<p>At <strong>2,500</strong>, that same mathematically valid design can become painfully expensive.</p>
+<p>That would explain why you remember DBeaver as nowhere near this slow without implying that anything is malfunctioning now.</p>
+<hr>
+<h2>3. The fixed memory budget may be interacting badly with the larger population</h2>
+<p>This is another major candidate.</p>
+<p>Later modules explicitly specify values such as:</p>
+<pre><code class="language-text">work_mem = 64MB
+jit = off
+</code></pre>
+<p>M1.14&#39;s accepted run configuration does exactly that. [export reference: filecite | turn54file6 | L362-L378]</p>
+<p>M1.7 also sets:</p>
+<pre><code class="language-sql">SET LOCAL work_mem=&#39;64MB&#39;;
+SET LOCAL jit=off;
+SET LOCAL lock_timeout=&#39;10s&#39;;
+SET LOCAL statement_timeout=&#39;15min&#39;;
+</code></pre>
+<p>[export reference: filecite | turn54file2 | L107-L111]</p>
+<p>But the published M1.4 validation begins simply with:</p>
+<pre><code class="language-sql">BEGIN;
+</code></pre>
+<p>and does <strong>not</strong> establish those performance settings itself. [export reference: filecite | turn56file0 | L12-L40]</p>
+<p>Therefore M1.4 depends more heavily on server/session defaults.</p>
+<p>That creates two possibilities:</p>
+<p><strong>Your old DBeaver connection may have had different effective settings</strong>, intentionally or because of earlier development work.</p>
+<p>Or the <strong>PostgreSQL 17 cluster being used now has different defaults</strong> than the original <code>msbf_strategy</code> connection.</p>
+<p>Relevant differences could include:</p>
+<pre><code class="language-text">work_mem
+jit
+max_parallel_workers_per_gather
+max_parallel_workers
+effective_cache_size
+random_page_cost
+effective_io_concurrency
+maintenance_work_mem
+</code></pre>
+<p>I&#39;m <strong>not suggesting we change any of those mid-run</strong>. That would compromise the qualification comparison.</p>
+<p>But after this run, we should compare them.</p>
+<hr>
+<h2>4. There may be a plan cliff</h2>
+<p>This is why 3.33× rows can sometimes produce 10×, 20×, or more runtime.</p>
+<p>Imagine at 135k rows PostgreSQL chooses a hash join whose working set fits comfortably in memory.</p>
+<p>At 450k rows, one of several things can happen:</p>
+<pre><code class="language-text">135k
+→ compact hash/sort
+→ memory resident
+→ fast
+</code></pre>
+<p>versus</p>
+<pre><code class="language-text">450k
+→ larger hash/sort
+→ different cardinality estimate
+→ different plan / batching / repeated function work
+→ much slower
+</code></pre>
+<p>Even if the data volume only increased 3.33×, the execution regime can change.</p>
+<p>Our live query showed:</p>
+<pre><code class="language-text">ACTIVE - CPU/RUNNING
+blocking_pids = {}
+</code></pre>
+<p>That means it is not presently sitting behind a lock.</p>
+<p>That actually increases my suspicion of <strong>expensive repeated computation or an inefficient plan</strong>, rather than infrastructure failure.</p>
+<hr>
+<h2>5. DBeaver may have been running against a much more favorable database state</h2>
+<p>Your original M1.4 procedure explicitly used the same continuously built <code>msbf_strategy</code> database from G0/G1/M1.2/M1.3. [export reference: filecite | turn57file1 | L21-L35]</p>
+<p>That environment had been developed interactively.</p>
+<p>Potential advantages:</p>
+<ul>
+<li>heavily reused tables already cached;</li>
+<li>indexes repeatedly traversed and cached;</li>
+<li>statistics already established;</li>
+<li>potentially prior <code>ANALYZE</code>;</li>
+<li>database files potentially on faster storage;</li>
+<li>no fresh database-copy overhead;</li>
+<li>previous queries might have warmed both PostgreSQL shared buffers and Windows file cache.</li>
+</ul>
+<p>Current Campaign Scale creates a <strong>new isolated subject</strong> specifically so we know we&#39;re testing fresh execution.</p>
+<p>That&#39;s much cleaner validation.</p>
+<p>It can also be slower.</p>
+<hr>
+<h2>6. D: HDD versus SSD could matter considerably — but not for everything we&#39;re seeing</h2>
+<p>This is one item I want to verify after the run rather than assume.</p>
+<p>We deliberately moved large Campaign Scale storage to D: because C: was capacity constrained.</p>
+<p>If your historical PostgreSQL <code>msbf_strategy</code> database lived on the C: SSD, then:</p>
+<pre><code class="language-text">old:
+SSD + 135k rows
+
+current:
+HDD + 450k rows
+</code></pre>
+<p>is a substantial hardware change.</p>
+<p>For generation, indexes, temporary files, large sorts and sequential reads, that can matter enormously.</p>
+<p><strong>However</strong>, your live POS31 query had:</p>
+<pre><code class="language-text">wait_event_type = NULL
+diagnosis = ACTIVE - CPU/RUNNING
+</code></pre>
+<p>so at the instant we observed it PostgreSQL was not reporting a disk I/O wait.</p>
+<p>Thus HDD is probably <strong>not the primary explanation for POS31&#39;s current 40+ minute stretch</strong>.</p>
+<p>It may still have contributed heavily to source 028&#39;s generation time.</p>
+<hr>
+<h2>7. We are doing exactly the same validation, but against much more data</h2>
+<p>This is worth emphasizing.</p>
+<p>Campaign Scale did not add POS31.</p>
+<p>The published M1.4 code defines POS31 as:</p>
+<pre><code class="language-text">M1_4_POS_31_ROW_REPRODUCTION
+Row-level deterministic reproduction
+</code></pre>
+<p>and explicitly regenerates expected and actual snapshots. [export reference: filecite | turn54file0 | L22-L29]</p>
+<p>At 750, that meant comparing:</p>
+<pre><code class="language-text">135,000 expected
+vs.
+135,000 actual
+</code></pre>
+<p>Now:</p>
+<pre><code class="language-text">450,000 expected
+vs.
+450,000 actual
+</code></pre>
+<p>But because expected generation itself builds deterministic daily-history logic, this isn&#39;t merely a 900k-row equality test.</p>
+<p>The computation inside those functions matters.</p>
+<hr>
+<h2>8. The current controller is not causing the SQL to take an hour</h2>
+<p>This distinction is important.</p>
+<p>Campaign Scale adds:</p>
+<ul>
+<li>source binding checks;</li>
+<li>checkpoint checks;</li>
+<li>process receipts;</li>
+<li>timing;</li>
+<li>evidence capture;</li>
+<li>postflight;</li>
+<li>return packaging.</li>
+</ul>
+<p>Those create some overhead.</p>
+<p>But when <code>pg_stat_activity</code> tells us <strong>one PostgreSQL statement itself has been active for 41 minutes</strong>, Python and the controller aren&#39;t the reason for those 41 minutes.</p>
+<p>PostgreSQL is inside the published SQL logic.</p>
+<p>So the performance problem we are observing is primarily <strong>inside the database workload</strong>, not the Campaign Scale orchestration layer.</p>
+<hr>
+<h2>9. DBeaver versus psql is probably almost irrelevant</h2>
+<p>This is the tempting explanation, but I put it near last.</p>
+<p>The project&#39;s own documentation explicitly supports either:</p>
+<pre><code class="language-text">DBeaver or psql
+</code></pre>
+<p>for PostgreSQL execution. [export reference: filecite | turn57file1 | L27-L35]</p>
+<p>Once the SQL reaches PostgreSQL, DBeaver isn&#39;t executing your joins; PostgreSQL is.</p>
+<p>There can be differences from:</p>
+<ul>
+<li>session configuration;</li>
+<li>JDBC prepared-statement behavior;</li>
+<li>transaction/autocommit handling;</li>
+<li>fetch behavior for huge result sets.</li>
+</ul>
+<p>But this validation script uses literal SQL and performs its costly work inside PostgreSQL.</p>
+<p>So I would <strong>not</strong> conclude:</p>
+<blockquote>
+<p>psql is slower than DBeaver.</p>
+</blockquote>
+<p>Rather:</p>
+<blockquote>
+<p>the current PostgreSQL execution context is materially different from the original 750 environment.</p>
+</blockquote>
+<hr>
+<h1>What I presently think is happening</h1>
+<p>My working attribution would be approximately:</p>
+<p><strong>Primary causes</strong></p>
+<ol>
+<li><strong>3.33× population/history size</strong></li>
+<li><strong>published M1.4 validation repeatedly rebuilds deterministic snapshots</strong></li>
+<li><strong>that design crosses a performance threshold at 2,500</strong></li>
+</ol>
+<p><strong>Potential amplifiers</strong></p>
+<ol start="4">
+<li>different memory/planner/parallel settings</li>
+<li>fresh statistics/cache state</li>
+<li>D:-resident database versus possibly faster historical storage</li>
+</ol>
+<p><strong>Minor</strong></p>
+<ol start="7">
+<li>Campaign Scale evidence/controller overhead</li>
+</ol>
+<p><strong>Probably negligible</strong></p>
+<ol start="8">
+<li>psql versus DBeaver itself</li>
+</ol>
+<p>And the later code gives us strong corroboration that the project had already recognized this general class of issue: M1.7 explicitly changed the architecture to <strong>materialize once and avoid rebuilding wide upstream blueprints</strong>. [export reference: filecite | turn54file2 | L99-L105]</p>
+<h2>This is actually valuable Campaign Scale evidence</h2>
+<p>I would not alter anything during this run.</p>
+<p>But afterward, we should do a focused <strong>performance attribution</strong> using actual plans/timings and determine whether a future publication can preserve:</p>
+<p><strong>logic → controls → validation → evidence → interpretation</strong></p>
+<p>while eliminating redundant recomputation.</p>
+<p>For example, if POS31 and POS32 can both consume <strong>one governed, materialized expected snapshot and one governed actual snapshot</strong>, rather than regenerating each independently, that may preserve the exact same control objectives and evidence while reducing runtime dramatically.</p>
+<p>That would be precisely the kind of later publication improvement you described: <strong>not deleting controls, but removing duplicated computation underneath them.</strong></p>
+</div></article><article id="m-57222344-9bad-4a8a-9281-e6ef9446aebf" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00212 · 2026-09-13T17:10:33.240000-04:00 · active path</p><div class="bubble"><p>the individual scripts in dbeaver (which is how i ran the initial 750 cohort) were quite fast actually.</p>
+</div></article><article id="m-3ec6cf4e-4c31-4139-82f4-9ed4cde52fd5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00213 · 2026-09-13T17:10:35.117719-04:00 · active path</p><div class="bubble"><p>That materially changes the diagnosis. If the original 750 scripts were typically <strong>seconds to a few minutes</strong>, then a 3.33× population increase should not plausibly turn the same M1.4 generation/validation scripts into <strong>60–70 minute</strong> executions by itself. I’m checking the retained execution history for any old timings/environment differences so we can separate scale from a genuine performance regression.</p>
+</div></article><article id="m-d08c1dbc-6eb9-434d-a794-ef2a087b3e21" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00214 · 2026-09-13T17:10:50.547259-04:00 · active path</p><div class="bubble"><p>That makes me more suspicious of <strong>algorithmic scaling</strong>, not just hardware or client differences. If the 750 scripts were genuinely fast, then the current ~60–70 minute M1.4 scripts imply something closer to a <strong>superlinear path</strong>—for example, a per-merchant/per-day calculation repeatedly rescanning the merchant population or parameter tables. I’m checking the published M1.4 generator for that pattern.</p>
+</div></article><article id="m-2c931351-b059-420b-a8d0-f705c08aefef" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00215 · 2026-09-13T17:11:11.083521-04:00 · active path</p><div class="bubble"><p>Yes — that changes my assessment substantially.</p>
+<p>If the original 750 scripts were <strong>quite fast individually</strong>, then I would no longer treat what we are seeing as an expected consequence of 750 → 2,500. A 3.33× population increase should not ordinarily turn fast scripts into <strong>60–70 minute scripts</strong>. We are seeing a real <strong>scaling/performance cliff</strong> somewhere.</p>
+<p>And we can narrow it more than before.</p>
+<p>The original M1.4 generator creates 135,000 daily rows at 750 merchants; the current run creates 450,000. That is only <strong>3.33× the row count</strong>. The original project also already ran successfully on PostgreSQL 17.9, so PostgreSQL-version difference is not a good explanation. [export reference: filecite | turn57file1 | L21-L35]</p>
+<h3>What I now think is most likely</h3>
+<p><strong>1. The published M1.4 SQL contains operations whose computational cost scales much worse than the output row count.</strong></p>
+<p>The blueprint builds the merchant × date grid, calculates multiple deterministic random/hash-derived values per merchant-day, and then performs a self-join of the calculated daily history to itself to obtain delayed settlement amounts:</p>
+<pre><code class="language-sql">FROM eligible curr
+LEFT JOIN eligible prior
+  ON prior.merchant_id = curr.merchant_id
+ AND prior.processor_account_id = curr.processor_account_id
+ AND prior.observation_date =
+       (curr.observation_date-curr.settlement_delay_days)::date
+</code></pre>
+<p>[export reference: filecite | turn61file0 | L208-L220]</p>
+<p>That is not necessarily bad SQL at 135k rows. But if PostgreSQL chooses an unfavorable plan at 450k rows—especially a nested-loop-like plan rather than an efficient hash/merge strategy—the runtime can jump far more than 3.33×.</p>
+<p>A useful rule of thumb:</p>
+<pre><code class="language-text">Linear scaling:
+750 → 2,500 ≈ 3.33× runtime
+
+N log N:
+≈ 3.5–4× runtime
+
+Quadratic-ish / repeated nested work:
+(2500 / 750)^2 ≈ 11.1× runtime
+</code></pre>
+<p>So if Program 25 took, say, <strong>5–6 minutes originally</strong>, an ~11× path lands remarkably close to the <strong>~69 minutes</strong> we just observed.</p>
+<p>That is now one of my leading hypotheses.</p>
+<hr>
+<p><strong>2. POS31 may be getting a very bad execution plan.</strong></p>
+<p>The current validation doesn&#39;t merely inspect the materialized <code>_m1_4_blueprint</code>.</p>
+<p>It executes:</p>
+<pre><code class="language-sql">m1_4_expected_pos_snapshot(...)
+FULL JOIN
+m1_4_actual_pos_snapshot(...)
+</code></pre>
+<p>[export reference: filecite | turn54file0 | L22-L29]</p>
+<p>The expected snapshot calls the entire <code>m1_4_daily_pos_blueprint()</code> again. [export reference: filecite | turn59file0 | L28-L44]</p>
+<p>So PostgreSQL is rebuilding that whole 450k-row deterministic history—including the settlement self-join—and simultaneously comparing it against physical history.</p>
+<p>Then POS32 invokes both expected and actual snapshot functions <strong>again</strong> to calculate the portfolio hash. [export reference: filecite | turn54file0 | L31-L38]</p>
+<p>At 750 this apparently wasn&#39;t painful. At 2,500 it plainly is.</p>
+<hr>
+<p><strong>3. We may have crossed a PostgreSQL planner/memory threshold.</strong></p>
+<p>This is different from simply having more records.</p>
+<p>At 135k rows PostgreSQL might choose:</p>
+<pre><code class="language-text">hash join
+everything fits comfortably
+minimal batching/spilling
+</code></pre>
+<p>At 450k it might choose:</p>
+<pre><code class="language-text">different join strategy
+larger sort/hash
+more batches
+or even a poor nested-loop plan
+</code></pre>
+<p>The current live query being:</p>
+<pre><code class="language-text">ACTIVE - CPU/RUNNING
+blocking_pids = {}
+</code></pre>
+<p>is entirely compatible with an <strong>inefficient CPU-heavy execution plan</strong>. It is not waiting on another process.</p>
+<p>This is probably one of the first things I would investigate after we preserve this run.</p>
+<hr>
+<p><strong>4. The original database may have had materially better statistics than this fresh campaign database.</strong></p>
+<p>This is now higher on my list.</p>
+<p>Your original DBeaver work occurred against a continuously developed <code>msbf_strategy</code> database. The fresh campaign is working in a newly copied/generated subject.</p>
+<p>PostgreSQL&#39;s planner depends heavily on statistics. If the original database had better <code>ANALYZE</code> state and the fresh 450k-row tables do not yet have equally representative statistics, PostgreSQL can seriously misestimate join cardinalities.</p>
+<p>That can turn:</p>
+<pre><code class="language-text">correct hash/merge plan
+</code></pre>
+<p>into:</p>
+<pre><code class="language-text">awful nested-loop plan
+</code></pre>
+<p>without changing one line of business logic.</p>
+<p>That would produce exactly the kind of disproportionate degradation we&#39;re seeing.</p>
+<hr>
+<p><strong>5. Session/resource settings may differ from the original execution.</strong></p>
+<p>M1.4&#39;s positive-validation script does not establish its own <code>work_mem</code>, JIT or similar performance settings; it begins directly with <code>BEGIN</code>. [export reference: filecite | turn56file0 | L12-L40]</p>
+<p>Later Module 1 code explicitly learned to do things differently. M1.7 says its performance design was <strong>“learned from M1.6”</strong> and specifically says:</p>
+<ul>
+<li>use bounded materialized aggregations;</li>
+<li>do not rebuild prior wide blueprints;</li>
+<li><strong>materialize expected and actual canonical snapshots exactly once</strong>;</li>
+<li>disable JIT and bound the execution settings. [export reference: filecite | turn54file2 | L99-L111]</li>
+</ul>
+<p>That is a very strong historical clue that performance problems had already been encountered during original development.</p>
+<p>Your DBeaver connection may also have inherited different server/session settings than this <code>psql</code> connection. The client itself is not the important part; the effective PostgreSQL settings are.</p>
+<hr>
+<p><strong>6. Storage could still amplify it, but I no longer think it explains the result by itself.</strong></p>
+<p>The current isolated PostgreSQL cluster lives on D:.</p>
+<p>If original <code>msbf_strategy</code> lived on faster SSD storage, that could hurt:</p>
+<ul>
+<li>generation;</li>
+<li>temp writes;</li>
+<li>indexes;</li>
+<li>sorts;</li>
+<li>hashes;</li>
+<li>checkpoint copies.</li>
+</ul>
+<p>But POS31 was observed as <strong>CPU-running</strong>, not waiting on PostgreSQL I/O. So even if disk contributes, there is clearly more going on.</p>
+<hr>
+<h3>What I now think is <em>not</em> the explanation</h3>
+<p>I would put these quite low:</p>
+<p><strong><code>psql</code> versus DBeaver.</strong> PostgreSQL executes the SQL either way. The project documentation itself permits both DBeaver and <code>psql</code>. [export reference: filecite | turn57file1 | L27-L35]</p>
+<p><strong>Campaign Scale&#39;s Python orchestration.</strong> It adds receipts and checks, but the live backend showed one PostgreSQL statement itself consuming 41+ minutes. Python cannot account for that.</p>
+<p><strong>Simply having 3.33× more rows.</strong> That contributes, unquestionably, but given your recollection of the original execution speed, it isn&#39;t remotely enough by itself.</p>
+<h2>The emerging diagnosis</h2>
+<p>I would phrase it now as:</p>
+<blockquote>
+<p><strong>Campaign Scale has exposed a latent scale-sensitive performance characteristic in the published Module 1 SQL that was not visible at the original 750 cohort.</strong></p>
+</blockquote>
+<p>That doesn&#39;t mean the published logic is wrong.</p>
+<p>In fact, this is exactly what a 2,500 shakedown is supposed to discover.</p>
+<p>And importantly, it may be possible to improve performance <strong>without sacrificing your control architecture at all</strong>.</p>
+<p>For example:</p>
+<pre><code class="language-text">Current M1.4 validation
+
+materialize blueprint once
+      ↓
+controls 1–30
+      ↓
+POS31 regenerates entire expected blueprint
+      ↓
+POS32 regenerates entire expected blueprint again
+      ↓
+additional controls
+</code></pre>
+<p>could potentially become, in a later governed publication:</p>
+<pre><code class="language-text">materialize expected canonical snapshot once
+materialize actual canonical snapshot once
+      ↓
+POS31 compares those
+      ↓
+POS32 hashes those same independently derived snapshots
+      ↓
+all control conclusions preserved
+</code></pre>
+<p>That is not deleting a control. It is eliminating redundant computation underneath independent control assertions.</p>
+<h3>One thing I would <em>not</em> do now</h3>
+<p>I would <strong>not change anything in this running qualification</strong>.</p>
+<p>This run is giving us extremely valuable baseline performance evidence.</p>
+<p>Once it completes—or if a published statement timeout legitimately stops it—I think the next technical task should be a <strong>focused execution-plan/performance attribution</strong>, not guesswork:</p>
+<pre><code class="language-text">Program 25 generation
+Program 26 POS31
+Program 26 POS32
+
+750 accepted structure
+vs.
+2,500 fresh structure
+
+EXPLAIN (ANALYZE, BUFFERS, SETTINGS)
+effective server/session settings
+table statistics
+temp spill
+parallelism
+join algorithms
+function call/recomputation counts
+</code></pre>
+<p>Then we&#39;ll know whether the real culprit is <strong>quadratic scaling, planner misestimation, repeated blueprint reconstruction, memory spill, storage, or some combination</strong>.</p>
+<p>Given what you&#39;ve now told me about the original DBeaver execution, I expect we&#39;ll find a concrete and fixable performance issue rather than conclude “2,500 just takes this long.”</p>
+</div></article><article id="m-e3f84ac9-3e29-4b34-9738-4d8a68327283" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00216 · 2026-09-13T17:13:56.761000-04:00 · active path</p><div class="bubble"><p>is it a D drive (HDD) vs C drive (SSD)? how is the current process running?</p>
+</div></article><article id="m-9da63df0-d8db-4c67-a6dc-39fa1ed3e998" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00217 · 2026-09-13T17:14:00.503931-04:00 · active path</p><div class="bubble"><p>Yes — the <strong>database itself is currently running from the D: drive</strong>, while the executables are on C:.</p>
+<p>The layout is essentially:</p>
+<pre><code class="language-text">C: SSD
+├─ C:\Python314\python.exe
+└─ C:\Program Files\PostgreSQL\17\bin\
+   ├─ postgres.exe
+   ├─ psql.exe
+   └─ pg_ctl.exe
+
+D: HDD
+└─ D:\MSBF_CAMPAIGNS\
+   ├─ pg_clusters\msbf_cs_ref750_routeb_20260912_012713\
+   │   └─ actual PostgreSQL database files
+   ├─ PART2_RETURNS\
+   ├─ temp\
+   └─ tools\
+</code></pre>
+<p>So PostgreSQL <strong>code executes from the C: SSD</strong>, but when it reads/writes database tables, indexes, WAL, temp spill files, etc., the persistent database storage is on the <strong>D: HDD</strong>.</p>
+<h3>Is that causing the current slowness?</h3>
+<p>For the <strong>specific query we checked</strong>, probably <strong>not primarily</strong>.</p>
+<p>Your live PostgreSQL status was:</p>
+<pre><code class="language-text">state           = active
+wait_event_type = NULL
+blocking_pids   = {}
+diagnosis       = ACTIVE - CPU/RUNNING
+</code></pre>
+<p>That means PostgreSQL was actively executing CPU work, rather than sitting in an operating-system disk wait.</p>
+<p>The current statement was the expensive:</p>
+<pre><code class="language-text">M1_4_POS_31_ROW_REPRODUCTION
+</code></pre>
+<p>which regenerates the expected 450,000-row deterministic history and compares it with the actual history.</p>
+<p>So at that moment the machine was effectively doing:</p>
+<pre><code class="language-text">Python controller
+       ↓
+psql client
+       ↓
+PostgreSQL backend
+       ↓
+CPU-heavy SQL computation
+       ↓
+regenerate/hash/join 450k expected
+against 450k actual
+</code></pre>
+<p>The Python controller itself is basically waiting for PostgreSQL to finish. It is <strong>not</strong> doing the heavy calculation.</p>
+<h3>Where the HDD probably does matter</h3>
+<p>The HDD can materially slow portions such as:</p>
+<ul>
+<li>initial 450,000-row history generation;</li>
+<li>writing the history table;</li>
+<li>creating indexes;</li>
+<li>large sorts/hash operations that spill to disk;</li>
+<li>PostgreSQL temporary files;</li>
+<li>checkpoint/database copying;</li>
+<li>later 900,000-row scenario-history stages;</li>
+<li>large exports.</li>
+</ul>
+<p>So it could explain <strong>part</strong> of why Program 25 (<code>source_028</code>) took ~69 minutes.</p>
+<p>But it does <strong>not adequately explain</strong> the 40+ minute POS31 computation we observed because that backend was reporting CPU-running, not I/O-waiting.</p>
+<h3>There is another important hardware detail</h3>
+<p>Even though the SQL is CPU-bound, PostgreSQL is probably executing much of this particular operation on <strong>one backend/core</strong>.</p>
+<p><code>state = active</code> tells us the backend is working, but our status query did not show parallel workers. If the deterministic functions / SQL structure prevent useful parallelism, then you could have:</p>
+<pre><code class="language-text">modern multicore CPU
+      ↓
+one PostgreSQL backend doing most of the work
+      ↓
+one core heavily used
+while much of the CPU sits available
+</code></pre>
+<p>That could produce exactly the behavior you&#39;re seeing.</p>
+<p>So my current ranking is:</p>
+<ol>
+<li><strong>Repeated deterministic blueprint computation / query-plan scaling</strong> — likely largest issue.</li>
+<li><strong>Potential lack of parallel execution</strong> — potentially very significant.</li>
+<li><strong>Planner/statistics/memory differences at 450k rows</strong> — potentially significant.</li>
+<li><strong>D: HDD instead of SSD</strong> — definitely a contributing factor for data-intensive stages.</li>
+<li><strong>psql vs DBeaver</strong> — likely negligible.</li>
+</ol>
+<p>And importantly, <strong>the run currently appears to be actually working, not stalled</strong>. It completed <code>source_028</code>, advanced into <code>source_029</code>, and the PostgreSQL backend we inspected was actively executing without blocking.</p>
+<p>After this run, I would specifically compare the old <code>msbf_strategy</code> storage location and PostgreSQL settings against this D:-resident cluster. If the original database was on C: SSD, that gives us a clean hardware variable to quantify—but I don&#39;t think moving to SSD alone would explain or cure the extreme POS31 runtime.</p>
+</div></article><article id="m-810ef960-f78a-4eff-bda2-50a9b1cc8a04" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00218 · 2026-09-13T17:15:57.554000-04:00 · active path</p><div class="bubble"><p>but the deterministic controls were also in dbeaver run, so i&#39;m not sure why that would be any different - please explain that one to me again.</p>
+</div></article><article id="m-c5e32ddb-1f68-4042-8ebc-8a83a1fff519" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00219 · 2026-09-13T17:15:59.106574-04:00 · active path</p><div class="bubble"><p>You’re right to push on that. The deterministic controls themselves are <strong>not different</strong>. The important point is that <strong>the same control can cost radically more when run against a larger dataset or under a different PostgreSQL execution plan</strong>.</p>
+<p>For M1.4, the published DBeaver run and the current campaign run both execute the same control logic. For example, POS31 still does this:</p>
+<pre><code class="language-sql">expected_snapshot(...)
+FULL JOIN
+actual_snapshot(...)
+</code></pre>
+<p>and checks for row-hash mismatches. That control existed in the original published code. [export reference: filecite | turn54file0 | L22-L29]</p>
+<p>What changed is the amount and shape of work underneath it.</p>
+<p>At 750 merchants, M1.4 had:</p>
+<pre><code class="language-text">750 × 180 days = 135,000 daily rows
+</code></pre>
+<p>The published execution guide confirms that original grain. [export reference: filecite | turn57file1 | L61-L71]</p>
+<p>Now it has:</p>
+<pre><code class="language-text">2,500 × 180 days = 450,000 daily rows
+</code></pre>
+<p>So when POS31 calls <code>m1_4_expected_pos_snapshot()</code>, PostgreSQL is not merely reading a stored 450k-row file. That function calls <code>m1_4_daily_pos_blueprint()</code> again, which regenerates the entire deterministic daily-history calculation. [export reference: filecite | turn59file0 | L28-L44]</p>
+<p>That blueprint includes:</p>
+<ul>
+<li>merchant/profile joins;</li>
+<li>merchant × date expansion;</li>
+<li>many deterministic hash/random-derived calculations per merchant-day;</li>
+<li>sales/seasonality/volatility computations;</li>
+<li>a self-join of daily history to itself for settlement timing. [export reference: filecite | turn61file0 | L83-L124] [export reference: filecite | turn61file0 | L180-L220]</li>
+</ul>
+<p>So the <strong>control is identical</strong>, but the function it invokes now has to regenerate a much larger analytical structure.</p>
+<p>The second issue is execution planning. PostgreSQL does not guarantee that 3.33× more rows means 3.33× more runtime. The same SQL can get a different join plan, different sort/hash behavior, different batching, or different parallelism once the dataset crosses a threshold. That is the part I mean by a “performance cliff.”</p>
+<p>A simple example:</p>
+<pre><code class="language-text">750 cohort:
+135k rows
+→ hash join fits comfortably
+→ fast
+</code></pre>
+<p>versus:</p>
+<pre><code class="language-text">2,500 cohort:
+450k rows
+→ larger intermediate sets
+→ planner chooses a less favorable path
+→ repeated deterministic reconstruction becomes very expensive
+</code></pre>
+<p>Nothing about the <strong>control objective</strong> changed.</p>
+<p>There is also repeated work inside the original published validation. The script materializes <code>_m1_4_blueprint</code> once at the start, but POS31 later invokes the expected-snapshot function again instead of simply reusing that materialized result. [export reference: filecite | turn56file0 | L34-L40] Then POS32 invokes expected and actual snapshots again for the set-hash test. [export reference: filecite | turn55file2 | L25-L41]</p>
+<p>That repeated computation existed in DBeaver too. It just may have been cheap enough at 750 that you barely noticed it.</p>
+<p>So the distinction is:</p>
+<pre><code class="language-text">Same published control
+Same published logic
+Same validation objective
+
+BUT
+
+3.33× more rows
++ much larger intermediate work
++ possible planner/memory/parallelism threshold changes
++ repeated blueprint regeneration
+= potentially far more than 3.33× runtime
+</code></pre>
+<p>And your recollection that DBeaver was <strong>very fast</strong> is exactly why I do <strong>not</strong> think “the controls are expensive by nature” is a sufficient explanation. I think Campaign Scale has exposed a scale-sensitive execution problem in how some of those controls are physically computed.</p>
+<p>That is why, after this run, I’d want to compare the actual execution plans of POS31/POS32 at 750 versus 2,500. That will tell us whether the culprit is a join-plan change, loss of parallelism, memory spill, repeated function execution, or some combination—not a difference in the controls themselves.</p>
+</div></article><article id="m-db989f3f-628b-4f7b-a5d7-9da710642f07" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00220 · 2026-09-13T17:17:19.036000-04:00 · active path</p><div class="bubble"><p>it&#39;s hard to believe that a ~3.5x times larger dataset (450k rows) would take hours when initial codes took seconds/minutes. that is just hard to comprehend.</p>
+</div></article><article id="m-feac18f5-b3ce-42f0-a22b-92471e9fe71e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00221 · 2026-09-13T17:17:21.110043-04:00 · active path</p><div class="bubble"><p>I agree with your skepticism. <strong>A ~3.3–3.5× increase in row count, by itself, does not plausibly explain going from seconds/minutes to roughly an hour per script.</strong> Something else is amplifying the cost.</p>
+<p>If the original 750 execution was, say, 1–3 minutes and the same logical stage is now taking 60–70 minutes, we&#39;re looking at an order-of-magnitude performance change—not normal linear scaling.</p>
+<p>The important distinction is:</p>
+<pre><code class="language-text">750 → 2,500 merchants
+135k → 450k M1.4 rows
+≈ 3.33× data
+</code></pre>
+<p>A reasonably scalable implementation should therefore land somewhere in the neighborhood of a few times slower, perhaps somewhat worse because of larger sorts/hashes. It should not naturally become <strong>30×, 50×, or 100× slower</strong>.</p>
+<p>So I think Campaign Scale has exposed a <strong>performance cliff</strong>.</p>
+<p>The most plausible causes are these, in roughly this order:</p>
+<ol>
+<li><p><strong>PostgreSQL chose a fundamentally worse execution plan at 450k rows.</strong> The same SQL can be very fast at 135k rows and catastrophically slow at 450k if the planner switches join strategy, underestimates cardinality, or performs repeated nested work. This is probably the first thing I want to prove or rule out.</p>
+</li>
+<li><p><strong>Repeated blueprint reconstruction is interacting badly with the larger plan.</strong> POS31 regenerates the expected deterministic history and joins it to the actual history. POS32 then regenerates those snapshots again for hashing. That happened at 750 too, but if each reconstruction has crossed a planning threshold, the repetition magnifies the problem. [export reference: filecite | turn55file2 | L25-L41]</p>
+</li>
+<li><p><strong>Statistics may be poor in the fresh subject.</strong> Your original <code>msbf_strategy</code> database had been built and exercised interactively. The new campaign subject is fresh. If PostgreSQL&#39;s statistics are inaccurate or incomplete after inserting 450k rows, the validation query can choose a terrible plan even though the SQL is identical.</p>
+</li>
+<li><p><strong>Parallelism may not be happening.</strong> We saw one active PostgreSQL backend doing CPU work. If these SQL functions are effectively serial, one core may be grinding through expensive deterministic calculations while most of the machine remains underused.</p>
+</li>
+<li><p><strong>The D: HDD may amplify some stages.</strong> It could substantially hurt generation, sorts, temp spill, indexing, and checkpoint operations if your original database was on the C: SSD. But the POS31 snapshot we inspected was <code>ACTIVE - CPU/RUNNING</code>, not waiting on I/O, so HDD alone cannot explain that particular 40+ minute query.</p>
+</li>
+<li><p><strong>Different PostgreSQL/session settings could contribute.</strong> M1.4 validation does not explicitly set things such as <code>work_mem</code>, JIT, or parallel settings. Later Module 1 stages explicitly introduced performance-oriented settings and materialization patterns, which is evidence the project itself encountered this kind of issue during development. [export reference: filecite | turn54file2 | L99-L111]</p>
+</li>
+</ol>
+<p>What I <strong>do not</strong> believe anymore is:</p>
+<blockquote>
+<p>“Well, it&#39;s 3.5× larger, so an hour is reasonable.”</p>
+</blockquote>
+<p>No. Given your original experience, that explanation is inadequate.</p>
+<p>A simplified illustration:</p>
+<pre><code class="language-text">Healthy scaling
+
+750:
+135k rows → 2 min
+
+2,500:
+450k rows → perhaps 6–10 min
+</code></pre>
+<p>What we&#39;re seeing is more like:</p>
+<pre><code class="language-text">750:
+fast
+
+2,500:
+60+ min
+</code></pre>
+<p>That signals a different execution regime, not simply more rows.</p>
+<p>And we have a particularly interesting clue in the published M1.4 code. The deterministic blueprint itself contains a self-join of calculated daily history for settlement timing. [export reference: filecite | turn61file0 | L208-L220] If PostgreSQL handles that efficiently, fine. If the planner starts executing that portion inefficiently at the larger cardinality, the cost can explode.</p>
+<p>So after this qualification run, I think we should <strong>stop speculating and measure it directly</strong>. A focused <code>EXPLAIN (ANALYZE, BUFFERS, SETTINGS)</code> on the expensive M1.4 paths can tell us:</p>
+<pre><code class="language-text">Was it a nested-loop explosion?
+Did a hash/sort spill?
+Were row estimates badly wrong?
+Was parallelism absent?
+How many times was the blueprint evaluated?
+How much was CPU versus disk?
+Were temp files written?
+What indexes were actually used?
+</code></pre>
+<p>That should give us a concrete explanation.</p>
+<p>And importantly, the likely solution does <strong>not</strong> have to compromise your controls. We may discover that the exact same control conclusions can be obtained with better physical execution—better statistics, better indexing, materializing a governed snapshot once, or eliminating redundant recomputation—while retaining the full logic/control/validation/evidence chain.</p>
+<p>So your instinct is right: <strong>450k rows is not “big data” in PostgreSQL terms. Hours at this scale strongly suggests an inefficient execution path that deserves investigation.</strong></p>
+</div></article><article id="m-f021726d-b592-46cf-84ad-87991f9c8b92" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00222 · 2026-09-13T17:20:54.776000-04:00 · active path</p><div class="bubble"><p>i think we have to ask how does dbeaver run it? does dbeaver force parallelism? what are you doing different than dbeaver? it cannot be 750 vs 2.5k. i do not believe that at all. and we could prove it. let&#39;s run a fresh 750 test run. using the process. instead of building new data now. just trim the current run to only process a third of the data and let&#39;s see if it is taking hours still. i guarantee it will also be slow and I guarantee there is something in the campaign scale that is materially inefficient vs dbeaver process and we need to uncover it.</p>
+</div></article><article id="m-d1bbd760-bb46-4676-b776-09cb252f5246" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00223 · 2026-09-13T17:20:56.610709-04:00 · active path</p><div class="bubble"><p>I agree with the experiment, with one important control: <strong>do not trim or mutate the currently running 2,500 subject.</strong> We should create a separate, disposable 750 benchmark subject so the comparison isolates population size while holding the runtime, PostgreSQL cluster, D: storage, and controller constant.</p>
+</div></article><article id="m-e107e7ac-f7b6-4033-8fe0-ba316db00614" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00224 · 2026-09-13T17:21:11.969594-04:00 · active path</p><div class="bubble"><p>I agree with the experiment, and we can make it cleaner than “trim the current run.” <strong>DBeaver does not force PostgreSQL parallelism</strong>, and the current POS31 statement is an <code>INSERT … SELECT</code>; PostgreSQL does not generate a parallel plan for a query that writes data, regardless of whether DBeaver or <code>psql</code> submitted it. </p>
+<p>So parallelism is unlikely to explain the DBeaver-vs-current gap for the exact control we are watching.</p>
+</div></article><article id="m-fe677a03-4463-4ad9-8bb6-e17a435a33db" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00225 · 2026-09-13T17:21:11.969594-04:00 · active path</p><div class="bubble"><p>I think your proposed experiment is the right way to settle this.</p>
+<p>And one point is now clear: <strong>DBeaver does not normally “force parallelism.”</strong> Its standard <strong>Execute SQL Script</strong> mode parses the script and executes statements consecutively through the PostgreSQL driver. It has a separate special mode for executing statements concurrently, but that is not ordinary script execution. [export reference: cite | turn641848search1 | turn641848search26]</p>
+<p>More importantly, the exact POS31 statement we&#39;re watching is an <code>INSERT … SELECT</code>. PostgreSQL says a query that writes data does <strong>not</strong> get a parallel query plan, with limited exceptions such as <code>CREATE TABLE AS</code>. So DBeaver could not have magically parallelized POS31 while <code>psql</code> runs it serially. [export reference: cite | turn641848search0 | turn641848search24]</p>
+<p>So I agree: we need an empirical 750 control.</p>
+<h3>The clean experiment</h3>
+<p>I would <strong>not trim or mutate the currently running 2,500 subject</strong>. That would compromise the qualification and create a hybrid dataset.</p>
+<p>Instead, after the current R4 run finishes—or if it stops naturally—we should use the already-existing <strong>750 Reference R1 database on this exact same PostgreSQL 17.9 D:-resident cluster</strong>:</p>
+<pre><code class="language-text">msbf_restore_test
+</code></pre>
+<p>and execute the exact expensive M1.4 validation computation there.</p>
+<p>That gives us an unusually clean experiment:</p>
+<pre><code class="language-text">750 benchmark
+-------------------------
+same computer
+same PostgreSQL 17.9
+same D: HDD cluster
+same postgres.exe
+same psql client
+same published M1.4 functions
+same 180-day history
+same POS31 control logic
+
+only major difference:
+750 merchants / 135k rows
+vs.
+2,500 merchants / 450k rows
+</code></pre>
+<p>We do <strong>not</strong> need to regenerate another 750 population to answer the performance question.</p>
+<p>And we can run the benchmark inside a transaction using only temporary objects and <code>ROLLBACK</code>, so Reference R1 remains unchanged.</p>
+<h3>The result will be decisive</h3>
+<p>There are three outcomes.</p>
+<p><strong>A. 750 takes seconds/minutes under <code>psql</code> on the current D: cluster.</strong></p>
+<p>Then you are right that the runtime environment is fundamentally capable of running this code quickly, and we&#39;ve proven a <strong>750 → 2,500 execution-plan/scaling cliff</strong>.</p>
+<p>Example:</p>
+<pre><code class="language-text">Reference 750 POS31 = 45 sec
+Current 2500 POS31 = 45 min
+</code></pre>
+<p>That is a ~60× runtime increase for 3.33× data. That would demand execution-plan investigation.</p>
+<p><strong>B. 750 also takes 30–60 minutes under <code>psql</code> on this D: cluster.</strong></p>
+<p>Then population size is essentially exonerated.</p>
+<p>We would have proven:</p>
+<pre><code class="language-text">Original DBeaver / original environment:
+750 = fast
+
+Current psql / D:-cluster environment:
+750 = very slow
+</code></pre>
+<p>Then we investigate:</p>
+<ul>
+<li>C: SSD versus D: HDD;</li>
+<li>PostgreSQL cluster configuration;</li>
+<li>effective session settings;</li>
+<li>statistics;</li>
+<li>JIT;</li>
+<li>memory;</li>
+<li>client/JDBC initialization settings;</li>
+<li>planner cost parameters;</li>
+<li>differences between the original <code>msbf_strategy</code> cluster and this isolated Campaign Scale cluster.</li>
+</ul>
+<p>And at that point I would be very interested in running the <strong>same exact 750 benchmark in DBeaver against the current D:-resident <code>msbf_restore_test</code> database</strong>.</p>
+<p>That would isolate the client/session variable completely:</p>
+<pre><code class="language-text">same database
+same 750 rows
+same D: drive
+same PostgreSQL server
+same SQL
+
+psql vs DBeaver
+</code></pre>
+<p>If DBeaver suddenly runs it in 30 seconds while psql takes 40 minutes, then we have a very concrete session/protocol/configuration difference to find.</p>
+<p><strong>C. Both psql and DBeaver are slow against the current 750 reference.</strong></p>
+<p>Then the culprit is almost certainly <strong>the current PostgreSQL cluster/storage/configuration</strong>, not Campaign Scale population logic.</p>
+<h3>One thing I would change from your proposed test</h3>
+<p>I wouldn&#39;t literally “process one-third of the current 2,500 data.”</p>
+<p>That sounds equivalent, but it isn&#39;t as scientifically clean.</p>
+<p>If we filter a 2,500 blueprint to 750 merchants, PostgreSQL might still generate all 2,500 rows internally before applying the filter. Then we&#39;d think we tested 750 when we actually paid much of the 2,500 computational cost.</p>
+<p>Using the genuine 750 Reference R1 avoids that ambiguity entirely.</p>
+<h3>And we should capture the actual execution plan</h3>
+<p>The 750 benchmark shouldn&#39;t just give us elapsed time. It should capture:</p>
+<pre><code class="language-sql">EXPLAIN (ANALYZE, BUFFERS, SETTINGS, WAL, SUMMARY)
+</code></pre>
+<p>for the POS31 computation.</p>
+<p>Then once the 2,500 run is finished, we can obtain the corresponding 2,500 plan.</p>
+<p>That comparison will answer questions like:</p>
+<pre><code class="language-text">750                       2,500
+------------------        ------------------
+Hash Join                 Nested Loop?
+0 temp spill              20 GB temp spill?
+correct row estimates     estimates off 100×?
+2 sec blueprint           35 min blueprint?
+index used                sequential/repeated scan?
+JIT off/on                JIT difference?
+</code></pre>
+<p>No speculation.</p>
+<h3>One more strong clue</h3>
+<p>Your published M1.4 generator itself is structurally the same code used originally. It produces the merchant × date grid and performs the settlement self-join. [export reference: filecite | turn61file0 | L83-L124] [export reference: filecite | turn61file0 | L208-L220]</p>
+<p>And your original execution guide explicitly allows either <strong>DBeaver or psql</strong> for the accepted stage. [export reference: filecite | turn57file1 | L27-L35]</p>
+<p>So I agree with your underlying premise:</p>
+<blockquote>
+<p><strong>We should not accept “2,500 is bigger” as the explanation until a controlled 750 benchmark proves it.</strong></p>
+</blockquote>
+<p>The current R4 run should continue untouched because running another CPU-heavy benchmark simultaneously would contaminate both timings.</p>
+<p>As soon as R4 finishes or stops, the very next action I recommend is the <strong>750 Reference R1 POS31 benchmark on the same D:-resident PostgreSQL cluster</strong>. That single test will tell us which branch of the investigation to follow.</p>
+</div></article><article id="m-ecc1fecb-a6a7-40e1-9c36-3e9a2bdb4aba" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00226 · 2026-09-13T17:23:29.979000-04:00 · active path</p><div class="bubble"><p>prepare the test</p>
+</div></article><article id="m-7a44889c-a4f2-490f-99f3-19a9b62ea3ff" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00227 · 2026-09-13T17:23:31.917996-04:00 · active path</p><div class="bubble"><p>I’ll make this a <strong>controlled 750 benchmark</strong>, not a partial rerun: same PostgreSQL cluster, same D: storage, same published M1.4 functions, no persistent writes, and it will refuse to run while the 2,500 qualification is still active.</p>
+</div></article><article id="m-7e872698-8409-4a8e-bfd0-69b05cb1b348" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00228 · 2026-09-13T17:23:31.917996-04:00 · active path</p><div class="bubble"><p>I’m preparing a <strong>two-part 750 benchmark</strong> against <code>msbf_restore_test</code>: (A) the exact POS31 reproduction query that is slow now, and (B) full M1.4 blueprint materialization into a temporary table. Each has a 15-minute ceiling and leaves the reference database unchanged.</p>
+</div></article><article id="m-eaa582ab-6380-487b-a628-f6f0191e7ad1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00229 · 2026-09-13T17:25:45.104290-04:00 · active path</p><div class="bubble"><p>Prepared.</p>
+<h3>750 controlled performance benchmark</h3>
+<p><strong>Download the benchmark package</strong> (historical reference: <code>sandbox:[session]/MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1_20260913.zip</code>; referenced bytes not established here)</p>
+<p>PowerShell launcher (historical reference: <code>sandbox:[session]/MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1_20260913/RUN_MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1.ps1</code>; referenced bytes not established here)</p>
+<p>Exact SQL benchmark (historical reference: <code>sandbox:[session]/MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1_20260913/MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1_20260913.sql</code>; referenced bytes not established here)</p>
+<p>README (historical reference: <code>sandbox:[session]/MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1_20260913/README.md</code>; referenced bytes not established here)</p>
+<p>SHA-256 (historical reference: <code>sandbox:[session]/MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1_20260913.zip.sha256</code>; referenced bytes not established here)</p>
+<p>SHA-256:</p>
+<pre><code class="language-text">e5d30ce222f0b7d80ff112485cd364f2b45b372d1dfee1846514c87909e79402
+</code></pre>
+<h3>What it tests</h3>
+<p>It uses the genuine accepted <strong>750 reference</strong> <code>msbf_restore_test</code> on the <strong>same PostgreSQL 17.9 D:-resident cluster</strong> and measures two things:</p>
+<ol>
+<li><strong>Exact POS31 deterministic reproduction computation</strong> — the same published control currently taking an extreme amount of time at 2,500.</li>
+<li><strong>Full M1.4 deterministic blueprint materialization</strong> — the computational heart of the generation stage.</li>
+</ol>
+<p>It also records the relevant PostgreSQL session settings, table statistics, indexes, buffers, WAL, execution plan, and execution time.</p>
+<h3>Safety</h3>
+<p>It will <strong>refuse to run while the current 2,500 qualification is active</strong>, so we do not contaminate either timing.</p>
+<p>It also:</p>
+<ul>
+<li>runs only against <code>msbf_restore_test</code>;</li>
+<li>verifies <strong>750 merchants / 135,000 POS rows / 180 dates / M1.4 gate PASS</strong>;</li>
+<li>creates only TEMP objects;</li>
+<li>performs no persistent MSBF DML;</li>
+<li>wraps everything in a transaction and rolls it back;</li>
+<li>gives each benchmark statement a <strong>15-minute ceiling</strong>.</li>
+</ul>
+<p>The original M1.4 published execution target was indeed 135,000 rows for 750 merchants across 180 days. [export reference: filecite | turn57file1 | L61-L71]</p>
+<h3>How we&#39;ll interpret it</h3>
+<p>If the 750 benchmark runs in seconds/minutes while the 2,500 query takes ~60 minutes, we have strong evidence of a <strong>severe scale/planner cliff</strong>.</p>
+<p>If the same 750 workload is also extremely slow under this <code>psql</code>/D:-cluster environment, then population size is largely exonerated. The next test becomes very clean: run the <strong>exact same SQL file in DBeaver against the exact same <code>msbf_restore_test</code> database</strong>.</p>
+<p>That will isolate:</p>
+<pre><code class="language-text">same SQL
+same 750 data
+same PostgreSQL server
+same D: storage
+
+psql vs DBeaver/session
+</code></pre>
+<p>Do <strong>not</strong> run this benchmark until the current R4 qualification finishes or stops.</p>
+</div></article><article id="m-b9a052b6-7a39-4574-b895-cc2dfd10df12" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00230 · 2026-09-13T17:28:32.463000-04:00 · active path</p><div class="bubble"><p>until the current R4 qualification finishes...it is still on the same M1 core 3/68 process I called out before and currently at 6570 seconds elapsed. i am not waiting for that to complete.</p>
+</div></article><article id="m-3b05b54e-ea8c-4273-9313-6cee2c0e4d73" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00231 · 2026-09-13T17:28:34.272657-04:00 · active path</p><div class="bubble"><p>Agreed. At <strong>6,570 seconds (~109.5 minutes)</strong> on M1 core 3/68, I would stop the R4 qualification and run the controlled 750 benchmark instead.</p>
+<p>In the <strong>original R4 PowerShell window</strong>, press:</p>
+<pre><code class="language-text">Ctrl+C
+</code></pre>
+<p><strong>once</strong>, then let the qualification tool finish its stop handling and produce a <code>_RETURN.zip</code> if possible. Do not close the window immediately.</p>
+<p>This is a reasonable interruption point because <code>source_029</code> is the published <strong>M1.4 positive-validation script</strong>, which runs inside an explicit transaction beginning with <code>BEGIN</code>; interrupting the active statement should abort that transaction rather than leave a partially accepted M1.4 validation state. [export reference: filecite | turn56file0 | L12-L32]</p>
+<p>After the Python qualification process has exited, run the 750 benchmark. Do <strong>not</strong> run it concurrently with R4, because CPU contention would make the comparison useless.</p>
+<p>The test we want is now very clean:</p>
+<pre><code class="language-text">Current 2,500:
+same cluster / D: drive / psql
+M1.4 POS31 &gt; 1 hour
+
+versus
+
+Reference 750:
+same cluster / D: drive / psql
+same published POS31 computation
+</code></pre>
+<p>If the 750 benchmark is also very slow, that strongly points away from population size and toward the current PostgreSQL environment/session/execution path.</p>
+<p>If 750 is fast, then we have directly demonstrated a severe scaling/planner cliff.</p>
+<p>Once R4 stops, paste the stop output here, then run the benchmark package I prepared.</p>
+</div></article><article id="m-a5dc050e-de62-440c-95ff-db69d03a1541" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00232 · 2026-09-13T17:29:19.929000-04:00 · active path</p><p class="note">Attachment references: LEAP3_R4_NATIVE_20260913T182750Z_b28da63f_RETURN.zip.sha256; LEAP3_R4_NATIVE_20260913T182750Z_b28da63f_RETURN.zip.validation.json; LEAP3_R4_NATIVE_20260913T182750Z_b28da63f_RETURN.zip</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-99e67a61-457c-4071-b99b-1026baeb6a92" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00233 · 2026-09-13T17:29:22.471581-04:00 · active path</p><div class="bubble"><p>I’ll inspect the stopped R4 return to confirm exactly where it was interrupted and whether the 750 benchmark can now proceed cleanly.</p>
+</div></article><article id="m-7fea5b9b-8d48-407a-8885-716131d586da" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00234 · 2026-09-13T17:29:54.845157-04:00 · active path</p><div class="bubble"><p>The R4 return confirms the interruption was clean enough for the benchmark: <code>source_028</code> completed in <strong>4,184.4 seconds (~69.7 min)</strong>, <code>source_029</code> was interrupted after <strong>6,597.0 seconds (~110.0 min)</strong>, and no later source ran. The isolated R4 subject should now be preserved and left untouched.</p>
+</div></article><article id="m-7c5dadd4-12f3-43f0-a26e-83ada8994865" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00235 · 2026-09-13T17:30:14.605680-04:00 · active path</p><div class="bubble"><p>The R4 return confirms the stop exactly as intended: status is <code>M1_CONTINUATION_STOPPED</code>, with a valid return ZIP/CRC. [export reference: filecite | turn62file0 | L2-L6]</p>
+<p>I inspected the return package in detail. The useful measured evidence is:</p>
+<pre><code class="language-text">source_028 — M1.4 generation
+COMPLETED
+Elapsed: 4,184.391 sec = 69.74 minutes
+
+source_029 — M1.4 positive validation
+INTERRUPTED by Ctrl+C
+Elapsed: 6,597.014 sec = 109.95 minutes
+
+Completed source IDs:
+027, 028
+
+Later sources:
+NOT EXECUTED
+</code></pre>
+<p>So we now have a very strong 2,500 benchmark baseline:</p>
+<pre><code class="language-text">M1.4 generation     ~69.7 minutes
+M1.4 validation     &gt;109.9 minutes, unfinished
+</code></pre>
+<p>The new R4 subject was created, but it is isolated and should simply remain preserved. Do not resume or modify it.</p>
+<h2>Proceed with the 750 benchmark now</h2>
+<p>The R4 Python qualification process has exited, so the benchmark&#39;s concurrency guard should now allow execution.</p>
+<p>Use the benchmark package already prepared:</p>
+<p>Download 750 benchmark (historical reference: <code>sandbox:[session]/MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1_20260913.zip</code>; referenced bytes not established here)</p>
+<p>Extract it somewhere on D:, for example:</p>
+<pre><code class="language-text">D:\MSBF_CAMPAIGNS\BENCHMARKS\MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1
+</code></pre>
+<p>Then run:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$ErrorActionPreference = &#39;Stop&#39;
+
+&amp; &#39;D:\MSBF_CAMPAIGNS\BENCHMARKS\MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1\RUN_MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1.ps1&#39;
+</code></pre>
+<p>The benchmark will test the accepted 750 <code>msbf_restore_test</code> on the <strong>same PostgreSQL server, same D: cluster, same machine, same <code>psql</code> client, and same published M1.4 functions</strong>.</p>
+<p>That makes the comparison unusually clean.</p>
+<h3>The threshold for a meaningful finding is huge</h3>
+<p>If 750 POS31 takes:</p>
+<pre><code class="language-text">30 seconds
+2 minutes
+5 minutes
+</code></pre>
+<p>while 2,500 took <strong>&gt;110 minutes unfinished</strong>, then 3.33× population clearly does <strong>not</strong> explain the degradation. We will have demonstrated a severe execution-plan/scaling cliff.</p>
+<p>If 750 also takes something like:</p>
+<pre><code class="language-text">30–60+ minutes
+</code></pre>
+<p>then your hypothesis becomes much stronger: <strong>the current Campaign Scale PostgreSQL execution environment behaves materially differently from your original DBeaver execution</strong>, even at the original population size.</p>
+<p>And then the next experiment is straightforward: run the exact same 750 SQL against the exact same <code>msbf_restore_test</code> database from DBeaver. That isolates client/session behavior with essentially every other variable held constant.</p>
+<p>This benchmark is the right next move.</p>
+</div></article><article id="m-0ba83767-0901-4ea7-abf4-3bb975ee592f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00236 · 2026-09-13T17:35:23.163000-04:00 · active path</p><div class="bubble"><h1>============================================================
+MSBF M1.4 750 PERFORMANCE BENCHMARK</h1>
+<p>Database: msbf_restore_test
+Output:   D:\MSBF_CAMPAIGNS\BENCHMARKS\M1_4_750_R1_20260913T213507Z</p>
+<p>Phase A: exact POS31 expected-vs-actual deterministic reproduction
+Phase B: full M1.4 expected-blueprint materialization to TEMP</p>
+<p>No persistent MSBF data will be changed.</p>
+<p>psql: error: connection to server at &quot;127.0.0.1&quot;, port 55432 failed: Connection refused (0x0000274D/10061)
+        Is the server running on that host and accepting TCP/IP connections?</p>
+<h1>============================================================
+BENCHMARK STOPPED / TIMED OUT</h1>
+<p>Output log:
+  D:\MSBF_CAMPAIGNS\BENCHMARKS\M1_4_750_R1_20260913T213507Z\M1_4_750_BENCHMARK_OUTPUT.txt</p>
+<p>Metadata:
+  D:\MSBF_CAMPAIGNS\BENCHMARKS\M1_4_750_R1_20260913T213507Z\M1_4_750_BENCHMARK_METADATA.txt</p>
+<p>Paste the benchmark output back into ChatGPT.</p>
+</div></article><article id="m-2a5a125f-e6b2-45b7-a876-23962eaaff97" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00237 · 2026-09-13T17:35:27.406582-04:00 · active path</p><div class="bubble"><p>This benchmark never reached PostgreSQL at all. The <code>connection refused</code> happened before Phase A, so <strong>no benchmark SQL executed and no reference data was touched</strong>.</p>
+<p>Most likely the PostgreSQL cluster stopped when we interrupted the long R4 console process. That is an infrastructure condition, not a benchmark result.</p>
+<p>Run this <strong>single block</strong> in PowerShell. It safely checks the exact known MSBF cluster, starts it only if it is confirmed stopped, waits for readiness, and then reruns the 750 benchmark.</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$ErrorActionPreference = &#39;Stop&#39;
+
+$PgBin = &#39;C:\Program Files\PostgreSQL\17\bin&#39;
+$Data = &#39;D:\MSBF_CAMPAIGNS\pg_clusters\msbf_cs_ref750_routeb_20260912_012713&#39;
+$LogDir = &#39;D:\MSBF_CAMPAIGNS\pg_logs&#39;
+$Port = 55432
+
+$Benchmark = &#39;D:\MSBF_CAMPAIGNS\BENCHMARKS\MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1\RUN_MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1.ps1&#39;
+
+$PgIsReady = Join-Path $PgBin &#39;pg_isready.exe&#39;
+$PgCtl = Join-Path $PgBin &#39;pg_ctl.exe&#39;
+
+Write-Host &quot;`nChecking PostgreSQL endpoint 127.0.0.1:$Port ...&quot;
+
+&amp; $PgIsReady -h 127.0.0.1 -p $Port
+$ReadyCode = $LASTEXITCODE
+
+if ($ReadyCode -ne 0) {
+
+    Write-Host &quot;Endpoint unavailable. Checking configured MSBF cluster state...&quot;
+
+    &amp; $PgCtl status -D $Data
+    $StatusCode = $LASTEXITCODE
+
+    if ($StatusCode -eq 0) {
+        throw &quot;Configured PostgreSQL cluster reports RUNNING but 127.0.0.1:$Port is unavailable. Stop here; do not start a second copy.&quot;
+    }
+
+    if ($StatusCode -ne 3) {
+        throw &quot;Could not establish that the configured cluster is safely stopped. pg_ctl status exit code: $StatusCode&quot;
+    }
+
+    New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+    $ServerLog = Join-Path $LogDir (&quot;benchmark_pg_start_&quot; + [DateTime]::UtcNow.ToString(&quot;yyyyMMdd&#39;T&#39;HHmmss&#39;Z&#39;&quot;) + &quot;.log&quot;)
+
+    Write-Host &quot;Configured cluster is stopped. Starting it safely...&quot;
+
+    &amp; $PgCtl start `
+        -D $Data `
+        -l $ServerLog `
+        -W `
+        -o &quot;-p $Port -h 127.0.0.1&quot;
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;PostgreSQL start failed. See: $ServerLog&quot;
+    }
+
+    $Ready = $false
+
+    for ($i = 1; $i -le 30; $i++) {
+        Start-Sleep -Seconds 1
+
+        &amp; $PgIsReady -h 127.0.0.1 -p $Port *&gt; $null
+
+        if ($LASTEXITCODE -eq 0) {
+            $Ready = $true
+            break
+        }
+    }
+
+    if (-not $Ready) {
+        throw &quot;PostgreSQL did not become ready on 127.0.0.1:$Port.&quot;
+    }
+}
+
+Write-Host &quot;`nPostgreSQL is accepting connections.&quot;
+
+if (-not (Test-Path -LiteralPath $Benchmark -PathType Leaf)) {
+    throw &quot;Benchmark launcher not found: $Benchmark&quot;
+}
+
+Write-Host &quot;`nStarting controlled 750 benchmark...&quot;
+&amp; $Benchmark
+</code></pre>
+<p>If your benchmark launcher is extracted somewhere else, change <strong>only</strong> this line:</p>
+<pre><code class="language-powershell">$Benchmark = &#39;...\RUN_MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1.ps1&#39;
+</code></pre>
+<p>Once it starts successfully, the result we care about is the elapsed time and execution plan for <strong>Phase A POS31</strong>. If that 750 test completes quickly, we&#39;ll have very strong evidence that the current 2,500 path hit a severe scaling/planner cliff rather than merely being “3.3× bigger.”</p>
+</div></article><article id="m-f45e246f-7c19-42a6-9ef3-fb2dbd10bd13" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00238 · 2026-09-13T17:36:25.101000-04:00 · active path</p><div class="bubble"><p>Checking PostgreSQL endpoint 127.0.0.1:55432 ...
+127.0.0.1:55432 - no response
+Endpoint unavailable. Checking configured MSBF cluster state...
+pg_ctl: no server running
+Configured cluster is stopped. Starting it safely...
+server starting</p>
+<p>PostgreSQL is accepting connections.</p>
+<p>Starting controlled 750 benchmark...</p>
+<h1>============================================================
+MSBF M1.4 750 PERFORMANCE BENCHMARK</h1>
+<p>Database: msbf_restore_test
+Output:   D:\MSBF_CAMPAIGNS\BENCHMARKS\M1_4_750_R1_20260913T213606Z</p>
+<p>Phase A: exact POS31 expected-vs-actual deterministic reproduction
+Phase B: full M1.4 expected-blueprint materialization to TEMP</p>
+<p>No persistent MSBF data will be changed.</p>
+<p>BEGIN
+SET
+SET
+DO
+SELECT 1
+      section      |   database_name   | server_version |                           data_directory                            | run_id | population_id | merchants | pos_rows
+-------------------+-------------------+----------------+---------------------------------------------------------------------+--------+---------------+-----------+----------
+ BENCHMARK_CONTEXT | msbf_restore_test | 17.9           | D:/MSBF_CAMPAIGNS/pg_clusters/msbf_cs_ref750_routeb_20260912_012713 |      1 | MSBF_POP_0001 |       750 |   135000
+(1 row)</p>
+<pre><code> section      |              name               | setting | unit |       source
+</code></pre>
+<p>------------------+---------------------------------+---------+------+--------------------
+ SESSION_SETTINGS | effective_cache_size            | 524288  | 8kB  | default
+ SESSION_SETTINGS | effective_io_concurrency        | 0       |      | default
+ SESSION_SETTINGS | jit                             | on      |      | default
+ SESSION_SETTINGS | maintenance_work_mem            | 65536   | kB   | default
+ SESSION_SETTINGS | max_parallel_workers            | 8       |      | default
+ SESSION_SETTINGS | max_parallel_workers_per_gather | 2       |      | default
+ SESSION_SETTINGS | min_parallel_index_scan_size    | 64      | 8kB  | default
+ SESSION_SETTINGS | min_parallel_table_scan_size    | 1024    | 8kB  | default
+ SESSION_SETTINGS | random_page_cost                | 4       |      | default
+ SESSION_SETTINGS | seq_page_cost                   | 1       |      | default
+ SESSION_SETTINGS | shared_buffers                  | 16384   | 8kB  | configuration file
+ SESSION_SETTINGS | temp_file_limit                 | -1      | kB   | default
+ SESSION_SETTINGS | work_mem                        | 4096    | kB   | default
+(13 rows)</p>
+<p>   section   | schemaname |         relname         | n_live_tup | n_dead_tup | last_analyze | last_autoanalyze | analyze_count | autoanalyze_count
+-------------+------------+-------------------------+------------+------------+--------------+------------------+---------------+-------------------
+ TABLE_STATS | msbf_m1    | merchant_pos_daily_base |          0 |          0 |              |                  |             0 |                 0
+(1 row)</p>
+<p> section |      indexname      |                                                                          indexdef
+---------+---------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ INDEXES | r1b_pk_1054ac0250fd | CREATE UNIQUE INDEX r1b_pk_1054ac0250fd ON msbf_m1.merchant_pos_daily_base USING btree (population_id, merchant_id, processor_account_id, observation_date)
+(1 row)</p>
+<pre><code>  benchmark_marker       |          observed_at
+</code></pre>
+<p>-----------------------------+-------------------------------
+ PHASE_A_POS31_EXPLAIN_BEGIN | 2026-09-13 17:36:07.736425-04
+(1 row)</p>
+<p>psql:D:/MSBF_CAMPAIGNS/BENCHMARKS/M1_4_750_R1_20260913T213606Z/MSBF_M1_4_750_PERFORMANCE_BENCHMARK_R1_20260913.sql:108: ERROR:  function msbf_m1.m1_4_expected_pos_snapshot(bigint) does not exist
+LINE 3: FROM msbf_m1.m1_4_expected_pos_snapshot((SELECT run_id FROM ...
+             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.</p>
+<h1>============================================================
+BENCHMARK STOPPED / TIMED OUT</h1>
+<p>Output log:
+  D:\MSBF_CAMPAIGNS\BENCHMARKS\M1_4_750_R1_20260913T213606Z\M1_4_750_BENCHMARK_OUTPUT.txt</p>
+<p>Metadata:
+  D:\MSBF_CAMPAIGNS\BENCHMARKS\M1_4_750_R1_20260913T213606Z\M1_4_750_BENCHMARK_METADATA.txt</p>
+<p>Paste the benchmark output back into ChatGPT.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

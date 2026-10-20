@@ -1,0 +1,1067 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5 — part 37 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5 — part 37</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-36.html">Previous part</a><a href="part-38.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-2e2df027-06bf-4d0b-b362-b1237c653848" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00431 · 2026-10-15T23:36:17.530013-04:00 · active path</p><div class="bubble"><p><strong>The segment parameter is working now, and the Healthcare Services filter is reaching both the chart and the executive narrative. Do not change the parameter definitions.</strong></p>
+<p>The two segment screenshots show the intended behavior:</p>
+<table>
+<thead>
+<tr>
+<th>Selection</th>
+<th>What the chart shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Industry</strong>, with Healthcare Services filtered</td>
+<td>One industry, with <strong>18.3% Baseline authorization versus 4.9% under stress</strong>.</td>
+</tr>
+<tr>
+<td><strong>Acquisition Source</strong>, with the same industry filter</td>
+<td>Five acquisition sources <strong>within Healthcare Services</strong>, each with its own two rates.</td>
+</tr>
+</tbody></table>
+<p>Your dashboard also shows <strong>82 matched applications, 29 different decisions, 35.4%, 15 Baseline authorizations, and 4 stress authorizations</strong>. The industry rates agree: <strong>15 ÷ 82 = 18.3%</strong> and <strong>4 ÷ 82 = 4.9%</strong>.</p>
+<p>For example, the <strong>16.7% / 5.6% Digital Direct bars</strong> are for <em>Healthcare Services through Digital Direct</em>, not Digital Direct across the entire portfolio. That is the correct distinction. The parameter changes the grouping; the industry filter continues to define the population. This is how the parameter-driven dimension calculation is intended to work. [export reference: cite | turn192303view0]</p>
+<p><strong>We are ready to assemble the executive view. Before placing the remaining sheets, there are two presentation issues worth correcting.</strong></p>
+<h2>1. Format the segment axis as a percentage</h2>
+<p>Your bar labels correctly show percentages, but the horizontal axis still displays <code>0.00</code>, <code>0.02</code>, and so forth, with the title <strong>Value</strong>.</p>
+<p>On <strong>08 — Segment Comparison</strong>:</p>
+<ol>
+<li>Right-click a horizontal-axis number → <strong>Format</strong>.</li>
+<li>In the formatting pane, select <strong>Axis → Numbers → Percentage</strong>, with <strong>zero decimal places</strong> for the axis.</li>
+<li>Leave the bar labels at <strong>one decimal place</strong>.</li>
+</ol>
+<p>This changes the display—not the calculation. Tableau interprets <code>1</code> as <code>100%</code>, so <strong>do not multiply the rate formulas by 100</strong>. [export reference: cite | turn192303view1]</p>
+<p>Then right-click the axis → <strong>Edit Axis</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Title</strong></td>
+<td><code>Share of matched applications authorized</code></td>
+</tr>
+<tr>
+<td><strong>Range</strong></td>
+<td>Fixed</td>
+</tr>
+<tr>
+<td><strong>Start</strong></td>
+<td><code>0</code></td>
+</tr>
+<tr>
+<td><strong>End</strong></td>
+<td><code>1</code></td>
+</tr>
+</tbody></table>
+<p>I recommend the fixed <strong>0–100%</strong> scale because readers will switch between populations. In your screenshots, the maximum changes from roughly 36% to 20%. That is mathematically legitimate, but a stable scale makes bar lengths comparable across selections. Tableau supports setting both axis endpoints explicitly. [export reference: cite | turn285328search0]</p>
+<h3>Remove the repeated measure-name column</h3>
+<p>The chart currently repeats “Baseline Authorization Rate” and “Stress Authorization Rate” beside every segment. The legend already identifies the two series.</p>
+<p>Right-click the <strong>Measure Names</strong> pill on <strong>Rows</strong> and turn off <strong>Show Header</strong>. <strong>Keep the pill on Rows</strong>—it is what separates the two bars. Leave the <code>Review Segment</code> header visible. Tableau allows discrete headers to be hidden without removing their fields from the view. [export reference: cite | turn285328search0]</p>
+<p>This will recover horizontal space without reducing the font.</p>
+<h2>2. Correct an important matrix-reading assumption</h2>
+<p><strong>Your filtered matrix reveals a limitation in my earlier “read the diagonal” guidance.</strong></p>
+<p>Under Healthcare Services, the <strong>stress “Counteroffer — authorized” column is absent</strong>, while the corresponding Baseline row remains. Consequently, the grid is no longer a symmetrical seven-by-seven display.</p>
+<p>The counts are not wrong. <strong>But geometric position alone no longer identifies an unchanged decision.</strong> Readers must compare the row and column categories. Tableau normally hides empty categorical rows and columns, which can produce this kind of compressed view. [export reference: cite | turn285328search3]</p>
+<p>We do not need to alter the data or manufacture records. Instead, make the distinction explicit.</p>
+<p>Create this calculated field:</p>
+<p><strong>Name</strong></p>
+<pre><code class="language-text">Decision Pairing Status
+</code></pre>
+<p><strong>Formula</strong></p>
+<pre><code class="language-tableau">IF ISNULL([Baseline Decision Code])
+    OR ISNULL([Stress Decision Code]) THEN
+
+    &quot;Decision code unavailable&quot;
+
+ELSEIF [Baseline Decision Code] = [Stress Decision Code] THEN
+
+    &quot;Same final decision category&quot;
+
+ELSE
+
+    &quot;Different final decision category&quot;
+
+END
+</code></pre>
+<p>On <strong>02 — Decision Matrix</strong>, drag <strong>Decision Pairing Status</strong> onto <strong>Tooltip</strong>. Keep the existing count on Color and Label.</p>
+<p>Edit the tooltip so it clearly includes the Baseline category, stress category, matched-application count, and this status. Use <strong>Insert</strong> to retain Tableau’s actual field tokens.</p>
+<p>Also add this short sentence to the matrix’s subtitle or caption:</p>
+<blockquote>
+<p><strong>Matching labels mean the same decision category; blank cells contain no applications in the current selection.</strong></p>
+</blockquote>
+<p>This avoids relying on the diagonal and preserves the distinction that <strong>the same category does not necessarily mean the same terms, reasons, or evidence</strong>. [export reference: filecite | turn110file0 | L53-L59]</p>
+<h2>3. Assemble the dashboard without shrinking the explanations</h2>
+<p>The current investigation section is readable. The next layout should preserve that, while giving the four indicators and segment chart a proper place.</p>
+<p><strong>Save the workbook locally before rearranging it. Keep the existing worksheets and actions.</strong></p>
+<p>For this assembly pass, I recommend a <strong>1400 × 1200 fixed dashboard</strong>, slightly wider than the working layout. That gives us room for the matrix and segment chart beside each other. A fixed dashboard may still require outer scrolling on a smaller display; the goal is to avoid <em>nested scrolling inside the default narrative paragraphs</em>. Tableau distinguishes overall dashboard sizing from the sizing of its individual containers. [export reference: cite | turn192303view2]</p>
+<h3>Target arrangement</h3>
+<pre><code class="language-text">MERCHANT CREDIT INTELLIGENCE
+Risk Decision &amp; Scenario Review
+
+Industry filter | Acquisition Source filter
+
+Matched applications | Different category | Baseline authorized | Stress authorized
+
+Portfolio interpretation
+
+Decision matrix                         | Authorization rates by segment
+                                        | Review Segment By control
+
+Application detail — select an application
+
+Selected merchant and paired outcomes          Narrative Detail control
+
+Baseline explanation                    | Recession Energy explanation
+
+Synthetic-scenario and interpretation note
+</code></pre>
+<p>The two charts answer different questions:</p>
+<p><strong>Matrix:</strong> Which decision pairings occur?</p>
+<p><strong>Segment chart:</strong> Where do authorization rates differ across the filtered population?</p>
+<p>The lower section then explains the selected application.</p>
+<h3>A. Add the executive-indicator row</h3>
+<p>Add an explicit <strong>Horizontal</strong> layout container above the executive narrative. Place these four existing sheets inside, in order:</p>
+<pre><code class="language-text">09 — KPI Matched Applications
+10 — KPI Different Decisions
+11 — KPI Baseline Authorized
+12 — KPI Stress Authorized
+</code></pre>
+<p>Select the container → <strong>Distribute Evenly</strong>. Hide the worksheet titles if the card text already contains its descriptive label.</p>
+<p>With the current Healthcare Services filter, the cards should display:</p>
+<table>
+<thead>
+<tr>
+<th>Card</th>
+<th>Expected display</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Matched applications</td>
+<td><strong>82</strong></td>
+</tr>
+<tr>
+<td>Different category</td>
+<td><strong>29 · 35.4%</strong></td>
+</tr>
+<tr>
+<td>Baseline authorized</td>
+<td><strong>15 · 18.3%</strong></td>
+</tr>
+<tr>
+<td>Stress authorized</td>
+<td><strong>4 · 4.9%</strong></td>
+</tr>
+</tbody></table>
+<p>Your screenshot shows that those worksheets exist, but <strong>it does not yet establish that all four are receiving the shared filters</strong>. These values are the next check.</p>
+<p>Explicit layout containers support equal distribution and grouped resizing. [export reference: cite | turn285328search2]</p>
+<h3>B. Put the two charts beside each other</h3>
+<p>Add a second <strong>Horizontal</strong> container where the matrix currently sits. Move the existing matrix into its left side and add <strong>08 — Segment Comparison</strong> to its right.</p>
+<p>Start with approximately:</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th align="right">Width</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Matrix</td>
+<td align="right"><strong>880 px</strong></td>
+</tr>
+<tr>
+<td>Segment comparison</td>
+<td align="right"><strong>460 px</strong></td>
+</tr>
+<tr>
+<td>Remaining width</td>
+<td align="right">Padding</td>
+</tr>
+</tbody></table>
+<p>Give this row approximately <strong>360–400 px of height</strong>. These are starting allocations, not acceptance requirements. <strong>Keep both charts’ labels readable rather than forcing exact dimensions.</strong></p>
+<p>Use <strong>Entire View</strong> for both embedded chart views. The segment chart will look less oversized here than it does as a full-screen worksheet with only one industry selected.</p>
+<p>Show <strong>Review Segment By</strong> with the segment chart. Keep <strong>Narrative Detail</strong> near the application explanations rather than at the very top; their locations should indicate what they control.</p>
+<h3>C. Keep the investigation section full width</h3>
+<p>Do not place the application list or story panels into the narrower chart columns.</p>
+<p>Retain:</p>
+<ul>
+<li>The application table across the full dashboard width, with vertical scrolling.</li>
+<li>The compact selection band immediately below it.</li>
+<li>Baseline and Recession Energy in an evenly divided horizontal container, with enough height for both complete <strong>Decision</strong> paragraphs.</li>
+</ul>
+<p>The longer <strong>Evidence</strong>, <strong>Structure</strong>, and <strong>Source rationale</strong> choices still need separate viewing checks. The current screenshots establish readability only for the displayed Decision paragraphs.</p>
+<h3>D. Compact the filter cards</h3>
+<p>Change <strong>Industry</strong> and <strong>Acquisition Source</strong> from checkbox lists to <strong>Multiple Values (Dropdown)</strong> through each filter card’s menu. Keep their existing worksheet scope.</p>
+<p>This is a display change only. <strong>Do not remove or recreate the shared filters.</strong></p>
+<h2>4. Preserve the interaction boundaries</h2>
+<p>Adding sheets must not change what the two existing actions target.</p>
+<table>
+<thead>
+<tr>
+<th>Interaction</th>
+<th>Intended effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Industry / Acquisition Source filters</strong></td>
+<td>All analytical views, including indicators and portfolio narrative.</td>
+</tr>
+<tr>
+<td><strong>Review Segment By</strong></td>
+<td>Segment-chart grouping only.</td>
+</tr>
+<tr>
+<td><strong>Matrix-cell selection</strong></td>
+<td>Application list and investigation narratives only.</td>
+</tr>
+<tr>
+<td><strong>Application selection</strong></td>
+<td>Shared selection band and the two individual stories only.</td>
+</tr>
+<tr>
+<td><strong>Narrative Detail</strong></td>
+<td>Which explanatory section appears in the two stories.</td>
+</tr>
+</tbody></table>
+<p><strong>Do not enable “Use as Filter” on the new segment chart during this pass.</strong> The global dropdowns already provide population selection. Adding another filtering action now would introduce a second route to the same scope before we have tested the final layout.</p>
+<p>The prepared design specifically keeps portfolio totals separate from matrix-cell and individual-application investigation filters. [export reference: filecite | turn110file0 | L17-L33]</p>
+<h2>5. Finish two small labeling items</h2>
+<p><strong>Requested Amount:</strong> The rightmost dollar column in the application table remains unlabeled in the screenshot. Complete the earlier <strong>Measure Names on Columns / Measure Values on Text</strong> setup, retaining only <code>MIN(Requested Amount)</code>, so the column has an actual <strong>Requested Amount</strong> header.</p>
+<p><strong>Dashboard title:</strong> Add a title at the top:</p>
+<blockquote>
+<p><strong>Merchant Credit Intelligence</strong><br>Risk Decision &amp; Scenario Review</p>
+</blockquote>
+<p>Use a short footer:</p>
+<blockquote>
+<p><strong>Deterministic synthetic scenarios. Review is not authorization; authorization does not establish funding.</strong></p>
+</blockquote>
+<p>That qualification fits the current export, which contains decision results and selected terms—not funded cash transactions. [export reference: filecite | turn110file0 | L53-L59]</p>
+<h2>Final check for this pass</h2>
+<p>Keep <strong>Healthcare Services</strong> selected, clear any matrix/application selection, and confirm that the four cards show <strong>82 / 29 / 15 / 4</strong> with their corresponding rates.</p>
+<p>Then select the Healthcare matrix cell:</p>
+<blockquote>
+<p><strong>Counteroffer review required → Evidence decline: 10 applications</strong></p>
+</blockquote>
+<p>Select Merchant <strong>000003</strong> from that list. The portfolio cards and executive narrative should remain on <strong>82 applications</strong>, while the lower panels explain Merchant 003.</p>
+<p><strong>This will give us one connected risk-review dashboard: portfolio scope → scenario comparison → segment context → application evidence.</strong> Save locally and send the assembled dashboard with Healthcare Services and Merchant 003 selected; that will let us review the complete layout and the shared-filter behavior together.</p>
+</div></article><article id="m-5d126d9e-7717-433f-842b-476e575cc34c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00432 · 2026-10-16T06:52:57.687000-04:00 · active path</p><div class="bubble"><p>what is this new dashboard called. your instructions are not quite as detailed for the new dashboard.</p>
+</div></article><article id="m-5a0b5efb-478b-481c-be6b-e96c8cf90e9f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00433 · 2026-10-16T06:57:34.610655-04:00 · active path</p><div class="bubble"><p><strong>Keep the dashboard named <code>Risk Decision &amp; Scenario Review</code>. We are expanding your existing dashboard—not creating a second one.</strong> My previous instructions moved too quickly from the worksheet build to the layout.</p>
+<p>The names should remain:</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Name</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Workbook</strong></td>
+<td><code>MCI_Risk_Decision_Scenario_Review_R1</code></td>
+</tr>
+<tr>
+<td><strong>Dashboard tab</strong></td>
+<td><code>Risk Decision &amp; Scenario Review</code></td>
+</tr>
+<tr>
+<td><strong>Large title displayed on the dashboard</strong></td>
+<td><strong>Merchant Credit Intelligence</strong></td>
+</tr>
+<tr>
+<td><strong>Subtitle displayed beneath it</strong></td>
+<td><strong>Risk Decision &amp; Scenario Review</strong></td>
+</tr>
+</tbody></table>
+<p><strong>Do not create another dashboard, reconnect data, or recreate the calculations.</strong> We will add the five worksheets you have already built—the four indicators and segment comparison—to the dashboard where your application investigation already works.</p>
+<h1>1. Return to the existing dashboard in editing mode</h1>
+<p>Click the existing <strong>Risk Decision &amp; Scenario Review</strong> tab at the bottom.</p>
+<p>Your recent dashboard screenshots appear to be in presentation mode. <strong>Press F7</strong> to return to editing mode if the menus and authoring panels are hidden. F7 toggles Tableau Desktop’s presentation mode. [export reference: cite | turn230053view2]</p>
+<p>Close any <strong>Format</strong> panel using its small <strong>×</strong>, then select the <strong>Dashboard</strong> tab in the left pane. You should see <strong>Size</strong>, <strong>Sheets</strong>, and <strong>Objects</strong>.</p>
+<p>Press <strong>Ctrl+S</strong> before rearranging anything.</p>
+<h1>2. Set the dashboard size and displayed title</h1>
+<h3>Set the size</h3>
+<p>In the left <strong>Dashboard</strong> pane, expand <strong>Size</strong> and choose:</p>
+<pre><code class="language-text">Sizing: Fixed size
+Width:  1400
+Height: 1200
+</code></pre>
+<p>Under <strong>Objects</strong>, keep <strong>Tiled</strong> selected.</p>
+<p>This is the same expanded layout proposed in my previous message. A fixed dashboard taller than your viewing window will have an outer scrollbar; that is different from clipping text inside individual narrative panels. [export reference: cite | turn230053view0]</p>
+<h3>Add the title</h3>
+<p>Choose <strong>Dashboard → Show Title</strong> if the dashboard title is not already visible.</p>
+<p>Double-click the title and replace its contents with:</p>
+<pre><code class="language-text">Merchant Credit Intelligence
+Risk Decision &amp; Scenario Review
+</code></pre>
+<p>In the title editor, make the first line approximately <strong>22-point bold</strong> and the second approximately <strong>12-point regular</strong>. These are my suggested display settings.</p>
+<p><strong>Changing this displayed title does not require renaming the dashboard tab.</strong> Tableau provides separate controls for showing and editing dashboard titles. [export reference: cite | turn970301search12]</p>
+<h1>3. Use this exact arrangement</h1>
+<p>This is the target arrangement of the <strong>existing dashboard</strong>:</p>
+<pre><code class="language-text">Merchant Credit Intelligence
+Risk Decision &amp; Scenario Review
+
+[ Industry filter ]                  [ Acquisition Source filter ]
+
+[ Matched applications ] [ Different category ] [ Baseline authorized ] [ Stress authorized ]
+
+Portfolio interpretation
+
+┌──────────────────────────────────────┬─────────────────────────────┐
+│                                      │ Review Segment By           │
+│ Decision matrix                      │                             │
+│                                      │ Authorization rates         │
+│                                      │ by segment                  │
+│ Matrix color legend                  │ Scenario color legend       │
+└──────────────────────────────────────┴─────────────────────────────┘
+
+Application detail — click a requested amount to investigate
+
+Selected merchant and paired outcomes          [ Narrative Detail ]
+
+┌──────────────────────────────────────┬─────────────────────────────┐
+│ Baseline explanation                 │ Recession Energy explanation│
+└──────────────────────────────────────┴─────────────────────────────┘
+
+Deterministic synthetic scenarios. Review is not authorization;
+authorization does not establish funding.
+</code></pre>
+<p><strong>The lower application list, selection band, and story panels already exist. Keep them.</strong> Most of the work is adding the indicator row and changing the matrix’s current full-width area into a two-chart row.</p>
+<h2>The one layout technique to use throughout</h2>
+<p>For each new row, drag <strong>Horizontal</strong> from <strong>Objects</strong> into the dashboard. Watch the highlighted placement area before releasing it.</p>
+<p>To move an existing item, select it and drag its <strong>small handle at the top of its border</strong>—not a data mark inside the chart. After inserting a container, place its contents inside that container rather than beside the entire dashboard. Tableau uses these containers to keep related objects together. [export reference: cite | turn970301search0 | turn970301search1]</p>
+<p>If an item lands in the wrong place, use <strong>Ctrl+Z immediately</strong> and retry. Do not delete the worksheet.</p>
+<h1>4. Put the two portfolio filters below the title</h1>
+<p>Your <strong>Industry</strong> and <strong>Acquisition Source</strong> filter cards are currently in the right-hand strip.</p>
+<p>First, change each card’s presentation:</p>
+<p><strong>Filter-card dropdown → Multiple Values (Dropdown)</strong></p>
+<p>Then:</p>
+<ol>
+<li>Drag a <strong>Horizontal</strong> container immediately below the dashboard title and above the executive narrative.</li>
+<li>Move the existing <strong>Industry</strong> filter card into its left side.</li>
+<li>Move the existing <strong>Acquisition Source</strong> filter card into its right side.</li>
+<li>Give the row enough height to show each filter’s title and dropdown—approximately <strong>50–60 pixels</strong>.</li>
+</ol>
+<p>Move the existing cards; <strong>do not remove the filters from the worksheets or change their “Apply to Worksheets” settings</strong>.</p>
+<p>The filter-card menus control their display, while the existing worksheet filter settings control their analytical scope. [export reference: cite | turn970301search0]</p>
+<h1>5. Add the four executive indicators</h1>
+<h3>Create the indicator row</h3>
+<p>Drag another <strong>Horizontal</strong> container into the space <strong>below the filter row and above <code>03 — Executive Narrative</code></strong>.</p>
+<p>From the left <strong>Sheets</strong> list, drag these sheets into that container, from left to right:</p>
+<table>
+<thead>
+<tr>
+<th>Position</th>
+<th>Existing worksheet</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>First</td>
+<td><strong>09 — KPI Matched Applications</strong></td>
+</tr>
+<tr>
+<td>Second</td>
+<td><strong>10 — KPI Different Decisions</strong></td>
+</tr>
+<tr>
+<td>Third</td>
+<td><strong>11 — KPI Baseline Authorized</strong></td>
+</tr>
+<tr>
+<td>Fourth</td>
+<td><strong>12 — KPI Stress Authorized</strong></td>
+</tr>
+</tbody></table>
+<p>When adding the second, third, and fourth sheets, release them at the <strong>right edge inside the same container</strong>, not beneath the preceding indicator.</p>
+<h3>Equalize their widths</h3>
+<p>Select the horizontal container. An easy way is to click <strong>Layout</strong> in the left pane and select the container in <strong>Item hierarchy</strong>.</p>
+<p>Open the container’s dropdown menu → <strong>Distribute Evenly</strong>. This command is available for explicitly added layout containers. [export reference: cite | turn230053view0 | turn970301search0]</p>
+<p>Give the indicator row approximately <strong>90 pixels of height</strong>. Hide each indicator’s worksheet title when its text already includes the descriptive label.</p>
+<p><strong>With Healthcare Services still selected, the row should show:</strong></p>
+<pre><code class="language-text">82                    29                   15                     4
+Matched applications  Different category   Baseline authorized    Stress authorized
+                      35.4%                18.3%                  4.9%
+</code></pre>
+<p>These are the expected values from the Healthcare Services view you just demonstrated. <strong>Use the calculated values already on the sheets, not typed numbers.</strong></p>
+<p>Keep <strong>03 — Executive Narrative</strong> immediately below this row. Its paragraph should still describe the same 82-application population.</p>
+<h1>6. Change the matrix area into a two-chart row</h1>
+<p>This is the part my previous instructions needed to explain more carefully.</p>
+<h3>A. Insert a horizontal comparison container</h3>
+<p>Drag <strong>Horizontal</strong> from Objects and position it <strong>immediately above the existing matrix, below the executive narrative</strong>.</p>
+<p>We will call this the <strong>comparison row</strong>. It is a layout container, not another dashboard.</p>
+<h3>B. Create two vertical panels inside that row</h3>
+<p>Drag a <strong>Vertical</strong> container inside the left side of the comparison row.</p>
+<p>Move your existing <strong>02 — Decision Matrix</strong> into that vertical container using its top handle.</p>
+<p>Then drag another <strong>Vertical</strong> container into the <strong>right side of the same comparison row</strong>. Add <strong>08 — Segment Comparison</strong> inside it from the Sheets list.</p>
+<p>The nesting should be:</p>
+<pre><code class="language-text">Horizontal comparison row
+    Vertical left panel
+        02 — Decision Matrix
+
+    Vertical right panel
+        08 — Segment Comparison
+</code></pre>
+<p><strong>Do not duplicate the matrix worksheet or use Swap Sheets.</strong> You are relocating the existing matrix and adding the segment worksheet.</p>
+<p>You can inspect the nesting under <strong>Layout → Item hierarchy</strong>. Use the hierarchy to select an awkward-to-click container; in Tableau Desktop, move these tiled objects on the dashboard canvas rather than relying on hierarchy drag-and-drop. [export reference: cite | turn230053view0]</p>
+<h3>C. Set the proportions</h3>
+<p>Start with approximately:</p>
+<table>
+<thead>
+<tr>
+<th>Region</th>
+<th align="right">Suggested allocation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Comparison row height</td>
+<td align="right"><strong>400 pixels</strong></td>
+</tr>
+<tr>
+<td>Left matrix panel</td>
+<td align="right"><strong>About two-thirds of the available width</strong></td>
+</tr>
+<tr>
+<td>Right segment panel</td>
+<td align="right"><strong>About one-third of the available width</strong></td>
+</tr>
+</tbody></table>
+<p>Do <strong>not</strong> use Distribute Evenly on this row: the matrix needs more width than the bar chart.</p>
+<p>Drag the divider between the panels to adjust their relative widths. Use the <strong>Layout</strong> pane’s size settings where available. There is no need to switch anything to Floating or enter X/Y coordinates.</p>
+<h3>D. Put the controls with the chart they affect</h3>
+<p>On the segment chart’s dashboard dropdown, choose:</p>
+<p><strong>Parameters → Review Segment By</strong></p>
+<p>Move that parameter card into the <strong>right vertical panel, above the segment chart</strong>. If the control is already visible elsewhere, move the existing card instead of creating a duplicate.</p>
+<p>Put the segment chart’s <strong>Measure Names color legend</strong> below its chart. Put the matrix’s <strong>Matched Applications color legend</strong> below the matrix in the left panel.</p>
+<p>Dashboard sheet menus expose the relevant parameter and legend controls. [export reference: cite | turn970301search5 | turn970301search0]</p>
+<p>The completed comparison row should now be:</p>
+<pre><code class="language-text">Horizontal comparison row
+    Vertical left panel
+        Decision matrix
+        Matched Applications color legend
+
+    Vertical right panel
+        Review Segment By parameter
+        Segment comparison
+        Baseline/stress color legend
+</code></pre>
+<p><strong>Do not enable “Use as Filter” on the segment chart.</strong> For this pass it shows segment context; your two portfolio dropdowns continue to control the reviewed population.</p>
+<h1>7. Keep the existing investigation section below the charts</h1>
+<p>Do not move these elements into either narrow chart panel.</p>
+<p>Keep the following across the full dashboard width:</p>
+<h3>Application detail</h3>
+<p>Retain <strong>04 — Application Detail</strong> below the comparison row. Allocate approximately <strong>160–180 pixels</strong> so several applications are visible and the rest can be scrolled.</p>
+<h3>Selected merchant and narrative selector</h3>
+<p>Keep <strong>05 — Selection Narrative</strong> below the application table.</p>
+<p>Move the existing <strong>Narrative Detail</strong> parameter beside this selection band, rather than leaving it at the top of the dashboard. A horizontal container can hold the wide selection band on the left and the smaller parameter card on the right.</p>
+<p>This makes the controls’ purposes visible:</p>
+<ul>
+<li><strong>Review Segment By</strong> belongs to the segment chart.</li>
+<li><strong>Narrative Detail</strong> belongs to the application explanations.</li>
+</ul>
+<h3>Scenario stories</h3>
+<p>Keep your existing bottom horizontal container containing:</p>
+<pre><code class="language-text">06 — Baseline Story | 07 — Stress Story
+</code></pre>
+<p>Give the two panels equal width and start with approximately <strong>250–280 pixels of height</strong>. Preserve the readable font and the revised formulas that no longer repeat the application identifier.</p>
+<p><strong>Do not trade away narrative readability to achieve an exact height.</strong> The complete default Decision paragraphs are more important than a perfectly uniform row size.</p>
+<h1>8. Set each embedded view’s fit</h1>
+<p>Use the dropdown on each <strong>sheet inside the dashboard</strong>, not only its separate worksheet tab.</p>
+<table>
+<thead>
+<tr>
+<th>Embedded worksheet</th>
+<th>Fit setting</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Four indicator sheets</td>
+<td><strong>Entire View</strong></td>
+</tr>
+<tr>
+<td>Executive narrative</td>
+<td><strong>Entire View</strong></td>
+</tr>
+<tr>
+<td>Decision matrix</td>
+<td><strong>Entire View</strong></td>
+</tr>
+<tr>
+<td>Segment comparison</td>
+<td><strong>Entire View</strong></td>
+</tr>
+<tr>
+<td>Application detail</td>
+<td><strong>Fit Width</strong></td>
+</tr>
+<tr>
+<td>Selection band</td>
+<td><strong>Entire View</strong></td>
+</tr>
+<tr>
+<td>Baseline and stress stories</td>
+<td><strong>Entire View</strong></td>
+</tr>
+</tbody></table>
+<p>These are Tableau’s view-sizing options. <strong>Entire View does not establish that every long text paragraph is readable</strong>; inspect the actual result rather than relying on the setting alone. [export reference: cite | turn230053view1]</p>
+<p>Add a small <strong>Text</strong> object at the bottom for:</p>
+<blockquote>
+<p>Deterministic synthetic scenarios. Review is not authorization; authorization does not establish funding.</p>
+</blockquote>
+<h1>9. Check the existing actions—do not rebuild them</h1>
+<p>Open <strong>Dashboard → Actions</strong> and inspect the two existing filter actions.</p>
+<table>
+<thead>
+<tr>
+<th>Existing action</th>
+<th>Source</th>
+<th>Targets</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Select decision pairing</strong></td>
+<td><code>02 — Decision Matrix</code></td>
+<td><code>04</code>, <code>05</code>, <code>06</code>, and <code>07</code></td>
+</tr>
+<tr>
+<td><strong>Inspect application</strong></td>
+<td><code>04 — Application Detail</code></td>
+<td><code>05</code>, <code>06</code>, and <code>07</code></td>
+</tr>
+</tbody></table>
+<p>The four indicator sheets, executive narrative, and segment chart must <strong>not</strong> be targets of either action. Explicit source/target selection is how Tableau filter actions limit an interaction’s effect. [export reference: cite | turn230053view3]</p>
+<p>Because we are using the <strong>same dashboard and same worksheets</strong>, the existing actions should remain available. This check confirms that the layout changes have not unintentionally expanded their scope.</p>
+<h2>Final checkpoint</h2>
+<p>With <strong>Healthcare Services</strong> selected:</p>
+<ol>
+<li>The indicators and executive narrative should agree on <strong>82 applications, 29 different decisions, 15 Baseline authorizations, and 4 stress authorizations</strong>.</li>
+<li>The segment chart should show either Healthcare Services as one industry or its five acquisition-source groups, depending on <strong>Review Segment By</strong>.</li>
+<li>Selecting <strong>Counteroffer review required → Evidence decline</strong> should show <strong>10 applications</strong> in the detail table.</li>
+<li>Selecting Merchant <strong>000003</strong> should update only the investigation band and scenario explanations—not the portfolio totals.</li>
+</ol>
+<p><strong>The dashboard is still <code>Risk Decision &amp; Scenario Review</code>; this is its completed executive-and-investigation layout.</strong> Save locally and send the assembled dashboard with the <strong>Layout pane visible</strong>, so I can check the container arrangement as well as the displayed results.</p>
+</div></article><article id="m-d581273c-56c4-47f8-aeca-6f618c3e4e24" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00434 · 2026-10-16T07:19:15.761000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-111850).png</p><div class="bubble"><p>I feel like the horizontal Industry/Acquisition just leaves a lot of extra space left on that top right: seems like we should do something with that or maybe adjust the strategy.</p>
+</div></article><article id="m-51135344-4876-4055-8b40-2c7cf0db41bd" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00435 · 2026-10-16T07:19:26.801556-04:00 · active path</p><div class="bubble"><p>I agree. Looking at your screenshot, <strong>the horizontal filter arrangement is wasting valuable dashboard space</strong>, and I would revise the strategy before you continue building.</p>
+<p>The problem is not simply the empty space on the right. It&#39;s that the Industry and Acquisition Source filters are consuming substantial vertical space because they are still displayed as checkbox lists. Meanwhile, the Matched Applications legend and Narrative Detail parameter are floating visually apart from the controls they support.</p>
+<p>For an executive-quality Tableau dashboard, I&#39;d use a <strong>compact control bar followed immediately by the four KPI cards</strong>.</p>
+<h2>Recommended top-of-dashboard layout</h2>
+&lt;box border radius=&quot;lg&quot; padding={3} gap={3}&gt;
+  &lt;box gap=&quot;1px&quot;&gt;
+    &lt;title size=&quot;xl&quot;&gt;Merchant Credit Intelligence&lt;/title&gt;
+    &lt;text color=&quot;secondary&quot; size=&quot;sm&quot;&gt;Risk Decision &amp; Scenario Review&lt;/text&gt;
+  &lt;/box&gt;
+  &lt;grid columns={3} gap={2}&gt;
+    &lt;grid-item&gt;
+      &lt;box gap={1}&gt;
+        &lt;label&gt;Industry&lt;/label&gt;
+        &lt;box background=&quot;surface-secondary&quot; radius=&quot;md&quot; padding={2}&gt;
+          &lt;row justify=&quot;between&quot; align=&quot;center&quot;&gt;
+            &lt;text size=&quot;xs&quot;&gt;Healthcare Services&lt;/text&gt;
+            &lt;icon name=&quot;chevron-down&quot; size=&quot;xs&quot;/&gt;
+          &lt;/row&gt;
+        &lt;/box&gt;
+      &lt;/box&gt;
+    &lt;/grid-item&gt;
+    &lt;grid-item&gt;
+      &lt;box gap={1}&gt;
+        &lt;label&gt;Acquisition Source&lt;/label&gt;
+        &lt;box background=&quot;surface-secondary&quot; radius=&quot;md&quot; padding={2}&gt;
+          &lt;row justify=&quot;between&quot; align=&quot;center&quot;&gt;
+            &lt;text size=&quot;xs&quot;&gt;All sources&lt;/text&gt;
+            &lt;icon name=&quot;chevron-down&quot; size=&quot;xs&quot;/&gt;
+          &lt;/row&gt;
+        &lt;/box&gt;
+      &lt;/box&gt;
+    &lt;/grid-item&gt;
+    &lt;grid-item&gt;
+      &lt;box gap={1}&gt;
+        &lt;label&gt;Review Segment By&lt;/label&gt;
+        &lt;box background=&quot;surface-secondary&quot; radius=&quot;md&quot; padding={2}&gt;
+          &lt;row justify=&quot;between&quot; align=&quot;center&quot;&gt;
+            &lt;text size=&quot;xs&quot;&gt;Industry&lt;/text&gt;
+            &lt;icon name=&quot;chevron-down&quot; size=&quot;xs&quot;/&gt;
+          &lt;/row&gt;
+        &lt;/box&gt;
+      &lt;/box&gt;
+    &lt;/grid-item&gt;
+  &lt;/grid&gt;
+  &lt;grid columns={4} gap={2}&gt;
+    {#each [{v:&quot;82&quot;,l:&quot;Matched&quot;,s:&quot;Applications&quot;},{v:&quot;29&quot;,l:&quot;Different&quot;,s:&quot;35.4%&quot;},{v:&quot;15&quot;,l:&quot;Baseline&quot;,s:&quot;18.3% authorized&quot;},{v:&quot;4&quot;,l:&quot;Stress&quot;,s:&quot;4.9% authorized&quot;}] as k}
+      &lt;grid-item&gt;
+        &lt;box border radius=&quot;md&quot; padding={2} gap={1} align=&quot;center&quot;&gt;
+          &lt;title size=&quot;xl&quot; color=&quot;default&quot; tabularNums&gt;{k.v}&lt;/title&gt;
+          &lt;text size=&quot;2xs&quot; weight=&quot;medium&quot; textAlign=&quot;center&quot;&gt;{k.l}&lt;/text&gt;
+          &lt;caption textAlign=&quot;center&quot;&gt;{k.s}&lt;/caption&gt;
+        &lt;/box&gt;
+      &lt;/grid-item&gt;
+    {/each}
+  &lt;/grid&gt;
+  &lt;caption&gt;Illustrative arrangement using your current Healthcare Services results; the Tableau KPI worksheets will supply live values.&lt;/caption&gt;
+&lt;/box&gt;
+
+<p>This gives you a more coherent visual hierarchy: title, portfolio controls, executive metrics, interpretation, comparison charts, and finally application-level investigation.</p>
+<h2>How I would change your Tableau setup</h2>
+<ol>
+<li><p><strong>Industry:</strong> On the filter card, click its dropdown arrow and select <strong>Multiple Values (Dropdown)</strong>. This retains multi-select functionality while collapsing the checkbox list.</p>
+</li>
+<li><p><strong>Acquisition Source:</strong> Do exactly the same. Your five acquisition sources will remain selectable without permanently occupying five rows.</p>
+</li>
+<li><p><strong>Review Segment By:</strong> Move this parameter to the same top control bar, since it governs how the segment comparison chart is grouped.</p>
+</li>
+<li><p><strong>Narrative Detail:</strong> Move this parameter down beside <strong>Selection Narrative</strong>. It changes the application explanation, not the portfolio-level view, so it doesn&#39;t belong in the executive control bar.</p>
+</li>
+<li><p><strong>Matched Applications legend:</strong> Move it directly beneath the decision matrix. It explains the matrix colors and should not occupy the top-right corner.</p>
+</li>
+</ol>
+<p>In Tableau&#39;s <strong>Dashboard</strong> editing pane, create a horizontal tiled container immediately beneath the title. Move the two existing filter cards into it, then the Review Segment By parameter. Resize the controls so they occupy roughly equal thirds of the row.</p>
+<p>For the filter dropdowns, allow approximately 40–55 pixels of row height. This should eliminate most of the wasted vertical space visible in your screenshot.</p>
+<h2>One important design refinement</h2>
+<p>I would <strong>not add another chart or decorative content to fill the upper-right space</strong>. The dashboard already has substantial analytical content. Adding more there would increase cognitive load without necessarily improving decision-making.</p>
+<p>Instead, use the recovered space for the KPI row. Keep the decision matrix and authorization-rate comparison immediately below the executive narrative.</p>
+<p>Also, your screenshot shows <strong>Healthcare Services selected</strong>, but the filter cards are still displaying all their available choices. That&#39;s normal for the current checkbox-list presentation; converting to dropdowns will make the selected context much clearer.</p>
+<p><strong>My recommendation:</strong> revise the control bar now, before moving any more worksheets. Then send me a screenshot of the full dashboard with the four KPI worksheets installed. We can fine-tune spacing, alignment, typography, and chart proportions without repeatedly rebuilding the layout.</p>
+</div></article><article id="m-0492ac3e-911c-4735-ad26-68c19abd7195" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00436 · 2026-10-16T07:23:10.638000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-112309).png</p><div class="bubble"><p>what about having these 5 at top:</p>
+</div></article><article id="m-68e4e2c2-c4b1-4165-9762-6a3834dc67fe" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00437 · 2026-10-16T07:23:21.420572-04:00 · alternate branch</p><div class="bubble"><p><strong>Yes. I actually prefer this five-control horizontal arrangement</strong> over my previous recommendation. It looks cleaner, more balanced, and more appropriate for an executive Tableau dashboard.</p>
+<p>Your current top row contains:</p>
+<ol>
+<li><strong>Industry</strong> — portfolio filter</li>
+<li><strong>Acquisition Source</strong> — portfolio filter</li>
+<li><strong>Review Segment By</strong> — analytical grouping parameter</li>
+<li><strong>Narrative Detail</strong> — explanation-depth parameter</li>
+<li><strong>Matched Applications</strong> — decision-matrix color legend</li>
+</ol>
+<p>The first four are interactive controls, while the fifth is a legend. That&#39;s perfectly reasonable visually, although I would make two refinements.</p>
+<h3>1. Keep the five-column layout</h3>
+<p>The spacing is good. The labels are aligned, the dropdowns have sufficient width, and the header remains visually distinct.</p>
+<p>I would keep Narrative Detail here rather than moving it lower, as I previously suggested. Having all four user-adjustable controls together makes the dashboard easier to operate.</p>
+<h3>2. Consider moving the Matched Applications legend</h3>
+<p>The only element I question is the fifth position.</p>
+<p>The gradient from 1 to 5 is a <strong>color-scale legend</strong>, not an executive metric. It explains the decision matrix, but doesn&#39;t tell the reader how many applications are currently in the filtered portfolio.</p>
+<p>You have two good choices:</p>
+<ul>
+<li><strong>Option A — Keep it exactly as shown.</strong> This is clean, symmetrical, and avoids further layout work.</li>
+<li><strong>Option B — Replace it with a Matched Applications KPI</strong>, showing the filtered population count, and relocate the gradient legend immediately above or below the decision matrix.</li>
+</ul>
+<p>I prefer <strong>Option B</strong>, because it gives the top row an actual portfolio-size indicator rather than a color key.</p>
+<h3>3. Reduce the empty space beneath the controls</h3>
+<p>The screenshot shows substantial blank space below the five elements. Assuming this is the full height of your top dashboard container, I&#39;d reduce that container to approximately <strong>125–145 pixels</strong>, including the title and subtitle, controls, and a little breathing room.</p>
+<p>In Tableau, select the enclosing layout container and adjust its height using the <strong>Layout</strong> pane. If it is tiled, make sure another object or nested container isn&#39;t forcing the extra height.</p>
+<h3>My recommended final arrangement</h3>
+<table>
+<thead>
+<tr>
+<th>Industry</th>
+<th>Acquisition Source</th>
+<th>Review Segment By</th>
+<th>Narrative Detail</th>
+<th>Matched Applications</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Healthcare Services</td>
+<td>Bank Relationship</td>
+<td>Industry</td>
+<td>Decision</td>
+<td><strong>Filtered count KPI</strong></td>
+</tr>
+</tbody></table>
+<p>Below that, I would place the Executive Narrative and decision matrix, with the gradient legend near the matrix.</p>
+<p><strong>Bottom line:</strong> Your revised layout is a meaningful improvement. I would retain the four dropdowns exactly where they are, replace the fifth legend with a dynamic KPI if practical, and reclaim the unused vertical space. That will give Merchant Credit Intelligence a more polished executive-report feel without unnecessary redesign.</p>
+</div></article><article id="m-9d44f253-0554-44ea-b927-f043268f9896" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00438 · 2026-10-16T07:23:23.879324-04:00 · active path</p><div class="bubble"><p><strong>Yes. I actually prefer this five-control arrangement.</strong> It&#39;s cleaner, more balanced, and makes better use of the dashboard width.</p>
+<p>Your current top row has a logical progression:</p>
+<ol>
+<li><strong>Industry</strong> — Filter the portfolio by industry.</li>
+<li><strong>Acquisition Source</strong> — Filter by origination channel.</li>
+<li><strong>Review Segment By</strong> — Choose how to group the segment analysis.</li>
+<li><strong>Narrative Detail</strong> — Choose the level of explanation.</li>
+<li><strong>Matched Applications</strong> — Interpret the decision-matrix color scale.</li>
+</ol>
+<p>I would retain all five across the top, with two refinements.</p>
+<h3>1. Keep the five controls, but distinguish their purposes</h3>
+<p>The first four are interactive controls. The fifth is a color legend, not a filter.</p>
+<p>That&#39;s perfectly acceptable, especially because the legend is compact and the horizontal alignment is consistent.</p>
+<p>One subtle improvement: change the legend title from <strong>Matched Applications</strong> to <strong>Application Count</strong> or <strong>Matched Application Count</strong>, so it is immediately clear that the gradient represents the number of applications in each matrix cell—not a portfolio-level KPI.</p>
+<h3>2. Eliminate the unused vertical space</h3>
+<p>Your screenshot shows a substantial blank area beneath the controls. If this is an empty dashboard container, reduce its height so the Executive Narrative begins approximately 20–30 pixels below the control row.</p>
+<p>The layout should flow as follows:</p>
+&lt;box border radius=&quot;lg&quot; padding={3} gap={2}&gt;
+  &lt;title size=&quot;lg&quot;&gt;Merchant Credit Intelligence&lt;/title&gt;
+  &lt;text color=&quot;secondary&quot; size=&quot;xs&quot;&gt;Risk Decision &amp; Scenario Review&lt;/text&gt;
+  &lt;grid columns={5} gap={2}&gt;
+    {#each [&quot;Industry&quot;,&quot;Acquisition Source&quot;,&quot;Review Segment By&quot;,&quot;Narrative Detail&quot;,&quot;Application Count&quot;] as name,i}
+      &lt;grid-item&gt;
+        &lt;box gap={1}&gt;
+          &lt;text size=&quot;3xs&quot; weight=&quot;medium&quot;&gt;{name}&lt;/text&gt;
+          {#if i===4}
+            &lt;box height=&quot;18px&quot; background=&quot;surface-tertiary&quot; radius=&quot;xs&quot;&gt;
+              &lt;svg viewBox=&quot;0 0 100 12&quot; width=&quot;100%&quot; height=&quot;100%&quot; preserveAspectRatio=&quot;none&quot;&gt;
+                &lt;defs&gt;&lt;linearGradient id=&quot;legend&quot;&gt;&lt;stop offset=&quot;0%&quot; stopColor=&quot;#a8d8cf&quot;/&gt;&lt;stop offset=&quot;100%&quot; stopColor=&quot;#24608b&quot;/&gt;&lt;/linearGradient&gt;&lt;/defs&gt;
+                &lt;rect width=&quot;100&quot; height=&quot;12&quot; fill=&quot;url(#legend)&quot;/&gt;
+              &lt;/svg&gt;
+            &lt;/box&gt;
+          {:else}
+            &lt;box border radius=&quot;xs&quot; padding={2}&gt;
+              &lt;row align=&quot;center&quot; justify=&quot;between&quot;&gt;
+                &lt;text size=&quot;3xs&quot; color=&quot;secondary&quot;&gt;{[&quot;Healthcare Services&quot;,&quot;Bank Relationship&quot;,&quot;Industry&quot;,&quot;Decision&quot;][i]}&lt;/text&gt;
+                &lt;icon name=&quot;chevron-down&quot; size=&quot;xs&quot;/&gt;
+              &lt;/row&gt;
+            &lt;/box&gt;
+          {/if}
+        &lt;/box&gt;
+      &lt;/grid-item&gt;
+    {/each}
+  &lt;/grid&gt;
+  &lt;divider spacing={2}/&gt;
+  &lt;text weight=&quot;medium&quot; size=&quot;sm&quot;&gt;Executive Narrative&lt;/text&gt;
+  &lt;text color=&quot;secondary&quot; size=&quot;xs&quot;&gt;Dynamic portfolio summary and scenario comparison&lt;/text&gt;
+  &lt;box background=&quot;surface-secondary&quot; radius=&quot;sm&quot; padding={3}&gt;
+    &lt;text size=&quot;xs&quot; color=&quot;secondary&quot;&gt;Decision Matrix&lt;/text&gt;
+    &lt;grid columns={6} gap=&quot;3px&quot;&gt;
+      {#each Array.from({length:18},(_,i)=&gt;i) as i}
+        &lt;grid-item&gt;&lt;box height=&quot;16px&quot; background={i%5===0?&quot;#3d86a5&quot;:i%3===0?&quot;#94c9ca&quot;:&quot;#d6e7e5&quot;} radius=&quot;2xs&quot;/&gt;&lt;/grid-item&gt;
+      {/each}
+    &lt;/grid&gt;
+  &lt;/box&gt;
+  &lt;caption&gt;Conceptual layout — not a reproduction of the live Tableau dashboard.&lt;/caption&gt;
+&lt;/box&gt;
+
+<h3>One functional check before proceeding</h3>
+<p>Your screenshot currently shows <strong>Healthcare Services + Bank Relationship</strong>, with a legend maximum of 5. That&#39;s plausible for a narrowly filtered selection, but verify that the Executive Narrative, decision matrix, segment comparison, and KPI worksheets all respond consistently to both filters.</p>
+<p>Also, remember that <strong>Review Segment By</strong> and <strong>Narrative Detail</strong> are parameters. Their selections must be referenced by the relevant calculated fields to affect worksheet content; displaying the controls alone doesn&#39;t establish that behavior.</p>
+<p><strong>Verdict:</strong> Keep the five across the top. I would not relocate Narrative Detail or the legend now that I can see this arrangement. It gives the dashboard a compact, professional control panel and preserves the full width below for the actual analytical story.</p>
+</div></article><article id="m-73b8651e-03f0-4f78-a852-ba24e43b6e61" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00439 · 2026-10-16T07:29:15.581000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-112901).png; image(20261016-112915).png</p><div class="bubble"><p>how to get this:  to look like you have here:</p>
+</div></article><article id="m-a455d746-3895-4bd4-8cce-ddcbf389a92a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00440 · 2026-10-16T07:29:27.743488-04:00 · active path</p><div class="bubble"><p>Your first screenshot shows the problem: <strong>Tableau is wrapping the KPI labels vertically because each worksheet&#39;s text mark has too little horizontal space.</strong> The numbers are correct; this is a formatting and container-layout issue.</p>
+<p>We can make the four cards look very close to the second image using Tableau&#39;s native dashboard tools—no custom extensions or new calculations required.</p>
+<h2>1. First, fix the text formatting inside each KPI worksheet</h2>
+<p>Do this on each of your four existing worksheets (<code>09</code> through <code>12</code>), starting with <strong>09 — KPI Matched Applications</strong>.</p>
+<ol>
+<li>Open the worksheet.</li>
+<li>On the <strong>Marks</strong> card, click <strong>Text</strong>.</li>
+<li>Click the <strong>…</strong> button to open <strong>Edit Label</strong>.</li>
+<li>Replace the existing arrangement with the corresponding template below. Use <strong>Insert</strong> to insert the calculated-field tokens; do not type the numbers manually.</li>
+<li>Center-align all text. Select the main number and make it <strong>22–24 pt bold</strong>. Make the label <strong>10–11 pt</strong>.</li>
+</ol>
+<p>Here is the intended label structure:</p>
+&lt;box border radius=&quot;lg&quot; padding={3} gap={2}&gt;
+  &lt;grid columns={4} gap={2}&gt;
+    {#each [{n:&quot;750&quot;,a:&quot;Matched&quot;,b:&quot;Applications&quot;},{n:&quot;236&quot;,a:&quot;Different&quot;,b:&quot;31.5%&quot;},{n:&quot;103&quot;,a:&quot;Baseline&quot;,b:&quot;13.7% authorized&quot;},{n:&quot;27&quot;,a:&quot;Stress&quot;,b:&quot;3.6% authorized&quot;}] as x}
+      &lt;grid-item&gt;
+        &lt;box background=&quot;surface-secondary&quot; radius=&quot;md&quot; padding={2} align=&quot;center&quot; gap={1}&gt;
+          &lt;title size=&quot;xl&quot; tabularNums&gt;{x.n}&lt;/title&gt;
+          &lt;text size=&quot;2xs&quot; weight=&quot;medium&quot;&gt;{x.a}&lt;/text&gt;
+          &lt;caption textAlign=&quot;center&quot;&gt;{x.b}&lt;/caption&gt;
+        &lt;/box&gt;
+      &lt;/grid-item&gt;
+    {/each}
+  &lt;/grid&gt;
+  &lt;caption&gt;Target appearance using your current full-portfolio values. These remain calculated values in Tableau.&lt;/caption&gt;
+&lt;/box&gt;
+
+<p>Use these four label templates in Tableau:</p>
+<p><strong>09 — KPI Matched Applications</strong></p>
+<pre><code class="language-text">&lt;Matched Applications&gt;
+Matched
+Applications
+</code></pre>
+<p><strong>10 — KPI Different Decisions</strong></p>
+<pre><code class="language-text">&lt;Different Decisions&gt;
+Different
+&lt;Different Decision Rate&gt;
+</code></pre>
+<p><strong>11 — KPI Baseline Authorized</strong></p>
+<pre><code class="language-text">&lt;Baseline Authorizations&gt;
+Baseline
+&lt;Baseline Authorization Rate&gt; authorized
+</code></pre>
+<p><strong>12 — KPI Stress Authorized</strong></p>
+<pre><code class="language-text">&lt;Stress Authorizations&gt;
+Stress
+&lt;Stress Authorization Rate&gt; authorized
+</code></pre>
+<p>The text in angle brackets above represents Tableau&#39;s inserted field tokens. Use the <strong>Insert</strong> menu to insert the real fields.</p>
+<h2>2. Fix the dashboard container</h2>
+<p>Return to your existing <strong>Risk Decision &amp; Scenario Review</strong> dashboard.</p>
+<ol>
+<li>In the left panel, select <strong>Layout</strong>.</li>
+<li>In <strong>Item hierarchy</strong>, locate the horizontal container holding KPI worksheets <code>09</code>, <code>10</code>, <code>11</code>, and <code>12</code>.</li>
+<li>Confirm all four worksheets are direct children of the <strong>same horizontal container</strong>. If they&#39;re nested inside narrow vertical containers, they may be getting squeezed.</li>
+<li>Select that horizontal container, open its dropdown menu, and choose <strong>Distribute Evenly</strong>.</li>
+<li>Give the container approximately <strong>100–115 pixels of height</strong> and the full available dashboard width.</li>
+</ol>
+<p>The four worksheets should each receive roughly one-quarter of the row.</p>
+<p><strong>Important:</strong> If the KPI worksheets are inside another narrow parent container, distributing them evenly won&#39;t solve the problem. Their parent must also span the dashboard&#39;s usable width.</p>
+<h2>3. Give each KPI a card appearance</h2>
+<p>Tableau can achieve a restrained card style through the <strong>Layout</strong> pane.</p>
+<p>For each KPI worksheet on the dashboard:</p>
+<ul>
+<li><strong>Background:</strong> White or a very light neutral.</li>
+<li><strong>Border:</strong> Thin light gray solid border.</li>
+<li><strong>Outer padding:</strong> 4–6 pixels on all sides.</li>
+<li><strong>Inner padding:</strong> 8–10 pixels where available.</li>
+<li><strong>Worksheet title:</strong> Hidden, because the label already identifies the metric.</li>
+</ul>
+<p>For a subtle rounded-card look, Tableau&#39;s standard dashboard border controls are more limited than the illustrated mockup. <strong>You can closely reproduce the spacing, border, and hierarchy, but native Tableau containers do not provide the same rounded-corner styling.</strong> Square or slightly softened visual cards are perfectly appropriate for a risk-management dashboard.</p>
+<h2>4. One more setting that often causes this exact issue</h2>
+<p>For each embedded KPI worksheet, use its dashboard dropdown:</p>
+<p><strong>Fit → Entire View</strong></p>
+<p>Then inspect the worksheet itself. On the <strong>Marks → Text → Alignment</strong> controls, set:</p>
+<ul>
+<li>Horizontal: <strong>Center</strong></li>
+<li>Vertical: <strong>Middle</strong></li>
+<li>Text wrapping: keep the intended line breaks only.</li>
+</ul>
+<p>If the label still breaks into fragments like <code>Matc / hed</code>, the KPI tile is still too narrow. <strong>Do not solve that by shrinking the font to 6 pt.</strong> Fix the parent container width instead.</p>
+<h2>What success looks like</h2>
+<p>With all filters cleared, the four cards should display:</p>
+<p><strong>750</strong> matched applications, <strong>236</strong> different decisions (31.5%), <strong>103</strong> Baseline authorizations (13.7%), and <strong>27</strong> stress authorizations (3.6%).</p>
+<p>With Healthcare Services selected, they should update to <strong>82 / 29 / 15 / 4</strong>, with the corresponding rates <strong>35.4% / 18.3% / 4.9%</strong>.</p>
+<p>My recommendation is to <strong>fix the first KPI card completely before formatting the other three</strong>. Once <code>Matched Applications</code> displays as a large centered number above two clean label lines, replicate that formatting across the other worksheets.</p>
+</div></article><article id="m-1936530c-b3d1-446c-ae88-f3cbff1166f8" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00441 · 2026-10-16T07:53:21.457000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-115311).png</p><div class="bubble"><p>getting close, but how do I center these?</p>
+</div></article><article id="m-33d95777-9fa7-4053-8136-cd9a9119682e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00442 · 2026-10-16T07:53:31.374651-04:00 · active path</p><div class="bubble"><p>You&#39;re very close. The four KPI tiles now have adequate width, and the text is no longer breaking awkwardly. <strong>The remaining issue is that Tableau is positioning each text mark at the upper-left corner rather than centering it within its tile.</strong></p>
+<p>We can fix that without changing your calculations or rebuilding the dashboard.</p>
+<h2>Step 1 — Center the text within each worksheet</h2>
+<p>Start with <strong>09 — KPI Matched Applications</strong>.</p>
+<ol>
+<li>Click its worksheet tab at the bottom of Tableau (not the dashboard).</li>
+<li>On the <strong>Marks</strong> card, click <strong>Text</strong>.</li>
+<li>Click the <strong>Alignment</strong> dropdown within the text-label editor.</li>
+<li>Set:<ul>
+<li><strong>Horizontal:</strong> Center</li>
+<li><strong>Vertical:</strong> Middle</li>
+</ul>
+</li>
+<li>Click <strong>OK</strong>.</li>
+</ol>
+<p>Repeat for worksheets <strong>10, 11, and 12</strong>.</p>
+<p>This centers the text <em>within the mark</em>. However, there is one additional setting that is particularly important for your screenshot.</p>
+<h2>Step 2 — Center the mark within the entire tile</h2>
+<p>On each KPI worksheet:</p>
+<ol>
+<li>Go to <strong>Format → Alignment</strong> from Tableau&#39;s top menu.</li>
+<li>In the left formatting pane, select the <strong>Sheet</strong> tab.</li>
+<li>Under <strong>Default → Pane</strong>, set:<ul>
+<li><strong>Horizontal:</strong> Center</li>
+<li><strong>Vertical:</strong> Middle</li>
+</ul>
+</li>
+<li>Leave <strong>Header</strong> alignment unchanged.</li>
+</ol>
+&lt;box border radius=&quot;lg&quot; padding={3} gap={2}&gt;
+  &lt;text weight=&quot;medium&quot; size=&quot;sm&quot;&gt;Desired KPI alignment&lt;/text&gt;
+  &lt;grid columns={4} gap={2}&gt;
+    {#each [{n:&quot;750&quot;,a:&quot;Matched&quot;,b:&quot;Applications&quot;},{n:&quot;236&quot;,a:&quot;Different&quot;,b:&quot;31.5%&quot;},{n:&quot;103&quot;,a:&quot;Baseline&quot;,b:&quot;13.7% authorized&quot;},{n:&quot;27&quot;,a:&quot;Stress&quot;,b:&quot;3.6% authorized&quot;}] as x}
+      &lt;grid-item&gt;
+        &lt;box border radius=&quot;md&quot; padding={{top:3,bottom:3,x:1}} align=&quot;center&quot; justify=&quot;center&quot; gap={1} minHeight=&quot;105px&quot;&gt;
+          &lt;title size=&quot;xl&quot; tabularNums&gt;{x.n}&lt;/title&gt;
+          &lt;text size=&quot;2xs&quot; weight=&quot;medium&quot; textAlign=&quot;center&quot;&gt;{x.a}&lt;/text&gt;
+          &lt;caption textAlign=&quot;center&quot;&gt;{x.b}&lt;/caption&gt;
+        &lt;/box&gt;
+      &lt;/grid-item&gt;
+    {/each}
+  &lt;/grid&gt;
+&lt;/box&gt;
+
+<h2>Step 3 — Check the embedded worksheet&#39;s Fit setting</h2>
+<p>Return to <strong>Risk Decision &amp; Scenario Review</strong>.</p>
+<p>For each KPI tile:</p>
+<ol>
+<li>Click the tile to select it.</li>
+<li>Open its dropdown menu in the upper-right corner.</li>
+<li>Select <strong>Fit → Entire View</strong>.</li>
+<li>Confirm the worksheet title is hidden.</li>
+</ol>
+<p>This ensures the worksheet uses the available tile area rather than retaining an unnecessarily narrow view.</p>
+<h2>Step 4 — Put the cards in the intended order</h2>
+<p>Your screenshot currently shows:</p>
+<p><strong>750 → 236 → 27 → 103</strong></p>
+<p>I would reorder them to:</p>
+<p><strong>750 → 236 → 103 → 27</strong></p>
+<p>That keeps the scenario comparison consistent everywhere: <strong>Baseline first, Recession Energy second</strong>.</p>
+<p>Drag the Stress KPI worksheet to the right of Baseline within the horizontal container, or use the dashboard layout controls to reposition them.</p>
+<h2>One more observation</h2>
+<p>Your first KPI tile is outlined because it is selected in dashboard-editing mode. The dashed vertical boundaries are layout guides, not necessarily visible borders in the published dashboard.</p>
+<p>Once the alignment is corrected, deselect the tiles or enter Presentation Mode to judge the finished appearance.</p>
+<p><strong>Expected result:</strong> four equally sized tiles, each with a large centered number, a centered label, and its supporting percentage beneath. You should not need to reduce font sizes or change the dashboard dimensions.</p>
+</div></article><article id="m-84dfd250-e0fc-411c-acf8-61dff4b9a6e8" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00443 · 2026-10-16T08:02:01.756000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-120156).png</p><div class="bubble"><p>do i have a 5th thing in this horizontal container why won&#39;t it fill to the far right end?</p>
+</div></article><article id="m-6c52607c-c02d-49e2-a693-b249f14e2f94" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00444 · 2026-10-16T08:02:13.774295-04:00 · active path</p><div class="bubble"><p><strong>Yes, I think you have a fifth item—or an empty nested container—at the far right.</strong> The diagonal blue-striped area after the Stress KPI is the clue.</p>
+<p>Your four KPI cards are now correctly centered and ordered. We just need to remove that unused layout space.</p>
+<h3>How to diagnose and fix it</h3>
+<ol>
+<li>Stay on the <strong>Risk Decision &amp; Scenario Review</strong> dashboard in editing mode.</li>
+<li>Click the <strong>Layout</strong> tab in Tableau&#39;s left sidebar.</li>
+<li>Find <strong>Item hierarchy</strong> and expand the horizontal container holding your four KPI worksheets.</li>
+<li>Look for an additional item after <code>12 — KPI Stress Authorized</code>. It might be:<ul>
+<li>A <strong>Blank</strong> object.</li>
+<li>An empty <strong>Vertical</strong> or <strong>Horizontal</strong> container.</li>
+<li>An unintended nested container.</li>
+</ul>
+</li>
+<li>If you find an extra object, select it in the hierarchy and choose <strong>Remove from Dashboard</strong> using its dropdown menu.</li>
+</ol>
+<p><strong>Be careful not to remove the parent horizontal container or any of your four KPI worksheets.</strong></p>
+<h3>If there are only four items</h3>
+<p>Then the striped area is likely unused space within the container rather than a fifth object.</p>
+<p>Try this:</p>
+<ol>
+<li>Select the <strong>parent horizontal container</strong> using Item hierarchy.</li>
+<li>Open its dropdown menu.</li>
+<li>Choose <strong>Distribute Evenly</strong>.</li>
+<li>Confirm the container spans the full available dashboard width.</li>
+</ol>
+<p>If the gap remains, check whether the container has unusually large <strong>right padding</strong> in the Layout pane. Reduce it to approximately 4–6 pixels.</p>
+<h3>What I see in your screenshot</h3>
+&lt;box border radius=&quot;lg&quot; padding={3} gap={2}&gt;
+  &lt;text weight=&quot;medium&quot; size=&quot;sm&quot;&gt;Your current row, interpreted&lt;/text&gt;
+  &lt;grid columns={5} gap=&quot;3px&quot;&gt;
+    {#each [&quot;750&quot;,&quot;236&quot;,&quot;103&quot;,&quot;27&quot;] as n}
+      &lt;grid-item&gt;
+        &lt;box background=&quot;surface-secondary&quot; padding={2} align=&quot;center&quot; radius=&quot;sm&quot;&gt;
+          &lt;title size=&quot;lg&quot;&gt;{n}&lt;/title&gt;
+        &lt;/box&gt;
+      &lt;/grid-item&gt;
+    {/each}
+    &lt;grid-item&gt;
+      &lt;box border={{size:1,color:&quot;#c29b55&quot;,style:&quot;dashed&quot;}} radius=&quot;sm&quot; padding={2} align=&quot;center&quot; justify=&quot;center&quot;&gt;
+        &lt;text size=&quot;3xs&quot; color=&quot;secondary&quot;&gt;Gap&lt;/text&gt;
+      &lt;/box&gt;
+    &lt;/grid-item&gt;
+  &lt;/grid&gt;
+  &lt;caption&gt;Illustration only. The striped area may be a layout object or unused container space; the hierarchy will distinguish them.&lt;/caption&gt;
+&lt;/box&gt;
+
+<p><strong>My recommendation:</strong> inspect Item hierarchy first. If you send a screenshot of the expanded KPI container hierarchy, I can tell you precisely which item to remove or resize without risking the four cards you&#39;ve already formatted.</p>
+</div></article><article id="m-2ac10bfa-dfaf-49fb-89d6-cbfe3a8b0bc7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00445 · 2026-10-16T08:03:45.577000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-120344).png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-beb0f326-aa69-4457-a3e9-803b8482882b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00446 · 2026-10-16T08:03:57.165906-04:00 · active path</p><div class="bubble"><p><strong>Good news: your Item hierarchy confirms that the KPI horizontal container contains exactly four worksheets. There is no fifth KPI object to remove.</strong></p>
+<p>The four children are correct and in the intended order:</p>
+<ol>
+<li><code>09 — KPI Matched Applications</code></li>
+<li><code>10 — KPI Different Decisions</code></li>
+<li><code>11 — KPI Baseline Authorized</code></li>
+<li><code>12 — KPI Stress Authorized</code></li>
+</ol>
+<p>The striped area in your earlier screenshot is therefore more likely a container-sizing or padding issue, not an extra worksheet.</p>
+<h3>Here&#39;s what I recommend</h3>
+<p><strong>Step 1 — Distribute the four KPIs evenly</strong></p>
+<ol>
+<li>Keep the highlighted <strong>Horizontal Container</strong> selected in Item hierarchy.</li>
+<li>Return to the dashboard canvas.</li>
+<li>Click the container&#39;s dropdown arrow (on its upper-right border).</li>
+<li>Select <strong>Distribute Evenly</strong>.</li>
+</ol>
+<p>This should give each KPI approximately one-quarter of the available container width.</p>
+<p><strong>Step 2 — Check the container&#39;s right padding</strong></p>
+<p>With the same horizontal container selected:</p>
+<ol>
+<li>Open the <strong>Layout</strong> pane.</li>
+<li>Find <strong>Outer Padding</strong>.</li>
+<li>Set <strong>Left, Right, Top, Bottom</strong> to approximately <code>0–4 px</code>.</li>
+<li>Check whether the container&#39;s width spans the dashboard&#39;s intended content area.</li>
+</ol>
+<p>If the container is narrower than the dashboard, select its parent tiled container and inspect its dimensions as well.</p>
+<p><strong>Step 3 — Check for a fixed-width constraint</strong></p>
+<p>Your hierarchy contains several nested <code>Tiled</code> levels above the KPI row. That is not automatically a problem, but it can make sizing less intuitive.</p>
+<p>Select the KPI horizontal container and inspect its <strong>W</strong> (width) in the Layout pane. Then select its immediate parent and compare widths.</p>
+<p>If the KPI container occupies less than the available parent width, use the dashboard canvas to resize the container or redistribute the parent layout.</p>
+<p><strong>Do not delete any of those nested containers yet.</strong> They may be holding other dashboard elements or controlling the current arrangement.</p>
+<h3>One other thing I noticed</h3>
+<p>Your hierarchy currently places the <strong>Decision Matrix, Application Detail, Selection Narrative, and story panels</strong> together under a vertical container. That&#39;s fine for the working investigation view.</p>
+<p>However, I do not see <strong>08 — Segment Comparison</strong> or the new side-by-side chart row in this hierarchy. We still need to add that after the KPI layout is resolved.</p>
+<p><strong>Next step:</strong> Select the KPI Horizontal Container, apply <strong>Distribute Evenly</strong>, and send a screenshot showing the KPI row plus its Layout pane with the width and padding values visible. That will let me determine whether the remaining right-side gap comes from the parent container rather than guessing.</p>
+</div></article><article id="m-655d5002-0c12-4ca1-b01f-f78cf3a69450" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00447 · 2026-10-16T08:07:31.599000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-120730).png</p><div class="bubble"><p>the top is looking pretty good.</p>
+</div></article><article id="m-cfbf3141-6c63-44e8-8386-3abd9402e579" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00448 · 2026-10-16T08:07:42.828966-04:00 · active path</p><div class="bubble"><p><strong>Yes—this is a substantial improvement.</strong> The top of the dashboard now looks like an intentional executive risk-management interface rather than a collection of Tableau worksheets.</p>
+<p>Several things are working particularly well: the five controls fit neatly across one row, the four KPI cards have consistent dimensions and centered values, and the scenario order is correct—Baseline before Stress.</p>
+<p>The full-population values also reconcile:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th align="right">Displayed</th>
+<th>Assessment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Matched applications</td>
+<td align="right">750</td>
+<td>&lt;icon name=&quot;check&quot; color=&quot;success&quot; inline/&gt;</td>
+</tr>
+<tr>
+<td>Different decisions</td>
+<td align="right">236 (31.5%)</td>
+<td>&lt;icon name=&quot;check&quot; color=&quot;success&quot; inline/&gt;</td>
+</tr>
+<tr>
+<td>Baseline authorized</td>
+<td align="right">103 (13.7%)</td>
+<td>&lt;icon name=&quot;check&quot; color=&quot;success&quot; inline/&gt;</td>
+</tr>
+<tr>
+<td>Stress authorized</td>
+<td align="right">27 (3.6%)</td>
+<td>&lt;icon name=&quot;check&quot; color=&quot;success&quot; inline/&gt;</td>
+</tr>
+</tbody></table>
+<h3>Three minor refinements I&#39;d make later</h3>
+<p><strong>1. Rename the KPI labels slightly.</strong> I would use <em>Different Decisions</em> instead of splitting the label into “Different” and the percentage alone. Likewise, <em>Baseline Authorized</em> and <em>Stress Authorized</em> would be clearer than just “Baseline” and “Stress.” The current design is clean, but a reader should understand each metric without needing the surrounding narrative.</p>
+<p><strong>2. Remove the blue selection highlight.</strong> The Baseline KPI is currently blue because it appears selected in Tableau&#39;s editing interface. If that disappears when you deselect the worksheet, no change is needed. If it remains in presentation mode, check the worksheet&#39;s background shading.</p>
+<p><strong>3. Keep the legend as it is.</strong> “Matched Application Count” is now a clearer title for the matrix&#39;s color scale. Its location works well in this compact control bar.</p>
+<h3>What I&#39;d do next</h3>
+<p><strong>Move on to the main analytical area.</strong> I would not spend more time perfecting the header tonight.</p>
+<p>The next important milestone is placing <strong>02 — Decision Matrix</strong> and <strong>08 — Segment Comparison</strong> side by side, while preserving the full-width application investigation and narrative panels below them.</p>
+<p>One design caution: your matrix has seven decision categories on each axis, so it needs substantially more horizontal space than the segment bar chart. I would start with a <strong>65% / 35% width allocation</strong>, then inspect the actual labels before accepting that arrangement.</p>
+<p>Once those two charts are in place, we&#39;ll have the essential executive-to-merchant analytical flow:</p>
+<p><strong>Portfolio indicators → decision migration matrix → segment sensitivity → individual application → evidence-based interpretation.</strong></p>
+<p>The header is now good enough to keep. The next priority is ensuring the analytical content beneath it is equally polished and readable.</p>
+</div></article><article id="m-69bb83ee-01ee-4d8d-86f8-6bc3ba19a3ea" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00449 · 2026-10-16T08:13:46.655000-04:00 · active path</p><div class="bubble"><p>Likewise, Baseline Authorized and Stress Authorized would be clearer than just “Baseline” and “Stress.”   we have authorized after the % are you suggesting removing that and just saying Baseline Authorized and Stress Authorized on the middle line?</p>
+</div></article><article id="m-ac297bdd-d066-4b1b-8b07-270af43710ba" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00450 · 2026-10-16T08:13:56.265257-04:00 · active path</p><div class="bubble"><p><strong>Yes, exactly.</strong> I recommend moving “Authorized” to the middle line and leaving the percentage alone on the bottom line.</p>
+<p>That makes each KPI self-explanatory and eliminates the slight redundancy in the current layout.</p>
+&lt;grid columns={2} gap={3}&gt;
+  &lt;grid-item&gt;
+    &lt;text color=&quot;secondary&quot; weight=&quot;medium&quot; size=&quot;xs&quot;&gt;Current&lt;/text&gt;
+    &lt;box border radius=&quot;lg&quot; padding={3} align=&quot;center&quot; gap={1}&gt;
+      &lt;title size=&quot;2xl&quot;&gt;103&lt;/title&gt;
+      &lt;text size=&quot;sm&quot;&gt;Baseline&lt;/text&gt;
+      &lt;text size=&quot;sm&quot; color=&quot;secondary&quot;&gt;13.7% authorized&lt;/text&gt;
+    &lt;/box&gt;
+  &lt;/grid-item&gt;
+  &lt;grid-item&gt;
+    &lt;text color=&quot;secondary&quot; weight=&quot;medium&quot; size=&quot;xs&quot;&gt;Recommended&lt;/text&gt;
+    &lt;box border radius=&quot;lg&quot; padding={3} align=&quot;center&quot; gap={1}&gt;
+      &lt;title size=&quot;2xl&quot;&gt;103&lt;/title&gt;
+      &lt;text size=&quot;sm&quot;&gt;Baseline Authorized&lt;/text&gt;
+      &lt;text size=&quot;sm&quot; color=&quot;secondary&quot;&gt;13.7%&lt;/text&gt;
+    &lt;/box&gt;
+  &lt;/grid-item&gt;
+&lt;/grid&gt;
+
+<p>I&#39;d use this consistent structure for all four cards:</p>
+<table>
+<thead>
+<tr>
+<th>Main value</th>
+<th>Middle label</th>
+<th>Bottom line</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>750</strong></td>
+<td>Matched Applications</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>236</strong></td>
+<td>Different Decisions</td>
+<td>31.5%</td>
+</tr>
+<tr>
+<td><strong>103</strong></td>
+<td>Baseline Authorized</td>
+<td>13.7%</td>
+</tr>
+<tr>
+<td><strong>27</strong></td>
+<td>Stress Authorized</td>
+<td>3.6%</td>
+</tr>
+</tbody></table>
+<p>This keeps the main number prominent, the metric definition immediately beneath it, and the rate as supporting context.</p>
+<p><strong>One caveat:</strong> If “Baseline Authorized” wraps awkwardly in Tableau, use two intentional lines rather than shrinking the font:</p>
+<p><code>Baseline</code><br><code>Authorized</code></p>
+<p>But with your current card widths, I expect the single-line version to fit comfortably.</p>
+</div></article><article id="m-b26e9bcb-9924-4aac-a8bd-0bb8e5137eb6" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00451 · 2026-10-16T08:19:21.262000-04:00 · active path</p><div class="bubble"><p>done. ok, now let&#39;s move on. below this what comes next and how should the rest of the dashboard lay out?</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

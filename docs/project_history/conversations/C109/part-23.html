@@ -1,0 +1,1149 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 23 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 23</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-22.html">Previous part</a><a href="part-24.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-dfe89512-07ba-41ea-be83-19547894bc58" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00537 · 2026-08-27T23:47:46.259679-04:00 · active path</p><div class="bubble"><p>Yes. <strong>“Required underwriting evidence was blocked…” is technically true but narratively wrong for the main canvas.</strong> <code>BLOCKED</code> is an implementation/evidence-contract state. It tells us what the pipeline did, not what an executive or interviewer needs to understand.</p>
+<p>For an evidence decline, the page should say something closer to:</p>
+<blockquote>
+<p><strong>Merchant operating evidence</strong><br>Required source or verification evidence was insufficient to support a complete operating assessment.</p>
+</blockquote>
+<blockquote>
+<p><strong>Requested-structure assessment</strong><br>Because the evidence was insufficient, capacity, integrated risk, comparative loss, and risk-adjusted economics were not evaluated for decisioning.</p>
+</blockquote>
+<blockquote>
+<p><strong>Why this outcome</strong><br>The available evidence was insufficient to support a reliable underwriting determination, so no offer was authorized.</p>
+</blockquote>
+<p>That is much cleaner. The exact <code>BLOCKED</code> statuses still belong in the technical tooltip/evidence note.</p>
+<p>This also preserves the important distinction we just fixed: 000012 is a <strong>policy decline caused by an actual verification hard stop</strong>, whereas 000312 Recession Energy and 000001 are terminal insufficient-evidence outcomes. <code>FactFinalDecision</code> explicitly classifies 000312 Recession Energy as <code>NO_STRUCTURE_INSUFFICIENT_EVIDENCE / DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED</code>. [export reference: filecite | turn76file0 | L11-L13]</p>
+<p>I would update the same three measures again, but this time make the main-canvas language business-facing throughout.</p>
+<h2>1. Full replacement — <code>P03 Merchant Evidence Narrative</code></h2>
+<pre><code class="language-DAX">P03 Merchant Evidence Narrative =
+VAR _ContextPass =
+    [P03 Underwriting Context Pass]
+
+VAR _FinalOutcome =
+    SELECTEDVALUE (
+        &#39;FactFinalDecision&#39;[final_decision_outcome_code]
+    )
+
+VAR _Archetype =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[archetype_code]
+    )
+
+VAR _AverageDailySales =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[avg_daily_eligible_sales_30d]
+    )
+
+VAR _AverageAvailableBalance =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[average_available_balance_30d]
+    )
+
+VAR _NegativeBalanceRate =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[negative_balance_day_rate_30d]
+    )
+
+VAR _NSFCount =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[nsf_count_30d]
+    )
+
+VAR _ProcessorContinuity =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[processor_continuity_status]
+    )
+
+VAR _DataConfidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[data_confidence_tier]
+    )
+
+VAR _FeatureCompleteness =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[feature_completeness_status]
+    )
+
+VAR _Verification =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[verification_disposition]
+    )
+
+VAR _ContractEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[contract_evidence_status]
+    )
+
+VAR _PrimaryReason =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[primary_contract_reason_code]
+    )
+
+VAR _SecondaryReasons =
+    COALESCE (
+        SELECTEDVALUE (
+            &#39;FactApplicationScenario&#39;[secondary_contract_reason_codes]
+        ),
+        &quot;&quot;
+    )
+
+VAR _ReasonText =
+    UPPER (
+        COALESCE ( _PrimaryReason, &quot;&quot; )
+            &amp; &quot;|&quot;
+            &amp; _SecondaryReasons
+    )
+
+VAR _PatternPhrase =
+    SWITCH (
+        _Archetype,
+        &quot;STABLE&quot;, &quot;a stable operating pattern&quot;,
+        &quot;GROWING&quot;, &quot;a growing operating pattern&quot;,
+        &quot;SEASONAL&quot;, &quot;a seasonal operating pattern&quot;,
+        &quot;VOLATILE&quot;, &quot;a volatile operating pattern&quot;,
+        &quot;DECLINING&quot;, &quot;a declining operating pattern&quot;,
+        &quot;DISRUPTED&quot;, &quot;a disrupted operating pattern&quot;,
+        &quot;THIN_HISTORY&quot;, &quot;limited operating history&quot;,
+        &quot;INSUFFICIENT_EVIDENCE&quot;, &quot;insufficient operating-pattern evidence&quot;,
+        &quot;an unclassified operating pattern&quot;
+    )
+
+VAR _SalesText =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _AverageDailySales ), BLANK (),
+        ABS ( _AverageDailySales ) &gt;= 1000000,
+            FORMAT (
+                _AverageDailySales / 1000000,
+                &quot;$0.0&quot;
+            ) &amp; &quot;M&quot;,
+        ABS ( _AverageDailySales ) &gt;= 1000,
+            FORMAT (
+                _AverageDailySales / 1000,
+                &quot;$0.0&quot;
+            ) &amp; &quot;K&quot;,
+        FORMAT (
+            _AverageDailySales,
+            &quot;$#,0&quot;
+        )
+    )
+
+VAR _SalesPhrase =
+    IF (
+        ISBLANK ( _AverageDailySales ),
+        &quot;eligible-sales evidence was unavailable&quot;,
+        &quot;averaging &quot;
+            &amp; _SalesText
+            &amp; &quot; in eligible sales per day&quot;
+    )
+
+VAR _NSFPhrase =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _NSFCount ),
+            &quot;NSF evidence was unavailable&quot;,
+        _NSFCount = 0,
+            &quot;no recent NSF events&quot;,
+        _NSFCount = 1,
+            &quot;one recent NSF event&quot;,
+        FORMAT ( _NSFCount, &quot;0&quot; )
+            &amp; &quot; recent NSF events&quot;
+    )
+
+VAR _NegativeBalancePhrase =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _NegativeBalanceRate ),
+            &quot;negative-balance evidence was unavailable&quot;,
+        _NegativeBalanceRate = 0,
+            &quot;no negative-balance days&quot;,
+        &quot;negative balances on &quot;
+            &amp; FORMAT (
+                _NegativeBalanceRate,
+                &quot;0.0%&quot;
+            )
+            &amp; &quot; of the last 30 days&quot;
+    )
+
+VAR _BalanceText =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _AverageAvailableBalance ), BLANK (),
+        ABS ( _AverageAvailableBalance ) &gt;= 1000000,
+            FORMAT (
+                ABS ( _AverageAvailableBalance ) / 1000000,
+                &quot;$0.0&quot;
+            ) &amp; &quot;M&quot;,
+        ABS ( _AverageAvailableBalance ) &gt;= 1000,
+            FORMAT (
+                ABS ( _AverageAvailableBalance ) / 1000,
+                &quot;$0.0&quot;
+            ) &amp; &quot;K&quot;,
+        FORMAT (
+            ABS ( _AverageAvailableBalance ),
+            &quot;$#,0&quot;
+        )
+    )
+
+VAR _BalanceSentence =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _AverageAvailableBalance ),
+            &quot;Average available balance was unavailable.&quot;,
+        _AverageAvailableBalance &lt; 0,
+            &quot;Average available balance was negative at &quot;
+                &amp; _BalanceText
+                &amp; &quot;.&quot;,
+        &quot;Average available balance was &quot;
+            &amp; _BalanceText
+            &amp; &quot;.&quot;
+    )
+
+VAR _ProcessorSentence =
+    SWITCH (
+        _ProcessorContinuity,
+        &quot;STABLE&quot;,
+            &quot;Processor continuity was stable.&quot;,
+        &quot;MONITORED&quot;,
+            &quot;Processor continuity required monitoring.&quot;,
+        &quot;WATCH&quot;,
+            &quot;Processor continuity was on watch.&quot;,
+        &quot;DISRUPTED&quot;,
+            &quot;Processor continuity was disrupted.&quot;,
+        &quot;UNAVAILABLE&quot;,
+            &quot;Processor-continuity evidence was unavailable.&quot;,
+        &quot;Processor-continuity status was not classified.&quot;
+    )
+
+VAR _ConfidenceLabel =
+    SWITCH (
+        _DataConfidence,
+        &quot;HIGH&quot;, &quot;high-confidence&quot;,
+        &quot;MEDIUM&quot;, &quot;medium-confidence&quot;,
+        &quot;LOW&quot;, &quot;low-confidence&quot;,
+        &quot;REVIEW&quot;, &quot;under-review&quot;,
+        &quot;unclassified&quot;
+    )
+
+VAR _CompletenessLabel =
+    SWITCH (
+        _FeatureCompleteness,
+        &quot;COMPLETE&quot;, &quot;complete&quot;,
+        &quot;PARTIAL&quot;, &quot;partial&quot;,
+        &quot;BLOCKED&quot;, &quot;incomplete&quot;,
+        &quot;unclassified&quot;
+    )
+
+VAR _EvidenceSentence =
+    SWITCH (
+        TRUE (),
+
+        _Verification = &quot;CLEAR&quot;,
+            &quot;The evidence was &quot;
+                &amp; _ConfidenceLabel
+                &amp; &quot; and &quot;
+                &amp; _CompletenessLabel
+                &amp; &quot;, with clear verification.&quot;,
+
+        _Verification = &quot;REVIEW&quot;,
+            &quot;The evidence was &quot;
+                &amp; _ConfidenceLabel
+                &amp; &quot; and &quot;
+                &amp; _CompletenessLabel
+                &amp; &quot;, but verification required review.&quot;,
+
+        _Verification = &quot;STOP&quot;,
+            &quot;Verification produced a governed hard-stop condition.&quot;,
+
+        _Verification = &quot;INSUFFICIENT_EVIDENCE&quot;,
+            &quot;Verification evidence was insufficient.&quot;,
+
+        &quot;Verification status was unavailable.&quot;
+    )
+
+RETURN
+    SWITCH (
+        TRUE (),
+
+        _ContextPass &lt;&gt; 1,
+            &quot;Select one merchant application and one scenario.&quot;,
+
+        /* Policy hard stop: source evidence existed and revealed a failure */
+        _Verification = &quot;STOP&quot;
+            &amp;&amp; CONTAINSSTRING (
+                _ReasonText,
+                &quot;BANK_ACCOUNT_MISMATCH&quot;
+            ),
+            &quot;The merchant&#39;s source data was available, but bank-account verification identified a governed mismatch. That hard-stop condition prevented the remaining underwriting assessment from proceeding.&quot;,
+
+        _Verification = &quot;STOP&quot;
+            &amp;&amp; CONTAINSSTRING (
+                _ReasonText,
+                &quot;BENEFICIAL_OWNER_FAILURE&quot;
+            ),
+            &quot;The merchant&#39;s source data was available, but beneficial-owner verification failed a governed requirement. That hard-stop condition prevented the remaining underwriting assessment from proceeding.&quot;,
+
+        _Verification = &quot;STOP&quot;
+            &amp;&amp; CONTAINSSTRING (
+                _ReasonText,
+                &quot;PROCESSOR_MISMATCH&quot;
+            ),
+            &quot;The merchant&#39;s source data was available, but processor verification identified a governed mismatch. That hard-stop condition prevented the remaining underwriting assessment from proceeding.&quot;,
+
+        _Verification = &quot;STOP&quot;,
+            &quot;The merchant&#39;s source evidence produced a governed verification hard stop. The remaining underwriting assessment was therefore not permitted to proceed.&quot;,
+
+        /* Terminal evidence decline: translate pipeline status into business language */
+        _FinalOutcome = &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;
+            &amp;&amp; CONTAINSSTRING (
+                _ReasonText,
+                &quot;CRITICAL_SOURCE_UNAVAILABLE&quot;
+            ),
+            &quot;Required source evidence was unavailable, so the merchant&#39;s operating profile could not be assessed reliably enough to support an underwriting decision.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;
+            &amp;&amp; _Verification = &quot;INSUFFICIENT_EVIDENCE&quot;,
+            &quot;Required verification evidence was insufficient, so the merchant&#39;s operating profile could not be assessed reliably enough to support an underwriting decision.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;,
+            &quot;Required source or verification evidence was insufficient to support a complete and reliable assessment of the merchant&#39;s operating profile.&quot;,
+
+        /* Other blocked state, without exposing implementation terminology */
+        _ContractEvidence = &quot;BLOCKED&quot;
+            || _FeatureCompleteness = &quot;BLOCKED&quot;,
+            &quot;The available underwriting evidence was not sufficient to support a complete operating assessment.&quot;,
+
+        /* Normal supported case */
+        &quot;The merchant showed &quot;
+            &amp; _PatternPhrase
+            &amp; &quot;, &quot;
+            &amp; _SalesPhrase
+            &amp; &quot;, with &quot;
+            &amp; _NSFPhrase
+            &amp; &quot; and &quot;
+            &amp; _NegativeBalancePhrase
+            &amp; &quot;. &quot;
+            &amp; _BalanceSentence
+            &amp; &quot; &quot;
+            &amp; _ProcessorSentence
+            &amp; &quot; &quot;
+            &amp; _EvidenceSentence
+    )
+</code></pre>
+<hr>
+<h2>2. Full replacement — <code>P03 Structure Assessment Narrative</code></h2>
+<pre><code class="language-DAX">P03 Structure Assessment Narrative =
+VAR _ContextPass =
+    [P03 Underwriting Context Pass]
+
+VAR _FinalOutcome =
+    SELECTEDVALUE (
+        &#39;FactFinalDecision&#39;[final_decision_outcome_code]
+    )
+
+VAR _Verification =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[verification_disposition]
+    )
+
+VAR _ContractEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[contract_evidence_status]
+    )
+
+VAR _CapacityEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[capacity_evidence_status]
+    )
+
+VAR _Affordability =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[affordability_status]
+    )
+
+VAR _Coverage =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[sales_linked_payment_coverage_ratio]
+    )
+
+VAR _ResidualCapacity =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[residual_daily_operating_cash_flow]
+    )
+
+VAR _PostFinancingLiquidity =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[post_financing_liquidity_buffer_amount]
+    )
+
+VAR _RiskEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[integrated_risk_evidence_status]
+    )
+
+VAR _RiskStatus =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[integrated_risk_status]
+    )
+
+VAR _RiskTier =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[integrated_risk_tier]
+    )
+
+VAR _RiskScore =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[integrated_risk_score]
+    )
+
+VAR _LossEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[loss_evidence_status]
+    )
+
+VAR _ExpectedLossRate =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[schedule_adjusted_comparative_loss_rate]
+    )
+
+VAR _EconomicsEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[unit_economics_evidence_status]
+    )
+
+VAR _Contribution =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[risk_adjusted_contribution_amount]
+    )
+
+VAR _AnnualizedReturn =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[annualized_risk_adjusted_return_rate]
+    )
+
+VAR _EconomicStatus =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[economic_status]
+    )
+
+VAR _AffordabilityLabel =
+    SWITCH (
+        _Affordability,
+        &quot;AFFORDABLE&quot;, &quot;affordable&quot;,
+        &quot;MARGINAL&quot;, &quot;marginal&quot;,
+        &quot;UNAFFORDABLE&quot;, &quot;unaffordable&quot;,
+        &quot;INSUFFICIENT_EVIDENCE&quot;, &quot;not assessable&quot;,
+        &quot;unclassified&quot;
+    )
+
+VAR _ResidualText =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _ResidualCapacity ), BLANK (),
+        ABS ( _ResidualCapacity ) &gt;= 1000000,
+            FORMAT (
+                ABS ( _ResidualCapacity ) / 1000000,
+                &quot;$0.0&quot;
+            ) &amp; &quot;M&quot;,
+        ABS ( _ResidualCapacity ) &gt;= 1000,
+            FORMAT (
+                ABS ( _ResidualCapacity ) / 1000,
+                &quot;$0.0&quot;
+            ) &amp; &quot;K&quot;,
+        FORMAT (
+            ABS ( _ResidualCapacity ),
+            &quot;$#,0&quot;
+        )
+    )
+
+VAR _ResidualClause =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _ResidualCapacity ),
+            &quot;with residual capacity unavailable&quot;,
+
+        _ResidualCapacity &gt;= 0,
+            &quot;leaving &quot;
+                &amp; _ResidualText
+                &amp; &quot; per day after modeled obligations&quot;,
+
+        &quot;producing a &quot;
+            &amp; _ResidualText
+            &amp; &quot; per-day shortfall&quot;
+    )
+
+VAR _LiquidityText =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _PostFinancingLiquidity ), BLANK (),
+        ABS ( _PostFinancingLiquidity ) &gt;= 1000000,
+            FORMAT (
+                ABS ( _PostFinancingLiquidity ) / 1000000,
+                &quot;$0.0&quot;
+            ) &amp; &quot;M&quot;,
+        ABS ( _PostFinancingLiquidity ) &gt;= 1000,
+            FORMAT (
+                ABS ( _PostFinancingLiquidity ) / 1000,
+                &quot;$0.0&quot;
+            ) &amp; &quot;K&quot;,
+        FORMAT (
+            ABS ( _PostFinancingLiquidity ),
+            &quot;$#,0&quot;
+        )
+    )
+
+VAR _LiquidityClause =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _PostFinancingLiquidity ),
+            BLANK (),
+
+        _PostFinancingLiquidity &gt;= 0,
+            &quot;a post-financing liquidity buffer of &quot;
+                &amp; _LiquidityText,
+
+        &quot;a negative post-financing liquidity position of &quot;
+            &amp; _LiquidityText
+    )
+
+VAR _CapacitySentence =
+    IF (
+        _CapacityEvidence = &quot;BLOCKED&quot;
+            || ISBLANK ( _Coverage ),
+
+        &quot;Capacity and affordability could not be evaluated reliably.&quot;,
+
+        &quot;At the requested structure, the governed capacity assessment was &quot;
+            &amp; _AffordabilityLabel
+            &amp; &quot;: modeled operating cash flow covered total daily obligations &quot;
+            &amp; FORMAT (
+                _Coverage,
+                &quot;0.00x&quot;
+            )
+            &amp; &quot;, &quot;
+            &amp; _ResidualClause
+            &amp; IF (
+                NOT ISBLANK ( _LiquidityClause ),
+                &quot;, with &quot; &amp; _LiquidityClause,
+                &quot;&quot;
+            )
+            &amp; &quot;.&quot;
+    )
+
+VAR _RiskLabel =
+    SWITCH (
+        _RiskStatus,
+        &quot;LOW_RISK&quot;, &quot;low&quot;,
+        &quot;MODERATE_RISK&quot;, &quot;moderate&quot;,
+        &quot;ELEVATED_RISK&quot;, &quot;elevated&quot;,
+        &quot;HIGH_RISK&quot;, &quot;high&quot;,
+        &quot;SEVERE_RISK&quot;, &quot;severe&quot;,
+        &quot;INSUFFICIENT_EVIDENCE&quot;, &quot;not assessable&quot;,
+        &quot;unclassified&quot;
+    )
+
+VAR _RiskSentence =
+    IF (
+        _RiskEvidence = &quot;BLOCKED&quot;
+            || ISBLANK ( _RiskTier ),
+
+        &quot;Integrated risk could not be evaluated reliably.&quot;,
+
+        &quot;Integrated risk was &quot;
+            &amp; _RiskLabel
+            &amp; &quot; (Tier &quot;
+            &amp; FORMAT (
+                _RiskTier,
+                &quot;0&quot;
+            )
+            &amp; IF (
+                NOT ISBLANK ( _RiskScore ),
+                &quot;; score &quot;
+                    &amp; FORMAT (
+                        _RiskScore,
+                        &quot;0.0&quot;
+                    ),
+                &quot;&quot;
+            )
+            &amp; &quot;).&quot;
+    )
+
+VAR _LossSentence =
+    IF (
+        _LossEvidence = &quot;BLOCKED&quot;
+            || ISBLANK ( _ExpectedLossRate ),
+
+        &quot;Comparative expected loss could not be evaluated reliably.&quot;,
+
+        &quot;Comparative expected loss was &quot;
+            &amp; FORMAT (
+                _ExpectedLossRate,
+                &quot;0.00%&quot;
+            )
+            &amp; &quot;.&quot;
+    )
+
+VAR _ContributionText =
+    IF (
+        ISBLANK ( _Contribution ),
+        BLANK (),
+        FORMAT (
+            _Contribution,
+            &quot;$#,0;($#,0);$0&quot;
+        )
+    )
+
+VAR _EconomicStatusTail =
+    SWITCH (
+        _EconomicStatus,
+        &quot;ABOVE_HURDLE&quot;,
+            &quot;, above the governed hurdle.&quot;,
+        &quot;BELOW_HURDLE&quot;,
+            &quot;, below the governed hurdle.&quot;,
+        &quot;NEGATIVE_CONTRIBUTION&quot;,
+            &quot;, producing negative contribution.&quot;,
+        &quot;.&quot;
+    )
+
+VAR _EconomicsSentence =
+    IF (
+        _EconomicsEvidence = &quot;BLOCKED&quot;
+            || ISBLANK ( _Contribution ),
+
+        &quot;Risk-adjusted economics could not be evaluated reliably.&quot;,
+
+        &quot;Risk-adjusted contribution was &quot;
+            &amp; _ContributionText
+            &amp; IF (
+                NOT ISBLANK ( _AnnualizedReturn ),
+                &quot; (&quot;
+                    &amp; FORMAT (
+                        _AnnualizedReturn,
+                        &quot;0.0%;(0.0%);0.0%&quot;
+                    )
+                    &amp; &quot; annualized)&quot;,
+                &quot;&quot;
+            )
+            &amp; _EconomicStatusTail
+    )
+
+RETURN
+    SWITCH (
+        TRUE (),
+
+        _ContextPass &lt;&gt; 1,
+            &quot;Select one merchant application and one scenario.&quot;,
+
+        /* Hard stop: downstream assessment intentionally not performed */
+        _Verification = &quot;STOP&quot;,
+            &quot;A governed verification hard stop occurred before capacity, integrated risk, comparative loss, and risk-adjusted economics could be used for decisioning. No downstream structure assessment was performed.&quot;,
+
+        /* Terminal insufficient-evidence decline */
+        _FinalOutcome = &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;,
+            &quot;Because the available evidence was insufficient, capacity, integrated risk, comparative loss, and risk-adjusted economics could not be evaluated reliably for decisioning.&quot;,
+
+        /* Other incomplete evidence */
+        _Verification = &quot;INSUFFICIENT_EVIDENCE&quot;
+            || _ContractEvidence = &quot;BLOCKED&quot;,
+            &quot;The available evidence was insufficient to complete a reliable assessment of capacity, integrated risk, comparative loss, and risk-adjusted economics.&quot;,
+
+        /* Normal supported case */
+        _CapacitySentence
+            &amp; &quot; &quot;
+            &amp; _RiskSentence
+            &amp; &quot; &quot;
+            &amp; _LossSentence
+            &amp; &quot; &quot;
+            &amp; _EconomicsSentence
+    )
+</code></pre>
+<hr>
+<h2>3. Full replacement — <code>P03 Decision Readout</code></h2>
+<p>I would make one modest improvement here too. Your current evidence-decline wording is accurate but still sounds like an internal control statement.</p>
+<p>Use this full version:</p>
+<pre><code class="language-DAX">P03 Decision Readout =
+VAR _ContextPass =
+    [P03 Underwriting Context Pass]
+
+VAR _FinalOutcome =
+    SELECTEDVALUE (
+        &#39;FactFinalDecision&#39;[final_decision_outcome_code]
+    )
+
+VAR _PricingDisposition =
+    SELECTEDVALUE (
+        &#39;FactFinalDecision&#39;[source_pricing_disposition_code]
+    )
+
+VAR _FinalOfferAmount =
+    SELECTEDVALUE (
+        &#39;FactFinalDecision&#39;[final_offer_amount]
+    )
+
+VAR _RequestedAmount =
+    SELECTEDVALUE (
+        &#39;DimApplication&#39;[requested_funding_amount]
+    )
+
+VAR _Verification =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[verification_disposition]
+    )
+
+VAR _HardStop =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[hard_stop_recommended_flag]
+    )
+
+VAR _Affordability =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[affordability_status]
+    )
+
+VAR _Coverage =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[sales_linked_payment_coverage_ratio]
+    )
+
+VAR _ResidualCapacity =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[residual_daily_operating_cash_flow]
+    )
+
+VAR _RiskStatus =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[integrated_risk_status]
+    )
+
+VAR _EconomicStatus =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[economic_status]
+    )
+
+VAR _Archetype =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[archetype_code]
+    )
+
+VAR _PrimaryReason =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[primary_contract_reason_code]
+    )
+
+VAR _SecondaryReasons =
+    COALESCE (
+        SELECTEDVALUE (
+            &#39;FactApplicationScenario&#39;[secondary_contract_reason_codes]
+        ),
+        &quot;&quot;
+    )
+
+VAR _ReasonText =
+    UPPER (
+        COALESCE ( _PrimaryReason, &quot;&quot; )
+            &amp; &quot;|&quot;
+            &amp; _SecondaryReasons
+    )
+
+VAR _HardStopIssue =
+    _HardStop = TRUE ()
+        || _Verification = &quot;STOP&quot;
+        || CONTAINSSTRING (
+            _ReasonText,
+            &quot;VERIFICATION_HARD_STOP&quot;
+        )
+
+VAR _CapacityIssue =
+    _Affordability = &quot;UNAFFORDABLE&quot;
+        || (
+            NOT ISBLANK ( _Coverage )
+                &amp;&amp; _Coverage &lt; 1
+        )
+        || (
+            NOT ISBLANK ( _ResidualCapacity )
+                &amp;&amp; _ResidualCapacity &lt; 0
+        )
+        || CONTAINSSTRING (
+            _ReasonText,
+            &quot;NEGATIVE_RESIDUAL_CASH_FLOW&quot;
+        )
+        || CONTAINSSTRING (
+            _ReasonText,
+            &quot;CAPACITY_BURDEN_RISK&quot;
+        )
+
+VAR _EconomicIssue =
+    _EconomicStatus IN {
+        &quot;BELOW_HURDLE&quot;,
+        &quot;NEGATIVE_CONTRIBUTION&quot;
+    }
+        || CONTAINSSTRING (
+            _ReasonText,
+            &quot;BELOW_ECONOMIC_HURDLE&quot;
+        )
+        || CONTAINSSTRING (
+            _ReasonText,
+            &quot;NEGATIVE_RISK_ADJUSTED_CONTRIBUTION&quot;
+        )
+
+VAR _RiskIssue =
+    _RiskStatus IN {
+        &quot;HIGH_RISK&quot;,
+        &quot;SEVERE_RISK&quot;
+    }
+
+VAR _LossIssue =
+    CONTAINSSTRING (
+        _ReasonText,
+        &quot;HIGH_COMPARATIVE_LOSS_RATE&quot;
+    )
+        || CONTAINSSTRING (
+            _ReasonText,
+            &quot;RECOVERY_SOURCE_CONFLICT&quot;
+        )
+
+VAR _OperatingIssue =
+    _Archetype IN {
+        &quot;VOLATILE&quot;,
+        &quot;DECLINING&quot;,
+        &quot;DISRUPTED&quot;
+    }
+        || CONTAINSSTRING (
+            _ReasonText,
+            &quot;OPERATING_DISRUPTION&quot;
+        )
+        || CONTAINSSTRING (
+            _ReasonText,
+            &quot;DECLINING_CASH_FLOW&quot;
+        )
+        || CONTAINSSTRING (
+            _ReasonText,
+            &quot;HIGH_CASH_FLOW_VOLATILITY&quot;
+        )
+        || CONTAINSSTRING (
+            _ReasonText,
+            &quot;OPERATING_RESILIENCE_RISK&quot;
+        )
+
+VAR _RequestedAmountText =
+    IF (
+        ISBLANK ( _RequestedAmount ),
+        BLANK (),
+        FORMAT (
+            _RequestedAmount,
+            &quot;$#,0&quot;
+        )
+    )
+
+VAR _FinalOfferAmountText =
+    IF (
+        ISBLANK ( _FinalOfferAmount ),
+        BLANK (),
+        FORMAT (
+            _FinalOfferAmount,
+            &quot;$#,0&quot;
+        )
+    )
+
+VAR _OfferReduced =
+    NOT ISBLANK ( _RequestedAmount )
+        &amp;&amp; NOT ISBLANK ( _FinalOfferAmount )
+        &amp;&amp; _FinalOfferAmount &lt; _RequestedAmount - 0.01
+
+RETURN
+    SWITCH (
+        TRUE (),
+
+        _ContextPass &lt;&gt; 1,
+            &quot;Select one merchant application and one scenario.&quot;,
+
+        /* Insufficient-evidence outcome */
+        _FinalOutcome = &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;
+            || _PricingDisposition = &quot;NO_STRUCTURE_INSUFFICIENT_EVIDENCE&quot;,
+
+            SWITCH (
+                TRUE (),
+
+                CONTAINSSTRING (
+                    _ReasonText,
+                    &quot;CRITICAL_SOURCE_UNAVAILABLE&quot;
+                ),
+                    &quot;Required source evidence was unavailable, preventing a reliable underwriting determination. No offer was authorized.&quot;,
+
+                _Verification = &quot;INSUFFICIENT_EVIDENCE&quot;,
+                    &quot;Required verification evidence was insufficient to support a reliable underwriting determination. No offer was authorized.&quot;,
+
+                &quot;The available evidence was insufficient to support a reliable underwriting determination, so no offer was authorized.&quot;
+            ),
+
+        /* Final offer */
+        _FinalOutcome = &quot;FINAL_OFFER_AUTHORIZED&quot;
+            &amp;&amp; _OfferReduced,
+
+            &quot;The merchant supported an offer, but the authorized structure reduced exposure from &quot;
+                &amp; _RequestedAmountText
+                &amp; &quot; to &quot;
+                &amp; _FinalOfferAmountText
+                &amp; &quot;. The selected terms satisfied the final governed decision boundary.&quot;,
+
+        _FinalOutcome = &quot;FINAL_OFFER_AUTHORIZED&quot;,
+
+            &quot;The selected structure satisfied the governed eligibility, risk, and economic boundary; no binding condition prevented final authorization.&quot;,
+
+        /* Counteroffer review */
+        _FinalOutcome = &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;
+            &amp;&amp; _CapacityIssue
+            &amp;&amp; _EconomicIssue,
+
+            &quot;The requested structure strained cash-flow capacity and did not meet the economic hurdle. A reduced structure was identified, but governance requires manual authorization before it can become an offer.&quot;,
+
+        _FinalOutcome = &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;
+            &amp;&amp; _CapacityIssue,
+
+            &quot;The requested structure exceeded sustainable cash-flow capacity. A reduced structure was identified, but governance requires manual authorization before it can become an offer.&quot;,
+
+        _FinalOutcome = &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;
+            &amp;&amp; _EconomicIssue,
+
+            &quot;The requested structure did not meet the governed economic hurdle. An alternative structure was identified, but it requires manual authorization.&quot;,
+
+        _FinalOutcome = &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;
+            &amp;&amp; (
+                _RiskIssue
+                    || _LossIssue
+            ),
+
+            &quot;Risk or comparative loss at the requested structure required a reduced structure and governed review before authorization.&quot;,
+
+        _FinalOutcome = &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;,
+
+            &quot;A reduced structure was identified, but governance requires manual authorization before it can become an offer.&quot;,
+
+        /* Policy decline — explicit verification hard stops */
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; CONTAINSSTRING (
+                _ReasonText,
+                &quot;BANK_ACCOUNT_MISMATCH&quot;
+            ),
+
+            &quot;Bank-account verification did not satisfy the governed match requirement. This hard-stop condition prevented offer design, so no financing structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; CONTAINSSTRING (
+                _ReasonText,
+                &quot;BENEFICIAL_OWNER_FAILURE&quot;
+            ),
+
+            &quot;Beneficial-owner verification did not satisfy the governed requirement. This hard-stop condition prevented offer design, so no financing structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; CONTAINSSTRING (
+                _ReasonText,
+                &quot;PROCESSOR_MISMATCH&quot;
+            ),
+
+            &quot;Processor verification did not satisfy the governed match requirement. This hard-stop condition prevented offer design, so no financing structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; _HardStopIssue,
+
+            &quot;A governed verification or policy hard stop prevented offer design, so no financing structure was authorized.&quot;,
+
+        /* Policy decline — evaluated underwriting weaknesses */
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; _CapacityIssue
+            &amp;&amp; _EconomicIssue,
+
+            &quot;The requested structure produced insufficient coverage or negative residual cash flow and did not meet the governed economic hurdle; no supportable structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; _CapacityIssue
+            &amp;&amp; (
+                _RiskIssue
+                    || _LossIssue
+            ),
+
+            &quot;The requested structure exceeded sustainable cash-flow capacity while risk or comparative loss was also elevated; no supportable structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; _CapacityIssue,
+
+            &quot;The requested structure exceeded sustainable cash-flow capacity; no supportable alternative structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; _EconomicIssue,
+
+            &quot;Risk-adjusted economics did not meet the governed hurdle; no supportable structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; (
+                _RiskIssue
+                    || _LossIssue
+            ),
+
+            &quot;Integrated risk or comparative loss exceeded the governed boundary; no supportable structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; _OperatingIssue,
+
+            &quot;Operating instability materially weakened the underwriting profile; no supportable structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;,
+
+            &quot;One or more governed eligibility or structure gates failed; no supportable structure was authorized.&quot;,
+
+        &quot;The governed decision requires further review.&quot;
+    )
+</code></pre>
+<h3>What I expect after this change</h3>
+<p>For <strong>000312 — Recession Energy</strong>, instead of three versions of “blocked,” you should get something approximately like:</p>
+<p><strong>Merchant operating evidence</strong>  </p>
+<blockquote>
+<p>Required source or verification evidence was insufficient to support a complete and reliable assessment of the merchant&#39;s operating profile.</p>
+</blockquote>
+<p><strong>Requested-structure assessment</strong>  </p>
+<blockquote>
+<p>Because the available evidence was insufficient, capacity, integrated risk, comparative loss, and risk-adjusted economics could not be evaluated reliably for decisioning.</p>
+</blockquote>
+<p><strong>Why this outcome</strong>  </p>
+<blockquote>
+<p>The available evidence was insufficient to support a reliable underwriting determination, so no offer was authorized.</p>
+</blockquote>
+<p>That is the right level for the primary report. The technical state—<code>BLOCKED</code>, which components were blocked, source confidence, verification disposition, etc.—remains available in the evidence note and eventual tooltip.</p>
+<p>And <strong>000012 should remain unchanged in substance</strong>: the merchant evidence should explicitly identify the bank-account mismatch, the structure assessment should explain that the hard stop prevented downstream assessment, and the final rationale should identify the hard-stop policy decline. Its source record supports that exact distinction. [export reference: filecite | turn75file6 | L91-L92]</p>
+<p>One final presentation cleanup after the DAX: rename the visible headers from <strong><code>Structure assessment narrative</code> → <code>Requested-structure assessment</code></strong> and <strong><code>P03 Decision Readout</code> → <code>Why this outcome</code></strong>. The technical measure names can remain unchanged.</p>
+</div></article><article id="m-4b9d1301-6802-4b3b-aa9a-887b8c807887" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00538 · 2026-08-27T23:54:08.480000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: P03_Merchant_003_Recession_Energy.png; P03_Merchant_003_Baseline.png</p><div class="bubble"><p>Here is Merchant 003. You see detailed narrative for Baseline, but the same required underwriting was blocked... for recession energy. I need more than that. What evidence was there, and why did it get blocked before a complete operating assessment could be produced. We need that why in our return. It&#39;s not sufficient to say, &quot;Required source or verification evidence was insufficient to support a complete operating assessment.&quot; as you suggest.</p>
+</div></article><article id="m-5b355588-e3c2-46fd-9054-bb74ad3d3084" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00539 · 2026-08-27T23:55:21.554178-04:00 · active path</p><div class="bubble"><p>Yes. Merchant 000003 exposes the next issue: <strong>we are still narrating the status of the pipeline rather than the evidence chain that caused that status.</strong></p>
+<p>For 000003 under Recession Energy, we actually know considerably more than the page is saying. The selected row has <strong>high source confidence (98.6%), clear verification, fraud Tier 1, monitored processor continuity, complete feature-completeness status, $28.6K average available balance, no negative-balance days, and no NSFs</strong>. What disappears under stress is the merchant&#39;s 30-day eligible-sales measure and annualized eligible sales. Once <code>avg_daily_eligible_sales_30d</code> is unavailable, M1.10 cannot estimate daily operating cash flow; the governed capacity engine explicitly sets capacity evidence to <code>BLOCKED</code> when that sales measure is null. Coverage and residual cash flow therefore cannot be calculated, and the missing capacity evidence cascades into resilience/risk/loss/economics being unusable. [export reference: filecite | turn78file0 | L6-L6] [export reference: filecite | turn81file4 | L154-L190]</p>
+<p>That is the story the page should tell.</p>
+<h2>What 000003 should say</h2>
+<h3>Merchant operating evidence</h3>
+<p>Instead of:</p>
+<blockquote>
+<p>Required underwriting evidence was blocked before a complete operating assessment could be produced.</p>
+</blockquote>
+<p>I would want:</p>
+<blockquote>
+<p><strong>Source confidence remained high with clear verification, no recent NSF or negative-balance activity, and $28.6K in average available liquidity. Under the stress scenario, however, the 30-day eligible-sales measure required to estimate operating cash flow was unavailable.</strong></p>
+</blockquote>
+<p>That is both much more informative and much more defensible.</p>
+<h3>Requested-structure assessment</h3>
+<p>Instead of:</p>
+<blockquote>
+<p>Required underwriting evidence was blocked before the governed capacity, risk, comparative-loss, and economic assessment could be completed.</p>
+</blockquote>
+<p>Use:</p>
+<blockquote>
+<p><strong>Without a usable 30-day eligible-sales measure, operating cash flow and payment capacity could not be calculated reliably. The governed process therefore withheld coverage, residual capacity, integrated risk, comparative loss, and risk-adjusted economics rather than treating missing sales evidence as weak performance.</strong></p>
+</blockquote>
+<p>That last phrase is particularly important. The capacity validation explicitly says blocked evidence must <strong>not be converted into weak merchant performance</strong>. [export reference: filecite | turn79file5 | L187-L191]</p>
+<h3>Why this outcome</h3>
+<p>For 000003 Recession Energy, the final decision is actually <strong>Policy decline</strong>, not an evidence decline. [export reference: filecite | turn82file2 | L84-L88]</p>
+<p>So I would want something such as:</p>
+<blockquote>
+<p><strong>The stress scenario left the application without a decisionable cash-flow capacity assessment. With required downstream risk and loss evidence unavailable, the governed policy path did not authorize a supportable structure.</strong></p>
+</blockquote>
+<p>That is materially stronger than:</p>
+<blockquote>
+<p>One or more governed eligibility or structure gates failed.</p>
+</blockquote>
+<hr>
+<h1>There is a model-design issue we should acknowledge</h1>
+<p>There are really <strong>two levels of “why”</strong>:</p>
+<ol>
+<li><p><strong>Why did capacity become blocked?</strong><br>We can answer this from <code>FactApplicationScenario</code>: <code>avg_daily_eligible_sales_30d</code> is blank, and the capacity engine explicitly blocks when that field is unavailable. [export reference: filecite | turn81file4 | L171-L179]</p>
+</li>
+<li><p><strong>Why did the 30-day eligible-sales feature itself become unavailable?</strong><br><code>FactApplicationScenario</code> does <strong>not contain enough diagnostic lineage to answer that safely.</strong></p>
+</li>
+</ol>
+<p>M1.9 actually has richer fields including:</p>
+<ul>
+<li><code>pos_quality_status</code></li>
+<li><code>deposit_quality_status</code></li>
+<li><code>downstream_routing_status</code></li>
+<li><code>ready_for_downstream_flag</code></li>
+<li><code>pos_history_days</code></li>
+<li><code>deposit_history_days</code></li>
+<li>processor outage/degraded rates</li>
+<li>feature-specific <code>value_status</code></li>
+<li>primary/secondary source snapshot IDs</li>
+</ul>
+<p>The M1.9 feature layer explicitly maintains these details and even has a long <code>cashflow_feature_value</code> table in which each feature carries an <code>AVAILABLE</code> / <code>NOT_AVAILABLE</code> state and source lineage. [export reference: filecite | turn82file1 | L58-L72]</p>
+<p>Those diagnostic fields did <strong>not</strong> all make it into the current <code>FactApplicationScenario</code> reporting contract.</p>
+<p>So we should not have the Power BI narrative invent something like:</p>
+<blockquote>
+<p>“Sales became unavailable because of a processor outage.”</p>
+</blockquote>
+<p>We do not currently have enough report-model evidence to prove that for the selected merchant.</p>
+<p>What we <strong>can</strong> state credibly is:</p>
+<blockquote>
+<p>“The 30-day eligible-sales evidence required for capacity assessment was unavailable.”</p>
+</blockquote>
+<p>That is specific, useful and directly proven.</p>
+<hr>
+<h1>This changes how I would design the narrative DAX</h1>
+<p>The measure should no longer contain one generic branch such as:</p>
+<pre><code class="language-DAX">_ContractEvidence = &quot;BLOCKED&quot;
+</code></pre>
+<p>and then print:</p>
+<blockquote>
+<p>Required underwriting evidence was blocked...</p>
+</blockquote>
+<p>Instead, it should identify the <strong>first observable break in the evidence chain</strong>.</p>
+<p>The precedence should become approximately:</p>
+<p><strong>Verification hard stop</strong><br>→ name the actual hard stop.</p>
+<p><strong>Eligible-sales unavailable</strong><br>→ explain that operating cash flow/capacity cannot be calculated.</p>
+<p><strong>Liquidity evidence unavailable</strong><br>→ identify that liquidity cannot be evaluated.</p>
+<p><strong>Risk evidence unavailable after capacity</strong><br>→ say that capacity evidence existed but integrated-risk evidence was insufficient.</p>
+<p><strong>Comparative-loss evidence unavailable</strong><br>→ identify the loss-evidence limitation.</p>
+<p><strong>Otherwise supported</strong><br>→ give the complete merchant and structure narratives.</p>
+<p>That is a much more mature analytical design because the narrative follows the <strong>dependency graph</strong>, not merely the final evidence flag.</p>
+<hr>
+<h1>Merchant 000003 is an excellent example</h1>
+<p>Baseline tells one coherent story:</p>
+<blockquote>
+<p>Volatile merchant → $4.0K/day sales → $99.3K liquidity → clear verification → monitored processor → only 0.73x coverage → $360/day shortfall → moderate risk → 6.37% comparative loss → positive economics → <strong>capacity-driven policy decline</strong>.</p>
+</blockquote>
+<p>Recession Energy tells a fundamentally different story:</p>
+<blockquote>
+<p>High-confidence evidence and clean bank-behavior indicators remain available → but the required eligible-sales measure disappears → operating cash flow cannot be estimated → capacity cannot be assessed → downstream risk/loss/economics cannot be used → <strong>no supportable stress structure is authorized</strong>.</p>
+</blockquote>
+<p>That is precisely the type of scenario comparison that makes the project sophisticated. The stress scenario is not simply “all metrics get worse.” In some paths, <strong>the evidence itself ceases to support a reliable decision</strong>, and the model refuses to manufacture an answer. The scenario framework was explicitly designed to reduce sales, increase volatility and zero-sales behavior, pressure liquidity and transaction quality, and potentially disrupt processor evidence. [export reference: filecite | turn79file0 | L19-L28]</p>
+<h2>What I recommend now</h2>
+<p>We should revise the narrative measures one more time, but this time around an explicit <strong>evidence-dependency hierarchy</strong> rather than adding another generic blocked-state sentence.</p>
+<p>For the fields already present in <code>FactApplicationScenario</code>, I would make the narrative distinguish at minimum:</p>
+<p><strong>verification failure → sales/cash-flow evidence unavailable → capacity unavailable → risk unavailable → loss unavailable → economics unavailable.</strong></p>
+<p>And for cases like 000003, we should <strong>still report the evidence that was successfully observed</strong>—high confidence, clear verification, liquidity, NSF/negative-balance behavior, processor status—before explaining the specific missing input.</p>
+<p>I would not yet add M1.9 tables to the Power BI carrier just to answer whether the eligible-sales gap came from POS history, source quality, or another upstream condition. That would reopen the semantic boundary. Instead, first make the P03 narrative maximally informative using the evidence already physically exposed. If, after testing the population, we repeatedly find that the reason <em>why a specific feature became unavailable</em> is essential, then we can make a bounded case for exposing a very small set of M1.9 diagnostic lineage fields.</p>
+<p>And when we update the DAX, I will provide the <strong>complete replacement formulas</strong>, not partial edits.</p>
+</div></article><article id="m-89f3b460-f931-4502-94f9-40b25bf99eef" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00540 · 2026-08-27T23:59:26.382000-04:00 · active path</p><div class="bubble"><p>please draft a detailed prompt to deliver back to my original build chat, regarding this: &quot;There is a model-design issue we should acknowledge
+There are really <strong>two levels of “why”</strong>:</p>
+<ol>
+<li><strong>Why did capacity become blocked?</strong>
+ We can answer this from <code>FactApplicationScenario</code>: <code>avg_daily_eligible_sales_30d</code> is blank, and the capacity engine explicitly blocks when that field is unavailable.  </li>
+<li><strong>Why did the 30-day eligible-sales feature itself become unavailable?</strong>
+ <code>FactApplicationScenario</code> does <strong>not contain enough diagnostic lineage to answer that safely.</strong></li>
+</ol>
+<p>M1.9 actually has richer fields including:</p>
+<ul>
+<li><code>pos_quality_status</code> </li>
+<li><code>deposit_quality_status</code> </li>
+<li><code>downstream_routing_status</code> </li>
+<li><code>ready_for_downstream_flag</code> </li>
+<li><code>pos_history_days</code> </li>
+<li><code>deposit_history_days</code> </li>
+<li>processor outage/degraded rates </li>
+<li>feature-specific <code>value_status</code> </li>
+<li>primary/secondary source snapshot IDs</li>
+</ul>
+<p>The M1.9 feature layer explicitly maintains these details and even has a long <code>cashflow_feature_value</code> table in which each feature carries an <code>AVAILABLE</code> / <code>NOT_AVAILABLE</code> state and source lineage. </p>
+<p>Those diagnostic fields did <strong>not</strong> all make it into the current <code>FactApplicationScenario</code> reporting contract.</p>
+<p>So we should not have the Power BI narrative invent something like:</p>
+<blockquote>
+<p>“Sales became unavailable because of a processor outage.”</p>
+</blockquote>
+<p>We do not currently have enough report-model evidence to prove that for the selected merchant.</p>
+<p>What we <strong>can</strong> state credibly is:</p>
+<blockquote>
+<p>“The 30-day eligible-sales evidence required for capacity assessment was unavailable.”</p>
+</blockquote>
+<p>That is specific, useful and directly proven.&quot;                  It seems like something we should investigate as a potential Module 1/2 issue. Would you agree?</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

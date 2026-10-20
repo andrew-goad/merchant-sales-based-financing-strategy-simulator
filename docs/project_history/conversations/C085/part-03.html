@@ -1,0 +1,1522 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WP3 Build Protocol — part 03 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>WP3 Build Protocol — part 03</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-02.html">Previous part</a><a href="part-04.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-123806fc-941b-4318-9a6d-220b5e572024" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00056 · 2026-08-11T00:49:19.942638-04:00 · active path</p><div class="bubble"><h1>M2.12 Program 221 HF6 — Hotfix complete</h1>
+<p>Your stop-and-rollback response was correct. The attached pre-run evidence proves that Program 220 remained complete, the accepted predecessor state was exact, no M2.12 evidence or G3 result rows existed, and all three owned sequences remained at the expected pre-Program-221 state. [export reference: filecite | turn7file0 | L9-L11]</p>
+<p><strong>Do not rerun Program 220. Do not rerun Program 221 HF5. Program 221 HF6 is the only current Program 221 retry source.</strong></p>
+<h2>Downloads</h2>
+<h3>Superseding continuation package</h3>
+<ul>
+<li>Download M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_220_HF6.zip (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_220_HF6.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching ZIP SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_220_HF6.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<p>The continuation ZIP intentionally contains:</p>
+<ul>
+<li>one read-only pre-rerun verifier;</li>
+<li>one executable Program 221 HF6 source;</li>
+<li>no executable Program 220;</li>
+<li>no executable Program 222;</li>
+<li>no recovery SQL.</li>
+</ul>
+<h3>Program 221 HF6 directly</h3>
+<ul>
+<li>Download Program 221 HF6 SQL (historical reference: <code>sandbox:[session]/221_msbf_m2_12_accepted_source_pristine_target_preflight_v1_HF6.sql</code>; referenced bytes not established here)</li>
+<li>Download the Program 221 HF6 sidecar (historical reference: <code>sandbox:[session]/221_msbf_m2_12_accepted_source_pristine_target_preflight_v1_HF6.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Mandatory pre-rerun verifier</h3>
+<ul>
+<li>Download the HF6 state and source-graph verifier (historical reference: <code>sandbox:[session]/221_HF6_pre_rerun_state_and_source_graph_verification.sql</code>; referenced bytes not established here)</li>
+<li>Download the verifier sidecar (historical reference: <code>sandbox:[session]/221_HF6_pre_rerun_state_and_source_graph_verification.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Review and operating records</h3>
+<ul>
+<li>Download the independent 97-control physical readback (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_221_HF6_INDEPENDENT_PHYSICAL_READBACK.md</code>; referenced bytes not established here)</li>
+<li>Download the independent control ledger (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_221_HF6_INDEPENDENT_PHYSICAL_READBACK_CONTROLS.csv</code>; referenced bytes not established here)</li>
+<li>Download the Program 221 HF6 operator protocol (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_221_HF6_OPERATOR_PROTOCOL.md</code>; referenced bytes not established here)</li>
+<li>Download the 19-edge semantic reconciliation (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_221_HF6_SOURCE_EDGE_SEMANTIC_RECONCILIATION.csv</code>; referenced bytes not established here)</li>
+<li>Download the complete 76-statement review (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_221_HF6_FULL_PROGRAM_REVIEW.csv</code>; referenced bytes not established here)</li>
+<li>Download the 1,029-reference physical-schema reconciliation (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_221_HF6_PHYSICAL_SCHEMA_RECONCILIATION.csv</code>; referenced bytes not established here)</li>
+<li>Download the Program 222 hold notice (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_SHARED_EDGE5_DEFECT_HOLD_NOTICE.md</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Root cause</h2>
+<p>The failing source edge was:</p>
+<pre><code class="language-text">Edge 5
+M1_3_TO_M2_2_REQUEST_AUTHORITY
+</code></pre>
+<p>Program 221 HF5 reconstructed the accepted M1.3 source value as:</p>
+<pre><code class="language-sql">agr.observed_value::text
+</code></pre>
+<p>The accepted M1.3 gate does not store a bare 32-character hash in <code>observed_value</code>. It stores a JSON object whose governed application hash is the embedded:</p>
+<pre><code class="language-text">application_set_hash
+</code></pre>
+<p>Consequently, HF5 compared the complete JSON document to the frozen expected hash:</p>
+<pre><code class="language-text">01485256b9b5748fb412743d35ced602
+</code></pre>
+<p>That comparison could never pass even though the underlying accepted state was correct.</p>
+<p>HF6 uses the correct physical extraction:</p>
+<pre><code class="language-sql">(agr.observed_value::jsonb -&gt;&gt; &#39;application_set_hash&#39;)::text
+</code></pre>
+<p>The same expression is used in both:</p>
+<ul>
+<li>the scalar source-hash observation; and</li>
+<li>its independent one-row count subquery.</li>
+</ul>
+<h2>Broader Program 221 review</h2>
+<p>The correction did not stop at Edge 5.</p>
+<h3>Source-graph reconstruction</h3>
+<p>All 19 source edges were independently reconstructed and compared with the frozen source-edge authority.</p>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th align="right">HF6 result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Physical source-edge branches</td>
+<td align="right"><strong>19</strong></td>
+</tr>
+<tr>
+<td>Distinct edge sequences</td>
+<td align="right"><strong>19</strong></td>
+</tr>
+<tr>
+<td>Distinct edge codes</td>
+<td align="right"><strong>19</strong></td>
+</tr>
+<tr>
+<td>Frozen expected-hash mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Scalar/count predicate mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Raw M1.3 <code>observed_value::text</code> expressions remaining</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Correct M1.3 <code>application_set_hash</code> extractions</td>
+<td align="right"><strong>2</strong></td>
+</tr>
+<tr>
+<td>Correct M1.6 <code>combined_hash</code> extractions</td>
+<td align="right"><strong>2</strong></td>
+</tr>
+</tbody></table>
+<h3>Registry identity hardening</h3>
+<p>The source-graph helper contained 72 ordinary registry observations. HF6 now requires every observation to be bound to the exact governed identity, including:</p>
+<ul>
+<li><code>module1_run_id</code>;</li>
+<li>contract or bundle code;</li>
+<li>contract or bundle version;</li>
+<li>accepted contract or bundle status;</li>
+<li>both request and pricing identities for the M2.2 dual-contract registry.</li>
+</ul>
+<p>Results:</p>
+<pre><code class="language-text">Registry observations reviewed          72
+Exact identity scopes                    72
+Missing identity predicates               0
+</code></pre>
+<p>HF6 also verifies that:</p>
+<pre><code class="language-text">M2.2 source_m1_3_gate_id
+    = M1_3_APPLICATION_REQUEST
+
+M2.5 source_m1_6_acceptance_gate_id
+    = M1_6_MATCHED_SCENARIO_OVERLAYS
+</code></pre>
+<h3>Assertion and diagnostic hardening</h3>
+<p>HF6 retains all 48 frozen preflight assertions and adds a final collection gate requiring:</p>
+<pre><code class="language-text">assertion_rows = 48
+pass_rows      = 48
+fail_rows      = 0
+all_pass_flag  = true
+</code></pre>
+<p>If the source graph fails again, the exception detail now identifies every failing edge with:</p>
+<pre><code class="language-text">edge sequence
+edge code
+expected hash
+observed accepted-source hash
+observed target-recorded hash
+source gate status
+source row count
+target row count
+edge status
+</code></pre>
+<p>This avoids another opaque <code>M2.12 P221 source graph mismatch</code> with no indication of which edge caused it.</p>
+<h3>Full-program scope</h3>
+<table>
+<thead>
+<tr>
+<th>Review item</th>
+<th align="right">Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Governed statements reviewed</td>
+<td align="right"><strong>76/76 PASS</strong></td>
+</tr>
+<tr>
+<td>Statements changed from HF5</td>
+<td align="right"><strong>55 and 74 only</strong></td>
+</tr>
+<tr>
+<td>Governed statements unchanged</td>
+<td align="right"><strong>74</strong></td>
+</tr>
+<tr>
+<td>Temporary helpers</td>
+<td align="right"><strong>18</strong></td>
+</tr>
+<tr>
+<td>Persistent DML operations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Persistent DDL operations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Physical-schema references reconciled</td>
+<td align="right"><strong>1,029</strong></td>
+</tr>
+<tr>
+<td>Frozen assertion predicates</td>
+<td align="right"><strong>48</strong></td>
+</tr>
+<tr>
+<td>Program 221 persistent-state behavior</td>
+<td align="right"><strong>READ-ONLY</strong></td>
+</tr>
+</tbody></table>
+<p>HF6 preserves the earlier HF5 corrections for:</p>
+<ul>
+<li>exact G3 gate selection;</li>
+<li>accepted physical registry column mappings;</li>
+<li>M1.17 bundle-status mappings;</li>
+<li>removal of node-level component-by-edge Cartesian multiplication;</li>
+<li>same-session post-commit result exportability.</li>
+</ul>
+<h2>Program 222 is held</h2>
+<p>The broader review identified the same M1.3 defect in the existing Program 222 source: it also uses the complete <code>agr.observed_value::text</code> value for the M1.3 source edge.</p>
+<p>Therefore:</p>
+<pre><code class="language-text">Program 222 execution              HELD
+Programs 223–227                   HELD BEHIND PROGRAM 222
+Program 222 executable SQL in ZIP  NO
+</code></pre>
+<p>Even if a successful Program 221 result displays:</p>
+<pre><code class="language-text">AUTHORIZED_TO_EXECUTE_PROGRAM_222
+</code></pre>
+<p>that is only Program 221’s governed internal disposition. It does <strong>not</strong> override this source-specific hold or release the known-defective Program 222.</p>
+<h2>Physical delivery ledger</h2>
+<h3>Continuation ZIP</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filename</td>
+<td align="right"><code>M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_220_HF6.zip</code></td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td align="right"><strong>80,843</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>7585f7c3244c5cce60527169fc8f67fbc1937e37524a5c1019e11db12395d898</code></td>
+</tr>
+<tr>
+<td>ZIP entries</td>
+<td align="right"><strong>34</strong></td>
+</tr>
+<tr>
+<td>Total uncompressed bytes</td>
+<td align="right"><strong>685,983</strong></td>
+</tr>
+<tr>
+<td>ZIP CRC</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Complete fresh extraction</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Case-insensitive duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Unsafe paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Symbolic links</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Build/extraction path mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Build/extraction size mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Build/extraction SHA-256 mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>The sidecar contains exactly:</p>
+<pre><code class="language-text">7585f7c3244c5cce60527169fc8f67fbc1937e37524a5c1019e11db12395d898  M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_220_HF6.zip
+</code></pre>
+<h3>Program 221 HF6</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>221,276</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>97387aca692d676b74c89ab298e4e284bd862feaf289f98eba5fd91c336877d7</code></td>
+</tr>
+<tr>
+<td>Governed statements</td>
+<td align="right"><strong>76</strong></td>
+</tr>
+<tr>
+<td>Changed statements from HF5</td>
+<td align="right"><strong>55, 74</strong></td>
+</tr>
+<tr>
+<td>Direct versus packaged bytes</td>
+<td align="right"><strong>IDENTICAL</strong></td>
+</tr>
+</tbody></table>
+<p>Superseded Program 221 HF5 identity:</p>
+<pre><code class="language-text">42b059a8e68a2243115377cd3839bdd1fb73d84233f9a848267cba96a4dbb933
+</code></pre>
+<p>Current Program 221 HF6 identity:</p>
+<pre><code class="language-text">97387aca692d676b74c89ab298e4e284bd862feaf289f98eba5fd91c336877d7
+</code></pre>
+<h3>Read-only verifier</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>70,553</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>a518ca8443825a1c7856fc9d338b9c0887b203c92927e36b792f0359b7b3842e</code></td>
+</tr>
+<tr>
+<td>Persistent DML</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Persistent DDL</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Final transaction action</td>
+<td align="right"><strong>ROLLBACK</strong></td>
+</tr>
+<tr>
+<td>Direct versus packaged bytes</td>
+<td align="right"><strong>IDENTICAL</strong></td>
+</tr>
+</tbody></table>
+<h3>Independent release validation</h3>
+<pre><code class="language-text">Independent controls                  97 / 97 PASS
+Blocking failures                      0
+Manifest mismatches                    0
+manifest.json mismatches               0
+SHA256SUMS mismatches                  0
+Package-inventory mismatches           0
+Source-edge authority mismatches       0
+Registry-scope failures                0
+Scalar/count parity failures           0
+Persistent mutation findings           0
+</code></pre>
+<p>The original WP5 R1 package remains the historical approved baseline identity and archive; this HF6 ZIP is a bounded continuation package after successful Program 220, not a replacement for that historical package. [export reference: filecite | turn6file0 | L3-L12]</p>
+<h1>Mandatory restart sequence</h1>
+<h2>1. Preserve the failed HF5 evidence</h2>
+<p>Retain unchanged:</p>
+<pre><code class="language-text">HF5 console transcript
+P0001 source-graph error
+client/process status
+stop action
+ROLLBACK response
+HF5 pre-run verification result
+</code></pre>
+<p>Do not overwrite those records with HF6 evidence.</p>
+<h2>2. Run the HF6 verifier first</h2>
+<p>Execute the complete physical file:</p>
+<pre><code class="language-text">221_HF6_pre_rerun_state_and_source_graph_verification.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">a518ca8443825a1c7856fc9d338b9c0887b203c92927e36b792f0359b7b3842e
+</code></pre>
+<p>It should return <strong>two result grids</strong>.</p>
+<h3>Result Grid 1 — source-graph detail</h3>
+<p>Require:</p>
+<pre><code class="language-text">exactly 19 rows
+edge_sequence 1–19
+19 distinct edge codes
+every edge_status = PASS
+every source row count = 1
+every target row count = 1
+every source gate status = PASS
+observed source hash = expected hash
+observed target hash = expected hash
+</code></pre>
+<h3>Result Grid 2 — state summary</h3>
+<p>Require:</p>
+<pre><code class="language-text">state_verification_status          PASS
+predecessor_rows                   1
+run_code                           M1_V0_2_BASELINE_BUILD
+run_version                        1
+run_status                         M2_11_ACCEPTED
+contract_status                    ACCEPTED
+installed_top_level_objects        21
+policy_rows                        1
+nonpolicy_rows                     0
+m2_12_evidence_rows                0
+g3_result_rows                     0
+gate_rows                          1
+exact_gate_rows                    1
+policy_sequence_state              1|true
+archive_sequence_state             1|false
+registry_sequence_state            1|false
+source_graph_rows                  19
+source_graph_pass_rows             19
+source_graph_distinct_sequences    19
+source_graph_distinct_codes        19
+disposition                        READY_TO_EXECUTE_PROGRAM_221_HF6
+</code></pre>
+<p>Any error, missing grid, row-count difference, non-PASS edge, or summary difference is a hard stop.</p>
+<h2>3. Export both verifier grids before leaving the session</h2>
+<p>For each visible result grid in DBeaver:</p>
+<pre><code class="language-text">Use fetched rows      ON
+Query the database    OFF
+Open new connection   OFF
+</code></pre>
+<p>Save separately:</p>
+<pre><code class="language-text">221_HF6_pre_rerun_source_graph_detail.csv
+221_HF6_pre_rerun_state_summary.csv
+</code></pre>
+<p>This avoids losing the actual result state or accidentally rerunning a query against session-local temporary helpers.</p>
+<h2>4. Execute Program 221 HF6 only</h2>
+<p>After the verifier passes exactly, execute:</p>
+<pre><code class="language-text">221_msbf_m2_12_accepted_source_pristine_target_preflight_v1_HF6.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">97387aca692d676b74c89ab298e4e284bd862feaf289f98eba5fd91c336877d7
+</code></pre>
+<p>Execution requirements:</p>
+<ul>
+<li>one complete physical file;</li>
+<li>one invocation;</li>
+<li>first-error-stop behavior;</li>
+<li>no outer transaction;</li>
+<li>no concatenated Program 222;</li>
+<li>no ad hoc SQL or patching.</li>
+</ul>
+<p>The governing live-execution authority requires this one-program-at-a-time sequence and an immediate stop on any error or ambiguity. [export reference: filecite | turn6file5 | L34-L55] The controlled prompt likewise prohibits proceeding to the next program until the current transcript, result sets, counts, lifecycle, hashes, sequence state, and checkpoint reconcile exactly. [export reference: filecite | turn6file6 | L24-L48]</p>
+<p>Required Program 221 result:</p>
+<pre><code class="language-text">preflight_status          PASS
+run_code                  M1_V0_2_BASELINE_BUILD
+run_version               1
+run_status                M2_11_ACCEPTED
+assertion_rows            48
+assertions_passed         48
+source_edges              19
+component_contracts       13
+certification_nodes       12
+mandatory_evidence_rows   72
+capability_rows           20
+disposition               AUTHORIZED_TO_EXECUTE_PROGRAM_222
+</code></pre>
+<p>Export that visible grid immediately using <strong>Use fetched rows</strong> as:</p>
+<pre><code class="language-text">221_HF6_primary_result.csv
+</code></pre>
+<h2>5. Stop after Program 221</h2>
+<p>Even after an exact PASS:</p>
+<pre><code class="language-text">Do not execute Program 222.
+Do not execute Programs 223–227.
+Do not execute any recovery.
+</code></pre>
+<p>Program 222 now requires its own bounded correction and review before execution.</p>
+<h2>Current boundary</h2>
+<pre><code class="language-text">Program 220 HF4 runtime checkpoint       PASS
+Program 221 HF5 attempt                  FAILED / ROLLED BACK
+Program 221 HF6 construction             COMPLETE
+Full 76-statement review                 PASS
+Independent physical/static readback     97 / 97 PASS
+PostgreSQL execution of HF6              NOT PERFORMED HERE
+Program 221 HF6 runtime success          NOT YET ESTABLISHED
+Program 222                              HELD
+M2.12 acceptance                         NOT CLAIMED
+</code></pre>
+</div></article><article id="m-c5da0b10-6363-4b2d-91fc-638f37e4fce2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C085-M00057 · 2026-08-11T06:31:44.565000-04:00 · active path</p><p class="note">Attachment references: 221_HF6_pre_rerun_source_graph_detail_20260811.csv; 221_HF6_pre_rerun_state_summary_20260811.csv; 221_msbf_m2_12_accepted_source_pristine_target_preflight_v1_HF6_results_20260811.csv</p><div class="bubble"><p>Good morning. Perform program 222 bounded correction and review. Attached are program 221 pre_rerun and program 221 results.</p>
+</div></article><article id="m-a0fec653-9bb0-470f-ba2b-6f9c5f8e3af9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00058 · 2026-08-11T06:32:12.233469-04:00 · active path</p><div class="bubble"><p>I’ll reconcile both Program 221 evidence exports first, then audit and correct Program 222 end-to-end before producing a bounded HF7 continuation package and execution verifier.</p>
+</div></article><article id="m-13813171-53c2-45bd-96e2-b2d425bf36dd" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00059 · 2026-08-11T06:35:16.832009-04:00 · active path</p><div class="bubble"><p>Program 221 reconciles exactly and authorizes Program 222 correction. I confirmed the M1.3 JSON/hash defect and am reviewing registry mappings, cardinalities, mutation boundaries, and exportability.</p>
+</div></article><article id="m-8a839bcb-04e5-4964-a52e-0c9ee515f90e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00060 · 2026-08-11T06:44:23.022245-04:00 · active path</p><div class="bubble"><p>The broader review found two blocking component-observation defects: all 13 branches repeat Component 9, and downstream output emits only it. I’m rebuilding both statements from 13-component authority.</p>
+</div></article><article id="m-5f9aef5c-5471-443d-a733-7b93a20654c7" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00061 · 2026-08-11T07:11:29.962462-04:00 · active path</p><div class="bubble"><p>HF7 retains all 206 governed statements, preserves persistent targets and transaction boundaries, and adds same-session result exportability. Independent ZIP readback is clean; Programs 223–227 remain held.</p>
+</div></article><article id="m-c6ace848-acce-4420-a932-c1238c8648da" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00062 · 2026-08-11T07:34:29.976259-04:00 · active path</p><div class="bubble"><h1>M2.12 Program 222 HF7 — Bounded Correction and Review Complete</h1>
+<p>Program 221 HF6 evidence reconciles successfully, and the bounded Program 222 correction has been completed.</p>
+<p>The Program 221 pre-execution checkpoint shows the accepted M2.11 predecessor, complete Program 220 installation, pristine M2.12 generation state, correct sequence positions, and 19 of 19 source edges passing. [export reference: filecite | turn9file0 | L9-L11] The detailed evidence confirms that all 19 expected, accepted-source, and target-recorded hashes agree—including Edge 5, <code>M1_3_TO_M2_2_REQUEST_AUTHORITY</code>, with hash <code>01485256b9b5748fb412743d35ced602</code>. [export reference: filecite | turn9file1 | L22-L41] Program 221 itself returned <code>PASS</code>, 48 of 48 assertions, 19 source edges, 13 component contracts, 12 certification nodes, 72 mandatory evidence rows, 20 capability rows, and <code>AUTHORIZED_TO_EXECUTE_PROGRAM_222</code>. [export reference: filecite | turn9file2 | L52-L53]</p>
+<h2>Downloads</h2>
+<h3>Controlled continuation package</h3>
+<ul>
+<li>Download M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_221_HF7.zip (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_221_HF7.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching ZIP SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_221_HF7.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<p>The continuation package contains no executable Program 220, Program 221, Program 223–227, or recovery source.</p>
+<h3>Program 222 HF7</h3>
+<ul>
+<li>Download Program 222 HF7 SQL (historical reference: <code>sandbox:[session]/222_msbf_m2_12_end_to_end_certification_generation_physical_reconciliation_v1_HF7.sql</code>; referenced bytes not established here)</li>
+<li>Download the Program 222 HF7 SQL sidecar (historical reference: <code>sandbox:[session]/222_msbf_m2_12_end_to_end_certification_generation_physical_reconciliation_v1_HF7.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Mandatory pre-execution verifier</h3>
+<ul>
+<li>Download the Program 222 HF7 state and source-graph verifier (historical reference: <code>sandbox:[session]/222_HF7_pre_execution_state_and_source_graph_verification.sql</code>; referenced bytes not established here)</li>
+<li>Download the verifier sidecar (historical reference: <code>sandbox:[session]/222_HF7_pre_execution_state_and_source_graph_verification.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Operator and review records</h3>
+<ul>
+<li>Download the Program 222 HF7 operator protocol (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF7_OPERATOR_PROTOCOL.md</code>; referenced bytes not established here)</li>
+<li>Download the HF7 validation report (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF7_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Download the independent physical-readback report (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF7_INDEPENDENT_PHYSICAL_READBACK.md</code>; referenced bytes not established here)</li>
+<li>Download the 17-control physical-readback ledger (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF7_INDEPENDENT_PHYSICAL_READBACK_CONTROLS.csv</code>; referenced bytes not established here)</li>
+<li>Download the 17-statement change ledger (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF7_CHANGED_STATEMENT_LEDGER.csv</code>; referenced bytes not established here)</li>
+<li>Download the 13-component physical reconciliation (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF7_COMPONENT_PHYSICAL_RECONCILIATION.csv</code>; referenced bytes not established here)</li>
+<li>Download the complete 206-statement review (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF7_FULL_PROGRAM_REVIEW.csv</code>; referenced bytes not established here)</li>
+<li>Download the persistent-mutation inventory (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF7_PERSISTENT_MUTATION_INVENTORY.csv</code>; referenced bytes not established here)</li>
+<li>Download the original-to-HF7 source patch (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_R3_TO_HF7.patch</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Program 221 evidence normalization</h2>
+<p>The two pre-run filenames were reversed relative to their physical content:</p>
+<table>
+<thead>
+<tr>
+<th>As-received filename</th>
+<th>Actual content</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>221_HF6_pre_rerun_source_graph_detail_20260811.csv</code></td>
+<td>One-row state summary</td>
+</tr>
+<tr>
+<td><code>221_HF6_pre_rerun_state_summary_20260811.csv</code></td>
+<td>Nineteen-row source-edge detail</td>
+</tr>
+</tbody></table>
+<p>The continuation package preserves both original files unchanged and supplies correctly named normalized copies. The Program 221 primary-result file was correctly named.</p>
+<ul>
+<li>Download the evidence-reconciliation note (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_221_HF6_EVIDENCE_RECONCILIATION.md</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Defects identified and corrected</h1>
+<p>The review did not stop at the already-known Edge 5 defect.</p>
+<h2>1. M1.3 source-edge extraction</h2>
+<p>The original Program 222 source treated the full accepted M1.3 gate JSON document as the source hash:</p>
+<pre><code class="language-sql">agr.observed_value::text
+</code></pre>
+<p>The governed source hash is the JSON member:</p>
+<pre><code class="language-text">application_set_hash
+</code></pre>
+<p>HF7 now uses:</p>
+<pre><code class="language-sql">(agr.observed_value::jsonb -&gt;&gt; &#39;application_set_hash&#39;)::text
+</code></pre>
+<p>in both the physical hash observation and the independently calculated source-row-count path.</p>
+<h2>2. Collapsed 13-component observation base</h2>
+<p>The original 13-branch component-observation helper did not physically reconstruct all 13 governed components. Its branches were effectively collapsed onto the M2.7 operational-activation component.</p>
+<p>HF7 reconstructs these exact component contracts:</p>
+<ol>
+<li>M1 G2 consumption bundle.</li>
+<li>M2.1 eligibility and routing.</li>
+<li>M2.2 request structure.</li>
+<li>M2.2 pricing structure.</li>
+<li>M2.3 final offer decision.</li>
+<li>M2.4 portfolio activation.</li>
+<li>M2.5 monitoring.</li>
+<li>M2.6 intervention strategy.</li>
+<li>M2.7 operational activation.</li>
+<li>M2.8 servicing execution.</li>
+<li>M2.9 reconciliation certification.</li>
+<li>M2.10 portfolio analytics.</li>
+<li>M2.11 strategy simulation.</li>
+</ol>
+<p>Each component now uses its own exact registry, contract or bundle identity, latest relation, archive relation, schema and methodology fields, governed hashes, acceptance gate, and acceptance evidence.</p>
+<h2>3. Repeated M2.7 component certification</h2>
+<p>The next original helper again used the M2.7 component rather than joining all 13 component observations to their governed specifications.</p>
+<p>HF7 replaces that construction with an exact-key 13-row certification join covering:</p>
+<ul>
+<li>component sequence;</li>
+<li>certification-node sequence;</li>
+<li>contract identity and version;</li>
+<li>accepted status;</li>
+<li>schema version;</li>
+<li>methodology version;</li>
+<li>canonical-entity count;</li>
+<li>latest and archive row counts;</li>
+<li>positive and negative evidence counts;</li>
+<li>contract, combined, latest, archive, and registry-row hashes;</li>
+<li>required source-edge counts and statuses.</li>
+</ul>
+<h2>4. Under-scoped registry reads</h2>
+<p>Several reproduction, seed, and evidence observations relied primarily on <code>module1_run_id</code> or version predicates.</p>
+<p>HF7 adds the exact contract or bundle code, version, and accepted-status identity wherever those fields govern uniqueness. This includes the M1.17 and M2.11 predecessor reads used to construct the G3 seed.</p>
+<h2>5. Cardinality-only assertions</h2>
+<p>Several helpers required only that the expected number of rows existed. A complete set of failing rows could therefore satisfy the helper cardinality.</p>
+<p>HF7 now requires:</p>
+<pre><code class="language-text">19 / 19 source-edge certifications PASS
+13 / 13 contract reproductions PASS
+12 / 12 stage-boundary observations PASS
+13 / 13 component certifications PASS
+72 / 72 evidence certifications PASS
+12 / 12 node certifications PASS
+</code></pre>
+<p>Diagnostic exceptions identify the individual failing edges, components, nodes, or evidence records.</p>
+<h2>6. Persistent-registry cross joins</h2>
+<p>The G3 seed used predecessor-registry cross joins that were not bound directly to their complete governed identities.</p>
+<p>HF7 replaces those with exact joins to:</p>
+<pre><code class="language-text">M1_G2_CONSUMPTION_BUNDLE, version 1, ACCEPTED
+M2_PORTFOLIO_OPTIMIZATION_STRATEGY_SIMULATION_CONSUMPTION, version 1, ACCEPTED
+</code></pre>
+<p>The remaining persistent cross joins are only to the three one-row PostgreSQL sequence relations used for sequence-state reconciliation.</p>
+<h2>7. Result exportability</h2>
+<p>The Program 222 primary-result helper formerly used:</p>
+<pre><code class="language-sql">ON COMMIT DROP
+</code></pre>
+<p>HF7 changes only that result helper to:</p>
+<pre><code class="language-sql">ON COMMIT PRESERVE ROWS
+</code></pre>
+<p>The committed result can therefore be queried again from the <strong>same originating database session</strong>. Exporting the visible result grid with <strong>Use fetched rows</strong> remains the preferred evidence method.</p>
+<h1>Bounded source scope</h1>
+<p>The approved historical Program 222 R3 identity was:</p>
+<pre><code class="language-text">SHA-256
+6e29dba9043675094fb9c399895895b9230e1b96976e5e4af7a7a48e094d51fe
+</code></pre>
+<p>That identity came from the approved WP2 R4 source set. [export reference: filecite | turn8file11 | L31-L50] It is now superseded <strong>only for the controlled Program 222 retry</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th align="right">HF7 result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Governed statements retained</td>
+<td align="right"><strong>206</strong></td>
+</tr>
+<tr>
+<td>Changed statement bodies</td>
+<td align="right"><strong>17</strong></td>
+</tr>
+<tr>
+<td>Unchanged statement bodies</td>
+<td align="right"><strong>189</strong></td>
+</tr>
+<tr>
+<td>Persistent DDL changes</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Persistent mutation-target changes</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Transaction-boundary changes</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Final commit retained</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Program 223–227 changes</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Recovery-source changes</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>Changed statements:</p>
+<pre><code class="language-text">43, 44, 51, 52, 56, 64, 68, 71, 72,
+75, 76, 80, 84, 120, 121, 195, 201
+</code></pre>
+<p>The persistent write sequence remains:</p>
+<ul>
+<li>five certification-snapshot inserts;</li>
+<li>G3 latest insert;</li>
+<li>G3 archive insert;</li>
+<li>G3 registry insert;</li>
+<li>24 generation-evidence inserts;</li>
+<li>governed-run lifecycle update.</li>
+</ul>
+<h1>Physical delivery ledger</h1>
+<h2>Continuation ZIP</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filename</td>
+<td align="right"><code>M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_221_HF7.zip</code></td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td align="right"><strong>122,102</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>5c93946b553958587963d62c15b6c052b9d28f521abcea46080e4a4854d8937a</code></td>
+</tr>
+<tr>
+<td>ZIP entries</td>
+<td align="right"><strong>36</strong></td>
+</tr>
+<tr>
+<td>Total uncompressed bytes</td>
+<td align="right"><strong>955,224</strong></td>
+</tr>
+<tr>
+<td>ZIP CRC</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Complete fresh extraction</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+</tbody></table>
+<p>The sidecar contains exactly:</p>
+<pre><code class="language-text">5c93946b553958587963d62c15b6c052b9d28f521abcea46080e4a4854d8937a  M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_221_HF7.zip
+</code></pre>
+<h2>Program 222 HF7</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>538,780</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>c36324490a0e63e0efdd657a2ac616853f46bccc9935bc871c6348fed547f839</code></td>
+</tr>
+<tr>
+<td>Governed statements</td>
+<td align="right"><strong>206</strong></td>
+</tr>
+<tr>
+<td>Changed statements</td>
+<td align="right"><strong>17</strong></td>
+</tr>
+<tr>
+<td>Unchanged statements</td>
+<td align="right"><strong>189</strong></td>
+</tr>
+<tr>
+<td>Direct SQL versus packaged SQL</td>
+<td align="right"><strong>IDENTICAL</strong></td>
+</tr>
+</tbody></table>
+<p>The SQL sidecar contains:</p>
+<pre><code class="language-text">c36324490a0e63e0efdd657a2ac616853f46bccc9935bc871c6348fed547f839  222_msbf_m2_12_end_to_end_certification_generation_physical_reconciliation_v1_HF7.sql
+</code></pre>
+<h2>Pre-execution verifier</h2>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>70,650</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>581524228eed42e62764a7969465475534f93dc851ba4baf99ae089c53b93993</code></td>
+</tr>
+<tr>
+<td>Persistent DML</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Persistent DDL</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Final action</td>
+<td align="right"><strong>ROLLBACK</strong></td>
+</tr>
+<tr>
+<td>Direct verifier versus packaged verifier</td>
+<td align="right"><strong>IDENTICAL</strong></td>
+</tr>
+</tbody></table>
+<p>The verifier sidecar contains:</p>
+<pre><code class="language-text">581524228eed42e62764a7969465475534f93dc851ba4baf99ae089c53b93993  222_HF7_pre_execution_state_and_source_graph_verification.sql
+</code></pre>
+<h1>Review results</h1>
+<h2>Source and semantic review</h2>
+<pre><code class="language-text">Governed statement review                  206 / 206 PASS
+Builder-side static controls                30 / 30 PASS
+Source-edge identities                      19 / 19 PASS
+Component physical mappings                 13 / 13 PASS
+Certification-node authority                12 / 12 retained
+Mandatory-evidence authority                72 / 72 retained
+Residual raw M1.3 JSON-document extraction   0
+Residual collapsed M2.7 component pattern    0
+Persistent component-base cross joins        0
+Executable Program 223+ sources in package   0
+</code></pre>
+<h2>Package readback</h2>
+<pre><code class="language-text">Independent release controls               17 / 17 PASS
+Path mismatches                              0
+Size mismatches                              0
+SHA-256 mismatches                           0
+Duplicate paths                              0
+Case-insensitive duplicate paths             0
+Unsafe paths                                 0
+Symbolic links                               0
+MANIFEST.csv mismatches                      0
+manifest.json mismatches                     0
+SHA256SUMS.txt mismatches                    0
+PACKAGE_INVENTORY.csv mismatches             0
+</code></pre>
+<p>This is a source, static, physical, and package review. <strong>HF7 has not been executed against your PostgreSQL database.</strong></p>
+<p>The original WP5 package remains the historical approved archive with SHA-256 <code>5dce8642e46aa701cdbe1aaeb75eb8e0a8fd454fc000e8ec4161400a45a3a38c</code>, 98 entries, 3,926,125 uncompressed bytes, and passing CRC. [export reference: filecite | turn8file0 | L3-L12]</p>
+<h1>Controlled execution protocol</h1>
+<p>The governing authorization permits one complete physical file per invocation, requires first-error-stop behavior, prohibits an outer transaction or concatenated programs, and conditions every later program on exact reconciliation of the preceding evidence. [export reference: filecite | turn8file5 | L34-L50] [export reference: filecite | turn8file6 | L22-L48]</p>
+<h2>1. Run the verifier first</h2>
+<p>Execute the complete physical file:</p>
+<pre><code class="language-text">222_HF7_pre_execution_state_and_source_graph_verification.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">581524228eed42e62764a7969465475534f93dc851ba4baf99ae089c53b93993
+</code></pre>
+<p>It produces two result grids.</p>
+<h3>Grid 1 — source-edge detail</h3>
+<p>Require:</p>
+<pre><code class="language-text">rows                                      19
+distinct edge sequences                   19
+distinct edge codes                       19
+source registry row count                 1 for every edge
+target registry row count                 1 for every edge
+source gate status                        PASS for every edge
+source hash mismatch                      false for every edge
+target hash mismatch                      false for every edge
+edge status                               PASS for every edge
+</code></pre>
+<h3>Grid 2 — state summary</h3>
+<p>Require:</p>
+<pre><code class="language-text">state_verification_status                 PASS
+predecessor_rows                          1
+run_code                                  M1_V0_2_BASELINE_BUILD
+run_version                               1
+run_status                                M2_11_ACCEPTED
+contract_status                           ACCEPTED
+installed_top_level_objects               21
+policy_rows                               1
+nonpolicy_rows                            0
+m2_12_evidence_rows                       0
+g3_result_rows                            0
+gate_rows                                 1
+exact_gate_rows                           1
+policy_sequence_state                     1|true
+archive_sequence_state                    1|false
+registry_sequence_state                   1|false
+source_graph_rows                         19
+source_graph_pass_rows                    19
+source_graph_distinct_sequences           19
+source_graph_distinct_codes               19
+disposition                               READY_TO_EXECUTE_PROGRAM_222_HF7
+</code></pre>
+<p>Export both visible grids with:</p>
+<pre><code class="language-text">Use fetched rows       ON
+Query the database     OFF
+Open new connection    OFF
+</code></pre>
+<p>Recommended filenames:</p>
+<pre><code class="language-text">222_HF7_pre_execution_source_graph_detail.csv
+222_HF7_pre_execution_state_summary.csv
+</code></pre>
+<p>Any difference is a hard stop.</p>
+<h2>2. Execute Program 222 HF7 only</h2>
+<p>After the verifier passes exactly, execute:</p>
+<pre><code class="language-text">222_msbf_m2_12_end_to_end_certification_generation_physical_reconciliation_v1_HF7.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">c36324490a0e63e0efdd657a2ac616853f46bccc9935bc871c6348fed547f839
+</code></pre>
+<p>Execution boundaries:</p>
+<pre><code class="language-text">Complete physical file       one invocation
+First-error stop             required
+Outer transaction            prohibited
+Program 223 concatenation    prohibited
+Ad hoc SQL changes           prohibited
+Recovery execution           prohibited
+</code></pre>
+<h2>3. Required Program 222 primary result</h2>
+<p>Require exactly one row:</p>
+<pre><code class="language-text">generation_status             PASS
+final_run_status              M2_12_GENERATED
+final_contract_status         GENERATED
+canonical_families            9
+canonical_entities            134
+generation_evidence_rows      24
+application_consumption_rows  1500
+operational_account_rows      59
+strategy_scope_rows           24
+policy_identity               1
+archive_identity              1
+registry_identity             1
+owned_sequence_states         1|true;1|true;1|true
+combined_set_hash             32 lowercase hexadecimal characters
+disposition                   READY_FOR_PROGRAM_223
+</code></pre>
+<p>Export the visible row immediately using <strong>Use fetched rows</strong>.</p>
+<h2>4. Stop after Program 222</h2>
+<p>Even if the result says <code>READY_FOR_PROGRAM_223</code>:</p>
+<pre><code class="language-text">Program 223    HELD
+Program 224    HELD
+Program 225    HELD
+Program 226    HELD
+Program 227    HELD
+Recoveries     UNAUTHORIZED
+</code></pre>
+<ul>
+<li>Download the formal Programs 223–227 hold notice (historical reference: <code>sandbox:[session]/M2_12_PROGRAMS_223_227_HOLD_NOTICE.md</code>; referenced bytes not established here)</li>
+</ul>
+<p>Program 223 remains held until the complete Program 222 transcript, process status, exported primary result, persistent row counts, lifecycle, hashes, sequence states, and 24 evidence rows reconcile exactly.</p>
+</div></article><article id="m-92fa0a74-a559-4e53-87e7-d2bea9c17194" class="message user"><p class="meta"><strong>Andrew / user</strong> · C085-M00063 · 2026-08-11T07:55:11.101000-04:00 · active path</p><p class="note">Attachment references: 222_HF7_pre_execution_source_graph_detail_20260811.csv; 222_HF7_pre_execution_state_summary_20260811.csv</p><div class="bubble"><p>program 222 error: SQL Error [P0001]: ERROR: M2.12 P222 HF7 stage-boundary certification mismatch
+  Detail: node=1:M1_17_G2_FOUNDATION|status=FAIL; node=4:M2_3_FINAL_DECISION|status=FAIL
+  Where: PL/pgSQL function inline_code_block line 12 at RAISE
+  ERROR: M2.12 P222 HF7 stage-boundary certification mismatch
+  Detail: node=1:M1_17_G2_FOUNDATION|status=FAIL; node=4:M2_3_FINAL_DECISION|status=FAIL
+  Where: PL/pgSQL function inline_code_block line 12 at RAISE       correct error in a hotfix and do not wait for my approval. i selected stop and used rollback. when correcting error, do not correct this error and stop, review the rest of program 222 for additional, similar/noticeable errors. 222 pre-run evidence attached.      </p>
+</div></article><article id="m-fb52e531-c573-4498-b049-6e83abdba264" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00064 · 2026-08-11T07:55:27.985128-04:00 · active path</p><div class="bubble"><p>I’m tracing both failed stage-boundary nodes to their physical registry fields, then auditing all remaining Program 222 stage, component, evidence, hash, and cardinality assertions before issuing the hotfix.</p>
+</div></article><article id="m-9deb0d4e-cce0-4994-a61f-a9d2222f498b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00065 · 2026-08-11T07:58:34.421852-04:00 · active path</p><div class="bubble"><p>The pre-run state is clean with all 19 source edges passing. The defect is broader: M1.17 snapshot controls and M2.3’s policy boundary are not <code>run_evidence.evidence_code</code> values.</p>
+</div></article><article id="m-bb773540-d654-4554-a088-85462dad4d09" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00066 · 2026-08-11T08:07:39.804833-04:00 · active path</p><div class="bubble"><p>The 70-control inventory resolves to 66 run-evidence rows, three M1.17 snapshot controls, and one M2.3 boundary reconstructed from its approved reason definition and payload coverage.</p>
+</div></article><article id="m-2f36902e-df8c-488c-9e23-a47afaaa56e7" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00067 · 2026-08-11T08:37:51.111418-04:00 · active path</p><div class="bubble"><h1>M2.12 Program 222 HF8 — Bounded Correction Complete</h1>
+<p>Your <strong>stop-and-rollback response was correct</strong>. Controlled execution requires an immediate stop on any error and prohibits rerunning, patching ad hoc, invoking recovery, or advancing to the next program without a governed correction. [export reference: filecite | turn10file5 | L34-L50]</p>
+<p>The attached pre-execution evidence establishes that the failure was internal to Program 222 HF7 rather than a predecessor or source-graph problem:</p>
+<ul>
+<li>all 19 source edges passed with exact accepted-source and target-recorded hashes; [export reference: filecite | turn11file0 | L10-L29]</li>
+<li>the run remained at <code>M2_11_ACCEPTED</code>;</li>
+<li>the M2.12 target was pristine;</li>
+<li>all three owned sequences remained at their pre-generation positions;</li>
+<li>the verifier disposition was <code>READY_TO_EXECUTE_PROGRAM_222_HF7</code>. [export reference: filecite | turn11file1 | L40-L41]</li>
+</ul>
+<p><strong>Do not rerun Program 222 HF7. Program 222 HF8 is the only current Program 222 retry source.</strong></p>
+<h2>Downloads</h2>
+<h3>Controlled continuation package</h3>
+<ul>
+<li>Download M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_221_HF8.zip (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_221_HF8.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching ZIP sidecar (historical reference: <code>sandbox:[session]/M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_221_HF8.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<p>The continuation ZIP intentionally contains only one executable governed program—Program 222 HF8—and one read-only pre-execution verifier. It contains no executable Program 220, 221, 223–227, or recovery source.</p>
+<h3>Program 222 HF8</h3>
+<ul>
+<li>Download Program 222 HF8 SQL (historical reference: <code>sandbox:[session]/222_msbf_m2_12_end_to_end_certification_generation_physical_reconciliation_v1_HF8.sql</code>; referenced bytes not established here)</li>
+<li>Download the Program 222 HF8 SQL sidecar (historical reference: <code>sandbox:[session]/222_msbf_m2_12_end_to_end_certification_generation_physical_reconciliation_v1_HF8.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Mandatory HF8 verifier</h3>
+<ul>
+<li>Download the HF8 state, source-graph, and stage-boundary verifier (historical reference: <code>sandbox:[session]/222_HF8_pre_execution_state_source_graph_and_stage_boundary_verification.sql</code>; referenced bytes not established here)</li>
+<li>Download the verifier sidecar (historical reference: <code>sandbox:[session]/222_HF8_pre_execution_state_source_graph_and_stage_boundary_verification.sql.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Operator and validation records</h3>
+<ul>
+<li>Download the HF8 operator protocol (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF8_OPERATOR_PROTOCOL.md</code>; referenced bytes not established here)</li>
+<li>Download the HF8 validation report (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF8_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Download the independent physical-readback report (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF8_INDEPENDENT_PHYSICAL_READBACK.md</code>; referenced bytes not established here)</li>
+<li>Download the 193-control independent readback ledger (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF8_INDEPENDENT_PHYSICAL_READBACK_CONTROLS.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h3>Detailed review evidence</h3>
+<ul>
+<li>Download the complete 206-statement review (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF8_FULL_PROGRAM_REVIEW.csv</code>; referenced bytes not established here)</li>
+<li>Download the 18-statement change ledger (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF8_CHANGED_STATEMENT_LEDGER.csv</code>; referenced bytes not established here)</li>
+<li>Download the stage-boundary physical-source reconciliation (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF8_STAGE_BOUNDARY_PHYSICAL_SOURCE_RECONCILIATION.csv</code>; referenced bytes not established here)</li>
+<li>Download the 12-node stage-boundary reconciliation (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF8_STAGE_BOUNDARY_NODE_RECONCILIATION.csv</code>; referenced bytes not established here)</li>
+<li>Download the special-source evidence extract (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF8_SPECIAL_SOURCE_EVIDENCE_EXTRACT.csv</code>; referenced bytes not established here)</li>
+<li>Download the persistent-mutation inventory (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF8_PERSISTENT_MUTATION_INVENTORY.csv</code>; referenced bytes not established here)</li>
+<li>Download the HF7-to-HF8 source patch (historical reference: <code>sandbox:[session]/M2_12_PROGRAM_222_HF7_TO_HF8.patch</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Root cause</h2>
+<p>HF7’s stage-boundary construction incorrectly assumed that <strong>every required stage-boundary control was a row in</strong>:</p>
+<pre><code class="language-text">msbf_ctl.run_evidence
+</code></pre>
+<p>That assumption was false for both failing nodes.</p>
+<h3>Node 1 — <code>M1_17_G2_FOUNDATION</code></h3>
+<p>Its three required controls are:</p>
+<pre><code class="language-text">M1_17_E2E_045_BLOCKING_ERRORS
+M1_17_E2E_046_MODULE2_ROWS
+M1_17_E2E_047_PII_COLUMNS
+</code></pre>
+<p>These are not ordinary <code>run_evidence</code> codes. Their accepted physical source is:</p>
+<pre><code class="language-text">msbf_ctl.m1_17_end_to_end_evidence_snapshot
+</code></pre>
+<p>HF7 searched the wrong relation, observed zero qualifying controls, and failed Node 1.</p>
+<p>HF8 reconstructs all three controls directly from the accepted M1.17 snapshot authority and requires:</p>
+<pre><code class="language-text">three physical rows
+three distinct controls
+all three statuses PASS
+zero duplicate controls
+zero missing controls
+zero non-PASS controls
+</code></pre>
+<h3>Node 4 — <code>M2_3_FINAL_DECISION</code></h3>
+<p>Node 4 has six required controls:</p>
+<ul>
+<li>five are ordinary positive or negative rows in <code>msbf_ctl.run_evidence</code>;</li>
+<li><code>M2_3_POLICY_BOUNDARY</code> is not a <code>run_evidence</code> code.</li>
+</ul>
+<p><code>M2_3_POLICY_BOUNDARY</code> is a physical decision-governance marker. HF8 reconstructs it from the combined accepted state:</p>
+<ol>
+<li>the exact approved reason definition in <code>msbf_m2.final_decision_reason_definition</code>;</li>
+<li>the accepted M2.3 contract registry;</li>
+<li>complete latest-payload coverage;</li>
+<li>complete archive-payload coverage;</li>
+<li>exact 1,500 latest and 1,500 archive rows containing the marker.</li>
+</ol>
+<p>Node 4 now requires five qualifying <code>run_evidence</code> controls plus one independently reconstructed physical policy-boundary control.</p>
+<h2>Full stage-boundary review</h2>
+<p>The correction was extended across the complete stage-boundary authority rather than limited to the two reported failures.</p>
+<table>
+<thead>
+<tr>
+<th>Physical source class</th>
+<th align="right">Governed controls</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>msbf_ctl.run_evidence</code></td>
+<td align="right"><strong>66</strong></td>
+</tr>
+<tr>
+<td>M1.17 end-to-end evidence snapshot</td>
+<td align="right"><strong>3</strong></td>
+</tr>
+<tr>
+<td>M2.3 physical policy-boundary marker</td>
+<td align="right"><strong>1</strong></td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td align="right"><strong>70</strong></td>
+</tr>
+</tbody></table>
+<p>All 70 controls across all 12 certification nodes were mapped to their actual persistent source:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Node</th>
+<th>Stage</th>
+<th align="right">Required controls</th>
+<th>Physical allocation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td><code>M1_17_G2_FOUNDATION</code></td>
+<td align="right">3</td>
+<td>3 M1.17 snapshot</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td><code>M2_1_ELIGIBILITY_ROUTING</code></td>
+<td align="right">3</td>
+<td>3 run evidence</td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td><code>M2_2_PRICING_STRUCTURE</code></td>
+<td align="right">3</td>
+<td>3 run evidence</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td><code>M2_3_FINAL_DECISION</code></td>
+<td align="right">6</td>
+<td>5 run evidence + 1 physical marker</td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td><code>M2_4_PORTFOLIO_ACTIVATION</code></td>
+<td align="right">4</td>
+<td>4 run evidence</td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td><code>M2_5_DAILY_MONITORING</code></td>
+<td align="right">6</td>
+<td>6 run evidence</td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td><code>M2_6_INTERVENTION_STRATEGY</code></td>
+<td align="right">4</td>
+<td>4 run evidence</td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td><code>M2_7_OPERATIONAL_ACTIVATION</code></td>
+<td align="right">7</td>
+<td>7 run evidence</td>
+</tr>
+<tr>
+<td align="right">9</td>
+<td><code>M2_8_SERVICING_EXECUTION</code></td>
+<td align="right">8</td>
+<td>8 run evidence</td>
+</tr>
+<tr>
+<td align="right">10</td>
+<td><code>M2_9_RECONCILIATION_CERTIFICATION</code></td>
+<td align="right">10</td>
+<td>10 run evidence</td>
+</tr>
+<tr>
+<td align="right">11</td>
+<td><code>M2_10_PORTFOLIO_ANALYTICS</code></td>
+<td align="right">10</td>
+<td>10 run evidence</td>
+</tr>
+<tr>
+<td align="right">12</td>
+<td><code>M2_11_STRATEGY_SIMULATION</code></td>
+<td align="right">6</td>
+<td>6 run evidence</td>
+</tr>
+</tbody></table>
+<p>HF8 now fails closed on any:</p>
+<pre><code class="language-text">missing physical control
+duplicate physical control
+non-PASS control
+wrong physical source
+acceptance-summary mismatch
+required-versus-observed count mismatch
+stage-boundary violation
+</code></pre>
+<h2>Additional Program 222 defects corrected</h2>
+<p>The review covered all <strong>206 governed statements</strong> and found additional assertions that were structurally present but too weak.</p>
+<h3>Boundary aggregate gate</h3>
+<p>HF7 verified the existence of the six boundary-aggregate rows but did not require all six governed flags to be true.</p>
+<p>HF8 requires every aggregate boundary flag to pass before generation can continue.</p>
+<h3>Base-family hash gate</h3>
+<p>HF7 primarily checked the six-row family cardinality. HF8 additionally requires all six base-family hashes to be valid lowercase 32-character hexadecimal hashes.</p>
+<h3>Physical-reconciliation gate</h3>
+<p>HF7 verified physical-reconciliation row presence. HF8 now requires the reconciliation itself to report:</p>
+<pre><code class="language-text">PASS
+zero path mismatches
+zero row-count mismatches
+zero hash mismatches
+zero sequence mismatches
+zero canonical-state mismatches
+</code></pre>
+<h3>Generation-evidence insertion gate</h3>
+<p>HF7 could reach the evidence insert after constructing 24 business-key rows even if one of those rows carried a non-PASS status.</p>
+<p>HF8 requires:</p>
+<pre><code class="language-text">24 evidence rows
+24 distinct evidence codes
+24 PASS statuses
+zero failing evidence rows
+</code></pre>
+<p>before the persistent insertion is allowed.</p>
+<h3>Post-update checkpoint</h3>
+<p>The final lifecycle checkpoint now reports exact diagnostics for:</p>
+<ul>
+<li>run lifecycle;</li>
+<li>G3 registry lifecycle;</li>
+<li>canonical-family counts;</li>
+<li>canonical-entity counts;</li>
+<li>generation-evidence counts;</li>
+<li>policy, archive, and registry identities;</li>
+<li>all three owned sequence states;</li>
+<li>combined-set hash form.</li>
+</ul>
+<h2>Bounded source scope</h2>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th align="right">HF8 result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Governed statements retained</td>
+<td align="right"><strong>206</strong></td>
+</tr>
+<tr>
+<td>Statements changed from HF7</td>
+<td align="right"><strong>18</strong></td>
+</tr>
+<tr>
+<td>Substantive corrections</td>
+<td align="right"><strong>9</strong></td>
+</tr>
+<tr>
+<td>Diagnostic-label corrections</td>
+<td align="right"><strong>9</strong></td>
+</tr>
+<tr>
+<td>Statements unchanged</td>
+<td align="right"><strong>188</strong></td>
+</tr>
+<tr>
+<td>Persistent DML statements changed</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Persistent DDL changed</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Persistent mutation targets changed</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Transaction boundaries changed</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Final commit changed</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Program 223–227 sources changed</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Recovery sources changed</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>Substantively corrected statements:</p>
+<pre><code class="language-text">59, 60, 67, 68, 113, 117, 192, 196, 202
+</code></pre>
+<p>Diagnostic-label-only corrections:</p>
+<pre><code class="language-text">44, 52, 56, 64, 72, 76, 80, 84, 121
+</code></pre>
+<h2>Physical delivery ledger</h2>
+<h3>Continuation ZIP</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filename</td>
+<td align="right"><code>M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_221_HF8.zip</code></td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td align="right"><strong>119,370</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>4a9b30404419c07e390a62dbf4ee2eed943f0a52e4095ed70eb788cc55ca67c7</code></td>
+</tr>
+<tr>
+<td>ZIP entries</td>
+<td align="right"><strong>28</strong></td>
+</tr>
+<tr>
+<td>Total uncompressed bytes</td>
+<td align="right"><strong>872,160</strong></td>
+</tr>
+<tr>
+<td>ZIP CRC</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Complete independent extraction</td>
+<td align="right"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Case-insensitive duplicate paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Unsafe paths</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Symbolic links</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Path mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Size mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>SHA-256 mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Manifest mismatches</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>The ZIP sidecar contains exactly:</p>
+<pre><code class="language-text">4a9b30404419c07e390a62dbf4ee2eed943f0a52e4095ed70eb788cc55ca67c7  M2_12_LIVE_EXECUTION_CONTINUATION_AFTER_221_HF8.zip
+</code></pre>
+<h3>Program 222 HF8</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>560,037</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>aa879a83a36f79f8b215110d5a349fbf0982a441cecd52284d5227ebfcc72fb9</code></td>
+</tr>
+<tr>
+<td>Governed statements</td>
+<td align="right"><strong>206</strong></td>
+</tr>
+<tr>
+<td>Direct SQL versus packaged SQL</td>
+<td align="right"><strong>IDENTICAL</strong></td>
+</tr>
+</tbody></table>
+<p>The SQL sidecar contains exactly:</p>
+<pre><code class="language-text">aa879a83a36f79f8b215110d5a349fbf0982a441cecd52284d5227ebfcc72fb9  222_msbf_m2_12_end_to_end_certification_generation_physical_reconciliation_v1_HF8.sql
+</code></pre>
+<h3>HF8 verifier</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th align="right">Physical result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bytes</td>
+<td align="right"><strong>104,636</strong></td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td align="right"><code>aa71e83753b00fe996cc97d52d3aa168ae32b77662c9b59766eb007d681ed34c</code></td>
+</tr>
+<tr>
+<td>Persistent DML</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Persistent DDL</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Final transaction action</td>
+<td align="right"><strong>ROLLBACK</strong></td>
+</tr>
+<tr>
+<td>Direct verifier versus packaged verifier</td>
+<td align="right"><strong>IDENTICAL</strong></td>
+</tr>
+</tbody></table>
+<h3>Independent readback</h3>
+<pre><code class="language-text">Independent controls                  193 / 193 PASS
+Blocking failures                       0
+Governed statements                   206 / 206 PASS
+Stage-boundary controls                70 / 70 mapped
+Temporary dependencies unscheduled      0
+Persistent mutation changes              0
+</code></pre>
+<p>This is a static, physical, source-semantic, and package validation. <strong>Program 222 HF8 has not been executed against your PostgreSQL database here.</strong></p>
+<p>The original WP5 R1 package remains the historical approved archive with SHA-256 <code>5dce8642e46aa701cdbe1aaeb75eb8e0a8fd454fc000e8ec4161400a45a3a38c</code>, 98 entries, 3,926,125 uncompressed bytes, and passing CRC. [export reference: filecite | turn10file0 | L3-L8] HF8 is a bounded continuation authority after completed Programs 220 and 221; it does not replace that historical archive.</p>
+<h1>Mandatory HF8 execution sequence</h1>
+<h2>1. Preserve the failed HF7 evidence</h2>
+<p>Keep separately and unchanged:</p>
+<pre><code class="language-text">complete HF7 transcript
+SQLSTATE P0001
+Node 1 and Node 4 failure detail
+client/process status
+STOP action
+ROLLBACK response
+HF7 pre-execution verifier exports
+</code></pre>
+<p>Do not overwrite these records with HF8 evidence.</p>
+<h2>2. Execute the HF8 verifier first</h2>
+<p>Execute the complete physical file:</p>
+<pre><code class="language-text">222_HF8_pre_execution_state_source_graph_and_stage_boundary_verification.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">aa71e83753b00fe996cc97d52d3aa168ae32b77662c9b59766eb007d681ed34c
+</code></pre>
+<p>It returns <strong>three result grids</strong>.</p>
+<h3>Grid 1 — source-graph detail</h3>
+<p>Require:</p>
+<pre><code class="language-text">rows                              19
+distinct edge sequences           19
+distinct edge codes               19
+source row count                   1 for every edge
+target row count                   1 for every edge
+source gate status                PASS for every edge
+source hash mismatch              false for every edge
+target hash mismatch              false for every edge
+edge status                       PASS for every edge
+</code></pre>
+<h3>Grid 2 — stage-boundary detail</h3>
+<p>Require:</p>
+<pre><code class="language-text">rows                              12
+stage rows passing                12
+total required controls           70
+total physical controls           70
+total distinct controls           70
+duplicate controls                 0
+missing controls                   0
+non-PASS controls                  0
+boundary violations                0
+stage status                      PASS for every node
+</code></pre>
+<p>Specifically:</p>
+<pre><code class="language-text">Node 1 physical source:
+msbf_ctl.m1_17_end_to_end_evidence_snapshot
+
+Node 4 physical sources:
+msbf_ctl.run_evidence
+plus the M2.3 physical policy-boundary reconstruction
+</code></pre>
+<h3>Grid 3 — state summary</h3>
+<p>Require:</p>
+<pre><code class="language-text">state_verification_status                 PASS
+predecessor_rows                          1
+run_code                                  M1_V0_2_BASELINE_BUILD
+run_version                               1
+run_status                                M2_11_ACCEPTED
+contract_status                           ACCEPTED
+installed_top_level_objects               21
+policy_rows                               1
+nonpolicy_rows                            0
+m2_12_evidence_rows                       0
+g3_result_rows                            0
+gate_rows                                 1
+exact_gate_rows                           1
+policy_sequence_state                     1|true
+archive_sequence_state                    1|false
+registry_sequence_state                   1|false
+source_graph_rows                         19
+source_graph_pass_rows                    19
+stage_boundary_rows                       12
+stage_boundary_pass_rows                  12
+stage_boundary_required_controls          70
+stage_boundary_physical_controls          70
+disposition                               READY_TO_EXECUTE_PROGRAM_222_HF8
+</code></pre>
+<p>Export all three visible grids with:</p>
+<pre><code class="language-text">Use fetched rows       ON
+Query the database     OFF
+Open new connection    OFF
+</code></pre>
+<p>Recommended filenames:</p>
+<pre><code class="language-text">222_HF8_pre_execution_source_graph_detail.csv
+222_HF8_pre_execution_stage_boundary_detail.csv
+222_HF8_pre_execution_state_summary.csv
+</code></pre>
+<p>Any error, missing grid, non-PASS row, count mismatch, source mismatch, or export anomaly is a hard stop.</p>
+<h2>3. Execute Program 222 HF8 only</h2>
+<p>After the verifier passes exactly, execute:</p>
+<pre><code class="language-text">222_msbf_m2_12_end_to_end_certification_generation_physical_reconciliation_v1_HF8.sql
+</code></pre>
+<p>Require SHA-256:</p>
+<pre><code class="language-text">aa879a83a36f79f8b215110d5a349fbf0982a441cecd52284d5227ebfcc72fb9
+</code></pre>
+<p>Execution boundaries:</p>
+<pre><code class="language-text">one complete physical file
+one invocation
+first-error stop
+no outer transaction
+no Program 223 concatenation
+no ad hoc SQL
+no recovery execution
+</code></pre>
+<p>The governing authority requires one whole physical file per invocation and prohibits an outer transaction or concatenated programs. [export reference: filecite | turn10file6 | L22-L32]</p>
+<h2>4. Required Program 222 result</h2>
+<p>Require exactly one row:</p>
+<pre><code class="language-text">generation_status             PASS
+final_run_status              M2_12_GENERATED
+final_contract_status         GENERATED
+canonical_families            9
+canonical_entities            134
+generation_evidence_rows      24
+application_consumption_rows  1500
+operational_account_rows      59
+strategy_scope_rows           24
+policy_identity               1
+archive_identity              1
+registry_identity             1
+owned_sequence_states         1|true;1|true;1|true
+combined_set_hash             32 lowercase hexadecimal characters
+disposition                   READY_FOR_PROGRAM_223
+</code></pre>
+<p>Export the visible result immediately with <strong>Use fetched rows</strong>.</p>
+<h2>5. Stop after Program 222</h2>
+<p>Even after an exact PASS:</p>
+<pre><code class="language-text">Program 223    HELD
+Program 224    HELD
+Program 225    HELD
+Program 226    HELD
+Program 227    HELD
+Recoveries     UNAUTHORIZED
+</code></pre>
+<ul>
+<li>Download the HF8 Programs 223–227 hold notice (historical reference: <code>sandbox:[session]/M2_12_PROGRAMS_223_227_HOLD_NOTICE_HF8.md</code>; referenced bytes not established here)</li>
+</ul>
+<p>Program 223 remains held until the complete HF8 verifier output, Program 222 transcript, process status, primary result, persistent counts, 24 generation-evidence rows, lifecycle, hashes, and all three owned sequence states reconcile exactly.</p>
+</div></article><article id="m-2d076202-a60b-4d4e-97ca-3fe8b797bd91" class="message user"><p class="meta"><strong>Andrew / user</strong> · C085-M00068 · 2026-08-11T08:47:00.389000-04:00 · active path</p><p class="note">Attachment references: 222_HF8_pre_execution_source_graph_detail_20260811.csv; 222_HF8_pre_execution_stage_boundary_detail_20260811.csv; 222_HF8_pre_execution_state_summary_20260811.csv</p><div class="bubble"><p>another 222 error: SQL Error [42702]: ERROR: column reference &quot;module1_run_id&quot; is ambiguous
+  Position: 1549
+  ERROR: column reference &quot;module1_run_id&quot; is ambiguous
+  Position: 1549             correct error in a hotfix and do not wait for my approval. i selected stop and used rollback. when correcting error, do not correct this error and stop, review the rest of program 222 for additional, similar/noticeable errors. 222 pre-run evidence attached.       </p>
+</div></article><article id="m-34c0e7f8-7ee4-493e-b672-07bf7ab96a44" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00069 · 2026-08-11T08:47:18.163022-04:00 · active path</p><div class="bubble"><p>I’ll reconcile the attached verifier evidence, isolate the ambiguous reference, then scan all 206 Program 222 statements for similar aliasing and other reachable SQL defects before packaging the hotfix.</p>
+</div></article><article id="m-15e814cf-9b88-4e3f-8f1a-dee7c21f35f2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00070 · 2026-08-11T08:50:23.542298-04:00 · active path</p><div class="bubble"><p>The verifier is clean: all 19 source edges and 12 stage boundaries passed with a pristine target. The ambiguity recurs in later hash-staging queries, so I’m correcting that family.</p>
+</div></article><article id="m-b93d65d5-291c-4383-b6c5-16bcf2aae8f3" class="message assistant"><p class="meta"><strong>Assistant</strong> · C085-M00071 · 2026-08-11T09:17:31.055589-04:00 · active path</p><div class="bubble"><p>The deeper review also found aggregate/grouping, unquoted-status, tautological-filter, and evidence-key parity defects; HF9 corrects them and passes a separate 133-control physical readback.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

@@ -1,0 +1,1297 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>M2.11 Plan Review — part 10 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>M2.11 Plan Review — part 10</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-09.html">Previous part</a><a href="part-11.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-3354b801-ae1c-418f-acf6-66146b865fb2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00131 · 2026-08-08T01:19:31.296437-04:00 · active path</p><div class="bubble"><h1>M2.12 Work Package 1 R5 complete</h1>
+<p>The R4 independent audit confirmed that the prior helper-schema, component-join, registry-identity, dependency, and staged-registry corrections were sound, but retained the WP1 hold for two implementation blockers and one governance inconsistency: incomplete G3 latest/archive hash staging, ambiguous policy/archive identity insertion, and helper/dependency metadata drift. [export reference: filecite | turn24file0 | L3-L27]</p>
+<p>I completed the bounded correction:</p>
+<pre><code class="language-text">M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R5
+</code></pre>
+<p>R5 also performs the requested <strong>full WP1 implementation-closure pass</strong>. It prospectively compiles the literal construction of Programs 220, 221, 222, 220A, 222A, and 222B using only current WP1 authorities.</p>
+<pre><code class="language-text">R5 construction                            COMPLETE
+Full implementation-closure audit          PASS
+Static controls                            11,143 / 11,143 PASS
+Known static failures                      0
+
+Prospective programs                       6 / 6 PASS
+Literal construction decisions             2,605
+Implementation-time inferred decisions     0
+Prospective inference gaps                 0
+
+SQL generated                              NO
+Recovery SQL generated                     NO
+PostgreSQL executed                        NO
+
+WP1 final approval                         HOLD — NARROW RE-REVIEW
+WP2 authorization                          NO
+Program 220                                NOT STARTED
+</code></pre>
+<p>The accepted M2.11 baseline remains unchanged and independently rehashes to:</p>
+<pre><code class="language-text">92f0491eea26b0d546c85992e27433cd006a0b2f126c32a139d795b7749904fc
+</code></pre>
+<p>Its external sidecar reconciles, ZIP CRC passes, and the archive retains 4,819 entries and accepted stage <code>30_M2_11</code>.</p>
+<h1>R4 findings corrected</h1>
+<h2>1. G3 latest hash staging</h2>
+<p>The audit found that <code>lt</code> and <code>ltc</code> were implied inline aliases rather than governed relations with exact schemas and dependencies. [export reference: filecite | turn24file0 | L118-L175]</p>
+<p>R5 now freezes:</p>
+<pre><code class="language-text">tmp_latest_m2_12_g3_stable_typed
+→ tmp_latest_m2_12_g3_contract_hashed
+→ tmp_latest_m2_12_g3_typed
+</code></pre>
+<h3>Stable latest stage</h3>
+<p><code>tmp_latest_m2_12_g3_stable_typed</code> contains the exact one-row, target-typed latest payload before either hash is added.</p>
+<p>It excludes:</p>
+<pre><code class="language-text">contract_row_hash
+row_hash
+created_at
+</code></pre>
+<h3>Contract-hashed stage</h3>
+<p><code>tmp_latest_m2_12_g3_contract_hashed</code> adds:</p>
+<pre><code class="language-text">contract_row_hash
+</code></pre>
+<p>from the frozen stable latest preimage.</p>
+<h3>Final latest stage</h3>
+<p><code>tmp_latest_m2_12_g3_typed</code> adds:</p>
+<pre><code class="language-text">row_hash
+created_at
+</code></pre>
+<p>The latest row hash therefore consumes the contract-hashed row, not an undefined inline alias.</p>
+<pre><code class="language-text">Undefined latest prehash aliases             0
+Latest helper stages                         3 / 3 governed
+Latest stage expected rows                   1 / 1 / 1
+Latest stage dependency gaps                 0
+</code></pre>
+<h2>2. G3 archive hash staging</h2>
+<p>The audit found that <code>archive_row_hash</code> was expressed against the final archive helper that already contained <code>archive_row_hash</code>, making a literal interpretation recursive. [export reference: filecite | turn24file0 | L176-L233]</p>
+<p>R5 now freezes:</p>
+<pre><code class="language-text">tmp_archive_m2_12_g3_stable_typed
+→ tmp_archive_m2_12_g3_typed
+</code></pre>
+<p>The stable archive stage contains the exact target-typed immutable business payload, including:</p>
+<pre><code class="language-text">contract_payload
+source_latest_row_hash
+contract_row_hash
+</code></pre>
+<p>but excludes:</p>
+<pre><code class="language-text">archive_id
+archive_row_hash
+created_at
+</code></pre>
+<p>The final archive stage adds only:</p>
+<pre><code class="language-text">archive_row_hash
+created_at
+</code></pre>
+<pre><code class="language-text">Archive hash expressions consuming
+their own final hash field                    0
+
+Archive stable/final stages                  2 / 2 governed
+Archive identity present in staged insert    NO
+Archive final expected rows                  1
+</code></pre>
+<p>No approved hash preimage, formula, included field, excluded field, or ordering rule changed.</p>
+<h2>3. Exact owned-identity model</h2>
+<p>The audit found that the registry identity model was exact, while policy and archive still mixed explicit <code>nextval</code> expressions with target-generated behavior. [export reference: filecite | turn24file0 | L235-L347]</p>
+<p>R5 applies one model to all three owned identities:</p>
+<pre><code class="language-text">GENERATED ALWAYS AS IDENTITY
++
+explicit owned sequence name
++
+identity omitted from every normal INSERT
++
+no OVERRIDING SYSTEM VALUE
++
+no staged nextval
++
+one target-generated value
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Identity</th>
+<th align="right">Normal writer</th>
+<th align="right">Recovery</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Policy profile</td>
+<td><code>policy_profile_id</code></td>
+<td align="right">220</td>
+<td align="right">220A</td>
+</tr>
+<tr>
+<td>G3 archive</td>
+<td><code>archive_id</code></td>
+<td align="right">222</td>
+<td align="right">222A</td>
+</tr>
+<tr>
+<td>G3 registry</td>
+<td><code>registry_id</code></td>
+<td align="right">222</td>
+<td align="right">222A</td>
+</tr>
+</tbody></table>
+<p>Expected successful state for each:</p>
+<pre><code class="language-text">Persisted identity value      1
+Sequence last_value           1
+Sequence is_called            true
+</code></pre>
+<p>Expected pristine state:</p>
+<pre><code class="language-text">Owner rows                    0
+Sequence last_value           1
+Sequence is_called            false
+</code></pre>
+<p>A failed transaction may advance a sequence nontransactionally. Programs 220A and 222A may restore the relevant sequence only when all frozen zero-owner-row, zero-downstream-state, lifecycle, sequence-ownership, and recovery-authority preconditions pass.</p>
+<pre><code class="language-text">Owned identity columns lacking exact DDL mode       0
+Ambiguous normal INSERT projections                 0
+Normal staged nextval calls                         0
+Normal OVERRIDING SYSTEM VALUE clauses              0
+Potential normal double sequence consumption        0
+Owned sequences lacking recovery treatment          0
+</code></pre>
+<h2>4. Helper/dependency metadata parity</h2>
+<p>The R4 audit found eleven helper records whose <code>upstream_relations_json</code> did not agree with the expression-derived dependency catalog, with 27 relationships absent from the helper metadata. [export reference: filecite | turn24file0 | L348-L400]</p>
+<p>R5 makes <code>upstream_relations_json</code> authoritative for <strong>direct, same-program helper dependencies</strong>. It now reconciles exactly to the dependency compiler.</p>
+<pre><code class="language-text">Governed helper relations                   79
+Governed helper output fields            1,281
+Direct helper dependencies                 141
+
+Helper metadata/dependency mismatches         0
+Missing direct upstream relations             0
+Unauthorized excess dependency grants         0
+Dependency row-count discrepancies            0
+</code></pre>
+<p>Construction-order dependencies that are not direct data inputs are separately represented in the topological-order and prospective program-blueprint authorities rather than being mixed into the direct dependency list.</p>
+<h1>Full prospective WP2 implementation closure</h1>
+<p>The user-directed R5 scope required more than correction of the three R4 findings. I prospectively simulated construction of all six WP2 programs and recoveries from the current authority set.</p>
+<h2>Program-level result</h2>
+<table>
+<thead>
+<tr>
+<th align="right">Program</th>
+<th align="right">Literal decisions</th>
+<th align="right">Categories</th>
+<th align="right">Inferred</th>
+<th align="right">Failed</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">220</td>
+<td align="right">669</td>
+<td align="right">13</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td align="right">221</td>
+<td align="right">182</td>
+<td align="right">9</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td align="right">222</td>
+<td align="right">1,629</td>
+<td align="right">12</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td align="right">220A</td>
+<td align="right">40</td>
+<td align="right">8</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td align="right">222A</td>
+<td align="right">40</td>
+<td align="right">8</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td align="right">222B</td>
+<td align="right">45</td>
+<td align="right">8</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td align="right"><strong>Total</strong></td>
+<td align="right"><strong>2,605</strong></td>
+<td align="right"></td>
+<td align="right"><strong>0</strong></td>
+<td align="right"><strong>0</strong></td>
+<td><strong>PASS</strong></td>
+</tr>
+</tbody></table>
+<p>The prospective compiler covers:</p>
+<pre><code class="language-text">Persistent objects and relation definitions
+Persistent column DDL
+Primary, unique, check and foreign-key constraints
+Indexes
+Archive function and trigger
+Comments and ownership boundaries
+
+Identity generation clauses
+Normal INSERT identity omission
+Sequence ownership and expected states
+Failed-transaction sequence behavior
+Guarded sequence restoration
+Committed sequence proof
+
+Temporary relation creation
+Temporary output schemas
+Temporary business keys
+Target types and casts
+Null/default handling
+Direct dependencies
+Topological construction order
+Index and ANALYZE timing
+Lifecycle and ON COMMIT behavior
+
+Accepted physical source bindings
+Source aliases
+Physical source fields
+Join predicates
+Filters and row selectors
+Multiplicity and expected rows
+Source-edge physical branches
+
+Hash preimages
+Hash exclusions
+Hash outputs
+Business-key ordering
+Set-hash ordering
+Contract-set ordering
+Combined-hash ordering
+Physical reconstruction
+
+Persistent INSERT target projections
+Source helper and source field
+Target/source type parity
+Expected row counts
+Persistence order
+No-update boundaries
+
+Program transaction/session behavior
+Timeout and search-path rules
+Persistent mutation boundary
+Preflight assertions
+Installation postflight
+Generation evidence
+Lifecycle transitions
+Recovery decision branches
+Recovery mutations
+Rerun behavior
+Primary result projections
+</code></pre>
+<h2>Closure inventory</h2>
+<pre><code class="language-text">Program 220 planned installed objects            21
+Program 220 installation postflights             21
+Program 221 fail-closed assertions                48
+
+Helper relations                                 79
+Helper fields                                 1,281
+Direct dependencies                              141
+Topological helper positions                     79 / 79
+Prospective blueprint helper coverage            79 / 79
+
+Persistent field/INSERT projection records       327
+INSERT projection failures                         0
+Identity INSERT ambiguities                        0
+
+Parsed physical alias.field references         7,040
+Resolved physical references                  7,040 / 7,040
+Unresolved physical references                    0
+
+Primary-result projections                         6 / 6
+Prospective inference-gap records                   0
+</code></pre>
+<h1>Program-boundary closure</h1>
+<h2>Program 220</h2>
+<p>The R5 authorities now fully determine:</p>
+<pre><code class="language-text">21 persistent/support objects
+all persistent column definitions
+all target constraints and indexes
+all three identity DDL clauses
+archive function and trigger
+exact one-row policy construction
+policy target typing
+policy configuration hash
+policy row hash
+policy INSERT projection
+policy sequence result
+21-object installation postflight
+primary result
+transaction behavior
+</code></pre>
+<p>Program 220 remains prohibited from inserting any non-policy M2.12 canonical row.</p>
+<h2>Program 221</h2>
+<p>The R5 authorities now fully determine:</p>
+<pre><code class="language-text">ordinary transaction
+persistent-state read-only
+tmp_preflight_ only
+zero persistent DML/DDL
+48 exact fail-closed assertions
+19 physical source-edge checks
+72 mandatory applicability checks
+pristine-target checks
+sequence-state checks
+no-Module-3 checks
+primary result
+rollback behavior
+</code></pre>
+<h2>Program 222</h2>
+<p>The R5 authorities now fully determine:</p>
+<pre><code class="language-text">single staged source/materialization graph
+12 stage-certification rows
+13 component rows
+72 evidence-certification rows
+13 reproduction rows
+20 capability rows
+1 latest row
+1 archive row
+1 registry row
+133 non-policy canonical rows total
+
+nine-family / 134-entity canonical source
+nine family set hashes
+contract set hash
+combined set hash
+
+one persistent registry INSERT
+zero post-insert canonical hash repair
+zero persistent canonical business/hash UPDATE operations
+
+phase-9 physical reconstruction
+24 generation-evidence rows
+GENERATED lifecycle transition
+primary result
+atomic commit boundary
+</code></pre>
+<h2>Programs 220A and 222A</h2>
+<p>Both recovery programs now have exact decision tables defining:</p>
+<pre><code class="language-text">permitted source state
+prohibited source state
+owned-row requirements
+downstream-state requirements
+sequence pre-state
+permitted sequence restoration
+persistent mutation
+required post-recovery proof
+primary result
+fail-closed disposition
+</code></pre>
+<p>Neither recovery may alter accepted predecessor state or a valid committed M2.12 checkpoint.</p>
+<h2>Program 222B</h2>
+<p>Program 222B is governed as proof-first recovery:</p>
+<pre><code class="language-text">reconstruct all nine families
+reconstruct 134 canonical entities
+reconstruct family, contract and combined hashes
+prove latest/archive/registry identity
+prove three owned sequence states
+prove generated business checkpoint
+repair only missing generation evidence
+or mutable GENERATED lifecycle when expressly permitted
+never regenerate canonical rows
+never alter business/hash fields
+</code></pre>
+<h1>Static and package validation</h1>
+<pre><code class="language-text">R5 static controls                      11,143 / 11,143 PASS
+Known static failures                         0
+
+R5 review-package controls                  20 / 20 PASS
+Package validation failures                     0
+
+ZIP CRC                                      PASS
+Complete extraction                          PASS
+Source/extracted path-size-hash parity       PASS
+Exact duplicate paths                           0
+Case-insensitive duplicate paths                0
+Unsafe or traversal paths                       0
+Attachment-suffix authority paths               0
+SQL files                                       0
+PostgreSQL executions                           0
+</code></pre>
+<h1>Primary R5 delivery</h1>
+<ul>
+<li>Download the M2.12 WP1 R5 review bundle (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R5.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R5.zip.sha256</code>; referenced bytes not established here)</li>
+<li>Read the R5 package-validation report (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R5_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Review all 20 package-validation controls (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R5_VALIDATION_CONTROLS.csv</code>; referenced bytes not established here)</li>
+<li>Read the machine-readable package summary (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R5_VALIDATION_SUMMARY.json</code>; referenced bytes not established here)</li>
+</ul>
+<pre><code class="language-text">Package
+M2_12_Build_WP1_R5.zip
+
+Bytes
+896,371
+
+SHA-256
+9ceec687e86084d18f40452716450223e50e3fb41587533da1d683ad7028e74d
+
+ZIP entries
+125
+
+Maximum ZIP path length
+62
+</code></pre>
+<p>This is a <strong>static WP1 audit-review bundle</strong>, not an implementation or ready-for-execution package.</p>
+<h1>Current R5 source authority</h1>
+<ul>
+<li>WP1 Source Authority R5 (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_WP1_SOURCE_AUTHORITY_R5.md</code>; referenced bytes not established here)</li>
+<li>R5 source-identity inventory (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_WP1_R5_SOURCE_IDENTITY.csv</code>; referenced bytes not established here)</li>
+<li>Implementation Control Correction R5 (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R5.md</code>; referenced bytes not established here)</li>
+<li>WP1 R5 Review (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_WORK_PACKAGE_1_REVIEW.md</code>; referenced bytes not established here)</li>
+<li>R5 finding-remediation matrix (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_WP1_R5_FINDING_REMEDIATION_MATRIX.csv</code>; referenced bytes not established here)</li>
+</ul>
+<p>Current identities:</p>
+<pre><code class="language-text">WP1 Source Authority R5
+1133f2fb27ef9086853dad6af04d76cb6ead9c1213bf75f630e2cbccd0cbd27a
+
+Implementation Control Correction R5
+a56ac60e5b30dd450fc20eec6c9c5c188f32dc924821b402ebb4149e214751b6
+
+R5 Source Identity Inventory
+bddb615937d2a4c96001bbcd3ef3812b22f29139972b92a1dd73757711087beb
+</code></pre>
+<h1>Full implementation-closure authorities</h1>
+<h2>Prospective compiler</h2>
+<ul>
+<li>2,605-row Literal Compilation Decision Matrix (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_WP2_LITERAL_COMPILATION_DECISION_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Six-Program Closure Summary (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_WP2_LITERAL_PROGRAM_CLOSURE_SUMMARY.csv</code>; referenced bytes not established here)</li>
+<li>Program/Category Applicability Matrix (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_WP2_PROGRAM_CATEGORY_APPLICABILITY_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Category Coverage Reconciliation (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_WP2_LITERAL_COMPILATION_CATEGORY_COVERAGE.csv</code>; referenced bytes not established here)</li>
+<li>Prospective Program Construction Blueprint (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_WP2_PROSPECTIVE_PROGRAM_CONSTRUCTION_BLUEPRINT.csv</code>; referenced bytes not established here)</li>
+<li>Prospective Construction Gap Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PROSPECTIVE_SQL_CONSTRUCTION_GAP_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Inference-Gap Register — zero rows (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_WP2_PROSPECTIVE_INFERENCE_GAP_REGISTER.csv</code>; referenced bytes not established here)</li>
+<li>Prospective Closure Report (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PROSPECTIVE_SQL_CONSTRUCTION_CLOSURE_REPORT.md</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Helper and dependency closure</h2>
+<ul>
+<li>Helper Temporary-Relation Specification — 79 relations (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_HELPER_TEMP_RELATION_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Helper Field Construction Specification — 1,281 fields (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_HELPER_FIELD_CONSTRUCTION_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Literal Helper Construction Specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_HELPER_LITERAL_CONSTRUCTION_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Literal Construction Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_HELPER_LITERAL_CONSTRUCTION_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Literal Source-Binding Normalization Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_LITERAL_SOURCE_BINDING_NORMALIZATION_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Topological Helper Order — 79/79 (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PROSPECTIVE_PROGRAM_HELPER_TOPOLOGICAL_ORDER.csv</code>; referenced bytes not established here)</li>
+<li>Direct Dependency Specification — 141 rows (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_INTERNAL_ADAPTER_DEPENDENCY_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Helper/Dependency Metadata Parity Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_HELPER_DEPENDENCY_METADATA_PARITY_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Prospective Blueprint Helper-Coverage Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PROSPECTIVE_BLUEPRINT_HELPER_COVERAGE_AUDIT.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Physical relation, alias, and field closure</h2>
+<ul>
+<li>Canonical Source Adapter Specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_CANONICAL_SOURCE_ADAPTER_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Literal Alias-Binding Specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_LITERAL_ALIAS_BINDING_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Physical Field Resolution Audit — 7,040/7,040 PASS (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_LITERAL_PHYSICAL_FIELD_RESOLUTION_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Accepted Physical Field Reference Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_ACCEPTED_PHYSICAL_FIELD_REFERENCE_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Actual Expression Reference Inventory (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_ACTUAL_EXPRESSION_REFERENCE_INVENTORY.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Latest, archive, registry, and hash closure</h2>
+<ul>
+<li>Ordered Hash Specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_ORDERED_HASH_SPECIFICATION.md</code>; referenced bytes not established here)</li>
+<li>Hash Dependency DAG (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_HASH_DEPENDENCY_DAG.csv</code>; referenced bytes not established here)</li>
+<li>Nine-Phase Hash Plan (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_HASH_DEPENDENCY_PHASE_PLAN.csv</code>; referenced bytes not established here)</li>
+<li>Canonical Entity Source Specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_CANONICAL_ENTITY_SOURCE_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Registry Hash-Staging Specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_REGISTRY_HASH_STAGING_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Registry Hash-Staging Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_REGISTRY_HASH_STAGING_AUDIT.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Identity, DDL, INSERT, and postflight closure</h2>
+<ul>
+<li>Owned Identity Insertion Specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_OWNED_IDENTITY_INSERTION_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Owned Sequence Recovery Specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_OWNED_SEQUENCE_RECOVERY_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Persistent DDL Column Specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PERSISTENT_DDL_COLUMN_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Program 220 DDL Object Specification — 21 objects (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PROGRAM_220_DDL_OBJECT_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Program 220 Installation Postflight — 21 objects (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PROGRAM_220_INSTALLATION_POSTFLIGHT_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Persistent INSERT Projection Specification — 327 rows (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PERSISTENT_INSERT_PROJECTION_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Persistent INSERT Projection Summary (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PERSISTENT_INSERT_PROJECTION_SUMMARY.csv</code>; referenced bytes not established here)</li>
+<li>Physical Constraint and Index Catalog (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PHYSICAL_CONSTRAINT_AND_INDEX_CATALOG.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Program, transaction, generation, and recovery closure</h2>
+<ul>
+<li>Program Responsibility Matrix (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PROGRAM_RESPONSIBILITY_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Transaction and Mutation Matrix (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_TRANSACTION_AND_MUTATION_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Program Transaction/Session Specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PROGRAM_TRANSACTION_SESSION_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Program 221 Preflight Assertions — 48 (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PROGRAM_221_PREFLIGHT_ASSERTION_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Program 222 Persistence Order (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PROGRAM_222_PERSISTENCE_ORDER_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Program 222 Physical Reconstruction (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PROGRAM_222_PHYSICAL_RECONSTRUCTION_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Program 222 Generation Evidence (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PROGRAM_222_GENERATION_EVIDENCE_INSERT_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Program 222 Lifecycle Transition (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PROGRAM_222_LIFECYCLE_TRANSITION_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Recovery Decision Specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_RECOVERY_DECISION_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Recovery Mutation Specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_RECOVERY_MUTATION_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Normal-Program Rerun Decision Specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_NORMAL_PROGRAM_RERUN_DECISION_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Primary Result Projection Specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PROGRAM_PRIMARY_RESULT_PROJECTION_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Consolidated governance</h2>
+<ul>
+<li>Consolidated Implementation Specification R5 (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_CONSOLIDATED_IMPLEMENTATION_SPECIFICATION.md</code>; referenced bytes not established here)</li>
+<li>Implementation Invariants (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_IMPLEMENTATION_INVARIANTS.md</code>; referenced bytes not established here)</li>
+<li>Type and Precision Dictionary (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_TYPE_PRECISION_DICTIONARY.csv</code>; referenced bytes not established here)</li>
+<li>Physical Object Catalog (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_PHYSICAL_OBJECT_CATALOG.csv</code>; referenced bytes not established here)</li>
+<li>Source-to-Target Mapping (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_SOURCE_TO_TARGET_MAPPING.csv</code>; referenced bytes not established here)</li>
+<li>Stage and Contract Source Authority (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_STAGE_AND_CONTRACT_SOURCE_AUTHORITY.csv</code>; referenced bytes not established here)</li>
+<li>Consumption View Mapping (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_CONSUMPTION_VIEW_MAPPING.csv</code>; referenced bytes not established here)</li>
+<li>Consumption View Join Plan (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_CONSUMPTION_VIEW_JOIN_PLAN.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Static review evidence</h2>
+<ul>
+<li>R5 Full-Closure Static Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_WORK_PACKAGE_1_R5_STATIC_AUDIT.md</code>; referenced bytes not established here)</li>
+<li>Machine-Readable R5 Static Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_WORK_PACKAGE_1_R5_STATIC_AUDIT.json</code>; referenced bytes not established here)</li>
+<li>All 11,143 Static Controls (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_5/M2_12_WORK_PACKAGE_1_R5_STATIC_AUDIT_CONTROLS.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Final governed state</h1>
+<pre><code class="language-text">M2.12 Work Package 1 R5                 COMPLETE
+Full implementation-closure result      PASS
+Recommended audit outcome               APPROVE WP1 R5
+
+WP1 final approval                      HOLD — NARROW RE-REVIEW
+WP2                                     NOT AUTHORIZED
+
+Program 220                             NOT STARTED
+Programs 220–227                        NOT GENERATED
+Recoveries 220A/222A/222B/223A         NOT GENERATED
+PostgreSQL                              NOT EXECUTED
+Implementation manifests               NOT CREATED
+Ready-for-execution package             NOT CREATED
+
+Module 3                               NOT AUTHORIZED
+Production                             NOT AUTHORIZED
+</code></pre>
+<p>The R4 audit expressly required R5 to remain bounded to implementation-control correction, generate no SQL, retain the WP2 hold, and stop for re-review. [export reference: filecite | turn24file0 | L432-L494]</p>
+</div></article><article id="m-66c18222-f549-4d1a-9192-2211285a052b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C081-M00132 · 2026-08-08T07:58:31.997000-04:00 · active path</p><p class="note">Attachment references: AUDIT_M2_12_Build_WP1_R5.zip; Pasted markdown(20260808-115821).md</p><div class="bubble"><h1>M2.12 WP1 R5 Independent Full-Closure Audit — Bounded R6 Required</h1>
+<p>Do not begin Work Package 2 and do not generate Program 220 or any SQL.</p>
+<p>Produce:</p>
+<p><code>M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R6</code></p>
+<p>This is not another narrow catalog-presence pass. R6 must create a genuinely literal,
+cross-artifact, state-consistent WP2 source authority.</p>
+<p>Preserve every R1–R5 business semantic and implementation authority already found sound,
+including the R5 latest/archive stage architecture, R4 staged registry construction,
+all approved hash preimages/formulas, source edges, counts, controls, grains, and
+non-production boundaries.</p>
+<h2>1. Make Program 220 DDL executable</h2>
+<ul>
+<li>Eliminate the three explicit CREATE SEQUENCE statements that collide with the same
+names assigned to <code>GENERATED ALWAYS AS IDENTITY</code> sequences, or replace the entire
+model with one fully compatible exact sequence/identity design.</li>
+<li>Distinguish installed implicit identity-sequence objects from executable DDL statements.</li>
+<li>Freeze one exact complete archive rejection function:
+function name, arguments, return type, language, volatility, security attributes,
+body, SQLSTATE, message, and expected postflight body identity.</li>
+<li>Freeze one exact trigger name and exact function binding across every catalog.</li>
+<li>Freeze exact COMMENT ON text and comment postflight, or formally remove comments
+from the exact installation surface.</li>
+</ul>
+<h2>2. Make all seven persistent views literal and valid</h2>
+<ul>
+<li>Provide complete CREATE OR REPLACE VIEW SQL or an exact projection/join compiler
+covering all 845 fields and all 23 join-plan rows.</li>
+<li>Persistent views may not reference transaction-local <code>ctx</code>.</li>
+<li>Freeze the exact persistent run-scoping model.</li>
+<li>Correct the four <code>g3r</code> references to the governed registry alias.</li>
+<li>Add view expression/alias/type/dependency parsing and postflight controls.</li>
+</ul>
+<h2>3. Rebuild Program 221 as executable assertions</h2>
+<ul>
+<li>Require exactly one exact approved policy row after Program 220, not zero.</li>
+<li>Require policy sequence <code>1/true</code> and archive/registry sequences <code>1/false</code>.</li>
+<li>Replace metadata-column pseudo-runtime references with exact SQL-producing helpers.</li>
+<li>Correct <code>assertion.check_code</code>/<code>assertion.observed_value</code> and authority-status misuse.</li>
+<li>Build all 19 source-edge branches from executable expressions, not descriptive branch text.</li>
+<li>Freeze exact boolean predicate, observed value, expected value, SQLSTATE/message, and
+result-row expression for all 48 assertions.</li>
+</ul>
+<h2>4. Remove every nonliteral helper/reconstruction placeholder</h2>
+<p>Replace or explicitly govern every occurrence of:</p>
+<ul>
+<li><code>execute edge_spec...</code>;</li>
+<li><code>count exact ...</code>;</li>
+<li><code>governed_policy_rows_scope</code>;</li>
+<li><code>governed_nonpolicy_rows_scope</code>;</li>
+<li><code>governed_evidence_rows_scope</code>;</li>
+<li><code>exact_family_mismatch_count_diagnostic</code>;</li>
+<li><code>exact_row_hash_mismatch_count_diagnostic</code>;</li>
+<li><code>exact_set_hash_mismatch_count_diagnostic</code>;</li>
+<li><code>exact_combined_hash_mismatch_count_diagnostic</code>;</li>
+<li><code>exact_sequence_state_mismatch_count_diagnostic</code>.</li>
+</ul>
+<p>Each must become executable PostgreSQL or a named governed relation with exact schema,
+grain, business key, dependencies, construction SQL, and row-count contract.</p>
+<h2>5. Complete Program 222 persistence and proof</h2>
+<ul>
+<li>Add an exact 24-row <code>msbf_ctl.run_evidence</code> INSERT projection, including:
+run_id, evidence_code, segment_key, metric_name, exactly one metric value column,
+unit_code, status, threshold handling, interpretation, and created_at/default behavior.</li>
+<li>Freeze exact registry and run lifecycle UPDATE predicates and values.</li>
+<li>Prove all three owned sequence states during phase-9 reconstruction, including the
+unchanged committed policy sequence.</li>
+<li>Keep all persistent canonical business/hash updates prohibited.</li>
+</ul>
+<h2>6. Make 220A, 222A, and 222B literal</h2>
+<ul>
+<li>Define exact policy/nonpolicy/evidence/gate/object scope queries.</li>
+<li>Add the runtime fields currently missing from the recovery decision authority.</li>
+<li>Freeze every branch predicate, DROP/DELETE/UPDATE/setval statement, operation order,
+failure signature, postcondition query, and primary-result projection.</li>
+<li>Do not use descriptive phrases such as <code>exact fail-closed branch</code>,
+<code>governed recovery scope</code>, or <code>only permitted branch action</code> as executable authority.</li>
+</ul>
+<h2>7. Freeze exact session parameters</h2>
+<p>For all six WP2 programs/recoveries, replace <code>governed module value</code> with exact
+statement_timeout and lock_timeout literals, or explicitly govern that no local override
+is issued and the session values are inherited.</p>
+<h2>8. Rebuild the prospective compiler</h2>
+<p>The compiler must be generated from executable source authorities and must include:</p>
+<ul>
+<li>all DDL statements, columns, constraints, indexes, function body, trigger, comments;</li>
+<li>all 845 view fields and 23 view joins;</li>
+<li>all 48 preflight predicates;</li>
+<li>every helper field expression and source catalog field;</li>
+<li>all 327 persistent canonical INSERT fields;</li>
+<li>the full run_evidence INSERT projection;</li>
+<li>exact lifecycle mutations;</li>
+<li>exact recovery decisions and mutations;</li>
+<li>all primary result projections.</li>
+</ul>
+<p>It must fail on:</p>
+<pre><code class="language-text">explicit-sequence / identity-sequence name collisions             &gt;0
+function or trigger identity mismatches                            &gt;0
+undefined function bodies or comment authorities                  &gt;0
+unbound persistent-view aliases                                   &gt;0
+view fields/joins absent from literal compilation                 &gt;0
+cross-catalog referenced fields absent                            &gt;0
+program-state prerequisite contradictions                         &gt;0
+nonliteral helper/reconstruction placeholders                     &gt;0
+generation-evidence INSERT fields unresolved                      &gt;0
+owned sequence states omitted from reconstruction                 &gt;0
+recovery scopes/branches/mutations not executable                  &gt;0
+session parameter placeholders                                    &gt;0
+implementation-time inferred decisions                            &gt;0
+</code></pre>
+<p>Required final values are zero.</p>
+<p>Stop after R6 and wait for full independent re-review. WP2 remains unauthorized.    </p>
+</div></article><article id="m-1cef362a-2695-4d9e-88c9-4d451d030868" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00133 · 2026-08-08T09:55:06.946621-04:00 · active path</p><div class="bubble"><h1>M2.12 Work Package 1 R6 complete</h1>
+<p>The R5 independent audit correctly rejected the submitted zero-inference conclusion: although R5 reported 11,143/11,143 controls and 2,605 literal decisions, independent prospective compilation still found unresolved DDL, view, preflight, generation, recovery, session, and compiler decisions. [export reference: filecite | turn24file0 | L1-L9]</p>
+<p>R6 preserves the R5 latest/archive staging, target-generated identity intent, helper/dependency parity, and the R4 staged-registry construction that the audit found sound. [export reference: filecite | turn24file0 | L64-L123] It replaces the catalog-presence compiler with a literal, cross-artifact, state-consistent authority for Programs 220, 221, 222, 220A, 222A, and 222B.</p>
+<pre><code class="language-text">Correction identity
+M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R6
+
+R6 construction                             COMPLETE
+Full prospective WP2 closure                PASS
+Prospective programs                        6 / 6 PASS
+Literal construction decisions              4,202
+Implementation-time inferred decisions      0
+Required zero metrics                       18 / 18 PASS
+Static controls                             4,241 / 4,241 PASS
+Independent validation controls             80 / 80 PASS
+
+Accepted M2.11 baseline                     LOCKED / UNCHANGED
+Frozen M2.12 business design                LOCKED / UNCHANGED
+Frozen business-semantic changes            0
+
+WP1 final approval                          HOLD — FULL INDEPENDENT RE-REVIEW
+WP2 authorization                           NO
+Programs 220–227                            NOT GENERATED
+Recovery SQL                                NOT GENERATED
+PostgreSQL                                  NOT EXECUTED
+Module 3                                    NOT AUTHORIZED
+Production                                  NOT AUTHORIZED
+</code></pre>
+<h2>1. Program 220 DDL is now literal</h2>
+<p>The audit identified incompatible explicit sequence creation and identity-sequence creation, inconsistent function and trigger names, an undefined function body, and an incomplete comment authority. [export reference: filecite | turn24file0 | L125-L210]</p>
+<p>R6 now defines exactly:</p>
+<pre><code class="language-text">Persistent tables                           9
+Archive rejection functions                 1
+Indexes                                     8
+Archive immutability triggers               1
+Persistent views                            7
+                                           --
+Executable DDL statements                  26
+</code></pre>
+<p>The owned-identity model is uniform:</p>
+<pre><code class="language-text">GENERATED ALWAYS AS IDENTITY
++ explicit SEQUENCE NAME
++ identity omitted from normal INSERT
++ zero standalone CREATE SEQUENCE statements
++ zero OVERRIDING SYSTEM VALUE clauses
++ one target-generated identity value
+</code></pre>
+<p>The three sequences are therefore classified as <strong>implicitly installed identity-sequence objects</strong>, not independently executable DDL statements.</p>
+<p>The archive guard is frozen to:</p>
+<pre><code class="language-text">Function
+msbf_ctl.m2_12_reject_g3_archive_mutation()
+
+Arguments
+()
+
+Return type
+trigger
+
+Language
+plpgsql
+
+Volatility
+VOLATILE
+
+Security
+SECURITY INVOKER
+
+Parallel safety
+PARALLEL UNSAFE
+
+Trigger
+trg_m2_12_g3_archive_immutable
+
+Binding
+BEFORE UPDATE OR DELETE
+ON msbf_ctl.m2_12_g3_bundle_archive
+FOR EACH ROW
+</code></pre>
+<p>The exact body, normalized-body MD5, SQLSTATE <code>P0001</code>, error message, detail, hint, function configuration, trigger event mask, and postflight catalog query are now governed.</p>
+<p><code>COMMENT ON</code> statements are formally excluded from Program 220’s executable installation identity. This is no longer an unstated omission:</p>
+<pre><code class="language-text">COMMENT ON statement count                 0
+Comment authority                          FORMALLY_EXCLUDED
+Installation postflight                    aligned
+</code></pre>
+<h2>2. All seven persistent views are literal</h2>
+<p>The audit found that R5 did not compile the 845 projection fields or 23 joins, and that the proposed persistent views contained 453 unbound <code>ctx</code> references and four incorrect <code>g3r</code> aliases. [export reference: filecite | turn24file0 | L214-L294]</p>
+<p>R6 now includes:</p>
+<pre><code class="language-text">Complete CREATE OR REPLACE VIEW statements     7
+Exact projection expressions                  845
+Exact governed joins                           23
+Unbound aliases                                 0
+Unresolved source fields                        0
+Transaction-local persistent-view dependencies  0
+ctx references                                  0
+g3r references                                  0
+</code></pre>
+<p>Every view now freezes:</p>
+<ul>
+<li>its base persistent relation and alias;</li>
+<li>join sequence and type;</li>
+<li>complete join predicate;</li>
+<li>every projection expression and cast;</li>
+<li>filter placement;</li>
+<li>source-side uniqueness and multiplicity controls;</li>
+<li>expected matched and unmatched rows;</li>
+<li>final cardinality;</li>
+<li>persistent run-scoping predicate.</li>
+</ul>
+<p>The persistent run scope is now:</p>
+<pre><code class="language-text">EXISTS exact approved M2.12 policy row
+for the base row&#39;s module1_run_id
+</code></pre>
+<p>No persistent view depends on a transaction-local run-context relation.</p>
+<h2>3. Program 221 is now an executable 48-assertion preflight</h2>
+<p>The audit found deterministic contradictions in the policy-row and sequence prerequisites, nonexistent assertion-result fields, and descriptive rather than executable source-edge branches. [export reference: filecite | turn24file0 | L296-L396]</p>
+<p>R6 now requires the physically reachable post-Program-220 state:</p>
+<pre><code class="language-text">Approved policy rows                         1
+Exact approved policy rows                   1
+Non-policy M2.12 canonical rows              0
+M2.12 generation-evidence rows               0
+G3 acceptance-gate rows                      0
+
+Policy sequence                              1 / true
+Archive sequence                             1 / false
+Registry sequence                            1 / false
+</code></pre>
+<p>All 48 assertions now have:</p>
+<pre><code class="language-text">assertion_sequence
+assertion_code
+assertion_family
+observed_value_sql
+expected_value
+pass_predicate_sql
+expected_sqlstate
+expected_message_prefix
+failure_raise_sql
+result_row_sql
+blocking_flag
+</code></pre>
+<p>Program 221’s result construction now uses the actual governed fields:</p>
+<pre><code class="language-text">assertion_sequence
+assertion_code
+observed_value
+expected_value
+status
+</code></pre>
+<p>rather than the stale <code>assertion.check_code</code> and metadata-status references.</p>
+<p>Source-edge treatment is fully executable:</p>
+<pre><code class="language-text">Program 221 source-edge branches            19 / 19
+Program 222 source-edge branches            19 / 19
+Descriptive edge branch placeholders          0
+</code></pre>
+<p>Each branch independently returns and reconciles:</p>
+<pre><code class="language-text">expected_source_hash
+observed_accepted_source_hash
+observed_target_recorded_source_hash
+source_gate_status
+source_registry_row_count
+target_registry_row_count
+source_hash_mismatch_flag
+target_hash_mismatch_flag
+edge_status
+</code></pre>
+<h2>4. Program 222 construction and physical proof are literal</h2>
+<p>The audit found descriptive helper expressions such as <code>execute edge_spec...</code>, undefined governed scopes, and nonexistent phase-9 diagnostic relations. [export reference: filecite | turn24file0 | L398-L451]</p>
+<p>R6 now governs:</p>
+<pre><code class="language-text">Unique temporary/helper relations           90
+Helper field constructions                1,302
+Direct dependency records                    94
+Program-applicable topological rows           92
+Canonical target-field decisions             327
+Canonical families                             9
+Canonical entities                           134
+</code></pre>
+<p>Each helper relation now has:</p>
+<ul>
+<li>exact owning program;</li>
+<li>exact namespace;</li>
+<li>grain and business key;</li>
+<li>expected rows;</li>
+<li>complete output schema;</li>
+<li>field-level construction expressions and types;</li>
+<li>direct dependencies;</li>
+<li>target casts and null rules;</li>
+<li>lifecycle and <code>ON COMMIT</code> behavior;</li>
+<li>index and <code>ANALYZE</code> treatment;</li>
+<li>downstream boundary;</li>
+<li>topological construction position.</li>
+</ul>
+<p>The following unresolved terms no longer occur in executable authority:</p>
+<pre><code class="language-text">execute edge_spec...
+governed_policy_rows_scope
+governed_nonpolicy_rows_scope
+governed_evidence_rows_scope
+exact_family_mismatch_count_diagnostic
+exact_row_hash_mismatch_count_diagnostic
+exact_set_hash_mismatch_count_diagnostic
+exact_combined_hash_mismatch_count_diagnostic
+exact_sequence_state_mismatch_count_diagnostic
+</code></pre>
+<p>The R4/R5 staged hash architecture remains intact:</p>
+<pre><code class="language-text">Base certification rows
+→ six base-family hashes
+→ latest stable / contract-hashed / final row
+→ archive stable / final row
+→ registry stable / prehashed row
+→ registry set hash
+→ contract set hash
+→ staged 134-entity canonical source
+→ combined set hash
+→ finalized registry row
+→ one persistent registry INSERT
+→ phase-9 persisted reconstruction
+</code></pre>
+<p>No persistent canonical business or hash update is authorized.</p>
+<h2>5. Generation evidence, lifecycle, and sequence proof are complete</h2>
+<p>The audit found no exact 24-row <code>run_evidence</code> INSERT projection, an ambiguous lifecycle transition, and omission of the policy sequence from phase-9 proof. [export reference: filecite | turn24file0 | L453-L520]</p>
+<p>R6 now defines:</p>
+<pre><code class="language-text">Generation evidence codes                   24
+Target columns per evidence row              10
+Target-field projection decisions           240
+Evidence rows with exactly one metric channel 24 / 24
+</code></pre>
+<p>Every row projects:</p>
+<pre><code class="language-text">run_id
+evidence_code
+segment_key
+metric_name
+metric_value_numeric
+metric_value_text
+unit_code
+status
+threshold_value
+interpretation
+</code></pre>
+<p><code>created_at</code> is intentionally omitted so the accepted target default applies.</p>
+<p>The lifecycle boundary is exact:</p>
+<pre><code class="language-text">G3 registry is inserted directly as:
+contract_status = GENERATED
+
+Program 222 persistent lifecycle UPDATE:
+msbf_ctl.run_registry
+M2_11_ACCEPTED → M2_12_GENERATED
+
+Registry lifecycle UPDATE count:
+0
+</code></pre>
+<p>Phase 9 now proves all three owned sequences:</p>
+<pre><code class="language-text">Policy sequence        1 / true
+Archive sequence       1 / true
+Registry sequence      1 / true
+</code></pre>
+<h2>6. Programs 220A, 222A, and 222B are literal recoveries</h2>
+<p>The audit found descriptive recovery actions, undefined scopes, missing runtime fields, and no exact branch or postcondition authority. [export reference: filecite | turn24file0 | L522-L566]</p>
+<p>R6 now contains:</p>
+<pre><code class="language-text">Recovery branches                         10
+Literal recovery mutation steps           22
+Successful recovery result rows            7
+Recovery programs                           3
+</code></pre>
+<p>Every branch has:</p>
+<ul>
+<li>an exact runtime context relation;</li>
+<li>an exact source-state predicate;</li>
+<li>permitted and prohibited state;</li>
+<li>exact ordered mutation IDs;</li>
+<li>exact <code>DROP</code>, <code>INSERT</code>, <code>UPDATE</code>, or <code>setval</code> statement;</li>
+<li>refusal SQLSTATE <code>P0001</code> and message;</li>
+<li>direct persistent-state postcondition query;</li>
+<li>exact result-row insertion;</li>
+<li>exact primary-result projection.</li>
+</ul>
+<p>The key boundaries remain:</p>
+<pre><code class="language-text">220A
+Incomplete Program 220 installation only.
+Drops exact views, trigger, tables, and function in governed reverse order.
+
+222A
+Zero-row failed Program 222 state only.
+May restore archive and registry sequences to 1 / false.
+May not alter the committed policy sequence.
+
+222B
+Proof-first committed-generation recovery.
+May insert missing generation evidence and/or update run status only.
+May not regenerate or modify canonical business/hash state.
+</code></pre>
+<h2>7. Session behavior is exact</h2>
+<p>The audit identified twelve unresolved timeout decisions. [export reference: filecite | turn24file0 | L568-L598]</p>
+<p>All six programs now use:</p>
+<pre><code class="language-text">statement_timeout
+NO_LOCAL_OVERRIDE
+
+lock_timeout
+NO_LOCAL_OVERRIDE
+</code></pre>
+<p>The inherited operator/session values are explicit authority; no <code>SET LOCAL</code> timeout is issued.</p>
+<p>Each program still uses an exact governed <code>search_path</code>, one explicit transaction, stop-at-first-error handling, and one commit only after all program postflights pass.</p>
+<h2>8. The prospective compiler was rebuilt</h2>
+<p>The R5 audit required the prospective compiler to be derived from executable authorities, not from nonblank descriptions, and required all final discrepancy metrics to equal zero. [export reference: filecite | turn24file0 | L600-L649] [export reference: filecite | turn24file0 | L679-L749]</p>
+<p>The R6 result is:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Program</th>
+<th align="right">Literal decisions</th>
+<th align="right">Categories</th>
+<th align="right">Inferred</th>
+<th align="right">Failed</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">220</td>
+<td align="right">1,538</td>
+<td align="right">20</td>
+<td align="right">0</td>
+<td align="right">0</td>
+</tr>
+<tr>
+<td align="right">221</td>
+<td align="right">316</td>
+<td align="right">13</td>
+<td align="right">0</td>
+<td align="right">0</td>
+</tr>
+<tr>
+<td align="right">222</td>
+<td align="right">2,109</td>
+<td align="right">20</td>
+<td align="right">0</td>
+<td align="right">0</td>
+</tr>
+<tr>
+<td align="right">220A</td>
+<td align="right">84</td>
+<td align="right">14</td>
+<td align="right">0</td>
+<td align="right">0</td>
+</tr>
+<tr>
+<td align="right">222A</td>
+<td align="right">68</td>
+<td align="right">14</td>
+<td align="right">0</td>
+<td align="right">0</td>
+</tr>
+<tr>
+<td align="right">222B</td>
+<td align="right">87</td>
+<td align="right">15</td>
+<td align="right">0</td>
+<td align="right">0</td>
+</tr>
+<tr>
+<td align="right"><strong>Total</strong></td>
+<td align="right"><strong>4,202</strong></td>
+<td align="right"></td>
+<td align="right"><strong>0</strong></td>
+<td align="right"><strong>0</strong></td>
+</tr>
+</tbody></table>
+<p>The compiler includes:</p>
+<pre><code class="language-text">All executable DDL statements and fields
+All constraints, indexes, function and trigger authority
+Formal comment exclusion
+All 845 view fields and 23 joins
+All 48 Program 221 assertions
+All 38 Program 221/222 edge branches
+All helper relations and field expressions
+All 327 canonical target-field decisions
+All 240 generation-evidence target decisions
+Lifecycle mutation
+Phase-9 physical reconstruction
+Recovery contexts, branches and mutations
+Session behavior
+All 58 primary-result fields
+Six complete primary-result SELECT statements
+</code></pre>
+<h2>Required zero metrics</h2>
+<pre><code class="language-text">Explicit sequence/identity collisions                     0
+Function or trigger identity mismatches                    0
+Undefined function bodies or comment authorities           0
+Unbound persistent-view aliases                            0
+View fields absent from literal compiler                   0
+View joins absent from literal compiler                    0
+Cross-catalog referenced fields absent                     0
+Program-state prerequisite contradictions                  0
+Nonliteral helper/reconstruction placeholders              0
+Unresolved retained descriptive phrases                    0
+Generation-evidence INSERT fields unresolved               0
+Owned sequence states omitted from reconstruction          0
+Recovery scopes/branches/mutations not executable          0
+Session parameter placeholders                             0
+Implementation-time inferred decisions                     0
+SQL files generated                                        0
+PostgreSQL executions                                      0
+Frozen business-semantic changes                           0
+</code></pre>
+<p>The retained frozen phrase “count exact gate/evidence/lifecycle rows” is now explicitly governed by an exact observed-value query, expected value, pass predicate, SQLSTATE, message, and four-object count/status proof. It is no longer an implementation-time decision.</p>
+<h1>R6 package identity</h1>
+<pre><code class="language-text">Package
+M2_12_Build_WP1_R6.zip
+
+Bytes
+1,309,675
+
+SHA-256
+861b7745daea99b0565a66582abd744a27eb918e50f264292a2cd66e04eaad67
+
+ZIP entries
+200
+
+Current R6 packaged files
+146
+
+Historical/noncurrent files
+52
+
+Root review controls
+2
+</code></pre>
+<p>The ZIP is deterministic: repeated construction produced the same byte size and SHA-256.</p>
+<pre><code class="language-text">ZIP CRC                                  PASS
+Complete extraction/hash parity         PASS
+External sidecar                        PASS
+Exact duplicate paths                     0
+Case-insensitive duplicate paths          0
+Unsafe or traversal paths                 0
+SQL files                                 0
+</code></pre>
+<p>The current source authority contains:</p>
+<pre><code class="language-text">Governed byte-identity records          144
+Current path/hash mismatches              0
+Prior R1–R5 authority records
+classified as current                     0
+</code></pre>
+<h1>Primary delivery</h1>
+<ul>
+<li>Download the M2.12 WP1 R6 review bundle (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R6.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching R6 SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R6.zip.sha256</code>; referenced bytes not established here)</li>
+<li>Read the R6 package-validation report (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R6_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Read the independent 80-control validation report (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R6_INDEPENDENT_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Download the independent validation controls (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R6_INDEPENDENT_VALIDATION_CONTROLS.csv</code>; referenced bytes not established here)</li>
+<li>Download the independent validation summary (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R6_INDEPENDENT_VALIDATION_SUMMARY.json</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Governing R6 records</h1>
+<ul>
+<li>WP1 Source Authority R6 (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_WP1_SOURCE_AUTHORITY_R6.md</code>; referenced bytes not established here)</li>
+<li>R6 source-identity inventory (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_WP1_R6_SOURCE_IDENTITY.csv</code>; referenced bytes not established here)</li>
+<li>Implementation Control Correction R6 (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R6.md</code>; referenced bytes not established here)</li>
+<li>WP1 R6 review (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_WORK_PACKAGE_1_REVIEW.md</code>; referenced bytes not established here)</li>
+<li>R5-to-R6 finding-remediation matrix (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_WP1_R6_FINDING_REMEDIATION_MATRIX.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Full-closure audit authorities</h1>
+<ul>
+<li>R6 full-closure static audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_WORK_PACKAGE_1_R6_STATIC_AUDIT.md</code>; referenced bytes not established here)</li>
+<li>All 4,241 static controls (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_WORK_PACKAGE_1_R6_STATIC_AUDIT_CONTROLS.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable static audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_WORK_PACKAGE_1_R6_STATIC_AUDIT.json</code>; referenced bytes not established here)</li>
+<li>Required-zero metric ledger (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_WP1_R6_REQUIRED_ZERO_METRICS.csv</code>; referenced bytes not established here)</li>
+<li>All 4,202 literal compilation decisions (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_WP2_LITERAL_COMPILATION_DECISION_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Six-program closure summary (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_WP2_LITERAL_PROGRAM_CLOSURE_SUMMARY.csv</code>; referenced bytes not established here)</li>
+<li>Prospective construction closure report (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_PROSPECTIVE_SQL_CONSTRUCTION_CLOSURE_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Zero-row inference-gap register (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_WP2_PROSPECTIVE_INFERENCE_GAP_REGISTER.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Principal literal authorities</h1>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Authority</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Program 220 DDL</td>
+<td>26-statement DDL catalog (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_PROGRAM_220_LITERAL_DDL_STATEMENT_CATALOG.csv</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>Archive function</td>
+<td>Exact function specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_PROGRAM_220_ARCHIVE_GUARD_FUNCTION_SPECIFICATION.csv</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>Persistent views</td>
+<td>Seven complete view statements (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_PERSISTENT_VIEW_STATEMENT_CATALOG.csv</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>Program 221</td>
+<td>Forty-eight assertion compiler (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_PROGRAM_221_LITERAL_ASSERTION_COMPILER.csv</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>Source edges</td>
+<td>Thirty-eight executable edge branches (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_SOURCE_EDGE_LITERAL_BRANCH_SPECIFICATION.csv</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>Program 222 evidence</td>
+<td>Complete 24-row evidence projection (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_PROGRAM_222_RUN_EVIDENCE_PROJECTION.csv</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>Recoveries</td>
+<td>Exact recovery branch specification (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_RECOVERY_LITERAL_BRANCH_SPECIFICATION.csv</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>Recovery mutations</td>
+<td>Ordered literal mutation catalog (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_RECOVERY_LITERAL_MUTATION_CATALOG.csv</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>Sessions</td>
+<td>Six-program transaction/session authority (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_PROGRAM_TRANSACTION_SESSION_SPECIFICATION.csv</code>; referenced bytes not established here)</td>
+</tr>
+<tr>
+<td>Primary results</td>
+<td>Fifty-eight exact result fields (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_6/M2_12_PROGRAM_PRIMARY_RESULT_PROJECTION_SPECIFICATION.csv</code>; referenced bytes not established here)</td>
+</tr>
+</tbody></table>
+<h1>Final governed state</h1>
+<pre><code class="language-text">M2.12 Work Package 1 R6                 COMPLETE
+Literal implementation-closure result   PASS
+Recommended audit outcome               APPROVE WP1 R6
+
+WP1 final approval                      HOLD — FULL INDEPENDENT RE-REVIEW
+WP2                                     NOT AUTHORIZED
+
+Program 220                             NOT GENERATED
+Program 221                             NOT GENERATED
+Program 222                             NOT GENERATED
+Programs 220A/222A/222B                 NOT GENERATED
+Programs 223–227                        NOT GENERATED
+
+PostgreSQL                              NOT EXECUTED
+Implementation execution package       NOT CREATED
+Module 3                               NOT AUTHORIZED
+Production                             NOT AUTHORIZED
+</code></pre>
+<p>R6 stops at the implementation-control boundary and awaits the requested full independent re-review.</p>
+</div></article><article id="m-87245ce2-9dbc-4d6b-aa1e-5889a03db69f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C081-M00134 · 2026-08-08T12:50:13.345000-04:00 · active path</p><p class="note">Attachment references: AUDIT_M2_12_Build_WP1_R6.zip</p><div class="bubble"><h1>M2.12 WP1 R6 Independent Audit — Bounded R7 Closure Required</h1>
+<p>Do not begin Work Package 2 and do not generate Program 220 or any SQL.</p>
+<p>Produce:</p>
+<p><code>M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R7</code></p>
+<p>Preserve every R1–R6 authority already found sound, including the complete R6
+Program 220 DDL/view/function authority, Program 221 assertion semantics, R5
+latest/archive stages, R4 registry staging, all hash preimages/formulas, source edges,
+counts, controls, grains, and non-production boundaries.</p>
+<h2>1. Eliminate all cross-program temporary dependencies</h2>
+<p>Program 220:</p>
+<ul>
+<li>Replace <code>tmp_src_m2_12_run_context</code> with a Program-220-owned context.</li>
+<li>Expand <code>tmp_install_m2_12_run_context</code>, or add a Program-220-owned authority
+helper, to provide the exact accepted M2.11 contract, combined, registry, and
+project identities required by policy construction.</li>
+</ul>
+<p>Program 222:</p>
+<ul>
+<li>Replace <code>tmp_src_m2_12_policy_typed</code> with the persisted exact policy row,
+preferably through the existing Program-222-owned
+<code>tmp_src_m2_12_policy_observation</code>.</li>
+<li>Update registry-staging aliases, joins, dependencies, fields, topology, and audits.</li>
+</ul>
+<p>Program 222B:</p>
+<ul>
+<li>Do not consume Program 222 transaction-local helpers.</li>
+<li>Reconstruct the required run context, phase-9 proof, and 24 evidence rows inside
+Program 222B under its authorized namespaces, or formally define exact
+Program-222B co-owned helpers and complete topology.</li>
+<li>Remove every <code>tmp_src_</code> reference from 222B unless that prefix and helper ownership
+are explicitly authorized.</li>
+</ul>
+<p>Required cross-program temporary references: 0.</p>
+<h2>2. Compile every current helper relation literally</h2>
+<p>For every retained helper, provide an exact statement authority containing:</p>
+<ul>
+<li><code>CREATE TEMP TABLE ... ON COMMIT DROP AS</code>;</li>
+<li>complete SELECT projection;</li>
+<li>complete FROM/CROSS JOIN/JOIN clauses and aliases;</li>
+<li>complete WHERE/GROUP BY/ORDER BY clauses;</li>
+<li>exact target casts;</li>
+<li>exact expected-row assertion;</li>
+<li>exact key/index and ANALYZE statements;</li>
+<li>exact owning program and authorized prefix.</li>
+</ul>
+<p>Retire stale helpers from every current catalog, topology, blueprint, decision matrix,
+and source identity rather than leaving uncompiled current records.</p>
+<p>Required current helpers lacking exact CREATE statements: 0.</p>
+<h2>3. Freeze one complete statement order per WP2 program</h2>
+<p>Create a program-level literal statement-order catalog for:</p>
+<p>220, 221, 222, 220A, 222A, and 222B.</p>
+<p>For Program 222, interleave the exact helper and persistent operations under the
+approved phase model:</p>
+<ol>
+<li>transaction/session and run/policy/source context;</li>
+<li>base design/observation/typed helpers;</li>
+<li>five base-family persistent INSERTs;</li>
+<li>six base-family set hashes;</li>
+<li>latest stable/hash/final helper and latest INSERT;</li>
+<li>archive stable/final helper and archive INSERT;</li>
+<li>registry stable/prehash/set/contract/combined/final helpers;</li>
+<li>registry INSERT;</li>
+<li>phase-9 persisted reconstruction;</li>
+<li>24 evidence rows;</li>
+<li>run lifecycle update;</li>
+<li>primary result and COMMIT.</li>
+</ol>
+<p><code>tmp_hash_m2_12_base_six</code> may not execute before base INSERTs. Phase-9 helpers may not
+execute before all eight non-policy canonical INSERTs.</p>
+<h2>4. Rebuild fail-closed compiler controls</h2>
+<p>Required final values:</p>
+<pre><code class="language-text">cross-program temporary references                         0
+temporary references surviving owner commit                0
+unauthorized temporary-prefix references                   0
+current helpers lacking exact CREATE statements            0
+stale current helpers absent from statement compiler       0
+programs lacking one complete literal statement order      0
+helpers reading persistent targets before required INSERT  0
+phase-9 relations constructed before persistence           0
+implementation-time inferred decisions                     0
+frozen business-semantic changes                           0
+SQL files generated                                        0
+PostgreSQL executions                                      0
+</code></pre>
+<p>Reissue every affected helper, alias, dependency, topology, blueprint, responsibility,
+transaction, compiler, static-audit, review, source-authority, and package record.</p>
+<p>Stop after R7 and wait for full independent re-review. WP2 remains unauthorized.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

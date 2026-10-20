@@ -1,0 +1,1464 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 21 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 21</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-20.html">Previous part</a><a href="part-22.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-4dea2330-ca54-4891-9f85-d42968c7abe7" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00519 · 2026-08-27T20:19:30.279014-04:00 · active path</p><div class="bubble"><p>I see it. <strong>The fields are in the Tooltips well correctly, but Power BI is only rendering two of the four additional tooltip fields</strong>:</p>
+<ul>
+<li>Monitoring status — showing</li>
+<li>Remitted to date — <strong>missing</strong></li>
+<li>Expected to date — <strong>missing</strong></li>
+<li>Cumulative shortfall — showing</li>
+</ul>
+<p>That strongly suggests the two existing <code>... As Of</code> measures are returning <strong>BLANK in this <code>monitoring_date</code> point context</strong>. Power BI suppresses blank tooltip fields rather than displaying their labels.</p>
+<p>So my earlier caveat was correct: <strong>we should not use the existing portfolio-style <code>As Of</code> measures here.</strong> The chart itself is being driven directly by <code>FactAccountDaily[monitoring_date]</code>, while those measures have a different as-of evaluation contract.</p>
+<h3>Fix: create P03 point-date measures</h3>
+<p>We want the values from the actual daily row represented by the hovered <code>monitoring_date</code>.</p>
+<p>First, though, I don&#39;t want to guess the physical field names. We need the two columns in <code>FactAccountDaily</code> corresponding to:</p>
+<p><strong>cumulative actual remittance</strong><br><strong>cumulative expected remittance</strong></p>
+<p>Your existing <code>P03 Cumulative Pace Ratio</code> almost certainly references them.</p>
+<p>Open the formula for <strong><code>P03 Cumulative Pace Ratio</code></strong> and paste it here (or screenshot it). From that I can give you the exact two measures immediately.</p>
+<p>They will conceptually be:</p>
+<pre><code class="language-DAX">P03 Cumulative Actual Remittance =
+SELECTEDVALUE (
+    FactAccountDaily[&lt;actual cumulative column&gt;]
+)
+</code></pre>
+<p>and</p>
+<pre><code class="language-DAX">P03 Cumulative Expected Remittance =
+SELECTEDVALUE (
+    FactAccountDaily[&lt;expected cumulative column&gt;]
+)
+</code></pre>
+<p>Then replace:</p>
+<ul>
+<li><code>[Cumulative Actual Remittance As Of]</code> → <code>P03 Cumulative Actual Remittance</code></li>
+<li><code>[Cumulative Expected Remittance As Of]</code> → <code>P03 Cumulative Expected Remittance</code></li>
+</ul>
+<p>and retain the visual names:</p>
+<p><strong>Remitted to date</strong><br><strong>Expected to date</strong></p>
+<h3>Everything else in this tooltip is working well</h3>
+<p>Your current hover already gives us:</p>
+<blockquote>
+<p><strong>8/23/2026</strong><br>Receivable balance — <strong>$17,124</strong><br>Remittance pace — <strong>88.67%</strong><br>Monitoring status — <strong>WATCH</strong><br>Cumulative shortfall — <strong>674.67</strong></p>
+</blockquote>
+<p>Once we insert the two point-date cumulative measures, it will become:</p>
+<blockquote>
+<p><strong>8/23/2026</strong><br>Receivable balance — $17,124<br>Remittance pace — 88.67%<br>Monitoring status — Watch<br>Remitted to date — $X,XXX<br>Expected to date — $X,XXX<br>Cumulative shortfall — $674.67</p>
+</blockquote>
+<p>That&#39;s the complete tooltip we want.</p>
+<p>One cosmetic item I also notice: <code>Cumulative shortfall</code> is currently displaying <strong><code>674.67</code> without <code>$</code></strong>. Change <code>P03 Cumulative Shortfall</code> to <strong>Currency, 2 decimals</strong>, so the tooltip renders <strong>$674.67</strong>.</p>
+<p>Send me the <code>P03 Cumulative Pace Ratio</code> formula and I&#39;ll give you the exact DAX for those two missing measures.</p>
+</div></article><article id="m-cf68a81f-5a0b-42f8-a550-8b19750baed7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00520 · 2026-08-27T20:21:24.412000-04:00 · active path</p><div class="bubble"><p>cumulative pace ratio just references the cumulative pace ratio variable in FactAccountDaily</p>
+</div></article><article id="m-099e64e5-cc6b-4257-81b8-d50cbba04062" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00521 · 2026-08-27T20:21:31.776260-04:00 · active path</p><div class="bubble"><p>Good — that simplifies it.</p>
+<p>Since <code>P03 Cumulative Pace Ratio</code> is already a direct <code>SELECTEDVALUE</code>-style reference to the daily-row column in <code>FactAccountDaily</code>, the two tooltip measures should follow the <strong>same pattern</strong>. The only thing we need is the exact physical column names for cumulative actual and cumulative expected remittance in <code>FactAccountDaily</code>.</p>
+<p>They are likely something close to:</p>
+<pre><code class="language-DAX">P03 Cumulative Actual Remittance =
+SELECTEDVALUE (
+    FactAccountDaily[cumulative_actual_remittance_amount]
+)
+</code></pre>
+<pre><code class="language-DAX">P03 Cumulative Expected Remittance =
+SELECTEDVALUE (
+    FactAccountDaily[cumulative_expected_remittance_amount]
+)
+</code></pre>
+<p>But I do <strong>not</strong> want you to create them until we confirm those exact field names.</p>
+<p>Once you identify the two columns, use those direct measures and put them in the Account performance tooltip as:</p>
+<p><strong>Remitted to date</strong><br><strong>Expected to date</strong></p>
+<p>That will match the same point-date logic already working for <code>P03 Cumulative Pace Ratio</code>, <code>P03 Monitoring Status</code>, and <code>P03 Cumulative Shortfall</code>.</p>
+<p>Also keep the tooltip order as:</p>
+<p><strong>Monitoring status → Remitted to date → Expected to date → Cumulative shortfall</strong></p>
+<p>The plotted fields will already show:</p>
+<p><strong>Receivable balance</strong><br><strong>Remittance pace</strong></p>
+<p>So the final hover becomes a concise six-line financial snapshot.</p>
+<p>And yes, format <code>P03 Cumulative Shortfall</code> as currency so that <code>$674.67</code> renders instead of <code>674.67</code>.</p>
+</div></article><article id="m-58838291-a31f-402e-854e-bb21541a683d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00522 · 2026-08-27T20:22:50.784000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: db38d046-76fb-4b52-bba4-550025afacbf.png; a4b51dca-817b-49ce-8a1c-eec507ba35b9.png</p><div class="bubble"><p>factaccountdaily variables</p>
+</div></article><article id="m-52884d16-6589-4ab3-8f96-f664c6678c55" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00523 · 2026-08-27T20:22:57.804620-04:00 · active path</p><div class="bubble"><p>Perfect. The physical fields confirm the exact measures we need, and they also reveal one useful distinction.</p>
+<p><code>FactAccountDaily</code> contains:</p>
+<ul>
+<li><code>cumulative_remittance_amount</code> — actual cumulative remittance</li>
+<li><code>cumulative_expected_remittance_amount</code> — expected cumulative remittance</li>
+<li><code>cumulative_shortfall_amount</code></li>
+<li><code>cumulative_pace_ratio</code></li>
+</ul>
+<p>So create these two <strong>point-date P03 measures</strong>:</p>
+<pre><code class="language-DAX">P03 Cumulative Remittance =
+SELECTEDVALUE (
+    FactAccountDaily[cumulative_remittance_amount]
+)
+</code></pre>
+<p>Format: <strong>Currency, 2 decimals</strong></p>
+<p>And:</p>
+<pre><code class="language-DAX">P03 Cumulative Expected Remittance =
+SELECTEDVALUE (
+    FactAccountDaily[cumulative_expected_remittance_amount]
+)
+</code></pre>
+<p>Format: <strong>Currency, 2 decimals</strong></p>
+<p>These are preferable to the existing <code>... As Of</code> measures for this particular visual because the X-axis is <code>FactAccountDaily[monitoring_date]</code>. Each hover therefore resolves to the actual daily account row represented by that point.</p>
+<h3>Account performance — final tooltip configuration</h3>
+<p>Keep your axes:</p>
+<p><strong>X-axis</strong></p>
+<ul>
+<li><code>monitoring_date</code></li>
+</ul>
+<p><strong>Y-axis</strong></p>
+<ul>
+<li>Receivable balance</li>
+</ul>
+<p><strong>Secondary Y-axis</strong></p>
+<ul>
+<li>Remittance pace</li>
+</ul>
+<p>Then Tooltips, in this order:</p>
+<table>
+<thead>
+<tr>
+<th>Technical measure</th>
+<th>Rename for this visual</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>P03 Monitoring Status</code></td>
+<td><strong>Monitoring status</strong></td>
+</tr>
+<tr>
+<td><code>P03 Cumulative Remittance</code></td>
+<td><strong>Remitted to date</strong></td>
+</tr>
+<tr>
+<td><code>P03 Cumulative Expected Remittance</code></td>
+<td><strong>Expected to date</strong></td>
+</tr>
+<tr>
+<td><code>P03 Cumulative Shortfall</code></td>
+<td><strong>Cumulative shortfall</strong></td>
+</tr>
+</tbody></table>
+<p>Also format <code>P03 Cumulative Shortfall</code> as <strong>Currency, 2 decimals</strong>.</p>
+<p>Your resulting hover should now look approximately like:</p>
+<blockquote>
+<p><strong>8/23/2026</strong><br>Receivable balance $17,124<br>Remittance pace 88.67%<br>Monitoring status Watch<br>Remitted to date $X,XXX.XX<br>Expected to date $X,XXX.XX<br>Cumulative shortfall $674.67</p>
+</blockquote>
+<p>That&#39;s enough. I would <strong>not add any more fields</strong> to Account performance.</p>
+<h3>One useful distinction from the field inventory</h3>
+<p>You also have both:</p>
+<ul>
+<li><code>actual_remittance_amount</code></li>
+<li><code>expected_daily_remittance_amount</code></li>
+</ul>
+<p>Those are the <strong>single-day flows</strong>.</p>
+<p>We specifically do <strong>not</strong> want them here. The Account performance chart is telling a cumulative lifecycle story, so:</p>
+<p><strong>cumulative actual vs cumulative expected → cumulative pace → cumulative shortfall</strong></p>
+<p>is internally coherent.</p>
+<p>Those daily fields are more appropriate for Monitoring journey if we ever decide the tooltip needs another layer of detail.</p>
+<p>So after these two measures render correctly, I would consider the <strong>Account performance tooltip complete</strong>.</p>
+</div></article><article id="m-6ea16f2d-2c62-4fd2-be95-25b55c620652" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00524 · 2026-08-27T22:16:31.514000-04:00 · active path</p><div class="bubble"><p>ok, those were fixed. now give me the new underwriting build items again, step by step.</p>
+</div></article><article id="m-13408041-bc1c-46b3-9146-5a2909eaa4d5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00525 · 2026-08-27T22:16:36.658422-04:00 · active path</p><div class="bubble"><p>Yes. Now that the two lifecycle tooltips are settled, I would build the underwriting enhancement in this order. <strong>Do not create any more of the old seven-column table measures.</strong> Your existing <code>P03 Capacity Display</code>, <code>P03 Coverage Display</code>, <code>P03 Resilience Display</code>, <code>P03 Risk Display</code>, <code>P03 Expected Loss Display</code>, and <code>P03 Economics Display</code> remain useful and will move to the technical tooltip.</p>
+<h2>Step 1 — Create the underwriting context control</h2>
+<p>Create this first. It protects every narrative from ambiguous Merchant/Scenario context.</p>
+<pre><code class="language-DAX">P03 Underwriting Context Pass =
+VAR _ApplicationKey =
+    SELECTEDVALUE ( &#39;DimApplication&#39;[ApplicationKey] )
+
+VAR _RunScenarioKey =
+    SELECTEDVALUE ( &#39;DimScenario&#39;[RunScenarioKey] )
+
+VAR _ApplicationScenarioRows =
+    IF (
+        NOT ISBLANK ( _ApplicationKey )
+            &amp;&amp; NOT ISBLANK ( _RunScenarioKey ),
+        CALCULATE (
+            COUNTROWS ( &#39;FactApplicationScenario&#39; ),
+            KEEPFILTERS (
+                &#39;FactApplicationScenario&#39;[ApplicationKey] = _ApplicationKey
+            ),
+            KEEPFILTERS (
+                &#39;FactApplicationScenario&#39;[RunScenarioKey] = _RunScenarioKey
+            )
+        )
+    )
+
+VAR _FinalDecisionRows =
+    IF (
+        NOT ISBLANK ( _ApplicationKey )
+            &amp;&amp; NOT ISBLANK ( _RunScenarioKey ),
+        CALCULATE (
+            COUNTROWS ( &#39;FactFinalDecision&#39; ),
+            KEEPFILTERS (
+                &#39;FactFinalDecision&#39;[ApplicationKey] = _ApplicationKey
+            ),
+            KEEPFILTERS (
+                &#39;FactFinalDecision&#39;[RunScenarioKey] = _RunScenarioKey
+            )
+        )
+    )
+
+RETURN
+    IF (
+        NOT ISBLANK ( _ApplicationKey )
+            &amp;&amp; NOT ISBLANK ( _RunScenarioKey )
+            &amp;&amp; _ApplicationScenarioRows = 1
+            &amp;&amp; _FinalDecisionRows = 1,
+        1,
+        0
+    )
+</code></pre>
+<p>Keep it visible while building. For every valid P03 Merchant + Scenario selection, it should show <strong>1</strong>.</p>
+<hr>
+<h1>Step 2 — Create <code>P03 Merchant Evidence Narrative</code></h1>
+<p>This is the first visible narrative. It answers:</p>
+<blockquote>
+<p><strong>What did we actually observe about this merchant?</strong></p>
+</blockquote>
+<pre><code class="language-DAX">P03 Merchant Evidence Narrative =
+VAR _ContextPass =
+    [P03 Underwriting Context Pass]
+
+VAR _Archetype =
+    SELECTEDVALUE ( &#39;FactApplicationScenario&#39;[archetype_code] )
+
+VAR _AverageDailySales =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[avg_daily_eligible_sales_30d]
+    )
+
+VAR _AverageAvailableBalance =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[average_available_balance_30d]
+    )
+
+VAR _NegativeBalanceRate =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[negative_balance_day_rate_30d]
+    )
+
+VAR _NSFCount =
+    SELECTEDVALUE ( &#39;FactApplicationScenario&#39;[nsf_count_30d] )
+
+VAR _ProcessorContinuity =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[processor_continuity_status]
+    )
+
+VAR _DataConfidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[data_confidence_tier]
+    )
+
+VAR _FeatureCompleteness =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[feature_completeness_status]
+    )
+
+VAR _Verification =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[verification_disposition]
+    )
+
+VAR _ContractEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[contract_evidence_status]
+    )
+
+VAR _EvidenceBlocked =
+    _ContractEvidence = &quot;BLOCKED&quot;
+        || _FeatureCompleteness = &quot;BLOCKED&quot;
+        || _Verification IN {
+            &quot;STOP&quot;,
+            &quot;INSUFFICIENT_EVIDENCE&quot;
+        }
+
+VAR _PatternPhrase =
+    SWITCH (
+        _Archetype,
+        &quot;STABLE&quot;, &quot;a stable operating pattern&quot;,
+        &quot;GROWING&quot;, &quot;a growing operating pattern&quot;,
+        &quot;SEASONAL&quot;, &quot;a seasonal operating pattern&quot;,
+        &quot;VOLATILE&quot;, &quot;a volatile operating pattern&quot;,
+        &quot;DECLINING&quot;, &quot;a declining operating pattern&quot;,
+        &quot;DISRUPTED&quot;, &quot;a disrupted operating pattern&quot;,
+        &quot;THIN_HISTORY&quot;, &quot;limited operating history&quot;,
+        &quot;INSUFFICIENT_EVIDENCE&quot;, &quot;insufficient operating-pattern evidence&quot;,
+        &quot;an unclassified operating pattern&quot;
+    )
+
+VAR _SalesText =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _AverageDailySales ), BLANK (),
+        ABS ( _AverageDailySales ) &gt;= 1000000,
+            FORMAT ( _AverageDailySales / 1000000, &quot;$0.0&quot; ) &amp; &quot;M&quot;,
+        ABS ( _AverageDailySales ) &gt;= 1000,
+            FORMAT ( _AverageDailySales / 1000, &quot;$0.0&quot; ) &amp; &quot;K&quot;,
+        FORMAT ( _AverageDailySales, &quot;$#,0&quot; )
+    )
+
+VAR _SalesPhrase =
+    IF (
+        ISBLANK ( _AverageDailySales ),
+        &quot;eligible-sales evidence was unavailable&quot;,
+        &quot;averaging &quot; &amp; _SalesText &amp; &quot; in eligible sales per day&quot;
+    )
+
+VAR _NSFPhrase =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _NSFCount ), &quot;NSF evidence was unavailable&quot;,
+        _NSFCount = 0, &quot;no recent NSF events&quot;,
+        _NSFCount = 1, &quot;one recent NSF event&quot;,
+        FORMAT ( _NSFCount, &quot;0&quot; ) &amp; &quot; recent NSF events&quot;
+    )
+
+VAR _NegativeBalancePhrase =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _NegativeBalanceRate ),
+            &quot;negative-balance evidence was unavailable&quot;,
+        _NegativeBalanceRate = 0,
+            &quot;no negative-balance days&quot;,
+        &quot;negative balances on &quot;
+            &amp; FORMAT ( _NegativeBalanceRate, &quot;0.0%&quot; )
+            &amp; &quot; of the last 30 days&quot;
+    )
+
+VAR _BalanceText =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _AverageAvailableBalance ), BLANK (),
+        ABS ( _AverageAvailableBalance ) &gt;= 1000000,
+            FORMAT ( ABS ( _AverageAvailableBalance ) / 1000000, &quot;$0.0&quot; ) &amp; &quot;M&quot;,
+        ABS ( _AverageAvailableBalance ) &gt;= 1000,
+            FORMAT ( ABS ( _AverageAvailableBalance ) / 1000, &quot;$0.0&quot; ) &amp; &quot;K&quot;,
+        FORMAT ( ABS ( _AverageAvailableBalance ), &quot;$#,0&quot; )
+    )
+
+VAR _BalanceSentence =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _AverageAvailableBalance ),
+            &quot;Average available balance was unavailable.&quot;,
+        _AverageAvailableBalance &lt; 0,
+            &quot;Average available balance was negative at &quot; &amp; _BalanceText &amp; &quot;.&quot;,
+        &quot;Average available balance was &quot; &amp; _BalanceText &amp; &quot;.&quot;
+    )
+
+VAR _ProcessorSentence =
+    SWITCH (
+        _ProcessorContinuity,
+        &quot;STABLE&quot;, &quot;Processor continuity was stable.&quot;,
+        &quot;MONITORED&quot;, &quot;Processor continuity required monitoring.&quot;,
+        &quot;WATCH&quot;, &quot;Processor continuity was on watch.&quot;,
+        &quot;DISRUPTED&quot;, &quot;Processor continuity was disrupted.&quot;,
+        &quot;UNAVAILABLE&quot;, &quot;Processor-continuity evidence was unavailable.&quot;,
+        &quot;Processor-continuity status was not classified.&quot;
+    )
+
+VAR _ConfidenceLabel =
+    SWITCH (
+        _DataConfidence,
+        &quot;HIGH&quot;, &quot;high-confidence&quot;,
+        &quot;MEDIUM&quot;, &quot;medium-confidence&quot;,
+        &quot;LOW&quot;, &quot;low-confidence&quot;,
+        &quot;REVIEW&quot;, &quot;under-review&quot;,
+        &quot;unclassified&quot;
+    )
+
+VAR _CompletenessLabel =
+    SWITCH (
+        _FeatureCompleteness,
+        &quot;COMPLETE&quot;, &quot;complete&quot;,
+        &quot;PARTIAL&quot;, &quot;partial&quot;,
+        &quot;BLOCKED&quot;, &quot;blocked&quot;,
+        &quot;unclassified&quot;
+    )
+
+VAR _EvidenceSentence =
+    SWITCH (
+        TRUE (),
+        _Verification = &quot;CLEAR&quot;,
+            &quot;The evidence was &quot;
+                &amp; _ConfidenceLabel
+                &amp; &quot; and &quot;
+                &amp; _CompletenessLabel
+                &amp; &quot;, with clear verification.&quot;,
+        _Verification = &quot;REVIEW&quot;,
+            &quot;The evidence was &quot;
+                &amp; _ConfidenceLabel
+                &amp; &quot; and &quot;
+                &amp; _CompletenessLabel
+                &amp; &quot;, but verification required review.&quot;,
+        _Verification = &quot;STOP&quot;,
+            &quot;Verification produced a hard-stop condition.&quot;,
+        _Verification = &quot;INSUFFICIENT_EVIDENCE&quot;,
+            &quot;Verification evidence was insufficient.&quot;,
+        &quot;Verification status was unavailable.&quot;
+    )
+
+RETURN
+    SWITCH (
+        TRUE (),
+        _ContextPass &lt;&gt; 1,
+            &quot;Select one merchant application and one scenario.&quot;,
+
+        _EvidenceBlocked,
+            &quot;Critical source or verification evidence was unavailable or blocked. &quot;
+                &amp; &quot;The governed process therefore does not treat the merchant&#39;s &quot;
+                &amp; &quot;operating profile as decision-ready.&quot;,
+
+        &quot;The merchant showed &quot;
+            &amp; _PatternPhrase
+            &amp; &quot;, &quot;
+            &amp; _SalesPhrase
+            &amp; &quot;, with &quot;
+            &amp; _NSFPhrase
+            &amp; &quot; and &quot;
+            &amp; _NegativeBalancePhrase
+            &amp; &quot;. &quot;
+            &amp; _BalanceSentence
+            &amp; &quot; &quot;
+            &amp; _ProcessorSentence
+            &amp; &quot; &quot;
+            &amp; _EvidenceSentence
+    )
+</code></pre>
+<hr>
+<h1>Step 3 — Create <code>P03 Structure Assessment Narrative</code></h1>
+<p>This answers:</p>
+<blockquote>
+<p><strong>What did the requested financing structure do to capacity, liquidity, risk, loss and economics?</strong></p>
+</blockquote>
+<pre><code class="language-DAX">P03 Structure Assessment Narrative =
+VAR _ContextPass =
+    [P03 Underwriting Context Pass]
+
+VAR _CapacityEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[capacity_evidence_status]
+    )
+
+VAR _Affordability =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[affordability_status]
+    )
+
+VAR _Coverage =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[sales_linked_payment_coverage_ratio]
+    )
+
+VAR _ResidualCapacity =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[residual_daily_operating_cash_flow]
+    )
+
+VAR _PostFinancingLiquidity =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[post_financing_liquidity_buffer_amount]
+    )
+
+VAR _RiskEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[integrated_risk_evidence_status]
+    )
+
+VAR _RiskStatus =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[integrated_risk_status]
+    )
+
+VAR _RiskTier =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[integrated_risk_tier]
+    )
+
+VAR _RiskScore =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[integrated_risk_score]
+    )
+
+VAR _LossEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[loss_evidence_status]
+    )
+
+VAR _ExpectedLossRate =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[schedule_adjusted_comparative_loss_rate]
+    )
+
+VAR _EconomicsEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[unit_economics_evidence_status]
+    )
+
+VAR _Contribution =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[risk_adjusted_contribution_amount]
+    )
+
+VAR _AnnualizedReturn =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[annualized_risk_adjusted_return_rate]
+    )
+
+VAR _EconomicStatus =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[economic_status]
+    )
+
+VAR _AffordabilityLabel =
+    SWITCH (
+        _Affordability,
+        &quot;AFFORDABLE&quot;, &quot;affordable&quot;,
+        &quot;MARGINAL&quot;, &quot;marginal&quot;,
+        &quot;UNAFFORDABLE&quot;, &quot;unaffordable&quot;,
+        &quot;INSUFFICIENT_EVIDENCE&quot;, &quot;not assessable&quot;,
+        &quot;unclassified&quot;
+    )
+
+VAR _ResidualText =
+    FORMAT (
+        ABS ( _ResidualCapacity ),
+        &quot;$#,0&quot;
+    )
+
+VAR _ResidualClause =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _ResidualCapacity ),
+            &quot;with residual capacity unavailable&quot;,
+        _ResidualCapacity &gt;= 0,
+            &quot;leaving &quot;
+                &amp; _ResidualText
+                &amp; &quot; per day after modeled obligations&quot;,
+        &quot;producing a &quot;
+            &amp; _ResidualText
+            &amp; &quot; per-day shortfall&quot;
+    )
+
+VAR _LiquidityText =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _PostFinancingLiquidity ), BLANK (),
+        ABS ( _PostFinancingLiquidity ) &gt;= 1000000,
+            FORMAT ( ABS ( _PostFinancingLiquidity ) / 1000000, &quot;$0.0&quot; ) &amp; &quot;M&quot;,
+        ABS ( _PostFinancingLiquidity ) &gt;= 1000,
+            FORMAT ( ABS ( _PostFinancingLiquidity ) / 1000, &quot;$0.0&quot; ) &amp; &quot;K&quot;,
+        FORMAT ( ABS ( _PostFinancingLiquidity ), &quot;$#,0&quot; )
+    )
+
+VAR _LiquidityClause =
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _PostFinancingLiquidity ), BLANK (),
+        _PostFinancingLiquidity &gt;= 0,
+            &quot;a post-financing liquidity buffer of &quot; &amp; _LiquidityText,
+        &quot;a negative post-financing liquidity position of &quot; &amp; _LiquidityText
+    )
+
+VAR _CapacitySentence =
+    IF (
+        _CapacityEvidence = &quot;BLOCKED&quot;
+            || ISBLANK ( _Coverage ),
+        &quot;Capacity and affordability were not reportable under the evidence contract.&quot;,
+        &quot;At the requested structure, the governed capacity assessment was &quot;
+            &amp; _AffordabilityLabel
+            &amp; &quot;: modeled operating cash flow covered total daily obligations &quot;
+            &amp; FORMAT ( _Coverage, &quot;0.00x&quot; )
+            &amp; &quot;, &quot;
+            &amp; _ResidualClause
+            &amp; IF (
+                NOT ISBLANK ( _LiquidityClause ),
+                &quot;, with &quot; &amp; _LiquidityClause,
+                &quot;&quot;
+            )
+            &amp; &quot;.&quot;
+    )
+
+VAR _RiskLabel =
+    SWITCH (
+        _RiskStatus,
+        &quot;LOW_RISK&quot;, &quot;low&quot;,
+        &quot;MODERATE_RISK&quot;, &quot;moderate&quot;,
+        &quot;ELEVATED_RISK&quot;, &quot;elevated&quot;,
+        &quot;HIGH_RISK&quot;, &quot;high&quot;,
+        &quot;SEVERE_RISK&quot;, &quot;severe&quot;,
+        &quot;INSUFFICIENT_EVIDENCE&quot;, &quot;not assessable&quot;,
+        &quot;unclassified&quot;
+    )
+
+VAR _RiskSentence =
+    IF (
+        _RiskEvidence = &quot;BLOCKED&quot;
+            || ISBLANK ( _RiskTier ),
+        &quot;Integrated risk was not assessable under the evidence contract.&quot;,
+        &quot;Integrated risk was &quot;
+            &amp; _RiskLabel
+            &amp; &quot; (Tier &quot;
+            &amp; FORMAT ( _RiskTier, &quot;0&quot; )
+            &amp; IF (
+                NOT ISBLANK ( _RiskScore ),
+                &quot;; score &quot; &amp; FORMAT ( _RiskScore, &quot;0.0&quot; ),
+                &quot;&quot;
+            )
+            &amp; &quot;).&quot;
+    )
+
+VAR _LossSentence =
+    IF (
+        _LossEvidence = &quot;BLOCKED&quot;
+            || ISBLANK ( _ExpectedLossRate ),
+        &quot;Comparative expected loss was not reportable.&quot;,
+        &quot;Comparative expected loss was &quot;
+            &amp; FORMAT ( _ExpectedLossRate, &quot;0.00%&quot; )
+            &amp; &quot;.&quot;
+    )
+
+VAR _ContributionText =
+    IF (
+        ISBLANK ( _Contribution ),
+        BLANK (),
+        FORMAT (
+            _Contribution,
+            &quot;$#,0;($#,0);$0&quot;
+        )
+    )
+
+VAR _EconomicStatusTail =
+    SWITCH (
+        _EconomicStatus,
+        &quot;ABOVE_HURDLE&quot;, &quot;, above the governed hurdle.&quot;,
+        &quot;BELOW_HURDLE&quot;, &quot;, below the governed hurdle.&quot;,
+        &quot;NEGATIVE_CONTRIBUTION&quot;, &quot;, producing negative contribution.&quot;,
+        &quot;.&quot;
+    )
+
+VAR _EconomicsSentence =
+    IF (
+        _EconomicsEvidence = &quot;BLOCKED&quot;
+            || ISBLANK ( _Contribution ),
+        &quot;Risk-adjusted economics were not reportable.&quot;,
+        &quot;Risk-adjusted contribution was &quot;
+            &amp; _ContributionText
+            &amp; IF (
+                NOT ISBLANK ( _AnnualizedReturn ),
+                &quot; (&quot;
+                    &amp; FORMAT (
+                        _AnnualizedReturn,
+                        &quot;0.0%;(0.0%);0.0%&quot;
+                    )
+                    &amp; &quot; annualized)&quot;,
+                &quot;&quot;
+            )
+            &amp; _EconomicStatusTail
+    )
+
+RETURN
+    IF (
+        _ContextPass &lt;&gt; 1,
+        &quot;Select one merchant application and one scenario.&quot;,
+        _CapacitySentence
+            &amp; &quot; &quot;
+            &amp; _RiskSentence
+            &amp; &quot; &quot;
+            &amp; _LossSentence
+            &amp; &quot; &quot;
+            &amp; _EconomicsSentence
+    )
+</code></pre>
+<hr>
+<h1>Step 4 — Replace the formula in the existing <code>P03 Decision Readout</code></h1>
+<p>Do <strong>not</strong> create another interpretation measure.</p>
+<p>Keep the existing measure name:</p>
+<pre><code class="language-text">P03 Decision Readout
+</code></pre>
+<p>but replace its current formula with the fuller decision-rationale logic we developed.</p>
+<p>The visible label will become:</p>
+<h3><strong>Why this outcome</strong></h3>
+<p>Use this version:</p>
+<pre><code class="language-DAX">P03 Decision Readout =
+VAR _ContextPass =
+    [P03 Underwriting Context Pass]
+
+VAR _FinalOutcome =
+    SELECTEDVALUE (
+        &#39;FactFinalDecision&#39;[final_decision_outcome_code]
+    )
+
+VAR _PricingDisposition =
+    SELECTEDVALUE (
+        &#39;FactFinalDecision&#39;[source_pricing_disposition_code]
+    )
+
+VAR _FinalOfferAmount =
+    SELECTEDVALUE (
+        &#39;FactFinalDecision&#39;[final_offer_amount]
+    )
+
+VAR _RequestedAmount =
+    SELECTEDVALUE (
+        &#39;DimApplication&#39;[requested_funding_amount]
+    )
+
+VAR _Verification =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[verification_disposition]
+    )
+
+VAR _ContractEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[contract_evidence_status]
+    )
+
+VAR _HardStop =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[hard_stop_recommended_flag]
+    )
+
+VAR _Affordability =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[affordability_status]
+    )
+
+VAR _Coverage =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[sales_linked_payment_coverage_ratio]
+    )
+
+VAR _ResidualCapacity =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[residual_daily_operating_cash_flow]
+    )
+
+VAR _RiskStatus =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[integrated_risk_status]
+    )
+
+VAR _EconomicStatus =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[economic_status]
+    )
+
+VAR _Archetype =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[archetype_code]
+    )
+
+VAR _PrimaryReason =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[primary_contract_reason_code]
+    )
+
+VAR _SecondaryReasons =
+    COALESCE (
+        SELECTEDVALUE (
+            &#39;FactApplicationScenario&#39;[secondary_contract_reason_codes]
+        ),
+        &quot;&quot;
+    )
+
+VAR _ReasonText =
+    UPPER (
+        COALESCE ( _PrimaryReason, &quot;&quot; )
+            &amp; &quot;|&quot;
+            &amp; _SecondaryReasons
+    )
+
+VAR _HardStopIssue =
+    _HardStop = TRUE ()
+        || _Verification = &quot;STOP&quot;
+        || CONTAINSSTRING ( _ReasonText, &quot;VERIFICATION_HARD_STOP&quot; )
+        || CONTAINSSTRING ( _ReasonText, &quot;CRITICAL_SOURCE_UNAVAILABLE&quot; )
+
+VAR _CapacityIssue =
+    _Affordability = &quot;UNAFFORDABLE&quot;
+        || ( NOT ISBLANK ( _Coverage ) &amp;&amp; _Coverage &lt; 1 )
+        || (
+            NOT ISBLANK ( _ResidualCapacity )
+                &amp;&amp; _ResidualCapacity &lt; 0
+        )
+        || CONTAINSSTRING ( _ReasonText, &quot;NEGATIVE_RESIDUAL_CASH_FLOW&quot; )
+        || CONTAINSSTRING ( _ReasonText, &quot;CAPACITY_BURDEN_RISK&quot; )
+
+VAR _EconomicIssue =
+    _EconomicStatus IN {
+        &quot;BELOW_HURDLE&quot;,
+        &quot;NEGATIVE_CONTRIBUTION&quot;
+    }
+        || CONTAINSSTRING ( _ReasonText, &quot;BELOW_ECONOMIC_HURDLE&quot; )
+        || CONTAINSSTRING (
+            _ReasonText,
+            &quot;NEGATIVE_RISK_ADJUSTED_CONTRIBUTION&quot;
+        )
+
+VAR _RiskIssue =
+    _RiskStatus IN {
+        &quot;HIGH_RISK&quot;,
+        &quot;SEVERE_RISK&quot;
+    }
+
+VAR _LossIssue =
+    CONTAINSSTRING ( _ReasonText, &quot;HIGH_COMPARATIVE_LOSS_RATE&quot; )
+        || CONTAINSSTRING ( _ReasonText, &quot;RECOVERY_SOURCE_CONFLICT&quot; )
+
+VAR _OperatingIssue =
+    _Archetype IN {
+        &quot;VOLATILE&quot;,
+        &quot;DECLINING&quot;,
+        &quot;DISRUPTED&quot;
+    }
+        || CONTAINSSTRING ( _ReasonText, &quot;OPERATING_DISRUPTION&quot; )
+        || CONTAINSSTRING ( _ReasonText, &quot;DECLINING_CASH_FLOW&quot; )
+        || CONTAINSSTRING ( _ReasonText, &quot;HIGH_CASH_FLOW_VOLATILITY&quot; )
+        || CONTAINSSTRING ( _ReasonText, &quot;OPERATING_RESILIENCE_RISK&quot; )
+
+VAR _RequestedAmountText =
+    FORMAT ( _RequestedAmount, &quot;$#,0&quot; )
+
+VAR _FinalOfferAmountText =
+    FORMAT ( _FinalOfferAmount, &quot;$#,0&quot; )
+
+VAR _OfferReduced =
+    NOT ISBLANK ( _RequestedAmount )
+        &amp;&amp; NOT ISBLANK ( _FinalOfferAmount )
+        &amp;&amp; _FinalOfferAmount &lt; _RequestedAmount - 0.01
+
+RETURN
+    SWITCH (
+        TRUE (),
+
+        _ContextPass &lt;&gt; 1,
+            &quot;Select one merchant application and one scenario.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;
+            || _PricingDisposition = &quot;NO_STRUCTURE_INSUFFICIENT_EVIDENCE&quot;
+            || _ContractEvidence = &quot;BLOCKED&quot;,
+            &quot;Critical source or verification evidence was unavailable. &quot;
+                &amp; &quot;The governed process therefore did not infer capacity, risk, &quot;
+                &amp; &quot;comparative loss, or economics from incomplete inputs.&quot;,
+
+        _FinalOutcome = &quot;FINAL_OFFER_AUTHORIZED&quot;
+            &amp;&amp; _OfferReduced,
+            &quot;The merchant supported an offer, but the authorized structure &quot;
+                &amp; &quot;reduced exposure from &quot;
+                &amp; _RequestedAmountText
+                &amp; &quot; to &quot;
+                &amp; _FinalOfferAmountText
+                &amp; &quot;. The selected terms satisfied the final governed decision boundary.&quot;,
+
+        _FinalOutcome = &quot;FINAL_OFFER_AUTHORIZED&quot;,
+            &quot;The selected structure satisfied the governed eligibility, risk, &quot;
+                &amp; &quot;and economic boundary; no binding condition prevented final authorization.&quot;,
+
+        _FinalOutcome = &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;
+            &amp;&amp; _CapacityIssue
+            &amp;&amp; _EconomicIssue,
+            &quot;The requested structure strained cash-flow capacity and did not &quot;
+                &amp; &quot;meet the economic hurdle. A reduced structure was identified, &quot;
+                &amp; &quot;but governance requires manual authorization before it can become an offer.&quot;,
+
+        _FinalOutcome = &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;
+            &amp;&amp; _CapacityIssue,
+            &quot;The requested structure exceeded sustainable cash-flow capacity. &quot;
+                &amp; &quot;A reduced structure was identified, but governance requires &quot;
+                &amp; &quot;manual authorization before it can become an offer.&quot;,
+
+        _FinalOutcome = &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;
+            &amp;&amp; _EconomicIssue,
+            &quot;The requested structure did not meet the governed economic hurdle. &quot;
+                &amp; &quot;An alternative structure was identified, but it requires manual authorization.&quot;,
+
+        _FinalOutcome = &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;
+            &amp;&amp; ( _RiskIssue || _LossIssue ),
+            &quot;Risk or comparative loss at the requested structure required a &quot;
+                &amp; &quot;reduced structure and governed review before authorization.&quot;,
+
+        _FinalOutcome = &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;,
+            &quot;A reduced structure was identified, but governance requires manual &quot;
+                &amp; &quot;authorization before it can become an offer.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; _HardStopIssue,
+            &quot;A hard-stop source, verification, or policy condition prevented &quot;
+                &amp; &quot;offer design; no supportable structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; _CapacityIssue
+            &amp;&amp; _EconomicIssue,
+            &quot;The requested structure produced insufficient coverage or negative &quot;
+                &amp; &quot;residual cash flow and did not meet the governed economic hurdle; &quot;
+                &amp; &quot;no supportable structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; _CapacityIssue
+            &amp;&amp; ( _RiskIssue || _LossIssue ),
+            &quot;The requested structure exceeded sustainable cash-flow capacity &quot;
+                &amp; &quot;while risk or comparative loss was also elevated; no supportable &quot;
+                &amp; &quot;structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; _CapacityIssue,
+            &quot;The requested structure exceeded sustainable cash-flow capacity; &quot;
+                &amp; &quot;no supportable alternative structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; _EconomicIssue,
+            &quot;Risk-adjusted economics did not meet the governed hurdle; &quot;
+                &amp; &quot;no supportable structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; ( _RiskIssue || _LossIssue ),
+            &quot;Integrated risk or comparative loss exceeded the governed boundary; &quot;
+                &amp; &quot;no supportable structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;
+            &amp;&amp; _OperatingIssue,
+            &quot;Operating instability materially weakened the underwriting profile; &quot;
+                &amp; &quot;no supportable structure was authorized.&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;,
+            &quot;One or more governed eligibility or structure gates failed; &quot;
+                &amp; &quot;no supportable structure was authorized.&quot;,
+
+        &quot;The governed decision requires further review.&quot;
+    )
+</code></pre>
+<hr>
+<h1>Step 5 — Create the evidence-basis note</h1>
+<p>This is small-text evidence disclosure beneath the three narratives.</p>
+<pre><code class="language-DAX">P03 Underwriting Evidence Note =
+VAR _ContextPass =
+    [P03 Underwriting Context Pass]
+
+VAR _ContractEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[contract_evidence_status]
+    )
+
+VAR _DataConfidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[data_confidence_tier]
+    )
+
+VAR _SourceConfidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[source_confidence_score]
+    )
+
+VAR _Verification =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[verification_disposition]
+    )
+
+VAR _FraudTier =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[fraud_risk_tier]
+    )
+
+VAR _CapacityEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[capacity_evidence_status]
+    )
+
+VAR _RiskEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[integrated_risk_evidence_status]
+    )
+
+VAR _LossEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[loss_evidence_status]
+    )
+
+VAR _EconomicsEvidence =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[unit_economics_evidence_status]
+    )
+
+VAR _VerificationLabel =
+    SWITCH (
+        _Verification,
+        &quot;CLEAR&quot;, &quot;clear verification&quot;,
+        &quot;REVIEW&quot;, &quot;verification review&quot;,
+        &quot;STOP&quot;, &quot;verification stop&quot;,
+        &quot;INSUFFICIENT_EVIDENCE&quot;, &quot;insufficient verification evidence&quot;,
+        &quot;verification unavailable&quot;
+    )
+
+RETURN
+    IF (
+        _ContextPass &lt;&gt; 1,
+        BLANK (),
+        &quot;Evidence basis: &quot;
+            &amp; LOWER ( COALESCE ( _ContractEvidence, &quot;unavailable&quot; ) )
+            &amp; &quot; overall&quot;
+            &amp; &quot; · &quot;
+            &amp; LOWER ( COALESCE ( _DataConfidence, &quot;unavailable&quot; ) )
+            &amp; &quot; data confidence&quot;
+            &amp; IF (
+                NOT ISBLANK ( _SourceConfidence ),
+                &quot; (&quot; &amp; FORMAT ( _SourceConfidence, &quot;0.0%&quot; ) &amp; &quot;)&quot;,
+                &quot;&quot;
+            )
+            &amp; &quot; · &quot;
+            &amp; _VerificationLabel
+            &amp; IF (
+                NOT ISBLANK ( _FraudTier ),
+                &quot; · fraud tier &quot; &amp; FORMAT ( _FraudTier, &quot;0&quot; ),
+                &quot;&quot;
+            )
+            &amp; &quot; · capacity &quot;
+            &amp; LOWER ( COALESCE ( _CapacityEvidence, &quot;unavailable&quot; ) )
+            &amp; &quot; · risk &quot;
+            &amp; LOWER ( COALESCE ( _RiskEvidence, &quot;unavailable&quot; ) )
+            &amp; &quot; · loss &quot;
+            &amp; LOWER ( COALESCE ( _LossEvidence, &quot;unavailable&quot; ) )
+            &amp; &quot; · economics &quot;
+            &amp; LOWER ( COALESCE ( _EconomicsEvidence, &quot;unavailable&quot; ) )
+    )
+</code></pre>
+<p>This is intentionally more technical than the prose above it.</p>
+<hr>
+<h1>Step 6 — Create the decision-timing note</h1>
+<pre><code class="language-DAX">P03 Underwriting Timing Note =
+VAR _ContextPass =
+    [P03 Underwriting Context Pass]
+
+VAR _DecisionSnapshotDate =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[as_of_date]
+    )
+
+RETURN
+    IF (
+        _ContextPass &lt;&gt; 1,
+        BLANK (),
+        &quot;Decision snapshot: &quot;
+            &amp; FORMAT ( _DecisionSnapshotDate, &quot;M/d/yyyy&quot; )
+            &amp; &quot;. Later account performance is shown separately and does not &quot;
+            &amp; &quot;rewrite the original underwriting assessment.&quot;
+    )
+</code></pre>
+<p>This is important enough to keep visible.</p>
+<hr>
+<h1>Step 7 — Build the visible panel</h1>
+<p>In the blank center-left space you created, build this:</p>
+<pre><code class="language-text">Underwriting rationale
+
+Merchant operating evidence
+&lt;dynamic narrative&gt;
+
+Requested-structure assessment
+&lt;dynamic narrative&gt;
+
+Why this outcome
+&lt;dynamic narrative&gt;
+
+Evidence basis...
+Decision snapshot...
+</code></pre>
+<h3>Use</h3>
+<p>Create <strong>three Card (new)</strong> visuals:</p>
+<ol>
+<li><code>P03 Merchant Evidence Narrative</code></li>
+<li><code>P03 Structure Assessment Narrative</code></li>
+<li><code>P03 Decision Readout</code></li>
+</ol>
+<p>Then two smaller Card (new) visuals:</p>
+<ol start="4">
+<li><code>P03 Underwriting Evidence Note</code></li>
+<li><code>P03 Underwriting Timing Note</code></li>
+</ol>
+<p>Do <strong>not</strong> use a Smart Narrative visual.</p>
+<h3>Formatting</h3>
+<p>For all five:</p>
+<ul>
+<li>visual title OFF;</li>
+<li>backgrounds OFF;</li>
+<li>borders OFF;</li>
+<li>word wrap ON;</li>
+<li>left aligned.</li>
+</ul>
+<p>Use static text labels:</p>
+<p><strong>Underwriting rationale</strong> — section title</p>
+<p><strong>Merchant operating evidence</strong><br><strong>Requested-structure assessment</strong><br><strong>Why this outcome</strong></p>
+<p>Then smaller muted text for the evidence/timing notes.</p>
+<p>I would start around:</p>
+<ul>
+<li>section title: <strong>14–15 pt bold</strong></li>
+<li>subsection labels: <strong>10–11 pt bold</strong></li>
+<li>main narrative: <strong>10 pt</strong></li>
+<li><code>Why this outcome</code>: <strong>10–11 pt</strong>, perhaps semibold</li>
+<li>evidence/timing: <strong>8–9 pt</strong></li>
+</ul>
+<p>Do not add red/yellow/green coloring here. The existing decision card already owns that semantic signal.</p>
+<hr>
+<h1>Step 8 — Build the technical tooltip page</h1>
+<p>Create a new report page:</p>
+<h3><code>P03 - Underwriting Detail</code></h3>
+<p>Set:</p>
+<p><strong>Page information → Tooltip = On</strong></p>
+<p>and size it as a tooltip page.</p>
+<p>Use the six measures you already created:</p>
+<ul>
+<li><code>P03 Capacity Display</code></li>
+<li><code>P03 Coverage Display</code></li>
+<li><code>P03 Resilience Display</code></li>
+<li><code>P03 Risk Display</code></li>
+<li><code>P03 Expected Loss Display</code></li>
+<li><code>P03 Economics Display</code></li>
+</ul>
+<p>Arrange approximately:</p>
+<pre><code class="language-text">UNDERWRITING DETAIL
+
+Capacity              Coverage              Resilience
+[value]               [value]               [value]
+
+Integrated risk       Expected loss         Economics
+[value]               [value]               [value]
+
+Evidence basis
+[evidence note]
+</code></pre>
+<p>This is where the technically sophisticated interviewer can see exact scores, tiers and economics.</p>
+<hr>
+<h1>Step 9 — Create the decision trace for that tooltip</h1>
+<pre><code class="language-DAX">P03 Decision Trace =
+VAR _ContextPass =
+    [P03 Underwriting Context Pass]
+
+VAR _PricingDisposition =
+    SELECTEDVALUE (
+        &#39;FactFinalDecision&#39;[source_pricing_disposition_code]
+    )
+
+VAR _FinalOutcome =
+    SELECTEDVALUE (
+        &#39;FactFinalDecision&#39;[final_decision_outcome_code]
+    )
+
+VAR _FinalDecisionReason =
+    SELECTEDVALUE (
+        &#39;FactFinalDecision&#39;[primary_decision_reason_code]
+    )
+
+VAR _UpstreamReason =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[primary_contract_reason_code]
+    )
+
+VAR _FallbackPath =
+    SELECTEDVALUE (
+        &#39;FactApplicationScenario&#39;[fallback_path_code]
+    )
+
+RETURN
+    IF (
+        _ContextPass &lt;&gt; 1,
+        BLANK (),
+        &quot;Pricing disposition: &quot;
+            &amp; COALESCE ( _PricingDisposition, &quot;NOT AVAILABLE&quot; )
+            &amp; &quot; | Final outcome: &quot;
+            &amp; COALESCE ( _FinalOutcome, &quot;NOT AVAILABLE&quot; )
+            &amp; &quot; | M2.3 reason: &quot;
+            &amp; COALESCE ( _FinalDecisionReason, &quot;NOT AVAILABLE&quot; )
+            &amp; &quot; | Upstream reason: &quot;
+            &amp; COALESCE ( _UpstreamReason, &quot;NOT AVAILABLE&quot; )
+            &amp; &quot; | Fallback path: &quot;
+            &amp; COALESCE ( _FallbackPath, &quot;NOT AVAILABLE&quot; )
+    )
+</code></pre>
+<p>Add this at the bottom of the tooltip.</p>
+<p>Also add static small text:</p>
+<blockquote>
+<p><strong>Internal synthetic explanation codes — not customer-facing adverse-action language or production policy.</strong></p>
+</blockquote>
+<p>Then assign the <code>P03 - Underwriting Detail</code> tooltip page to all three main underwriting narrative visuals.</p>
+<hr>
+<h1>Step 10 — Set visual interactions</h1>
+<p>This is critical.</p>
+<p>The underwriting panel must respond to:</p>
+<ul>
+<li><strong>Merchant</strong></li>
+<li><strong>Scenario</strong></li>
+</ul>
+<p>It must <strong>not</strong> respond to selections in:</p>
+<ul>
+<li>Account performance</li>
+<li>Monitoring journey</li>
+<li>Servicing outcome</li>
+</ul>
+<p>Use <strong>Format → Edit interactions</strong>.</p>
+<p>Select each lifecycle chart/table and set its interaction with every underwriting narrative object to:</p>
+<h3><strong>None</strong></h3>
+<p>The underwriting section is the original decision snapshot. Later account performance must never rewrite it.</p>
+<hr>
+<h1>Step 11 — Update the subtitle</h1>
+<p>Replace the current subtitle with:</p>
+<blockquote>
+<p><strong>Follow one synthetic application from merchant operating evidence and underwriting rationale through decision, funding, performance, monitoring and servicing.</strong></p>
+</blockquote>
+<p>That now accurately describes P03.</p>
+<hr>
+<h1>Step 12 — QA before polishing</h1>
+<p>Test these five combinations:</p>
+<ol>
+<li><p><strong>000312 — Baseline</strong></p>
+<ul>
+<li>approved/funded;</li>
+<li>later poor performance;</li>
+<li>underwriting rationale must remain original.</li>
+</ul>
+</li>
+<li><p><strong>000738 — Baseline</strong></p>
+<ul>
+<li>counteroffer review;</li>
+<li>rationale should explain why restructuring/review was needed.</li>
+</ul>
+</li>
+<li><p><strong>000001 — Baseline</strong></p>
+<ul>
+<li>evidence decline;</li>
+<li>blocked fields must not turn into zeros or invented risk conclusions.</li>
+</ul>
+</li>
+<li><p><strong>000311 — Baseline</strong></p>
+<ul>
+<li>policy decline;</li>
+<li>rationale should explain the supported binding weakness.</li>
+</ul>
+</li>
+<li><p><strong>000749 — Baseline vs Recession Energy</strong></p>
+<ul>
+<li>use the same merchant and switch Scenario;</li>
+<li>operating evidence, capacity/risk/economics, rationale and decision should move coherently with scenario.</li>
+</ul>
+</li>
+</ol>
+<p>For every test, confirm:</p>
+<p><strong><code>P03 Underwriting Context Pass = 1</code></strong></p>
+<p>and confirm that:</p>
+<ul>
+<li>blocked evidence is described as unavailable/blocked;</li>
+<li>partial evidence remains explicitly partial;</li>
+<li><code>FactFinalDecision</code> controls what ultimately happened;</li>
+<li>the narrative does not infer a decline reason merely because one metric looks weak;</li>
+<li>lifecycle clicks do not alter underwriting.</li>
+</ul>
+<hr>
+<h2>Final object inventory</h2>
+<p>After this enhancement, the underwriting-specific model population should be:</p>
+<p><strong>Already built</strong></p>
+<ul>
+<li><code>P03 Capacity Display</code></li>
+<li><code>P03 Coverage Display</code></li>
+<li><code>P03 Resilience Display</code></li>
+<li><code>P03 Risk Display</code></li>
+<li><code>P03 Expected Loss Display</code></li>
+<li><code>P03 Economics Display</code></li>
+<li><code>P03 Decision Readout</code> — <strong>formula updated</strong></li>
+</ul>
+<p><strong>New</strong></p>
+<ul>
+<li><code>P03 Underwriting Context Pass</code></li>
+<li><code>P03 Merchant Evidence Narrative</code></li>
+<li><code>P03 Structure Assessment Narrative</code></li>
+<li><code>P03 Underwriting Evidence Note</code></li>
+<li><code>P03 Underwriting Timing Note</code></li>
+<li><code>P03 Decision Trace</code></li>
+</ul>
+<p>I would build <strong>Steps 1–6 first and put the five visible measures into the available space before creating the tooltip</strong>. That lets us inspect the actual page density and narrative quality before spending time polishing the technical hover experience.</p>
+</div></article><article id="m-defefa9b-a923-4822-8ce0-9ffdc3267dad" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00526 · 2026-08-27T22:48:16.148000-04:00 · active path</p><div class="bubble"><p>how to fix this: multi card  - so much white space in between  - and the middle gets cutoff</p>
+</div></article><article id="m-6010a079-f75d-4730-8acd-3fb1245ca51a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00527 · 2026-08-27T22:48:21.914674-04:00 · active path</p><div class="bubble"><p>That is a limitation of using one <strong>multi-card visual for long dynamic text</strong>. Power BI tries to allocate the available height across the cards, which creates excessive internal spacing and can truncate the longest card—exactly what you&#39;re seeing.</p>
+<p>For the underwriting narrative, I would <strong>not fight the multi-card formatting</strong>. Use separate visuals.</p>
+<h3>Recommended fix</h3>
+<p>Create <strong>three separate Card (new) visuals</strong>, one for each narrative measure:</p>
+<ol>
+<li><code>P03 Merchant Evidence Narrative</code></li>
+<li><code>P03 Structure Assessment Narrative</code></li>
+<li><code>P03 Decision Readout</code></li>
+</ol>
+<p>Then two smaller separate cards beneath them for:</p>
+<ul>
+<li><code>P03 Underwriting Evidence Note</code></li>
+<li><code>P03 Underwriting Timing Note</code></li>
+</ul>
+<p>Put one rectangle/background container behind all five so they still look like <strong>one Underwriting rationale panel</strong>.</p>
+<p>For each of the three main cards:</p>
+<ul>
+<li><strong>Title:</strong> Off</li>
+<li><strong>Category label:</strong> Off</li>
+<li><strong>Callout/value:</strong> On</li>
+<li><strong>Word wrap:</strong> On</li>
+<li><strong>Background:</strong> Off</li>
+<li><strong>Border:</strong> Off</li>
+<li><strong>Padding:</strong> reduce as far as Power BI allows</li>
+<li><strong>Vertical alignment:</strong> Top</li>
+<li><strong>Text alignment:</strong> Left</li>
+<li>Size each visual&#39;s height individually according to its text.</li>
+</ul>
+<p>Then use ordinary static text labels immediately above each visual:</p>
+<p><strong>Merchant operating evidence</strong><br><strong>Requested-structure assessment</strong><br><strong>Why this outcome</strong></p>
+<p>This gives you precise control over spacing instead of Power BI distributing it for you.</p>
+<h3>Why this is much better</h3>
+<p>Your three narratives naturally have different lengths. For example:</p>
+<ul>
+<li>Merchant evidence might require 3–4 lines.</li>
+<li>Structure assessment might require 4–5 lines.</li>
+<li>Why this outcome might require only 2–3 lines.</li>
+</ul>
+<p>A multi-card visual effectively says, “give these cards some shared layout treatment.” We need the opposite: <strong>each narrative gets exactly the vertical space it needs</strong>.</p>
+<p>I would lay the available center-left region out roughly:</p>
+<pre><code class="language-text">UNDERWRITING RATIONALE
+
+Merchant operating evidence
+[3–4 lines of dynamic text]
+
+Requested-structure assessment
+[4–5 lines of dynamic text]
+
+Why this outcome
+[2–3 lines of dynamic text]
+
+Evidence basis: ...
+Decision snapshot: ...
+</code></pre>
+<p>The gaps between sections should only be about <strong>6–10 px</strong>, not the huge blank regions you&#39;re getting now.</p>
+<h3>One more important formatting point</h3>
+<p>For the three main Card (new) visuals, don&#39;t make the card itself display its measure name. The measure names are technical and they consume vertical space. Use the static section headings above them and let the card contain <strong>only the narrative sentence</strong>.</p>
+<p>So yes: <strong>break up the multi-card</strong>. For normal KPIs multi-card is useful; for variable-length narrative text it is the wrong visual. The separate-card approach will solve both the white-space problem and the middle-text cutoff.</p>
+</div></article><article id="m-f5c84a93-fc32-4c29-9ade-7c70afa6935f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00528 · 2026-08-27T22:49:11.047000-04:00 · active path</p><div class="bubble"><p>but with single cards it still is dedicating a lot of white space around the visual</p>
+</div></article><article id="m-5573484d-6da2-400e-a6fc-71ac37ddeaf9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00529 · 2026-08-27T22:49:21.603201-04:00 · active path</p><div class="bubble"><p>Yes. That means the problem is <strong>the Card visual itself</strong>, not the fact that you were using a multi-card. Cards reserve internal callout/container space even after you remove most formatting, so they are a poor fit for paragraph-length narrative.</p>
+<p>For this P03 underwriting section, I would stop using cards for the narrative entirely.</p>
+<h3>Best option: dynamic text boxes</h3>
+<p>Power BI text boxes can display <strong>dynamic measure values</strong> while giving you much tighter control over spacing than a Card.</p>
+<p>For each narrative section:</p>
+<ol>
+<li><strong>Insert → Text box</strong></li>
+<li>Type the static heading, for example:
+<strong>Merchant operating evidence</strong></li>
+<li>Press Enter.</li>
+<li>Use the text box&#39;s <strong><code>+ Value</code> / dynamic value</strong> option.</li>
+<li>Select:
+<code>P03 Merchant Evidence Narrative</code></li>
+<li>Put the dynamic value on the next line.</li>
+<li>Format the heading bold, around 10–11 pt.</li>
+<li>Format the dynamic value around 9.5–10 pt, regular.</li>
+<li>Set the text box background and border off.</li>
+<li>Resize the text box tightly around the actual content.</li>
+</ol>
+<p>Repeat for:</p>
+<ul>
+<li><strong>Requested-structure assessment</strong> → <code>P03 Structure Assessment Narrative</code></li>
+<li><strong>Why this outcome</strong> → <code>P03 Decision Readout</code></li>
+</ul>
+<p>Then use smaller dynamic text boxes for:</p>
+<ul>
+<li><code>P03 Underwriting Evidence Note</code></li>
+<li><code>P03 Underwriting Timing Note</code></li>
+</ul>
+<p>This should give you something much closer to:</p>
+<pre><code class="language-text">UNDERWRITING RATIONALE
+
+Merchant operating evidence
+The merchant showed a growing operating pattern, averaging $2.1K...
+
+Requested-structure assessment
+At the requested structure, operating cash flow covered...
+
+Why this outcome
+The selected $18.5K structure...
+
+Evidence basis: partial overall · high data confidence...
+Decision snapshot: 7/23/2026...
+</code></pre>
+<p>with only the spacing <strong>you</strong> choose between sections.</p>
+<h3>Why I prefer this</h3>
+<p>A card thinks it is displaying a KPI and reserves room for a callout area. A text box thinks it is displaying prose. What we&#39;re building here is fundamentally <strong>dynamic prose</strong>, so the text box is the correct visual primitive.</p>
+<p>It also lets us do something useful stylistically: <strong>put the subsection heading and narrative in the same object</strong>. That reduces the number of visual objects and makes the whole panel much easier to align.</p>
+<h3>If your Power BI build does not expose dynamic values in text boxes</h3>
+<p>Use a <strong>one-column Table visual</strong> as the fallback:</p>
+<ul>
+<li>put only the narrative measure in Values;</li>
+<li>column header OFF;</li>
+<li>gridlines OFF;</li>
+<li>outline OFF;</li>
+<li>row padding as low as possible;</li>
+<li>word wrap ON;</li>
+<li>background OFF;</li>
+<li>totals OFF.</li>
+</ul>
+<p>A single-cell table is surprisingly effective for dynamic narrative because it does not reserve the large callout area that Cards do.</p>
+<p>But given the purpose of this page, <strong>dynamic text boxes are my first choice</strong>. They should solve exactly the whitespace problem you&#39;re fighting and make the underwriting panel look much more like an intentional executive narrative rather than several oversized KPI containers.</p>
+</div></article><article id="m-ef4c2a3e-bfb4-48cc-98f2-b154e652760e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00530 · 2026-08-27T23:03:00.924000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: cb9347ec-6dde-4c60-8ebe-767450c38335.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-e664c36f-b7f5-449a-83f4-7a443b6e1319" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00531 · 2026-08-27T23:03:04.118322-04:00 · active path</p><div class="bubble"><p>Yes — that screenshot clarifies it. <strong>Do not turn on Q&amp;A or create the local index.</strong> That is unrelated to what we need.</p>
+<p>I was too optimistic about the <code>+ Value</code> behavior in your Power BI text box. In your build, that route is invoking the Q&amp;A-backed dynamic-value functionality, which is not worth introducing merely to render these narratives.</p>
+<p>Click <strong>Close</strong>. Leave Q&amp;A/indexing unchanged.</p>
+<h3>Use a one-cell Table visual instead</h3>
+<p>For each narrative, create a separate <strong>Table</strong> visual. This is the better solution in your current Power BI environment because tables already render our measure-driven text without the Card visual&#39;s excessive internal whitespace.</p>
+<p>For <strong>Merchant operating evidence</strong>:</p>
+<ol>
+<li>Insert a <strong>Table</strong> visual.</li>
+<li>Add only <code>P03 Merchant Evidence Narrative</code>.</li>
+<li>In the field dropdown, choose <strong>Rename for this visual</strong> → <code>Merchant operating evidence</code>.</li>
+<li>Format:<ul>
+<li><strong>Column headers:</strong> On</li>
+<li>Header font: roughly 10–11 pt, semibold/bold</li>
+<li><strong>Values:</strong> 9–10 pt</li>
+<li><strong>Values → Word wrap:</strong> On</li>
+<li><strong>Column headers → Word wrap:</strong> On</li>
+<li><strong>Grid → Horizontal gridlines:</strong> Off</li>
+<li><strong>Grid → Vertical gridlines:</strong> Off</li>
+<li><strong>Outline:</strong> None</li>
+<li><strong>Totals:</strong> Off</li>
+<li><strong>Row padding:</strong> minimum or very low</li>
+<li>Background: Off</li>
+<li>Border: Off</li>
+<li>Visual title: Off</li>
+</ul>
+</li>
+<li>Make the single column occupy the entire width.</li>
+<li>Resize the visual vertically until it fits the narrative tightly.</li>
+</ol>
+<p>Then duplicate that visual twice and substitute:</p>
+<p><strong>Requested-structure assessment</strong><br>→ <code>P03 Structure Assessment Narrative</code></p>
+<p><strong>Why this outcome</strong><br>→ <code>P03 Decision Readout</code></p>
+<p>This should produce almost exactly what we want:</p>
+<pre><code class="language-text">UNDERWRITING RATIONALE
+
+Merchant operating evidence
+The merchant showed a growing operating pattern, averaging $2.1K...
+
+Requested-structure assessment
+At the requested structure, the governed capacity assessment was...
+
+Why this outcome
+The merchant supported an offer, but the authorized structure reduced...
+</code></pre>
+<h3>For the two small notes</h3>
+<p>I would try putting both measures in a <strong>fourth table visual</strong>:</p>
+<ul>
+<li><code>P03 Underwriting Evidence Note</code></li>
+<li><code>P03 Underwriting Timing Note</code></li>
+</ul>
+<p>But because adding two measures creates two columns, that may not be ideal. If so, create one additional measure:</p>
+<pre><code class="language-DAX">P03 Underwriting Notes =
+VAR _Evidence =
+    [P03 Underwriting Evidence Note]
+VAR _Timing =
+    [P03 Underwriting Timing Note]
+RETURN
+    _Evidence
+        &amp; UNICHAR ( 10 )
+        &amp; _Timing
+</code></pre>
+<p>Then use a fourth one-cell table:</p>
+<p><strong>Column header:</strong> Off<br><strong>Value:</strong> <code>P03 Underwriting Notes</code><br><strong>Word wrap:</strong> On<br><strong>Font:</strong> ~8–9 pt<br><strong>Row padding:</strong> minimum</p>
+<p>That should consume very little height.</p>
+<h3>One advantage of the Table approach</h3>
+<p>This also keeps the underwriting section consistent with the visual language already established on P03. Your <code>Merchant request</code>, <code>Funded terms</code>, and <code>Servicing &amp; intervention</code> sections are table-based. The narrative tables will therefore feel like part of the report rather than a collection of oversized KPI cards.</p>
+<p>So the revised build is:</p>
+<p><strong>one static text box</strong> → <code>Underwriting rationale</code></p>
+<p>then <strong>three one-cell tables</strong> → the three narratives</p>
+<p>then <strong>one compact one-cell table</strong> → evidence + timing notes.</p>
+<p>No Q&amp;A, no local index, and no Card whitespace problem.</p>
+</div></article><article id="m-ac231597-ade6-4803-874f-a4f6c955b82d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00532 · 2026-08-27T23:29:41.743000-04:00 · active path</p><p class="note">10 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: P03_Merchant_001_Baseline.png; P03_Merchant_001_Recession_Energy.png; P03_Merchant_012_Baseline.png; P03_Merchant_012_Recession_Energy.png; P03_Merchant_312_Baseline.png; P03_Merchant_312_Recession_Energy.png; P03_Merchant_738_Baseline.png; P03_Merchant_738_Recession_Energy.png; P03_Merchant_749_Baseline.png; P03_Merchant_749_Recession_Energy.png</p><div class="bubble"><p>The narratives around the declines seem like there could be an issue.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

@@ -1,0 +1,2332 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Branch · Merchant POS Lending Simulator — part 20 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>Branch · Merchant POS Lending Simulator — part 20</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-19.html">Previous part</a><a href="part-21.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-b56d0923-2af9-4ba5-8c19-efcc7bd70bba" class="message assistant"><p class="meta"><strong>Assistant</strong> · C080-M00544 · 2026-08-04T23:40:44.422348-04:00 · active path</p><div class="bubble"><h1>M2.11 Source &amp; Design Freeze Amendment A — <strong>LOCKED</strong></h1>
+<p>The assessment is correct. The original freeze established the right architecture, but the remaining semantic gaps were material enough to justify a bounded amendment before SQL construction.</p>
+<p>This amendment supersedes only the scoring, normalization, portfolio-rollup, Pareto, reason-code, stress-comparison, and contract-behavior sections identified below. Every other element of the original M2.11 freeze remains unchanged.</p>
+<pre><code class="language-text">Authoritative M2.10 baseline                         UNCHANGED
+Accepted source hierarchy                            UNCHANGED
+Stage and production boundaries                      UNCHANGED
+Physical object grains                               UNCHANGED
+Expected physical row counts                         UNCHANGED
+Canonical entity count                            19,298
+Programs 212–219                                      UNCHANGED
+M2.12 final-certification handoff                     UNCHANGED
+</code></pre>
+<p>No SQL, package documentation, manifest, checksum inventory, or ZIP was generated in this step.</p>
+<hr>
+<h1>A1. Physical representation of the weight matrix</h1>
+<p>The new strategy-weight semantics will <strong>not</strong> add a 64-row strategy/objective bridge table because that would alter the frozen object inventory and canonical count.</p>
+<p>The existing eight-row:</p>
+<pre><code class="language-text">msbf_m2.portfolio_strategy_profile
+</code></pre>
+<p>will carry the matrix through explicit target-typed fields for:</p>
+<ul>
+<li>eight objective weights;</li>
+<li>selection mode;</li>
+<li>selected-exposure direction;</li>
+<li>candidate-scoring applicability;</li>
+<li>scope-scoring applicability;</li>
+<li>score weight total;</li>
+<li>evidence handling code;</li>
+<li>score precision;</li>
+<li>row hash.</li>
+</ul>
+<p>The eight-row:</p>
+<pre><code class="language-text">msbf_m2.portfolio_strategy_objective_definition
+</code></pre>
+<p>will carry the stable objective semantics:</p>
+<ul>
+<li>raw-value formula code;</li>
+<li>default optimization direction;</li>
+<li>normalization method;</li>
+<li>missing-value policy;</li>
+<li>scoring domain;</li>
+<li>scope-aggregation method;</li>
+<li>Pareto-inclusion flag;</li>
+<li>equality tolerance;</li>
+<li>numeric scale.</li>
+</ul>
+<p>Weights will not exist only inside an opaque JSON document. Any JSON payload will be a reporting representation of explicit physical fields.</p>
+<p>The frozen canonical count therefore remains:</p>
+<pre><code class="language-text">19,298
+</code></pre>
+<hr>
+<h1>A2. Exact objective definitions</h1>
+<h2>Objective formulas</h2>
+<table>
+<thead>
+<tr>
+<th>Objective</th>
+<th>Application/candidate raw value</th>
+<th>Scope-level raw value</th>
+<th align="right">Stable direction</th>
+<th align="right">Pareto</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ACCESS_RATE</code></td>
+<td><code>1</code> for a selected access candidate; <code>0</code> for implicit no-access</td>
+<td>Access-selected application rows ÷ total application rows in scope</td>
+<td align="right">Maximize</td>
+<td align="right">Yes</td>
+</tr>
+<tr>
+<td><code>SELECTED_EXPOSURE_AMOUNT</code></td>
+<td>Candidate funding amount; zero for no-access</td>
+<td>Sum of selected funding amount</td>
+<td align="right">Strategy-specific</td>
+<td align="right"><strong>No</strong></td>
+</tr>
+<tr>
+<td><code>FINANCE_CHARGE_AMOUNT</code></td>
+<td>Candidate finance-charge amount; zero for no-access</td>
+<td>Sum of selected finance-charge amount</td>
+<td align="right">Maximize</td>
+<td align="right">Yes</td>
+</tr>
+<tr>
+<td><code>EXPECTED_LOSS_DENSITY</code></td>
+<td>Candidate expected loss ÷ candidate funding amount</td>
+<td>Sum expected loss ÷ sum selected exposure</td>
+<td align="right">Minimize</td>
+<td align="right">Yes</td>
+</tr>
+<tr>
+<td><code>RISK_ADJUSTED_CONTRIBUTION</code></td>
+<td>Candidate risk-adjusted contribution; zero for no-access</td>
+<td>Sum risk-adjusted contribution</td>
+<td align="right">Maximize</td>
+<td align="right">Yes</td>
+</tr>
+<tr>
+<td><code>ANNUALIZED_RISK_ADJUSTED_RETURN</code></td>
+<td>Candidate annualized return; zero for no-access</td>
+<td>Selected-exposure-weighted annualized return</td>
+<td align="right">Maximize</td>
+<td align="right">Yes</td>
+</tr>
+<tr>
+<td><code>SERVICING_BURDEN_UNITS</code></td>
+<td>Not used in candidate ranking</td>
+<td>Sum of selected account-servicing burden units</td>
+<td align="right">Minimize</td>
+<td align="right">Yes</td>
+</tr>
+<tr>
+<td><code>PAYMENT_BURDEN_RATE</code></td>
+<td>Candidate remittance rate; zero for no-access</td>
+<td>Selected-exposure-weighted remittance rate</td>
+<td align="right">Minimize</td>
+<td align="right">Yes</td>
+</tr>
+</tbody></table>
+<h2>Exact access-rate denominator</h2>
+<p>For every reporting scope:</p>
+<pre><code class="language-text">Access Rate
+=
+Access-selected application rows
+÷
+Total application rows in the scope
+</code></pre>
+<p>The denominator includes:</p>
+<ul>
+<li>access selections;</li>
+<li>controlled reviews;</li>
+<li>strategy restrictions;</li>
+<li>insufficient-evidence outcomes;</li>
+<li>policy declines;</li>
+<li>blocked rows.</li>
+</ul>
+<p>It does not use only the eligible population.</p>
+<p>Expected scope denominators:</p>
+<pre><code class="language-text">BASELINE            750
+RECESSION_ENERGY    750
+PORTFOLIO           750
+</code></pre>
+<h2>Expected-loss density</h2>
+<pre><code class="language-text">Candidate Expected-Loss Density
+=
+candidate_expected_loss_amount
+÷
+candidate_funding_amount
+</code></pre>
+<pre><code class="language-text">Scope Expected-Loss Density
+=
+sum(selected_expected_loss_amount)
+÷
+sum(selected_funding_amount)
+</code></pre>
+<p>If selected exposure is zero, the scope metric is <code>NULL</code>, not zero, and the strategy is not Pareto-eligible for that scope.</p>
+<h2>Annualized-return aggregation</h2>
+<pre><code class="language-text">Scope Annualized Return
+=
+sum(selected_funding_amount × annualized_return_rate)
+÷
+sum(selected_funding_amount)
+</code></pre>
+<p>If selected exposure is zero, the scope annualized return is <code>NULL</code>.</p>
+<h2>Payment-burden aggregation</h2>
+<pre><code class="language-text">Scope Payment-Burden Rate
+=
+sum(selected_funding_amount × selected_remittance_rate)
+÷
+sum(selected_funding_amount)
+</code></pre>
+<p>If selected exposure is zero, the scope payment-burden rate is <code>NULL</code>.</p>
+<hr>
+<h1>A3. Exact strategy-weight matrix</h1>
+<p>Legend:</p>
+<pre><code class="language-text">↑  maximize
+↓  minimize
+—  weight zero / not used in that strategy’s weighted score
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Selection mode</th>
+<th align="right">Access ↑</th>
+<th align="right">Exposure</th>
+<th align="right">Finance charge ↑</th>
+<th align="right">Loss density ↓</th>
+<th align="right">Contribution ↑</th>
+<th align="right">Return ↑</th>
+<th align="right">Servicing burden ↓</th>
+<th align="right">Payment burden ↓</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>BASELINE_REPLAY</code></td>
+<td><code>SOURCE_REPLAY</code></td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right">—</td>
+</tr>
+<tr>
+<td><code>ACCESS_EXPANSION</code></td>
+<td><code>WEIGHTED_CANDIDATE</code></td>
+<td align="right"><strong>0.450000</strong></td>
+<td align="right"><strong>0.150000 ↑</strong></td>
+<td align="right">0.050000</td>
+<td align="right">0.100000</td>
+<td align="right">0.100000</td>
+<td align="right">0.050000</td>
+<td align="right">—</td>
+<td align="right">0.100000</td>
+</tr>
+<tr>
+<td><code>PRICE_FOR_RISK</code></td>
+<td><code>WEIGHTED_CANDIDATE</code></td>
+<td align="right">0.100000</td>
+<td align="right">0.050000 ↑</td>
+<td align="right"><strong>0.300000</strong></td>
+<td align="right">0.150000</td>
+<td align="right">0.200000</td>
+<td align="right">0.100000</td>
+<td align="right">—</td>
+<td align="right">0.100000</td>
+</tr>
+<tr>
+<td><code>PAYMENT_BURDEN_RELIEF</code></td>
+<td><code>WEIGHTED_CANDIDATE</code></td>
+<td align="right">0.150000</td>
+<td align="right">0.100000 ↓</td>
+<td align="right">0.050000</td>
+<td align="right">0.100000</td>
+<td align="right">0.100000</td>
+<td align="right">0.050000</td>
+<td align="right">—</td>
+<td align="right"><strong>0.450000</strong></td>
+</tr>
+<tr>
+<td><code>LOSS_CONTAINMENT</code></td>
+<td><code>WEIGHTED_CANDIDATE</code></td>
+<td align="right">0.050000</td>
+<td align="right">0.250000 ↓</td>
+<td align="right">—</td>
+<td align="right"><strong>0.400000</strong></td>
+<td align="right">0.100000</td>
+<td align="right">0.050000</td>
+<td align="right">—</td>
+<td align="right">0.150000</td>
+</tr>
+<tr>
+<td><code>PROFITABILITY_DISCIPLINE</code></td>
+<td><code>WEIGHTED_CANDIDATE</code></td>
+<td align="right">0.050000</td>
+<td align="right">0.050000 ↑</td>
+<td align="right">0.150000</td>
+<td align="right">0.150000</td>
+<td align="right"><strong>0.350000</strong></td>
+<td align="right"><strong>0.200000</strong></td>
+<td align="right">—</td>
+<td align="right">0.050000</td>
+</tr>
+<tr>
+<td><code>EARLY_INTERVENTION</code></td>
+<td><code>RULE_BASED_ACCOUNT</code></td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right"><strong>0.600000</strong></td>
+<td align="right"><strong>0.400000</strong></td>
+</tr>
+<tr>
+<td><code>BALANCED_FRONTIER</code></td>
+<td><code>WEIGHTED_CANDIDATE</code></td>
+<td align="right">0.200000</td>
+<td align="right">0.050000 ↑</td>
+<td align="right">0.100000</td>
+<td align="right">0.200000</td>
+<td align="right"><strong>0.200000</strong></td>
+<td align="right">0.100000</td>
+<td align="right">0.100000</td>
+<td align="right">0.050000</td>
+</tr>
+</tbody></table>
+<p>Frozen weight requirements:</p>
+<pre><code class="language-text">ACCESS_EXPANSION total                    1.000000
+PRICE_FOR_RISK total                      1.000000
+PAYMENT_BURDEN_RELIEF total               1.000000
+LOSS_CONTAINMENT total                    1.000000
+PROFITABILITY_DISCIPLINE total            1.000000
+EARLY_INTERVENTION scope total            1.000000
+BALANCED_FRONTIER total                   1.000000
+BASELINE_REPLAY total                     0.000000
+</code></pre>
+<h2>Candidate-ranking treatment of servicing burden</h2>
+<p><code>SERVICING_BURDEN_UNITS</code> is not available at the M2.2 candidate grain and will not be fabricated.</p>
+<p>Therefore:</p>
+<ul>
+<li>the candidate-selection score excludes servicing burden;</li>
+<li><code>BALANCED_FRONTIER</code> candidate selection renormalizes its remaining application-objective weights from <code>0.900000</code> to <code>1.000000</code>;</li>
+<li>its full eight-objective matrix is used only for the scope-level evaluation score;</li>
+<li>all other weighted candidate strategies already have candidate-domain weights totaling <code>1.000000</code>.</li>
+</ul>
+<h2>Baseline and early-intervention exceptions</h2>
+<p><code>BASELINE_REPLAY</code> never uses a score to choose a candidate.</p>
+<p><code>EARLY_INTERVENTION</code> replays the baseline application structure and access outcome. Its weights are used only to evaluate the resulting scope-level workload and payment-burden posture.</p>
+<hr>
+<h1>A4. Exact normalization and scoring mechanics</h1>
+<h2>Candidate-selection normalization population</h2>
+<p>Normalization occurs within:</p>
+<pre><code class="language-text">module1_run_id
++ scenario_id
++ merchant_application_id
++ strategy_profile_code
+</code></pre>
+<p>The normalization population contains:</p>
+<ol>
+<li>M2.2 candidates that pass source-integrity checks;</li>
+<li>candidates that pass the strategy’s hard constraints;</li>
+<li>the deterministic implicit no-access alternative.</li>
+</ol>
+<p>The implicit no-access alternative is evaluated in Program 214 temporary logic but is <strong>not</strong> added to the persisted 4,456-row candidate-evaluation table. The frozen count remains:</p>
+<pre><code class="language-text">557 accepted candidate rows × 8 strategies = 4,456
+</code></pre>
+<h2>Maximize transformation</h2>
+<pre><code class="language-text">normalized_value
+=
+(raw_value − minimum_value)
+÷
+(maximum_value − minimum_value)
+</code></pre>
+<h2>Minimize transformation</h2>
+<pre><code class="language-text">normalized_value
+=
+(maximum_value − raw_value)
+÷
+(maximum_value − minimum_value)
+</code></pre>
+<h2>Constant population</h2>
+<p>When:</p>
+<pre><code class="language-text">maximum_value = minimum_value
+</code></pre>
+<p>every non-null alternative receives:</p>
+<pre><code class="language-text">normalized_value = 1.0000000000
+</code></pre>
+<p>The objective then has no ranking power, and deterministic tie-breaking decides.</p>
+<h2>Domain-adjusted weighted score</h2>
+<pre><code class="language-text">Candidate Objective Score
+=
+sum(normalized_value × strategy_weight)
+÷
+sum(applicable candidate-domain strategy weights)
+</code></pre>
+<p>For <code>BALANCED_FRONTIER</code> candidate selection:</p>
+<pre><code class="language-text">denominator = 0.900000
+</code></pre>
+<p>because its <code>0.100000</code> servicing-burden weight is scope-only.</p>
+<h2>Scope strategy score</h2>
+<p>Scope values are normalized across all eight strategy profiles within:</p>
+<pre><code class="language-text">module1_run_id
++ reporting_scope_code
+</code></pre>
+<p>The full strategy weight row is then applied.</p>
+<p><code>BASELINE_REPLAY</code> receives no strategy score. It remains the control comparator.</p>
+<h2>Missing and blocked evidence</h2>
+<p>No objective value will be imputed from an average, median, floor, ceiling, or other strategy.</p>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Frozen treatment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Structural field absent, such as amount, remittance, or finance charge</td>
+<td><code>BLOCKED_SOURCE_INTEGRITY</code></td>
+</tr>
+<tr>
+<td>Expected loss, contribution, or return required by a positive weight but null</td>
+<td><code>INFEASIBLE_OBJECTIVE_EVIDENCE</code></td>
+</tr>
+<tr>
+<td>Upstream evidence <code>BLOCKED</code></td>
+<td>Candidate may not be selected</td>
+</tr>
+<tr>
+<td>Upstream evidence <code>PARTIAL</code>, but objective values physically exist</td>
+<td>Candidate may be scored; evidence remains <code>PARTIAL</code></td>
+</tr>
+<tr>
+<td>Objective weight is zero or objective is outside evaluation domain</td>
+<td><code>NOT_APPLICABLE</code>; omitted from denominator</td>
+</tr>
+<tr>
+<td>Scope metric required by a positive weight is null</td>
+<td>Scope score becomes null; strategy is frontier-ineligible</td>
+</tr>
+<tr>
+<td>Unknown amount</td>
+<td>Remains null; never converted to zero</td>
+</tr>
+</tbody></table>
+<p><code>PARTIAL</code> evidence receives no concealed numerical haircut. The evidence status remains visible and participates in governance-priority ordering.</p>
+<h2>Numeric precision</h2>
+<pre><code class="language-text">Strategy weight                numeric(9,6)
+Raw scoring value              numeric(28,10)
+Minimum / maximum              numeric(28,10)
+Normalized value               numeric(18,10)
+Weighted contribution          numeric(22,12)
+Total objective score          numeric(22,12)
+Scope balance score            numeric(22,12)
+</code></pre>
+<p>All arithmetic uses PostgreSQL <code>numeric</code>, never floating-point types.</p>
+<p>Rounding occurs only at the following points:</p>
+<pre><code class="language-text">normalized value       round(..., 10)
+weighted contribution  round(..., 12)
+total score             round(sum(...), 12)
+</code></pre>
+<p>PostgreSQL numeric rounding semantics apply.</p>
+<h2>Candidate-score equality</h2>
+<p>Two objective scores are tied when their persisted 12-decimal values are identical or differ by no more than:</p>
+<pre><code class="language-text">0.000000000001
+</code></pre>
+<p>The frozen deterministic tie-break remains:</p>
+<pre><code class="language-text">1. Lowest hard-constraint violation count
+2. Best feasibility rank
+3. Highest 12-decimal objective score
+4. Accepted M2.2 candidate rank
+5. Candidate template code
+6. Accepted M2.2 candidate row hash
+</code></pre>
+<p>Database row order is prohibited as a tie-break.</p>
+<hr>
+<h1>A5. Exact selected-exposure treatment</h1>
+<p>The recommended option <strong>B</strong> is adopted.</p>
+<pre><code class="language-text">SELECTED_EXPOSURE_AMOUNT
+</code></pre>
+<p>is:</p>
+<ul>
+<li>visible in every candidate, strategy, comparison, and contract output;</li>
+<li>available for strategy-specific weighted scoring;</li>
+<li>available for baseline deltas;</li>
+<li>available for worst-case portfolio ordering;</li>
+<li><strong>excluded from Pareto dominance</strong>.</li>
+</ul>
+<p>Rationale:</p>
+<pre><code class="language-text">Higher exposure supports access and revenue.
+Lower exposure supports loss and burden containment.
+Neither direction is universally superior across strategies.
+</code></pre>
+<p>No strategy can obtain Pareto superiority solely by increasing or decreasing exposure.</p>
+<hr>
+<h1>A6. Exact feasibility classes</h1>
+<p>Lower rank is better.</p>
+<table>
+<thead>
+<tr>
+<th align="right">Rank</th>
+<th>Feasibility class</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td><code>FEASIBLE_ACCESS</code></td>
+<td>Candidate satisfies all constraints and strategy permits synthetic access</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td><code>FEASIBLE_CONTROLLED_REVIEW</code></td>
+<td>Candidate is analytically viable but source route, evidence, or economics requires review</td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td><code>FEASIBLE_NO_ACCESS</code></td>
+<td>Deterministic no-access alternative</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td><code>INFEASIBLE_OBJECTIVE_EVIDENCE</code></td>
+<td>A positively weighted required objective is missing or blocked</td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td><code>INFEASIBLE_HARD_CONSTRAINT</code></td>
+<td>One or more hard constraints fail</td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td><code>PRESERVED_INSUFFICIENT_EVIDENCE</code></td>
+<td>M2.2 no-structure insufficient-evidence outcome preserved</td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td><code>PRESERVED_POLICY_DECLINE</code></td>
+<td>M2.2 policy-decline outcome preserved</td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td><code>BLOCKED_SOURCE_INTEGRITY</code></td>
+<td>Source count, grain, lineage, identity, or accepted-candidate inconsistency</td>
+</tr>
+</tbody></table>
+<p>Infeasible candidates remain in the 4,456-row evaluation table with:</p>
+<pre><code class="language-text">objective_score = NULL
+candidate_selected_flag = false
+</code></pre>
+<p>They are not silently dropped.</p>
+<hr>
+<h1>A7. Exact strategy-outcome severity order</h1>
+<p>Lower rank is better. Higher rank is selected by the <code>PORTFOLIO</code> worst-case rollup.</p>
+<table>
+<thead>
+<tr>
+<th align="right">Rank</th>
+<th>Strategy outcome</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td><code>ACCESS_SELECTED</code></td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td><code>CONTROLLED_REVIEW</code></td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td><code>NO_ACCESS_STRATEGY_RESTRICTION</code></td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td><code>NO_ACCESS_NO_FEASIBLE_CANDIDATE</code></td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td><code>NO_ACCESS_INSUFFICIENT_EVIDENCE</code></td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td><code>NO_ACCESS_POLICY_DECLINE</code></td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td><code>BLOCKED_SOURCE_INTEGRITY</code></td>
+</tr>
+</tbody></table>
+<p>A policy decline is not interpreted as a data-integrity defect. A source-integrity block remains the most severe outcome because the strategy result cannot be relied upon.</p>
+<hr>
+<h1>A8. Exact baseline-replay contract</h1>
+<p><code>BASELINE_REPLAY</code> must reproduce the accepted source at two levels.</p>
+<h2>M2.2 structure fields</h2>
+<p>The following must reproduce exactly for all 1,500 scenario/application rows:</p>
+<pre><code class="language-text">pricing_disposition_code
+structure_available_flag
+review_required_flag
+selected_candidate_template_code
+selected_candidate_row_hash
+requested_funding_amount
+selected_funding_amount
+selected_remittance_rate
+selected_payback_multiple
+selected_collection_horizon_days
+selected_total_repayment_amount
+selected_finance_charge_amount
+selected_implied_daily_collection_amount
+selected_implied_payoff_days
+selected_amount_to_request_ratio
+candidate_count
+counteroffer_foundation_flag
+stress_nonimprovement_applied_flag
+routing_evidence_status
+</code></pre>
+<p>Where a structure exists, the selected candidate must match one accepted:</p>
+<pre><code class="language-text">msbf_m2.application_pricing_structure_candidate
+</code></pre>
+<p>row on:</p>
+<pre><code class="language-text">module1_run_id
++ scenario_id
++ merchant_application_id
++ candidate_template_code
+</code></pre>
+<p>and its accepted candidate row hash.</p>
+<h2>M2.4 final activation fields</h2>
+<p>The following must also reproduce exactly:</p>
+<pre><code class="language-text">source_final_decision_outcome_code
+activation_outcome_code
+activation_outcome_rank
+booking_eligible_flag
+booking_authorized_flag
+funding_authorized_flag
+funding_completed_flag
+portfolio_activated_flag
+operational_review_required_flag
+synthetic_offer_acceptance_assumed_flag
+synthetic_account_id
+synthetic_advance_id
+booked_amount
+funded_amount
+activation_remittance_rate
+activation_payback_multiple
+activation_collection_horizon_days
+activation_total_repayment_amount
+activation_finance_charge_amount
+activation_implied_daily_collection_amount
+activation_implied_payoff_days
+activation_evidence_status
+</code></pre>
+<h2>Operational account replay</h2>
+<p>For the 59 M2.10 account rows, baseline replay must preserve:</p>
+<pre><code class="language-text">M2.7 operational setup outcome
+M2.7 operational setup action
+M2.7 payment factor
+M2.7 setup duration
+M2.7 reassessment interval and date
+M2.10 certified state
+M2.10 performance tier
+M2.10 servicing queue
+M2.10 certified exposure
+M2.10 servicing burden units
+M2.10 payment and exception posture
+</code></pre>
+<p>Baseline-replay acceptance requires:</p>
+<pre><code class="language-text">Application replay mismatches      0 of 1,500
+Account replay mismatches          0 of 59
+</code></pre>
+<p>No tolerance is applied to source hashes, categorical fields, flags, dates, or currency values.</p>
+<hr>
+<h1>A9. Applications without accepted M2.2 candidates</h1>
+<p>The treatment is now exact.</p>
+<table>
+<thead>
+<tr>
+<th>M2.2 source condition</th>
+<th>M2.11 treatment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>NO_STRUCTURE_POLICY_DECLINE</code></td>
+<td>Preserve <code>NO_ACCESS_POLICY_DECLINE</code> for every strategy</td>
+</tr>
+<tr>
+<td><code>NO_STRUCTURE_INSUFFICIENT_EVIDENCE</code></td>
+<td>Preserve <code>NO_ACCESS_INSUFFICIENT_EVIDENCE</code> for every strategy</td>
+</tr>
+<tr>
+<td>Structure available and candidate rows present</td>
+<td>Evaluate accepted candidates</td>
+</tr>
+<tr>
+<td>Structure available but expected candidate rows absent</td>
+<td><code>BLOCKED_SOURCE_INTEGRITY</code></td>
+</tr>
+<tr>
+<td>Selected M2.2 candidate absent from accepted candidate inventory</td>
+<td><code>BLOCKED_SOURCE_INTEGRITY</code></td>
+</tr>
+<tr>
+<td>Candidates exist but none passes M2.11 constraints</td>
+<td><code>NO_ACCESS_NO_FEASIBLE_CANDIDATE</code></td>
+</tr>
+<tr>
+<td>Strategy deliberately chooses the implicit no-access option</td>
+<td><code>NO_ACCESS_STRATEGY_RESTRICTION</code></td>
+</tr>
+</tbody></table>
+<p>M2.11 does not synthesize a new candidate for an application with no accepted M2.2 candidate.</p>
+<p>The implicit no-access alternative is a strategy fallback, not a fabricated offer row.</p>
+<hr>
+<h1>A10. Profitability-evidence requirements</h1>
+<p>The M1.15 contract legitimately contains <code>PARTIAL</code> and <code>BLOCKED</code> evidence states. M2.11 will not incorrectly require an upstream <code>COMPLETE</code> status that the accepted population does not provide.</p>
+<h2>Economics-supported candidate</h2>
+<p>A candidate has supported economics only when:</p>
+<pre><code class="language-text">candidate_eligible_flag = true
+
+expected_loss_amount is not null
+risk_adjusted_contribution_amount is not null
+annualized_return_rate is not null
+candidate_finance_charge_amount is not null
+
+m1_15_contract_evidence_status &lt;&gt; &#39;BLOCKED&#39;
+acquisition_contract_evidence_status &lt;&gt; &#39;BLOCKED&#39;
+economic_status &lt;&gt; &#39;INSUFFICIENT_EVIDENCE&#39;
+</code></pre>
+<h2>Economic treatment</h2>
+<table>
+<thead>
+<tr>
+<th>Accepted economic status</th>
+<th>Challenger treatment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ABOVE_HURDLE</code></td>
+<td>May be <code>FEASIBLE_ACCESS</code> if all other constraints pass</td>
+</tr>
+<tr>
+<td><code>BELOW_HURDLE</code></td>
+<td>At most <code>FEASIBLE_CONTROLLED_REVIEW</code></td>
+</tr>
+<tr>
+<td><code>NEGATIVE_CONTRIBUTION</code></td>
+<td><code>INFEASIBLE_HARD_CONSTRAINT</code></td>
+</tr>
+<tr>
+<td><code>INSUFFICIENT_EVIDENCE</code></td>
+<td><code>INFEASIBLE_OBJECTIVE_EVIDENCE</code></td>
+</tr>
+</tbody></table>
+<p>Additionally, no challenger may receive <code>ACCESS_SELECTED</code> when:</p>
+<pre><code class="language-text">risk_adjusted_contribution_amount &lt; 0
+OR
+annualized_return_rate &lt; 0
+</code></pre>
+<h2>Manual-review route treatment</h2>
+<p>A candidate originating from:</p>
+<pre><code class="language-text">source_route_code = &#39;MANUAL_REVIEW&#39;
+</code></pre>
+<p>normally remains:</p>
+<pre><code class="language-text">CONTROLLED_REVIEW
+</code></pre>
+<p>The sole exception is <code>ACCESS_EXPANSION</code>, which may produce synthetic access only when all are true:</p>
+<pre><code class="language-text">candidate_eligible_flag = true
+counteroffer_foundation_flag = true
+hard_constraint_violation_count = 0
+economic_status = &#39;ABOVE_HURDLE&#39;
+risk_adjusted_contribution_amount &gt;= 0
+annualized_return_rate &gt;= 0
+upstream evidence is not BLOCKED
+unresolved_exception_count = 0
+</code></pre>
+<p>This is a counterfactual strategy result, not a production authorization.</p>
+<hr>
+<h1>A11. Exact EARLY_INTERVENTION semantics</h1>
+<p><code>EARLY_INTERVENTION</code> is now explicitly a <strong>timing-only</strong> strategy. It does not invent a new payment factor, exposure amount, price, or expected-loss benefit.</p>
+<p>Its application structure, access outcome, exposure, finance charge, loss, contribution, and return replay <code>BASELINE_REPLAY</code>.</p>
+<h2>Account treatment</h2>
+<h3>Closed-stable account</h3>
+<pre><code class="language-text">No intervention
+No new review date
+No burden increment
+No payment-factor change
+</code></pre>
+<h3>Active-reconciled account</h3>
+<pre><code class="language-text">Treatment code
+EARLY_REASSESSMENT_SIMULATION
+
+Simulated reassessment date
+greatest(
+    source_operational_activation_date + 1 day,
+    source_next_reassessment_date − 4 days
+)
+
+Payment factor
+Unchanged from accepted M2.7
+
+Exposure
+Unchanged
+
+Incremental servicing burden
++1.000000 unit
+</code></pre>
+<h3>Controlled-review account</h3>
+<pre><code class="language-text">Treatment code
+ACCELERATED_GOVERNANCE_REVIEW_SIMULATION
+
+Simulated review due date
+coalesce(
+    source_operational_activation_date,
+    governed run as_of_date
+) + 1 day
+
+Payment factor
+Unchanged
+
+Exposure
+Unchanged
+
+Incremental servicing burden
++1.000000 unit
+</code></pre>
+<p>Given the current accepted M2.10 posture of:</p>
+<pre><code class="language-text">57 closed stable
+1 active reconciled
+1 controlled review
+</code></pre>
+<p>the timing-only strategy would add:</p>
+<pre><code class="language-text">2.000000 servicing burden units
+</code></pre>
+<p>while making no claim of reduced default risk, improved return, higher contribution, or improved payment performance.</p>
+<p>This intentionally demonstrates that proactive intervention has an observable operating cost even when the project does not yet contain empirical treatment-effect evidence.</p>
+<hr>
+<h1>A12. Exact PORTFOLIO worst-case selection</h1>
+<p>The <code>PORTFOLIO</code> scope selects exactly one scenario row per:</p>
+<pre><code class="language-text">merchant_application_id
++ strategy_profile_code
+</code></pre>
+<p>using this frozen descending adversity order:</p>
+<pre><code class="language-text">1. Highest hard-constraint violation count
+
+2. Worst strategy-outcome severity rank
+
+3. Worst evidence rank:
+      BLOCKED = 3
+      PARTIAL = 2
+      COMPLETE = 1
+
+4. Highest expected-loss density
+      NULL sorts as worst
+
+5. Lowest risk-adjusted contribution
+      NULL sorts as worst
+
+6. Lowest annualized risk-adjusted return
+      NULL sorts as worst
+
+7. Highest payment-burden rate
+      NULL sorts as worst
+
+8. Highest servicing-burden units
+      NULL sorts as worst
+
+9. Scenario priority:
+      RECESSION_ENERGY before BASELINE
+
+10. Physical application-strategy row hash,
+       ascending lexical order
+</code></pre>
+<p>The rollup is not an average and does not sum scenarios.</p>
+<p>It preserves:</p>
+<pre><code class="language-text">750 distinct applications per strategy
+</code></pre>
+<p>for scope aggregation.</p>
+<p>The scenario code is a final business tie-break before the row hash, ensuring that a completely equivalent stress record is selected over baseline.</p>
+<hr>
+<h1>A13. Exact Pareto-dominance model</h1>
+<h2>Frontier objectives</h2>
+<p>Seven objectives participate:</p>
+<pre><code class="language-text">ACCESS_RATE                          maximize
+FINANCE_CHARGE_AMOUNT                maximize
+EXPECTED_LOSS_DENSITY                minimize
+RISK_ADJUSTED_CONTRIBUTION           maximize
+ANNUALIZED_RISK_ADJUSTED_RETURN      maximize
+SERVICING_BURDEN_UNITS               minimize
+PAYMENT_BURDEN_RATE                  minimize
+</code></pre>
+<p>Excluded:</p>
+<pre><code class="language-text">SELECTED_EXPOSURE_AMOUNT
+</code></pre>
+<h2>Frontier eligibility</h2>
+<p>A strategy/scope row is frontier-eligible only when:</p>
+<pre><code class="language-text">hard_constraint_violation_count = 0
+strategy_evidence_status &lt;&gt; &#39;BLOCKED&#39;
+all seven frontier objective values are non-null
+stress_improvement_violation_count = 0
+</code></pre>
+<p>A frontier-ineligible strategy remains visible but receives no frontier rank.</p>
+<h2>Equality tolerances</h2>
+<table>
+<thead>
+<tr>
+<th>Objective</th>
+<th align="right">Equality/no-worse tolerance</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ACCESS_RATE</code></td>
+<td align="right"><code>0.00000001</code></td>
+</tr>
+<tr>
+<td><code>FINANCE_CHARGE_AMOUNT</code></td>
+<td align="right"><code>$0.01</code></td>
+</tr>
+<tr>
+<td><code>EXPECTED_LOSS_DENSITY</code></td>
+<td align="right"><code>0.00000001</code></td>
+</tr>
+<tr>
+<td><code>RISK_ADJUSTED_CONTRIBUTION</code></td>
+<td align="right"><code>$0.01</code></td>
+</tr>
+<tr>
+<td><code>ANNUALIZED_RISK_ADJUSTED_RETURN</code></td>
+<td align="right"><code>0.00000001</code></td>
+</tr>
+<tr>
+<td><code>SERVICING_BURDEN_UNITS</code></td>
+<td align="right"><code>0.000001</code></td>
+</tr>
+<tr>
+<td><code>PAYMENT_BURDEN_RATE</code></td>
+<td align="right"><code>0.00000001</code></td>
+</tr>
+</tbody></table>
+<h2>Dominance test</h2>
+<p>Strategy A dominates Strategy B when:</p>
+<ol>
+<li>A is no worse than B on all seven frontier objectives after tolerance; and</li>
+<li>A is strictly better than B beyond tolerance on at least one objective.</li>
+</ol>
+<p>If all differences are within tolerance, neither strategy dominates the other.</p>
+<h2>Frontier rank</h2>
+<p>Iterative non-dominated sorting is frozen:</p>
+<pre><code class="language-text">Rank 1
+All non-dominated strategies in the full eligible set.
+
+Rank 2
+Non-dominated strategies after Rank 1 is removed.
+
+Rank 3+
+Repeat until every eligible strategy has a rank.
+</code></pre>
+<p>More than one strategy may receive the same frontier rank.</p>
+<p>Strategy code is used only for deterministic display order. It does not alter frontier rank.</p>
+<hr>
+<h1>A14. Governance-review priority</h1>
+<p>A frontier position does not constitute deployment approval.</p>
+<h2>Primary priority count</h2>
+<p>Exactly:</p>
+<pre><code class="language-text">zero or one PRIMARY_GOVERNANCE_REVIEW strategy per scope
+</code></pre>
+<p>is permitted.</p>
+<p>Multiple Rank 1 strategies may receive:</p>
+<pre><code class="language-text">SECONDARY_FRONTIER_REVIEW
+</code></pre>
+<p>in the same scope.</p>
+<p><code>BASELINE_REPLAY</code> is never assigned challenger priority. It remains:</p>
+<pre><code class="language-text">CONTROL_REFERENCE
+</code></pre>
+<h2>Governance balance score</h2>
+<p>For review ordering only, the seven Pareto objectives are normalized across all frontier-eligible strategies in the scope.</p>
+<p>Each receives equal weight:</p>
+<pre><code class="language-text">1 ÷ 7
+</code></pre>
+<pre><code class="language-text">Governance Balance Score
+=
+mean(
+    normalized access benefit,
+    normalized finance-charge benefit,
+    normalized loss-density benefit,
+    normalized contribution benefit,
+    normalized return benefit,
+    normalized servicing-burden benefit,
+    normalized payment-burden benefit
+)
+</code></pre>
+<p>This score:</p>
+<ul>
+<li>does not select application candidates;</li>
+<li>does not determine Pareto dominance;</li>
+<li>does not override constraints;</li>
+<li>does not authorize deployment.</li>
+</ul>
+<h2>Primary-priority prerequisites</h2>
+<p>A challenger must have:</p>
+<pre><code class="language-text">frontier_rank = 1
+hard_constraint_violation_count = 0
+strategy_evidence_status in (&#39;COMPLETE&#39;,&#39;PARTIAL&#39;)
+stress_improvement_violation_count = 0
+all seven frontier metrics present
+</code></pre>
+<h2>Primary-priority ordering</h2>
+<pre><code class="language-text">1. Better evidence rank:
+      COMPLETE before PARTIAL
+
+2. Higher governance balance score
+
+3. Higher risk-adjusted contribution delta versus baseline
+
+4. Lower expected-loss-density delta versus baseline
+
+5. Higher access-rate delta versus baseline
+
+6. Lower payment-burden delta versus baseline
+
+7. Lower servicing-burden delta versus baseline
+
+8. Strategy profile code, ascending
+</code></pre>
+<p>If no challenger satisfies the prerequisites, the scope receives no primary governance priority.</p>
+<p>A strategy may receive primary priority in more than one scope, but no scope may have more than one primary strategy.</p>
+<hr>
+<h1>A15. Stress non-improvement — exact interpretation</h1>
+<p>The amendment formally separates:</p>
+<pre><code class="language-text">SOURCE IMPROVEMENT
+STRATEGY RESTRICTION
+ABSOLUTE WORKLOAD REDUCTION
+</code></pre>
+<p>They are not interchangeable.</p>
+<h2>Source non-improvement metrics</h2>
+<p>For each matched application, stress cannot improve these accepted source measures beyond tolerance:</p>
+<pre><code class="language-text">integrated_risk_score                         lower is better
+synthetic_merchant_risk_proxy                lower is better
+
+source_expected_loss_density
+=
+schedule_adjusted_comparative_expected_loss_amount
+÷
+path_weighted_ead_amount                     lower is better
+
+annualized_risk_adjusted_return_rate          higher is better
+</code></pre>
+<p>A source-improvement violation exists when stress shows:</p>
+<pre><code class="language-text">lower integrated risk
+OR
+lower merchant risk proxy
+OR
+lower source loss density
+OR
+higher source annualized return
+</code></pre>
+<p>beyond <code>0.00000001</code>.</p>
+<h2>Strategy access and feasibility</h2>
+<p>Stress cannot have a better:</p>
+<pre><code class="language-text">strategy_outcome_rank
+feasibility_rank
+</code></pre>
+<p>than baseline for the same application and strategy.</p>
+<p>A numerically lower rank under stress is a violation.</p>
+<h2>Comparable-treatment burden test</h2>
+<p>Payment and servicing burden are compared for non-improvement only when treatment is comparable.</p>
+<p>Treatment is comparable when both scenarios have:</p>
+<pre><code class="language-text">the same strategy outcome code
+AND
+the same selected candidate template code
+AND
+selected funding amounts equal within $0.01
+AND
+the same servicing treatment code
+</code></pre>
+<p>Under comparable treatment:</p>
+<pre><code class="language-text">stress payment burden &lt; baseline payment burden
+</code></pre>
+<p>or:</p>
+<pre><code class="language-text">stress servicing burden &lt; baseline servicing burden
+</code></pre>
+<p>beyond tolerance is an improvement violation.</p>
+<h2>Strategy restriction</h2>
+<p>When stress produces:</p>
+<ul>
+<li>a worse access outcome;</li>
+<li>a worse feasibility class;</li>
+<li>lower selected exposure;</li>
+<li>a more conservative candidate;</li>
+<li>no access where baseline had access;</li>
+</ul>
+<p>then lower exposure, lower payment burden, lower finance charge, higher selected-candidate return, or lower total workload is classified as:</p>
+<pre><code class="language-text">STRATEGY_RESTRICTION
+</code></pre>
+<p>It is not classified as favorable source performance.</p>
+<h2>Absolute workload reduction</h2>
+<p>The following remains visible:</p>
+<pre><code class="language-text">stress total servicing burden
+−
+baseline total servicing burden
+</code></pre>
+<p>A negative value may result because fewer accounts receive access or review under stress.</p>
+<p>That reduction:</p>
+<ul>
+<li>is reported;</li>
+<li>is not hidden;</li>
+<li>is not called a source improvement;</li>
+<li>does not fail stress non-improvement when caused by a worse access outcome.</li>
+</ul>
+<h2>Frozen stress flags</h2>
+<p>Every matched comparison will carry:</p>
+<pre><code class="language-text">source_risk_improvement_violation_flag
+source_return_improvement_violation_flag
+strategy_access_improvement_violation_flag
+strategy_feasibility_improvement_violation_flag
+comparable_payment_burden_improvement_violation_flag
+comparable_servicing_burden_improvement_violation_flag
+
+strategy_restriction_flag
+absolute_workload_reduction_flag
+stress_nonimprovement_pass_flag
+</code></pre>
+<p><code>stress_nonimprovement_pass_flag</code> is true only when all six violation flags are false.</p>
+<hr>
+<h1>A16. Exact 32-reason catalog</h1>
+<p>Every reason definition will carry:</p>
+<pre><code class="language-text">reason_code
+reason_family
+severity_code
+severity_rank
+applicability_code
+description
+production_action_flag = false
+external_system_update_flag = false
+merchant_contact_flag = false
+production_adverse_action_flag = false
+</code></pre>
+<p>Severity hierarchy:</p>
+<pre><code class="language-text">INFO           1
+REVIEW         2
+ACCESS_BLOCK   3
+SYSTEM_BLOCK   4
+</code></pre>
+<h2>Source and evidence reasons</h2>
+<table>
+<thead>
+<tr>
+<th align="right">#</th>
+<th>Reason code</th>
+<th>Severity</th>
+<th>Applicability</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td><code>M2_11_REASON_SOURCE_CONTRACTS_VERIFIED</code></td>
+<td><code>INFO</code></td>
+<td><code>ALL</code></td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td><code>M2_11_REASON_BASELINE_REPLAY_MATCH</code></td>
+<td><code>INFO</code></td>
+<td><code>APPLICATION_ACCOUNT</code></td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td><code>M2_11_REASON_SOURCE_EVIDENCE_PARTIAL</code></td>
+<td><code>REVIEW</code></td>
+<td><code>CANDIDATE_APPLICATION</code></td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td><code>M2_11_REASON_SOURCE_EVIDENCE_BLOCKED</code></td>
+<td><code>SYSTEM_BLOCK</code></td>
+<td><code>ALL</code></td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td><code>M2_11_REASON_SOURCE_GRAIN_OR_LINEAGE_ERROR</code></td>
+<td><code>SYSTEM_BLOCK</code></td>
+<td><code>ALL</code></td>
+</tr>
+</tbody></table>
+<h2>Constraint and feasibility reasons</h2>
+<table>
+<thead>
+<tr>
+<th align="right">#</th>
+<th>Reason code</th>
+<th>Severity</th>
+<th>Applicability</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">6</td>
+<td><code>M2_11_REASON_POLICY_DECLINE_PRESERVED</code></td>
+<td><code>ACCESS_BLOCK</code></td>
+<td><code>APPLICATION</code></td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td><code>M2_11_REASON_INSUFFICIENT_EVIDENCE_PRESERVED</code></td>
+<td><code>ACCESS_BLOCK</code></td>
+<td><code>APPLICATION</code></td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td><code>M2_11_REASON_CANDIDATE_NOT_ELIGIBLE</code></td>
+<td><code>ACCESS_BLOCK</code></td>
+<td><code>CANDIDATE</code></td>
+</tr>
+<tr>
+<td align="right">9</td>
+<td><code>M2_11_REASON_STRUCTURE_BOUND_VIOLATION</code></td>
+<td><code>ACCESS_BLOCK</code></td>
+<td><code>CANDIDATE</code></td>
+</tr>
+<tr>
+<td align="right">10</td>
+<td><code>M2_11_REASON_AFFORDABILITY_CONSTRAINT</code></td>
+<td><code>ACCESS_BLOCK</code></td>
+<td><code>CANDIDATE</code></td>
+</tr>
+<tr>
+<td align="right">11</td>
+<td><code>M2_11_REASON_ECONOMIC_EVIDENCE_BLOCKED</code></td>
+<td><code>ACCESS_BLOCK</code></td>
+<td><code>CANDIDATE</code></td>
+</tr>
+<tr>
+<td align="right">12</td>
+<td><code>M2_11_REASON_NEGATIVE_CONTRIBUTION</code></td>
+<td><code>ACCESS_BLOCK</code></td>
+<td><code>CANDIDATE</code></td>
+</tr>
+<tr>
+<td align="right">13</td>
+<td><code>M2_11_REASON_BELOW_HURDLE_REVIEW</code></td>
+<td><code>REVIEW</code></td>
+<td><code>CANDIDATE_APPLICATION</code></td>
+</tr>
+<tr>
+<td align="right">14</td>
+<td><code>M2_11_REASON_UNRESOLVED_EXCEPTION</code></td>
+<td><code>ACCESS_BLOCK</code></td>
+<td><code>APPLICATION_ACCOUNT</code></td>
+</tr>
+<tr>
+<td align="right">15</td>
+<td><code>M2_11_REASON_CLOSED_STATE_PRESERVED</code></td>
+<td><code>INFO</code></td>
+<td><code>ACCOUNT</code></td>
+</tr>
+</tbody></table>
+<h2>Strategy-selection reasons</h2>
+<table>
+<thead>
+<tr>
+<th align="right">#</th>
+<th>Reason code</th>
+<th>Severity</th>
+<th>Applicability</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">16</td>
+<td><code>M2_11_REASON_ACCESS_EXPANSION_SELECTED</code></td>
+<td><code>INFO</code></td>
+<td><code>APPLICATION</code></td>
+</tr>
+<tr>
+<td align="right">17</td>
+<td><code>M2_11_REASON_PRICE_FOR_RISK_SELECTED</code></td>
+<td><code>INFO</code></td>
+<td><code>APPLICATION</code></td>
+</tr>
+<tr>
+<td align="right">18</td>
+<td><code>M2_11_REASON_PAYMENT_BURDEN_RELIEF_SELECTED</code></td>
+<td><code>INFO</code></td>
+<td><code>APPLICATION</code></td>
+</tr>
+<tr>
+<td align="right">19</td>
+<td><code>M2_11_REASON_LOSS_CONTAINMENT_SELECTED</code></td>
+<td><code>INFO</code></td>
+<td><code>APPLICATION</code></td>
+</tr>
+<tr>
+<td align="right">20</td>
+<td><code>M2_11_REASON_PROFITABILITY_DISCIPLINE_SELECTED</code></td>
+<td><code>INFO</code></td>
+<td><code>APPLICATION</code></td>
+</tr>
+<tr>
+<td align="right">21</td>
+<td><code>M2_11_REASON_EARLY_INTERVENTION_SIMULATED</code></td>
+<td><code>REVIEW</code></td>
+<td><code>ACCOUNT</code></td>
+</tr>
+<tr>
+<td align="right">22</td>
+<td><code>M2_11_REASON_BALANCED_FRONTIER_SELECTED</code></td>
+<td><code>INFO</code></td>
+<td><code>APPLICATION</code></td>
+</tr>
+<tr>
+<td align="right">23</td>
+<td><code>M2_11_REASON_NO_ACCESS_STRATEGY_RESTRICTION</code></td>
+<td><code>INFO</code></td>
+<td><code>APPLICATION</code></td>
+</tr>
+<tr>
+<td align="right">24</td>
+<td><code>M2_11_REASON_CONTROLLED_REVIEW_REQUIRED</code></td>
+<td><code>REVIEW</code></td>
+<td><code>APPLICATION_ACCOUNT</code></td>
+</tr>
+<tr>
+<td align="right">25</td>
+<td><code>M2_11_REASON_DETERMINISTIC_TIE_BREAK_APPLIED</code></td>
+<td><code>INFO</code></td>
+<td><code>CANDIDATE_APPLICATION</code></td>
+</tr>
+<tr>
+<td align="right">26</td>
+<td><code>M2_11_REASON_NO_FEASIBLE_CANDIDATE</code></td>
+<td><code>ACCESS_BLOCK</code></td>
+<td><code>APPLICATION</code></td>
+</tr>
+</tbody></table>
+<h2>Stress, frontier, and governance reasons</h2>
+<table>
+<thead>
+<tr>
+<th align="right">#</th>
+<th>Reason code</th>
+<th>Severity</th>
+<th>Applicability</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">27</td>
+<td><code>M2_11_REASON_STRESS_SOURCE_NONIMPROVEMENT_PASS</code></td>
+<td><code>INFO</code></td>
+<td><code>COMPARISON</code></td>
+</tr>
+<tr>
+<td align="right">28</td>
+<td><code>M2_11_REASON_STRESS_STRATEGY_RESTRICTION</code></td>
+<td><code>INFO</code></td>
+<td><code>COMPARISON</code></td>
+</tr>
+<tr>
+<td align="right">29</td>
+<td><code>M2_11_REASON_STRESS_IMPROVEMENT_VIOLATION</code></td>
+<td><code>SYSTEM_BLOCK</code></td>
+<td><code>COMPARISON</code></td>
+</tr>
+<tr>
+<td align="right">30</td>
+<td><code>M2_11_REASON_NONDOMINATED_FRONTIER</code></td>
+<td><code>INFO</code></td>
+<td><code>FRONTIER</code></td>
+</tr>
+<tr>
+<td align="right">31</td>
+<td><code>M2_11_REASON_DOMINATED_STRATEGY</code></td>
+<td><code>INFO</code></td>
+<td><code>FRONTIER</code></td>
+</tr>
+<tr>
+<td align="right">32</td>
+<td><code>M2_11_REASON_GOVERNANCE_REVIEW_PRIORITY</code></td>
+<td><code>REVIEW</code></td>
+<td><code>FRONTIER</code></td>
+</tr>
+</tbody></table>
+<p>The count remains exactly:</p>
+<pre><code class="language-text">32
+</code></pre>
+<p>No future reason may be inserted ad hoc during Program 214. A new reason would require a freeze amendment.</p>
+<hr>
+<h1>A17. Contract version and archive behavior</h1>
+<p>The frozen M2.11 consumption identity remains:</p>
+<pre><code class="language-text">M2_PORTFOLIO_OPTIMIZATION_STRATEGY_SIMULATION_CONSUMPTION
+Contract version 1
+M2_11_PORTFOLIO_OPTIMIZATION_STRATEGY_SIMULATION_SCHEMA_V1
+</code></pre>
+<h2>Latest and archive grain</h2>
+<pre><code class="language-text">module1_run_id
++ contract_version
++ strategy_profile_code
++ reporting_scope_code
+</code></pre>
+<p>Expected rows:</p>
+<pre><code class="language-text">Latest     24
+Archive    24
+</code></pre>
+<h2>Archive immutability</h2>
+<p>A database-level:</p>
+<pre><code class="language-text">BEFORE UPDATE OR DELETE
+</code></pre>
+<p>row trigger will reject every archive mutation with an exception.</p>
+<p>The archive will not use:</p>
+<pre><code class="language-text">ON CONFLICT DO UPDATE
+</code></pre>
+<p>Generation will insert each version exactly once.</p>
+<h2>Exact reproduction</h2>
+<p>For every latest row:</p>
+<pre><code class="language-text">archive.contract_row_hash
+=
+latest.contract_row_hash
+</code></pre>
+<p>and:</p>
+<pre><code class="language-text">archive.contract_payload
+=
+to_jsonb(latest) excluding reporting-only created timestamp
+</code></pre>
+<p>The archive row hash will be based on:</p>
+<ul>
+<li>contract payload;</li>
+<li>source latest row hash;</li>
+<li>archive identity;</li>
+<li>contract version.</li>
+</ul>
+<h2>Lifecycle behavior</h2>
+<p>Program 214 creates the version-1 latest and archive rows and sets:</p>
+<pre><code class="language-text">contract_status = GENERATED
+run_status      = M2_11_GENERATED
+</code></pre>
+<p>Programs 215 and 217 may update only mutable registry lifecycle fields and timestamps.</p>
+<p>They may not update:</p>
+<ul>
+<li>latest business values;</li>
+<li>latest contract hashes;</li>
+<li>archive payloads;</li>
+<li>archive hashes.</li>
+</ul>
+<h2>Rerun behavior</h2>
+<p>A committed Program 214 cannot be rerun for contract version 1.</p>
+<p>A future methodology change requires:</p>
+<pre><code class="language-text">new methodology version
++ new contract version
++ new source/design freeze
+</code></pre>
+<p>It may not overwrite the accepted version-1 archive.</p>
+<hr>
+<h1>A18. Final amended freeze status</h1>
+<pre><code class="language-text">Authoritative M2.10 baseline                    LOCKED
+Five-source hierarchy                           LOCKED
+Eight strategy profiles                         LOCKED
+Eight objective definitions                     LOCKED
+8 × 8 weight matrix                             LOCKED
+Objective normalization                         LOCKED
+Missing-evidence treatment                      LOCKED
+Score scale and rounding                        LOCKED
+Candidate tie precision                         LOCKED
+Selected-exposure Pareto treatment               LOCKED
+Feasibility classes and ranks                   LOCKED
+Outcome/access severity order                   LOCKED
+Baseline-replay source fields                   LOCKED
+No-candidate treatment                          LOCKED
+Profitability evidence requirements             LOCKED
+EARLY_INTERVENTION treatment                    LOCKED
+PORTFOLIO worst-case hierarchy                  LOCKED
+Pareto tolerances and frontier ranks            LOCKED
+Governance-review priority                      LOCKED
+Stress non-improvement interpretation           LOCKED
+Thirty-two reason definitions                   LOCKED
+Archive version and trigger behavior            LOCKED
+
+Physical object counts                         UNCHANGED
+Canonical entity count                         19,298
+Programs 212–219                               UNCHANGED
+M2.12 handoff                                  UNCHANGED
+</code></pre>
+<h2>Amendment disposition</h2>
+<pre><code class="language-text">Design Freeze Amendment A                     APPROVED
+M2.11 source and business design          FULLY FROZEN
+Remaining business-design ambiguities                0
+
+SQL generated                                      NO
+Documentation package generated                    NO
+Manifest generated                                 NO
+ZIP generated                                      NO
+Accepted M2.10 baseline modified                   NO
+</code></pre>
+<p>Work Package 2 may now build Programs <strong>212–214</strong> without reopening M2.11 business design.</p>
+</div></article><article id="m-c27d755a-a56e-40c9-9cef-0c6adf0bfc9d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C080-M00545 · 2026-08-05T07:15:10.272000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(19).md; Pasted markdown (2)(5).md</p><div class="bubble"><p>Review the two chat responses above and finalize M2.11 source and design freeze.</p>
+</div></article><article id="m-582064d0-e53e-4522-81fe-0b823f7ef479" class="message assistant"><p class="meta"><strong>Assistant</strong> · C080-M00546 · 2026-08-05T07:30:16.824655-04:00 · active path</p><div class="bubble"><h1>M2.11 Source &amp; Design Freeze — <strong>FINAL AND LOCKED</strong></h1>
+<p>I reviewed both attached responses together.</p>
+<p>The first response is controlling on <strong>design completeness</strong>: it correctly confirms the accepted M2.10 baseline, approves the architecture and five-work-package approach, and identifies six implementation-affecting issues that still required a bounded Amendment B. [export reference: filecite | turn3file1]</p>
+<p>The second response is controlling on <strong>build execution discipline</strong>: its five separately approved work packages, clean-workspace rules, no-work-ahead requirement, atomic Program 214 boundary, independent validation, and standalone-only pre-acceptance packaging model remain approved. Its statement that the design was already complete is revised to mean <strong>complete after incorporation of Amendment B below</strong>. [export reference: filecite | turn3file0]</p>
+<p>This response constitutes:</p>
+<pre><code class="language-text">M2.11 Source &amp; Design Freeze Amendment B
++
+Final Consolidated Freeze Disposition
+</code></pre>
+<p>No SQL, implementation specification, catalog, manifest, checksum inventory, documentation package, or ZIP has been generated in this step.</p>
+<hr>
+<h1>1. Final governing hierarchy</h1>
+<p>The M2.11 build is governed in this order:</p>
+<pre><code class="language-text">1. Accepted M2.10 full-project repository
+   and its governing acceptance records
+
+2. Original M2.11 Source &amp; Design Freeze
+
+3. M2.11 Source &amp; Design Freeze Amendment A
+
+4. M2.11 Source &amp; Design Freeze Amendment B
+   established by this response
+
+5. Approved output from the immediately
+   preceding M2.11 work package
+</code></pre>
+<p>Where a narrow conflict exists:</p>
+<pre><code class="language-text">Amendment B
+supersedes Amendment A
+only on the six matters expressly resolved below.
+
+Amendment A
+supersedes the original freeze
+only on the matters expressly resolved by Amendment A.
+
+All remaining original freeze provisions remain binding.
+</code></pre>
+<p>An approved Work Package 1 implementation specification may consolidate and map these rules, but it may not alter them.</p>
+<hr>
+<h1>2. Authoritative M2.10 baseline remains locked</h1>
+<p>The accepted M2.10 baseline remains:</p>
+<pre><code class="language-text">Archive SHA-256
+ca6aac62b1bb9442f3f3c5749930a13965a96c5141a18cf49fd8a37c765cf02c
+
+Archive size
+20,259,040 bytes
+
+ZIP entries
+4,488
+
+Numbered stages
+29
+
+Final accepted stage
+29_M2_10
+
+Run code
+M1_V0_2_BASELINE_BUILD
+
+Run version
+1
+
+Run status
+M2_10_ACCEPTED
+
+Contract status
+ACCEPTED
+
+Acceptance gate
+PASS
+
+M2.10 combined set hash
+24fca7263a04397ebf21d30639f9069b
+</code></pre>
+<p>The reviewed baseline also reconciles to:</p>
+<pre><code class="language-text">Account-performance rows                    59
+KPI rows                                    72
+Servicing-queue rows                         3
+Matched account comparisons                 15
+Canonical entities                         370
+
+Closed-stable accounts                      57
+Active-reconciled accounts                   1
+Controlled-review accounts                   1
+
+Certified exposure                     $785.48
+Active exposure                        $323.79
+Review-hold exposure                   $461.69
+Servicing burden units                 7.000000
+Unresolved exceptions                         0
+</code></pre>
+<p>The M2.10 ZIP itself is confirmed as the accepted baseline. Work Package 1 must also reconcile it to the matching external <code>.sha256</code> sidecar before producing implementation-control artifacts. The design freeze does not depend on rerunning M2.10 in PostgreSQL.</p>
+<hr>
+<h1>3. Amendment B1 — M2.2 source-family completion</h1>
+<h2>Final decision</h2>
+<p>The five-source-family hierarchy remains unchanged. The M2.2 source family is expanded to include the physical latest contract required for exact baseline replay.</p>
+<p>The authorized M2.2 physical objects are now:</p>
+<pre><code class="language-text">msbf_m2.application_pricing_structure_latest
+    Expected rows: 1,500
+
+msbf_m2.application_pricing_structure_candidate
+    Expected rows: 557
+
+Accepted M2.2 contract registry,
+acceptance gate, and set-hash metadata
+</code></pre>
+<p>This does <strong>not</strong> create a sixth source family.</p>
+<h2>Purpose of each M2.2 object</h2>
+<p><code>application_pricing_structure_latest</code> supplies the accepted application-level outcome and replay fields, including:</p>
+<pre><code class="language-text">pricing_disposition_code
+structure_available_flag
+review_required_flag
+selected_candidate_template_code
+selected_candidate_row_hash
+candidate_count
+stress_nonimprovement_applied_flag
+routing_evidence_status
+</code></pre>
+<p><code>application_pricing_structure_candidate</code> supplies the finite accepted structures that M2.11 may evaluate and re-rank.</p>
+<h2>Frozen source checks</h2>
+<p>Program 213 and Program 214 must require:</p>
+<pre><code class="language-text">M2.2 latest rows                              1,500
+M2.2 latest unique scenario/application rows  1,500
+M2.2 candidate rows                             557
+M2.2 candidate grain duplicates                   0
+
+Selected-candidate references absent
+from the candidate inventory                       0
+
+Structure-available rows lacking
+their expected candidate population                0
+
+No-structure outcomes incorrectly
+carrying selected candidates                       0
+</code></pre>
+<h2>Canonical-count effect</h2>
+<p>None.</p>
+<p>The 1,500 M2.2 latest rows contribute fields to the already-frozen:</p>
+<pre><code class="language-text">portfolio_strategy_application_source_snapshot
+Expected rows: 1,500
+</code></pre>
+<p>The 557 accepted candidates continue to populate:</p>
+<pre><code class="language-text">portfolio_strategy_candidate_source_snapshot
+Expected rows: 557
+</code></pre>
+<p>No new M2.11 target table or canonical entity family is introduced.</p>
+<h2>Source-scan rule</h2>
+<p>Within Program 214, every authorized physical source object may be scanned exactly once into a dedicated materialized staging object.</p>
+<p>This rule applies per Program 214 execution. Program 213 may independently read the accepted sources for preflight validation.</p>
+<p>After materialization, no downstream Program 214 logic may rescan the accepted physical source tables.</p>
+<hr>
+<h1>4. Amendment B2 — implicit no-access objective treatment</h1>
+<h2>Final decision</h2>
+<p>The implicit no-access alternative remains a temporary Program 214 evaluation construct. It is not inserted into the 4,456-row accepted-candidate evaluation table and does not alter the canonical count.</p>
+<p>Frozen identity:</p>
+<pre><code class="language-text">Alternative code
+IMPLICIT_NO_ACCESS
+</code></pre>
+<h2>Candidate-ranking conventions</h2>
+<p>For candidate-choice normalization and scoring only:</p>
+<table>
+<thead>
+<tr>
+<th>Objective</th>
+<th align="right">Implicit no-access value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ACCESS_RATE</code></td>
+<td align="right"><code>0</code></td>
+</tr>
+<tr>
+<td><code>SELECTED_EXPOSURE_AMOUNT</code></td>
+<td align="right"><code>0.00</code></td>
+</tr>
+<tr>
+<td><code>FINANCE_CHARGE_AMOUNT</code></td>
+<td align="right"><code>0.00</code></td>
+</tr>
+<tr>
+<td><code>EXPECTED_LOSS_DENSITY</code></td>
+<td align="right"><code>0.0000000000</code></td>
+</tr>
+<tr>
+<td><code>RISK_ADJUSTED_CONTRIBUTION</code></td>
+<td align="right"><code>0.00</code></td>
+</tr>
+<tr>
+<td><code>ANNUALIZED_RISK_ADJUSTED_RETURN</code></td>
+<td align="right"><code>0.0000000000</code></td>
+</tr>
+<tr>
+<td><code>PAYMENT_BURDEN_RATE</code></td>
+<td align="right"><code>0.0000000000</code></td>
+</tr>
+<tr>
+<td><code>SERVICING_BURDEN_UNITS</code></td>
+<td align="right">Not applicable at candidate grain</td>
+</tr>
+</tbody></table>
+<p>The zero expected-loss density is a <strong>finite-choice scoring convention</strong>, not an economic ratio calculated from zero exposure.</p>
+<h2>Persisted economic treatment</h2>
+<p>When no access is selected:</p>
+<pre><code class="language-text">selected_exposure_amount                 0.00
+selected_expected_loss_amount            0.00
+selected_finance_charge_amount           0.00
+selected_risk_adjusted_contribution      0.00
+
+selected_expected_loss_density           NULL
+</code></pre>
+<p>The economic density remains <code>NULL</code> because:</p>
+<pre><code class="language-text">0 expected loss ÷ 0 selected exposure
+</code></pre>
+<p>has no meaningful ratio interpretation.</p>
+<p>The final application simulation must preserve the distinction between:</p>
+<pre><code class="language-text">candidate-ranking loss-density convention = 0
+
+and
+
+persisted economic loss density = NULL
+</code></pre>
+<h2>Scope-level zero-exposure treatment</h2>
+<p>When a strategy/scope has no selected exposure:</p>
+<pre><code class="language-text">access_rate                               0
+selected_exposure_amount                  0.00
+finance_charge_amount                     0.00
+expected_loss_amount                      0.00
+risk_adjusted_contribution                0.00
+
+expected_loss_density                     NULL
+annualized_risk_adjusted_return           NULL
+payment_burden_rate                       NULL
+</code></pre>
+<p>Such a strategy/scope is:</p>
+<pre><code class="language-text">visible in summaries and comparisons
+but
+ineligible for Pareto-frontier evaluation
+</code></pre>
+<p>because required frontier ratios are absent.</p>
+<hr>
+<h1>5. Amendment B3 — candidate-selection precedence</h1>
+<h2>Final decision</h2>
+<p>The original sequence placing feasibility rank before objective score is superseded for weighted candidate selection.</p>
+<h3>Step 1 — preserve outcomes that are not candidate-selection populations</h3>
+<p>The following bypass challenger candidate selection:</p>
+<pre><code class="language-text">NO_ACCESS_POLICY_DECLINE
+NO_ACCESS_INSUFFICIENT_EVIDENCE
+BLOCKED_SOURCE_INTEGRITY
+</code></pre>
+<p>They remain governed preserved outcomes.</p>
+<h3>Step 2 — exclude nonselectable candidate alternatives</h3>
+<p>A candidate is excluded from selection when it has:</p>
+<pre><code class="language-text">hard_constraint_violation_count &gt; 0
+
+OR
+
+feasibility_class in
+(
+    INFEASIBLE_OBJECTIVE_EVIDENCE,
+    INFEASIBLE_HARD_CONSTRAINT,
+    BLOCKED_SOURCE_INTEGRITY
+)
+
+OR
+
+objective_score IS NULL
+</code></pre>
+<h3>Step 3 — rank feasible accepted candidates and implicit no access</h3>
+<p>For weighted-candidate strategies, the final selection order is:</p>
+<pre><code class="language-text">1. Highest persisted 12-decimal objective score
+
+2. On score equality within 0.000000000001:
+   best feasibility rank
+
+3. Accepted M2.2 candidate rank
+
+4. Candidate template code
+
+5. Accepted candidate row hash
+</code></pre>
+<p>Feasibility ranks remain:</p>
+<pre><code class="language-text">1  FEASIBLE_ACCESS
+2  FEASIBLE_CONTROLLED_REVIEW
+3  FEASIBLE_NO_ACCESS
+</code></pre>
+<p>Therefore:</p>
+<ul>
+<li>no access may win when its weighted score is strictly superior;</li>
+<li>access or controlled review wins a true score tie against no access;</li>
+<li>database row order never resolves a tie.</li>
+</ul>
+<h2>Score-exempt strategies</h2>
+<p>The following remain exempt:</p>
+<pre><code class="language-text">BASELINE_REPLAY
+EARLY_INTERVENTION
+</code></pre>
+<p><code>BASELINE_REPLAY</code> reproduces the accepted source structure.</p>
+<p><code>EARLY_INTERVENTION</code> replays the baseline application structure and changes only the frozen account-intervention timing treatment.</p>
+<h2>Candidate-evaluation persistence</h2>
+<p>The persisted evaluation table remains:</p>
+<pre><code class="language-text">557 accepted candidate rows
+× 8 strategies
+=
+4,456 rows
+</code></pre>
+<p>The implicit no-access alternative is calculated in temporary scoring logic and represented only through the selected application-strategy outcome when chosen.</p>
+<hr>
+<h1>6. Amendment B4 — account-servicing strategy treatment</h1>
+<h2>Final population</h2>
+<p>The frozen account-servicing simulation population remains:</p>
+<pre><code class="language-text">59 accepted M2.10 operational account rows
+×
+8 strategies
+=
+472 account-servicing strategy rows
+</code></pre>
+<h2>Seven replay strategies</h2>
+<p>For every strategy except <code>EARLY_INTERVENTION</code>, account servicing must replay the accepted M2.7/M2.10 account posture exactly:</p>
+<pre><code class="language-text">BASELINE_REPLAY
+ACCESS_EXPANSION
+PRICE_FOR_RISK
+PAYMENT_BURDEN_RELIEF
+LOSS_CONTAINMENT
+PROFITABILITY_DISCIPLINE
+BALANCED_FRONTIER
+</code></pre>
+<p>These strategies may not change:</p>
+<pre><code class="language-text">operational setup outcome
+operational setup action
+payment factor
+setup duration
+reassessment interval
+reassessment date
+certified account state
+performance tier
+servicing queue
+certified exposure
+payment performance
+exception posture
+servicing burden units
+</code></pre>
+<h2>EARLY_INTERVENTION</h2>
+<p>The Amendment A timing-only treatment remains unchanged:</p>
+<pre><code class="language-text">Closed stable:
+    no intervention
+    no burden increment
+
+Active reconciled:
+    earlier reassessment
+    payment factor unchanged
+    exposure unchanged
+    +1.000000 burden unit
+
+Controlled review:
+    accelerated governance review
+    payment factor unchanged
+    exposure unchanged
+    +1.000000 burden unit
+</code></pre>
+<p>No account strategy claims reduced risk, improved return, higher contribution, or improved payment performance.</p>
+<h2>Separation from application selection</h2>
+<p>The application-strategy layer and account-servicing layer are distinct governed simulations.</p>
+<p>An application strategy outcome does not:</p>
+<ul>
+<li>delete an accepted operational account;</li>
+<li>close an accepted operational account;</li>
+<li>fabricate an account for a newly selected application;</li>
+<li>alter accepted payment or account history.</li>
+</ul>
+<p>An existing account remains in the account-servicing simulation even when an application strategy’s counterfactual outcome is no access.</p>
+<h2>Scope-specific account counts</h2>
+<p>Frozen expected account coverage:</p>
+<pre><code class="language-text">BASELINE account rows                     44
+RECESSION_ENERGY account rows             15
+PORTFOLIO distinct operational accounts   44
+</code></pre>
+<p>The accepted 15 stress accounts must each match one baseline operational application. Program 213 must fail closed if that relationship does not hold.</p>
+<h2>PORTFOLIO account rollup</h2>
+<p>For each:</p>
+<pre><code class="language-text">merchant_application_id
++ strategy_profile_code
+</code></pre>
+<p>select one account-servicing row from the available scenarios using:</p>
+<pre><code class="language-text">1. Highest accepted source-account posture rank
+
+   CONTROLLED_REVIEW     3
+   ACTIVE_RECONCILED     2
+   CLOSED_STABLE         1
+
+2. Highest strategy servicing-burden units
+
+3. Highest certified exposure amount
+
+4. RECESSION_ENERGY before BASELINE
+
+5. Account-servicing simulation row hash,
+   ascending lexical order
+</code></pre>
+<p>The 15 matched baseline/stress pairs collapse to one adverse row each. Baseline-only accounts remain as their available row.</p>
+<h2>Servicing-burden interpretation</h2>
+<p>Newly access-selected applications without an accepted operational account receive no fabricated servicing simulation or burden estimate.</p>
+<p>Scope-level servicing burden means:</p>
+<blockquote>
+<p>Burden on the accepted M2.10 operational-account population under the strategy—not projected total servicing cost for newly selected access.</p>
+</blockquote>
+<p>Every scope summary and contract row must expose:</p>
+<pre><code class="language-text">servicing_account_rows
+servicing_distinct_application_rows
+
+servicing_burden_coverage_code
+=
+ACCEPTED_OPERATIONAL_ACCOUNTS_ONLY
+
+new_access_servicing_burden_estimated_flag
+=
+false
+</code></pre>
+<p>This limitation must remain visible in Program 218, Program 219, and the final contract.</p>
+<hr>
+<h1>7. Amendment B5 — applications without an operational account</h1>
+<h2>Final decision</h2>
+<p>Absence of an accepted M2.10 operational account is not a credit-data, economics, or source-integrity defect.</p>
+<p>For an application with no operational account:</p>
+<pre><code class="language-text">operational_account_present_flag
+=
+false
+
+account_certification_constraint_applicability
+=
+NOT_APPLICABLE
+
+constraint_unresolved_exception_count
+=
+0
+</code></pre>
+<p>The <code>0</code> applies only to hard-constraint evaluation. It means:</p>
+<pre><code class="language-text">No associated operational exception exists
+because no accepted operational account exists.
+</code></pre>
+<p>It must not be represented as a measured operational-account metric.</p>
+<p>Accordingly:</p>
+<pre><code class="language-text">source_unresolved_exception_count
+=
+NULL
+
+source_certified_state_code
+=
+NULL
+
+source_servicing_queue_code
+=
+NULL
+
+source_certified_exposure_amount
+=
+NULL
+</code></pre>
+<p>For an application with an accepted account, the exception/certification constraint applies and requires:</p>
+<pre><code class="language-text">state_certified_flag = true
+unresolved_exception_count = 0
+certification_blocked_flag = false
+accepted account lineage intact
+</code></pre>
+<p>This rule applies to every strategy, including the controlled <code>ACCESS_EXPANSION</code> exception.</p>
+<p>It does not weaken economic, affordability, candidate, policy-decline, or insufficient-evidence controls.</p>
+<hr>
+<h1>8. Amendment B6 — latest and archive contract grain</h1>
+<h2>Latest contract</h2>
+<p>Frozen unique key:</p>
+<pre><code class="language-text">module1_run_id
++ strategy_profile_code
++ reporting_scope_code
+</code></pre>
+<p><code>contract_version</code> is a required stored attribute but is not part of latest-row uniqueness.</p>
+<p>Expected version-1 latest rows:</p>
+<pre><code class="language-text">8 strategies × 3 scopes = 24
+</code></pre>
+<h2>Immutable archive</h2>
+<p>Frozen unique key:</p>
+<pre><code class="language-text">module1_run_id
++ contract_version
++ strategy_profile_code
++ reporting_scope_code
+</code></pre>
+<p>Expected version-1 archive rows:</p>
+<pre><code class="language-text">24
+</code></pre>
+<h2>Current-version behavior</h2>
+<p>Program 214 must:</p>
+<ol>
+<li>insert 24 latest rows for version 1;</li>
+<li>insert 24 immutable archive rows for version 1;</li>
+<li>fail closed if version-1 latest, archive, registry, or generated business rows already exist;</li>
+<li>prohibit a committed version-1 rerun.</li>
+</ol>
+<p>Program 215–219 may not rewrite latest business values or archive values.</p>
+<p>Program 217 may update only mutable lifecycle fields and timestamps in the contract registry.</p>
+<h2>Archive trigger</h2>
+<p>The archive remains protected by a database-level:</p>
+<pre><code class="language-text">BEFORE UPDATE OR DELETE
+</code></pre>
+<p>trigger that raises on every attempted mutation.</p>
+<h2>Future versions</h2>
+<p>A future contract or methodology version requires:</p>
+<pre><code class="language-text">a new source/design freeze
++ new methodology identity
++ new contract version
++ separately governed implementation
+</code></pre>
+<p>Such a future version may replace the current latest view of the contract while appending a new immutable archive version. That behavior is outside the current version-1 programs.</p>
+<hr>
+<h1>9. Frozen source hierarchy after Amendment B</h1>
+<p>Exactly five accepted source families remain authorized.</p>
+<h2>1. M2.10 current portfolio-performance family</h2>
+<pre><code class="language-text">msbf_ctl.m2_10_portfolio_analytics_contract_registry
+msbf_m2.application_portfolio_performance_latest
+msbf_m2.portfolio_kpi_snapshot
+msbf_m2.servicing_queue_analytics_snapshot
+</code></pre>
+<h2>2. M1.17 integrated application family</h2>
+<pre><code class="language-text">msbf_m1.v_m1_17_g2_integrated_consumption
+</code></pre>
+<h2>3. M2.2 pricing-and-structure family</h2>
+<pre><code class="language-text">msbf_m2.application_pricing_structure_latest
+msbf_m2.application_pricing_structure_candidate
+accepted M2.2 registry and gate metadata
+</code></pre>
+<h2>4. M2.4 booking/funding/activation family</h2>
+<pre><code class="language-text">msbf_m2.application_booking_funding_activation_latest
+</code></pre>
+<h2>5. M2.7 operational-activation family</h2>
+<pre><code class="language-text">msbf_m2.application_operational_activation_latest
+</code></pre>
+<p>Direct reads of M2.3, M2.5, M2.6, M2.8, and M2.9 business tables remain prohibited.</p>
+<hr>
+<h1>10. All other frozen design elements remain unchanged</h1>
+<p>The following remain exactly as previously locked:</p>
+<pre><code class="language-text">Module
+M2.11 — Portfolio Optimization &amp; Strategy Simulation
+
+Repository stage
+30_M2_11
+
+Methodology
+M2_11_METHOD_V1
+
+Policy
+M2_11_PORTFOLIO_OPTIMIZATION_STRATEGY_SIMULATION_POLICY_V1
+
+Contract
+M2_PORTFOLIO_OPTIMIZATION_STRATEGY_SIMULATION_CONSUMPTION v1
+
+Schema
+M2_11_PORTFOLIO_OPTIMIZATION_STRATEGY_SIMULATION_SCHEMA_V1
+
+Acceptance gate
+M2_11_PORTFOLIO_OPTIMIZATION_STRATEGY_SIMULATION
+</code></pre>
+<p>Also unchanged:</p>
+<pre><code class="language-text">Strategy profiles                          8
+Objective definitions                      8
+Hard-constraint families                  12
+Reason definitions                        32
+Reporting scopes                           3
+
+Positive controls                        120
+Negative controls                         20
+Generation evidence rows                  24
+Acceptance evidence rows                   1
+Detailed-report result sets               24
+</code></pre>
+<p>The eight strategies remain:</p>
+<pre><code class="language-text">BASELINE_REPLAY
+ACCESS_EXPANSION
+PRICE_FOR_RISK
+PAYMENT_BURDEN_RELIEF
+LOSS_CONTAINMENT
+PROFITABILITY_DISCIPLINE
+EARLY_INTERVENTION
+BALANCED_FRONTIER
+</code></pre>
+<p>The 8 × 8 weight matrix, normalization formulas, missing-evidence treatment, exact precision and rounding, selected-exposure exclusion from Pareto dominance, feasibility classes, outcome-severity ranks, baseline-replay fields, profitability requirements, PORTFOLIO application adversity order, Pareto tolerances, non-dominated sorting, governance-review priority, stress non-improvement rules, 32-reason catalog, and non-production boundary remain governed by Amendment A.</p>
+<hr>
+<h1>11. Physical counts and canonical arithmetic remain unchanged</h1>
+<pre><code class="language-text">Policy profile                                  1
+Strategy profiles                               8
+Objective definitions                           8
+Constraint definitions                         12
+Reason definitions                             32
+
+Application source snapshots                1,500
+Candidate source snapshots                    557
+Account source snapshots                       59
+KPI source snapshots                           72
+Queue source snapshots                          3
+
+Candidate evaluations                       4,456
+Application strategy simulations           12,000
+Account servicing simulations                 472
+
+Strategy summaries                             24
+Frontier rows                                  24
+Baseline/challenger comparisons                21
+
+Latest contract rows                           24
+Archive contract rows                          24
+Contract registry rows                          1
+                                            ------
+Canonical entities                         19,298
+</code></pre>
+<p>Arithmetic:</p>
+<pre><code class="language-text">1 + 8 + 8 + 12 + 32
++ 1,500 + 557 + 59 + 72 + 3
++ 4,456 + 12,000 + 472
++ 24 + 24 + 21
++ 24 + 24 + 1
+=
+19,298
+</code></pre>
+<p>The implicit no-access alternative is temporary and is excluded from canonical counts.</p>
+<p>The newly authorized M2.2 latest source populates an existing source snapshot and does not create additional canonical rows.</p>
+<hr>
+<h1>12. Program and mutation architecture remains unchanged</h1>
+<p>Normal sequence:</p>
+<pre><code class="language-text">212  Schema, policy, definitions,
+     contracts, triggers, and views
+
+213  Accepted-source and pristine-target preflight
+
+214  Deterministic strategy simulation
+     and physical reconciliation
+
+215  Positive validation
+
+216  Negative controls
+
+217  Acceptance finalizer
+
+218  Master report
+
+219  Detailed report
+</code></pre>
+<p>Recovery programs:</p>
+<pre><code class="language-text">212A  Failed schema/policy installation recovery
+214A  Failed pre-commit generation rollback recovery
+214B  Committed-generation checkpoint reconstruction
+215A  Failed-positive-validation recovery
+</code></pre>
+<p>Implementation invariants:</p>
+<pre><code class="language-text">212 installs structures and definitions only.
+
+213 is read-only.
+
+214 is the sole normal writer of
+M2.11 simulation business rows.
+
+215–219 cannot regenerate the simulation blueprint.
+
+218 and 219 are read-only.
+
+Every combined hash uses explicit ordered aggregation.
+
+Every selection and tie uses frozen business keys.
+
+Recovery programs never appear in the normal execution chain.
+</code></pre>
+<hr>
+<h1>13. Five-work-package plan — final disposition</h1>
+<p>The five-work-package approach remains fully approved. It creates the necessary review and restart boundaries and prevents another monolithic one-pass build. [export reference: filecite | turn4file0]</p>
+<p>The governing references in the work-package prompts must now read:</p>
+<pre><code class="language-text">Accepted M2.10 baseline
++ Final M2.11 Source &amp; Design Freeze
+  consisting of:
+    original freeze
+    Amendment A
+    Amendment B
+</code></pre>
+<p>The five packages remain:</p>
+<pre><code class="language-text">WP1  Freeze consolidation and implementation specification
+
+WP2  Programs 212–214 and associated recovery utilities
+
+WP3  Programs 215–216 and validation recovery
+
+WP4  Programs 217–219
+
+WP5  Documentation and standalone execution packaging
+</code></pre>
+<p>The global controls from the work-package response remain binding:</p>
+<ul>
+<li>one clean workspace;</li>
+<li>no reuse of partial failed M2.11 builds;</li>
+<li>no work ahead;</li>
+<li>no invented business rules;</li>
+<li>no fabricated hashes, results, champions, or acceptance;</li>
+<li>PostgreSQL <code>numeric</code>, not floating point;</li>
+<li>explicit insert projections;</li>
+<li>ordered hashes;</li>
+<li>staged source consumption;</li>
+<li>index and <code>ANALYZE</code> before downstream joins;</li>
+<li>materialize expensive intermediates once;</li>
+<li>no full-project ZIP before acceptance;</li>
+<li>standalone status must remain <code>READY FOR LIVE EXECUTION / NOT EXECUTED / NOT ACCEPTED</code>. [export reference: filecite | turn7file0]</li>
+</ul>
+<p>This conversation is already the dedicated M2.11 build conversation. There is no need to return to the failed build chat or open another one.</p>
+<hr>
+<h1>14. Final authorization state</h1>
+<pre><code class="language-text">M2.10 authoritative baseline                  LOCKED
+Original M2.11 Source &amp; Design Freeze          LOCKED
+M2.11 Amendment A                              LOCKED
+M2.11 Amendment B                              LOCKED
+
+Five-source-family hierarchy                   LOCKED
+Authorized physical source objects             LOCKED
+Eight strategies                               LOCKED
+Eight objectives                               LOCKED
+8 × 8 weight matrix                            LOCKED
+Twelve hard constraints                        LOCKED
+Thirty-two reasons                             LOCKED
+Three reporting scopes                         LOCKED
+
+No-access objective treatment                  LOCKED
+Candidate-selection precedence                 LOCKED
+Account-servicing treatment                    LOCKED
+Operational-account applicability              LOCKED
+PORTFOLIO account rollup                       LOCKED
+Latest/archive grain                           LOCKED
+
+Expected physical counts                       LOCKED
+Canonical count of 19,298                      LOCKED
+Programs 212–219                               LOCKED
+Recovery boundaries                            LOCKED
+Validation counts                              LOCKED
+Non-production boundary                        LOCKED
+M2.12 handoff                                  LOCKED
+
+Remaining business-design ambiguities               0
+</code></pre>
+<h2>Build authorization</h2>
+<pre><code class="language-text">Work Package 1
+AUTHORIZED
+
+Programs 212–219 SQL construction
+NOT YET AUTHORIZED
+
+Condition for SQL authorization
+Work Package 1 approval with:
+
+Frozen-semantic changes                         0
+Unmapped required source fields                 0
+Unresolved target grains                        0
+Canonical-count discrepancies                  0
+Program-boundary ambiguities                    0
+</code></pre>
+<h2>Artifact status for this response</h2>
+<pre><code class="language-text">SQL generated                                  NO
+Implementation files generated                 NO
+Documentation package generated                NO
+Manifest generated                             NO
+ZIP generated                                  NO
+Accepted M2.10 baseline modified               NO
+</code></pre>
+<p><strong>The M2.11 source and business design is now fully frozen. The next governed action is Work Package 1 only.</strong></p>
+</div></article><article id="m-65d21eea-ce26-4638-9c09-1bdeeffb7f6f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C080-M00547 · 2026-08-06T23:53:32.244000-04:00 · active path</p><p class="note">Attachment references: M2_11_STANDALONE_ACCEPTED_20260806(2).zip; M2.11_Acceptance.rtf; M2_11_FULL_PROJECT_ACCEPTED_20260806(2).zip</p><div class="bubble"><p>M2.11 acceptance. Ingest before we move on to M2.12 source and business design.</p>
+</div></article><article id="m-9685dc0c-c207-475a-a21d-b95431542f9c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C080-M00548 · 2026-08-06T23:57:50.887103-04:00 · active path</p><div class="bubble"><h1>M2.11 accepted baseline ingested</h1>
+<p>The following artifacts are now treated as the authoritative M2.11 acceptance set:</p>
+<pre><code class="language-text">M2_11_STANDALONE_ACCEPTED_20260806(2).zip
+M2_11_FULL_PROJECT_ACCEPTED_20260806(2).zip
+M2.11_Acceptance.rtf
+</code></pre>
+<p>I independently confirmed that both ZIP archives open successfully and pass CRC validation. Their calculated identities match the acceptance record:</p>
+<pre><code class="language-text">Accepted standalone M2.11
+SHA-256
+7fec978d1675af4fe415f31a7560dda605f6f48fe055fe8c671b07c59156c6b6
+
+ZIP entries
+308
+
+Accepted full project through M2.11
+SHA-256
+92f0491eea26b0d546c85992e27433cd006a0b2f126c32a139d795b7749904fc
+
+ZIP entries
+4,819
+
+Numbered stages
+30
+
+Final stage
+30_M2_11
+</code></pre>
+<p>The acceptance record confirms that the independent audit concluded <strong>PASS</strong>, with no source, runtime, canonical-identity, validation, acceptance, archive, stress, or evidence-completeness blocker. It also confirms that all packaging advisories were resolved without changing SQL or rerunning PostgreSQL. [export reference: filecite | turn8file0 | L10-L45]</p>
+<h2>Accepted database identity</h2>
+<pre><code class="language-text">Run code
+M1_V0_2_BASELINE_BUILD
+
+Run version
+1
+
+Run status
+M2_11_ACCEPTED
+
+Contract status
+ACCEPTED
+
+Acceptance gate
+PASS
+
+Generation evidence
+24 / 24 PASS
+
+Positive controls
+120 / 120 PASS
+
+Negative controls
+20 / 20 PASS
+
+Acceptance prerequisites
+45 / 45 PASS
+
+Canonical families
+19
+
+Canonical entities
+19,298
+
+Contract set hash
+19f1a9d842c9cb35617ca03e49445aad
+
+Combined set hash
+a67d375b9f9248b3eec8160cf3dc656d
+
+Registry row hash
+61c22f4f3f2e99905d05958fddf80671
+
+Deterministic mismatches
+0
+
+Blocking or stage-boundary findings
+0
+
+Stress-improvement violations
+0
+
+Latest/archive mismatches
+0
+
+Governed evidence exports
+38 / 38 PASS
+</code></pre>
+<p>These identities reconcile across the acceptance finalizer, master report, 24 detailed reports, post-chain state, and independent audit. [export reference: filecite | turn8file0 | L179-L239]</p>
+<h2>Repository authority</h2>
+<p>The full-project ZIP is now the sole technical baseline for M2.12 source and business design:</p>
+<pre><code class="language-text">Authoritative project baseline
+M2_11_FULL_PROJECT_ACCEPTED_20260806(2).zip
+
+Accepted predecessor stages
+29 / 29 byte-identical
+
+Embedded accepted M2.11 stage
+30_M2_11
+
+Standalone versus embedded M2.11
+BYTE-IDENTICAL
+</code></pre>
+<p>The acceptance package reports that all 29 predecessor stages were preserved and that the embedded <code>30_M2_11</code> stage is byte-identical to the accepted standalone package. [export reference: filecite | turn8file0 | L145-L170]</p>
+<h2>Current governance boundary</h2>
+<pre><code class="language-text">M2.11                                    ACCEPTED
+M2.12 source and business design         AUTHORIZED
+M2.12 SQL construction                   NOT AUTHORIZED
+M2.12 PostgreSQL execution               NOT AUTHORIZED
+Production deployment                    NOT AUTHORIZED
+Module 3                                 NOT AUTHORIZED
+</code></pre>
+<p>The independent audit expressly authorizes <strong>M2.12 source/design planning only</strong> while retaining separate approval requirements for M2.12 implementation and execution. [export reference: filecite | turn8file0 | L241-L280]</p>
+<p>No files were created, modified, repackaged, or superseded during this intake.</p>
+</div></article><article id="m-c4179f9b-ac68-4205-96df-5fc5ab251a50" class="message user"><p class="meta"><strong>Andrew / user</strong> · C080-M00549 · 2026-08-07T00:01:11.213000-04:00 · active path</p><div class="bubble"><p>Produce M2.12 source and business design. We will build M2.12 in a separate chat. We need to pass everything to the other chat in explicit detail to ensure successful M2.12 build.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

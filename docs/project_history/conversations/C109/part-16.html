@@ -1,0 +1,1036 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 16 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 16</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-15.html">Previous part</a><a href="part-17.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-a8153ab7-cfe0-44e5-b343-7a96ce40ffd5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00425 · 2026-08-27T08:13:39.958370-04:00 · active path</p><div class="bubble"><p>Ingested. <code>FactServicingExecution</code> is the strongest operational fact we have seen so far for P04, and it confirms that this page should be built as a <strong>small but precise servicing workbench</strong>, not as a broad production-collections dashboard.</p>
+<p>The table is at one row per scenario-qualified account/advance servicing-execution outcome. It carries account identity, source operational setup, servicing outcome/action/queue, processing flags, lifecycle state, payment-event counts, payment amounts, ending simulated exposure, and execution reasons. That is enough to support both the top servicing KPIs and the operational-detail table. [export reference: filecite | turn50file0 | L1-L6]</p>
+<p>Two rows define the actual workload population. Merchant 000312 / Baseline is the active-processing case: <code>$518.04</code> source exposure, <code>SIMULATED_TEMPORARY_PAYMENT_PROCESSING_ACTIVE</code>, queue <code>TEMPORARY_PAYMENT_PROCESSING</code>, processing authorized, seven payment events, one return, one retry, and <code>$323.79</code> ending simulated exposure. Merchant 000098 / Baseline is the review-hold case: <code>$461.69</code> exposure, <code>SERVICING_EXECUTION_REVIEW_HOLD</code>, queue <code>SERVICING_REVIEW_HOLD</code>, review required, zero payment events, and <code>$461.69</code> ending exposure. [export reference: filecite | turn50file0 | L5-L6]</p>
+<p>Everything else in the supplied population follows the no-processing path: <code>NO_SERVICING_EXECUTION_REQUIRED</code>, <code>NO_PAYMENT_PROCESSING</code>, <code>CLOSED_NO_PROCESSING</code>, zero processing amounts, and zero ending exposure. Merchant 000749 from P03 is one example. [export reference: filecite | turn50file0 | L26-L26]</p>
+<p>That gives us a very useful operational hierarchy for P04:</p>
+<p><strong>Normal / no servicing</strong>
+→ closed, no processing required</p>
+<p><strong>Active servicing</strong>
+→ temporary payment processing</p>
+<p><strong>Review required</strong>
+→ servicing review hold</p>
+<p>Those are distinct enough to support a small status distribution.</p>
+<h3>Fields I would treat as report-grade</h3>
+<p>From <code>FactServicingExecution</code>, these are the fields worth designing around:</p>
+<pre><code class="language-text">merchant_id
+merchant_application_id
+source_exposure_amount
+servicing_execution_outcome_code
+servicing_execution_action_code
+servicing_execution_priority_rank
+servicing_execution_queue_code
+processing_authorized_flag
+processing_review_required_flag
+no_processing_required_flag
+final_lifecycle_state_code
+payment_event_count
+returned_event_count
+retry_event_count
+scheduled_payment_amount
+processed_payment_amount
+returned_payment_amount
+retry_payment_amount
+ending_simulated_exposure_amount
+primary_execution_reason_code
+AccountKey
+</code></pre>
+<p>The hashes, contract metadata, methodology/version fields, and synthetic execution IDs belong in lineage/evidence, not the main page.</p>
+<h3>This changes the KPI recommendation slightly</h3>
+<p>I would now anchor the <strong>top KPI strip on <code>FactServicingExecution</code></strong>, because it gives us a clean account-grain servicing posture.</p>
+<p>The first four KPIs I want are:</p>
+<p><strong>Accounts requiring attention</strong><br>Count rows where either:</p>
+<pre><code class="language-text">processing_authorized_flag = TRUE
+OR
+processing_review_required_flag = TRUE
+</code></pre>
+<p><strong>Exposure requiring attention</strong><br>Sum <code>source_exposure_amount</code> over those same rows.</p>
+<p><strong>Active servicing</strong><br>Count rows where <code>processing_authorized_flag = TRUE</code>.</p>
+<p><strong>Review holds</strong><br>Count rows where <code>processing_review_required_flag = TRUE</code>.</p>
+<p>For the full current population, we expect approximately:</p>
+<pre><code class="language-text">Accounts requiring attention     2
+Exposure requiring attention     $979.73
+Active servicing                 1
+Review holds                     1
+</code></pre>
+<p>across both scenarios together, although with the required single-select Scenario slicer the visible values will depend on which scenario owns those two rows. The two supplied actionable rows are both Baseline. [export reference: filecite | turn50file0 | L5-L6]</p>
+<p>I would <strong>not</strong> make “57 no processing required” a headline KPI. That&#39;s useful context for a distribution chart, but the page should foreground exceptions.</p>
+<h3>The execution fact is not date-as-of</h3>
+<p>One important boundary has also become clear: <code>FactServicingExecution</code> itself does <strong>not contain an operational event date</strong> other than <code>created_at</code>, which is artifact creation metadata. So the Observation-date slicer should <strong>not directly filter this execution fact as though servicing execution happened on <code>created_at</code></strong>.</p>
+<p>That means P04 will likely combine:</p>
+<ul>
+<li><strong>as-of monitoring state</strong> from <code>FactAccountDaily</code> / endpoint facts,</li>
+<li><strong>dated exception history</strong> from <code>FactPaymentException</code>,</li>
+<li><strong>servicing outcome state</strong> from <code>FactServicingExecution</code>.</li>
+</ul>
+<p>We need to be careful not to pretend all three are the same temporal grain.</p>
+<h3>Next table</h3>
+<p>Before constructing measures, send me <strong><code>FactServicingQueueEndpoint</code></strong> next.</p>
+<p>That is the crucial one because it may already provide the governed endpoint summary of servicing queue, exposure and burden. If it does, we may use:</p>
+<ul>
+<li>daily/as-of monitoring for current operational condition,</li>
+<li>endpoint queue for certified servicing posture,</li>
+<li>execution fact for the specific action/outcome,</li>
+<li>payment exception for case history.</li>
+</ul>
+<p>Once I ingest <code>FactServicingQueueEndpoint</code>, we should have enough to lock P04&#39;s exact KPI architecture and start building.</p>
+</div></article><article id="m-0c0f7787-fb87-40f8-99c9-79d6b35f23e4" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00426 · 2026-08-27T08:14:29.496000-04:00 · active path</p><div class="bubble"><p>factservicingqueueendpoint : </p>
+<table>
+<thead>
+<tr>
+<th>module1_run_id servicing_queue_code account_count scenario_count certified_exposure_amount payment_event_count exception_case_count resolved_exception_count unresolved_exception_count servicing_burden_units maximum_tier_rank row_hash created_at</th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>ACTIVE_REASSESSMENT</td>
+<td>1</td>
+<td>1</td>
+<td>323.79</td>
+<td>7</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>2</td>
+<td>1</td>
+<td>c4dca8f26dc946f4f8faeab96ace3fb6</td>
+<td>8/4/2026</td>
+</tr>
+<tr>
+<td>1</td>
+<td>GOVERNANCE_REVIEW_HOLD</td>
+<td>1</td>
+<td>1</td>
+<td>461.69</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>5</td>
+<td>2</td>
+<td>ee2bd79461c84bb18d13e31af768fbc3</td>
+<td>8/4/2026</td>
+</tr>
+<tr>
+<td>1</td>
+<td>NO_SERVICING_REQUIRED</td>
+<td>57</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>97c04aff7b6d829daf49de5f264ef01e</td>
+<td>8/4/2026</td>
+</tr>
+</tbody></table>
+</div></article><article id="m-7662782e-144f-42f2-9ab4-9bcd176e5714" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00427 · 2026-08-27T08:14:31.392879-04:00 · active path</p><div class="bubble"><p>Excellent. <code>FactServicingQueueEndpoint</code> clarifies the architecture substantially.</p>
+<p>It is <strong>not scenario-grain</strong>. It is an endpoint aggregate across the accepted population, with <code>scenario_count</code> telling us how many scenarios contribute to each queue. Therefore, <strong>we should not use it for Scenario-sensitive P04 KPIs</strong>. Doing so would make a Baseline/Recession Energy slicer appear to control figures that are actually cross-scenario endpoint aggregates.</p>
+<p>Its three rows reconcile cleanly to the servicing-execution population:</p>
+<table>
+<thead>
+<tr>
+<th>Queue</th>
+<th align="right">Accounts</th>
+<th align="right">Certified exposure</th>
+<th align="right">Burden</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Active reassessment</td>
+<td align="right">1</td>
+<td align="right">$323.79</td>
+<td align="right">2</td>
+<td>Active temporary-processing account</td>
+</tr>
+<tr>
+<td>Governance review hold</td>
+<td align="right">1</td>
+<td align="right">$461.69</td>
+<td align="right">5</td>
+<td>Controlled review account</td>
+</tr>
+<tr>
+<td>No servicing required</td>
+<td align="right">57</td>
+<td align="right">$0</td>
+<td align="right">0</td>
+<td>Remaining funded account paths</td>
+</tr>
+</tbody></table>
+<p>That gives <strong>59 account paths</strong>, <strong>$785.48 certified endpoint exposure</strong>, and <strong>7 servicing-burden units</strong>. It also confirms one exception case, resolved, and zero unresolved exceptions.</p>
+<h3>Important distinction from <code>FactServicingExecution</code></h3>
+<p>We now have two different exposure concepts:</p>
+<ul>
+<li><p><code>FactServicingExecution[source_exposure_amount]</code>: exposure entering the servicing execution stage.</p>
+<ul>
+<li>312 = <strong>$518.04</strong></li>
+<li>098 = <strong>$461.69</strong></li>
+<li>attention population = <strong>$979.73</strong></li>
+</ul>
+</li>
+<li><p><code>FactServicingQueueEndpoint[certified_exposure_amount]</code>: certified <strong>ending</strong> exposure.</p>
+<ul>
+<li>Active reassessment = <strong>$323.79</strong></li>
+<li>Governance review hold = <strong>$461.69</strong></li>
+<li>attention population = <strong>$785.48</strong></li>
+</ul>
+</li>
+</ul>
+<p>Those are both valid, but they answer different questions.</p>
+<p>For a page titled <strong>Servicing &amp; Exceptions</strong>, I strongly prefer the second for a headline:</p>
+<p><strong>Current servicing exposure: $785.48</strong></p>
+<p>because it represents the endpoint posture rather than the amount entering servicing.</p>
+<h2>But we should not start building yet</h2>
+<p>This table exposes an important temporal issue that we need to resolve first.</p>
+<p>Our original P04 concept included an <strong>Observation date</strong> slicer. But <code>FactServicingQueueEndpoint</code> is endpoint-only, while <code>FactServicingExecution</code> is an execution-state snapshot and <code>FactPaymentException</code> contains actual event dates. Mixing those under an Observation-date slicer could imply historical as-of servicing states that these facts do not actually contain.</p>
+<p>So I want to inspect <strong><code>FactMonitoringEndpoint</code> next</strong>.</p>
+<p>That table may tell us whether P04 should ultimately be:</p>
+<p><strong>A. an Observation-date operational workbench</strong>, with endpoint servicing information carefully gated, or</p>
+<p><strong>B. an endpoint servicing/exception workbench</strong>, with no Observation-date slicer at all.</p>
+<p>Given what we&#39;ve learned from P03, I would much rather discover that now than build five visuals and later realize the temporal contract is wrong.</p>
+<p>Please send <strong><code>FactMonitoringEndpoint</code></strong> next. After that, I expect we&#39;ll be able to lock the temporal contract and begin actual P04 construction.</p>
+</div></article><article id="m-f2973fe1-0b1c-4889-8878-37f2ec3df782" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00428 · 2026-08-27T08:15:18.583000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260827-121509).md</p><div class="bubble"><p>factmonitoringendpoint : </p>
+</div></article><article id="m-4513ecdd-dcdb-4dc1-8cc2-8afa74c3a9c1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00429 · 2026-08-27T08:15:23.224945-04:00 · active path</p><div class="bubble"><p>Ingested. <code>FactMonitoringEndpoint</code> resolves the temporal question.</p>
+<p>This is explicitly an <strong>endpoint fact</strong>: every supplied row has <code>latest_monitoring_day_index = 120</code> and <code>latest_monitoring_date = 11/22/2026</code>. It provides one terminal monitoring state per scenario-qualified funded account, including status, exposure, pace, remittance recency, liquidity indicators, alerts and monitoring reason. [export reference: filecite | turn51file0 | L1-L8]</p>
+<p>The two materially distressed Baseline accounts are exactly the ones we already identified operationally:</p>
+<ul>
+<li><strong>Merchant 000312:</strong> Severe shortfall, remaining receivable <strong>$518.04</strong>, pace <strong>97.69%</strong>, one active alert, not paid off. [export reference: filecite | turn51file0 | L25-L25]</li>
+<li><strong>Merchant 000098:</strong> Severe shortfall, remaining receivable <strong>$461.69</strong>, pace <strong>91.27%</strong>, one active alert, not paid off. [export reference: filecite | turn51file0 | L34-L34]</li>
+</ul>
+<p>That reconciles the <strong>$979.73 monitoring exposure</strong> entering the servicing decision. The servicing layer then distinguishes what happens next: 312 receives temporary payment processing, reducing its certified ending exposure to $323.79, while 098 remains on governance review hold at $461.69. Hence the servicing endpoint becomes <strong>$785.48</strong>.</p>
+<p>That progression is actually a very good story:</p>
+<p><strong>Monitoring identifies $979.73 requiring attention → governed servicing acts/reviews → certified servicing endpoint exposure is $785.48.</strong></p>
+<h2>Lock the P04 temporal contract</h2>
+<p>I recommend <strong>no Observation Date slicer on P04</strong>.</p>
+<p>P04 should be explicitly an <strong>endpoint operational workbench as of November 22, 2026</strong>.</p>
+<p>Why? Because:</p>
+<ul>
+<li><code>FactMonitoringEndpoint</code> = November 22 endpoint.</li>
+<li><code>FactServicingQueueEndpoint</code> = certified servicing endpoint.</li>
+<li><code>FactServicingExecution</code> = servicing-execution result/state.</li>
+<li><code>FactPaymentException</code> = dated case history associated with that servicing process.</li>
+</ul>
+<p>An Observation-date slicer would falsely suggest we can reconstruct the complete servicing queue as it existed on arbitrary dates. We cannot from these endpoint/execution facts.</p>
+<p><code>FactAccountDaily</code> remains useful for P03&#39;s longitudinal journey, but P04 is answering a different question: <strong>what requires attention at the governed endpoint?</strong></p>
+<h2>We can now start construction</h2>
+<p>Create a <strong>fresh blank page</strong>.</p>
+<p>Use:</p>
+<p><strong>Tab</strong>
+<code>P04 - Servicing &amp; Exceptions</code></p>
+<p><strong>Title</strong>
+<code>Servicing &amp; Exceptions</code></p>
+<p><strong>Subtitle</strong>
+<code>Identify accounts requiring operational attention, understand the drivers, and review governed servicing outcomes.</code></p>
+<p>I changed the earlier subtitle slightly. I prefer <strong>“review governed servicing outcomes”</strong> to “quantify the associated exposure” because the page is going to do both, and the former better captures its operational purpose.</p>
+<h3>Top slicers</h3>
+<p>For now, create only:</p>
+<p><strong>Scenario</strong></p>
+<p>Single-select, Select All off.</p>
+<p>Do <strong>not</strong> create Observation date.</p>
+<p>I would eventually consider Industry as a second slicer, but not yet.</p>
+<hr>
+<h1>First visual: endpoint monitoring KPI strip</h1>
+<p>Let&#39;s build four cards across the top, immediately under the title/slicer area.</p>
+<p>Because <code>FactMonitoringEndpoint</code> is scenario-grain, these will respond correctly to Scenario.</p>
+<h3>KPI 1 — Accounts requiring attention</h3>
+<p>Create:</p>
+<pre><code class="language-DAX">P04 Accounts Requiring Attention =
+CALCULATE (
+    DISTINCTCOUNT ( FactMonitoringEndpoint[AccountKey] ),
+    FactMonitoringEndpoint[latest_monitoring_status_rank] &gt; 0
+)
+</code></pre>
+<p>However, I want to flag something before we blindly accept that definition: rank &gt; 0 may include terminal/status conditions that aren&#39;t actually servicing-worthy. From the rows we&#39;ve seen, most endpoints are Paid Off = rank 0, while the two severe-shortfall accounts are rank 4. But we should test the distribution before freezing the definition.</p>
+<p>So create a temporary table first:</p>
+<p><strong>Rows</strong></p>
+<ul>
+<li><code>latest_monitoring_status_code</code></li>
+<li><code>latest_monitoring_status_rank</code></li>
+</ul>
+<p><strong>Value</strong></p>
+<ul>
+<li>distinct count <code>AccountKey</code></li>
+</ul>
+<p>With Scenario = <strong>Baseline</strong>.</p>
+<p>Tell me what that table shows.</p>
+<p>That will tell us whether <code>&gt; 0</code> safely means <strong>attention required</strong>, or whether there are Current/Watch/Underperforming endpoint populations that need a more nuanced definition.</p>
+<h3>Why we&#39;re pausing at that tiny test</h3>
+<p>This is exactly the sort of physical-model discovery that improved P03.</p>
+<p>I don&#39;t want to define “Accounts requiring attention” as rank &gt; 0 and then discover that 20 perfectly normal Current accounts are rank 1. The monitoring hierarchy appears to be:</p>
+<pre><code class="language-text">0  Paid off
+1  Current
+2  Watch
+3  Underperforming
+4  Severe shortfall
+</code></pre>
+<p>If so, our operational attention threshold may be <code>&gt;= 2</code>, or perhaps only specific alert/servicing states. We should let the actual endpoint population answer that.</p>
+<p>So the immediate steps are:</p>
+<ol>
+<li>Create fresh P04.</li>
+<li>Add title/subtitle.</li>
+<li>Add <strong>Scenario</strong> single-select slicer.</li>
+<li>Unhide <code>FactMonitoringEndpoint</code> if necessary.</li>
+<li>Create the temporary status/rank/count table under <strong>Baseline</strong>.</li>
+<li>Send me the result.</li>
+</ol>
+<p>Then we&#39;ll lock the definition of <strong>Accounts requiring attention</strong> and construct the real KPI strip.</p>
+</div></article><article id="m-cf5b1c53-f15b-466f-9fd4-f5e64d0cac4c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00430 · 2026-08-27T08:17:54.166000-04:00 · active path</p><div class="bubble"><p>are we going to have a left hand side card like we&#39;ve had in P01 through P03? Wondering why KPI 1 would not fit into that.</p>
+</div></article><article id="m-f522b361-9011-4b0c-84d3-087a5efd195a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00431 · 2026-08-27T08:17:56.015046-04:00 · active path</p><div class="bubble"><p>Yes. I think your instinct is better than the layout I just proposed.</p>
+<p>We <strong>should preserve the left-hand summary rail established in P01–P03</strong>. It has become part of the report&#39;s visual grammar: controls/context at the top, a compact executive summary on the left, and the deeper analytical story across the larger right-hand canvas.</p>
+<p>For P04, though, the left rail should not be a merchant profile. It should be an <strong>Operational Posture</strong> multi-card.</p>
+<h3>Proposed P04 left rail</h3>
+<p>I would reserve roughly the same width as P03&#39;s Merchant Profile and eventually populate it with something like:</p>
+<p><strong>Operational Posture</strong></p>
+<p><strong>Accounts requiring attention</strong><br><code>2</code></p>
+<p><strong>Attention exposure</strong><br><code>$979.73</code></p>
+<p><strong>Active servicing</strong><br><code>1</code></p>
+<p><strong>Review holds</strong><br><code>1</code></p>
+<p><strong>Active alerts</strong><br><code>2</code></p>
+<p><strong>Unresolved exceptions</strong><br><code>0</code></p>
+<p>Potentially one or two additional values if physical construction demonstrates they add something—perhaps <strong>Servicing burden</strong> or <strong>Certified servicing exposure</strong>.</p>
+<p>That is much better than scattering six individual KPI cards across the top.</p>
+<h3>Why <code>Accounts requiring attention</code> belongs there</h3>
+<p>It becomes the lead value in the left rail—the operational equivalent of the merchant identity/context rail on P03.</p>
+<p>The page then reads naturally:</p>
+<p><strong>Left:</strong> <em>How much attention is required?</em><br><strong>Upper right:</strong> <em>Where/why is attention required?</em><br><strong>Middle/right:</strong> <em>What servicing posture/action resulted?</em><br><strong>Bottom/right:</strong> <em>Which specific accounts require investigation?</em></p>
+<p>That gives us much more canvas for the actual workbench.</p>
+<h3>One important semantic issue</h3>
+<p>I would still <strong>not create the final <code>Accounts requiring attention</code> measure yet</strong>. We need the tiny status-distribution test I requested, because we have not established whether <code>latest_monitoring_status_rank &gt; 0</code> is the correct business definition.</p>
+<p>In fact, now that we&#39;ve ingested the servicing tables, I suspect the best headline definition may ultimately be <strong>governed servicing attention</strong>, rather than simply monitoring deterioration.</p>
+<p>For example, the two known Baseline cases tell a clean story:</p>
+<ul>
+<li>312 → severe shortfall → temporary processing</li>
+<li>098 → severe shortfall → governance review hold</li>
+</ul>
+<p>But we need to determine whether <code>WATCH</code> or <code>UNDERPERFORMING</code> accounts exist at the endpoint and whether those count as “requiring attention” even when no servicing execution was generated.</p>
+<h3>Layout adjustment</h3>
+<p>I would therefore build the shell as:</p>
+<pre><code class="language-text">┌───────────────────────────────────────────────────────────────┐
+│ Servicing &amp; Exceptions                         [Scenario ▼]   │
+│ Identify accounts requiring operational attention...         │
+├───────────────┬───────────────────────────────────────────────┤
+│               │                                               │
+│ OPERATIONAL   │        Monitoring / attention visuals         │
+│ POSTURE       │                                               │
+│               ├───────────────────────────────────────────────┤
+│ Attention     │                                               │
+│ accounts      │        Servicing / queue / driver             │
+│ Exposure      │                                               │
+│ Active svc    ├───────────────────────────────────────────────┤
+│ Review holds  │                                               │
+│ Alerts        │        Account exception workbench            │
+│ Exceptions    │                                               │
+│               │                                               │
+└───────────────┴───────────────────────────────────────────────┘
+</code></pre>
+<p>And I would make the left rail a <strong>single multi-card</strong>, just as we learned works well on P03. That means one visual, one alt text, compact formatting, and consistent page architecture.</p>
+<p>So yes: <strong>reserve the left-hand side now. Don&#39;t build a top-row KPI strip.</strong></p>
+<p>Next, let&#39;s perform the temporary Baseline <code>latest_monitoring_status_code / rank / account count</code> test. Once we see that population, we&#39;ll know exactly what the first value in the Operational Posture card should mean and can start filling that card from the top down.</p>
+</div></article><article id="m-4450cb10-f75e-427f-bf3e-dccb7cfe38bb" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00432 · 2026-08-27T08:19:12.207000-04:00 · active path</p><div class="bubble"><p>why temporary tables - i provided the full datasets. what more do you need to guide construction?</p>
+</div></article><article id="m-5d59b651-5983-4765-acf6-6dd273ad3d5f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00433 · 2026-08-27T08:19:24.915118-04:00 · active path</p><div class="bubble"><p>You&#39;re right. <strong>We do not need temporary diagnostic tables here.</strong> You supplied the full datasets, and I should use them directly.</p>
+<p>From the complete <code>FactMonitoringEndpoint</code> population, the endpoint state is already clear:</p>
+<ul>
+<li><strong>Baseline:</strong> 44 funded account paths = <strong>42 Paid Off + 2 Severe Shortfall</strong></li>
+<li><strong>Recession Energy:</strong> 15 funded account paths = <strong>15 Paid Off</strong></li>
+<li>The two Baseline Severe Shortfall accounts are <strong>Merchant 000312 ($518.04 remaining receivable)</strong> and <strong>Merchant 000098 ($461.69)</strong>. [export reference: filecite | turn51file0 | L25-L25] [export reference: filecite | turn51file0 | L34-L34]</li>
+<li>Therefore, at the endpoint, <code>latest_monitoring_status_rank &gt; 0</code> <strong>does cleanly identify the attention population in this build</strong>: 2 accounts / $979.73 in Baseline, 0 in Recession Energy.</li>
+<li><code>FactServicingExecution</code> then routes those two Baseline accounts differently: 000312 into active temporary processing and 000098 into servicing review hold. [export reference: filecite | turn50file0 | L5-L6]</li>
+</ul>
+<p>So we can stop probing and <strong>build</strong>.</p>
+<h2>P04 shell</h2>
+<p>Use the left-side rail, consistent with P01–P03.</p>
+<p><strong>Tab:</strong> <code>P04 - Servicing &amp; Exceptions</code></p>
+<p><strong>Title:</strong> <code>Servicing &amp; Exceptions</code></p>
+<p><strong>Subtitle:</strong><br><code>Identify accounts requiring operational attention, understand the drivers, and review governed servicing outcomes.</code></p>
+<p>Top-right control:</p>
+<p><strong>Scenario</strong> — single select, Select All off.</p>
+<p>No Observation Date slicer. P04 is an <strong>endpoint operational workbench</strong>, not an arbitrary historical as-of servicing view.</p>
+<h2>Build the left multi-card: <code>Operational Posture</code></h2>
+<p>I recommend six values. These all remain Scenario-sensitive and avoid using the cross-scenario <code>FactServicingQueueEndpoint</code> aggregate directly.</p>
+<p>Create these measures.</p>
+<h3>1. Accounts requiring attention</h3>
+<pre><code class="language-DAX">P04 Accounts Requiring Attention =
+CALCULATE (
+    DISTINCTCOUNT ( FactMonitoringEndpoint[AccountKey] ),
+    FactMonitoringEndpoint[latest_monitoring_status_rank] &gt; 0
+)
+</code></pre>
+<p>Expected:</p>
+<ul>
+<li>Baseline = <strong>2</strong></li>
+<li>Recession Energy = <strong>0</strong></li>
+</ul>
+<h3>2. Attention exposure</h3>
+<pre><code class="language-DAX">P04 Attention Exposure =
+CALCULATE (
+    SUM ( FactMonitoringEndpoint[remaining_receivable_amount] ),
+    FactMonitoringEndpoint[latest_monitoring_status_rank] &gt; 0
+)
+</code></pre>
+<p>Expected:</p>
+<ul>
+<li>Baseline = <strong>$979.73</strong></li>
+<li>Recession Energy = <strong>$0</strong></li>
+</ul>
+<p>This is the exposure identified by endpoint monitoring <strong>before the servicing execution outcome</strong>.</p>
+<h3>3. Active servicing</h3>
+<pre><code class="language-DAX">P04 Active Servicing =
+CALCULATE (
+    DISTINCTCOUNT ( FactServicingExecution[AccountKey] ),
+    FactServicingExecution[processing_authorized_flag] = TRUE ()
+)
+</code></pre>
+<p>Expected:</p>
+<ul>
+<li>Baseline = <strong>1</strong></li>
+<li>Recession Energy = <strong>0</strong></li>
+</ul>
+<h3>4. Review holds</h3>
+<pre><code class="language-DAX">P04 Review Holds =
+CALCULATE (
+    DISTINCTCOUNT ( FactServicingExecution[AccountKey] ),
+    FactServicingExecution[processing_review_required_flag] = TRUE ()
+)
+</code></pre>
+<p>Expected:</p>
+<ul>
+<li>Baseline = <strong>1</strong></li>
+<li>Recession Energy = <strong>0</strong></li>
+</ul>
+<h3>5. Servicing exposure</h3>
+<p>This is useful because it shows what remains after the servicing-execution state has been applied:</p>
+<pre><code class="language-DAX">P04 Servicing Exposure =
+CALCULATE (
+    SUM ( FactServicingExecution[ending_simulated_exposure_amount] ),
+    FactServicingExecution[no_processing_required_flag] = FALSE ()
+)
+</code></pre>
+<p>Expected Baseline:</p>
+<p><strong>$785.48</strong></p>
+<p>That decomposes into:</p>
+<ul>
+<li>000312 active processing = <strong>$323.79</strong></li>
+<li>000098 review hold = <strong>$461.69</strong></li>
+</ul>
+<p>This creates a useful contrast with <strong>Attention Exposure = $979.73</strong>.</p>
+<h3>6. Unresolved exceptions</h3>
+<pre><code class="language-DAX">P04 Unresolved Exceptions =
+CALCULATE (
+    DISTINCTCOUNT ( FactPaymentException[PaymentExceptionKey] ),
+    FactPaymentException[unresolved_exception_flag] = TRUE ()
+)
+</code></pre>
+<p>Expected:</p>
+<ul>
+<li>Baseline = <strong>0</strong></li>
+<li>Recession Energy = <strong>0</strong></li>
+</ul>
+<p>That zero is valuable here because it tells the operational user that the payment exception generated during the temporary-processing cycle was resolved rather than sitting in backlog.</p>
+<h2>Multi-card order</h2>
+<p>Build one multi-card on the left, titled:</p>
+<p><strong>Operational Posture</strong></p>
+<p>Put the measures in this order:</p>
+<ol>
+<li>Accounts requiring attention</li>
+<li>Attention exposure</li>
+<li>Active servicing</li>
+<li>Review holds</li>
+<li>Servicing exposure</li>
+<li>Unresolved exceptions</li>
+</ol>
+<p>That tells a compact story:</p>
+<p><strong>2 accounts identified → $979.73 at risk/attention → 1 actively serviced + 1 held for review → $785.48 remaining servicing exposure → no unresolved exception backlog.</strong></p>
+<p>That is much more useful than six disconnected KPI boxes.</p>
+<h3>One thing I would not include yet: <code>Active alerts</code></h3>
+<p>The endpoint data contains <code>active_alert_count = 1</code> on some accounts that are nevertheless <strong>Paid Off</strong>, apparently because the alert payload can retain things such as liquidity-stress indicators at the endpoint. For example, some paid-off rows still carry an active-alert count. [export reference: filecite | turn51file0 | L21-L21]</p>
+<p>So I would <strong>not call a raw sum of <code>active_alert_count</code> “Active alerts”</strong> without a more careful semantic definition. The six measures above are cleaner.</p>
+<h2>Then the first right-hand visual</h2>
+<p>Once that left card is working, the first substantive visual should be <strong>Monitoring posture</strong>, not another KPI.</p>
+<p>I recommend a horizontal bar chart:</p>
+<p><strong>Y-axis</strong>
+<code>FactMonitoringEndpoint[latest_monitoring_status_code]</code></p>
+<p><strong>X-axis</strong>
+Distinct count of <code>AccountKey</code></p>
+<p>With the Scenario slicer controlling it.</p>
+<p>Baseline should immediately show the stark endpoint distribution:</p>
+<p><strong>Paid Off — 42</strong><br><strong>Severe Shortfall — 2</strong></p>
+<p>and Recession Energy:</p>
+<p><strong>Paid Off — 15</strong></p>
+<p>We should create a polished presentation label column for those status codes rather than display <code>SEVERE_SHORTFALL</code>.</p>
+<p>So the immediate construction sequence is now straightforward: <strong>create the page shell → Scenario slicer → Operational Posture multi-card with these six measures → then Monitoring Posture chart.</strong> No temporary tables needed.</p>
+</div></article><article id="m-f8260fc6-b21c-423a-98f4-a717de11cb9e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00434 · 2026-08-27T08:52:04.092000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 91c55c4a-cc03-4981-86f7-516be8678b2f.png</p><div class="bubble"><p>latest_monitoring_status_code can&#39;t be in y-axis: please stop making that mistake.</p>
+</div></article><article id="m-d0ffa82c-5525-4dc3-88c9-605a47b5699c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00435 · 2026-08-27T08:52:10.896037-04:00 · active path</p><div class="bubble"><p>You&#39;re right. With <strong>Discourage implicit measures</strong> enabled, I should not tell you to drag raw numeric/text fields into visuals when Power BI requires an explicit measure for the value context. I’ll treat that as a hard construction rule from here forward.</p>
+<p>For the Monitoring posture chart, keep the raw status field only as the category <strong>if Power BI allows it there</strong>, but use an explicit measure for the count. If even the category field is blocked in that visual, then we need a small presentation table/column strategy instead of forcing it.</p>
+<p>Create this measure:</p>
+<pre><code class="language-DAX">P04 Monitoring Account Count =
+DISTINCTCOUNT ( FactMonitoringEndpoint[AccountKey] )
+</code></pre>
+<p>Then try:</p>
+<ul>
+<li><strong>Y-axis:</strong> <code>FactMonitoringEndpoint[latest_monitoring_status_code]</code></li>
+<li><strong>X-axis / Values:</strong> <code>[P04 Monitoring Account Count]</code></li>
+</ul>
+<p>If Power BI still refuses <code>latest_monitoring_status_code</code> on the Y-axis, then stop there and tell me. In that case I’ll give you the correct workaround using a report-owned presentation dimension/column rather than repeating the same mistake.</p>
+<p>Also, for presentation, I would not leave the raw codes visible anyway. We will likely create a proper label such as:</p>
+<ul>
+<li><code>Paid off</code></li>
+<li><code>Current</code></li>
+<li><code>Watch</code></li>
+<li><code>Underperforming</code></li>
+<li><code>Severe shortfall</code></li>
+</ul>
+<p>with a governed sort rank.</p>
+<p>I’ll keep the build guidance explicit-measure-safe from this point forward.</p>
+</div></article><article id="m-481d901c-ac3a-4142-80b0-e244ae519994" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00436 · 2026-08-27T08:56:47.208000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: a05ab2da-120a-485f-be05-c18c3c425b51.png</p><div class="bubble"><p> can&#39;t be on x-axis and confirmed that latest_monitoring_status_code can&#39;t be on y-axis</p>
+</div></article><article id="m-ee96eadc-7d9f-4289-b7a3-b3549a37f0cd" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00437 · 2026-08-27T08:56:51.691472-04:00 · active path</p><div class="bubble"><p>This tells us exactly what happened: <strong>the selected visual is using column-chart field roles, not bar-chart roles.</strong> The errors are complementary:</p>
+<ul>
+<li><code>latest_monitoring_status_code</code> on <strong>Y-axis</strong> → Power BI says a <strong>measure is required</strong>.</li>
+<li><code>[P04 Monitoring Account Count]</code> on <strong>X-axis</strong> → Power BI says a <strong>non-measure field is required</strong>.</li>
+</ul>
+<p>So Power BI is telling us:</p>
+<p><strong>X-axis = category</strong><br><strong>Y-axis = measure</strong></p>
+<p>That means either keep the current column chart and use:</p>
+<ul>
+<li><strong>X-axis:</strong> <code>FactMonitoringEndpoint[latest_monitoring_status_code]</code></li>
+<li><strong>Y-axis:</strong> <code>[P04 Monitoring Account Count]</code></li>
+</ul>
+<p>or, if we want the horizontal bar chart I originally proposed, first change the visual type to <strong>Clustered bar chart</strong>. Then use:</p>
+<ul>
+<li><strong>Y-axis:</strong> <code>FactMonitoringEndpoint[latest_monitoring_status_code]</code></li>
+<li><strong>X-axis:</strong> <code>[P04 Monitoring Account Count]</code></li>
+</ul>
+<p>I recommend the <strong>horizontal clustered bar chart</strong>, because the status labels will read much better—especially <code>Severe shortfall</code>—and it fits the operational-workbench design.</p>
+<h3>Before adding the fields, create the presentation label</h3>
+<p>Rather than showing <code>PAID_OFF</code> and <code>SEVERE_SHORTFALL</code>, create a <strong>calculated column</strong> in <code>FactMonitoringEndpoint</code>:</p>
+<pre><code class="language-DAX">P04 Monitoring Status =
+SWITCH (
+    FactMonitoringEndpoint[latest_monitoring_status_code],
+    &quot;PAID_OFF&quot;, &quot;Paid off&quot;,
+    &quot;CURRENT&quot;, &quot;Current&quot;,
+    &quot;WATCH&quot;, &quot;Watch&quot;,
+    &quot;UNDERPERFORMING&quot;, &quot;Underperforming&quot;,
+    &quot;SEVERE_SHORTFALL&quot;, &quot;Severe shortfall&quot;,
+    SUBSTITUTE (
+        FactMonitoringEndpoint[latest_monitoring_status_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<p>And a sort column:</p>
+<pre><code class="language-DAX">P04 Monitoring Status Sort =
+SWITCH (
+    FactMonitoringEndpoint[latest_monitoring_status_code],
+    &quot;SEVERE_SHORTFALL&quot;, 1,
+    &quot;UNDERPERFORMING&quot;, 2,
+    &quot;WATCH&quot;, 3,
+    &quot;CURRENT&quot;, 4,
+    &quot;PAID_OFF&quot;, 5,
+    99
+)
+</code></pre>
+<p>Then set:</p>
+<p><strong><code>P04 Monitoring Status</code> → Sort by column → <code>P04 Monitoring Status Sort</code></strong></p>
+<h3>Build the chart</h3>
+<p>Select <strong>Clustered bar chart</strong>, then:</p>
+<p><strong>Y-axis</strong>
+<code>P04 Monitoring Status</code></p>
+<p><strong>X-axis</strong>
+<code>[P04 Monitoring Account Count]</code></p>
+<p>For <strong>Baseline</strong>, based on the full endpoint population you supplied, we should see:</p>
+<ul>
+<li>Paid off — <strong>42</strong></li>
+<li>Severe shortfall — <strong>2</strong></li>
+</ul>
+<p>For <strong>Recession Energy</strong>:</p>
+<ul>
+<li>Paid off — <strong>15</strong></li>
+</ul>
+<p>That is the correct explicit-measure-safe construction. The issue wasn&#39;t that categorical fields cannot be used; I had the axis roles wrong for the visual you currently had selected.</p>
+</div></article><article id="m-3ad25cd2-6bf2-447b-8169-2bb708de12aa" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00438 · 2026-08-27T08:57:40.681000-04:00 · active path</p><div class="bubble"><p>oh i had this as a line chart still - what should it be?</p>
+</div></article><article id="m-355c0d13-3471-451e-be1b-ec4ea72fd710" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00439 · 2026-08-27T08:57:42.473858-04:00 · active path</p><div class="bubble"><p>Use a <strong>Clustered bar chart</strong> — horizontal bars.</p>
+<p>This is a categorical endpoint comparison, not a time series, so a line chart is the wrong visual. We want to compare the number of accounts in each monitoring status.</p>
+<p>Set it up as:</p>
+<ul>
+<li><strong>Visual:</strong> Clustered bar chart</li>
+<li><strong>Y-axis:</strong> <code>P04 Monitoring Status</code> — the calculated presentation column</li>
+<li><strong>X-axis:</strong> <code>[P04 Monitoring Account Count]</code> — the explicit measure</li>
+<li><strong>Legend:</strong> none</li>
+<li><strong>Title:</strong> <code>Monitoring posture</code></li>
+</ul>
+<p>For Baseline, it should show essentially:</p>
+<p><strong>Severe shortfall</strong> | 2<br><strong>Paid off</strong> | 42</p>
+<p>The horizontal format is preferable because later status labels such as <strong>Underperforming</strong> and <strong>Severe shortfall</strong> remain easy to read if the population expands.</p>
+<p>And yes—the errors now make complete sense. They weren&#39;t related to Discourage Implicit Measures; you still had a <strong>line chart</strong>, whose X-axis expects the category and Y-axis expects the measure. My initial assumption about your selected visual caused the confusion.</p>
+</div></article><article id="m-9fd3aa31-c32e-43f3-a3fc-e1154b8da468" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00440 · 2026-08-27T09:11:16.266000-04:00 · active path</p><div class="bubble"><p>the clustered bar chart - Monitoring posture is built</p>
+</div></article><article id="m-cb91e5e9-c97d-447c-8a4f-4fdcb59f8210" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00441 · 2026-08-27T09:11:18.262206-04:00 · active path</p><div class="bubble"><p>Good. Keep <strong>Monitoring posture</strong> as the first right-hand visual. Now I would build the complementary visual that answers <strong>“what happened to the accounts requiring attention?”</strong></p>
+<h2>Next visual — Servicing disposition</h2>
+<p>Use a <strong>clustered bar chart</strong> again.</p>
+<p>First create a presentation column in <code>FactServicingExecution</code>:</p>
+<pre><code class="language-DAX">P04 Servicing Disposition =
+SWITCH (
+    FactServicingExecution[servicing_execution_outcome_code],
+    &quot;NO_SERVICING_EXECUTION_REQUIRED&quot;, &quot;No servicing required&quot;,
+    &quot;SIMULATED_TEMPORARY_PAYMENT_PROCESSING_ACTIVE&quot;, &quot;Active servicing&quot;,
+    &quot;SERVICING_EXECUTION_REVIEW_HOLD&quot;, &quot;Review hold&quot;,
+    SUBSTITUTE (
+        FactServicingExecution[servicing_execution_outcome_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<p>Then create the explicit measure:</p>
+<pre><code class="language-DAX">P04 Servicing Account Count =
+DISTINCTCOUNT ( FactServicingExecution[AccountKey] )
+</code></pre>
+<p>Build:</p>
+<ul>
+<li><strong>Visual:</strong> Clustered bar chart</li>
+<li><strong>Y-axis:</strong> <code>P04 Servicing Disposition</code></li>
+<li><strong>X-axis:</strong> <code>[P04 Servicing Account Count]</code></li>
+<li><strong>Legend:</strong> none</li>
+<li><strong>Title:</strong> <code>Servicing disposition</code></li>
+</ul>
+<p>With <strong>Baseline</strong> selected, we expect the chart to show the normal population plus the two exceptional paths: one <strong>Active servicing</strong> and one <strong>Review hold</strong>.</p>
+<h3>But I would filter out “No servicing required”</h3>
+<p>For this page, 57 normal paths will visually swamp the two cases we care about. <code>Monitoring posture</code> already provides the portfolio context.</p>
+<p>So add a <strong>visual-level filter</strong>:</p>
+<p><code>P04 Servicing Disposition</code> <strong>is not</strong> <code>No servicing required</code></p>
+<p>Then this chart becomes intentionally focused on operational workload:</p>
+<p><strong>Active servicing — 1</strong><br><strong>Review hold — 1</strong></p>
+<p>That is much more useful.</p>
+<p>Place <strong>Servicing disposition</strong> beside or immediately below <strong>Monitoring posture</strong>. The pair tells a very clean story:</p>
+<p><strong>Monitoring posture:</strong> <em>Which accounts ended in distress?</em><br>→ 2 Severe shortfall</p>
+<p><strong>Servicing disposition:</strong> <em>What happened to them?</em><br>→ 1 Active servicing / 1 Review hold</p>
+<p>Once that is built, the next visual should answer the third question: <strong>why?</strong> We&#39;ll use the monitoring/execution reason fields for an <strong>Attention drivers</strong> visual before constructing the detailed account workbench.</p>
+</div></article><article id="m-87ee6374-f0f4-4f07-8589-a6cd28114334" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00442 · 2026-08-27T09:20:38.872000-04:00 · active path</p><div class="bubble"><p>Monitoring posture and Servicing disposition are both built</p>
+</div></article><article id="m-55169421-3415-4e31-90e6-9b36231749cc" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00443 · 2026-08-27T09:21:07.355136-04:00 · active path</p><div class="bubble"><p>Good. Next I would build <strong>Attention drivers</strong>, but based on the actual servicing execution reason—not the raw monitoring reason, which would just repeat “severe shortfall” for both actionable accounts.</p>
+<p>Create a presentation column in <code>FactServicingExecution</code>:</p>
+<pre><code class="language-DAX">P04 Attention Driver =
+SWITCH (
+    FactServicingExecution[primary_execution_reason_code],
+    &quot;M2_8_REASON_SOURCE_TEMPORARY_PROCESSING&quot;, &quot;Temporary processing required&quot;,
+    &quot;M2_8_REASON_SOURCE_REVIEW_HOLD&quot;, &quot;Governance review required&quot;,
+    &quot;M2_8_REASON_SOURCE_NO_PROCESSING&quot;, &quot;No servicing required&quot;,
+    SUBSTITUTE (
+        FactServicingExecution[primary_execution_reason_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<p>The two actionable Baseline accounts genuinely have different reasons: Merchant 000312 is sourced to temporary processing, while Merchant 000098 is sourced to review hold. [export reference: filecite | turn52file0 | L9-L10]</p>
+<p>Then use the explicit measure you already created:</p>
+<pre><code class="language-DAX">[P04 Servicing Account Count]
+</code></pre>
+<p>Build another <strong>clustered bar chart</strong>:</p>
+<ul>
+<li><strong>Y-axis:</strong> <code>P04 Attention Driver</code></li>
+<li><strong>X-axis:</strong> <code>[P04 Servicing Account Count]</code></li>
+<li><strong>Visual filter:</strong> exclude <code>No servicing required</code></li>
+<li><strong>Title:</strong> <code>Attention drivers</code></li>
+</ul>
+<p>Expected Baseline result:</p>
+<ul>
+<li>Temporary processing required — <strong>1</strong></li>
+<li>Governance review required — <strong>1</strong></li>
+</ul>
+<p>This will intentionally resemble the servicing-disposition count pattern, but it answers a different question: <strong>why did the account enter that servicing path?</strong></p>
+<p>After this, I would stop adding summary charts. The next major component should be the <strong>account workbench table</strong>, which is where P04 starts becoming operationally useful rather than just descriptive.</p>
+</div></article><article id="m-6a6994a0-d451-445c-a011-bcc6152dab98" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00444 · 2026-08-27T09:23:29.010000-04:00 · active path</p><div class="bubble"><p>but what does Temporary processing required and Governance review required and how did those accounts end up in those paths</p>
+</div></article><article id="m-abb8976a-1bf7-4946-b99f-cfcad613165c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00445 · 2026-08-27T09:23:31.128917-04:00 · active path</p><div class="bubble"><p>That is the more important question, and it changes my recommendation for the next visual. <strong>“Attention drivers” based only on <code>primary_execution_reason_code</code> would be too circular</strong>: it tells us the servicing path chosen, not what underlying account behavior caused that path.</p>
+<p>For the two Baseline accounts, we can reconstruct the chain from the supplied facts.</p>
+<h3>Merchant 000312 — why temporary processing?</h3>
+<p>At the monitoring endpoint, 000312 is <strong>Severe shortfall</strong>, not paid off, with <strong>$518.04 remaining receivable</strong>, <strong>$518.04 cumulative shortfall</strong>, cumulative pace of about <strong>97.69%</strong>, and an active alert. Its monitoring reason is <code>M2_5_STATUS_SEVERE_SHORTFALL</code>; the alert payload specifically says <code>contract_horizon_overrun = true</code>. [export reference: filecite | turn51file0 | L25-L25]</p>
+<p>The servicing layer then says its upstream operational setup was:</p>
+<p><code>TEMPORARY_PAYMENT_ADJUSTMENT_SETUP_READY</code></p>
+<p>with action:</p>
+<p><code>CREATE_TEMPORARY_ADJUSTMENT_BLUEPRINT</code></p>
+<p>and therefore authorized:</p>
+<p><code>SIMULATED_TEMPORARY_PAYMENT_PROCESSING_ACTIVE</code></p>
+<p>The synthetic servicing cycle changes its daily payment from <strong>$37.00 to $27.75</strong>, schedules/processes <strong>$194.25</strong> across seven events, includes one return and one retry, and reduces ending simulated exposure from <strong>$518.04 to $323.79</strong>. Its final lifecycle state is <code>REASSESSMENT_DUE</code>. [export reference: filecite | turn52file0 | L9-L9]</p>
+<p>So in business language:</p>
+<blockquote>
+<p><strong>000312 reached the end of its contractual monitoring horizon with a remaining shortfall. The governed upstream setup authorized a temporary payment adjustment, so servicing executed a synthetic reduced-payment cycle and left the account due for reassessment.</strong></p>
+</blockquote>
+<p>That is what <strong>Active servicing / temporary processing</strong> actually means here.</p>
+<h3>Merchant 000098 — why governance review?</h3>
+<p>000098 also ends at <strong>Severe shortfall</strong>, not paid off, with <strong>$461.69 remaining receivable</strong>, <strong>$461.69 cumulative shortfall</strong>, approximately <strong>91.27% cumulative pace</strong>, and one active alert. It also carries <code>contract_horizon_overrun = true</code>. [export reference: filecite | turn51file0 | L34-L34]</p>
+<p>But its upstream operational setup is different:</p>
+<p><code>OPERATIONAL_SETUP_REVIEW_REQUIRED</code></p>
+<p>with:</p>
+<p><code>ROUTE_OPERATIONAL_GOVERNANCE_REVIEW</code></p>
+<p>and status:</p>
+<p><code>OPERATIONAL_REVIEW_REQUIRED</code></p>
+<p>Therefore servicing <strong>does not authorize payment processing</strong>. Instead it produces:</p>
+<p><code>SERVICING_EXECUTION_REVIEW_HOLD</code></p>
+<p>→ <code>HOLD_FOR_SERVICING_REVIEW</code></p>
+<p>→ final state <code>SERVICING_REVIEW_HOLD</code></p>
+<p>No payment events are generated and the entire <strong>$461.69</strong> remains as ending exposure. [export reference: filecite | turn52file1 | L23-L24]</p>
+<p>In business language:</p>
+<blockquote>
+<p><strong>000098 also reached the endpoint with unresolved shortfall, but the upstream governed setup did not authorize an automated temporary-payment treatment. It required operational/governance review, so servicing correctly stopped rather than executing a synthetic payment cycle.</strong></p>
+</blockquote>
+<h3>The important distinction</h3>
+<p>So <strong>Severe shortfall itself does not determine the servicing treatment</strong>.</p>
+<p>Both accounts have the same terminal monitoring status:</p>
+<p><strong>Severe shortfall + contract horizon overrun</strong></p>
+<p>but the next governed layer distinguishes them:</p>
+<p><strong>000312</strong><br>Severe shortfall → temporary adjustment setup authorized → <strong>Active servicing</strong> → reduced synthetic payment cycle → reassessment due</p>
+<p><strong>000098</strong><br>Severe shortfall → operational review required → <strong>Governance review hold</strong> → no payment processing → exposure remains held</p>
+<p>That&#39;s actually an excellent analytical story for P04.</p>
+<p>And it means I would <strong>not build the <code>Attention drivers</code> bar chart I just proposed</strong>. With only one account in each path, it would merely restate Servicing disposition.</p>
+<p>Instead, I think the next visual should be the <strong>Account attention workbench</strong>, where those causal/path differences become visible at account level. We can give it columns along the lines of:</p>
+<p><strong>Merchant | Monitoring status | Pace | Shortfall | Attention exposure | Servicing disposition | Treatment/action | Ending exposure | Lifecycle state</strong></p>
+<p>Then 000312 and 000098 will sit side-by-side and the user can immediately understand <strong>same monitoring problem, different governed treatment</strong>.</p>
+<p>That is considerably more useful than a third 1-versus-1 bar chart.</p>
+</div></article><article id="m-0f2abad5-5ccf-4e42-a495-da1ae7c54f98" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00446 · 2026-08-27T09:25:44.382000-04:00 · active path</p><div class="bubble"><p>build <strong>Account attention workbench</strong>, where those causal/path differences become visible at account level. We can give it columns along the lines of:</p>
+<p><strong>Merchant | Monitoring status | Pace | Shortfall | Attention exposure | Servicing disposition | Treatment/action | Ending exposure | Lifecycle state</strong></p>
+<p>Then 000312 and 000098 will sit side-by-side and the user can immediately understand <strong>same monitoring problem, different governed treatment</strong>.</p>
+<p>That is considerably more useful than a third 1-versus-1 bar chart.</p>
+</div></article><article id="m-9b2a9381-f19d-4d49-b097-9600fec6ca91" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00447 · 2026-08-27T09:25:45.974995-04:00 · active path</p><div class="bubble"><p>Yes. Build this as a <strong>Table visual</strong>. This should become the principal operational workbench on P04.</p>
+<p>Because we are combining fields from <code>FactMonitoringEndpoint</code> and <code>FactServicingExecution</code>, I recommend using <strong>explicit measures for the account-specific numeric/text values</strong> rather than dragging fact columns across grains and risking row expansion like we encountered on P03.</p>
+<h3>1. Merchant</h3>
+<p>We already have merchant presentation logic from P03. For this portfolio table, create a calculated column in <code>FactMonitoringEndpoint</code>:</p>
+<pre><code class="language-DAX">P04 Merchant =
+VAR _Merchant = FactMonitoringEndpoint[merchant_id]
+VAR _Pos = SEARCH ( &quot;M&quot;, _Merchant, 1, BLANK() )
+RETURN
+    IF (
+        NOT ISBLANK ( _Pos ),
+        RIGHT ( _Merchant, 6 ),
+        _Merchant
+    )
+</code></pre>
+<p>If your existing P03 merchant-number column is in a shared dimension and filters these facts correctly, we can reuse it instead. <strong>Do not create this duplicate if that existing column is available at the proper grain.</strong></p>
+<h3>2. Monitoring status</h3>
+<p>We already created:</p>
+<p><code>P04 Monitoring Status</code></p>
+<p>Use that presentation column.</p>
+<h3>3. Pace</h3>
+<p>Create:</p>
+<pre><code class="language-DAX">P04 Account Pace =
+SELECTEDVALUE ( FactMonitoringEndpoint[cumulative_pace_ratio] )
+</code></pre>
+<p>Format as <strong>Percentage, 1 decimal place</strong>.</p>
+<p>The two expected Baseline values are approximately:</p>
+<ul>
+<li>000312 → <strong>97.7%</strong></li>
+<li>000098 → <strong>91.3%</strong>. [export reference: filecite | turn51file0 | L25-L25] [export reference: filecite | turn51file0 | L34-L34]</li>
+</ul>
+<h3>4. Shortfall</h3>
+<pre><code class="language-DAX">P04 Account Shortfall =
+SELECTEDVALUE ( FactMonitoringEndpoint[cumulative_shortfall_amount] )
+</code></pre>
+<p>Format currency, 0 or 2 decimals. I&#39;d use <strong>$0</strong> here given the portfolio presentation.</p>
+<h3>5. Attention exposure</h3>
+<pre><code class="language-DAX">P04 Account Attention Exposure =
+SELECTEDVALUE ( FactMonitoringEndpoint[remaining_receivable_amount] )
+</code></pre>
+<p>Format currency.</p>
+<p>For these two accounts, shortfall and remaining receivable happen to be identical, so we may ultimately find one column redundant. <strong>Build both initially; we&#39;ll judge the physical table afterward.</strong></p>
+<h3>6. Servicing disposition</h3>
+<p>Instead of trying to use the calculated <code>FactServicingExecution</code> column directly, create:</p>
+<pre><code class="language-DAX">P04 Account Servicing Disposition =
+SELECTEDVALUE (
+    FactServicingExecution[P04 Servicing Disposition]
+)
+</code></pre>
+<p>Expected:</p>
+<ul>
+<li>000312 → <strong>Active servicing</strong></li>
+<li>000098 → <strong>Review hold</strong>. [export reference: filecite | turn52file0 | L9-L10]</li>
+</ul>
+<h3>7. Treatment/action</h3>
+<p>The raw action codes are far too technical. Create a presentation column in <code>FactServicingExecution</code>:</p>
+<pre><code class="language-DAX">P04 Servicing Action =
+SWITCH (
+    FactServicingExecution[servicing_execution_action_code],
+    &quot;EXECUTE_TEMPORARY_SYNTHETIC_PAYMENT_CYCLE&quot;, &quot;Temporary payment cycle&quot;,
+    &quot;HOLD_FOR_SERVICING_REVIEW&quot;, &quot;Hold for servicing review&quot;,
+    &quot;NO_PAYMENT_PROCESSING&quot;, &quot;No processing&quot;,
+    SUBSTITUTE (
+        FactServicingExecution[servicing_execution_action_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<p>Then the measure:</p>
+<pre><code class="language-DAX">P04 Account Servicing Action =
+SELECTEDVALUE (
+    FactServicingExecution[P04 Servicing Action]
+)
+</code></pre>
+<h3>8. Ending exposure</h3>
+<pre><code class="language-DAX">P04 Account Ending Exposure =
+SELECTEDVALUE (
+    FactServicingExecution[ending_simulated_exposure_amount]
+)
+</code></pre>
+<p>Format currency.</p>
+<p>Expected:</p>
+<ul>
+<li>000312 → <strong>$323.79</strong></li>
+<li>000098 → <strong>$461.69</strong>. [export reference: filecite | turn52file0 | L9-L10]</li>
+</ul>
+<p>This is particularly useful beside Attention exposure because the user can see that servicing reduced 312&#39;s exposure while 098 remained unchanged.</p>
+<h3>9. Lifecycle state</h3>
+<p>Create a presentation column:</p>
+<pre><code class="language-DAX">P04 Lifecycle State =
+SWITCH (
+    FactServicingExecution[final_lifecycle_state_code],
+    &quot;REASSESSMENT_DUE&quot;, &quot;Reassessment due&quot;,
+    &quot;SERVICING_REVIEW_HOLD&quot;, &quot;Servicing review hold&quot;,
+    &quot;CLOSED_NO_PROCESSING_REQUIRED&quot;, &quot;Closed — no processing&quot;,
+    SUBSTITUTE (
+        FactServicingExecution[final_lifecycle_state_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-DAX">P04 Account Lifecycle State =
+SELECTEDVALUE (
+    FactServicingExecution[P04 Lifecycle State]
+)
+</code></pre>
+<hr>
+<h2>Build the table</h2>
+<p>Add a <strong>Table</strong> visual and put the fields in this exact order:</p>
+<table>
+<thead>
+<tr>
+<th>Display column</th>
+<th>Field</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Merchant</td>
+<td><code>P04 Merchant</code></td>
+</tr>
+<tr>
+<td>Monitoring status</td>
+<td><code>P04 Monitoring Status</code></td>
+</tr>
+<tr>
+<td>Pace</td>
+<td><code>[P04 Account Pace]</code></td>
+</tr>
+<tr>
+<td>Shortfall</td>
+<td><code>[P04 Account Shortfall]</code></td>
+</tr>
+<tr>
+<td>Attention exposure</td>
+<td><code>[P04 Account Attention Exposure]</code></td>
+</tr>
+<tr>
+<td>Servicing disposition</td>
+<td><code>[P04 Account Servicing Disposition]</code></td>
+</tr>
+<tr>
+<td>Treatment / action</td>
+<td><code>[P04 Account Servicing Action]</code></td>
+</tr>
+<tr>
+<td>Ending exposure</td>
+<td><code>[P04 Account Ending Exposure]</code></td>
+</tr>
+<tr>
+<td>Lifecycle state</td>
+<td><code>[P04 Account Lifecycle State]</code></td>
+</tr>
+</tbody></table>
+<p>Rename the headers in the visual to those concise names.</p>
+<h3>Critical visual filter</h3>
+<p>We want an <strong>attention workbench</strong>, not all 44 Baseline accounts.</p>
+<p>Add a visual-level filter:</p>
+<p><strong><code>P04 Monitoring Status</code> → is not <code>Paid off</code></strong></p>
+<p>Given the full endpoint population, Baseline should therefore show exactly <strong>two rows</strong>: 000312 and 000098. Recession Energy should show no rows because all 15 funded endpoint paths are Paid Off.</p>
+<h3>What the finished Baseline table should communicate</h3>
+<p>Conceptually:</p>
+<table>
+<thead>
+<tr>
+<th>Merchant</th>
+<th>Monitoring</th>
+<th align="right">Pace</th>
+<th align="right">Shortfall</th>
+<th align="right">Attention exposure</th>
+<th>Disposition</th>
+<th>Action</th>
+<th align="right">Ending exposure</th>
+<th>Lifecycle</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>000312</td>
+<td>Severe shortfall</td>
+<td align="right">97.7%</td>
+<td align="right">$518</td>
+<td align="right">$518</td>
+<td>Active servicing</td>
+<td>Temporary payment cycle</td>
+<td align="right">$324</td>
+<td>Reassessment due</td>
+</tr>
+<tr>
+<td>000098</td>
+<td>Severe shortfall</td>
+<td align="right">91.3%</td>
+<td align="right">$462</td>
+<td align="right">$462</td>
+<td>Review hold</td>
+<td>Hold for servicing review</td>
+<td align="right">$462</td>
+<td>Servicing review hold</td>
+</tr>
+</tbody></table>
+<p>That makes the business story immediately visible: <strong>both reached the endpoint in severe shortfall, but only 312 was authorized for a temporary-payment treatment; 098 was stopped for review.</strong></p>
+<p>Turn <strong>Totals off</strong>. There is no analytically useful total row for this mixture of statuses, rates, exposures and lifecycle states.</p>
+<p>Build that table first and show me the result before we decide whether <code>Shortfall</code> and <code>Attention exposure</code> are visually redundant or whether another field—probably the underlying monitoring reason or payment-exception history—deserves the space more.</p>
+</div></article><article id="m-a559645e-edb9-4b2a-8125-5ea463ffcd6e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00448 · 2026-08-27T09:42:36.183000-04:00 · active path</p><div class="bubble"><p>account pace, shortfall, and attention exposure are all measures, correct?</p>
+</div></article><article id="m-c0adba36-668a-479f-9e7b-82c19ab1620d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00449 · 2026-08-27T09:42:37.977925-04:00 · active path</p><div class="bubble"><p>Correct. <strong>All three are explicit measures</strong>, not calculated columns:</p>
+<pre><code class="language-DAX">P04 Account Pace =
+SELECTEDVALUE ( FactMonitoringEndpoint[cumulative_pace_ratio] )
+</code></pre>
+<pre><code class="language-DAX">P04 Account Shortfall =
+SELECTEDVALUE ( FactMonitoringEndpoint[cumulative_shortfall_amount] )
+</code></pre>
+<pre><code class="language-DAX">P04 Account Attention Exposure =
+SELECTEDVALUE ( FactMonitoringEndpoint[remaining_receivable_amount] )
+</code></pre>
+<p>Formatting:</p>
+<ul>
+<li><strong>Account Pace:</strong> Percentage, 1 decimal</li>
+<li><strong>Account Shortfall:</strong> Currency</li>
+<li><strong>Account Attention Exposure:</strong> Currency</li>
+</ul>
+<p>The categorical presentation fields such as <strong><code>P04 Monitoring Status</code></strong>, <strong><code>P04 Servicing Disposition</code></strong>, <strong><code>P04 Servicing Action</code></strong>, and <strong><code>P04 Lifecycle State</code></strong> are calculated columns; their account-specific retrieval versions are measures where needed in the cross-fact workbench.</p>
+</div></article><article id="m-f4175821-768b-40d2-b95b-749051ee4ca8" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00450 · 2026-08-27T10:19:50.936000-04:00 · active path</p><div class="bubble"><p>is Servicing Disposition a column or measure?</p>
+</div></article><article id="m-58eab9d4-dc20-4e94-8f81-f89e0a571288" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00451 · 2026-08-27T10:19:52.842126-04:00 · active path</p><div class="bubble"><p>We created <strong>both</strong>, for different purposes:</p>
+<ul>
+<li><strong><code>P04 Servicing Disposition</code></strong> = <strong>calculated column</strong> in <code>FactServicingExecution</code>. This translates the raw outcome code into readable categories such as <code>Active servicing</code>, <code>Review hold</code>, and <code>No servicing required</code>.</li>
+<li><strong><code>P04 Account Servicing Disposition</code></strong> = <strong>measure</strong> that retrieves the appropriate disposition for each account row in the cross-fact workbench.</li>
+</ul>
+<p>The column was:</p>
+<pre><code class="language-DAX">P04 Servicing Disposition =
+SWITCH (
+    FactServicingExecution[servicing_execution_outcome_code],
+    &quot;NO_SERVICING_EXECUTION_REQUIRED&quot;, &quot;No servicing required&quot;,
+    &quot;SIMULATED_TEMPORARY_PAYMENT_PROCESSING_ACTIVE&quot;, &quot;Active servicing&quot;,
+    &quot;SERVICING_EXECUTION_REVIEW_HOLD&quot;, &quot;Review hold&quot;,
+    SUBSTITUTE (
+        FactServicingExecution[servicing_execution_outcome_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<p>And for the <strong>Account attention workbench</strong>, use this measure:</p>
+<pre><code class="language-DAX">P04 Account Servicing Disposition =
+SELECTEDVALUE (
+    FactServicingExecution[P04 Servicing Disposition]
+)
+</code></pre>
+<p>So: <strong>presentation category = column; workbench value = measure.</strong></p>
+</div></article><article id="m-3f2e6f76-e181-49e6-bf04-4af36ca05bc5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00452 · 2026-08-27T10:29:34.470000-04:00 · active path</p><div class="bubble"><p>servicing disposition is blank</p>
+</div></article><article id="m-fb33a139-679e-489a-b4b3-d4a123eb01bf" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00453 · 2026-08-27T10:29:38.816484-04:00 · active path</p><div class="bubble"><p>That is the expected failure mode from the way we built the workbench, and the fix is straightforward.</p>
+<p>The issue is <strong>filter propagation between two fact tables</strong>. Your table row is being established by <code>FactMonitoringEndpoint</code>, but that account-level row context does not automatically filter <code>FactServicingExecution</code>. Therefore this:</p>
+<pre><code class="language-DAX">SELECTEDVALUE (
+    FactServicingExecution[P04 Servicing Disposition]
+)
+</code></pre>
+<p>sees multiple servicing rows and returns blank.</p>
+<p>We should explicitly pass the selected <code>AccountKey</code> from the monitoring fact into the servicing fact with <code>TREATAS</code>.</p>
+<p>Replace <strong><code>P04 Account Servicing Disposition</code></strong> with:</p>
+<pre><code class="language-DAX">P04 Account Servicing Disposition =
+VAR _AccountKeys =
+    VALUES ( FactMonitoringEndpoint[AccountKey] )
+RETURN
+    CALCULATE (
+        SELECTEDVALUE (
+            FactServicingExecution[P04 Servicing Disposition]
+        ),
+        TREATAS (
+            _AccountKeys,
+            FactServicingExecution[AccountKey]
+        )
+    )
+</code></pre>
+<p>For Baseline, that should now return:</p>
+<ul>
+<li><code>000312</code> → <strong>Active servicing</strong></li>
+<li><code>000098</code> → <strong>Review hold</strong></li>
+</ul>
+<p>The supplied servicing fact confirms those two distinct outcomes. [export reference: filecite | turn52file0 | L9-L10]</p>
+<h3>Correct the other servicing-side workbench measures now</h3>
+<p>They will have the same cross-fact problem, so fix them before adding them to the table.</p>
+<p><strong>Servicing action</strong></p>
+<pre><code class="language-DAX">P04 Account Servicing Action =
+VAR _AccountKeys =
+    VALUES ( FactMonitoringEndpoint[AccountKey] )
+RETURN
+    CALCULATE (
+        SELECTEDVALUE (
+            FactServicingExecution[P04 Servicing Action]
+        ),
+        TREATAS (
+            _AccountKeys,
+            FactServicingExecution[AccountKey]
+        )
+    )
+</code></pre>
+<p><strong>Ending exposure</strong></p>
+<pre><code class="language-DAX">P04 Account Ending Exposure =
+VAR _AccountKeys =
+    VALUES ( FactMonitoringEndpoint[AccountKey] )
+RETURN
+    CALCULATE (
+        SELECTEDVALUE (
+            FactServicingExecution[ending_simulated_exposure_amount]
+        ),
+        TREATAS (
+            _AccountKeys,
+            FactServicingExecution[AccountKey]
+        )
+    )
+</code></pre>
+<p><strong>Lifecycle state</strong></p>
+<pre><code class="language-DAX">P04 Account Lifecycle State =
+VAR _AccountKeys =
+    VALUES ( FactMonitoringEndpoint[AccountKey] )
+RETURN
+    CALCULATE (
+        SELECTEDVALUE (
+            FactServicingExecution[P04 Lifecycle State]
+        ),
+        TREATAS (
+            _AccountKeys,
+            FactServicingExecution[AccountKey]
+        )
+    )
+</code></pre>
+<p>Your three monitoring-side measures—<strong>Pace, Shortfall, Attention Exposure</strong>—do <strong>not</strong> need this fix because the table itself is already anchored on <code>FactMonitoringEndpoint</code>.</p>
+<p>This is the correct pattern for P04: <strong>MonitoringEndpoint establishes the account rows; <code>TREATAS(AccountKey)</code> retrieves the corresponding servicing result from the other fact grain.</strong></p>
+</div></article><article id="m-11bf13bf-f778-4592-80f6-d4e81d93a2b7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00454 · 2026-08-27T10:53:57.671000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 7a3a330e-bcbc-4d87-8327-6b1c188b685c.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

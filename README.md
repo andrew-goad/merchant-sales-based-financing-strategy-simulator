@@ -80,6 +80,10 @@ The **53-page cohort report** traces decisions, segments, lifecycle results and 
 
 This companion supplements Power BI rather than replacing it. The scenarios are alternatives, not sequential account outcomes; review is not authorization, and authorization does not establish funding. This is a documentation/portfolio addition, not a new simulator version or release.
 
+## Follow the decisions behind the work
+
+[Project history](docs/project_history/README.md) connects the original dialogue, human-carried handoffs and review evidence. Start with the [Human-in-the-Loop evidence guide](docs/project_history/HITL_guide.md), or inspect the [development chronology](docs/project_history/CHRONOLOGY.md) and [conversation directory](docs/project_history/CONVERSATIONS.md).
+
 ## Choose your next level of detail
 
 ### Understand the evidence foundation

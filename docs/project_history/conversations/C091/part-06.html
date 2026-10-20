@@ -1,0 +1,1593 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence — part 06 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence — part 06</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-05.html">Previous part</a><a href="part-07.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-5aaed5fb-63e3-4ddf-9b86-b8f6ecb4633c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00083 · 2026-08-19T10:51:07.744052-04:00 · active path</p><div class="bubble"><p>The date metadata is clean. The stronger explanation is now that <strong>the PBIP opened without a local data cache, so the model definition is present but the tables have not yet been physically populated</strong>.</p>
+<p>Microsoft’s PBIP documentation states that when a project has no <code>.pbi\cache.abf</code>, Power BI Desktop opens the semantic model with its <strong>entire definition but without data</strong>. [export reference: cite | turn205069search0 | turn205069search3] That matches exactly what you are seeing:</p>
+<pre><code class="language-text">14 table schemas visible
+6 relationship definitions visible
+columns visible
+0 rows in Data view
+&quot;Some of the tables have incomplete or no data&quot;
+warning triangles
+</code></pre>
+<p>Your <code>DimDate</code> Power Query preview is 123/123 valid with a proper Date type, and the BIM maps it normally as <code>dateTime / Short Date</code>. So I would <strong>not treat “Invalid Date” as evidence of bad date values</strong> at this point. It is much more likely associated with the unprocessed/no-cache table state.</p>
+<h2>Next action: perform the actual Desktop data refresh</h2>
+<p>You are now at the point where the banner’s <strong>Refresh now</strong> operation is appropriate.</p>
+<p>First, close Power Query Editor <strong>without making any changes</strong>. Since you are only inspecting, use:</p>
+<p><strong>Close &amp; Apply</strong> only if there are no pending edits. If Power Query asks about changes you did not intentionally make, do not apply them; tell me what it says.</p>
+<p>Once back in Desktop, before clicking Refresh, record the pre-refresh state:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1A_PRE_DESKTOP_DATA_REFRESH&quot;
+    timestamp_local = (Get-Date).ToString(&quot;o&quot;)
+    timestamp_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+    power_query_preview = &quot;PASS&quot;
+    hotfix_id = &quot;A1A-M-RUNTIME-HF01&quot;
+    semantic_tables_defined = 14
+    relationships_defined = 6
+    data_rows_currently_loaded = &quot;NONE_OBSERVED&quot;
+    incomplete_or_no_data_banner = $true
+    explicit_measures = 0
+    substantive_report_pages = 0
+    technical_shell_pages = 1
+    a1b_started = $false
+} |
+    ConvertTo-Json -Depth 5 |
+    Set-Content `
+        -LiteralPath &quot;$ev\E06_PRE_DESKTOP_DATA_REFRESH.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Then click the banner:</p>
+<p><strong>Refresh now</strong></p>
+<p>or use:</p>
+<p><strong>Home → Refresh → Refresh data only</strong></p>
+<p>If your current Desktop exposes the expanded refresh choices, <strong>Refresh data only</strong> is preferable here because Microsoft distinguishes it from schema sync: it loads fresh data while preserving the existing semantic schema. [export reference: cite | turn205069search2] We already have the governed schema and do not want an incidental schema change.</p>
+<p>Let that refresh run completely.</p>
+<h3>If it succeeds</h3>
+<p>Go immediately to <strong>Data view → DimDate</strong>. You should now see 123 rows. Then check:</p>
+<pre><code class="language-text">DimAsOfDate             123
+FactValidationResult    533
+</code></pre>
+<p>and one of the larger core dimensions such as <code>DimMerchant</code>.</p>
+<p>Then return to Model view and see whether the warning triangles/banner disappear.</p>
+<p>At that point we can start recording the actual loaded row-count evidence and move into <code>AUD-REL-005</code> / <code>AUD-SCN-004</code> testing.</p>
+<h3>If it fails</h3>
+<p>Do not repair anything. Capture the full refresh dialog/error text. That would be the first true semantic-engine processing error and will tell us the exact table/column causing it.</p>
+<p>The key correction to our interpretation is:</p>
+<pre><code class="language-text">Power Query Preview        PASS
+Semantic definition        14 tables / 6 relationships present
+No local cache/data        expected PBIP opening state
+Desktop data refresh       NEXT REQUIRED ENGINE TEST
+</code></pre>
+<p>Microsoft explicitly documents that PBIP can open with full model metadata and no data when <code>cache.abf</code> is absent. [export reference: cite | turn205069search0]</p>
+<p>Proceed with <strong>Refresh data only</strong> if available; otherwise use the banner’s <strong>Refresh now</strong>. Tell me whether it completes and whether <code>DimDate</code> then shows 123 rows.</p>
+</div></article><article id="m-d7be1b35-3f1e-40ab-8ddb-29104c294a45" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00084 · 2026-08-19T10:58:00.252000-04:00 · active path</p><div class="bubble"><p>All tables now loaded successfully! I see 123 rows in DimDate and 533 in FactValidationResult</p>
+</div></article><article id="m-550799f4-cef6-4c07-a215-884c0abe46e4" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00085 · 2026-08-19T10:58:01.819022-04:00 · active path</p><div class="bubble"><p>Excellent. That is the first successful <strong>physical semantic-engine load</strong>.</p>
+<p>We can now distinguish the stages cleanly:</p>
+<pre><code class="language-text">Power Query inventory                 47/47 PASS
+HF01                                  APPLIED
+Power Query Preview Attempt 2         PASS
+14-table schema instantiation         PASS
+Desktop data refresh                  PASS
+DimDate physical rows                 123
+FactValidationResult physical rows    533
+A1b                                   NOT STARTED
+</code></pre>
+<p>This does <strong>not</strong> close the three audit holds yet; it gives us the physical evidence needed to test them.</p>
+<h2>1. Preserve the successful refresh immediately</h2>
+<p>Run this in PowerShell:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1A_DESKTOP_DATA_REFRESH_ATTEMPT_1&quot;
+    timestamp_local = (Get-Date).ToString(&quot;o&quot;)
+    timestamp_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    result = &quot;PASS&quot;
+
+    prior_hotfix = &quot;A1A-M-RUNTIME-HF01&quot;
+    power_query_preview = &quot;PASS&quot;
+
+    semantic_tables_defined = 14
+    semantic_tables_loaded = 14
+    relationships_defined = 6
+    power_query_queries = 47
+    explicit_measures = 0
+
+    observed_row_counts = @{
+        DimDate = 123
+        FactValidationResult = 533
+    }
+
+    technical_shell_pages = 1
+    substantive_report_pages = 0
+    visual_objects = 0
+    a1b_started = $false
+
+    privacy_execution_configuration = @{
+        local_source_classification = &quot;PUBLIC&quot;
+        ignore_privacy_levels = $false
+        classification_scope = &quot;LOCAL_EXECUTION_CONFIGURATION&quot;
+    }
+
+    unchanged_holds = @(
+        &quot;AUD-SCN-004&quot;,
+        &quot;AUD-REL-005&quot;,
+        &quot;AUD-ASOF-003&quot;
+    )
+
+    pbi_wp2 = &quot;HOLD&quot;
+} |
+    ConvertTo-Json -Depth 8 |
+    Set-Content `
+        -LiteralPath &quot;$ev\E06_DESKTOP_DATA_REFRESH_PASS.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>If you can, take screenshots of <code>DimDate</code> showing 123 rows and <code>FactValidationResult</code> showing 533 rows and save them in the evidence directory.</p>
+<h2>2. Don&#39;t perform another refresh</h2>
+<p>We now have the successful engine state. Repeated refreshing adds no value and makes the evidence chronology harder to interpret.</p>
+<p>Also do not create measures or visuals to test the model. A1a remains at zero explicit measures and zero substantive report pages.</p>
+<h2>3. Next we verify the six instantiated relationships</h2>
+<p>Go to:</p>
+<p><strong>Home → Manage relationships</strong></p>
+<p>Do <strong>not</strong> edit anything.</p>
+<p>You should see exactly six relationships. We need to verify their physical state against the frozen definitions:</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Relationship</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>REL-001</td>
+<td><code>DimIndustry[industry_code]</code> → <code>DimMerchant[industry_code]</code></td>
+</tr>
+<tr>
+<td>REL-002</td>
+<td><code>DimRegion[region_code]</code> → <code>DimMerchant[region_code]</code></td>
+</tr>
+<tr>
+<td>REL-003</td>
+<td><code>DimMerchant[MerchantKey]</code> → <code>DimApplication[MerchantKey]</code></td>
+</tr>
+<tr>
+<td>REL-004</td>
+<td><code>DimAcquisitionSource[primary_source_code]</code> → <code>DimApplication[primary_source_code]</code></td>
+</tr>
+<tr>
+<td>REL-005</td>
+<td><code>DimApplication[ApplicationKey]</code> → <code>DimAccountAdvance[ApplicationKey]</code></td>
+</tr>
+<tr>
+<td>REL-006</td>
+<td><code>DimScenario[RunScenarioKey]</code> → <code>DimAccountAdvance[RunScenarioKey]</code></td>
+</tr>
+</tbody></table>
+<p>The frozen design requires one-to-many, single-direction relationships; scenario identity remains <code>scenario_id</code> through the scenario-qualified key rather than <code>scenario_code</code>. The cross-workstream audit explicitly froze <code>scenario_id</code> as the relationship identity and the account grain as run × scenario × application. [export reference: filecite | turn9file7 | L13-L25]</p>
+<h3>What I need next</h3>
+<p>Open <strong>Manage relationships</strong> and send me a screenshot of the complete relationship list.</p>
+<p>Don&#39;t click Edit yet.</p>
+<p>Once we have that screenshot, we&#39;ll use DAX Studio to extract the authoritative <code>TMSCHEMA_RELATIONSHIPS</code> metadata rather than relying only on the GUI. That will establish the physical cardinality, active state, and filter direction required for <code>AUD-REL-005</code>.</p>
+</div></article><article id="m-a81acdd4-cffb-4a92-8fae-eb8e96372189" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00086 · 2026-08-19T11:04:19.732000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: MANAGE_RELATIONSHIPS.png</p><div class="bubble"><p>Manage relationships screenshot attached.</p>
+</div></article><article id="m-047d64d1-48dc-49c6-bfc0-58784d5bcb2a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00087 · 2026-08-19T11:04:21.517746-04:00 · active path</p><div class="bubble"><p>This is exactly the relationship state we wanted to see.</p>
+<p>The screenshot physically shows <strong>six and only six relationships</strong>, all <strong>Active</strong>, and every one is displayed as <code>*:1</code> with a single filter-direction arrow from the <code>1</code> side toward the <code>*</code> side. There is no visible many-to-many or bidirectional relationship.</p>
+<p>The six instantiated relationships reconcile to the frozen A1a design:</p>
+<table>
+<thead>
+<tr>
+<th>Physical relationship</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>DimApplication[ApplicationKey]</code> 1 → * <code>DimAccountAdvance[ApplicationKey]</code></td>
+<td>Active</td>
+</tr>
+<tr>
+<td><code>DimScenario[RunScenarioKey]</code> 1 → * <code>DimAccountAdvance[RunScenarioKey]</code></td>
+<td>Active</td>
+</tr>
+<tr>
+<td><code>DimMerchant[MerchantKey]</code> 1 → * <code>DimApplication[MerchantKey]</code></td>
+<td>Active</td>
+</tr>
+<tr>
+<td><code>DimAcquisitionSource[primary_source_code]</code> 1 → * <code>DimApplication[primary_source_code]</code></td>
+<td>Active</td>
+</tr>
+<tr>
+<td><code>DimIndustry[industry_code]</code> 1 → * <code>DimMerchant[industry_code]</code></td>
+<td>Active</td>
+</tr>
+<tr>
+<td><code>DimRegion[region_code]</code> 1 → * <code>DimMerchant[region_code]</code></td>
+<td>Active</td>
+</tr>
+</tbody></table>
+<p>This is consistent with the frozen shared identity contract: <code>scenario_id</code> governs scenario identity, and operational account grain remains <code>module1_run_id × scenario_id × merchant_application_id</code>. [export reference: filecite | turn9file7 | L13-L25]</p>
+<p>We should still <strong>not close <code>AUD-REL-005</code> ourselves</strong>. We now have strong GUI evidence of instantiation, but the audit requested metadata and behavioral evidence as well.</p>
+<h2>Preserve this screenshot</h2>
+<p>Save it in:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819
+\evidence\local_engine_return
+\E07_MANAGE_RELATIONSHIPS_6_ACTIVE.png
+</code></pre>
+<p>Then record the GUI observation:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1A_RELATIONSHIP_GUI_INSTANTIATION&quot;
+    timestamp_local = (Get-Date).ToString(&quot;o&quot;)
+    timestamp_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    relationship_count = 6
+    active_relationships = 6
+    inactive_relationships = 0
+    many_to_many_relationships = 0
+    bidirectional_relationships_observed = 0
+    single_direction_relationships_observed = 6
+
+    relationships = @(
+        &quot;DimApplication[ApplicationKey] -&gt; DimAccountAdvance[ApplicationKey]&quot;,
+        &quot;DimScenario[RunScenarioKey] -&gt; DimAccountAdvance[RunScenarioKey]&quot;,
+        &quot;DimMerchant[MerchantKey] -&gt; DimApplication[MerchantKey]&quot;,
+        &quot;DimAcquisitionSource[primary_source_code] -&gt; DimApplication[primary_source_code]&quot;,
+        &quot;DimIndustry[industry_code] -&gt; DimMerchant[industry_code]&quot;,
+        &quot;DimRegion[region_code] -&gt; DimMerchant[region_code]&quot;
+    )
+
+    aud_rel_005 = &quot;PHYSICAL_GUI_EVIDENCE_CAPTURED_PENDING_METADATA_AND_BEHAVIOR_TEST&quot;
+    pbi_wp2 = &quot;HOLD&quot;
+    a1b = &quot;NOT_AUTHORIZED&quot;
+} |
+    ConvertTo-Json -Depth 6 |
+    Set-Content `
+        -LiteralPath &quot;$ev\E07_RELATIONSHIP_GUI_EVIDENCE.json&quot; `
+        -Encoding utf8
+</code></pre>
+<h2>Next: DAX Studio</h2>
+<p>Close the <strong>Manage relationships</strong> dialog using its <strong>X</strong>. Don&#39;t change anything.</p>
+<p>Then in Power BI Desktop select:</p>
+<p><strong>External tools → DAX Studio</strong></p>
+<p>DAX Studio should open connected to this running model.</p>
+<p>Once DAX Studio opens successfully, <strong>don&#39;t run anything yet</strong>. Tell me whether it connected and what you see at the top/left—particularly whether the model tables are listed.</p>
+<p>Then we&#39;ll extract the authoritative DMV metadata for:</p>
+<pre><code class="language-text">TMSCHEMA_TABLES
+TMSCHEMA_COLUMNS
+TMSCHEMA_RELATIONSHIPS
+TMSCHEMA_MEASURES
+TMSCHEMA_PARTITIONS
+TMSCHEMA_EXPRESSIONS
+</code></pre>
+<p>That will give us machine-readable proof of the 14/6/47/0 engine footprint before we run the scenario, orphan, and as-of behavioral tests.</p>
+</div></article><article id="m-a11f9dc6-03c4-4108-a346-02b78a2fc6f0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00088 · 2026-08-19T11:10:20.726000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: DAX_STUDIO_SCREENSHOT.png</p><div class="bubble"><p>Dax Studio Screenshot Attached.</p>
+</div></article><article id="m-37c7f295-32ee-4f8e-950f-be1adbb1ea14" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00089 · 2026-08-19T11:10:22.352309-04:00 · active path</p><div class="bubble"><p>Perfect. DAX Studio is <strong>successfully connected to the live Power BI semantic engine</strong>.</p>
+<p>The screenshot establishes:</p>
+<pre><code class="language-text">Connection              Connected
+Live model               MSBF_PBI_A1A_Local_Construction...
+Tables visible           14
+Engine endpoint          localhost
+Metadata refresh         Successful
+DAX Studio               3.5.2
+</code></pre>
+<p>I can see all 14 tables in the Metadata pane. The lighter/italic rendering of some tables is not itself an error; we&#39;ll let the DMV results establish their physical state.</p>
+<h2>Next: capture the authoritative engine metadata</h2>
+<p>We&#39;ll do this carefully, <strong>one query at a time</strong>. These are read-only DMV queries; they do not create measures or modify the model.</p>
+<h3>First query — relationships</h3>
+<p>In the large query editor, paste:</p>
+<pre><code class="language-sql">SELECT *
+FROM $SYSTEM.TMSCHEMA_RELATIONSHIPS
+</code></pre>
+<p>Click <strong>Run</strong>.</p>
+<p>You should get exactly <strong>6 rows</strong>.</p>
+<h3>Export it</h3>
+<p>Once the results appear:</p>
+<ol>
+<li>Click inside the results grid.</li>
+<li>Use <strong>File → Export Data</strong> if available, or the results-grid export/save option.</li>
+<li>Save as CSV here:</li>
+</ol>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819
+\evidence\local_engine_return
+\E08_TMSCHEMA_RELATIONSHIPS.csv
+</code></pre>
+<p>Do not worry yet about interpreting numeric enum fields such as cardinality or cross-filtering behavior. We&#39;ll resolve those using the column/table metadata rather than guessing.</p>
+<h2>Second query — tables</h2>
+<p>Replace the query with:</p>
+<pre><code class="language-sql">SELECT *
+FROM $SYSTEM.TMSCHEMA_TABLES
+</code></pre>
+<p>Run it.</p>
+<p>Expected:</p>
+<pre><code class="language-text">14 rows
+</code></pre>
+<p>Save:</p>
+<pre><code class="language-text">E08_TMSCHEMA_TABLES.csv
+</code></pre>
+<h2>Third — columns</h2>
+<p>Run:</p>
+<pre><code class="language-sql">SELECT *
+FROM $SYSTEM.TMSCHEMA_COLUMNS
+</code></pre>
+<p>Save:</p>
+<pre><code class="language-text">E08_TMSCHEMA_COLUMNS.csv
+</code></pre>
+<p>There will be many rows; that&#39;s expected.</p>
+<h2>Fourth — measures</h2>
+<p>Run:</p>
+<pre><code class="language-sql">SELECT *
+FROM $SYSTEM.TMSCHEMA_MEASURES
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">0 rows
+</code></pre>
+<p>This zero-row result is important physical evidence that A1a still contains <strong>zero explicit measures</strong>.</p>
+<p>Save the result as:</p>
+<pre><code class="language-text">E08_TMSCHEMA_MEASURES.csv
+</code></pre>
+<p>If DAX Studio won&#39;t export an empty result, take a screenshot clearly showing:</p>
+<pre><code class="language-text">0 rows
+</code></pre>
+<p>and save it as:</p>
+<pre><code class="language-text">E08_TMSCHEMA_MEASURES_ZERO_ROWS.png
+</code></pre>
+<h2>Fifth — partitions</h2>
+<p>Run:</p>
+<pre><code class="language-sql">SELECT *
+FROM $SYSTEM.TMSCHEMA_PARTITIONS
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">14 rows
+</code></pre>
+<p>Save:</p>
+<pre><code class="language-text">E08_TMSCHEMA_PARTITIONS.csv
+</code></pre>
+<h2>Sixth — expressions</h2>
+<p>Run:</p>
+<pre><code class="language-sql">SELECT *
+FROM $SYSTEM.TMSCHEMA_EXPRESSIONS
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">33 rows
+</code></pre>
+<p>Save:</p>
+<pre><code class="language-text">E08_TMSCHEMA_EXPRESSIONS.csv
+</code></pre>
+<p>Together those two populations prove the Power Query count physically:</p>
+<pre><code class="language-text">14 table partitions
++ 33 named expressions
+----------------------
+  47 Power Query objects
+</code></pre>
+<p>That directly corroborates the static A1a inventory, which specified 9 parameters + 5 functions + 19 staging + 14 semantic queries = 47. [export reference: filecite | turn10file0 | L16-L31]</p>
+<h2>After those six exports</h2>
+<p>Don&#39;t run behavioral DAX yet.</p>
+<p>Tell me the observed row counts for:</p>
+<pre><code class="language-text">TMSCHEMA_RELATIONSHIPS = ?
+TMSCHEMA_TABLES        = ?
+TMSCHEMA_COLUMNS       = ?
+TMSCHEMA_MEASURES      = ?
+TMSCHEMA_PARTITIONS    = ?
+TMSCHEMA_EXPRESSIONS   = ?
+</code></pre>
+<p>If you have trouble finding DAX Studio&#39;s CSV export option, tell me what options appear when you right-click the results grid. We can use its <strong>Output → File</strong> mode instead.</p>
+<p>Once those counts reconcile, we&#39;ll use the exported metadata to prove the six relationships&#39; exact columns/cardinality/filter direction and then run the <strong>read-only scenario, orphan, and as-of tests</strong>—without adding a single measure or visual.</p>
+</div></article><article id="m-6b714553-8cad-4580-8aed-57e4ae848921" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00090 · 2026-08-19T11:33:13.998000-04:00 · active path</p><p class="note">Attachment references: E08_TMSCHEMA_EXPRESSIONS.csv; E08_TMSCHEMA_MEASURES.csv; E08_TMSCHEMA_PARTITIONS.csv; E08_TMSCHEMA_RELATIONSHIPS.csv; E08_TMSCHEMA_TABLES.csv; E08_TMSCHEMA_COLUMNS.csv</p><div class="bubble"><p>Query Results attached and saved in evidence folder.</p>
+</div></article><article id="m-a73c746a-c694-43f6-b572-b9172b451db1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00091 · 2026-08-19T11:33:59.547669-04:00 · active path</p><div class="bubble"><p>The six DMV exports reconcile cleanly. I inspected the attached CSVs directly.</p>
+<p>The live semantic engine now physically reports:</p>
+<pre><code class="language-text">TMSCHEMA_TABLES          14
+TMSCHEMA_COLUMNS        242
+TMSCHEMA_RELATIONSHIPS    6
+TMSCHEMA_MEASURES         0
+TMSCHEMA_PARTITIONS      14
+TMSCHEMA_EXPRESSIONS     33
+</code></pre>
+<p>That gives us the exact A1a engine footprint:</p>
+<pre><code class="language-text">14 semantic tables
+6 instantiated relationships
+14 table partitions
+33 named expressions
+14 + 33 = 47 Power Query objects
+0 explicit DAX measures
+</code></pre>
+<p>This independently corroborates the static A1a design inventory of 47 queries with the expected 9 parameter / 5 function / 19 staging / 14 semantic split. [export reference: filecite | turn10file0 | L16-L31]</p>
+<p>The relationship DMV is also clean. All six are <code>IsActive = True</code>, all have <code>State = 1</code>, and all show the same single-direction cross-filter behavior value. Their physical endpoints resolve exactly as follows:</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Many side</th>
+<th>One side</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>REL-001</td>
+<td><code>DimMerchant[industry_code]</code></td>
+<td><code>DimIndustry[industry_code]</code></td>
+</tr>
+<tr>
+<td>REL-002</td>
+<td><code>DimMerchant[region_code]</code></td>
+<td><code>DimRegion[region_code]</code></td>
+</tr>
+<tr>
+<td>REL-003</td>
+<td><code>DimApplication[MerchantKey]</code></td>
+<td><code>DimMerchant[MerchantKey]</code></td>
+</tr>
+<tr>
+<td>REL-004</td>
+<td><code>DimApplication[primary_source_code]</code></td>
+<td><code>DimAcquisitionSource[primary_source_code]</code></td>
+</tr>
+<tr>
+<td>REL-005</td>
+<td><code>DimAccountAdvance[ApplicationKey]</code></td>
+<td><code>DimApplication[ApplicationKey]</code></td>
+</tr>
+<tr>
+<td>REL-006</td>
+<td><code>DimAccountAdvance[RunScenarioKey]</code></td>
+<td><code>DimScenario[RunScenarioKey]</code></td>
+</tr>
+</tbody></table>
+<p>The DMV cardinality values are consistent across all six: <code>FromCardinality = 2</code> on the many side and <code>ToCardinality = 1</code> on the one side. That matches the GUI evidence you already captured. The scenario relationship is physically on <code>RunScenarioKey</code>, preserving the frozen <code>scenario_id</code>-qualified account identity rather than using <code>scenario_code</code>. The shared audit froze exactly that scenario identity and account grain. [export reference: filecite | turn9file7 | L13-L25]</p>
+<p>There is also useful refresh evidence in <code>TMSCHEMA_PARTITIONS</code>: all 14 partitions have <code>State = 1</code>, no <code>ErrorMessage</code>, and non-null refresh timestamps from the successful Desktop refresh. So the prior no-data/invalid-date condition is no longer the controlling engine state.</p>
+<h2>Preserve a DMV summary now</h2>
+<p>Run this in PowerShell so the evidence package has a compact machine-readable reconciliation:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1A_LIVE_ENGINE_METADATA_RECONCILIATION&quot;
+    timestamp_local = (Get-Date).ToString(&quot;o&quot;)
+    timestamp_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    tmschema_tables = 14
+    tmschema_columns = 242
+    tmschema_relationships = 6
+    tmschema_measures = 0
+    tmschema_partitions = 14
+    tmschema_expressions = 33
+
+    calculated_power_query_object_count = 47
+
+    active_relationships = 6
+    inactive_relationships = 0
+    relationship_state_1_count = 6
+    partition_state_1_count = 14
+    partition_error_count = 0
+
+    physical_engine_boundary = &quot;14_TABLES_6_RELATIONSHIPS_47_QUERIES_0_MEASURES&quot;
+
+    aud_rel_005 = &quot;METADATA_EVIDENCE_CAPTURED_BEHAVIOR_TEST_PENDING&quot;
+    aud_scn_004 = &quot;HOLD_BEHAVIOR_TEST_PENDING&quot;
+    aud_asof_003 = &quot;HOLD_BEHAVIOR_TEST_PENDING&quot;
+
+    pbi_wp2 = &quot;HOLD&quot;
+    a1b = &quot;NOT_AUTHORIZED&quot;
+} |
+    ConvertTo-Json -Depth 6 |
+    Set-Content `
+        -LiteralPath &quot;$ev\E08_LIVE_ENGINE_METADATA_RECONCILIATION.json&quot; `
+        -Encoding utf8
+</code></pre>
+<h2>Next: behavioral tests</h2>
+<p>We can now move from metadata to the three remaining local-engine behaviors. We should test them with <strong>query-scoped DAX only</strong>—no persistent measures.</p>
+<p>Start with scenario isolation. In DAX Studio, paste and run this:</p>
+<pre><code class="language-DAX">EVALUATE
+SUMMARIZECOLUMNS(
+    DimScenario[scenario_code],
+    &quot;AccountPaths&quot;,
+        COUNTROWS(DimAccountAdvance),
+    &quot;DistinctApplications&quot;,
+        DISTINCTCOUNT(DimAccountAdvance[merchant_application_id]),
+    &quot;FundedAmount&quot;,
+        SUM(DimAccountAdvance[funded_amount])
+)
+ORDER BY
+    DimScenario[scenario_code]
+</code></pre>
+<p>Expected physical result:</p>
+<pre><code class="language-text">BASELINE
+AccountPaths           44
+DistinctApplications   44
+FundedAmount            472000
+
+RECESSION_ENERGY
+AccountPaths           15
+DistinctApplications   15
+FundedAmount            195600
+</code></pre>
+<p>This is our first direct <code>AUD-SCN-004</code> filter-behavior test.</p>
+<p>Save the result as:</p>
+<pre><code class="language-text">E09_SCENARIO_ISOLATION.csv
+</code></pre>
+<p>Do not create a measure from any of these expressions.</p>
+<p>After you run that query, send me the two result rows. Then we&#39;ll run the relationship orphan/filter-propagation controls and finally the as-of/endpoint test.</p>
+</div></article><article id="m-d202596e-a55f-417b-911b-1db266771b56" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00092 · 2026-08-19T11:36:33.194000-04:00 · active path</p><p class="note">Attachment references: E09_SCENARIO_ISOLATION.csv</p><div class="bubble"><p>Scenario Isolation query attached.</p>
+</div></article><article id="m-6a9e7efb-a064-4877-a811-90074cf49280" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00093 · 2026-08-19T11:36:42.819029-04:00 · active path</p><div class="bubble"><p>Scenario isolation passed exactly as expected.</p>
+<p>The attached engine result is:</p>
+<pre><code class="language-text">BASELINE
+AccountPaths           44
+DistinctApplications   44
+FundedAmount            472000
+
+RECESSION_ENERGY
+AccountPaths           15
+DistinctApplications   15
+FundedAmount            195600
+</code></pre>
+<p>That means the live model is preserving the intended scenario-qualified account population with <strong>no visible cross-scenario leakage</strong> in this test. The combined interpretation remains 59 scenario-qualified paths representing 44 distinct applications, including 15 matched stress overlays.</p>
+<p>For audit purposes, I would now mark the source-owner status of <code>AUD-SCN-004</code> as:</p>
+<pre><code class="language-text">PHYSICAL_EVIDENCE_CAPTURED_PENDING_INDEPENDENT_DISPOSITION
+</code></pre>
+<p>—not closed by us.</p>
+<p>Next we should test relationship propagation and orphan behavior. In DAX Studio, run this read-only query:</p>
+<pre><code class="language-DAX">EVALUATE
+ROW(
+    &quot;IndustryChildRows&quot;,
+        COUNTROWS(DimMerchant),
+
+    &quot;IndustryFilteredRows&quot;,
+        SUMX(
+            VALUES(DimIndustry[industry_code]),
+            CALCULATE(COUNTROWS(DimMerchant))
+        ),
+
+    &quot;RegionChildRows&quot;,
+        COUNTROWS(DimMerchant),
+
+    &quot;RegionFilteredRows&quot;,
+        SUMX(
+            VALUES(DimRegion[region_code]),
+            CALCULATE(COUNTROWS(DimMerchant))
+        ),
+
+    &quot;MerchantChildRows&quot;,
+        COUNTROWS(DimApplication),
+
+    &quot;MerchantFilteredRows&quot;,
+        SUMX(
+            VALUES(DimMerchant[MerchantKey]),
+            CALCULATE(COUNTROWS(DimApplication))
+        ),
+
+    &quot;AcquisitionChildRows&quot;,
+        COUNTROWS(DimApplication),
+
+    &quot;AcquisitionFilteredRows&quot;,
+        SUMX(
+            VALUES(DimAcquisitionSource[primary_source_code]),
+            CALCULATE(COUNTROWS(DimApplication))
+        ),
+
+    &quot;ApplicationChildRows&quot;,
+        COUNTROWS(DimAccountAdvance),
+
+    &quot;ApplicationFilteredRows&quot;,
+        SUMX(
+            VALUES(DimApplication[ApplicationKey]),
+            CALCULATE(COUNTROWS(DimAccountAdvance))
+        ),
+
+    &quot;ScenarioChildRows&quot;,
+        COUNTROWS(DimAccountAdvance),
+
+    &quot;ScenarioFilteredRows&quot;,
+        SUMX(
+            VALUES(DimScenario[RunScenarioKey]),
+            CALCULATE(COUNTROWS(DimAccountAdvance))
+        )
+)
+</code></pre>
+<p>For each relationship pair, the filtered-row total should equal the child-table total. Save the result as:</p>
+<pre><code class="language-text">E10_RELATIONSHIP_FILTER_BEHAVIOR.csv
+</code></pre>
+<p>Then we’ll run a separate six-relationship orphan-key test and finish with the as-of/endpoint evidence.</p>
+</div></article><article id="m-9e82db36-ed95-4118-b973-3ef52248fa55" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00094 · 2026-08-19T11:39:56.410000-04:00 · active path</p><p class="note">Attachment references: E10_RELATIONSHIP_FILTER_BEHAVIOR.csv</p><div class="bubble"><p>E10_RELATIONSHIP_FILTER_BEHAVIOR attached.</p>
+</div></article><article id="m-c29b347b-0a10-4046-9105-fad986eaa9cb" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00095 · 2026-08-19T11:40:03.262699-04:00 · active path</p><div class="bubble"><p><code>E10_RELATIONSHIP_FILTER_BEHAVIOR.csv</code> passes cleanly.</p>
+<p>The live-engine result is:</p>
+<table>
+<thead>
+<tr>
+<th>Relationship path</th>
+<th align="right">Child rows</th>
+<th align="right">Filter-propagated rows</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Industry → Merchant</td>
+<td align="right">750</td>
+<td align="right">750</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Region → Merchant</td>
+<td align="right">750</td>
+<td align="right">750</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Merchant → Application</td>
+<td align="right">750</td>
+<td align="right">750</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Acquisition Source → Application</td>
+<td align="right">750</td>
+<td align="right">750</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Application → Account Advance</td>
+<td align="right">59</td>
+<td align="right">59</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Scenario → Account Advance</td>
+<td align="right">59</td>
+<td align="right">59</td>
+<td>PASS</td>
+</tr>
+</tbody></table>
+<p>So all <strong>six instantiated relationships successfully propagate filters from the one-side to the many-side without losing child rows</strong>.</p>
+<p>Combined with the evidence already captured, <code>AUD-REL-005</code> now has:</p>
+<pre><code class="language-text">6/6 relationships physically instantiated
+6/6 Active
+6/6 one-to-many
+6/6 single-direction
+0 many-to-many
+0 bidirectional
+6/6 filter-propagation tests PASS
+</code></pre>
+<p>We should still leave its source-owner disposition as:</p>
+<pre><code class="language-text">AUD-REL-005 =
+PHYSICAL_EVIDENCE_CAPTURED_PENDING_INDEPENDENT_DISPOSITION
+</code></pre>
+<h3>Next: six-relationship orphan test</h3>
+<p>Run this in DAX Studio:</p>
+<pre><code class="language-DAX">EVALUATE
+ROW(
+    &quot;IndustryOrphanKeys&quot;,
+        COUNTROWS(
+            EXCEPT(
+                VALUES(DimMerchant[industry_code]),
+                VALUES(DimIndustry[industry_code])
+            )
+        ),
+
+    &quot;RegionOrphanKeys&quot;,
+        COUNTROWS(
+            EXCEPT(
+                VALUES(DimMerchant[region_code]),
+                VALUES(DimRegion[region_code])
+            )
+        ),
+
+    &quot;MerchantOrphanKeys&quot;,
+        COUNTROWS(
+            EXCEPT(
+                VALUES(DimApplication[MerchantKey]),
+                VALUES(DimMerchant[MerchantKey])
+            )
+        ),
+
+    &quot;AcquisitionSourceOrphanKeys&quot;,
+        COUNTROWS(
+            EXCEPT(
+                VALUES(DimApplication[primary_source_code]),
+                VALUES(DimAcquisitionSource[primary_source_code])
+            )
+        ),
+
+    &quot;ApplicationOrphanKeys&quot;,
+        COUNTROWS(
+            EXCEPT(
+                VALUES(DimAccountAdvance[ApplicationKey]),
+                VALUES(DimApplication[ApplicationKey])
+            )
+        ),
+
+    &quot;ScenarioOrphanKeys&quot;,
+        COUNTROWS(
+            EXCEPT(
+                VALUES(DimAccountAdvance[RunScenarioKey]),
+                VALUES(DimScenario[RunScenarioKey])
+            )
+        )
+)
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">IndustryOrphanKeys             0
+RegionOrphanKeys               0
+MerchantOrphanKeys             0
+AcquisitionSourceOrphanKeys    0
+ApplicationOrphanKeys          0
+ScenarioOrphanKeys             0
+</code></pre>
+<p>Save it as:</p>
+<pre><code class="language-text">E11_RELATIONSHIP_ORPHANS.csv
+</code></pre>
+<p>After that, we&#39;ll run the final <strong>as-of / endpoint behavioral evidence</strong> for <code>AUD-ASOF-003</code>.</p>
+</div></article><article id="m-58b17d27-a93d-4d68-b9b4-b1ed267a4a7a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00096 · 2026-08-19T11:41:42.283000-04:00 · active path</p><p class="note">Attachment references: E11_RELATIONSHIP_ORPHANS.csv</p><div class="bubble"><p>E11_RELATIONSHIP_ORPHANS attached.</p>
+</div></article><article id="m-d5768509-1ae0-427e-b1e7-f98a81b1aa13" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00097 · 2026-08-19T11:41:48.617070-04:00 · active path</p><div class="bubble"><p>There is an important nuance in <code>E11_RELATIONSHIP_ORPHANS.csv</code>: <strong>all six results are blank, not zero</strong>.</p>
+<p>The attached file contains:</p>
+<pre><code class="language-text">IndustryOrphanKeys             BLANK
+RegionOrphanKeys               BLANK
+MerchantOrphanKeys             BLANK
+AcquisitionSourceOrphanKeys    BLANK
+ApplicationOrphanKeys          BLANK
+ScenarioOrphanKeys             BLANK
+</code></pre>
+<p>That is consistent with DAX <code>COUNTROWS()</code> returning <code>BLANK()</code> when its table argument contains no rows. Semantically, this is what we hoped to see—each <code>EXCEPT()</code> produced an empty orphan set—but for audit evidence I do <strong>not</strong> want to submit blanks and later describe them as literal zeroes.</p>
+<p>Let&#39;s make the evidence unambiguous.</p>
+<h2>Rerun E11 with explicit zero coercion</h2>
+<p>Run this in DAX Studio:</p>
+<pre><code class="language-DAX">EVALUATE
+ROW(
+    &quot;IndustryOrphanKeys&quot;,
+        COALESCE(
+            COUNTROWS(
+                EXCEPT(
+                    VALUES(DimMerchant[industry_code]),
+                    VALUES(DimIndustry[industry_code])
+                )
+            ),
+            0
+        ),
+
+    &quot;RegionOrphanKeys&quot;,
+        COALESCE(
+            COUNTROWS(
+                EXCEPT(
+                    VALUES(DimMerchant[region_code]),
+                    VALUES(DimRegion[region_code])
+                )
+            ),
+            0
+        ),
+
+    &quot;MerchantOrphanKeys&quot;,
+        COALESCE(
+            COUNTROWS(
+                EXCEPT(
+                    VALUES(DimApplication[MerchantKey]),
+                    VALUES(DimMerchant[MerchantKey])
+                )
+            ),
+            0
+        ),
+
+    &quot;AcquisitionSourceOrphanKeys&quot;,
+        COALESCE(
+            COUNTROWS(
+                EXCEPT(
+                    VALUES(DimApplication[primary_source_code]),
+                    VALUES(DimAcquisitionSource[primary_source_code])
+                )
+            ),
+            0
+        ),
+
+    &quot;ApplicationOrphanKeys&quot;,
+        COALESCE(
+            COUNTROWS(
+                EXCEPT(
+                    VALUES(DimAccountAdvance[ApplicationKey]),
+                    VALUES(DimApplication[ApplicationKey])
+                )
+            ),
+            0
+        ),
+
+    &quot;ScenarioOrphanKeys&quot;,
+        COALESCE(
+            COUNTROWS(
+                EXCEPT(
+                    VALUES(DimAccountAdvance[RunScenarioKey]),
+                    VALUES(DimScenario[RunScenarioKey])
+                )
+            ),
+            0
+        )
+)
+</code></pre>
+<p>Overwrite or save the corrected result as:</p>
+<pre><code class="language-text">E11_RELATIONSHIP_ORPHANS.csv
+</code></pre>
+<p>Expected literal output:</p>
+<pre><code class="language-text">IndustryOrphanKeys             0
+RegionOrphanKeys               0
+MerchantOrphanKeys             0
+AcquisitionSourceOrphanKeys    0
+ApplicationOrphanKeys          0
+ScenarioOrphanKeys             0
+</code></pre>
+<p>This does <strong>not</strong> change the substantive result; it only makes the evidence machine-readable and audit-safe.</p>
+<p>Once you have the corrected E11, attach it. Then we&#39;ll proceed to the final <code>AUD-ASOF-003</code> tests for the July 23 source cutoff, November 22 evidence endpoint, default as-of date, and no historical endpoint back-casting.</p>
+</div></article><article id="m-4be8e837-9914-4bc9-bcc7-d7cc7c3e3d01" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00098 · 2026-08-19T11:43:54.990000-04:00 · active path</p><p class="note">Attachment references: E11_RELATIONSHIP_ORPHANS(1).csv</p><div class="bubble"><p>Updated E11_RELATIONSHIP_ORPHANS attached.</p>
+</div></article><article id="m-827e7b6e-523d-4315-8194-cb31c898f559" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00099 · 2026-08-19T11:44:00.289481-04:00 · active path</p><div class="bubble"><p>Confirmed. The revised <code>E11_RELATIONSHIP_ORPHANS</code> now contains literal zeroes across all six relationship controls:</p>
+<pre><code class="language-text">IndustryOrphanKeys             0
+RegionOrphanKeys               0
+MerchantOrphanKeys             0
+AcquisitionSourceOrphanKeys    0
+ApplicationOrphanKeys          0
+ScenarioOrphanKeys             0
+</code></pre>
+<p>Together with E08 and E10, the relationship evidence is now very strong: 6/6 instantiated and active, 6/6 filter-propagation tests reconcile, and 6/6 orphan tests return zero. We will leave <code>AUD-REL-005</code> pending Independent Audit disposition rather than self-closing it.</p>
+<h2>Final local-engine control: <code>AUD-ASOF-003</code></h2>
+<p>We need to be precise here. A1a contains the <strong>date/control spine</strong>, but the 13 endpoint-only business facts themselves are deferred beyond A1a. Therefore, this cycle can physically prove the date boundaries and controller behavior, while any test requiring those deferred endpoint fact tables must remain explicitly unexecuted—not simulated.</p>
+<p>First run this DAX Studio query:</p>
+<pre><code class="language-DAX">EVALUATE
+ROW(
+    &quot;DimDateRows&quot;,
+        COUNTROWS(DimDate),
+
+    &quot;DimDateMin&quot;,
+        MIN(DimDate[Date]),
+
+    &quot;DimDateMax&quot;,
+        MAX(DimDate[Date]),
+
+    &quot;SourceRunAsOfRows&quot;,
+        CALCULATE(
+            COUNTROWS(DimDate),
+            DimDate[IsSourceRunAsOf] = TRUE()
+        ),
+
+    &quot;SourceRunAsOfDate&quot;,
+        CALCULATE(
+            MAX(DimDate[Date]),
+            DimDate[IsSourceRunAsOf] = TRUE()
+        ),
+
+    &quot;EvidenceEndpointRows&quot;,
+        CALCULATE(
+            COUNTROWS(DimDate),
+            DimDate[IsEvidenceEndpoint] = TRUE()
+        ),
+
+    &quot;EvidenceEndpointDate&quot;,
+        CALCULATE(
+            MAX(DimDate[Date]),
+            DimDate[IsEvidenceEndpoint] = TRUE()
+        ),
+
+    &quot;AsOfControllerRows&quot;,
+        COUNTROWS(DimAsOfDate),
+
+    &quot;AsOfControllerMin&quot;,
+        MIN(DimAsOfDate[AsOfDate]),
+
+    &quot;AsOfControllerMax&quot;,
+        MAX(DimAsOfDate[AsOfDate]),
+
+    &quot;DefaultAsOfRows&quot;,
+        CALCULATE(
+            COUNTROWS(DimAsOfDate),
+            DimAsOfDate[IsDefaultAsOf] = TRUE()
+        ),
+
+    &quot;DefaultAsOfDate&quot;,
+        CALCULATE(
+            MAX(DimAsOfDate[AsOfDate]),
+            DimAsOfDate[IsDefaultAsOf] = TRUE()
+        )
+)
+</code></pre>
+<p>Save as:</p>
+<pre><code class="language-text">E12_ASOF_DATE_SPINE.csv
+</code></pre>
+<p>The expected result is:</p>
+<pre><code class="language-text">DimDateRows             123
+DimDateMin              2026-07-23
+DimDateMax              2026-11-22
+
+SourceRunAsOfRows       1
+SourceRunAsOfDate       2026-07-23
+
+EvidenceEndpointRows    1
+EvidenceEndpointDate    2026-11-22
+
+AsOfControllerRows      123
+AsOfControllerMin       2026-07-23
+AsOfControllerMax       2026-11-22
+
+DefaultAsOfRows         1
+DefaultAsOfDate         2026-11-22
+</code></pre>
+<p>The July 23 source/evidence cutoff and the distinction between that cutoff and the deterministic synthetic horizon are frozen cross-workstream controls. [export reference: filecite | turn9file4 | L17-L24]</p>
+<h3>Then run one boundary-classification query</h3>
+<p>This tests the controller&#39;s temporal classification without pretending the deferred endpoint facts are loaded:</p>
+<pre><code class="language-DAX">EVALUATE
+SELECTCOLUMNS(
+    FILTER(
+        DimAsOfDate,
+        DimAsOfDate[AsOfDate] IN {
+            DATE(2026,7,23),
+            DATE(2026,7,24),
+            DATE(2026,11,21),
+            DATE(2026,11,22)
+        }
+    ),
+    &quot;AsOfDate&quot;, DimAsOfDate[AsOfDate],
+    &quot;IsSourceRunAsOf&quot;, DimAsOfDate[IsSourceRunAsOf],
+    &quot;IsEvidenceEndpoint&quot;, DimAsOfDate[IsEvidenceEndpoint],
+    &quot;IsDefaultAsOf&quot;, DimAsOfDate[IsDefaultAsOf]
+)
+ORDER BY [AsOfDate]
+</code></pre>
+<p>Save as:</p>
+<pre><code class="language-text">E12_ASOF_BOUNDARY_CLASSIFICATION.csv
+</code></pre>
+<p>This should demonstrate that July 23 and November 22 have distinct roles and that November 21 is not incorrectly marked as the certified endpoint.</p>
+<p>After you attach <strong>both E12 files</strong>, we&#39;ll reconcile exactly what portion of <code>AUD-ASOF-003</code> A1a physically proves and what portion must remain held because the 13 endpoint-only fact tables are outside the authorized A1a footprint. That distinction is important because the audit explicitly says no static artifact can close the full endpoint-behavior control. [export reference: filecite | turn9file6 | L94-L100]</p>
+</div></article><article id="m-f00b7fab-6477-46c5-ad67-df72467f0954" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00100 · 2026-08-19T11:46:37.442000-04:00 · active path</p><p class="note">Attachment references: E12_ASOF_BOUNDARY_CLASSIFICATION.csv; E12_ASOF_DATE_SPINE.csv</p><div class="bubble"><p>E12_ASOF_... queries attached.</p>
+</div></article><article id="m-2df02491-7d08-406a-b3e4-b78f653e108c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00101 · 2026-08-19T11:46:47.643790-04:00 · active path</p><div class="bubble"><p>The two E12 files reconcile exactly to the intended A1a temporal-control spine.</p>
+<p><code>E12_ASOF_DATE_SPINE.csv</code> physically shows:</p>
+<pre><code class="language-text">DimDateRows             123
+DimDateMin              2026-07-23
+DimDateMax              2026-11-22
+
+SourceRunAsOfRows       1
+SourceRunAsOfDate       2026-07-23
+
+EvidenceEndpointRows    1
+EvidenceEndpointDate    2026-11-22
+
+AsOfControllerRows      123
+AsOfControllerMin       2026-07-23
+AsOfControllerMax       2026-11-22
+
+DefaultAsOfRows         1
+DefaultAsOfDate         2026-11-22
+</code></pre>
+<p><code>E12_ASOF_BOUNDARY_CLASSIFICATION.csv</code> then confirms the four tested boundary dates behave distinctly:</p>
+<table>
+<thead>
+<tr>
+<th>As-of date</th>
+<th align="right">Source run as-of</th>
+<th align="right">Evidence endpoint</th>
+<th align="right">Default as-of</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2026-07-23</td>
+<td align="right">TRUE</td>
+<td align="right">FALSE</td>
+<td align="right">FALSE</td>
+</tr>
+<tr>
+<td>2026-07-24</td>
+<td align="right">FALSE</td>
+<td align="right">FALSE</td>
+<td align="right">FALSE</td>
+</tr>
+<tr>
+<td>2026-11-21</td>
+<td align="right">FALSE</td>
+<td align="right">FALSE</td>
+<td align="right">FALSE</td>
+</tr>
+<tr>
+<td>2026-11-22</td>
+<td align="right">FALSE</td>
+<td align="right">TRUE</td>
+<td align="right">TRUE</td>
+</tr>
+</tbody></table>
+<p>That is clean physical local-engine evidence that the model distinguishes the accepted <strong>2026-07-23 source/evidence cutoff</strong> from the <strong>2026-11-22 deterministic-synthetic endpoint</strong>, rather than conflating those dates. That distinction is part of the frozen cross-workstream contract. [export reference: filecite | turn9file4 | L17-L24]</p>
+<p>The important governance distinction is that <strong>A1a does not contain the 13 endpoint-only business fact tables</strong>. Therefore, A1a can prove the controller/date-spine component of <code>AUD-ASOF-003</code>, but it cannot physically prove that each deferred endpoint-only fact returns blank before November 22 or a HOLD outside the evidence horizon. The prior audit explicitly said that endpoint-only behavioral evidence remains a local-engine hold and cannot be closed by static evidence alone. [export reference: filecite | turn9file6 | L94-L100]</p>
+<p>I would now record the three controls as:</p>
+<pre><code class="language-text">AUD-SCN-004
+PHYSICAL_EVIDENCE_CAPTURED_PENDING_INDEPENDENT_DISPOSITION
+Evidence: E09_SCENARIO_ISOLATION.csv
+Result: 44 / $472,000 baseline; 15 / $195,600 recession overlay
+
+AUD-REL-005
+PHYSICAL_EVIDENCE_CAPTURED_PENDING_INDEPENDENT_DISPOSITION
+Evidence:
+  E08_TMSCHEMA_RELATIONSHIPS.csv
+  E10_RELATIONSHIP_FILTER_BEHAVIOR.csv
+  E11_RELATIONSHIP_ORPHANS.csv
+Result:
+  6 instantiated
+  6 active
+  6 one-to-many / single-direction
+  6/6 filter behavior PASS
+  6/6 orphan controls = 0
+
+AUD-ASOF-003
+PARTIAL_PHYSICAL_EVIDENCE_CAPTURED / HOLD_REMAINS
+Evidence:
+  E12_ASOF_DATE_SPINE.csv
+  E12_ASOF_BOUNDARY_CLASSIFICATION.csv
+Result:
+  date/controller spine PASS
+Limitation:
+  13 endpoint-only deferred facts are outside A1a and were not instantiated,
+  so historical blanking / endpoint visibility / outside-evidence HOLD behavior
+  cannot yet be physically tested.
+</code></pre>
+<h2>Next step: preserve the completed A1a engine state</h2>
+<p>We are now at the point where I recommend <strong>saving the working project once</strong>, closing Power BI and DAX Studio, and generating the final post-execution manifest before we package the evidence for Independent Audit.</p>
+<p>Before saving, verify visually one last time that the report still contains exactly:</p>
+<pre><code class="language-text">1 technical shell page
+0 substantive pages
+0 visuals
+0 explicit measures
+</code></pre>
+<p>Then use <strong>Ctrl+S</strong> in Power BI Desktop. Do not publish or convert the project.</p>
+<p>After saving, close DAX Studio and then Power BI Desktop normally. Once both are fully closed, tell me. I’ll give you the final PowerShell block to generate the post-save hashes, reconcile all A1a evidence artifacts, and prepare the audit submission package—including the HF01 chronology and the privacy-setting observation—without beginning A1b.</p>
+</div></article><article id="m-5b702427-e71b-48d3-9f74-62e3fb4fa1a9" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00102 · 2026-08-19T11:49:58.140000-04:00 · active path</p><div class="bubble"><p>Power BI Desktop saved and closed.</p>
+</div></article><article id="m-fc456bcb-78ab-417f-8c39-e0e60d33a9d1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00103 · 2026-08-19T11:50:02.582364-04:00 · active path</p><div class="bubble"><p>Good. Now that Power BI Desktop and DAX Studio are closed, we can freeze the executed A1a state, generate the final manifests/hashes, and build the audit-return package <strong>without reopening Desktop and without beginning A1b</strong>.</p>
+<p>The evidence collected so far supports a successful bounded A1a local-engine execution, with one important limitation: <code>AUD-ASOF-003</code> has only the A1a date/controller portion physically tested because the 13 endpoint-only facts are outside A1a. The shell decision explicitly keeps all three controls subject to Independent Audit disposition. [export reference: filecite | turn9file0 | L127-L155]</p>
+<h2>1. Run the final post-save boundary verification</h2>
+<p>Open PowerShell 7 and run:</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+
+$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+$downloads = Join-Path $HOME &quot;Downloads&quot;
+
+$verifier = Join-Path $downloads `
+    &quot;Verify-A1aTechnicalShellBoundary.ps1&quot;
+
+&amp; $verifier `
+    -PackageRoot $work `
+    -SourceRoot `
+    &quot;C:\MSBF\MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818&quot; *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$ev\E13_FINAL_POST_SAVE_BOUNDARY_VERIFICATION.txt&quot;
+</code></pre>
+<p>Required result remains:</p>
+<pre><code class="language-text">14 semantic tables
+6 relationships
+47 Power Query queries
+0 explicit measures
+67 semantic activation objects
+
+1 technical shell page
+0 substantive report pages
+0 visuals
+0 bookmarks
+0 A1b objects
+
+active_page_resolves = true
+status = PASS
+</code></pre>
+<p>If anything differs, stop and paste the output.</p>
+<hr>
+<h2>2. Capture the installed Power BI Desktop identity without reopening it</h2>
+<p>Run:</p>
+<pre><code class="language-powershell">$desktopCandidates = @(
+    &quot;$env:LOCALAPPDATA\Microsoft\WindowsApps\PBIDesktop.exe&quot;,
+    &quot;$env:ProgramFiles\Microsoft Power BI Desktop\bin\PBIDesktop.exe&quot;,
+    &quot;${env:ProgramFiles(x86)}\Microsoft Power BI Desktop\bin\PBIDesktop.exe&quot;
+) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }
+
+$desktopExe = $null
+
+foreach ($candidate in $desktopCandidates) {
+    try {
+        $resolved = (Get-Item -LiteralPath $candidate -ErrorAction Stop)
+        if ($resolved) {
+            $desktopExe = $resolved.FullName
+            break
+        }
+    }
+    catch {}
+}
+
+$desktopEvidence = [ordered]@{
+    event = &quot;POWER_BI_DESKTOP_LOCAL_IDENTITY&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+    executable_path_found = ($null -ne $desktopExe)
+    executable_path = if ($desktopExe) { $desktopExe } else { &quot;NOT_RESOLVED&quot; }
+    file_version = if ($desktopExe) {
+        (Get-Item -LiteralPath $desktopExe).VersionInfo.FileVersion
+    } else {
+        &quot;NOT_RESOLVED&quot;
+    }
+    product_version = if ($desktopExe) {
+        (Get-Item -LiteralPath $desktopExe).VersionInfo.ProductVersion
+    } else {
+        &quot;NOT_RESOLVED&quot;
+    }
+}
+
+$desktopEvidence |
+    ConvertTo-Json -Depth 5 |
+    Set-Content `
+        -LiteralPath &quot;$ev\E13_POWER_BI_DESKTOP_IDENTITY.json&quot; `
+        -Encoding utf8
+
+$desktopEvidence | Format-List
+</code></pre>
+<p>If the Microsoft Store installation prevents PowerShell from resolving the executable version, <code>NOT_RESOLVED</code> is acceptable; do not reopen Desktop just to manufacture missing evidence.</p>
+<hr>
+<h2>3. Generate the corrected post-save manifest</h2>
+<p>Use the corrected helper—not the defective original packaged copy:</p>
+<pre><code class="language-powershell">$postSaveManifest = Join-Path $downloads `
+    &quot;Export-A1aPostSaveManifest_FIXED.ps1&quot;
+
+Unblock-File -LiteralPath $postSaveManifest
+
+&amp; $postSaveManifest `
+    -PackageRoot $work `
+    -OutputDirectory $ev
+</code></pre>
+<p>Expected files:</p>
+<pre><code class="language-text">E12_POST_SAVE_MANIFEST.csv
+E12_POST_SAVE_SHA256SUMS.txt
+</code></pre>
+<p>If you already generated an earlier E12 manifest before the final engine run, this invocation should replace it with the <strong>actual final saved state</strong>.</p>
+<hr>
+<h2>4. Record the final control dispositions</h2>
+<p>Run:</p>
+<pre><code class="language-powershell">$controlStatus = @(
+    [pscustomobject]@{
+        control_id = &quot;AUD-SCN-004&quot;
+        source_owner_status = &quot;PHYSICAL_EVIDENCE_CAPTURED_PENDING_INDEPENDENT_DISPOSITION&quot;
+        evidence = &quot;E09_SCENARIO_ISOLATION.csv&quot;
+        result = &quot;BASELINE 44 paths / 44 applications / 472000 funded; RECESSION_ENERGY 15 paths / 15 applications / 195600 funded&quot;
+        limitation = &quot;Independent Audit closure required&quot;
+    },
+    [pscustomobject]@{
+        control_id = &quot;AUD-REL-005&quot;
+        source_owner_status = &quot;PHYSICAL_EVIDENCE_CAPTURED_PENDING_INDEPENDENT_DISPOSITION&quot;
+        evidence = &quot;E08_TMSCHEMA_RELATIONSHIPS.csv; E10_RELATIONSHIP_FILTER_BEHAVIOR.csv; E11_RELATIONSHIP_ORPHANS.csv&quot;
+        result = &quot;6 instantiated active one-to-many single-direction relationships; filter propagation reconciles; 6/6 orphan controls = 0&quot;
+        limitation = &quot;Independent Audit closure required&quot;
+    },
+    [pscustomobject]@{
+        control_id = &quot;AUD-ASOF-003&quot;
+        source_owner_status = &quot;PARTIAL_PHYSICAL_EVIDENCE_CAPTURED_HOLD_REMAINS&quot;
+        evidence = &quot;E12_ASOF_DATE_SPINE.csv; E12_ASOF_BOUNDARY_CLASSIFICATION.csv&quot;
+        result = &quot;A1a date/controller spine physically reconciles 2026-07-23 source cutoff and 2026-11-22 endpoint/default-as-of&quot;
+        limitation = &quot;13 endpoint-only business facts are outside authorized A1a; historical blanking, endpoint visibility, and post-evidence HOLD behavior were not physically executed&quot;
+    }
+)
+
+$controlStatus |
+    Export-Csv `
+        -LiteralPath &quot;$ev\E13_LOCAL_ENGINE_CONTROL_DISPOSITION.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+</code></pre>
+<p>This distinction is important because the governing audit says static evidence cannot itself close the endpoint-behavior control. [export reference: filecite | turn9file6 | L94-L100]</p>
+<hr>
+<h2>5. Create the complete execution chronology</h2>
+<p>This records the two runtime issues transparently rather than presenting the final successful state as though it occurred on the first attempt.</p>
+<pre><code class="language-powershell">$chronology = @&#39;
+# A1a Local Power BI Execution Chronology
+
+## Governing boundary
+
+- 14 semantic tables
+- 6 relationships
+- 47 Power Query queries
+- 0 explicit measures
+- 1 physical technical shell page
+- 0 substantive report pages
+- 0 visual objects
+- 0 A1b objects
+
+## Execution chronology
+
+1. Initial zero-page PBIP open failed:
+   - `ActivePageName not found`
+   - `The report has no pages. Reports must have at least one page.`
+   - Desktop was closed without saving that attempted state.
+
+2. Independent Audit decision `IA-D-R3A-PBI-001` authorized exactly one blank technical shell page:
+   - `A1A_TECHNICAL_SHELL_NO_VISUALS`
+   - zero visuals
+   - zero substantive report pages.
+
+3. Derived working copy created.
+   Pre-shell verification:
+   - 14 tables
+   - 6 relationships
+   - 47 queries
+   - 0 measures
+   - 0 pages
+   - 0 A1b tokens.
+
+4. Technical shell created and saved.
+   Post-shell verification:
+   - 1 physical technical shell page
+   - 0 substantive pages
+   - 0 visuals
+   - active-page reference resolved.
+
+5. Power Query Refresh Preview Attempt 1 failed:
+   - `Expression.Error: The value isn&#39;t a single-character string.`
+   - malformed M path literal used `\\` where Power Query M required `\`.
+   - downstream build-catalog reads also failed.
+
+6. Source owner explicitly authorized bounded hotfix `A1A-M-RUNTIME-HF01`.
+   Hotfix changed only:
+   - `stg_POWER_BI_DATA_CATALOG`
+   - `fxReadCatalogedCsv`
+   - `fxReadBuildCsv`
+
+   Exact change population:
+   - 3 external M definitions
+   - 7 M source lines
+   - matching 7 embedded model.bim line values
+   - no whole-BIM JSON reserialization
+   - no table, relationship, query, measure, page, key, grain, source-selection, or business-logic expansion.
+
+7. Power Query Refresh Preview Attempt 2 reached the Desktop privacy gate.
+   - Private classification produced local function-population errors.
+   - local C:\ source was classified Public for this local execution.
+   - privacy protection was not globally ignored.
+   - this setting is recorded as a local execution configuration, not a production governance standard.
+
+8. Refresh Preview Attempt 2 then completed successfully.
+
+9. Initial Close &amp; Apply instantiated model metadata but no rows were visible.
+   Desktop showed `Invalid Date` / incomplete-data indicators.
+   Read-only investigation established:
+   - `DimDate` had 123 rows in Power Query,
+   - Date type,
+   - 100% valid,
+   - 0% error,
+   - model date metadata was valid `dateTime / Short Date`.
+
+10. Desktop data refresh then completed successfully.
+    All 14 tables loaded.
+    Physical examples:
+    - `DimDate` = 123 rows
+    - `FactValidationResult` = 533 rows.
+
+11. DAX Studio live-engine metadata reconciled:
+    - 14 tables
+    - 242 columns
+    - 6 relationships
+    - 0 measures
+    - 14 partitions
+    - 33 expressions
+    - 47 Power Query objects.
+
+12. Scenario isolation physically passed:
+    - BASELINE = 44 paths / 44 applications / $472,000
+    - RECESSION_ENERGY = 15 paths / 15 applications / $195,600.
+
+13. Six relationship filter-propagation tests passed.
+
+14. Six relationship orphan tests returned literal zeroes.
+
+15. A1a as-of/date-controller tests passed:
+    - source cutoff = 2026-07-23
+    - endpoint = 2026-11-22
+    - default as-of = 2026-11-22
+    - 123-date controller spine.
+
+16. The 13 endpoint-only business facts remain outside A1a.
+    Therefore full pre-endpoint blanking / endpoint visibility / post-evidence HOLD behavior was not physically tested.
+
+17. Power BI Desktop was saved and closed.
+    A1b was not started.
+    No public Power BI milestone claim was made.
+
+## Controlling source-owner state
+
+- `AUD-SCN-004`: PHYSICAL_EVIDENCE_CAPTURED_PENDING_INDEPENDENT_DISPOSITION
+- `AUD-REL-005`: PHYSICAL_EVIDENCE_CAPTURED_PENDING_INDEPENDENT_DISPOSITION
+- `AUD-ASOF-003`: PARTIAL_PHYSICAL_EVIDENCE_CAPTURED / HOLD_REMAINS
+- `PBI-WP2`: HOLD
+- `A1b`: NOT_AUTHORIZED
+- Public Power BI claims: NOT_AUTHORIZED
+&#39;@
+
+$chronology |
+    Set-Content `
+        -LiteralPath &quot;$ev\E13_A1A_LOCAL_EXECUTION_CHRONOLOGY.md&quot; `
+        -Encoding utf8
+</code></pre>
+<hr>
+<h2>6. Create a final evidence inventory with hashes</h2>
+<p>Run:</p>
+<pre><code class="language-powershell">$evidenceInventory = @(
+    Get-ChildItem `
+        -LiteralPath $ev `
+        -File `
+        -Recurse |
+    Sort-Object FullName |
+    ForEach-Object {
+        [pscustomobject]@{
+            relative_path = $_.FullName.Substring($ev.Length + 1)
+            bytes = $_.Length
+            sha256 = (
+                Get-FileHash `
+                    -LiteralPath $_.FullName `
+                    -Algorithm SHA256
+            ).Hash.ToLowerInvariant()
+        }
+    }
+)
+
+$evidenceInventory |
+    Export-Csv `
+        -LiteralPath &quot;$ev\E13_FINAL_EVIDENCE_INVENTORY.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+Write-Host &quot;Evidence files inventoried:&quot; $evidenceInventory.Count
+</code></pre>
+<hr>
+<h2>7. Create a fresh final PBIP project manifest</h2>
+<pre><code class="language-powershell">$projectRoot = Join-Path $work &quot;project&quot;
+
+$projectManifest = @(
+    Get-ChildItem `
+        -LiteralPath $projectRoot `
+        -File `
+        -Recurse |
+    Sort-Object FullName |
+    ForEach-Object {
+        [pscustomobject]@{
+            relative_path = $_.FullName.Substring($projectRoot.Length + 1)
+            bytes = $_.Length
+            sha256 = (
+                Get-FileHash `
+                    -LiteralPath $_.FullName `
+                    -Algorithm SHA256
+            ).Hash.ToLowerInvariant()
+        }
+    }
+)
+
+$projectManifest |
+    Export-Csv `
+        -LiteralPath &quot;$ev\E13_FINAL_PBIP_PROJECT_MANIFEST.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+Write-Host &quot;PBIP files inventoried:&quot; $projectManifest.Count
+</code></pre>
+<p>This is the final physical project identity after the Desktop execution—not the pre-shell or pre-hotfix identity.</p>
+<hr>
+<h2>8. Build the Independent Audit submission carrier</h2>
+<p>Run this only after Steps 1–7 pass:</p>
+<pre><code class="language-powershell">$submissionName = &quot;MSBF_PBI_A1A_LOCAL_ENGINE_EVIDENCE_R1_20260819&quot;
+$submissionRoot = Join-Path &quot;C:\MSBF&quot; $submissionName
+
+if (Test-Path -LiteralPath $submissionRoot) {
+    throw &quot;Submission root already exists. Preserve it and choose a new R-number rather than overwriting.&quot;
+}
+
+New-Item `
+    -ItemType Directory `
+    -Path $submissionRoot |
+    Out-Null
+
+New-Item `
+    -ItemType Directory `
+    -Path (Join-Path $submissionRoot &quot;project&quot;) |
+    Out-Null
+
+New-Item `
+    -ItemType Directory `
+    -Path (Join-Path $submissionRoot &quot;evidence&quot;) |
+    Out-Null
+
+Copy-Item `
+    -LiteralPath &quot;$work\project\*&quot; `
+    -Destination &quot;$submissionRoot\project&quot; `
+    -Recurse `
+    -Force
+
+Copy-Item `
+    -LiteralPath &quot;$ev\*&quot; `
+    -Destination &quot;$submissionRoot\evidence&quot; `
+    -Recurse `
+    -Force
+
+$status = @&#39;
+# MSBF Power BI A1a Local-Engine Evidence — Source-Owner Submission
+
+## Submission state
+
+A1a bounded local-engine execution completed under source-owner authority and the
+independently authorized one-page technical-shell compatibility exception.
+
+### Physical executed footprint
+
+- Semantic tables: 14
+- Relationships: 6
+- Power Query queries: 47
+- Explicit DAX measures: 0
+- Semantic activation objects: 67
+- Physical technical shell pages: 1
+- Substantive report pages: 0
+- Visual objects: 0
+- A1b objects: 0
+
+### Runtime remediation disclosed
+
+`A1A-M-RUNTIME-HF01` corrected a Power Query M Windows-path literal defect in
+three existing definitions. Exact before/after hashes and seven changed source
+lines are included. No source-selection, key, grain, semantic-count, business
+logic, measure, or report-experience expansion occurred.
+
+### Local privacy observation
+
+The local C:\ data source required Public privacy classification for the
+successful bounded Desktop execution after Private produced function-evaluation
+errors. Privacy protections were not globally disabled. This is evidence of the
+local execution configuration and is not proposed as a production privacy
+standard.
+
+### Local-engine controls
+
+- AUD-SCN-004:
+  PHYSICAL_EVIDENCE_CAPTURED_PENDING_INDEPENDENT_DISPOSITION
+
+- AUD-REL-005:
+  PHYSICAL_EVIDENCE_CAPTURED_PENDING_INDEPENDENT_DISPOSITION
+
+- AUD-ASOF-003:
+  PARTIAL_PHYSICAL_EVIDENCE_CAPTURED / HOLD_REMAINS
+
+The A1a date/controller spine was physically tested. The thirteen endpoint-only
+facts are outside A1a and therefore their historical blanking, endpoint
+visibility, and outside-evidence HOLD behavior were not physically executed.
+
+### Unchanged governance
+
+- PBI-WP2: HOLD
+- A1b: NOT_AUTHORIZED
+- Public Power BI milestone claims: NOT_AUTHORIZED
+- No substantive report-page construction occurred.
+- No publication or deployment occurred.
+
+This is a source-owner evidence submission. Independent Audit retains finding
+and gate disposition authority.
+&#39;@
+
+$status |
+    Set-Content `
+        -LiteralPath &quot;$submissionRoot\00_SOURCE_OWNER_SUBMISSION_STATUS.md&quot; `
+        -Encoding utf8
+</code></pre>
+<hr>
+<h2>9. Create the carrier manifest and ZIP</h2>
+<pre><code class="language-powershell">$payloadManifestPath = Join-Path $submissionRoot `
+    &quot;MANIFEST_SHA256.csv&quot;
+
+$payloadFiles = @(
+    Get-ChildItem `
+        -LiteralPath $submissionRoot `
+        -File `
+        -Recurse |
+    Where-Object {
+        $_.FullName -ne $payloadManifestPath
+    } |
+    Sort-Object FullName
+)
+
+$payloadManifest = foreach ($file in $payloadFiles) {
+    [pscustomobject]@{
+        relative_path = $file.FullName.Substring($submissionRoot.Length + 1)
+        bytes = $file.Length
+        sha256 = (
+            Get-FileHash `
+                -LiteralPath $file.FullName `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+}
+
+$payloadManifest |
+    Export-Csv `
+        -LiteralPath $payloadManifestPath `
+        -NoTypeInformation `
+        -Encoding utf8
+
+$zip = &quot;C:\MSBF\$submissionName.zip&quot;
+
+Compress-Archive `
+    -Path &quot;$submissionRoot\*&quot; `
+    -DestinationPath $zip `
+    -CompressionLevel Optimal
+
+$zipHash = (
+    Get-FileHash `
+        -LiteralPath $zip `
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+$sidecar = &quot;$zip.sha256&quot;
+
+&quot;$zipHash  $submissionName.zip&quot; |
+    Set-Content `
+        -LiteralPath $sidecar `
+        -Encoding ascii
+
+Write-Host &quot;&quot;
+Write-Host &quot;Audit carrier created:&quot;
+Write-Host $zip
+Write-Host &quot;&quot;
+Write-Host &quot;SHA-256:&quot;
+Write-Host $zipHash
+</code></pre>
+<hr>
+<h2>10. Run a simple ZIP integrity check</h2>
+<pre><code class="language-powershell">Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+$archive = [System.IO.Compression.ZipFile]::OpenRead($zip)
+
+try {
+    $entries = @($archive.Entries)
+
+    $unsafe = @(
+        $entries |
+        Where-Object {
+            $_.FullName.StartsWith(&quot;/&quot;) -or
+            $_.FullName.StartsWith(&quot;\&quot;) -or
+            $_.FullName -match &#39;(^|[\\/])\.\.([\\/]|$)&#39;
+        }
+    )
+
+    $duplicates = @(
+        $entries |
+        Group-Object FullName |
+        Where-Object Count -gt 1
+    )
+
+    $caseFoldDuplicates = @(
+        $entries |
+        Group-Object { $_.FullName.ToLowerInvariant() } |
+        Where-Object Count -gt 1
+    )
+
+    [pscustomobject]@{
+        zip = [IO.Path]::GetFileName($zip)
+        bytes = (Get-Item $zip).Length
+        sha256 = $zipHash
+        members = $entries.Count
+        unsafe_paths = $unsafe.Count
+        duplicate_paths = $duplicates.Count
+        case_fold_duplicate_paths = $caseFoldDuplicates.Count
+        result = if (
+            $unsafe.Count -eq 0 -and
+            $duplicates.Count -eq 0 -and
+            $caseFoldDuplicates.Count -eq 0
+        ) {
+            &quot;PASS&quot;
+        } else {
+            &quot;FAIL&quot;
+        }
+    } |
+        Format-List
+}
+finally {
+    $archive.Dispose()
+}
+</code></pre>
+<p>Required:</p>
+<pre><code class="language-text">unsafe_paths                0
+duplicate_paths             0
+case_fold_duplicate_paths   0
+result                      PASS
+</code></pre>
+<hr>
+<p>Once those commands finish, send me:</p>
+<ol>
+<li>the final shell-verifier result;</li>
+<li>the generated ZIP filename, byte size, and SHA-256;</li>
+<li>the ZIP integrity result.</li>
+</ol>
+<p>Then I can give you the exact <strong>Independent Audit submission prompt</strong>, including the disclosure of your bounded HF01 authorization and the request for separate dispositions on <code>AUD-SCN-004</code>, <code>AUD-REL-005</code>, and the still-partial <code>AUD-ASOF-003</code>.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

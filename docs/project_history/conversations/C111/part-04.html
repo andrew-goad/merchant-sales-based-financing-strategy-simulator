@@ -1,0 +1,1295 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing — part 04 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing — part 04</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-03.html">Previous part</a><a href="part-05.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-7a2dd2ea-2361-4a94-8c49-edcbb84c01d8" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00050 · 2026-08-28T17:32:20.206730-04:00 · active path</p><div class="bubble"><p>Good—the fail-closed control worked exactly as intended. <strong>Do not rerun it and do not delete <code>msbf_r1b_20260828_173127</code>.</strong> The disposable database is useful forensic state.</p>
+<p>The failure occurred during accepted M1.16 schema/policy bootstrap, before snapshot hydration or candidate search. That means no successor decisions were produced and nothing needs rollback. The two Python <code>SyntaxWarning</code> lines are cosmetic; they did not cause the failure.</p>
+<p>I can already see a likely design issue in my Phase 1 bootstrap approach: I deliberately executed only accepted schema/policy programs before loading the CSV snapshot. Some later accepted schema extensions—notably M1.16—contain dependencies on predecessor objects/state established by normal-stage execution, so “schema-only bootstrap” may be too aggressive even though the target is ultimately snapshot hydration. I do <strong>not</strong> want to guess at the exact failing statement, however.</p>
+<p>Please upload these two files from:</p>
+<pre><code class="language-text">C:\MSBF\R1B_RUNTIME\results
+</code></pre>
+<pre><code class="language-text">msbf_r1b_20260828_173127_R1B_PHASE1_RESULTS.zip
+msbf_r1b_20260828_173127_R1B_PHASE1_RESULTS.zip.sha256
+</code></pre>
+<p>That is all I need from you. <strong>Do not troubleshoot, run SQL manually, or create another database.</strong></p>
+<p>Once I ingest the captured PostgreSQL log, I’ll determine the precise failure, correct the bootstrap architecture—not just patch the symptom—and give you a replacement one-command runtime. If the evidence confirms what I suspect, I’ll redesign the predecessor reconstruction so the harness establishes the accepted dependencies in their proper execution order while still sparing you the old manual ~230-program process.</p>
+</div></article><article id="m-18a3b883-c619-4169-aa14-79b4225c9ea3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00051 · 2026-08-28T17:34:11.061000-04:00 · active path</p><p class="note">Attachment references: msbf_r1b_20260828_173127_R1B_PHASE1_RESULTS.zip; msbf_r1b_20260828_173127_R1B_PHASE1_RESULTS.zip(1).sha256</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-fd55f5bd-af91-489d-8858-72f6ab5ae3a2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00052 · 2026-08-28T17:57:46.274739-04:00 · active path</p><div class="bubble"><h1>R1 failure diagnosed; corrected R2 runtime ready</h1>
+<p>I ingested the supplied R1 results package and SHA-256 sidecar. [export reference: filecite | turn6file0 | L1-L5] [export reference: filecite | turn6file1 | L7-L11]</p>
+<p>The fail-closed runtime behaved correctly:</p>
+<pre><code class="language-text">Disposable database created       msbf_r1b_20260828_173127
+Snapshot hydration reached         FALSE
+Candidate search executed          FALSE
+Accepted authority changed         FALSE
+Failure state retained             TRUE
+</code></pre>
+<h2>Exact root cause</h2>
+<p>The run stopped in the accepted M1.16 schema/policy source at line 847:</p>
+<pre><code class="language-text">insert or update on table &quot;acquisition_legacy_overlap_policy&quot;
+violates foreign key constraint &quot;fk_acq_overlap_channel&quot;
+
+Key (partner_channel_id)=(CH_PROCESSOR_DIRECT)
+is not present in table &quot;partner_channel&quot;.
+</code></pre>
+<p>This confirms that the R1 bootstrap architecture—not M1.16 business strategy—was defective.</p>
+<p>R1 attempted to execute only the accepted schema/policy programs before loading the signoff snapshot. Those programs are not all independent DDL. M1.16 seeds acquisition-policy rows that depend on <code>partner_channel</code> data normally created by earlier generation stages.</p>
+<p>The log also showed earlier warning signs: M1.12, M1.13, and M1.14 checkpoint queries reported incomplete or <code>FAIL</code> policy state because the partial schema sequence lacked predecessor-generated records. Those checkpoint rows did not throw exceptions, so the M1.16 foreign-key violation became the first hard stop.</p>
+<p>Classification:</p>
+<pre><code class="language-text">RUNTIME_PACKAGE_BOOTSTRAP_ARCHITECTURE_DEFECT
+</code></pre>
+<p>The failed database should remain untouched as correction history.</p>
+<h2>R2 architecture correction</h2>
+<p>I replaced the partial schema-program bootstrap with an <strong>accepted snapshot mirror</strong>.</p>
+<p>R2 will reconstruct the disposable PostgreSQL predecessor state from:</p>
+<ul>
+<li>253 source-derived accepted table definitions;</li>
+<li>6,954 exact accepted columns and PostgreSQL data types;</li>
+<li>exact accepted nullability;</li>
+<li>253 primary keys;</li>
+<li>84 unique constraints;</li>
+<li>all 253 accepted CSV objects;</li>
+<li>all 1,115,469 accepted rows;</li>
+<li>exact per-file headers and SHA-256 identities.</li>
+</ul>
+<p>The 371 accepted foreign-key definitions are retained in the package as provenance and reference evidence. They are not physically installed during this phase because the mirror is read-only and the snapshot already passed complete foreign-key validation during ingestion. Primary and unique keys are installed to preserve grains and support successor joins.</p>
+<p>This boundary is faster and more accurate for strategy remediation than replaying a partial accepted program sequence. It does <strong>not</strong> claim to replace a future full clean-build execution certification.</p>
+<h2>Requested-structure reproduction gate</h2>
+<p>After hydration, R2 installs the successor analytical contracts and independently reproduces the accepted M1.10 calculations for:</p>
+<ul>
+<li>rate-based daily remittance;</li>
+<li>horizon-required daily repayment;</li>
+<li>selected requested daily burden;</li>
+<li>payment coverage;</li>
+<li>residual daily operating cash flow; and</li>
+<li>post-financing liquidity.</li>
+</ul>
+<p>The exact expected live population is:</p>
+<pre><code class="language-text">Strategy-input rows               1,500
+Decisionable capacity rows        1,087
+Capacity-null rows                  413
+Expected metric mismatches            0
+</code></pre>
+<p>I also ran an offline Decimal replay directly against the accepted CSV strings:</p>
+<pre><code class="language-text">Rate-based mismatches                 0
+Horizon mismatches                    0
+Requested-daily mismatches            0
+Coverage mismatches                   0
+Residual-cash-flow mismatches         0
+Post-liquidity mismatches             0
+</code></pre>
+<p>That gives us strong construction confidence, but the live PostgreSQL R2 result remains the controlling next gate.</p>
+<p>Candidate search is still disabled in Phase 1 R2.</p>
+<h1>Download the corrected runtime</h1>
+<p>Download the R1B Phase 1 R2 snapshot-mirror runtime (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE1_R2_SNAPSHOT_MIRROR_RUNTIME_20260828.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE1_R2_SNAPSHOT_MIRROR_RUNTIME_20260828.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Open the R2 start guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE1_R2_SNAPSHOT_MIRROR_RUNTIME_20260828/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Open the full R1 failure analysis and R2 correction record (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE1_R2_SNAPSHOT_MIRROR_RUNTIME_20260828/docs/01_R1_FAILURE_ANALYSIS_AND_R2_CORRECTION.md</code>; referenced bytes not established here)</p>
+<p>Open the R2 build receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE1_R2_BUILD_RECEIPT_20260828.json</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package bytes:
+225,122
+
+SHA-256:
+cdc733b9bbbcfc6fee0351e3f34958ebb514a17f479105529388b5d4faf80344
+
+ZIP integrity:
+PASS
+
+Maximum archive member path:
+76 characters
+
+Windows-native extraction risk:
+LOW
+</code></pre>
+<h1>Run R2</h1>
+<p>Extract the new ZIP so that you have:</p>
+<pre><code class="language-text">C:\MSBF\R1B_PHASE1_R2
+</code></pre>
+<p>Your accepted data snapshot should remain here:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_Data_After_M2_12_Sign_Off(2).zip
+</code></pre>
+<p>Do not delete or modify:</p>
+<pre><code class="language-text">msbf_r1b_20260828_173127
+</code></pre>
+<p>Then run this from PowerShell:</p>
+<pre><code class="language-powershell">cd C:\MSBF\R1B_PHASE1_R2
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_R1B_PHASE1_R2.ps1
+</code></pre>
+<p>Enter the local PostgreSQL <code>postgres</code> password when prompted.</p>
+<p>The runtime will create a <strong>new</strong> database with a name such as:</p>
+<pre><code class="language-text">msbf_r1b_r2_20260828_XXXXXX
+</code></pre>
+<p>It will not touch the preserved R1 database.</p>
+<p>Hydrating approximately 685 MB of uncompressed CSV data and building 337 key constraints can take several minutes. Leave the PowerShell window open.</p>
+<p>When it finishes, upload both generated files from:</p>
+<pre><code class="language-text">C:\MSBF\R1B_PHASE1_R2\results
+</code></pre>
+<p>They will resemble:</p>
+<pre><code class="language-text">msbf_r1b_r2_..._R1B_PHASE1_R2_RESULTS.zip
+msbf_r1b_r2_..._R1B_PHASE1_R2_RESULTS.zip.sha256
+</code></pre>
+<p>Do not rerun after either PASS or FAIL. The generated evidence package will determine the next action.</p>
+</div></article><article id="m-1da1c2fc-93ea-40ba-a007-562f5f6b0975" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00053 · 2026-08-28T18:02:02.335000-04:00 · active path</p><p class="note">Attachment references: msbf_r1b_r2_20260828_180030_R1B_PHASE1_R2_RESULTS.zip; msbf_r1b_r2_20260828_180030_R1B_PHASE1_R2_RESULTS.zip.sha256</p><div class="bubble"><p>MSBF M1/M2 Successor R1B Phase 1 R2
+Architecture: accepted snapshot mirror
+Snapshot:     C:\MSBF\MSBF_Data_After_M2_12_Sign_Off(2).zip
+PostgreSQL:   C:\Program Files\PostgreSQL\17\bin</p>
+<p>The preserved failed database msbf_r1b_20260828_173127 will not be modified.
+Candidate search remains disabled in this phase.</p>
+<p>PostgreSQL password for local user postgres (not stored):</p>
+<p>R1B Phase 1 R2 finished: FAIL
+Disposable database retained: msbf_r1b_r2_20260828_180030
+Prior failed database touched: NO
+Candidate search executed: NO
+Results: C:\MSBF\R1B_PHASE1_R2\results\msbf_r1b_r2_20260828_180030_R1B_PHASE1_R2_RESULTS.zip
+SHA-256: 01e48c5aed2ef98bdbe0d03e0942db9d11b0d5b26f1fbcc57066d70e334c7259
+Failure: RuntimeError(&#39;Command failed (3): C:\Program Files\PostgreSQL\17\bin\psql.exe -h localhost -p 5432 -U postgres -d msbf_r1b_r2_20260828_180030 -X -v ON_ERROR_STOP=1 -f C:\MSBF\R1B_PHASE1_R2\results\msbf_r1b_r2_20260828_180030\logs\LOAD_ACCEPTED_SNAPSHOT.sql&#39;)
+Do not rerun. Upload the result ZIP and sidecar.
+R1B Phase 1 R2 stopped fail-closed. Upload the generated result ZIP and sidecar from C:\MSBF\R1B_PHASE1_R2\results.
+At C:\MSBF\R1B_PHASE1_R2\RUN_R1B_PHASE1_R2.ps1:28 char:3</p>
+<ul>
+<li>throw &quot;R1B Phase 1 R2 stopped fail-closed. Upload the generated res ...</li>
+<li><pre><code>+ CategoryInfo          : OperationStopped: (R1B Phase 1 R2 ...SE1_R2\results.:String) [], RuntimeException
++ FullyQualifiedErrorId : R1B Phase 1 R2 stopped fail-closed. Upload the generated result ZIP and sidecar from C:\MSBF\R1B_PHASE1_R2\results.
+</code></pre>
+</li>
+</ul>
+</div></article><article id="m-5111833a-e6df-4ec1-a96f-38a6001b2447" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00054 · 2026-08-28T18:21:38.670743-04:00 · active path</p><div class="bubble"><h1>R2 failure diagnosed; R3 runtime ready</h1>
+<p>I ingested the R2 results ZIP and verified its SHA-256 sidecar. [export reference: filecite | turn7file0 | L1-L5] [export reference: filecite | turn7file1 | L7-L12]</p>
+<p>The R2 fail-closed behavior was correct:</p>
+<pre><code class="language-text">Disposable database created       msbf_r1b_r2_20260828_180030
+Mirror tables created              253
+Mirror columns created             6,954
+Snapshot hydration completed       FALSE
+Successor strategy executed        FALSE
+Candidate search executed          FALSE
+Accepted authority changed         FALSE
+</code></pre>
+<h2>Exact failure</h2>
+<p>R2 reached the accepted CSV load and stopped at:</p>
+<pre><code class="language-text">msbf_ctl.parameter_definition
+column: allowed_values
+type:   jsonb
+</code></pre>
+<p>PostgreSQL reported:</p>
+<pre><code class="language-text">ERROR: invalid input syntax for type json
+CONTEXT: COPY parameter_definition, line 2, column allowed_values: &quot;&quot;
+</code></pre>
+<p>The source value represents database <code>NULL</code>, but the CSV exporter serialized it as a <strong>quoted empty field</strong>. PostgreSQL&#39;s ordinary CSV <code>COPY</code> treats:</p>
+<pre><code class="language-text">unquoted empty field → NULL
+quoted empty field   → empty string
+</code></pre>
+<p>An empty string is invalid for <code>jsonb</code>, so the load stopped.</p>
+<p>This is not a Module 1/2 data defect or strategy defect. It is a bounded <strong>CSV-null serialization compatibility defect</strong> in the runtime hydration layer.</p>
+<h2>Complete null-population analysis</h2>
+<p>I scanned the entire accepted snapshot rather than patching only the first failing JSON column:</p>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th align="right">Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CSV objects analyzed</td>
+<td align="right">253</td>
+</tr>
+<tr>
+<td>Rows analyzed</td>
+<td align="right">1,115,469</td>
+</tr>
+<tr>
+<td>Empty CSV fields</td>
+<td align="right"><strong>1,037,372</strong></td>
+</tr>
+<tr>
+<td>Affected columns</td>
+<td align="right"><strong>603</strong></td>
+</tr>
+<tr>
+<td>Affected tables</td>
+<td align="right"><strong>94</strong></td>
+</tr>
+<tr>
+<td>Empty fields in nullable columns</td>
+<td align="right">1,037,372</td>
+</tr>
+<tr>
+<td>Empty fields in <code>NOT NULL</code> columns</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Row-width defects</td>
+<td align="right">0</td>
+</tr>
+</tbody></table>
+<p>The empty-field pattern spans nullable text, numeric, boolean, integer, date, JSONB, and timestamp columns. The fact that every empty field occurs in a nullable column—and none occurs in a required column—is strong evidence that this is the export representation of database nulls.</p>
+<h2>R3 correction</h2>
+<p>R3 does not modify the accepted CSV bytes.</p>
+<p>Instead, it:</p>
+<ol>
+<li>binds to the exact accepted snapshot SHA-256 and each CSV member hash;</li>
+<li>binds to the source-derived accepted column registry;</li>
+<li>applies PostgreSQL <code>FORCE_NULL</code> only to the exact 603 nullable columns containing empty fields;</li>
+<li>loads all 1,115,469 rows;</li>
+<li>counts the resulting nulls in each of those 603 columns;</li>
+<li>requires exact equality to the frozen empty-field population;</li>
+<li>refuses to add keys or install successor contracts if any null count differs;</li>
+<li>proceeds to the requested-structure reproduction gate only after that reconciliation passes.</li>
+</ol>
+<p>The known failing <code>allowed_values</code> JSONB column is explicitly included in the controlled normalization plan.</p>
+<p>R1 and R2 remain preserved correction history:</p>
+<pre><code class="language-text">msbf_r1b_20260828_173127
+msbf_r1b_r2_20260828_180030
+</code></pre>
+<p>R3 will create a new database:</p>
+<pre><code class="language-text">msbf_r1b_r3_YYYYMMDD_HHMMSS
+</code></pre>
+<h2>Download R3</h2>
+<p>Download the R1B Phase 1 R3 runtime (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE1_R3_NULL_NORMALIZED_SNAPSHOT_RUNTIME_20260828.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE1_R3_NULL_NORMALIZED_SNAPSHOT_RUNTIME_20260828.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Open the R3 start guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE1_R3_START_HERE_20260828.md</code>; referenced bytes not established here)</p>
+<p>Open the R2 failure analysis and R3 correction record (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE1_R3_FAILURE_ANALYSIS_AND_CORRECTION_20260828.md</code>; referenced bytes not established here)</p>
+<p>Open the null-normalization summary (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE1_R3_NULL_NORMALIZATION_SUMMARY_20260828.json</code>; referenced bytes not established here)</p>
+<p>Open the R3 build receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE1_R3_BUILD_RECEIPT_20260828.json</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package SHA-256:
+a867ac906dfd7b96878c1a99aa63cf07508d4dc8758c43bbe86b26c31bdc2ac9
+
+Package bytes:
+223,289
+
+ZIP integrity:
+PASS
+
+Archive members:
+31
+
+Maximum member-path length:
+76 characters
+
+Candidate search enabled:
+FALSE
+</code></pre>
+<h2>Run R3</h2>
+<p>Extract the new package so that this exists:</p>
+<pre><code class="language-text">C:\MSBF\R1B_PHASE1_R3
+</code></pre>
+<p>Do not delete either failed database.</p>
+<p>Then run:</p>
+<pre><code class="language-powershell">cd C:\MSBF\R1B_PHASE1_R3
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_R1B_PHASE1_R3.ps1
+</code></pre>
+<p>Enter the local PostgreSQL <code>postgres</code> password when prompted.</p>
+<p>R3 must hydrate the full snapshot, reconcile all 603 normalized columns, build the 337 accepted key constraints, and run the 1,500-row requested-structure reproduction gate. It may take several minutes.</p>
+<p>When it finishes, upload both generated files from:</p>
+<pre><code class="language-text">C:\MSBF\R1B_PHASE1_R3\results
+</code></pre>
+<p>They will resemble:</p>
+<pre><code class="language-text">msbf_r1b_r3_..._R1B_PHASE1_R3_RESULTS.zip
+msbf_r1b_r3_..._R1B_PHASE1_R3_RESULTS.zip.sha256
+</code></pre>
+<p>Do not rerun after either <code>PASS</code> or <code>FAIL</code>.</p>
+</div></article><article id="m-d2e4f5a4-49be-4eaa-b6b7-df5ae606285f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00055 · 2026-08-28T19:45:30.402000-04:00 · active path</p><p class="note">Attachment references: msbf_r1b_r3_20260828_194153_R1B_PHASE1_R3_RESULTS.zip; msbf_r1b_r3_20260828_194153_R1B_PHASE1_R3_RESULTS.zip.sha256</p><div class="bubble"><p>MSBF M1/M2 Successor R1B Phase 1 R3
+Architecture: accepted snapshot mirror with source-bound NULL normalization
+Snapshot:     C:\MSBF\MSBF_Data_After_M2_12_Sign_Off(2).zip
+PostgreSQL:   C:\Program Files\PostgreSQL\17\bin</p>
+<p>The preserved failed databases msbf_r1b_20260828_173127 and msbf_r1b_r2_20260828_180030 will not be modified.
+Candidate search remains disabled in this phase.</p>
+<p>PostgreSQL password for local user postgres (not stored):</p>
+<p>R1B Phase 1 R3 finished: PASS
+Disposable database retained: msbf_r1b_r3_20260828_194153
+Prior failed databases touched: NO
+Candidate search executed: NO
+Results: C:\MSBF\R1B_PHASE1_R3\results\msbf_r1b_r3_20260828_194153_R1B_PHASE1_R3_RESULTS.zip
+SHA-256: af536fbd56b52cc5ba43421aae7bebb329bd6c658ca1bcd678f909721b9c994f
+Requested-structure reproduction: PASS
+Upload the result ZIP and sidecar. Phase 2 remains fail-closed pending review.</p>
+<p>PASS. Upload the generated *_R1B_PHASE1_R3_RESULTS.zip and .sha256 files from:
+C:\MSBF\R1B_PHASE1_R3\results</p>
+</div></article><article id="m-92f64984-340f-4d79-9595-1e72c2c377bb" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00056 · 2026-08-28T22:11:33.493081-04:00 · active path</p><div class="bubble"><h1>R3 accepted as the Phase 2 runtime foundation</h1>
+<p>The uploaded R3 results package and sidecar reconcile to the successful desktop run. [export reference: filecite | turn8file0 | L1-L5] [export reference: filecite | turn8file1 | L7-L11]</p>
+<pre><code class="language-text">R3_RUNTIME_STATUS                    PASS
+DISPOSABLE_DATABASE                  msbf_r1b_r3_20260828_194153
+ACCEPTED_SNAPSHOT_OBJECTS            253
+ACCEPTED_SNAPSHOT_ROWS               1,115,469
+ACCEPTED_COLUMNS                     6,954
+NULL-NORMALIZED_COLUMNS              603
+STRATEGY_INPUT_ROWS                  1,500
+REQUESTED-STRUCTURE REPRODUCTION     1,087 / 1,087 PASS
+CAPACITY-NULL ROWS                   413
+REQUESTED DAILY MISMATCHES           0
+COVERAGE MISMATCHES                  0
+RESIDUAL-CASH-FLOW MISMATCHES        0
+POST-LIQUIDITY MISMATCHES            0
+CANDIDATE SEARCH EXECUTED            FALSE
+ACCEPTED AUTHORITY CHANGED           FALSE
+</code></pre>
+<p>This is an important gate: the corrected adapter now reproduces the accepted requested-structure M1.10 mechanics exactly in live PostgreSQL. Candidate search can proceed without substituting a divergent capacity method.</p>
+<p>Open the R3 evidence review (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE1_R3_EVIDENCE_REVIEW_20260828.md</code>; referenced bytes not established here)</p>
+<h2>Next leap: Phase 2A candidate domain and capacity frontier</h2>
+<p>I prepared the next one-command runtime. It will use the passed R3 database as an <strong>immutable template</strong>, create a new clone, and perform the first actual counteroffer-search layer.</p>
+<p>Phase 2A will:</p>
+<ol>
+<li>reverify the exact 1,087-row M1.10 reproduction gate;</li>
+<li>rederive the exact 489-row Baseline mandatory-search population;</li>
+<li>resolve the product-term domain from accepted requested and funded structures;</li>
+<li>generate a compact boundary candidate population across:<ul>
+<li>funded amount;</li>
+<li>remittance rate;</li>
+<li>payback multiple; and</li>
+<li>horizon;</li>
+</ul>
+</li>
+<li>evaluate every candidate through the exact M1.10 capacity calculations;</li>
+<li>persist the candidate frontier in the cloned PostgreSQL database;</li>
+<li>retain exact candidate keys, terms, metrics, source identities, and search populations;</li>
+<li>export the complete accepted policy/parameter evidence needed to compile the downstream risk, loss, economics, review, and authorization gates.</li>
+</ol>
+<p>This is a substantive candidate search, but it intentionally does <strong>not</strong> issue successor final decisions yet. Its <code>mechanical_positive_flag</code> means only:</p>
+<pre><code class="language-text">payment coverage                 &gt;= 1.00x
+residual daily cash flow         &gt;= $0
+post-financing liquidity         &gt;= $0
+</code></pre>
+<p>That identifies structures capable of clearing the basic capacity mechanics. It is not yet proof that they satisfy the complete accepted risk, comparative-loss, economics, review, and authorization boundaries.</p>
+<p>The purpose of this separation is to avoid repeating the predecessor defect in a different form: we will not call a candidate “feasible” merely because its capacity improves.</p>
+<h2>Download and run</h2>
+<p>Download the Phase 2A candidate-frontier runtime (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2A_CANDIDATE_FRONTIER_RUNTIME_20260828.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2A_CANDIDATE_FRONTIER_RUNTIME_20260828.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Open the Phase 2A start guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2A_CANDIDATE_FRONTIER_RUNTIME_20260828/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Extract the ZIP into:</p>
+<pre><code class="language-text">C:\MSBF
+</code></pre>
+<p>You should then have:</p>
+<pre><code class="language-text">C:\MSBF\R1B_PHASE2A
+</code></pre>
+<p>Run:</p>
+<pre><code class="language-powershell">cd C:\MSBF\R1B_PHASE2A
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_R1B_PHASE2A.ps1
+</code></pre>
+<p>Enter the local PostgreSQL <code>postgres</code> password when prompted.</p>
+<p>The runner will leave this passed R3 database untouched:</p>
+<pre><code class="language-text">msbf_r1b_r3_20260828_194153
+</code></pre>
+<p>It will create a new clone resembling:</p>
+<pre><code class="language-text">msbf_r1b_p2a_20260828_XXXXXX
+</code></pre>
+<p>When the run finishes, upload both generated files from:</p>
+<pre><code class="language-text">C:\MSBF\R1B_PHASE2A\results
+</code></pre>
+<p>They will resemble:</p>
+<pre><code class="language-text">msbf_r1b_p2a_..._R1B_PHASE2A_RESULTS.zip
+msbf_r1b_p2a_..._R1B_PHASE2A_RESULTS.zip.sha256
+</code></pre>
+<p>Do not rerun after either <code>PASS</code> or <code>FAIL</code>. The evidence package will determine the exact full-gate compilation and the subsequent quantified successor decision rerun.</p>
+</div></article><article id="m-e2488aff-fbf2-409c-b454-ef14fe883e0b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00057 · 2026-08-28T22:17:51.775000-04:00 · active path</p><p class="note">Attachment references: msbf_r1b_p2a_20260828_221607_R1B_PHASE2A_RESULTS.zip; msbf_r1b_p2a_20260828_221607_R1B_PHASE2A_RESULTS.zip.sha256</p><div class="bubble"><p>MSBF M1/M2 Successor R1B Phase 2A
+Purpose: source-bound candidate domain and exact M1.10 capacity frontier
+Source R3 database: msbf_r1b_r3_20260828_194153</p>
+<p>C:\MSBF\R1B_PHASE2A\src\r1b_phase2a.py:262: SyntaxWarning: &#39;return&#39; in a &#39;finally&#39; block
+  print(&#39;Failure:&#39;,receipt.get(&#39;error&#39;)); return 1
+C:\MSBF\R1B_PHASE2A\src\r1b_phase2a.py:265: SyntaxWarning: &#39;return&#39; in a &#39;finally&#39; block
+  return 0
+PostgreSQL password for local user postgres (not stored):</p>
+<p>R1B Phase 2A finished: FAIL
+Source R3 database modified: NO
+Clone retained: msbf_r1b_p2a_20260828_221607
+Final decisions generated: NO
+Results: C:\MSBF\R1B_PHASE2A\results\msbf_r1b_p2a_20260828_221607_R1B_PHASE2A_RESULTS.zip
+SHA-256: eb855c21606fbf33822c9f803557f9010a31fa352d7b2ca9089f5f939b7f291f
+Failure: RuntimeError(&quot;R3 reproduction state not exact: {&#39;rows&#39;: 1500, &#39;requested_daily_mismatches&#39;: 0, &#39;coverage_mismatches&#39;: 0, &#39;residual_mismatches&#39;: 0, &#39;liquidity_mismatches&#39;: 0}&quot;)
+R1B Phase 2A stopped fail-closed. Upload the generated results ZIP and sidecar from C:\MSBF\R1B_PHASE2A\results.
+At C:\MSBF\R1B_PHASE2A\RUN_R1B_PHASE2A.ps1:14 char:2</p>
+<ul>
+<li>throw &quot;R1B Phase 2A stopped fail-closed. Upload the generated result ...</li>
+<li><pre><code> + CategoryInfo          : OperationStopped: (R1B Phase 2A st...HASE2A\results.:String) [], RuntimeException
+ + FullyQualifiedErrorId : R1B Phase 2A stopped fail-closed. Upload the generated results ZIP and sidecar from C:\MSBF\R1B_PHASE2A\results.
+</code></pre>
+</li>
+</ul>
+</div></article><article id="m-013f2d03-ec59-4609-a438-4ba39dbe1fb0" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00058 · 2026-08-28T22:55:24.790941-04:00 · active path</p><div class="bubble"><h1>Phase 2A failure fully diagnosed; corrected R2 runtime ready</h1>
+<p>I verified the uploaded Phase 2A results ZIP against its sidecar. [export reference: filecite | turn8file0 | L1-L5] [export reference: filecite | turn8file1 | L7-L11]</p>
+<p>The failure was a <strong>runtime assertion defect</strong>, not a data, strategy, PostgreSQL, or R3-foundation failure.</p>
+<h2>Exact cause</h2>
+<p>The R1 runtime queried:</p>
+<pre><code class="language-text">msbf_m12r1a.v_requested_structure_reproduction
+</code></pre>
+<p>That view correctly contains all:</p>
+<pre><code class="language-text">1,500 application-scenario rows
+</code></pre>
+<p>It then incorrectly compared that total to:</p>
+<pre><code class="language-text">1,087 decisionable-capacity rows
+</code></pre>
+<p>The correct R3 controls are:</p>
+<pre><code class="language-text">Strategy-input rows                 1,500
+Decisionable-capacity rows          1,087
+Capacity-null rows                    413
+Requested daily mismatches              0
+Coverage mismatches                     0
+Residual-cash-flow mismatches           0
+Post-liquidity mismatches               0
+</code></pre>
+<p>The R1 terminal also inaccurately said that a clone was retained. The log shows the stop occurred <strong>before <code>createdb</code></strong>, so:</p>
+<pre><code class="language-text">msbf_r1b_p2a_20260828_221607
+</code></pre>
+<p>was not actually created. Nothing needs to be cleaned up from that attempted run.</p>
+<h2>Additional defects corrected before rerun</h2>
+<p>I did not merely change <code>1087</code> to <code>1500</code>. Static review exposed four more problems that would otherwise have caused subsequent failures or inefficient execution:</p>
+<ol>
+<li><p>The candidate generator referenced two nonexistent adapter names:</p>
+<ul>
+<li><code>existing_daily_obligation_burden</code></li>
+<li><code>average_available_balance_30d</code></li>
+</ul>
+<p>R2 now uses the physical accepted fields:</p>
+<pre><code class="language-text">existing_daily_payment_amount
+current_liquidity_buffer_amount
+</code></pre>
+</li>
+<li><p>The prior search logic treated every <code>PARTIAL</code> capacity-evidence row as search-required, producing 567 Baseline rows rather than the governed 489.</p>
+<p>R2 derives the population from the actual accepted M2.1 capacity gate:</p>
+<pre><code class="language-text">GATE_06_CAPACITY = FAIL or REVIEW
+</code></pre>
+<p>Exact population:</p>
+<pre><code class="language-text">Baseline                            489
+Recession Energy                    280
+Total                               769
+
+Predecessor FAIL                    650
+Predecessor REVIEW                  119
+</code></pre>
+</li>
+<li><p>The prior candidate domain cross-multiplied approximately:</p>
+<pre><code class="language-text">769 observed remittance rates
+×
+762 observed payback multiples
+</code></pre>
+<p>That could have created an impractically large search.</p>
+<p>R2 instead uses:</p>
+<ul>
+<li>accepted M2.2 policy bounds;</li>
+<li>all five accepted candidate templates;</li>
+<li>requested terms;</li>
+<li>the policy-minimum capacity structure;</li>
+<li>analytically calculated capacity-rate boundaries;</li>
+<li>exact amount-boundary candidates one increment above and below the governing point.</li>
+</ul>
+</li>
+<li><p>Candidate metrics were previously calculated with Python floating-point arithmetic.</p>
+<p>R2 now generates only the candidate <strong>terms</strong> in Python using <code>Decimal</code>, then evaluates every candidate in PostgreSQL using the exact accepted M1.10 numeric formulas and tier thresholds.</p>
+</li>
+</ol>
+<h2>R2 frozen controls</h2>
+<p>The corrected runtime will not proceed unless it reproduces:</p>
+<pre><code class="language-text">R3 strategy-input rows                       1,500
+R3 decisionable-capacity rows                1,087
+R3 capacity-null rows                          413
+
+Exact capacity-search rows                     769
+Baseline search rows                           489
+Stress search rows                             280
+
+Exact candidate-term rows                   26,709
+Requested candidates reproduced                769
+Allowed requested-metric mismatches              0
+Capacity-dominant minimum candidates            769
+</code></pre>
+<p>Every requested candidate must exactly reproduce its predecessor:</p>
+<ul>
+<li>payment coverage;</li>
+<li>residual daily operating cash flow; and</li>
+<li>post-financing liquidity.</li>
+</ul>
+<p>The candidate frontier then applies the complete accepted M1.10 tier mechanics, including:</p>
+<ul>
+<li>coverage thresholds;</li>
+<li>total-obligation-to-sales thresholds;</li>
+<li>residual cash flow;</li>
+<li>post-financing buffer days; and</li>
+<li>stacking treatment.</li>
+</ul>
+<p>This phase still does <strong>not</strong> generate successor final decisions. It establishes the exact candidate capacity frontier before risk, comparative loss, economics, human-review, scenario-floor, and authorization logic are applied.</p>
+<h1>Download Phase 2A R2</h1>
+<p>Download the corrected Phase 2A R2 runtime (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2A_R2_EXACT_CAPACITY_FRONTIER_RUNTIME_20260828.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2A_R2_EXACT_CAPACITY_FRONTIER_RUNTIME_20260828.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Open the R2 start guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2A_R2_EXACT_CAPACITY_FRONTIER_RUNTIME_20260828/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Open the complete failure analysis and correction record (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2A_R2_EXACT_CAPACITY_FRONTIER_RUNTIME_20260828/docs/01_PHASE2A_R1_FAILURE_ANALYSIS_AND_R2_CORRECTION.md</code>; referenced bytes not established here)</p>
+<p>Open the R2 build receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2A_R2_EXACT_CAPACITY_FRONTIER_RUNTIME_20260828/BUILD_RECEIPT.json</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package SHA-256:
+a647aa5168f83170e9381602405c33ee73cbd69e5f0ee8d8990dd65d545afb56
+
+Package bytes:
+710,583
+
+ZIP integrity:
+PASS
+
+Archive members:
+11
+
+Maximum archive-member path:
+71 characters
+</code></pre>
+<h1>Run Phase 2A R2</h1>
+<p>Extract the new ZIP into:</p>
+<pre><code class="language-text">C:\MSBF
+</code></pre>
+<p>You should then have:</p>
+<pre><code class="language-text">C:\MSBF\R1B_PHASE2A_R2
+</code></pre>
+<p>Do not rerun the old <code>R1B_PHASE2A</code> package.</p>
+<p>Run:</p>
+<pre><code class="language-powershell">cd C:\MSBF\R1B_PHASE2A_R2
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_R1B_PHASE2A_R2.ps1
+</code></pre>
+<p>Enter the local PostgreSQL <code>postgres</code> password when prompted.</p>
+<p>R2 will preserve:</p>
+<pre><code class="language-text">msbf_r1b_r3_20260828_194153
+</code></pre>
+<p>and create a new clone resembling:</p>
+<pre><code class="language-text">msbf_r1b_p2a_r2_20260828_XXXXXX
+</code></pre>
+<p>When the run finishes, upload both files from:</p>
+<pre><code class="language-text">C:\MSBF\R1B_PHASE2A_R2\results
+</code></pre>
+<p>They will resemble:</p>
+<pre><code class="language-text">msbf_r1b_p2a_r2_..._R1B_PHASE2A_R2_RESULTS.zip
+msbf_r1b_p2a_r2_..._R1B_PHASE2A_R2_RESULTS.zip.sha256
+</code></pre>
+<p>Do not rerun after either <code>PASS</code> or <code>FAIL</code>.</p>
+</div></article><article id="m-0eddc21c-525d-47ba-97da-59286597c224" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00059 · 2026-08-28T23:00:33.079000-04:00 · active path</p><p class="note">Attachment references: msbf_r1b_p2a_r2_20260828_225742_R1B_PHASE2A_R2_RESULTS.zip; msbf_r1b_p2a_r2_20260828_225742_R1B_PHASE2A_R2_RESULTS.zip.sha256</p><div class="bubble"><p>MSBF M1/M2 Successor R1B Phase 2A R2
+Purpose: corrected exact M1.10 candidate capacity frontier
+Source R3 database: msbf_r1b_r3_20260828_194153</p>
+<p>PostgreSQL password for local user postgres (not stored):</p>
+<p>R1B Phase 2A R2 finished: PASS
+Source R3 database modified: NO
+Clone created: YES
+Clone retained: msbf_r1b_p2a_r2_20260828_225742
+Final decisions generated: NO
+Results: C:\MSBF\R1B_PHASE2A_R2\results\msbf_r1b_p2a_r2_20260828_225742_R1B_PHASE2A_R2_RESULTS.zip
+SHA-256: 1b940893d9543d7a856cdb36185a2a6de5f220b95fcf4e54da5dd6aa7eda941e
+Exact M1.10 capacity frontier: PASS
+Upload the result ZIP and sidecar. Full risk/loss/economics compilation follows review.</p>
+<p>PASS. Upload the generated *_R1B_PHASE2A_R2_RESULTS.zip and .sha256 files from:
+C:\MSBF\R1B_PHASE2A_R2\results</p>
+</div></article><article id="m-7fe20e52-6823-4531-8808-a8a8be5bc97f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00060 · 2026-08-29T00:36:28.743249-04:00 · active path</p><div class="bubble"><h1>Phase 2A R2 accepted as the capacity-frontier foundation</h1>
+<p>I ingested the successful Phase 2A R2 results ZIP and its SHA-256 sidecar. [export reference: filecite | turn9file0 | L1-L6] [export reference: filecite | turn9file1 | L7-L12]</p>
+<pre><code class="language-text">PHASE2A_R2_STATUS                   PASS
+SOURCE_R3_DATABASE_MODIFIED         FALSE
+SOURCE_PHASE2A_CLONE                msbf_r1b_p2a_r2_20260828_225742
+SEARCH APPLICATION-SCENARIOS        769
+BASELINE SEARCH POPULATION          489
+STRESS SEARCH POPULATION            280
+CANDIDATE STRUCTURES                26,709
+REQUESTED-STRUCTURE REPRODUCTION    PASS
+EXACT M1.10 CAPACITY FRONTIER       PASS
+FINAL DECISIONS GENERATED           FALSE
+ACCEPTED AUTHORITY CHANGED          FALSE
+</code></pre>
+<p>This establishes that the candidate generator and PostgreSQL evaluator can:</p>
+<ul>
+<li>reconstruct the exact search population;</li>
+<li>create the governed candidate domain without the prior combinatorial explosion;</li>
+<li>reproduce every requested structure;</li>
+<li>calculate candidate remittance burden, coverage, residual cash flow, liquidity and capacity status through the accepted M1.10 mechanics; and</li>
+<li>preserve the complete candidate-level capacity evidence.</li>
+</ul>
+<p>It does <strong>not</strong> yet establish that any mechanically capacity-positive candidate is a supportable counteroffer. Candidates still need exact downstream resilience, integrated-risk, comparative-loss and unit-economics evaluation.</p>
+<p>Open the Phase 2A R2 evidence review (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2A_R2_EVIDENCE_REVIEW_20260829/00_PHASE2A_R2_EVIDENCE_REVIEW.md</code>; referenced bytes not established here)</p>
+<p>Download the complete Phase 2A R2 evidence-review package (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2A_R2_EVIDENCE_REVIEW_20260829.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2A_R2_EVIDENCE_REVIEW_20260829.zip.sha256</code>; referenced bytes not established here)</p>
+<h1>Next step: Phase 2B exact downstream candidate replay</h1>
+<p>I have prepared the next one-command runtime.</p>
+<p>Phase 2B uses the passed Phase 2A database as an immutable template and creates a new disposable clone. Within isolated replay schemas it applies the exact accepted source methods for:</p>
+<pre><code class="language-text">M1.11  Cash-flow archetype and operating resilience
+M1.12  Integrated merchant-risk proxy
+M1.13  Exposure, recovery and comparative expected loss
+M1.14  Unit economics and risk-adjusted contribution
+</code></pre>
+<h2>Critical control: requested-structure reproduction first</h2>
+<p>Before alternative candidates are accepted as valid analytical results, Phase 2B must reproduce the accepted requested-structure outputs through all four stages.</p>
+<p>It compares the replayed requested candidates to the accepted physical snapshot for business metrics such as:</p>
+<pre><code class="language-text">cash-flow archetype and resilience
+integrated risk score, tier and status
+comparative loss and recovery metrics
+risk-adjusted contribution
+annualized risk-adjusted return
+economic status
+</code></pre>
+<p>Any mismatch stops the run before the candidate outputs can be used.</p>
+<p>Only after that gate passes will the runtime retain the complete downstream results for all 26,709 candidates.</p>
+<h2>Exact-method boundary</h2>
+<p>The package preserves the exact accepted SQL bytes and hashes. The runtime creates schema-isolated transformed copies whose changes are restricted to:</p>
+<ul>
+<li>redirecting accepted schema names into disposable replay schemas;</li>
+<li>supplying candidate-expanded request and M1.10 capacity rows; and</li>
+<li>neutralizing lifecycle/assertion calls that govern an accepted production-stage run but are not part of the business calculations.</li>
+</ul>
+<p>The calculation SQL itself remains tied to the accepted source files.</p>
+<p>This is the first live execution of that downstream replay compiler. It is intentionally fail-closed because accepted stage sources may expose an additional dependency that was not visible from static inspection. A failure would be a bounded replay-construction finding—not a successor decision—and the results package will identify the exact source and database state.</p>
+<h2>What Phase 2B will not do</h2>
+<p>It will not yet:</p>
+<ul>
+<li>select the winning counteroffer;</li>
+<li>apply revised review or authorization routing;</li>
+<li>issue successor final decisions;</li>
+<li>apply the Baseline stress floor;</li>
+<li>change Power BI;</li>
+<li>modify the accepted predecessor databases;</li>
+<li>publish anything; or</li>
+<li>establish revised M1/G2 or M2/G3 authority.</li>
+</ul>
+<p>After a Phase 2B pass, I can perform the final strategy layer in one larger step: complete feasibility gates, deterministic frontier selection, human-review classification, scenario-floor lineage, final outcomes, predecessor-versus-successor impacts and Power BI consumption outputs.</p>
+<h1>Download and run Phase 2B</h1>
+<p>Download the Phase 2B exact downstream replay runtime (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_EXACT_DOWNSTREAM_REPLAY_RUNTIME_20260829.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_EXACT_DOWNSTREAM_REPLAY_RUNTIME_20260829.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Open the Phase 2B start guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_EXACT_DOWNSTREAM_REPLAY_RUNTIME_20260829/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Open the method-boundary statement (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_EXACT_DOWNSTREAM_REPLAY_RUNTIME_20260829/docs/01_PHASE2B_METHOD_BOUNDARY.md</code>; referenced bytes not established here)</p>
+<p>Open the Phase 2B construction receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_BUILD_RECEIPT_20260829.json</code>; referenced bytes not established here)</p>
+<p>Extract the package into:</p>
+<pre><code class="language-text">C:\MSBF
+</code></pre>
+<p>The resulting folder should be:</p>
+<pre><code class="language-text">C:\MSBF\R1B_PHASE2B
+</code></pre>
+<p>Do not delete or modify:</p>
+<pre><code class="language-text">msbf_r1b_r3_20260828_194153
+msbf_r1b_p2a_r2_20260828_225742
+</code></pre>
+<p>Run:</p>
+<pre><code class="language-powershell">cd C:\MSBF\R1B_PHASE2B
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_R1B_PHASE2B.ps1
+</code></pre>
+<p>Enter the local PostgreSQL <code>postgres</code> password when prompted.</p>
+<p>The runtime will preserve the Phase 2A database and create a new clone resembling:</p>
+<pre><code class="language-text">msbf_r1b_p2b_20260829_XXXXXX
+</code></pre>
+<p>When it finishes, upload both generated files from:</p>
+<pre><code class="language-text">C:\MSBF\R1B_PHASE2B\results
+</code></pre>
+<p>They will resemble:</p>
+<pre><code class="language-text">msbf_r1b_p2b_..._R1B_PHASE2B_RESULTS.zip
+msbf_r1b_p2b_..._R1B_PHASE2B_RESULTS.zip.sha256
+</code></pre>
+<p>Do not rerun after either <code>PASS</code> or <code>FAIL</code>. No additional strategy decision is required from you before this execution.</p>
+</div></article><article id="m-5fc75ebc-4fe8-49d0-a37c-6c5ae3fa3f22" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00061 · 2026-08-29T06:45:16.051000-04:00 · active path</p><p class="note">3 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 3e2ffbac-8fc6-4b23-9abc-3d22b4bb1abe.png; 331e645b-33ea-4c61-a186-4482ea5c0ad4.png; 51fda291-ad32-420e-966e-a34dadc9855b.png</p><div class="bubble"><p>The 2B zip would not download, and the files you shared related to it (START_HERE, METHOD BOUNDARY, and BUILD_RECEIPT) all say preview unavailable. I was able to download the 2A zips/documents you shared. Please review that those 2A documents you shared are accurate and please re-provide the 2B documents.</p>
+</div></article><article id="m-735341f1-b71c-4b1b-b94c-9926c698f5c0" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00062 · 2026-08-29T07:23:45.721341-04:00 · active path</p><div class="bubble"><h1>Phase 2A review complete</h1>
+<p>I independently rechecked the successful Phase 2A R2 results ZIP and its uploaded SHA-256 sidecar. [export reference: filecite | turn9file0 | L1-L6] [export reference: filecite | turn9file1 | L7-L12]</p>
+<p>The previously supplied Phase 2A evidence-review documents are <strong>accurate for the scope they claim</strong>:</p>
+<pre><code class="language-text">PHASE2A_R2_RUNTIME                    PASS
+RESULT_PACKAGE_SHA256                1b940893d9543d7a856cdb36185a2a6de5f220b95fcf4e54da5dd6aa7eda941e
+ZIP_INTEGRITY                        PASS
+SOURCE_R3_MODIFIED                   FALSE
+FINAL_DECISIONS_GENERATED            FALSE
+ACCEPTED_AUTHORITY_CHANGED           FALSE
+
+SEARCH APPLICATION-SCENARIOS         769
+BASELINE SEARCH ROWS                 489
+RECESSION ENERGY SEARCH ROWS         280
+DISTINCT APPLICATIONS                508
+CANDIDATE STRUCTURES                 26,709
+REQUESTED CANDIDATES                 769
+REQUESTED M1.10 MISMATCHES           0
+</code></pre>
+<p>The distinction between 508 applications and 769 application-scenarios is intentional: <strong>261 applications enter search under both scenarios</strong>.</p>
+<h2>Phase 2A compatibility addendum</h2>
+<p>Deeper preparation for Phase 2B found an important downstream parameter-domain boundary that was outside the Phase 2A capacity-only scope:</p>
+<pre><code class="language-text">Phase 2A capacity candidates                       26,709
+Exact M1.13 horizon support                         6,047
+No exact M1.13 horizon parameter                    20,662
+Requested structures supported                 769 / 769
+</code></pre>
+<p>The accepted M1.13 method has exact <code>paydown_curve_shape</code> parameters only for <strong>30-, 60-, and 90-day</strong> payoff horizons. Phase 2A also generated candidates at 32, 33, 35, 63, 66, 69, 95, 99, 104 and 120 days.</p>
+<p>That does <strong>not</strong> invalidate the Phase 2A capacity frontier. It means those 20,662 candidates cannot be silently treated as exact downstream loss/economics results.</p>
+<p>Open the original Phase 2A R2 evidence review (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2A_R2_EVIDENCE_REVIEW_20260829/00_PHASE2A_R2_EVIDENCE_REVIEW.md</code>; referenced bytes not established here)</p>
+<p>Download the original Phase 2A R2 review package (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2A_R2_EVIDENCE_REVIEW_20260829.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2A_R2_EVIDENCE_REVIEW_20260829.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Open the new Phase 2A verification and Phase 2B compatibility addendum (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2A_R2_VERIFICATION_AND_PHASE2B_COMPATIBILITY_ADDENDUM_20260829.md</code>; referenced bytes not established here)</p>
+<p>The addendum should travel with the original Phase 2A review package going forward.</p>
+<h1>Phase 2B files regenerated and reissued</h1>
+<p>The previous Phase 2B links failed because the artifacts did not successfully complete the attachment/upload step. I regenerated the package, tested its ZIP integrity, shortened the archive paths, and supplied standalone document copies rather than relying on previews embedded inside the ZIP.</p>
+<p>I also incorporated the newly discovered M1.13 horizon boundary. The corrected package is designated <strong>Phase 2B R2</strong>.</p>
+<h2>Runtime package</h2>
+<p>Download the corrected Phase 2B R2 runtime (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R2_EXACT_DOWNSTREAM_REPLAY_RUNTIME_20260829.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R2_EXACT_DOWNSTREAM_REPLAY_RUNTIME_20260829.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Filename:
+MSBF_M1M2_R1B_PHASE2B_R2_EXACT_DOWNSTREAM_REPLAY_RUNTIME_20260829.zip
+
+Size:
+83,425 bytes
+
+SHA-256:
+aaf7e5ca5cdd593542ac0531e38bab8e68baf51432ac1025fd96b5ed761e19c4
+
+ZIP integrity:
+PASS
+
+Archive members:
+20
+
+Maximum archive-member path:
+97 characters
+</code></pre>
+<p>Open the final package receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R2_FINAL_PACKAGE_RECEIPT_20260829.json</code>; referenced bytes not established here)</p>
+<h2>Standalone documents</h2>
+<p>Open the Phase 2B R2 START HERE guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R2_START_HERE_20260829.md</code>; referenced bytes not established here)</p>
+<p>Open the Phase 2B R2 method-boundary statement (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R2_METHOD_BOUNDARY_20260829.md</code>; referenced bytes not established here)</p>
+<p>Open the Phase 2B R2 build receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R2_BUILD_RECEIPT_20260829.json</code>; referenced bytes not established here)</p>
+<p>I also created plain-text fallback copies in case the interface again cannot preview Markdown:</p>
+<p>Download START HERE as plain text (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R2_START_HERE_20260829.txt</code>; referenced bytes not established here)</p>
+<p>Download the method boundary as plain text (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R2_METHOD_BOUNDARY_20260829.txt</code>; referenced bytes not established here)</p>
+<h1>Corrected Phase 2B boundary</h1>
+<p>Phase 2B R2 will:</p>
+<ul>
+<li>clone <code>msbf_r1b_p2a_r2_20260828_225742</code>;</li>
+<li>leave the passed Phase 2A database unchanged;</li>
+<li>retain all 26,709 candidates with their downstream-support classification;</li>
+<li>execute exact accepted M1.11–M1.14 calculation methods for the 6,047 candidates with explicit accepted M1.13 parameter support;</li>
+<li>classify the other 20,662 candidates as <code>DOWNSTREAM_PARAMETER_UNAVAILABLE</code>;</li>
+<li>create paired Baseline and Recession Energy replay rows so accepted stress floors can execute;</li>
+<li>require exact M1.11, M1.12, M1.13 and M1.14 reproduction for all 769 requested structures;</li>
+<li>stop unless all <strong>3,076 requested stage/candidate comparisons</strong> have zero mismatches;</li>
+<li>retain complete downstream candidate evidence after that gate passes.</li>
+</ul>
+<p>It will not:</p>
+<ul>
+<li>interpolate or extrapolate a missing paydown curve;</li>
+<li>invent a 120-day M1.13 parameter;</li>
+<li>select a counteroffer;</li>
+<li>apply final M2 routing;</li>
+<li>issue successor decisions;</li>
+<li>modify Power BI;</li>
+<li>modify the accepted predecessor;</li>
+<li>or change accepted M1/G2 or M2/G3 authority.</li>
+</ul>
+<p>The package carries the exact accepted source bytes and hashes for the four downstream stages. Its transformed execution copies change only replay scaffolding: disposable run identity, fixed-cardinality readiness assertions, acceptance-evidence writes, run-state advancement and statement timeout. The calculation and persistence sections remain source-derived.</p>
+<h2>Important construction status</h2>
+<p>The package passed static construction, source-hash, Python-compilation, archive-integrity and path-length checks. It has <strong>not yet been executed against your PostgreSQL database</strong>. Its first live execution remains deliberately fail-closed and may expose another physical dependency that static inspection cannot prove away. Any such result would be captured as construction evidence rather than treated as a strategy result.</p>
+<h1>Run instructions</h1>
+<p>Extract the ZIP into:</p>
+<pre><code class="language-text">C:\MSBF
+</code></pre>
+<p>This should create:</p>
+<pre><code class="language-text">C:\MSBF\R1B_PHASE2B_R2
+</code></pre>
+<p>Then run:</p>
+<pre><code class="language-powershell">cd C:\MSBF\R1B_PHASE2B_R2
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_R1B_PHASE2B_R2.ps1
+</code></pre>
+<p>It will use this passed database as its immutable source:</p>
+<pre><code class="language-text">msbf_r1b_p2a_r2_20260828_225742
+</code></pre>
+<p>When it finishes, upload the generated results ZIP and SHA-256 sidecar from:</p>
+<pre><code class="language-text">C:\MSBF\R1B_PHASE2B_R2\results
+</code></pre>
+<p>Do not rerun after either <code>PASS</code> or <code>FAIL</code>.</p>
+</div></article><article id="m-c4dad044-d3ee-43ac-9db1-edb94468000a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00063 · 2026-08-29T07:35:26-04:00 · active path</p><p class="note">Attachment references: msbf_r1b_p2b_r2_20260829_072702_R1B_PHASE2B_R2_RESULTS.zip; msbf_r1b_p2b_r2_20260829_072702_R1B_PHASE2B_R2_RESULTS.zip.sha256</p><div class="bubble"><p>MSBF M1/M2 Successor R1B Phase 2B R2
+Purpose: exact accepted M1.11-M1.14 replay for source-supported candidates
+Source Phase2A database: msbf_r1b_p2a_r2_20260828_225742</p>
+<p>C:\MSBF\R1B_PHASE2B_R2\src\r1b_phase2b_r2.py:132: SyntaxWarning: &#39;return&#39; in a &#39;finally&#39; block
+  if receipt.get(&#39;status&#39;)!=&#39;PASS&#39;:print(&#39;Failure:&#39;,receipt.get(&#39;error&#39;));return 1
+C:\MSBF\R1B_PHASE2B_R2\src\r1b_phase2b_r2.py:135: SyntaxWarning: &#39;return&#39; in a &#39;finally&#39; block
+  return 0
+PostgreSQL password for local user postgres (not stored):</p>
+<p>R1B Phase 2B R2 finished: FAIL
+Source Phase2A database modified: NO
+Clone retained: msbf_r1b_p2b_r2_20260829_072702
+Final decisions generated: NO
+Results: C:\MSBF\R1B_PHASE2B_R2\results\msbf_r1b_p2b_r2_20260829_072702_R1B_PHASE2B_R2_RESULTS.zip
+SHA-256: e83fd089b0e39bb195f2cfc85801a8a5bb071fe9dd68d8406380f22428a79f49
+Failure: RuntimeError(&#39;Command failed (3): C:\Program Files\PostgreSQL\17\bin\psql.exe -h localhost -p 5432 -U postgres -d msbf_r1b_p2b_r2_20260829_072702 -X -v ON_ERROR_STOP=1 -f C:\MSBF\R1B_PHASE2B_R2\sql\00_PREPARE_EXACT_REPLAY_POPULATION.sql&#39;)
+R1B Phase 2B R2 stopped fail-closed. Upload the generated results ZIP and sidecar from C:\MSBF\R1B_PHASE2B_R2\results.
+At C:\MSBF\R1B_PHASE2B_R2\RUN_R1B_PHASE2B_R2.ps1:13 char:28</p>
+<ul>
+<li>... DE -ne 0) { throw &quot;R1B Phase 2B R2 stopped fail-closed. Upload the ge ...</li>
+<li><pre><code>            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+</code></pre>
+<ul>
+<li>CategoryInfo          : OperationStopped: (R1B Phase 2B R2...E2B_R2\results.:String) [], RuntimeException</li>
+<li>FullyQualifiedErrorId : R1B Phase 2B R2 stopped fail-closed. Upload the generated results ZIP and sidecar from C:\MSBF\R1B_PHASE2B_R2\results.</li>
+</ul>
+</li>
+</ul>
+</div></article><article id="m-d761ed86-b8dc-4cf4-bbbb-5dc4202457f1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00064 · 2026-08-29T07:55:25.307908-04:00 · active path</p><div class="bubble"><h1>Phase 2B R2 failure diagnosed; corrected R3 runtime ready</h1>
+<p>I verified the uploaded R2 results ZIP against its SHA-256 sidecar, and the archive itself is intact. [export reference: filecite | turn10file0 | L1-L6] [export reference: filecite | turn10file1 | L7-L12]</p>
+<p>The failure was a narrowly bounded <strong>custom replay-preparation SQL defect</strong>:</p>
+<pre><code class="language-text">ERROR: column &quot;scenario_id&quot; specified more than once
+</code></pre>
+<p>The failing statement was the creation of:</p>
+<pre><code class="language-text">msbf_m12r1b_p2b.replay_capacity_calculation
+</code></pre>
+<p>The custom <code>base</code> CTE selected both:</p>
+<pre><code class="language-sql">sr.scenario_id
+</code></pre>
+<p>and:</p>
+<pre><code class="language-sql">c0.*
+</code></pre>
+<p>But <code>c0.*</code> already includes <code>scenario_id</code>. PostgreSQL allows duplicate column labels in an ordinary query result, but it cannot create a physical table with two columns having the same name.</p>
+<h2>What did and did not happen</h2>
+<pre><code class="language-text">Source Phase 2A database modified       FALSE
+Clone created                            TRUE
+Failed clone                             msbf_r1b_p2b_r2_20260829_072702
+Preparation transaction committed       FALSE
+M1.11 exact source executed              FALSE
+M1.12 exact source executed              FALSE
+M1.13 exact source executed              FALSE
+M1.14 exact source executed              FALSE
+Final decisions generated                FALSE
+Accepted authority changed               FALSE
+</code></pre>
+<p>The preparation SQL was inside one transaction. The error occurred before <code>COMMIT</code>, so its candidate/input inserts were rolled back. The failed clone remains preserved correction evidence and should not be modified.</p>
+<p>Classification:</p>
+<pre><code class="language-text">CUSTOM_REPLAY_PREPARATION_CTAS_COLUMN_COLLISION
+</code></pre>
+<p>This is <strong>not</strong> an accepted M1.10–M1.14 methodology defect and does not change the strategy conclusions.</p>
+<h1>R3 correction</h1>
+<p>R3 replaces the wildcard expansion with an explicit, unique 44-column projection containing only:</p>
+<ul>
+<li>replay and predecessor keys;</li>
+<li>candidate terms;</li>
+<li>one <code>scenario_id</code> and one <code>scenario_code</code>;</li>
+<li>the required M1.9/M1.10 input fields;</li>
+<li>the accepted M1.10 policy values; and</li>
+<li>the candidate-capacity calculations needed downstream.</li>
+</ul>
+<p>The accepted and transformed M1.11–M1.14 calculation source files are unchanged from R2 and retain the same hashes.</p>
+<p>I also corrected the recurring Python warnings by removing <code>return</code> statements from the <code>finally</code> block. The runtime receipt now records the exact stage active at failure or completion.</p>
+<h2>R3 construction controls</h2>
+<pre><code class="language-text">Static controls passed                 11
+Static controls failed                  0
+Replay base projection columns         44
+Duplicate projection names              0
+c0.* wildcard expansion present      FALSE
+Accepted-source hashes changed        FALSE
+Transformed-source hashes changed     FALSE
+Python compilation                    PASS
+ZIP integrity                         PASS
+Archive members                         22
+Maximum archive path length             97
+Final-decision execution included     FALSE
+</code></pre>
+<h1>Download Phase 2B R3</h1>
+<p>Download the corrected Phase 2B R3 runtime (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R3_EXACT_DOWNSTREAM_REPLAY_RUNTIME_20260829.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R3_EXACT_DOWNSTREAM_REPLAY_RUNTIME_20260829.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256:
+4dad33cf0c73d40230f06d17a13737818e5c57f5693fcf13e9f6b1ee7ddd991a
+
+Package size:
+86,724 bytes
+</code></pre>
+<p>Supporting documents:</p>
+<p>Open the R3 START HERE guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R3_START_HERE_20260829.md</code>; referenced bytes not established here)</p>
+<p>Open the R2 failure analysis and R3 correction record (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R2_FAILURE_ANALYSIS_AND_R3_CORRECTION_20260829.md</code>; referenced bytes not established here)</p>
+<p>Open the R3 method-boundary statement (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R3_METHOD_BOUNDARY_20260829.md</code>; referenced bytes not established here)</p>
+<p>Open the R3 build receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R3_BUILD_RECEIPT_20260829.json</code>; referenced bytes not established here)</p>
+<p>Open the final package receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R3_FINAL_PACKAGE_RECEIPT_20260829.json</code>; referenced bytes not established here)</p>
+<p>Plain-text fallbacks:</p>
+<p>Download START HERE as TXT (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R3_START_HERE_20260829.txt</code>; referenced bytes not established here)</p>
+<p>Download the failure analysis as TXT (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R2_FAILURE_ANALYSIS_AND_R3_CORRECTION_20260829.txt</code>; referenced bytes not established here)</p>
+<p>Download the method boundary as TXT (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1B_PHASE2B_R3_METHOD_BOUNDARY_20260829.txt</code>; referenced bytes not established here)</p>
+<h1>Run R3</h1>
+<p>Extract the ZIP into:</p>
+<pre><code class="language-text">C:\MSBF
+</code></pre>
+<p>You should then have:</p>
+<pre><code class="language-text">C:\MSBF\R1B_PHASE2B_R3
+</code></pre>
+<p>Preserve both:</p>
+<pre><code class="language-text">msbf_r1b_p2a_r2_20260828_225742
+msbf_r1b_p2b_r2_20260829_072702
+</code></pre>
+<p>Run:</p>
+<pre><code class="language-powershell">cd C:\MSBF\R1B_PHASE2B_R3
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_R1B_PHASE2B_R3.ps1
+</code></pre>
+<p>R3 will create a new clone resembling:</p>
+<pre><code class="language-text">msbf_r1b_p2b_r3_20260829_XXXXXX
+</code></pre>
+<p>It will then attempt:</p>
+<pre><code class="language-text">Replay preparation
+→ exact M1.11 replay
+→ exact M1.12 replay
+→ exact M1.13 replay
+→ exact M1.14 replay
+→ 3,076 requested-structure reproduction comparisons
+→ supported-candidate downstream export
+</code></pre>
+<p>When it finishes, upload the generated ZIP and sidecar from:</p>
+<pre><code class="language-text">C:\MSBF\R1B_PHASE2B_R3\results
+</code></pre>
+<p>Do not rerun after either <code>PASS</code> or <code>FAIL</code>.</p>
+</div></article><article id="m-a1a2c3f3-a7f1-4320-93ab-d76c5d2bd61d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00065 · 2026-08-29T08:21:29.989000-04:00 · active path</p><p class="note">Attachment references: msbf_r1b_p2b_r3_20260829_080240_R1B_PHASE2B_R3_RESULTS.zip; msbf_r1b_p2b_r3_20260829_080240_R1B_PHASE2B_R3_RESULTS.zip.sha256</p><div class="bubble"><p>MSBF M1/M2 Successor R1B Phase 2B R3
+Purpose: corrected exact accepted M1.11-M1.14 replay for source-supported candidates
+Source Phase2A database: msbf_r1b_p2a_r2_20260828_225742</p>
+<p>The failed Phase2B R2 clone will not be modified.
+Final decisions remain disabled.</p>
+<p>PostgreSQL password for local user postgres (not stored):</p>
+<p>R1B Phase 2B R3 finished: PASS
+Source Phase2A database modified: NO
+Clone retained: msbf_r1b_p2b_r3_20260829_080240
+Final decisions generated: NO
+Last stage: COMPLETE
+Results: C:\MSBF\R1B_PHASE2B_R3\results\msbf_r1b_p2b_r3_20260829_080240_R1B_PHASE2B_R3_RESULTS.zip
+SHA-256: b10aca3cdb2f8f2340714f49c4a35b0aa3f2fa0aa68dc8a8572ef2ab7843c36f
+Exact requested M1.11-M1.14 reproduction: PASS
+Upload the result ZIP and sidecar. Final feasibility/selection remains pending review.</p>
+<p>PASS. Upload the generated *_R1B_PHASE2B_R3_RESULTS.zip and .sha256 files from:
+C:\MSBF\R1B_PHASE2B_R3\results</p>
+</div></article><article id="m-367629ab-aab4-4247-822e-e0b5b2f0e021" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00066 · 2026-08-29T09:39:13.791554-04:00 · active path</p><div class="bubble"><h1>Phase 2B R3 accepted</h1>
+<p>I verified the uploaded Phase 2B R3 results ZIP against its sidecar. The package is intact, the exact M1.11–M1.14 replay completed successfully, and no final decisions or accepted-authority changes were produced. [export reference: filecite | turn11file0 | L1-L6] [export reference: filecite | turn11file1 | L7-L12]</p>
+<pre><code class="language-text">PHASE2B_R3_STATUS                     PASS
+SOURCE_PHASE2A_DATABASE_MODIFIED      FALSE
+RETAINED_CLONE                        msbf_r1b_p2b_r3_20260829_080240
+SOURCE CANDIDATES                     26,709
+EXACT DOWNSTREAM-SUPPORTED            6,047
+DOWNSTREAM-UNSUPPORTED               20,662
+REQUESTED-STAGE COMPARISONS           3,076
+REQUESTED-STAGE MISMATCHES                0
+FINAL DECISIONS GENERATED             FALSE
+ACCEPTED AUTHORITY CHANGED            FALSE
+</code></pre>
+<p>All 769 requested structures reproduced through M1.11 resilience, M1.12 integrated risk, M1.13 comparative loss, and M1.14 economics. We now have a defensible exact-method foundation for final counteroffer selection.</p>
+<h2>What the replay exposed</h2>
+<h3>1. The candidate horizon contract is inconsistent</h3>
+<p>Exact M1.13 paydown-curve parameters exist only for:</p>
+<pre><code class="language-text">30 days
+60 days
+90 days
+</code></pre>
+<p>Phase 2A had also generated 32-, 33-, 35-, 63-, 66-, 69-, 95-, 99-, 104-, and 120-day candidates. Consequently:</p>
+<table>
+<thead>
+<tr>
+<th>Candidate domain</th>
+<th align="right">Rows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Exact M1.13-supported candidates</td>
+<td align="right">6,047</td>
+</tr>
+<tr>
+<td>Unsupported horizon candidates</td>
+<td align="right">20,662</td>
+</tr>
+<tr>
+<td>Total</td>
+<td align="right">26,709</td>
+</tr>
+</tbody></table>
+<p>This is a genuine M1.13/M2.2 contract defect: M2.2 permits a 120-day maximum while M1.13 cannot calculate an exact 120-day loss result.</p>
+<p>The smallest safe R1 correction is to restrict candidate horizons to <strong>30, 60, and 90 days</strong>. We should not manufacture, interpolate, or extrapolate a 120-day paydown curve during this remediation.</p>
+<h3>2. The strategy lacks a commercially meaningful counteroffer floor</h3>
+<p>Using only the accepted $2,500 absolute minimum produces unreasonable alternatives:</p>
+<pre><code class="language-text">Selected structures at exactly $2,500             87
+Changed selections evaluated                     260
+Changed selections reduced by at least 50%       134
+Largest exposure reduction                      98.33%
+Median reduction among changed selections       50.45%
+</code></pre>
+<p>A merchant requesting $150,000 should not receive a $2,500 “counteroffer” merely because the candidate happens to pass the mechanical gates. That is not a meaningful alternative to the request.</p>
+<p>Your credit-decisioning simulator correctly prevented this by requiring both:</p>
+<pre><code class="language-text">approved amount &gt;= requested amount × minimum counteroffer percentage
+
+approved amount &gt;= requested amount ×
+                   (1 − maximum exposure reduction)
+</code></pre>
+<p>MSBF needs the same type of denominator-safe policy boundary.</p>
+<h3>3. The search population must be widened slightly</h3>
+<p>Phase 2A correctly searched the 769 capacity <code>FAIL</code> or <code>REVIEW</code> application-scenarios.</p>
+<p>The exact replay now shows another <strong>11 application-scenarios</strong> where:</p>
+<pre><code class="language-text">capacity = PASS
+economics = BELOW_HURDLE / REVIEW
+</code></pre>
+<p>Those rows also have a structure-remediable problem and should be searched rather than sent directly to review:</p>
+<pre><code class="language-text">Baseline                 6
+Recession Energy         5
+Total                    11
+</code></pre>
+<p>The successor search-entry rule should therefore be:</p>
+<blockquote>
+<p>Enter structure search whenever any decisionable, structure-remediable gate is <code>FAIL</code> or <code>REVIEW</code>, not only when capacity is adverse.</p>
+</blockquote>
+<h3>4. Verification review is substantially overinclusive</h3>
+<p>Within the 769 current search rows:</p>
+<pre><code class="language-text">Accepted verification REVIEW rows               426
+Proposed genuine human-review rows               118
+</code></pre>
+<p>The difference comes from three conflations in the predecessor design:</p>
+<ul>
+<li>source-quality warnings are treated the same as a specific verification conflict;</li>
+<li>partial-source evidence is treated as a universal review veto even when decision-critical evidence remains usable; and</li>
+<li>processor continuity contributes to the M1.8 verification disposition and is then evaluated again through the separate M2.1 continuity gate.</li>
+</ul>
+<p>The proposed successor review taxonomy is:</p>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Treatment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Specific bank, owner, KYB, sanctions, processor, fraud, or source-conflict review</td>
+<td>Human review</td>
+</tr>
+<tr>
+<td>Medium data confidence</td>
+<td>Human review</td>
+</tr>
+<tr>
+<td>Fraud tier 3</td>
+<td>Human review</td>
+</tr>
+<tr>
+<td><code>DISRUPTED</code> or <code>UNAVAILABLE</code> processor continuity</td>
+<td>Human review</td>
+</tr>
+<tr>
+<td><code>WATCH</code> continuity</td>
+<td>Advisory monitoring</td>
+</tr>
+<tr>
+<td>Source-quality warning alone</td>
+<td>Advisory when required evidence remains usable</td>
+</tr>
+<tr>
+<td>Partial-source warning alone</td>
+<td>Advisory when required evidence remains usable</td>
+</tr>
+<tr>
+<td>Acquisition-evidence review</td>
+<td>Noncredit advisory rather than underwriting veto</td>
+</tr>
+</tbody></table>
+<p>This does not disregard evidence. It separates a genuine judgment condition from an evidence-quality observation that has already been incorporated into the calculated underwriting metrics.</p>
+<h2>The genuine policy decision</h2>
+<p>Before I issue the final Phase 2C decision runtime, we need to establish the minimum viable counteroffer threshold.</p>
+<p>My recommendation is:</p>
+<pre><code class="language-text">Minimum counteroffer amount       40% of requested amount
+Maximum exposure reduction        60%
+</code></pre>
+<p>This is consistent with the center of the threshold range used in your credit-decisioning simulator and produces a reasonable sensitivity result.</p>
+<table>
+<thead>
+<tr>
+<th align="right">Minimum counteroffer ratio</th>
+<th align="right">Baseline selected</th>
+<th align="right">Stress selected</th>
+<th align="right">Baseline no feasible</th>
+<th align="right">Stress no feasible</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">No ratio floor</td>
+<td align="right">240</td>
+<td align="right">94</td>
+<td align="right">249</td>
+<td align="right">186</td>
+</tr>
+<tr>
+<td align="right">35%</td>
+<td align="right">203</td>
+<td align="right">79</td>
+<td align="right">286</td>
+<td align="right">201</td>
+</tr>
+<tr>
+<td align="right"><strong>40%</strong></td>
+<td align="right"><strong>199</strong></td>
+<td align="right"><strong>77</strong></td>
+<td align="right"><strong>290</strong></td>
+<td align="right"><strong>203</strong></td>
+</tr>
+<tr>
+<td align="right">45%</td>
+<td align="right">193</td>
+<td align="right">75</td>
+<td align="right">296</td>
+<td align="right">205</td>
+</tr>
+<tr>
+<td align="right">50%</td>
+<td align="right">186</td>
+<td align="right">70</td>
+<td align="right">303</td>
+<td align="right">210</td>
+</tr>
+<tr>
+<td align="right">60%</td>
+<td align="right">167</td>
+<td align="right">61</td>
+<td align="right">322</td>
+<td align="right">219</td>
+</tr>
+</tbody></table>
+<p>Moving from 35% to 40% excludes only:</p>
+<pre><code class="language-text">4 Baseline selections
+2 stress selections
+</code></pre>
+<p>Moving from 40% to 45% excludes another:</p>
+<pre><code class="language-text">6 Baseline selections
+2 stress selections
+</code></pre>
+<p>Forty percent therefore removes the most commercially implausible reductions without materially collapsing the viable population.</p>
+<h2>Recommended complete R1 policy slate</h2>
+<p>I recommend approving these items together:</p>
+<pre><code class="language-text">1. Minimum counteroffer ratio
+   40% of requested amount.
+
+2. Maximum exposure reduction
+   60%.
+
+3. Exact payoff-horizon domain
+   30, 60 and 90 days only for R1.
+
+4. Candidate economics
+   The resolved economic hurdle must pass.
+   BELOW_HURDLE is not a feasible final counteroffer.
+
+5. Dual-frontier selection
+   Strict automatic frontier:
+       highest funded amount among candidates for which
+       capacity, resilience, risk and economics all PASS.
+
+   Review frontier:
+       highest funded amount among candidates that remain
+       acceptable but retain a genuine REVIEW gate.
+
+6. Authority-first selection
+   Where a strict candidate exists, select the highest strict
+   candidate for automatic authorization rather than forcing
+   review solely because a larger marginal candidate exists.
+
+7. Expanded search entry
+   Search any decisionable structure-remediable FAIL or REVIEW,
+   including the 11 economics-review rows.
+
+8. Human-review taxonomy
+   Retain review for specific conflicts, medium confidence,
+   fraud tier 3 and disrupted/unavailable continuity.
+   Treat source-only warnings and WATCH continuity as advisory
+   when required evidence remains available.
+</code></pre>
+<p>This preserves both frontiers. Power BI will eventually be able to show:</p>
+<ul>
+<li>the automatically supportable offer;</li>
+<li>any larger reviewable alternative;</li>
+<li>why the automatic candidate passed;</li>
+<li>why the larger candidate required review; and</li>
+<li>which frontier governed the final decision.</li>
+</ul>
+<p>That is more sophisticated than either blindly maximizing amount or always choosing the smallest possible passing offer.</p>
+<h2>Preliminary impact at the recommended 40%</h2>
+<p>These figures are <strong>not final</strong> because the 11 supplemental searches and stress floor are still pending.</p>
+<h3>Baseline</h3>
+<table>
+<thead>
+<tr>
+<th>Preliminary successor outcome</th>
+<th align="right">Rows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Approve as requested</td>
+<td align="right">92</td>
+</tr>
+<tr>
+<td>Counteroffer authorized</td>
+<td align="right">6</td>
+</tr>
+<tr>
+<td>Counteroffer review required</td>
+<td align="right">125</td>
+</tr>
+<tr>
+<td>Manual underwriting review</td>
+<td align="right">71</td>
+</tr>
+<tr>
+<td>No feasible structure</td>
+<td align="right">290</td>
+</tr>
+<tr>
+<td>Hard policy stop</td>
+<td align="right">117</td>
+</tr>
+<tr>
+<td>Insufficient evidence</td>
+<td align="right">43</td>
+</tr>
+<tr>
+<td>Supplemental search pending</td>
+<td align="right">6</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td align="right"><strong>750</strong></td>
+</tr>
+</tbody></table>
+<p>For comparison, the accepted Baseline contains:</p>
+<pre><code class="language-text">Final offers                 44
+Counteroffer/manual review  139
+Policy declines             524
+Evidence declines            43
+</code></pre>
+<p>The provisional strategy more than doubles straight-through authorizations from 44 to 98 before the six supplemental Baseline searches are resolved.</p>
+<p>The review population does not disappear. Some current policy declines correctly become counteroffer review cases rather than immediate declines. The key improvement is that each review will have a specific binding reason rather than being caused by broad source-quality or continuity flags.</p>
+<h3>Recession Energy — independent outcome before the Baseline floor</h3>
+<table>
+<thead>
+<tr>
+<th>Preliminary independent outcome</th>
+<th align="right">Rows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Approve as requested</td>
+<td align="right">23</td>
+</tr>
+<tr>
+<td>Counteroffer authorized</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td>Counteroffer review required</td>
+<td align="right">53</td>
+</tr>
+<tr>
+<td>Manual underwriting review</td>
+<td align="right">24</td>
+</tr>
+<tr>
+<td>No feasible structure</td>
+<td align="right">203</td>
+</tr>
+<tr>
+<td>Hard policy stop</td>
+<td align="right">117</td>
+</tr>
+<tr>
+<td>Insufficient evidence</td>
+<td align="right">321</td>
+</tr>
+<tr>
+<td>Supplemental search pending</td>
+<td align="right">5</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td align="right"><strong>750</strong></td>
+</tr>
+</tbody></table>
+<p>Phase 2C will retain these independent results and separately apply the governed matched-Baseline floor, rather than obscuring one with the other.</p>
+<h2>Review package</h2>
+<p>Open the Phase 2B R3 evidence review (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2B_R3_REVIEW_AND_POLICY_DECISION_20260829/00_PHASE2B_R3_EVIDENCE_REVIEW.md</code>; referenced bytes not established here)</p>
+<p>Open the counteroffer policy decision memo (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2B_R3_REVIEW_AND_POLICY_DECISION_20260829/01_COUNTEROFFER_POLICY_DECISION_MEMO.md</code>; referenced bytes not established here)</p>
+<p>Open the threshold-sensitivity register (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2B_R3_REVIEW_AND_POLICY_DECISION_20260829/02_MINIMUM_COUNTEROFFER_RATIO_SENSITIVITY.csv</code>; referenced bytes not established here)</p>
+<p>Open the recommended policy slate (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2B_R3_REVIEW_AND_POLICY_DECISION_20260829/03_RECOMMENDED_R1_POLICY_SLATE.json</code>; referenced bytes not established here)</p>
+<p>Open the preliminary outcome distribution (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2B_R3_REVIEW_AND_POLICY_DECISION_20260829/04_PROVISIONAL_OUTCOME_DISTRIBUTION_40PCT.csv</code>; referenced bytes not established here)</p>
+<p>Open the 11-row supplemental search population (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2B_R3_REVIEW_AND_POLICY_DECISION_20260829/05_SUPPLEMENTAL_STRUCTURE_SEARCH_POPULATION.csv</code>; referenced bytes not established here)</p>
+<p>Open the preliminary selected-candidate register (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2B_R3_REVIEW_AND_POLICY_DECISION_20260829/06_SELECTED_CANDIDATE_40PCT_PRELIMINARY.csv</code>; referenced bytes not established here)</p>
+<p>Open the additional defect register (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2B_R3_REVIEW_AND_POLICY_DECISION_20260829/07_ADDITIONAL_DEFECT_REGISTER.csv</code>; referenced bytes not established here)</p>
+<p>Download the complete review and policy-decision package (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2B_R3_REVIEW_AND_POLICY_DECISION_20260829.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_PHASE2B_R3_REVIEW_AND_POLICY_DECISION_20260829.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package SHA-256:
+09033bc36cdb92fd2ec9027ef628f5ff7fe4cb1b98e4730ecbddb70280a35de0
+</code></pre>
+<p>This is the first point in the construction where I need a genuinely new owner policy decision. A sufficient authorization is:</p>
+<blockquote>
+<p><strong>Approve the recommended R1 policy slate, including the 40% minimum counteroffer ratio and 60% maximum exposure reduction, and proceed with Phase 2C.</strong></p>
+</blockquote>
+</div></article><article id="m-058b0a1a-34ea-465f-ad26-59c7e6ff243f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00067 · 2026-08-29T09:45:39.514000-04:00 · active path</p><div class="bubble"><p>Approve the recommended R1 policy slate, including the 40% minimum counteroffer ratio and 60% maximum exposure reduction, and proceed with Phase 2C.  That said, please allow flexibility for future runs. Future users should be able to adjust these inputs to their satisfaction, at least any variables that make sense to allow adjustability. This flexibility can be handled now or tabled for the next campaign run.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

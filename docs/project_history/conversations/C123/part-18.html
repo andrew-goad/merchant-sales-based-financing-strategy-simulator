@@ -1,0 +1,1718 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5 — part 18 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5 — part 18</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-17.html">Previous part</a><a href="part-19.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-5cbe0373-4b80-4674-a11a-ab675f86e358" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00196 · 2026-09-11T19:42:21.382584-04:00 · active path</p><div class="bubble"><p>Yes. We now know the historical artifacts and their locations, so this preflight does <strong>no historical searching at all</strong>. It inspects only the <strong>current MSBF repository, current toolchain/PostgreSQL installation, current listeners/services, and D: capacity</strong>.</p>
+<p>Use a normal PowerShell window. It performs <strong>no PostgreSQL connection, no SQL execution, no Git mutation, no service changes, and no repository writes</strong>. Its only writes are to a new evidence directory on <code>D:</code>.</p>
+<pre><code class="language-powershell"># =====================================================================================
+# MSBF CAMPAIGN SCALE
+# CURRENT-STATE-ONLY PREFLIGHT
+#
+# PURPOSE
+#   Establish the current machine/repository state needed to construct the rebased
+#   Campaign Scale harness for:
+#
+#       750 accepted-reference deterministic replay
+#              -&gt; zero semantic differences gate
+#       fresh 2,500-merchant end-to-end shakedown
+#
+# SCOPE
+#   CURRENT STATE ONLY.
+#
+#   This script DOES NOT:
+#     - search historical Campaign Scale folders
+#     - search Documents / Downloads / Desktop
+#     - search for R26 golden/runtime/checkpoint artifacts
+#     - connect to PostgreSQL
+#     - execute SQL
+#     - create/drop/restore a database
+#     - start/stop PostgreSQL
+#     - fetch/pull/checkout/reset Git
+#     - modify D:\x\m
+#
+# WRITES
+#   Evidence only, under:
+#       D:\MSBF_CAMPAIGN_CURRENT_STATE_&lt;timestamp&gt;
+#
+# =====================================================================================
+
+$ErrorActionPreference = &quot;Stop&quot;
+$ProgressPreference = &quot;SilentlyContinue&quot;
+$env:GIT_OPTIONAL_LOCKS = &quot;0&quot;
+
+# -------------------------------------------------------------------------------------
+# GOVERNING CURRENT SOURCE
+# -------------------------------------------------------------------------------------
+
+$Repo = &quot;D:\x\m&quot;
+
+$ExpectedTag       = &quot;module-2-g3-v2.1.0&quot;
+$ExpectedCommit    = &quot;fd9f67b6d1d7fc848d315bcb696487b82c9a8046&quot;
+$ExpectedTree      = &quot;fa82f71a9aabf88d5ecbc16ba38cac8de8d83cbb&quot;
+$ExpectedTagObject = &quot;cdef0c49eb37d0cc72444c0829c253e09eee050a&quot;
+
+if (-not (Test-Path -LiteralPath $Repo -PathType Container)) {
+    throw &quot;STOP: repository does not exist: $Repo&quot;
+}
+
+# -------------------------------------------------------------------------------------
+# OUTPUT — D DRIVE ONLY
+# -------------------------------------------------------------------------------------
+
+$Stamp = Get-Date -Format &quot;yyyyMMdd_HHmmss&quot;
+$Out   = &quot;D:\MSBF_CAMPAIGN_CURRENT_STATE_$Stamp&quot;
+$Zip   = &quot;$Out.zip&quot;
+
+New-Item -ItemType Directory -Path $Out -Force | Out-Null
+
+$ErrorLog = Join-Path $Out &quot;ERRORS.txt&quot;
+
+function Log-Error {
+    param([string]$Message)
+
+    Add-Content -LiteralPath $ErrorLog `
+        -Value (&quot;[{0}] {1}&quot; -f (Get-Date -Format o), $Message)
+}
+
+function Hash-File {
+    param([string]$Path)
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        return &quot;&lt;NOT_FOUND&gt;&quot;
+    }
+
+    try {
+        return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+    catch {
+        Log-Error &quot;Hash failure: $Path :: $($_.Exception.Message)&quot;
+        return &quot;&lt;HASH_ERROR&gt;&quot;
+    }
+}
+
+function Git-Value {
+    param([string[]]$Args)
+
+    try {
+        $Value = &amp; git -C $Repo @Args 2&gt;&amp;1
+
+        if ($LASTEXITCODE -ne 0) {
+            Log-Error &quot;git $($Args -join &#39; &#39;) :: $($Value -join &#39; &#39;)&quot;
+            return &quot;&lt;ERROR&gt;&quot;
+        }
+
+        return (($Value | Out-String).Trim())
+    }
+    catch {
+        Log-Error &quot;git $($Args -join &#39; &#39;) :: $($_.Exception.Message)&quot;
+        return &quot;&lt;ERROR&gt;&quot;
+    }
+}
+
+# =====================================================================================
+# 00 — COLLECTION / MACHINE CONTEXT
+# =====================================================================================
+
+$Context = [ordered]@{
+    collection_started_local = (Get-Date).ToString(&quot;o&quot;)
+    collection_started_utc   = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    computer_name             = $env:COMPUTERNAME
+    powershell_version        = $PSVersionTable.PSVersion.ToString()
+
+    repo_path                 = $Repo
+    output_path               = $Out
+
+    campaign_intent           = &quot;750_REFERENCE_REPLAY_THEN_FRESH_2500_SHAKEDOWN&quot;
+    database_execution        = &quot;NOT_PERFORMED&quot;
+    historical_search         = &quot;NOT_PERFORMED&quot;
+}
+
+try {
+    $OS  = Get-CimInstance Win32_OperatingSystem
+    $CPU = Get-CimInstance Win32_Processor | Select-Object -First 1
+
+    $Context.os_caption          = $OS.Caption
+    $Context.os_version          = $OS.Version
+    $Context.os_architecture     = $OS.OSArchitecture
+    $Context.memory_gb           = [math]::Round($OS.TotalVisibleMemorySize / 1MB, 2)
+    $Context.cpu_name            = $CPU.Name
+    $Context.logical_processors  = $CPU.NumberOfLogicalProcessors
+}
+catch {
+    Log-Error &quot;Machine context: $($_.Exception.Message)&quot;
+}
+
+$Context |
+    ConvertTo-Json -Depth 8 |
+    Set-Content -LiteralPath &quot;$Out\00_RUN_CONTEXT.json&quot; -Encoding UTF8
+
+
+# =====================================================================================
+# 01 — PUBLICATION AUTHORITY BINDING
+# =====================================================================================
+
+$Head      = Git-Value @(&quot;rev-parse&quot;, &quot;HEAD&quot;)
+$HeadTree  = Git-Value @(&quot;rev-parse&quot;, &quot;HEAD^{tree}&quot;)
+$Branch    = Git-Value @(&quot;branch&quot;, &quot;--show-current&quot;)
+
+$TagObject = Git-Value @(&quot;rev-parse&quot;, &quot;refs/tags/$ExpectedTag&quot;)
+$TagCommit = Git-Value @(&quot;rev-parse&quot;, &quot;$ExpectedTag^{}&quot;)
+$TagTree   = Git-Value @(&quot;rev-parse&quot;, &quot;$ExpectedTag^{}^{tree}&quot;)
+
+$Publication = [ordered]@{
+    expected = [ordered]@{
+        tag        = $ExpectedTag
+        tag_object = $ExpectedTagObject
+        commit     = $ExpectedCommit
+        tree       = $ExpectedTree
+    }
+
+    observed = [ordered]@{
+        current_branch  = $Branch
+        current_head    = $Head
+        current_tree    = $HeadTree
+        tag_object      = $TagObject
+        tag_commit      = $TagCommit
+        tag_tree        = $TagTree
+    }
+
+    checks = [ordered]@{
+        tag_object_match     = ($TagObject -eq $ExpectedTagObject)
+        tag_commit_match     = ($TagCommit -eq $ExpectedCommit)
+        tag_tree_match       = ($TagTree -eq $ExpectedTree)
+
+        head_at_publication  = ($Head -eq $ExpectedCommit)
+        head_tree_at_release = ($HeadTree -eq $ExpectedTree)
+    }
+}
+
+$Publication |
+    ConvertTo-Json -Depth 8 |
+    Set-Content -LiteralPath &quot;$Out\01_PUBLICATION_BINDING.json&quot; -Encoding UTF8
+
+
+# =====================================================================================
+# 02 — CURRENT GIT / WORKING-TREE STATE
+# =====================================================================================
+
+$GitState = &quot;$Out\02_GIT_STATE.txt&quot;
+
+@&quot;
+================================================================================
+MSBF CURRENT GIT STATE
+================================================================================
+
+Repository:
+$Repo
+
+Collection:
+$(Get-Date -Format o)
+
+&quot;@ | Set-Content -LiteralPath $GitState -Encoding UTF8
+
+$Sections = @(
+    @{
+        Name = &quot;CURRENT BRANCH&quot;
+        Args = @(&quot;branch&quot;, &quot;--show-current&quot;)
+    },
+    @{
+        Name = &quot;HEAD&quot;
+        Args = @(&quot;rev-parse&quot;, &quot;HEAD&quot;)
+    },
+    @{
+        Name = &quot;STATUS PORCELAIN&quot;
+        Args = @(&quot;status&quot;, &quot;--porcelain=v1&quot;, &quot;--untracked-files=all&quot;)
+    },
+    @{
+        Name = &quot;UNSTAGED DIFF&quot;
+        Args = @(&quot;diff&quot;, &quot;--no-ext-diff&quot;, &quot;--name-status&quot;)
+    },
+    @{
+        Name = &quot;STAGED DIFF&quot;
+        Args = @(&quot;diff&quot;, &quot;--cached&quot;, &quot;--no-ext-diff&quot;, &quot;--name-status&quot;)
+    },
+    @{
+        Name = &quot;REMOTES&quot;
+        Args = @(&quot;remote&quot;, &quot;-v&quot;)
+    },
+    @{
+        Name = &quot;TAGS AT HEAD&quot;
+        Args = @(&quot;tag&quot;, &quot;--points-at&quot;, &quot;HEAD&quot;)
+    },
+    @{
+        Name = &quot;RECENT COMMITS&quot;
+        Args = @(&quot;log&quot;, &quot;-n&quot;, &quot;15&quot;, &quot;--decorate&quot;, &quot;--oneline&quot;)
+    },
+    @{
+        Name = &quot;SUBMODULE STATUS&quot;
+        Args = @(&quot;submodule&quot;, &quot;status&quot;)
+    }
+)
+
+foreach ($S in $Sections) {
+
+    Add-Content -LiteralPath $GitState `
+        -Value &quot;`r`n--- $($S.Name) ---&quot;
+
+    try {
+        $Value = &amp; git -C $Repo @($S.Args) 2&gt;&amp;1
+
+        Add-Content -LiteralPath $GitState `
+            -Value ($Value | Out-String)
+    }
+    catch {
+        Log-Error &quot;Git state section &#39;$($S.Name)&#39;: $($_.Exception.Message)&quot;
+    }
+}
+
+
+# =====================================================================================
+# 03 — PUBLICATION COMMIT -&gt; CURRENT HEAD DIFFERENCE
+#
+# This is important if development occurred after publication.
+# It does NOT change anything.
+# =====================================================================================
+
+$DiffPath = &quot;$Out\03_PUBLICATION_TO_HEAD_DIFF.txt&quot;
+
+@&quot;
+================================================================================
+DIFF: PUBLISHED v2.1.0 COMMIT -&gt; CURRENT HEAD
+================================================================================
+
+Published commit:
+$ExpectedCommit
+
+Current HEAD:
+$Head
+
+&quot;@ | Set-Content -LiteralPath $DiffPath -Encoding UTF8
+
+try {
+    &amp; git -C $Repo diff `
+        --no-ext-diff `
+        --name-status `
+        $ExpectedCommit `
+        $Head 2&gt;&amp;1 |
+        Out-String |
+        Add-Content -LiteralPath $DiffPath
+}
+catch {
+    Log-Error &quot;Publication -&gt; HEAD diff: $($_.Exception.Message)&quot;
+}
+
+
+# =====================================================================================
+# 04 — ALL CURRENT TRACKED FILES
+#
+# Metadata only. SHA-256 is calculated separately for executable/control-relevant files.
+# =====================================================================================
+
+$TrackedPaths = @()
+
+try {
+    $TrackedPaths = @(
+        &amp; git -c core.quotepath=false -C $Repo ls-files
+    )
+}
+catch {
+    throw &quot;STOP: unable to inventory tracked files.&quot;
+}
+
+$AllTracked = foreach ($Rel in $TrackedPaths) {
+
+    if ([string]::IsNullOrWhiteSpace($Rel)) {
+        continue
+    }
+
+    $Full = Join-Path $Repo $Rel
+
+    if (Test-Path -LiteralPath $Full -PathType Leaf) {
+
+        $F = Get-Item -LiteralPath $Full
+
+        [pscustomobject]@{
+            relative_path       = $Rel
+            extension           = $F.Extension.ToLowerInvariant()
+            bytes               = $F.Length
+            last_write_time_utc = $F.LastWriteTimeUtc.ToString(&quot;o&quot;)
+            exists              = $true
+        }
+    }
+    else {
+
+        [pscustomobject]@{
+            relative_path       = $Rel
+            extension           = [IO.Path]::GetExtension($Rel).ToLowerInvariant()
+            bytes               = $null
+            last_write_time_utc = $null
+            exists              = $false
+        }
+    }
+}
+
+$AllTracked |
+    Sort-Object relative_path |
+    Export-Csv `
+        -LiteralPath &quot;$Out\04_ALL_TRACKED_FILES.csv&quot; `
+        -NoTypeInformation `
+        -Encoding UTF8
+
+
+# =====================================================================================
+# 05 — EXECUTABLE / CONTROL SOURCE SHA-256 INVENTORY
+#
+# This becomes the current side of the old-230-position -&gt; v2.1.0 mapping.
+# =====================================================================================
+
+$ControlExtensions = @(
+    &quot;.sql&quot;,
+    &quot;.ps1&quot;,
+    &quot;.psm1&quot;,
+    &quot;.py&quot;,
+    &quot;.json&quot;,
+    &quot;.csv&quot;,
+    &quot;.yaml&quot;,
+    &quot;.yml&quot;,
+    &quot;.toml&quot;,
+    &quot;.cmd&quot;,
+    &quot;.bat&quot;,
+    &quot;.txt&quot;,
+    &quot;.sha256&quot;
+)
+
+$ControlRows = foreach ($Rel in $TrackedPaths) {
+
+    if ([string]::IsNullOrWhiteSpace($Rel)) {
+        continue
+    }
+
+    $Full = Join-Path $Repo $Rel
+
+    if (-not (Test-Path -LiteralPath $Full -PathType Leaf)) {
+        continue
+    }
+
+    $Ext = [IO.Path]::GetExtension($Full).ToLowerInvariant()
+
+    if ($ControlExtensions -notcontains $Ext) {
+        continue
+    }
+
+    $F = Get-Item -LiteralPath $Full
+
+    [pscustomobject]@{
+        relative_path       = $Rel
+        extension           = $Ext
+        bytes               = $F.Length
+        last_write_time_utc = $F.LastWriteTimeUtc.ToString(&quot;o&quot;)
+        sha256              = Hash-File $Full
+    }
+}
+
+$ControlRows |
+    Sort-Object relative_path |
+    Export-Csv `
+        -LiteralPath &quot;$Out\05_EXECUTABLE_CONTROL_SOURCE_HASHES.csv&quot; `
+        -NoTypeInformation `
+        -Encoding UTF8
+
+
+# =====================================================================================
+# 06 — CURRENT SQL INVENTORY
+# =====================================================================================
+
+$SqlRows = $ControlRows |
+    Where-Object { $_.extension -eq &quot;.sql&quot; } |
+    Sort-Object relative_path
+
+$SqlRows |
+    Export-Csv `
+        -LiteralPath &quot;$Out\06_CURRENT_SQL_SOURCE_INVENTORY.csv&quot; `
+        -NoTypeInformation `
+        -Encoding UTF8
+
+
+# =====================================================================================
+# 07 — CURRENT TOOLCHAIN
+# =====================================================================================
+
+$ToolchainPath = &quot;$Out\07_TOOLCHAIN.txt&quot;
+
+@&quot;
+================================================================================
+CURRENT TOOLCHAIN
+================================================================================
+
+&quot;@ | Set-Content -LiteralPath $ToolchainPath -Encoding UTF8
+
+$Commands = @(
+    &quot;git&quot;,
+    &quot;python&quot;,
+    &quot;py&quot;,
+    &quot;psql&quot;,
+    &quot;pg_config&quot;,
+    &quot;pg_dump&quot;,
+    &quot;pg_restore&quot;,
+    &quot;createdb&quot;,
+    &quot;dropdb&quot;
+)
+
+foreach ($Name in $Commands) {
+
+    Add-Content -LiteralPath $ToolchainPath `
+        -Value &quot;`r`n--- $Name ---&quot;
+
+    try {
+        $Cmd = Get-Command $Name -ErrorAction SilentlyContinue
+
+        if ($null -eq $Cmd) {
+
+            Add-Content -LiteralPath $ToolchainPath `
+                -Value &quot;&lt;NOT FOUND&gt;&quot;
+
+            continue
+        }
+
+        Add-Content -LiteralPath $ToolchainPath `
+            -Value &quot;PATH: $($Cmd.Source)&quot;
+
+        if ($Name -eq &quot;git&quot;) {
+            Add-Content -LiteralPath $ToolchainPath `
+                -Value ((&amp; $Cmd.Source --version 2&gt;&amp;1) | Out-String)
+        }
+
+        elseif ($Name -eq &quot;python&quot;) {
+            Add-Content -LiteralPath $ToolchainPath `
+                -Value ((&amp; $Cmd.Source --version 2&gt;&amp;1) | Out-String)
+        }
+
+        elseif ($Name -in @(&quot;psql&quot;,&quot;pg_config&quot;,&quot;pg_dump&quot;,&quot;pg_restore&quot;)) {
+            Add-Content -LiteralPath $ToolchainPath `
+                -Value ((&amp; $Cmd.Source --version 2&gt;&amp;1) | Out-String)
+        }
+    }
+    catch {
+        Log-Error &quot;Toolchain $Name :: $($_.Exception.Message)&quot;
+    }
+}
+
+
+# =====================================================================================
+# 08 — POSTGRESQL INSTALLATION / SERVICE STATE
+#
+# NO DATABASE CONNECTION.
+# =====================================================================================
+
+$PgPath = &quot;$Out\08_POSTGRESQL_CURRENT_STATE.txt&quot;
+
+@&quot;
+================================================================================
+POSTGRESQL CURRENT STATE
+NO DATABASE CONNECTION PERFORMED
+================================================================================
+
+&quot;@ | Set-Content -LiteralPath $PgPath -Encoding UTF8
+
+
+# ---- PostgreSQL Windows services -----------------------------------------------------
+
+Add-Content -LiteralPath $PgPath `
+    -Value &quot;--- WINDOWS SERVICES ---&quot;
+
+try {
+
+    $PgServices = Get-CimInstance Win32_Service |
+        Where-Object {
+            $_.Name -match &quot;(?i)postgres&quot; -or
+            $_.DisplayName -match &quot;(?i)postgres&quot;
+        }
+
+    foreach ($S in $PgServices) {
+
+        Add-Content -LiteralPath $PgPath -Value @&quot;
+
+Name        : $($S.Name)
+DisplayName : $($S.DisplayName)
+State       : $($S.State)
+StartMode   : $($S.StartMode)
+ProcessId   : $($S.ProcessId)
+PathName    : $($S.PathName)
+
+&quot;@
+    }
+
+    if (-not $PgServices) {
+        Add-Content -LiteralPath $PgPath `
+            -Value &quot;&lt;NO POSTGRESQL WINDOWS SERVICE FOUND&gt;&quot;
+    }
+}
+catch {
+    Log-Error &quot;PostgreSQL service inventory: $($_.Exception.Message)&quot;
+}
+
+
+# ---- PostgreSQL processes ------------------------------------------------------------
+
+Add-Content -LiteralPath $PgPath `
+    -Value &quot;`r`n--- POSTGRES PROCESSES ---&quot;
+
+try {
+
+    $Processes = Get-Process postgres -ErrorAction SilentlyContinue
+
+    if ($Processes) {
+
+        $Processes |
+            Select-Object Id, ProcessName, Path |
+            Format-Table -AutoSize |
+            Out-String |
+            Add-Content -LiteralPath $PgPath
+    }
+    else {
+        Add-Content -LiteralPath $PgPath `
+            -Value &quot;&lt;NO postgres PROCESS OBSERVED&gt;&quot;
+    }
+}
+catch {
+    Log-Error &quot;PostgreSQL process inventory: $($_.Exception.Message)&quot;
+}
+
+
+# ---- Known PostgreSQL registry installations ----------------------------------------
+
+Add-Content -LiteralPath $PgPath `
+    -Value &quot;`r`n--- POSTGRESQL REGISTRY INSTALLATIONS ---&quot;
+
+$RegistryRoots = @(
+    &quot;HKLM:\SOFTWARE\PostgreSQL\Installations&quot;,
+    &quot;HKLM:\SOFTWARE\WOW6432Node\PostgreSQL\Installations&quot;
+)
+
+foreach ($Root in $RegistryRoots) {
+
+    if (-not (Test-Path $Root)) {
+        continue
+    }
+
+    try {
+
+        Get-ChildItem $Root |
+            ForEach-Object {
+
+                Get-ItemProperty $_.PSPath |
+                    Select-Object `
+                        PSChildName,
+                        BaseDirectory,
+                        Version,
+                        DataDirectory
+            } |
+            Format-List |
+            Out-String |
+            Add-Content -LiteralPath $PgPath
+    }
+    catch {
+        Log-Error &quot;PostgreSQL registry inventory $Root :: $($_.Exception.Message)&quot;
+    }
+}
+
+
+# ---- Listening ports ----------------------------------------------------------------
+
+Add-Content -LiteralPath $PgPath `
+    -Value &quot;`r`n--- LISTENERS: 5432 / 55432 ---&quot;
+
+try {
+
+    $Listeners = Get-NetTCPConnection -State Listen -ErrorAction Stop |
+        Where-Object {
+            $_.LocalPort -in @(5432,55432)
+        }
+
+    if ($Listeners) {
+
+        foreach ($L in $Listeners) {
+
+            $ProcessName = &quot;&quot;
+
+            try {
+                $ProcessName = (
+                    Get-Process -Id $L.OwningProcess -ErrorAction Stop
+                ).ProcessName
+            }
+            catch {}
+
+            Add-Content -LiteralPath $PgPath `
+                -Value &quot;$($L.LocalAddress):$($L.LocalPort) | PID=$($L.OwningProcess) | $ProcessName&quot;
+        }
+    }
+    else {
+        Add-Content -LiteralPath $PgPath `
+            -Value &quot;&lt;NO LISTENER ON 5432 OR 55432&gt;&quot;
+    }
+}
+catch {
+
+    Add-Content -LiteralPath $PgPath `
+        -Value &quot;&lt;Get-NetTCPConnection unavailable; netstat fallback&gt;&quot;
+
+    try {
+
+        netstat -ano |
+            Select-String &quot;:5432|:55432&quot; |
+            Out-String |
+            Add-Content -LiteralPath $PgPath
+    }
+    catch {
+        Log-Error &quot;Listener inventory: $($_.Exception.Message)&quot;
+    }
+}
+
+
+# =====================================================================================
+# 09 — D DRIVE CAPACITY
+# =====================================================================================
+
+$DriveRows = @()
+
+try {
+
+    $DDrive = Get-PSDrive -Name D -PSProvider FileSystem
+
+    $DriveRows += [pscustomobject]@{
+        drive   = &quot;D:&quot;
+        root    = $DDrive.Root
+        used_gb = [math]::Round($DDrive.Used / 1GB, 2)
+        free_gb = [math]::Round($DDrive.Free / 1GB, 2)
+        free_tb = [math]::Round($DDrive.Free / 1TB, 3)
+    }
+}
+catch {
+    Log-Error &quot;D drive capacity: $($_.Exception.Message)&quot;
+}
+
+try {
+
+    $Volume = Get-Volume -DriveLetter D -ErrorAction Stop
+
+    $DriveRows += [pscustomobject]@{
+        drive   = &quot;D: VOLUME&quot;
+        root    = $Volume.FileSystemLabel
+        used_gb = $null
+        free_gb = [math]::Round($Volume.SizeRemaining / 1GB, 2)
+        free_tb = [math]::Round($Volume.SizeRemaining / 1TB, 3)
+    }
+
+    $Volume |
+        Select-Object `
+            DriveLetter,
+            FileSystemLabel,
+            FileSystem,
+            HealthStatus,
+            OperationalStatus,
+            Size,
+            SizeRemaining |
+        ConvertTo-Json -Depth 4 |
+        Set-Content `
+            -LiteralPath &quot;$Out\09B_D_VOLUME_DETAILS.json&quot; `
+            -Encoding UTF8
+}
+catch {
+    Log-Error &quot;Get-Volume D: $($_.Exception.Message)&quot;
+}
+
+$DriveRows |
+    Export-Csv `
+        -LiteralPath &quot;$Out\09_D_DRIVE_CAPACITY.csv&quot; `
+        -NoTypeInformation `
+        -Encoding UTF8
+
+
+# =====================================================================================
+# 10 — PREFLIGHT GATE
+# =====================================================================================
+
+$WorkingState = @(
+    &amp; git -C $Repo status --porcelain=v1 --untracked-files=all 2&gt;$null
+)
+
+$PublicationToHead = @(
+    &amp; git -C $Repo diff `
+        --no-ext-diff `
+        --name-only `
+        $ExpectedCommit `
+        $Head 2&gt;$null
+)
+
+$Psql = Get-Command psql -ErrorAction SilentlyContinue
+$PgDump = Get-Command pg_dump -ErrorAction SilentlyContinue
+$PgRestore = Get-Command pg_restore -ErrorAction SilentlyContinue
+
+$DFreeGB = $null
+
+try {
+    $DFreeGB = [math]::Round(
+        (Get-PSDrive -Name D -PSProvider FileSystem).Free / 1GB,
+        2
+    )
+}
+catch {}
+
+$Gate = [ordered]@{
+    status = &quot;CURRENT_STATE_CAPTURE_COMPLETE&quot;
+
+    source_authority = [ordered]@{
+        tag_object_match        = ($TagObject -eq $ExpectedTagObject)
+        tag_commit_match        = ($TagCommit -eq $ExpectedCommit)
+        tag_tree_match          = ($TagTree -eq $ExpectedTree)
+
+        current_head            = $Head
+        current_head_tree       = $HeadTree
+
+        head_at_publication     = ($Head -eq $ExpectedCommit)
+        head_tree_at_publication= ($HeadTree -eq $ExpectedTree)
+
+        publication_to_head_changed_paths = @($PublicationToHead).Count
+        working_tree_entries              = @($WorkingState).Count
+        working_tree_clean                = (@($WorkingState).Count -eq 0)
+    }
+
+    inventory = [ordered]@{
+        tracked_files                  = @($AllTracked).Count
+        executable_control_files       = @($ControlRows).Count
+        sql_files                      = @($SqlRows).Count
+    }
+
+    postgres_toolchain = [ordered]@{
+        psql_found       = ($null -ne $Psql)
+        pg_dump_found    = ($null -ne $PgDump)
+        pg_restore_found = ($null -ne $PgRestore)
+    }
+
+    storage = [ordered]@{
+        drive       = &quot;D:&quot;
+        free_gb     = $DFreeGB
+        intended_for_campaign_runtime = $true
+    }
+
+    safety = [ordered]@{
+        historical_artifact_search = $false
+        postgres_connection         = $false
+        sql_execution               = $false
+        database_mutation           = $false
+        git_mutation                = $false
+        service_mutation            = $false
+        repository_write            = $false
+    }
+
+    next_step = &quot;RETURN_ZIP_FOR_230_POSITION_REBASE_AND_HARNESS_CONSTRUCTION&quot;
+}
+
+$Gate |
+    ConvertTo-Json -Depth 10 |
+    Set-Content `
+        -LiteralPath &quot;$Out\10_PREFLIGHT_GATE.json&quot; `
+        -Encoding UTF8
+
+
+# =====================================================================================
+# 11 — HASH THE EVIDENCE PACKAGE
+# =====================================================================================
+
+$EvidenceFiles = Get-ChildItem -LiteralPath $Out -File |
+    Sort-Object Name
+
+$EvidenceHashes = foreach ($F in $EvidenceFiles) {
+
+    [pscustomobject]@{
+        file   = $F.Name
+        bytes  = $F.Length
+        sha256 = Hash-File $F.FullName
+    }
+}
+
+$EvidenceHashes |
+    Export-Csv `
+        -LiteralPath &quot;$Out\11_EVIDENCE_HASHES.csv&quot; `
+        -NoTypeInformation `
+        -Encoding UTF8
+
+
+# =====================================================================================
+# 12 — PACKAGE
+# =====================================================================================
+
+Compress-Archive `
+    -Path &quot;$Out\*&quot; `
+    -DestinationPath $Zip `
+    -CompressionLevel Optimal
+
+$ZipHash = Hash-File $Zip
+
+
+# =====================================================================================
+# CONSOLE SUMMARY
+# =====================================================================================
+
+Write-Host &quot;&quot;
+Write-Host &quot;======================================================================&quot; `
+    -ForegroundColor Cyan
+
+Write-Host &quot;MSBF CURRENT-STATE PREFLIGHT COMPLETE&quot; `
+    -ForegroundColor Green
+
+Write-Host &quot;======================================================================&quot; `
+    -ForegroundColor Cyan
+
+Write-Host &quot;&quot;
+Write-Host &quot;Evidence:&quot;
+Write-Host &quot;  $Out&quot;
+
+Write-Host &quot;&quot;
+Write-Host &quot;Upload this ZIP:&quot;
+Write-Host &quot;  $Zip&quot; `
+    -ForegroundColor Yellow
+
+Write-Host &quot;&quot;
+Write-Host &quot;ZIP SHA-256:&quot;
+Write-Host &quot;  $ZipHash&quot;
+
+Write-Host &quot;&quot;
+Write-Host &quot;SOURCE AUTHORITY&quot;
+Write-Host &quot;  Tag object match : $($TagObject -eq $ExpectedTagObject)&quot;
+Write-Host &quot;  Tag commit match : $($TagCommit -eq $ExpectedCommit)&quot;
+Write-Host &quot;  Tag tree match   : $($TagTree -eq $ExpectedTree)&quot;
+
+Write-Host &quot;&quot;
+Write-Host &quot;CURRENT REPOSITORY&quot;
+Write-Host &quot;  HEAD             : $Head&quot;
+Write-Host &quot;  HEAD = release   : $($Head -eq $ExpectedCommit)&quot;
+Write-Host &quot;  Working tree rows: $(@($WorkingState).Count)&quot;
+Write-Host &quot;  Tag -&gt; HEAD paths: $(@($PublicationToHead).Count)&quot;
+
+Write-Host &quot;&quot;
+Write-Host &quot;SOURCE INVENTORY&quot;
+Write-Host &quot;  Tracked files    : $(@($AllTracked).Count)&quot;
+Write-Host &quot;  Control sources  : $(@($ControlRows).Count)&quot;
+Write-Host &quot;  SQL files        : $(@($SqlRows).Count)&quot;
+
+Write-Host &quot;&quot;
+Write-Host &quot;POSTGRESQL TOOLCHAIN&quot;
+Write-Host &quot;  psql             : $($null -ne $Psql)&quot;
+Write-Host &quot;  pg_dump          : $($null -ne $PgDump)&quot;
+Write-Host &quot;  pg_restore       : $($null -ne $PgRestore)&quot;
+
+Write-Host &quot;&quot;
+Write-Host &quot;D: FREE&quot;
+Write-Host &quot;  $DFreeGB GB&quot;
+
+Write-Host &quot;&quot;
+Write-Host &quot;NO PostgreSQL connection or SQL execution was performed.&quot; `
+    -ForegroundColor Green
+
+Write-Host &quot;NO historical artifact search was performed.&quot; `
+    -ForegroundColor Green
+
+Write-Host &quot;======================================================================&quot; `
+    -ForegroundColor Cyan
+</code></pre>
+<h3>What to send me</h3>
+<p>Upload the single resulting ZIP:</p>
+<p><code>D:\MSBF_CAMPAIGN_CURRENT_STATE_&lt;timestamp&gt;.zip</code></p>
+<p>There is no need to send console screenshots unless the script stops with an error.</p>
+<p>The key distinction now is that <strong>all historical discovery is closed</strong>. I already have:</p>
+<ul>
+<li>predecessor Campaign Scale architecture;</li>
+<li>WP3 frozen campaign configuration;</li>
+<li>R5 static harness;</li>
+<li>all three scale profiles;</li>
+<li>source-plan/checkpoint/report/result-set catalogs;</li>
+<li>R26 golden result;</li>
+<li>retained R26 runtime;</li>
+<li>R6 source backup;</li>
+<li>R26 retained-checkpoint backup.</li>
+</ul>
+<p>This preflight therefore answers only four current questions:</p>
+<p><strong>What exact v2.1.0 source authority exists now?<br>Has <code>D:\x\m</code> moved since publication?<br>What current source files must replace the predecessor 230-position plan?<br>What PostgreSQL/tooling state is available for our new D:-based isolated campaign?</strong></p>
+<p>Once you return this ZIP, I intend the next leap to be <strong>actual harness construction/rebase</strong>, including the 750 zero-difference certification gate and the fresh 2,500 profile—not another artifact-location exercise.</p>
+</div></article><article id="m-4e25155a-f9de-4bff-a18b-d1976a5f8ddf" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00197 · 2026-09-11T19:44:02.764000-04:00 · active path</p><div class="bubble"><p>what about the bypass line at the top. we normally do that.</p>
+</div></article><article id="m-3bee61ee-05c9-4ab8-8d0e-3e11457fc931" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00198 · 2026-09-11T19:44:13.272981-04:00 · active path</p><div class="bubble"><p>Yes. I would keep the <strong>process-scoped execution-policy bypass</strong> at the top, consistent with how we&#39;ve handled the other MSBF PowerShell runbooks.</p>
+<p>Add this immediately after the opening comments, before <code>$ErrorActionPreference</code>:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+</code></pre>
+<p>So the opening should be:</p>
+<pre><code class="language-powershell"># =====================================================================================
+# MSBF CAMPAIGN SCALE
+# CURRENT-STATE-ONLY PREFLIGHT
+# =====================================================================================
+
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+
+$ErrorActionPreference = &quot;Stop&quot;
+$ProgressPreference = &quot;SilentlyContinue&quot;
+$env:GIT_OPTIONAL_LOCKS = &quot;0&quot;
+</code></pre>
+<p>A couple of important points:</p>
+<ul>
+<li><strong><code>-Scope Process</code> only</strong> — it changes policy for that PowerShell window and disappears when you close it.</li>
+<li>It does <strong>not</strong> alter LocalMachine or CurrentUser policy.</li>
+<li>It normally does not require an elevated/admin PowerShell window.</li>
+<li>For a block pasted directly into PowerShell, it isn&#39;t strictly necessary, but it is useful for consistency and becomes relevant once the campaign harness starts invoking our <code>.ps1</code> components.</li>
+<li>I would <strong>not</strong> use <code>Set-ExecutionPolicy Unrestricted</code> or make a persistent machine-level change.</li>
+</ul>
+<p>So yes: <strong>put the bypass line back in.</strong> I should have included it in the current-state preflight given our established MSBF execution pattern.</p>
+</div></article><article id="m-a8c3515d-50ed-420f-9396-f4e6080a3da3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00199 · 2026-09-11T19:48:30.469000-04:00 · active path</p><p class="note">Attachment references: MSBF_CAMPAIGN_CURRENT_STATE_20260911_194525.zip</p><div class="bubble"><h1>====================================================================== 
+MSBF CURRENT-STATE PREFLIGHT COMPLETE</h1>
+<p>Evidence: 
+  D:\MSBF_CAMPAIGN_CURRENT_STATE_20260911_194525 </p>
+<p>Upload this ZIP: 
+  D:\MSBF_CAMPAIGN_CURRENT_STATE_20260911_194525.zip </p>
+<p>ZIP SHA-256: 
+  dd7154709dfdec2f4e6ffdb501dfa4da1180c0214b4c408dbc27289c8381a104 </p>
+<p>SOURCE AUTHORITY 
+  Tag object match : False 
+  Tag commit match : False 
+  Tag tree match   : False </p>
+<p>CURRENT REPOSITORY 
+  HEAD             : &lt;ERROR&gt; 
+  HEAD = release   : False 
+  Working tree rows: 0 
+  Tag -&gt; HEAD paths: 0 </p>
+<p>SOURCE INVENTORY 
+  Tracked files    : 2884 
+  Control sources  : 1751 
+  SQL files        : 407 </p>
+<p>POSTGRESQL TOOLCHAIN 
+  psql             : False 
+  pg_dump          : False 
+  pg_restore       : False </p>
+<p>D: FREE 
+  16461.86 GB </p>
+<p>NO PostgreSQL connection or SQL execution was performed. 
+NO historical artifact search was performed. 
+======================================================================                Proceed with the next leap - actual harness construction/rebase, including the 750 zero-difference certification gate and the fresh 2,500 profile - not another artifact-location exercise.</p>
+</div></article><article id="m-f322b593-29b4-4792-827d-d9fe756b5eba" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00200 · 2026-09-11T19:49:04.379002-04:00 · active path</p><div class="bubble"><p>I’ll build the harness from the retained packages and preflight, correcting Git/tool discovery within it. Database execution stays blocked until source identity and 750 reconciliation pass.</p>
+</div></article><article id="m-cfa39e0e-266f-4176-82b5-77ccaad09812" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00201 · 2026-09-11T19:52:16.485586-04:00 · active path</p><div class="bubble"><p>I’ll locally test the rebuilt harness without database execution, including target isolation and reference-coverage checks before any Windows runtime step.</p>
+</div></article><article id="m-91b9e9fa-7e35-4b32-a3f8-3e33d256bf88" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00202 · 2026-09-11T20:34:44.172339-04:00 · active path</p><div class="bubble"><h2>Harness construction R1 is delivered—but full campaign execution is not yet ready</h2>
+<p>I built and tested the <strong>harness core, source mappings, 750/2,500 profiles, exact-comparison logic and progression gates</strong>.</p>
+<p><strong>I have not completed the full fresh-database execution path.</strong> Inspecting the actual sources exposed three concrete integration gaps that the earlier handoffs did not resolve. The package blocks execution at those gaps rather than passing off a retained-750 replay as a fresh campaign.</p>
+<p><strong>My earlier estimate that this was mostly a thin-wrapper rebase was too optimistic.</strong> The business methods are available, but several successful historical launchers depend on retained intermediate data. Connecting those methods to newly generated campaign data is additional engineering—not an artifact-location problem.</p>
+<h3>Deliverables</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Campaign harness R1 (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R1_20260911.zip</code>; referenced bytes not established here)</strong></td>
+<td><strong>3.39 MB.</strong> Actual Python/PowerShell code, profiles, source bindings, recovered original methods, comparison contracts and tests.</td>
+</tr>
+<tr>
+<td><strong>Build and source-rebase report (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R1_BUILD_REPORT.md</code>; referenced bytes not established here)</strong></td>
+<td>Exact construction results, source-level findings, completed checks and remaining implementation.</td>
+</tr>
+<tr>
+<td><strong>Private verification evidence (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R1_PRIVATE_EVIDENCE_20260911.zip</code>; referenced bytes not established here)</strong></td>
+<td>Original preflight evidence, diagnosis, test results, source anchors and clean-extraction checks.</td>
+</tr>
+<tr>
+<td><strong>Delivery verification (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R1_DELIVERY_VERIFICATION.json</code>; referenced bytes not established here)</strong></td>
+<td>Machine-readable archive identities, test results and explicit execution limitations.</td>
+</tr>
+<tr>
+<td><strong>Harness SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R1_20260911.zip.sha256</code>; referenced bytes not established here)</strong></td>
+<td>Exact delivery identity.</td>
+</tr>
+</tbody></table>
+<p>These are <strong>private engineering artifacts</strong>, not GitHub publication assets.</p>
+<h2>1. The alarming preflight results came from the collector—not evidence of a broken installation</h2>
+<h3>Git</h3>
+<p>Your <code>02_GIT_STATE.txt</code> contains successful direct Git output showing:</p>
+<pre><code class="language-text">HEAD:   fd9f67b6d1d7fc848d315bcb696487b82c9a8046
+Branch: main
+Status: empty
+Staged and unstaged differences: empty
+</code></pre>
+<p>The six failed helper calls logged <strong>Git with no forwarded arguments</strong>. That helper reused <code>$Args</code>, an automatic PowerShell variable. The new package avoids that helper entirely and uses explicit argument lists, checked exit codes and full-length object-ID validation. Microsoft documents <code>$args</code> as an automatically maintained variable, not an appropriate general-purpose parameter name. [export reference: cite | turn223895view0]</p>
+<p><strong>The failed comparisons did not establish a tag mismatch.</strong> Fresh tag-object/tree verification still needs the corrected native check; I have not converted the invalid <code>&lt;ERROR&gt;</code> results into a PASS.</p>
+<h3>PostgreSQL</h3>
+<p>Your evidence records a running <code>postgresql-x64-17</code> service, an installation registered as <code>17.9-2</code>, and this executable directory:</p>
+<pre><code class="language-text">C:\Program Files\PostgreSQL\17\bin
+</code></pre>
+<p>The earlier collector only looked for commands on <code>PATH</code>. The new harness uses the explicit installation directory. <strong>There is no evidence here that PostgreSQL needs reinstalling.</strong></p>
+<p>I also matched <strong>all 1,751 inventoried source/control files</strong> against the supplied repository snapshot, with zero mismatches. The diagnosis and comparisons are retained in the build report (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R1_BUILD_REPORT.md</code>; referenced bytes not established here).</p>
+<h2>2. What is actually constructed</h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Implemented result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Source authority</strong></td>
+<td>Exact 2,884-file publication-tree lock, current and historical tag expectations, direct Git checks and source-nonmutation checks.</td>
+</tr>
+<tr>
+<td><strong>Historical source rebase</strong></td>
+<td>All <strong>230 predecessor positions</strong> resolved: 222 byte-identical files in the supplied public tree and eight originals recovered from retained packages.</td>
+</tr>
+<tr>
+<td><strong>Module 1 prefix</strong></td>
+<td><strong>134 original G0/G1/M1 SQL files</strong> assembled with exact source bindings. They have not been executed here.</td>
+</tr>
+<tr>
+<td><strong>Campaign profiles</strong></td>
+<td>A reference-750 profile and a fresh-2,500 profile, with separate population/run identities and explicit scenario/date/horizon treatment.</td>
+</tr>
+<tr>
+<td><strong>Comparator and gates</strong></td>
+<td>Exact keyed comparisons, missing/extra/duplicate/value detection, narrowly declared metadata normalization, and rejection of incomplete or tail-only reference certification.</td>
+</tr>
+<tr>
+<td><strong>Execution core</strong></td>
+<td>Sequential PostgreSQL/Python invocation, isolated-target checks, source hashes, logs, timeouts, progress messages and retained failure receipts. <strong>Database execution remains blocked.</strong></td>
+</tr>
+</tbody></table>
+<p>The original <strong>172-checkpoint, 58-report and 607-result-set catalogs</strong> are preserved as engineering inputs. Their presence is not represented as proof that every current-release adapter is implemented.</p>
+<p>The 2,500 profile defines <strong>2,500 merchants and 5,000 application-scenario paths</strong>. It does <strong>not</strong> multiply the old 130 funded paths or 6,519 structures by a scale factor. Those outcomes must emerge from the new population.</p>
+<p>I recovered the necessary small strategy and M2.4 source packages from retained files myself. <strong>No additional historical file search is requested from you.</strong></p>
+<h2>3. Why full execution remains blocked</h2>
+<h3>A. The current launchers consume retained population data</h3>
+<p>The retained R26 code explicitly reads <code>PHASE2C_R4_STRATEGY.zip</code>. The historical M2.4 integration launcher loads a packaged:</p>
+<pre><code class="language-text">M2_3_SUCCESSOR_DOWNSTREAM_COMPATIBILITY.csv
+</code></pre>
+<p>Those are valid inputs for the executions they originally supported. They are <strong>not a fresh campaign input path</strong>.</p>
+<p>The remaining adapter work must connect freshly generated merchant/application evidence to the existing strategy methods, then construct the corresponding compatibility and lifecycle inputs. <strong>Restoring a checkpoint or loading the accepted CSV as the subject would skip the behavior you want to test.</strong></p>
+<h3>B. Configuration declarations are not completed parameter adapters</h3>
+<p>The old WP3 register contains <strong>926 binding declarations</strong>, with entries explicitly labeled:</p>
+<pre><code class="language-text">DECLARE_BINDING_REQUIREMENT_NO_SQL_EDIT
+PENDING_CR_WP5
+</code></pre>
+<p>That does not mean 926 defects. It means the old architecture documented where binding was needed without completing all the runtime bindings.</p>
+<p>Later methods also contain known-reference assertions such as <strong>1,500 applications, 413 unavailable-feature cases, 130 funded paths and 15,600 monitoring rows</strong>.</p>
+<p>For the 750 replay, appropriate known-answer checks should remain exact. For 2,500, population formulas and data-dependent outcomes must be handled differently. <strong>A global replacement of <code>750</code> or <code>130</code> would be unsafe and would not meet your minimal-impact requirement.</strong></p>
+<h3>C. The accepted R26 result is not a complete end-to-end reference export</h3>
+<p>The supplied golden ZIP provides <strong>15 distinct tail CSV surfaces</strong> and the retained R26 reconciliation evidence. Its existing 90-check reconciler does not establish full G0-through-M2.12 reconstruction.</p>
+<p>That limitation is also explicit in the original runbook: its offline route does not regenerate M2.1–M2.10. [export reference: filecite | turn65file0 | L24-L47]</p>
+<p>The full reference contract still needs upstream and current-strategy coverage, with keys and metadata exclusions declared <strong>before</strong> comparing a newly generated subject. The backups and retained source evidence are available; the missing work is the comparison implementation.</p>
+<p><strong>These are source-integration tasks. They are not a revival of the external-signer requirement or a new broad audit prerequisite.</strong></p>
+<h2>4. Checks actually performed</h2>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+<th>Scope</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>New harness unit/negative tests</td>
+<td><strong>54/54 PASS</strong></td>
+<td>Fixtures and local process tests; repeated from the cleanly extracted delivery ZIP</td>
+</tr>
+<tr>
+<td>Recovered R4 strategy engine</td>
+<td><strong>20/20 generated outputs byte-identical</strong></td>
+<td>Actual execution of unchanged methods on retained reference inputs</td>
+</tr>
+<tr>
+<td>Existing R26 offline replay</td>
+<td><strong>PASS</strong></td>
+<td>Actual source-owned simulation/canonicalization on retained inputs</td>
+</tr>
+<tr>
+<td>Existing golden reconciler</td>
+<td><strong>90/90 PASS</strong></td>
+<td>Retained R26 evidence—not a new campaign</td>
+</tr>
+<tr>
+<td>New comparator on actual reference exports</td>
+<td><strong>15/15 PASS; 97,265 rows</strong></td>
+<td>Same-reference comparison test, <strong>not</strong> a fresh zero-difference result</td>
+</tr>
+<tr>
+<td>Metadata normalization parity</td>
+<td><strong>2/2 exact</strong></td>
+<td>Compared with the source-owned R26 normalization functions</td>
+</tr>
+<tr>
+<td>Source-owned R26 static transformation</td>
+<td><strong>12 transforms / 16 checks PASS</strong></td>
+<td>Static construction; no SQL execution</td>
+</tr>
+<tr>
+<td>Runtime entry-point rejection</td>
+<td><strong>Both blocked as intended</strong></td>
+<td><code>replay750</code> and <code>fresh2500</code> stopped before credentials or connections</td>
+</tr>
+<tr>
+<td>Delivery integrity</td>
+<td><strong>PASS</strong></td>
+<td>CRC, safe paths, collisions, manifests and clean-extraction member comparison</td>
+</tr>
+</tbody></table>
+<p>An integrated preparation/compiler test also passed, using the actual source files and analytical methods. <strong>Only the unavailable native Git and PostgreSQL-version probes were mocked</strong>, and that distinction is recorded beside the test receipts.</p>
+<p>No Windows-native PowerShell execution, PostgreSQL connection, fresh 750 run, fresh 2,500 run, PBIX refresh or Git mutation was performed here. The original input identities remain unchanged.</p>
+<h2>5. The next Windows action is available—but it cannot close the construction gaps</h2>
+<p>The package’s <code>Prepare</code> mode exercises the delivered software on your actual Python/Windows installation, fixes the earlier Git/tool discovery and performs the retained-source method checks. It does <strong>not</strong> search your archives or connect to PostgreSQL.</p>
+<p>After saving the harness ZIP in <code>D:\MSBF_ARCHIVE</code>, the launch is:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$ErrorActionPreference = &#39;Stop&#39;
+
+$Zip = &#39;D:\MSBF_ARCHIVE\MSBF_CAMPAIGN_HARNESS_R1_20260911.zip&#39;
+$ExpectedHash = &#39;ca338ea1f89745770ae82dbc52801e23d1a2f0208490d9f4abc70d2c63b76b1d&#39;
+$Destination = &#39;D:\MSBF_CS_R1&#39;
+
+if ((Get-FileHash -LiteralPath $Zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $ExpectedHash) {
+    throw &#39;STOP: harness ZIP identity mismatch.&#39;
+}
+if (Test-Path -LiteralPath $Destination) {
+    throw &#39;STOP: destination already exists; do not overwrite.&#39;
+}
+
+Expand-Archive -LiteralPath $Zip -DestinationPath $Destination
+&amp; &quot;$Destination\RUN_CAMPAIGN.ps1&quot; -Mode Prepare
+</code></pre>
+<p>Successful preparation will correctly print:</p>
+<pre><code class="language-text">PACKAGE_PREPARATION = PASS
+FULL_750_EXECUTION = HOLD
+FRESH_2500_EXECUTION = HOLD
+</code></pre>
+<p>That HOLD is already known; <strong>another machine readout will not resolve it</strong>. The command is useful for native verification of the constructed package, not a prerequisite for locating more files.</p>
+<p><strong>The next engineering work is to finish the fresh-input adapters, implement the precise population/cardinality bindings, and complete the full-750 comparison contract. The source methods and retained evidence are now assembled; the remaining responsibility is implementation, not further preparation by you.</strong></p>
+</div></article><article id="m-12eecfed-c62f-4a69-b0c6-a0480e2c0aa5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00203 · 2026-09-11T20:49:31.252000-04:00 · active path</p><div class="bubble"><p>so are you wanting me to run that powershell command?</p>
+</div></article><article id="m-719d5d2d-df8f-4bbd-b2a4-985be922188c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00204 · 2026-09-11T20:49:33.190992-04:00 · active path</p><div class="bubble"><p>Yes — <strong>run that PowerShell block next.</strong></p>
+<p>Its purpose is to verify that the R1 harness I just built behaves correctly on your actual Windows environment. It is <strong>not</strong> going to execute the 750 campaign yet.</p>
+<h3>First, save the harness ZIP here</h3>
+<p>Put:</p>
+<p><code>MSBF_CAMPAIGN_HARNESS_R1_20260911.zip</code></p>
+<p>in:</p>
+<p><code>D:\MSBF_ARCHIVE\</code></p>
+<p>Then open your normal PowerShell window and run:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$ErrorActionPreference = &#39;Stop&#39;
+
+$Zip = &#39;D:\MSBF_ARCHIVE\MSBF_CAMPAIGN_HARNESS_R1_20260911.zip&#39;
+$ExpectedHash = &#39;ca338ea1f89745770ae82dbc52801e23d1a2f0208490d9f4abc70d2c63b76b1d&#39;
+$Destination = &#39;D:\MSBF_CS_R1&#39;
+
+if ((Get-FileHash -LiteralPath $Zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $ExpectedHash) {
+    throw &#39;STOP: harness ZIP identity mismatch.&#39;
+}
+
+if (Test-Path -LiteralPath $Destination) {
+    throw &#39;STOP: destination already exists; do not overwrite.&#39;
+}
+
+Expand-Archive -LiteralPath $Zip -DestinationPath $Destination
+
+&amp; &quot;$Destination\RUN_CAMPAIGN.ps1&quot; -Mode Prepare
+</code></pre>
+<h3>What this will and will not do</h3>
+<p>It <strong>will</strong> verify the actual Windows environment, Git/source bindings, tool discovery, harness configuration, retained-source analytical methods, and preparation controls.</p>
+<p>It <strong>will not</strong>:</p>
+<ul>
+<li>connect to PostgreSQL;</li>
+<li>create or modify a database;</li>
+<li>execute the 750 campaign;</li>
+<li>execute the 2,500 campaign;</li>
+<li>modify <code>D:\x\m</code>;</li>
+<li>commit/push anything to Git;</li>
+<li>touch the published release.</li>
+</ul>
+<p>The expected terminal disposition is:</p>
+<pre><code class="language-text">PACKAGE_PREPARATION = PASS
+FULL_750_EXECUTION = HOLD
+FRESH_2500_EXECUTION = HOLD
+</code></pre>
+<p>That HOLD is intentional at this stage. It means the harness correctly refuses to cross into database execution until I finish the remaining fresh-input adapters and full 750 comparison contract.</p>
+<p><strong>Run it and paste the complete console result here.</strong> Then I&#39;ll use that result alongside the R1 construction evidence to continue the engineering rather than send you through another discovery exercise.</p>
+</div></article><article id="m-7384a0b2-8038-4a2e-81a3-8800dce5c569" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00205 · 2026-09-11T20:53:37.033000-04:00 · active path</p><p class="note">Attachment references: PREPARE_20260912T005050_5556cc38_RETURN.zip.validation.json; PREPARE_20260912T005050_5556cc38_RETURN.zip; PREPARE_20260912T005050_5556cc38_RETURN.zip(1).sha256</p><div class="bubble"><p>Powershell Result: MSBF campaign harness R1 — actual package preparation and file-only tests
+No historical search. Runtime remains held until fresh-source bridges are completed.
+  offline_r26: 15s elapsed
+  r4_method: 15s elapsed
+PACKAGE_PREPARATION = PASS
+FULL_750_EXECUTION = HOLD
+FRESH_2500_EXECUTION = HOLD
+No database connection, SQL, restore, Git mutation or source search performed.
+RETURN ZIP: D:\MSBF_CAMPAIGNS\PREPARE_20260912T005050_5556cc38_RETURN.zip
+SHA-256: 90adcbbb58a7d55507dc6285a44c094c274a156d5cf59c6d1928855a5c0a1c62
+CONSTRUCTION/READINESS HOLD is recorded. No database campaign was executed.    Now, proceed with the next engineering work, finishing the fresh-input adapters, implementing the precise population/cardinality bindings, and completing the full-750 comparison contract.</p>
+</div></article><article id="m-fe3e2fc2-daf9-49b8-9f72-7cdb8920c710" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00206 · 2026-09-11T20:54:13.523759-04:00 · active path</p><div class="bubble"><p>I’ll verify the Windows return, then finish fresh-input wiring, population bindings, and the full-750 comparator while preventing 2,500 execution from inheriting 750-specific assumptions.</p>
+</div></article><article id="m-1485a085-e4b9-4410-a29d-a5d72d1389a3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00207 · 2026-09-11T23:51:54.491000-04:00 · active path</p><p class="note">Attachment references: PREPARE_20260912T005050_5556cc38_RETURN.zip(2).sha256; PREPARE_20260912T005050_5556cc38_RETURN.zip.validation(1).json; PREPARE_20260912T005050_5556cc38_RETURN(1).zip</p><div class="bubble"><p>Powershell Result: MSBF campaign harness R1 — actual package preparation and file-only tests No historical search. Runtime remains held until fresh-source bridges are completed.   offline_r26: 15s elapsed   r4_method: 15s elapsed PACKAGE_PREPARATION = PASS FULL_750_EXECUTION = HOLD FRESH_2500_EXECUTION = HOLD No database connection, SQL, restore, Git mutation or source search performed. RETURN ZIP: D:\MSBF_CAMPAIGNS\PREPARE_20260912T005050_5556cc38_RETURN.zip SHA-256: 90adcbbb58a7d55507dc6285a44c094c274a156d5cf59c6d1928855a5c0a1c62 CONSTRUCTION/READINESS HOLD is recorded. No database campaign was executed.    Now, proceed with the next engineering work, finishing the fresh-input adapters, implementing the precise population/cardinality bindings, and completing the full-750 comparison contract.  </p>
+</div></article><article id="m-ac43cd8c-33e1-42ca-8bb2-438fd082c925" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00208 · 2026-09-11T23:52:31.978248-04:00 · alternate branch</p><div class="bubble"><p>I’ll verify the Windows preparation return, then implement and test the fresh-input adapters, population bindings, and full-750 comparison contract while preserving accepted business sources.</p>
+</div></article><article id="m-7684fc51-d124-4520-a151-563b9e881bda" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00209 · 2026-09-12T00:08:10.114000-04:00 · active path</p><div class="bubble"><p>Build Module A — Fresh-input adapters
+This is the largest remaining task.</p>
+<p>Right now the recovered strategy methods still expect artifacts that originated from accepted historical runs.</p>
+<p>Instead, they must consume freshly generated campaign data.</p>
+<p>Conceptually today:</p>
+<pre><code>
+</code></pre>
+<pre><code>historical accepted data
+        ↓
+strategy methods
+</code></pre>
+<p>Needs to become:</p>
+<pre><code>
+</code></pre>
+<pre><code>fresh Module 1 generation
+        ↓
+adapter layer
+        ↓
+strategy methods
+</code></pre>
+<p>That adapter is where I expect most of the remaining effort.</p>
+</div></article><article id="m-29802205-786a-48be-9aaf-3b12e17ad3f5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00210 · 2026-09-12T00:34:28.048150-04:00 · active path</p><div class="bubble"><p>Module A R2 is built and packaged.</p>
+<p>This closes the <strong>file-level fresh-input adapter construction</strong> that was holding R1: the harness now has a current Module A bridge from fresh campaign inputs into the retained R4 strategy methods, plus 750/2,500 cardinality bindings and the full-750 zero-difference comparison contract.</p>
+<p>It does <strong>not</strong> yet claim native database execution, 750 replay, 2,500 campaign completion, Power BI refresh, Git mutation, publication, or audit acceptance.</p>
+<h2>Deliverables</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>MSBF Campaign Harness R2 — Module A (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R2_MODULE_A_20260912.zip</code>; referenced bytes not established here)</strong></td>
+<td>Main package to save under <code>D:\MSBF_ARCHIVE</code>.</td>
+</tr>
+<tr>
+<td><strong>SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R2_MODULE_A_20260912.zip.sha256</code>; referenced bytes not established here)</strong></td>
+<td>Exact package identity.</td>
+</tr>
+<tr>
+<td><strong>Build report (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R2_MODULE_A_BUILD_REPORT.md</code>; referenced bytes not established here)</strong></td>
+<td>What was built, tested, and still held.</td>
+</tr>
+<tr>
+<td><strong>Delivery verification (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R2_MODULE_A_DELIVERY_VERIFICATION.json</code>; referenced bytes not established here)</strong></td>
+<td>Machine-readable package and check results.</td>
+</tr>
+<tr>
+<td><strong>Private evidence package (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R2_MODULE_A_PRIVATE_EVIDENCE_20260912.zip</code>; referenced bytes not established here)</strong></td>
+<td>Receipts, manifests, test outputs, parity checks. Not a public artifact.</td>
+</tr>
+<tr>
+<td><strong>Private evidence validation (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R2_MODULE_A_PRIVATE_EVIDENCE_VALIDATION.json</code>; referenced bytes not established here)</strong></td>
+<td>CRC/path-safety validation for the evidence package.</td>
+</tr>
+</tbody></table>
+<h2>R2 package identity</h2>
+<pre><code class="language-text">MSBF_CAMPAIGN_HARNESS_R2_MODULE_A_20260912.zip
+Bytes:   3,443,306
+SHA-256: f53b68780e197e81082e0cb9bbd6608f674f5cf98916cc6065d685fdb4ead3db
+Entries: 246
+</code></pre>
+<h2>What Module A now does</h2>
+<p>R2 implements the bridge you described:</p>
+<pre><code class="language-text">fresh Module 1 / M2.1-M2.3 campaign data
+        ↓
+Module A adapter/export layer
+        ↓
+retained R4 strategy methods
+</code></pre>
+<p>The old Campaign Scale work established useful execution contracts—configuration-driven 750/2,500/25,000 profiles, <code>module1_run_id</code> lineage, source-plan concepts, checkpoint/report catalogs, recovery outside the normal path, and fail-closed controls—but it also explicitly required rebasing after the M1/M2 strategy was republished. [export reference: filecite | turn62file0 | L44-L79]</p>
+<p>R2 converts that principle into package code for Module A:</p>
+<ul>
+<li><p><strong>Fresh subject inputs</strong> are now four current files:</p>
+<ul>
+<li><code>application_scenario_source.csv</code></li>
+<li><code>verification_result.csv</code></li>
+<li><code>candidate_exact_result.csv</code></li>
+<li><code>feature_availability_source.csv</code></li>
+</ul>
+</li>
+<li><p><strong>Historical R3 hash-history inputs are prohibited</strong> for fresh campaign subjects. The wrapper writes deterministic no-predecessor provenance markers instead of copying retained predecessor hashes.</p>
+</li>
+<li><p><strong>Reference-750 mode still requires all six R4 input files</strong> so the campaign wrapper can prove byte-identical parity with the original retained R4 engine.</p>
+</li>
+<li><p><strong>2,500 profile bindings are explicit</strong>: 2,500 merchants, 5,000 application-scenario rows, 15,000 verification rows, 5,000 feature rows, 450,000 base-history rows and 900,000 scenario-history rows.</p>
+</li>
+</ul>
+<p>Candidate structures, funded paths and monitoring rows remain data-dependent. R2 does <strong>not</strong> multiply the old 750 outcomes into 2,500 expectations.</p>
+<h2>Checks completed</h2>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Your R1 Prepare return package</td>
+<td>CRC/path safety PASS, 21 files, SHA matched. [export reference: filecite</td>
+</tr>
+<tr>
+<td>Final package CRC/path/case-fold/duplicate checks</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Final package source-member byte reconciliation</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Manifest rows / checksum rows</td>
+<td>244 / 245</td>
+</tr>
+<tr>
+<td>Clean-extract package verification</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Clean-extract selftests</td>
+<td>71/71 PASS</td>
+</tr>
+<tr>
+<td>Module A reference input validation</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Original R4 engine vs. campaign wrapper</td>
+<td>20/20 output files byte-identical</td>
+</tr>
+<tr>
+<td>Fresh no-predecessor fixture</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Database connection / SQL execution</td>
+<td>NOT PERFORMED</td>
+</tr>
+<tr>
+<td>Fresh 750 replay / fresh 2,500 campaign</td>
+<td>NOT PERFORMED</td>
+</tr>
+</tbody></table>
+<p>The R26 retained route still matters as reference evidence, but the runbook is explicit that the existing offline route does <strong>not</strong> regenerate M2.1–M2.10 or execute M2.12 in a database. [export reference: filecite | turn65file0 | L24-L47] That is why R2 now builds the fresh-input bridge rather than pretending the retained R26 tail proof is a fresh campaign.</p>
+<h2>Remaining gates</h2>
+<p>R2 narrows the construction hold to three native-runtime items:</p>
+<ol>
+<li><strong>Native Module A DB export</strong> against an isolated 750 subject database.</li>
+<li><strong>Full 750 zero-difference comparison</strong> using the new predeclared comparison contract.</li>
+<li><strong>Downstream M2.4/R26 fresh-subject bridge</strong> after Module A/R4 outputs exist as native subject outputs.</li>
+</ol>
+<p>This is also why R2 continues to respect the warning that the historical 230-position catalog is not a universal R26 end-to-end launcher, and that qualified Route B was limited to portable checkpoint restore plus isolated retained-final replay—not arbitrary new campaign inputs. [export reference: filecite | turn69file0 | L25-L39]</p>
+<h2>Next owner-side verification command</h2>
+<p>Save the main R2 ZIP to:</p>
+<pre><code class="language-text">D:\MSBF_ARCHIVE\MSBF_CAMPAIGN_HARNESS_R2_MODULE_A_20260912.zip
+</code></pre>
+<p>Then run:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$ErrorActionPreference = &#39;Stop&#39;
+
+$Zip = &#39;D:\MSBF_ARCHIVE\MSBF_CAMPAIGN_HARNESS_R2_MODULE_A_20260912.zip&#39;
+$ExpectedHash = &#39;f53b68780e197e81082e0cb9bbd6608f674f5cf98916cc6065d685fdb4ead3db&#39;
+$Destination = &#39;D:\MSBF_CS_R2_MODULE_A&#39;
+
+if ((Get-FileHash -LiteralPath $Zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $ExpectedHash) {
+    throw &#39;STOP: harness ZIP identity mismatch.&#39;
+}
+
+if (Test-Path -LiteralPath $Destination) {
+    throw &#39;STOP: destination already exists; choose a fresh destination.&#39;
+}
+
+Expand-Archive -LiteralPath $Zip -DestinationPath $Destination
+
+&amp; &quot;$Destination\RUN_CAMPAIGN.ps1&quot; `
+    -Mode ModuleA `
+    -Repository &#39;D:\x\m&#39; `
+    -WorkRoot &#39;D:\MSBF_CAMPAIGNS&#39; `
+    -PostgreSQLBin &#39;C:\Program Files\PostgreSQL\17\bin&#39; `
+    -PythonExecutable &#39;python&#39;
+</code></pre>
+<p>Expected terminal disposition:</p>
+<pre><code class="language-text">MODULE_A_FRESH_INPUT_ADAPTERS = PASS
+REFERENCE_R4_WRAPPER_PARITY = PASS
+FRESH_NO_PREDECESSOR_FIXTURE = PASS
+DATABASE_EXECUTION = HOLD
+FULL_750_EXECUTION = HOLD
+FRESH_2500_EXECUTION = HOLD
+</code></pre>
+<p>That HOLD is intentional. It means <strong>Module A construction passed</strong>, but the harness still refuses to cross into native database execution until the next gate is built and authorized.</p>
+<p>The next engineering leap should be <strong>Native Module A DB Export + 750 Subject Construction</strong>, not more artifact discovery.</p>
+</div></article><article id="m-321ece0c-ef93-436d-be10-42e979b5cc8e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00211 · 2026-09-12T00:36:37.841000-04:00 · active path</p><div class="bubble"><p>Exception: D:\MSBF_CS_R2_MODULE_A\RUN_CAMPAIGN.ps1:14
+Line |
+  14 |      throw &quot;STOP: Python not at the path observed in your preflight: $ …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | STOP: Python not at the path observed in your preflight: python</p>
+</div></article><article id="m-40c99e6a-0afe-4e87-a4f4-948543c05a69" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00212 · 2026-09-12T00:36:40.665788-04:00 · active path</p><div class="bubble"><p>This is a <strong>good failure</strong>. It&#39;s a harness bug, not an MSBF bug.</p>
+<p>The important part is:</p>
+<blockquote>
+<p><strong>STOP: Python not at the path observed in your preflight: python</strong></p>
+</blockquote>
+<p>That tells me exactly what happened.</p>
+<h2>Root cause</h2>
+<p>I made an incorrect assumption in R2.</p>
+<p>Your preflight proved one of these is true:</p>
+<ul>
+<li>Python is installed but <strong><code>python</code> is not the executable name</strong></li>
+<li>or Python is available only through <strong><code>py.exe</code></strong></li>
+<li>or it is installed in a specific path (Anaconda, Store install, etc.)</li>
+<li>or the launcher isn&#39;t on PATH.</li>
+</ul>
+<p>The harness should <strong>discover Python</strong>, not require <code>&quot;python&quot;</code>.</p>
+<p>That&#39;s my mistake.</p>
+<hr>
+<h2>Do NOT change your machine</h2>
+<p>Please <strong>do not</strong>:</p>
+<ul>
+<li>reinstall Python</li>
+<li>edit PATH</li>
+<li>create aliases</li>
+<li>change environment variables</li>
+</ul>
+<p>This is exactly the kind of thing the harness should handle automatically.</p>
+<hr>
+<h1>Let&#39;s fix the harness correctly</h1>
+<p>Rather than hardcoding</p>
+<pre><code class="language-powershell">python
+</code></pre>
+<p>the harness should determine the interpreter using a fallback sequence.</p>
+<p>Something like:</p>
+<pre><code>1. explicit -PythonExecutable parameter
+
+2. python
+
+3. py -3
+
+4. py
+
+5. registry
+
+6. fail closed
+</code></pre>
+<p>That&#39;s much more robust.</p>
+<hr>
+<h1>Before I build R3</h1>
+<p>I need exactly one thing.</p>
+<p>Run:</p>
+<pre><code class="language-powershell">Get-Command python,py -ErrorAction SilentlyContinue |
+    Format-List Name,Source
+</code></pre>
+<p>and</p>
+<pre><code class="language-powershell">py --version
+</code></pre>
+<p>(if that errors, tell me.)</p>
+<p>and</p>
+<pre><code class="language-powershell">python --version
+</code></pre>
+<p>(if that errors, tell me.)</p>
+<p>That will tell me exactly how your Windows installation exposes Python.</p>
+<hr>
+<h1>I also want to improve the harness</h1>
+<p>Since we&#39;re already making another revision, I want to eliminate this entire class of failures.</p>
+<p>Instead of relying on PATH, R3 should automatically discover:</p>
+<ul>
+<li>Git</li>
+<li>Python</li>
+<li>psql</li>
+<li>pg_dump</li>
+<li>pg_restore</li>
+</ul>
+<p>exactly the same way.</p>
+<p>Then we never have this issue again.</p>
+<hr>
+<h2>This is actually good timing</h2>
+<p>We&#39;re still before <strong>any database execution</strong>.</p>
+<p>Nothing has mutated.</p>
+<p>Nothing has been restored.</p>
+<p>Nothing has been executed.</p>
+<p>So this is exactly where I would want to discover a portability issue.</p>
+<hr>
+<p>I would call this:</p>
+<blockquote>
+<p><strong>Campaign Harness R2 Finding 001</strong></p>
+<p>Toolchain discovery incorrectly assumed <code>python</code> instead of implementing adaptive interpreter discovery.</p>
+</blockquote>
+<p>That&#39;s a harness defect—not a campaign defect.</p>
+<p>I would fix it before proceeding to any native 750 execution.</p>
+</div></article><article id="m-574acad5-92ad-45be-bada-6dc2c767dd2d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00213 · 2026-09-12T00:37:48.937000-04:00 · active path</p><div class="bubble"><p>Name   : python.exe
+Source : C:\Python314\python.exe</p>
+<p>Name   : py.exe
+Source : C:\WINDOWS\py.exe</p>
+<p>PS D:\x\m&gt; py --version
+Python 3.14.7
+PS D:\x\m&gt; python --version
+Python 3.14.7</p>
+</div></article><article id="m-b6c60e97-e91c-4514-8571-7c411c384540" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00214 · 2026-09-12T00:37:52.682205-04:00 · active path</p><div class="bubble"><p>Good — no R3 needed yet. Python is installed and available. The R2 command I gave you passed the <strong>command alias</strong> <code>python</code>, but the harness wanted a <strong>literal executable path</strong>.</p>
+<p>Run the existing extracted package again with the full Python path:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$ErrorActionPreference = &#39;Stop&#39;
+
+&amp; &quot;D:\MSBF_CS_R2_MODULE_A\RUN_CAMPAIGN.ps1&quot; `
+    -Mode ModuleA `
+    -Repository &#39;D:\x\m&#39; `
+    -WorkRoot &#39;D:\MSBF_CAMPAIGNS&#39; `
+    -PostgreSQLBin &#39;C:\Program Files\PostgreSQL\17\bin&#39; `
+    -PythonExecutable &#39;C:\Python314\python.exe&#39;
+</code></pre>
+<p>You do <strong>not</strong> need to re-extract the ZIP or create a new destination.</p>
+<p>Expected disposition remains:</p>
+<pre><code class="language-text">MODULE_A_FRESH_INPUT_ADAPTERS = PASS
+REFERENCE_R4_WRAPPER_PARITY = PASS
+FRESH_NO_PREDECESSOR_FIXTURE = PASS
+DATABASE_EXECUTION = HOLD
+FULL_750_EXECUTION = HOLD
+FRESH_2500_EXECUTION = HOLD
+</code></pre>
+<p>This still should not connect to PostgreSQL or execute SQL. If it fails again, paste the exception and I’ll patch the harness rather than having you change your environment.</p>
+</div></article><article id="m-b9659601-f599-4ac5-946e-569dd071101c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00215 · 2026-09-12T00:42:58.727000-04:00 · active path</p><p class="note">Attachment references: MODULE_A_20260912T043825_437e112b_RETURN.zip; MODULE_A_20260912T043825_437e112b_RETURN.zip.sha256; MODULE_A_20260912T043825_437e112b_RETURN.zip.validation.json</p><div class="bubble"><p>MSBF campaign harness R2 — actual package preparation and file-only tests
+No historical search. Module A adapters are constructed and file-tested; database runtime remains held until native export/full-750 gates pass.
+  r4_original_reference_output: 15s elapsed
+  r4_campaign_reference_output: 15s elapsed
+MODULE_A_FRESH_INPUT_ADAPTERS = PASS
+REFERENCE_R4_WRAPPER_PARITY = PASS
+FRESH_NO_PREDECESSOR_FIXTURE = PASS
+DATABASE_EXECUTION = HOLD
+FULL_750_EXECUTION = HOLD
+FRESH_2500_EXECUTION = HOLD
+No database connection, SQL, restore, Git mutation or source search performed.
+RETURN ZIP: D:\MSBF_CAMPAIGNS\MODULE_A_20260912T043825_437e112b_RETURN.zip
+SHA-256: 945e2e5d56bd6b638e9c167f257f280a83050177e7f558549c08ace4aea378f0
+CONSTRUCTION/READINESS HOLD is recorded. No database campaign was executed.</p>
+</div></article><article id="m-c659144f-817d-454b-9765-532ac627cdca" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00216 · 2026-09-12T00:49:07.971271-04:00 · active path</p><div class="bubble"><p>Module A native export gate is now built.</p>
+<p>This R3 package advances beyond file-only adapter testing: it adds a <strong>native, read-only PostgreSQL export path</strong> that can pull the Module A/R4 input surfaces from an explicit subject database, validate them, run the R4 campaign-aware wrapper, and in <code>REFERENCE_750</code> mode compare all 20 R4 outputs against the retained accepted reference.</p>
+<p>Your uploaded R2 return package validates cleanly: 94 regular files, CRC PASS, path safety PASS, and SHA-256 <code>945e2e5d56bd6b638e9c167f257f280a83050177e7f558549c08ace4aea378f0</code>. [export reference: filecite | turn70file0 | L2-L8]</p>
+<h2>Deliverables</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MSBF Campaign Harness R3 — Native Module A (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R3_NATIVE_MODULE_A_20260912.zip</code>; referenced bytes not established here)</td>
+<td>Main package to save under <code>D:\MSBF_ARCHIVE</code>.</td>
+</tr>
+<tr>
+<td>SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R3_NATIVE_MODULE_A_20260912.zip.sha256</code>; referenced bytes not established here)</td>
+<td>Package identity.</td>
+</tr>
+<tr>
+<td>Build report (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R3_NATIVE_MODULE_A_BUILD_REPORT.md</code>; referenced bytes not established here)</td>
+<td>What changed, what passed, and what remains held.</td>
+</tr>
+<tr>
+<td>Delivery verification (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R3_NATIVE_MODULE_A_DELIVERY_VERIFICATION.json</code>; referenced bytes not established here)</td>
+<td>CRC/path/expanded-byte verification.</td>
+</tr>
+<tr>
+<td>Selftest evidence (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R3_NATIVE_MODULE_A_SELFTEST.json</code>; referenced bytes not established here)</td>
+<td>Clean-extract selftests: 77/77 PASS.</td>
+</tr>
+<tr>
+<td>Delivery manifest (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_HARNESS_R3_NATIVE_MODULE_A_DELIVERY_MANIFEST.csv</code>; referenced bytes not established here)</td>
+<td>Hashes for the delivered files.</td>
+</tr>
+</tbody></table>
+<h2>R3 package identity</h2>
+<pre><code class="language-text">MSBF_CAMPAIGN_HARNESS_R3_NATIVE_MODULE_A_20260912.zip
+Bytes:   3,491,953
+SHA-256: 37dc9ca1c6ea031f01ce1b591490c81d24bcd2df6ee7b5f2f81823a6832ea46e
+Entries: 252
+Clean-extract selftests: 77/77 PASS
+</code></pre>
+<h2>What R3 does</h2>
+<p>R3 adds:</p>
+<pre><code class="language-text">PostgreSQL subject database
+        ↓
+read-only Module A export queries
+        ↓
+six/four CSV input surfaces
+        ↓
+R4 campaign-aware strategy wrapper
+        ↓
+reference-750 parity comparison or fresh-campaign validation
+</code></pre>
+<p>It does <strong>not</strong> create, drop, restore, or mutate databases. The native path uses <code>PGOPTIONS</code> with <code>default_transaction_read_only=on</code> and <code>COPY (SELECT ...) TO STDOUT</code>.</p>
+<h2>Recommended next owner-side run</h2>
+<p>For the first R3 test, run it against the retained Phase2C R3 source database, assuming it still exists locally:</p>
+<pre><code class="language-text">msbf_r1b_p2c_r3_20260829_190652
+</code></pre>
+<p>Save the R3 ZIP to:</p>
+<pre><code class="language-text">D:\MSBF_ARCHIVE\MSBF_CAMPAIGN_HARNESS_R3_NATIVE_MODULE_A_20260912.zip
+</code></pre>
+<p>Then run:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$ErrorActionPreference = &#39;Stop&#39;
+
+$Zip = &#39;D:\MSBF_ARCHIVE\MSBF_CAMPAIGN_HARNESS_R3_NATIVE_MODULE_A_20260912.zip&#39;
+$ExpectedHash = &#39;37dc9ca1c6ea031f01ce1b591490c81d24bcd2df6ee7b5f2f81823a6832ea46e&#39;
+$Destination = &#39;D:\MSBF_CS_R3_NATIVE_MODULE_A&#39;
+
+if ((Get-FileHash -LiteralPath $Zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $ExpectedHash) {
+    throw &#39;STOP: harness ZIP identity mismatch.&#39;
+}
+
+if (Test-Path -LiteralPath $Destination) {
+    throw &#39;STOP: destination already exists; choose a fresh destination.&#39;
+}
+
+Expand-Archive -LiteralPath $Zip -DestinationPath $Destination
+
+&amp; &quot;$Destination\RUN_CAMPAIGN.ps1&quot; `
+    -Mode NativeModuleA `
+    -Repository &#39;D:\x\m&#39; `
+    -WorkRoot &#39;D:\MSBF_CAMPAIGNS&#39; `
+    -PostgreSQLBin &#39;C:\Program Files\PostgreSQL\17\bin&#39; `
+    -PythonExecutable &#39;C:\Python314\python.exe&#39; `
+    -SubjectDatabase &#39;msbf_r1b_p2c_r3_20260829_190652&#39; `
+    -ProfileId &#39;0750_REFERENCE&#39; `
+    -ModuleAMode &#39;REFERENCE_750&#39; `
+    -DatabaseHost &#39;127.0.0.1&#39; `
+    -DatabasePort 5432 `
+    -DatabaseUser &#39;postgres&#39; `
+    -ApproveReadOnlyDatabaseExport
+</code></pre>
+<p>Expected successful disposition:</p>
+<pre><code class="language-text">NATIVE_MODULE_A_DB_EXPORT = PASS
+REFERENCE_750_R4_OUTPUT_COMPARISON = PASS
+REFERENCE_750_R4_FILES_COMPARED = 20
+DATABASE_MUTATION = NO
+FULL_750_EXECUTION = HOLD
+FRESH_2500_EXECUTION = HOLD
+</code></pre>
+<p>This will ask for the local PostgreSQL password. It does not record the password.</p>
+<h2>Boundary</h2>
+<p>A PASS here proves <strong>native Module A/R4 equivalence</strong> for the named subject database. It still does <strong>not</strong> certify the full 750 replay or authorize fresh 2,500 execution. The next engineering gate after this return package is the full isolated 750 subject run/canonical database comparison.</p>
+</div></article><article id="m-506f74a8-a764-462d-bc6e-cbec55c50650" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00217 · 2026-09-12T00:51:02.868000-04:00 · active path</p><div class="bubble"><p>Exception: D:\MSBF_CS_R3_NATIVE_MODULE_A\RUN_CAMPAIGN.ps1:40
+Line |
+  40 |      throw &quot;STOP: package action failed with exit code $NativeExitCode …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | STOP: package action failed with exit code 2. Preserve the emitted evidence.</p>
+</div></article><article id="m-3d179073-4ee5-401d-9105-d78fd2bdb037" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00218 · 2026-09-12T00:51:05.218394-04:00 · active path</p><div class="bubble"><p>Yes — stop there and <strong>do not rerun yet</strong>.</p>
+<p>That failure means the R3 wrapper did exactly what it was supposed to do at the PowerShell level: the internal package action returned nonzero, and the launcher stopped rather than continuing.</p>
+<p>Now I need the emitted evidence from that failed run.</p>
+<h2>What to upload</h2>
+<p>Look in:</p>
+<pre><code class="language-text">D:\MSBF_CAMPAIGNS
+</code></pre>
+<p>Upload the newest R3 return package, likely named something like:</p>
+<pre><code class="language-text">NATIVE_MODULE_A_20260912T...._RETURN.zip
+</code></pre>
+<p>Also upload its <code>.sha256</code> and <code>.validation.json</code> if they exist.</p>
+<h2>Quick command to find it</h2>
+<p>Run this in PowerShell:</p>
+<pre><code class="language-powershell">Get-ChildItem &#39;D:\MSBF_CAMPAIGNS&#39; -Recurse -File |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 25 FullName, Length, LastWriteTime |
+    Format-Table -AutoSize
+</code></pre>
+<p>If you see a newest <code>*_RETURN.zip</code>, upload that ZIP.</p>
+<h2>What I expect the failure to be</h2>
+<p>Exit code <code>2</code> likely means one of these native Module A export conditions failed:</p>
+<ul>
+<li>the subject database name was not found;</li>
+<li><code>psql</code> failed to connect or authenticate;</li>
+<li>one of the expected source tables/views was not present in <code>msbf_r1b_p2c_r3_20260829_190652</code>;</li>
+<li>the read-only export query failed;</li>
+<li>exported CSV columns did not match the declared Module A input contract.</li>
+</ul>
+<p>I do <strong>not</strong> want to guess which one. The evidence package should tell us precisely.</p>
+<p>The R2 return was clean — 94 regular files, CRC PASS, path-safety PASS — so this is now a <strong>native database/export integration failure</strong>, not a package-integrity issue. [export reference: filecite | turn70file0 | L2-L8]</p>
+<p>Upload the emitted return ZIP and I’ll patch the next package from the actual failure evidence.</p>
+</div></article><article id="m-5f5565d4-c83d-4e31-880b-eb0f381bcc49" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00219 · 2026-09-12T00:52:47.608000-04:00 · active path</p><p class="note">Attachment references: NATIVE_MODULE_A_20260912T045029_904caab6_RETURN.zip; NATIVE_MODULE_A_20260912T045029_904caab6_RETURN.zip.sha256; NATIVE_MODULE_A_20260912T045029_904caab6_RETURN.zip.validation.json</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

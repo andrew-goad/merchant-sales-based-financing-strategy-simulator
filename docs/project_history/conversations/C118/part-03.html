@@ -1,0 +1,924 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 3 — part 03 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 3 — part 03</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-02.html">Previous part</a><a href="part-04.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-9bac96be-fb5d-40e7-8920-c15c6d5fce23" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00031 · 2026-09-03T13:41:23.782228-04:00 · active path</p><div class="bubble"><p>Yes. That is the larger point, and your P02 example exposes exactly what I have been doing wrong.</p>
+<p>I have been approaching P03 as though its unresolved measures need to be <strong>individually reconstructed from source columns</strong>. That is not the architecture of the successor Power BI model. The project already has a <strong>measure hierarchy</strong>, and I have been reasoning too locally instead of traversing that hierarchy before proposing changes.</p>
+<p>The evidence is now clear.</p>
+<p><code>R1 P02 Cumulative Expected As Of</code> does not calculate anything itself:</p>
+<pre><code class="language-DAX">R1 P02 Cumulative Expected As Of =
+    [R1 P01 Cumulative Expected As Of]
+</code></pre>
+<p>[export reference: filecite | turn72file0 | L9-L18]</p>
+<p>And P02 actually uses that measure as the <code>Expected to date</code> tooltip on its Remittance fulfillment visual. [export reference: filecite | turn72file0 | L39-L47]</p>
+<p>More importantly, the P01 measure it delegates to is already the successor-wide implementation:</p>
+<pre><code class="language-DAX">R1 P01 Cumulative Expected As Of =
+IF (
+    [R1 P01 As Of Evidence Status] = &quot;VALID&quot;,
+    COALESCE (
+        SUMX (
+            VALUES ( &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey] ),
+            CALCULATE ( [R1 P01 __Cumulative Expected As Of] )
+        ),
+        0
+    )
+)
+</code></pre>
+<p>[export reference: filecite | turn72file1 | L72-L90]</p>
+<p>And the hidden canonical helper is already built entirely on <code>R1FactDailyMonitoring</code>:</p>
+<pre><code class="language-DAX">R1 P01 __Cumulative Expected As Of =
+VAR _Actual =
+    [R1 P01 __Cumulative Actual As Of]
+VAR _Pace =
+    [R1 P01 __Pace Ratio As Of]
+VAR _Shortfall =
+    [R1 P01 __Cumulative Shortfall As Of]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK ( _Actual ), BLANK (),
+        NOT ISBLANK ( _Pace ) &amp;&amp; _Pace &gt; 0,
+            DIVIDE ( _Actual, _Pace ),
+        NOT ISBLANK ( _Shortfall ),
+            _Actual + _Shortfall,
+        BLANK ()
+    )
+</code></pre>
+<p>[export reference: filecite | turn73file1 | L402-L416]</p>
+<p>The three helpers underneath it all read the current successor fact:</p>
+<ul>
+<li>Actual → <code>R1FactDailyMonitoring[cumulative_remittance_amount]</code></li>
+<li>Pace → <code>R1FactDailyMonitoring[cumulative_pace_ratio]</code></li>
+<li>Shortfall → <code>R1FactDailyMonitoring[cumulative_shortfall_amount]</code></li>
+</ul>
+<p>[export reference: filecite | turn73file1 | L360-L401]</p>
+<p>So I should <strong>not have proposed a new independent <code>R26 P03 Expected To Date</code> calculation.</strong></p>
+<p>In fact, the R3 proposal is worse than merely redundant: I changed the branch precedence by testing shortfall before pace, whereas the existing canonical P01 implementation tests pace first. That means my proposed R3 measure could diverge from the already-established successor semantic. <strong>That proposed R3 DAX is withdrawn.</strong> R3 can remain evidence that we found the predecessor binding defect, but it should not be treated as implementation authority.</p>
+<h3>The architecture I should have recognized</h3>
+<p>There is already a layering pattern in this project:</p>
+<pre><code class="language-text">SOURCE / SEMANTIC FACTS
+        ↓
+R1FactDailyMonitoring + other R1 successor facts
+        ↓
+P01 canonical successor semantic layer
+        ↓
+P02 page layer
+    aliases P01 where semantics are identical
+    adds P02-specific lifecycle/cohort calculations
+        ↓
+R26 P02 overlay
+    adds R26 monitoring-family semantics
+        ↓
+P03 / P04 presentation layers
+    should reuse those canonical semantics wherever possible
+    and only add genuinely page-specific logic
+</code></pre>
+<p>P02 proves this repeatedly. It does not just alias cumulative expected:</p>
+<pre><code class="language-text">R1 P02 Current Exposure As Of
+    → R1 P01 Current Exposure As Of
+
+R1 P02 Cumulative Actual As Of
+    → R1 P01 Cumulative Actual As Of
+
+R1 P02 Cumulative Expected As Of
+    → R1 P01 Cumulative Expected As Of
+
+R1 P02 Remittance Fulfillment
+    → R1 P01 Remittance Fulfillment
+
+R1 P02 Active Alert Flags As Of
+    → R1 P01 Active Alert Flags As Of
+
+R1 P02 Paid-Off Paths As Of
+    → R1 P01 Paid-Off Paths As Of
+</code></pre>
+<p>[export reference: filecite | turn72file0 | L9-L20]</p>
+<p>And where R26 added new monitoring semantics, P02 again built on the P01 as-of engine rather than creating another independent date framework. <code>R26 P02 Operational Alert Families As Of</code>, for example, gets its <code>_LatestDate</code> from <code>[R1 P01 __Latest Monitoring Date As Of]</code> and then evaluates the R26 source-owned <code>operational_alert_family_count</code>. [export reference: filecite | turn74file0 | L15-L28] The R26 raw-alert measure follows the same architecture. [export reference: filecite | turn74file1 | L70-L97]</p>
+<p>That is the pattern I should be applying to P03.</p>
+<h3>There is one important P03 distinction</h3>
+<p>We should not blindly change P03 Expected to:</p>
+<pre><code class="language-DAX">[R1 P01 Cumulative Expected As Of]
+</code></pre>
+<p>because P02 and P03 currently have different date-context architectures.</p>
+<p>P02&#39;s X-axis is:</p>
+<pre><code class="language-text">DimAsOfDate[AsOfDate]
+</code></pre>
+<p>[export reference: filecite | turn74file2 | L242-L250]</p>
+<p>That is exactly what drives <code>[Selected As Of Date]</code>, the disconnected as-of controller. [export reference: filecite | turn73file0 | L71-L82]</p>
+<p>P03&#39;s Account Performance X-axis is currently:</p>
+<pre><code class="language-text">R1FactDailyMonitoring[monitoring_date]
+</code></pre>
+<p>[export reference: filecite | turn72file4 | L248-L254]</p>
+<p>So a naked P01 alias on the current P03 visual could use the default/selected <code>DimAsOfDate</code> rather than each plotted monitoring date.</p>
+<p>That gives us <strong>two legitimate architectural solutions</strong>, and this is the type of choice we should evaluate instead of inventing another metric:</p>
+<ol>
+<li><p><strong>Preferred architecture to evaluate:</strong> make the P03 time-series use <code>DimAsOfDate[AsOfDate]</code>, as P02 does, and let P03 reuse the canonical P01/P02 as-of measures directly.</p>
+</li>
+<li><p>If retaining <code>R1FactDailyMonitoring[monitoring_date]</code> is preferable for P03 interaction behavior, create only a <strong>context adapter</strong> that translates the plotted monitoring date into <code>DimAsOfDate</code> context and then delegates to <code>[R1 P01 Cumulative Expected As Of]</code>. The adapter should contain no expected-remittance mathematics of its own.</p>
+</li>
+</ol>
+<p>That is fundamentally different from what I proposed last turn.</p>
+<h3>And it changes how we should handle the other P03 measures</h3>
+<p>I also should <strong>not ask you for three isolated DAX formulas</strong> now. We already have enough evidence to know that is the wrong workflow.</p>
+<p>For example, P02 already contains:</p>
+<pre><code class="language-DAX">R1 P02 __Monitoring Status As Of
+</code></pre>
+<p>which uses <code>[R1 P01 __Latest Monitoring Date As Of]</code> and then returns the current <code>R1FactDailyMonitoring[monitoring_status_code]</code>. [export reference: filecite | turn73file1 | L477-L492]</p>
+<p>P02 also already has:</p>
+<pre><code class="language-DAX">R1 P02 __Monitoring Day Index As Of
+</code></pre>
+<p>built on the same P01 canonical date engine. [export reference: filecite | turn74file4 | L371-L386]</p>
+<p>And the entire R26 monitoring-family layer already exists in P02:</p>
+<ul>
+<li><code>R26 P02 Accounts with Operational Alerts As Of</code></li>
+<li><code>R26 P02 Accounts in Adverse Monitoring Status As Of</code></li>
+<li><code>R26 P02 Raw Alert Conditions As Of</code></li>
+<li><code>R26 P02 Operational Alert Families As Of</code></li>
+</ul>
+<p>all using the P01 as-of framework and current R26 monitoring source. [export reference: filecite | turn74file2 | L166-L180] [export reference: filecite | turn74file3 | L274-L291]</p>
+<p>So before touching <code>Reason</code>, <code>Daily shortfall</code>, <code>Days since remittance</code>, <code>Monitoring Status Rank</code>, or frankly any other P03 performance measure, I need to determine whether its semantic already exists at one of those lower layers.</p>
+<h2>The correct way to close my understanding gap</h2>
+<p>I think this is now clear: <strong>stop doing P03 measure remediation until I have built the actual Power BI semantic dependency landscape.</strong></p>
+<p>Not another P03 register of measure names. A dependency/ownership map of the model.</p>
+<p>For every measure relevant to P01–P04, I need to establish:</p>
+<pre><code class="language-text">Measure
+  ↓
+semantic owner / canonical layer
+  ↓
+direct measure dependencies
+  ↓
+ultimate table/column dependencies
+  ↓
+date-context mechanism
+  ↓
+grain
+  ↓
+successor vs predecessor source boundary
+  ↓
+pages/visuals consuming it
+  ↓
+aliases/wrappers that already reuse it
+  ↓
+duplicate calculations elsewhere
+  ↓
+deprecated predecessor equivalents
+</code></pre>
+<p>Then classify every P03 binding as one of only four things:</p>
+<pre><code class="language-text">REUSE_CANONICAL
+    Existing P01/P02/R26 semantic should be reused directly.
+
+CONTEXT_ADAPTER_ONLY
+    Existing semantic is correct but P03 needs date/grain context translated.
+
+P03_SPECIFIC
+    Truly unique Application Journey presentation/narrative logic.
+
+DEFECT / RETIRE
+    Predecessor-bound, duplicate, semantically inconsistent, or unnecessary.
+</code></pre>
+<p>That is the missing control.</p>
+<p>It would also surface exactly the kind of defect you just caught: I would never have proposed another expected-remittance formula because the dependency map would have shown:</p>
+<pre><code class="language-text">P03 Expected to date
+    predecessor:
+        ModelParameters[P03 Cumulative Expected Remittance]
+            → FactAccountDaily   ❌
+
+canonical successor semantic:
+        R1 P01 Cumulative Expected As Of
+            → R1 P01 __Cumulative Expected As Of
+                → R1 P01 __Cumulative Actual As Of
+                → R1 P01 __Pace Ratio As Of
+                → R1 P01 __Cumulative Shortfall As Of
+                    → R1FactDailyMonitoring   ✓
+
+P02 precedent:
+        R1 P02 Cumulative Expected As Of
+            → R1 P01 Cumulative Expected As Of   ✓
+</code></pre>
+<p>Once that is visible, the answer is obvious: <strong>reuse/adapt; do not recalculate.</strong></p>
+<p>I also think this needs to go beyond P03. If I only map the measures P03 happens to use, I can still miss reusable semantics living in P01, P02, or P04. The bounded scope should therefore be <strong>the complete P01–P04 measure-and-visual dependency landscape, including R1 and R26 overlays and retained predecessor measures</strong>, before we finish P03.</p>
+<p>And I would treat the current R3 package as <strong>finding evidence only, not the next implementation baseline</strong>. The proposed Expected-to-Date patch in it is withdrawn. The next controlled revision should be built only after this dependency-landscape exercise, because otherwise we would again be patching symptoms before understanding the semantic architecture.</p>
+<p>That is the path I think resolves the problem you are describing—not by you feeding me measures one at a time, but by me systematically reconstructing and owning the measure landscape from the project evidence we already have.</p>
+</div></article><article id="m-8d3ab912-b646-4e95-a9d1-53d1aaaac3cf" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00032 · 2026-09-03T13:45:38.004000-04:00 · active path</p><div class="bubble"><p>so how do I give you what you need?</p>
+</div></article><article id="m-b8bf94a6-bc50-4a28-a82b-ce178b6967ff" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00033 · 2026-09-03T13:45:42.431307-04:00 · active path</p><div class="bubble"><p>The best way is to give me the <strong>current C2 PBIP project itself</strong>, or a read-only export of its semantic/report definitions. That closes the problem at the root.</p>
+<p>What I need, in priority order:</p>
+<ol>
+<li><p><strong>Best option — zip the full current project folder</strong></p>
+<ul>
+<li><code>MSBF_PBI_R26_PARALLEL_REFINEMENT_C2_20260902</code></li>
+<li>Include the <code>.pbip</code>, <code>.SemanticModel</code>, and <code>.Report</code> folders.</li>
+<li>Attach that ZIP here.</li>
+<li>You do <strong>not</strong> need to include caches or unrelated local files.</li>
+</ul>
+</li>
+<li><p><strong>If the full PBIP is too large</strong>, give me these two physical definitions:</p>
+<ul>
+<li>the current semantic model definition, especially <code>model.bim</code> or the TMDL equivalent;</li>
+<li>the current report definition folder/files containing visual bindings.
+This is enough for me to recover every measure body, dependency, display folder, hidden helper, page/visual consumer, and tooltip binding.</li>
+</ul>
+</li>
+<li><p><strong>Fallback only if neither is practical:</strong> run a full metadata export from the open C2 model and send me:</p>
+<ul>
+<li>all measures with full DAX expressions;</li>
+<li>all tables/columns;</li>
+<li>relationships;</li>
+<li>report visual/queryRef bindings.
+The partial screenshot-by-screenshot approach is workable, but it is exactly what has been causing the context gaps, so I do not recommend continuing that way.</li>
+</ul>
+</li>
+</ol>
+<p>Once you attach the <strong>full C2 PBIP ZIP</strong>, I can build the thing we actually need: a canonical P01–P04 semantic dependency map that shows each measure’s formula, direct and ultimate dependencies, semantic owner, date-context engine, grain, page/visual consumers, aliases, predecessor equivalents, and whether P03 should <strong>reuse, context-adapt, retain as page-specific, or retire</strong> it.</p>
+<p>That would also let me validate the physical current state rather than reconstructing it from handoff summaries.</p>
+<p>So the simplest answer is: <strong>zip your current <code>MSBF_PBI_R26_PARALLEL_REFINEMENT_C2_20260902</code> project folder and attach it here.</strong> You should not need to manually feed me any more DAX one measure at a time.</p>
+</div></article><article id="m-3966a22a-d14f-4944-8057-3ed71ad82cd9" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00034 · 2026-09-03T13:50:21.886000-04:00 · active path</p><p class="note">Attachment references: project.zip</p><div class="bubble"><p>requested zip attached. Please ingest everything you need and update our source of truth appropriately. then let&#39;s stop circling and get back to professional production on these remaining tabs.</p>
+</div></article><article id="m-adee78c9-99bb-473d-8c13-3570dd966667" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00035 · 2026-09-03T15:15:48.028918-04:00 · active path</p><div class="bubble"><h1>R4 source of truth established</h1>
+<p>Complete. I ingested the attached <code>project.zip</code> as the physical project input and reconciled its semantic model, report definition, DAX-query history, current carrier data, lifecycle integration, measures, dependencies, visuals, field wells, tooltips, and page-level source bindings. [export reference: filecite | turn75file0 | L1-L9]</p>
+<p>The gap is now closed at the <strong>project architecture level</strong>, not through another partial P03 inventory.</p>
+<p><strong><code>MSBF_POWER_BI_CANONICAL_IMPLEMENTATION_REGISTER_R4_20260903</code> now supersedes R1–R3 as the controlling implementation register.</strong></p>
+<h2>Controlling physical state</h2>
+<p>The uploaded folder still carries C1 folder names, but it contains the current working C2 PBIX. The correct authority is:</p>
+<pre><code class="language-text">Current working project
+MSBF_PBI_R26_PARALLEL_REFINEMENT_C2_20260902.pbix
+
+PBIX SHA-256
+fa2eb55fd556d12b4a4c2b6f135dc2f3f67cd5c427208560a77cae940bf5b52a
+
+C3 required
+NO
+
+Public supersession/publication
+NOT AUTHORIZED
+</code></pre>
+<p>The readable C1 PBIP model and report trees are retained as predecessor-readable baseline evidence only. They are not current authority. Continue working in the C2 PBIX. Synchronizing the readable PBIP representation is a later integration-audit hygiene requirement, not a blocker to present P03 production.</p>
+<h2>Recovered current implementation landscape</h2>
+<table>
+<thead>
+<tr>
+<th>Current implementation object</th>
+<th align="right">Recovered</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tables</td>
+<td align="right">55</td>
+</tr>
+<tr>
+<td>Columns</td>
+<td align="right">1,804</td>
+</tr>
+<tr>
+<td>Measures</td>
+<td align="right">316</td>
+</tr>
+<tr>
+<td>Exact readable measure expressions</td>
+<td align="right">315</td>
+</tr>
+<tr>
+<td>Direct dependency edges</td>
+<td align="right">833</td>
+</tr>
+<tr>
+<td>Pure measure aliases/wrappers</td>
+<td align="right">12</td>
+</tr>
+<tr>
+<td>Relationships</td>
+<td align="right">55</td>
+</tr>
+<tr>
+<td>Report pages</td>
+<td align="right">7</td>
+</tr>
+<tr>
+<td>Visuals</td>
+<td align="right">133</td>
+</tr>
+<tr>
+<td>Current report bindings</td>
+<td align="right">271</td>
+</tr>
+<tr>
+<td>Report-object field references</td>
+<td align="right">347</td>
+</tr>
+<tr>
+<td>Current P03 measures</td>
+<td align="right">51</td>
+</tr>
+<tr>
+<td>P03 visuals</td>
+<td align="right">25</td>
+</tr>
+<tr>
+<td>P03 bindings</td>
+<td align="right">53</td>
+</tr>
+</tbody></table>
+<p>The one name-only measure is an unused <code>R26 P03 Recommendation Narrative</code>; it does not prevent current production.</p>
+<p>The register now explicitly tracks:</p>
+<ul>
+<li>each measure’s semantic owner;</li>
+<li>direct and ultimate dependencies;</li>
+<li>canonical aliases and wrappers;</li>
+<li>date-context mechanism;</li>
+<li>source grain;</li>
+<li>predecessor-table exposure;</li>
+<li>page and visual consumers;</li>
+<li>installed DAX overlay chronology;</li>
+<li>current report field wells and tooltips;</li>
+<li>reuse versus context-adapter versus page-specific treatment.</li>
+</ul>
+<p>This captures the architecture you were pressing me to recognize. For example, P02 delegates <code>R1 P02 Cumulative Expected As Of</code> to the canonical P01 measure rather than recreating its mathematics. [export reference: filecite | turn72file0 | L9-L18] The underlying P01 helper owns the expected-remittance reconstruction from current R1 actual, pace, and shortfall measures. [export reference: filecite | turn73file1 | L402-L416]</p>
+<h2>R3 correction</h2>
+<p>The independent calculation proposed in R3 for <code>R26 P03 Expected To Date</code> is <strong>withdrawn and must not be installed</strong>.</p>
+<p>R4 instead implements the correct architecture:</p>
+<pre><code class="language-text">P03 plotted monitoring date
+        ↓ context translation
+DimAsOfDate[AsOfDate]
+        ↓
+R1 P01 __Cumulative Expected As Of
+        ↓
+canonical R1FactDailyMonitoring semantic engine
+</code></pre>
+<p>The new P03 measure is therefore a <strong>date-context adapter only</strong>. It does not duplicate or alter the canonical expected-remittance calculation.</p>
+<h1>Immediate P03 production sequence</h1>
+<p>No further one-off screenshots or measure formulas are needed before completing these three displays.</p>
+<h2>1. Install the bounded four-measure patch</h2>
+<p>In the current C2 PBIX:</p>
+<ol>
+<li>Save the project.</li>
+<li>Open DAX Query View.</li>
+<li>Open or paste the supplied successor patch.</li>
+<li>Select <strong>Run</strong>.</li>
+<li>Confirm the result reports four measures and no source mutation.</li>
+<li>Select <strong>Update model with changes</strong> once.</li>
+</ol>
+<p>The patch creates exactly:</p>
+<pre><code class="language-text">R26 P03 Expected To Date
+R26 P03 Primary Alert Family Display
+R26 P03 Daily Shortfall Alert Display
+R26 P03 Days Since Remittance
+</code></pre>
+<p>It does not change:</p>
+<pre><code class="language-text">R1FactDailyMonitoring
+R1FactIntervention
+R1FactFundedLifecycle
+relationships
+strategy logic
+policy logic
+funding logic
+Patch 3 narratives
+strengthened narrative QA
+</code></pre>
+<p>Open the four-measure production patch (historical reference: <code>sandbox:[session]/MSBF_R26_P03_PERFORMANCE_MONITORING_SUCCESSOR_PATCH_R1_20260903.dax</code>; referenced bytes not established here)</p>
+<h2>2. Finalize Account performance</h2>
+<p>Keep the title:</p>
+<pre><code class="language-text">Account performance
+</code></pre>
+<p>Use this exact configuration:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Object</th>
+<th>Display label</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>X-axis</td>
+<td><code>R1FactDailyMonitoring[monitoring_date]</code></td>
+<td>Monitoring date</td>
+</tr>
+<tr>
+<td>Y-axis</td>
+<td><code>[R26 P03 Remaining Receivable]</code></td>
+<td>Remaining balance</td>
+</tr>
+<tr>
+<td>Secondary Y-axis</td>
+<td><code>[R26 P03 Remittance Pace]</code></td>
+<td>Remittance pace</td>
+</tr>
+<tr>
+<td>Tooltip 1</td>
+<td><code>[R26 P03 Monitoring Status Display]</code></td>
+<td>Monitoring status</td>
+</tr>
+<tr>
+<td>Tooltip 2</td>
+<td><code>[R26 P03 Remitted To Date]</code></td>
+<td>Remitted to date</td>
+</tr>
+<tr>
+<td>Tooltip 3</td>
+<td><code>[R26 P03 Expected To Date]</code></td>
+<td>Expected to date</td>
+</tr>
+<tr>
+<td>Tooltip 4</td>
+<td><code>[R26 P03 Cumulative Shortfall]</code></td>
+<td>Cumulative shortfall</td>
+</tr>
+</tbody></table>
+<p>Remove these two predecessor measures:</p>
+<pre><code class="language-text">ModelParameters[P03 Cumulative Expected Remittance]
+ModelParameters[P03 Cumulative Shortfall]
+</code></pre>
+<p>Keep the current successor X-axis, Y-axis, secondary Y-axis, Monitoring status, and Remitted-to-date bindings.</p>
+<h2>3. Finalize Monitoring journey</h2>
+<p>Keep the title:</p>
+<pre><code class="language-text">Monitoring journey
+</code></pre>
+<p>Replace the current predecessor-backed visual configuration with:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Object</th>
+<th>Display label</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>X-axis</td>
+<td><code>R1FactDailyMonitoring[monitoring_date]</code></td>
+<td>Monitoring date</td>
+</tr>
+<tr>
+<td>Y-axis</td>
+<td><code>[R26 P03 Monitoring Status Rank]</code></td>
+<td>Monitoring status rank</td>
+</tr>
+<tr>
+<td>Tooltip 1</td>
+<td><code>[R26 P03 Monitoring Status Display]</code></td>
+<td>Monitoring status</td>
+</tr>
+<tr>
+<td>Tooltip 2</td>
+<td><code>[R26 P03 Primary Alert Family Display]</code></td>
+<td>Primary alert family</td>
+</tr>
+<tr>
+<td>Tooltip 3</td>
+<td><code>[R26 P03 Daily Shortfall Alert Display]</code></td>
+<td>Daily shortfall alert</td>
+</tr>
+<tr>
+<td>Tooltip 4</td>
+<td><code>[R26 P03 Remittance Pace]</code></td>
+<td>Remittance pace</td>
+</tr>
+<tr>
+<td>Tooltip 5</td>
+<td><code>[R26 P03 Cumulative Shortfall]</code></td>
+<td>Cumulative shortfall</td>
+</tr>
+<tr>
+<td>Tooltip 6</td>
+<td><code>[R26 P03 Days Since Remittance]</code></td>
+<td>Days since remittance</td>
+</tr>
+<tr>
+<td>Tooltip 7</td>
+<td><code>[R26 P03 Operational Alert Families]</code></td>
+<td>Operational alert families</td>
+</tr>
+<tr>
+<td>Tooltip 8</td>
+<td><code>[R26 P03 Raw Alert Conditions]</code></td>
+<td>Raw alert conditions</td>
+</tr>
+</tbody></table>
+<p>Remove every <code>FactAccountDaily</code> and <code>ModelParameters[P03 ...]</code> binding from this visual.</p>
+<p>The current visual already has reference lines for ranks 0–4. Add:</p>
+<pre><code class="language-text">Value: 5
+Label: Dormant / no remittance
+</code></pre>
+<p>The controlled status ladder is:</p>
+<pre><code class="language-text">0  Paid off
+1  Current
+2  Watch
+3  Underperforming
+4  Severe shortfall
+5  Dormant / no remittance
+</code></pre>
+<p>The old dollar-valued <strong>Daily shortfall</strong> tooltip is deliberately not reproduced. The curated R26 Power BI source exposes the governed <code>daily_shortfall_alert_flag</code>, while cumulative shortfall remains the amount-bearing metric. The new tooltip is therefore accurately relabeled <strong>Daily shortfall alert</strong> rather than presenting an unsupported reconstructed amount.</p>
+<h2>4. Finalize Servicing &amp; intervention</h2>
+<p>Keep the title:</p>
+<pre><code class="language-text">Servicing &amp; intervention
+</code></pre>
+<p>Keep the existing table and this exact visible order:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Order</th>
+<th>Current successor measure</th>
+<th>Display label</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td><code>[R26 P03 Intervention Display]</code></td>
+<td>Intervention</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td><code>[R26 P03 Servicing Action Display]</code></td>
+<td>Action</td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td><code>[R26 P03 Servicing Queue Display]</code></td>
+<td>Queue</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td><code>[R26 P03 Intervention Exposure]</code></td>
+<td>Exposure</td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td><code>[R26 P03 Intervention Reason Display]</code></td>
+<td>Reason</td>
+</tr>
+</tbody></table>
+<p>Remove all five predecessor <code>FactIntervention</code> fields.</p>
+<p>Do not add a separate tooltip field well. <code>R26 P03 Servicing Alt Text</code> remains reserved for the final accessibility pass.</p>
+<h1>Required validation</h1>
+<p>After the four measures are installed and the visuals are rebound, run the supplied QA using <strong>Run only</strong>. Do not select <strong>Update model with changes</strong> for the QA query.</p>
+<p>Open the performance/monitoring QA query (historical reference: <code>sandbox:[session]/MSBF_R26_P03_PERFORMANCE_MONITORING_QA_R1_20260903.dax</code>; referenced bytes not established here)</p>
+<p>Required results:</p>
+<table>
+<thead>
+<tr>
+<th>QA result</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Result 1</td>
+<td><code>15,600 monitoring rows / 130 paths / 120 minimum days / 120 maximum days</code></td>
+</tr>
+<tr>
+<td>Result 2</td>
+<td><code>0 rows</code></td>
+</tr>
+<tr>
+<td>Result 3</td>
+<td>Merchant 738 Baseline = 120 monitoring rows and lifecycle available; Recession Energy = 0 monitoring rows</td>
+</tr>
+<tr>
+<td>Result 4</td>
+<td><code>126 closed/no-further-action / 3 outreach-review / 1 temporary-remittance-review</code></td>
+</tr>
+</tbody></table>
+<p>Then perform these visual checks:</p>
+<table>
+<thead>
+<tr>
+<th>Merchant/scenario</th>
+<th>Required display behavior</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>000082 / Baseline</code></td>
+<td>All three downstream displays blank</td>
+</tr>
+<tr>
+<td><code>000738 / Baseline</code></td>
+<td>Account performance and Monitoring journey populated; Servicing shows No further action</td>
+</tr>
+<tr>
+<td><code>000738 / Recession Energy</code></td>
+<td>All three downstream displays blank</td>
+</tr>
+<tr>
+<td><code>000098 / Baseline</code></td>
+<td>Targeted outreach review</td>
+</tr>
+<tr>
+<td><code>000749 / Baseline</code></td>
+<td>Temporary remittance review</td>
+</tr>
+</tbody></table>
+<p>Continue holding the final screenshot/evidence package until all remaining P03 controls are complete.</p>
+<h1>Remaining P03 sequence</h1>
+<p>After this right-side display pass:</p>
+<ol>
+<li>Build the Technical rationale tooltip.</li>
+<li>Correct the footer to current C2/R26 identity.</li>
+<li>Validate Merchant/Scenario interactions and nonfunded blanking.</li>
+<li>Complete the final page and visual alt-text/tab-order pass.</li>
+<li>Refresh.</li>
+<li>Save, close, and reopen C2.</li>
+<li>Rerun narrative QA and operational QA.</li>
+<li>Capture the representative seven-outcome evidence set.</li>
+<li>Freeze P03.</li>
+<li>Move directly to the P04 successor rebase.</li>
+</ol>
+<p>The physical project review confirms that P04 is the next major rebase: <strong>30 of its 31 current report bindings remain predecessor/core</strong>, while P05 and P06 are already constructed as R1 candidate pages.</p>
+<h1>Controlling deliverables</h1>
+<p>Download the complete R4 source-of-truth package (historical reference: <code>sandbox:[session]/MSBF_POWER_BI_CANONICAL_IMPLEMENTATION_REGISTER_R4_20260903.zip</code>; referenced bytes not established here)</p>
+<p>Download the R4 SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_POWER_BI_CANONICAL_IMPLEMENTATION_REGISTER_R4_20260903.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Open the canonical implementation workbook (historical reference: <code>sandbox:[session]/MSBF_POWER_BI_CANONICAL_IMPLEMENTATION_REGISTER_R4_20260903.xlsx</code>; referenced bytes not established here)</p>
+<p>Open the detailed P03 production instructions (historical reference: <code>sandbox:[session]/MSBF_P03_PRODUCTION_INSTRUCTIONS_R4_20260903.md</code>; referenced bytes not established here)</p>
+<p>Open the exact P03 target binding plan (historical reference: <code>sandbox:[session]/_r4_user_build/MSBF_POWER_BI_CANONICAL_IMPLEMENTATION_REGISTER_R4_20260903/registers/P03_TARGET_BINDING_PLAN.csv</code>; referenced bytes not established here)</p>
+<p>Open the P01–P03 semantic reuse map (historical reference: <code>sandbox:[session]/_r4_user_build/MSBF_POWER_BI_CANONICAL_IMPLEMENTATION_REGISTER_R4_20260903/registers/P01_P02_P03_SEMANTIC_REUSE_MAP.csv</code>; referenced bytes not established here)</p>
+<p>Open the ZIP validation report (historical reference: <code>sandbox:[session]/MSBF_POWER_BI_CANONICAL_IMPLEMENTATION_REGISTER_R4_20260903_ZIP_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">R4 package bytes       29,317,809
+R4 package SHA-256     93373973c9248cd78ce6fc5c5687dda71025dc2514706fbef06ee0aabaa35f2f
+ZIP entries            207
+CRC                     PASS
+Clean extraction        PASS
+Manifest                PASS
+SHA256SUMS              PASS
+Unsafe paths            0
+Duplicate paths         0
+Case-fold collisions    0
+Symlinks                0
+Encrypted entries       0
+Windows path budget     PASS
+</code></pre>
+<p>The next production action is the bounded four-measure patch in C2, followed by the exact three-visual rebindings above.</p>
+</div></article><article id="m-07eb3b86-e578-420f-b42e-e76d946a5616" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00036 · 2026-09-03T15:31:37.480000-04:00 · active path</p><div class="bubble"><p>y-axis and secondary y-axis titles for account performance chart</p>
+</div></article><article id="m-69a4f2ce-b738-4686-a997-3dc3c957b090" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00037 · 2026-09-03T15:31:39.570657-04:00 · active path</p><div class="bubble"><p>For the <strong>Account performance</strong> chart, use:</p>
+<ul>
+<li><strong>Y-axis title:</strong> <code>Remaining receivable</code></li>
+<li><strong>Secondary Y-axis title:</strong> <code>Remittance pace</code></li>
+</ul>
+<p>I prefer <strong>Remaining receivable</strong> over “Remaining balance” because it matches the portfolio/receivable terminology already established elsewhere in the Power BI project.</p>
+</div></article><article id="m-b4209df6-82f0-490a-9e7c-9b726d173b8f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00038 · 2026-09-03T15:54:56.814000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 26724b14-fc39-46e2-9095-e16e2c72afce.png</p><div class="bubble"><p>how to have the y-axis include values for 0,1,2,3,4,5 and not just 0,2,4: </p>
+</div></article><article id="m-55e2713c-614e-4a05-a591-5455d58540d3" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00039 · 2026-09-03T15:54:59.453178-04:00 · active path</p><div class="bubble"><p>Power BI is automatically choosing a <strong>2-unit major tick interval</strong> because of the visual&#39;s height. There isn&#39;t normally a direct “tick interval = 1” setting for this line chart.</p>
+<p>For this <strong>Monitoring journey</strong> visual, do this:</p>
+<ol>
+<li>Select the chart.</li>
+<li>Open <strong>Format visual</strong>.</li>
+<li>Expand <strong>Y-axis</strong>.</li>
+<li>Under <strong>Range</strong>, set:<ul>
+<li><strong>Minimum:</strong> <code>0</code></li>
+<li><strong>Maximum:</strong> <code>5</code></li>
+</ul>
+</li>
+<li>Look for <strong>Values → Density</strong> (sometimes shown as label density) and move it to the <strong>maximum</strong>.</li>
+</ol>
+<p>If Power BI still displays only <code>0, 2, 4</code>, that means it is suppressing alternating numeric tick labels because of the available vertical space. Increasing the visual height may make <code>0–5</code> all appear, but I <strong>wouldn&#39;t enlarge this P03 visual just to force numeric ticks</strong>.</p>
+<p>More importantly, for our design, the numbers themselves are not the business meaning. Your reference-line labels already communicate the governed ladder:</p>
+<pre><code class="language-text">5  Dormant / no remittance
+4  Severe shortfall
+3  Underperforming
+2  Watch
+1  Current
+0  Paid off
+</code></pre>
+<p>So if Power BI insists on showing only <code>0, 2, 4</code> after setting <strong>Min = 0 / Max = 5</strong> and maximum label density, I would <strong>hide the numeric Y-axis labels entirely</strong> and rely on the six labeled horizontal status lines. That would actually be cleaner and more executive-facing than having both the numeric rank and the status labels compete for attention.</p>
+</div></article><article id="m-41abba4b-faba-406a-993e-91d06f1ba216" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00040 · 2026-09-03T16:13:01.346000-04:00 · active path</p><div class="bubble"><p>please provide a good mix of each type of narrative in our data. I want to capture a good amount of evidence for this P03. Let&#39;s say at least 1 example for each narrative situation. can you provide a good mix of merchants that I should capture (some baseline / some recession). This should exhaust the narrative situations that we may see. I will then capture the P03 screenshots accordingly for that set of merchants. also, please supply alt text instructions for the title, left kpi card, merchant request, proposed structure, single cards for decision class and label, narratives, account performance, monitoring journey, and servicing &amp; intervention.</p>
+</div></article><article id="m-9a58a7b4-a835-4748-9068-c77e2ef89aa4" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00041 · 2026-09-03T16:15:18.003513-04:00 · active path</p><div class="bubble"><p>Yes. Now that we have the full current narrative inventory and the exact helper branching, I would capture <strong>more than merely seven screenshots</strong>. The narrative system has seven governed outcomes, but review and hard-stop outcomes contain materially different explanatory branches. The controlling QA explicitly requires all seven outcomes plus a Recession Energy path affected by the Baseline non-improvement floor. [export reference: filecite | turn77file10 | L1042-L1073]</p>
+<h2>Recommended P03 evidence population</h2>
+<p>I recommend <strong>17 merchant/scenario screenshots</strong>. That is enough to cover every material narrative family and the meaningful helper branches without turning the evidence package into a random sample.</p>
+<table>
+<thead>
+<tr>
+<th align="right">#</th>
+<th align="right">Merchant</th>
+<th>Scenario</th>
+<th>Narrative situation demonstrated</th>
+<th>Why capture it</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td align="right"><strong>738</strong></td>
+<td><strong>Baseline</strong></td>
+<td><strong>Approved as requested</strong></td>
+<td>Canonical funded approval; also half of the critical scenario-isolation pair. It has exactly one lifecycle row and a physical funding date. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td align="right"><strong>101</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td><strong>Counteroffer authorized</strong></td>
+<td>Gives us a stress-scenario authorized counteroffer rather than making the funded evidence set Baseline-only. Current inventory identifies 101/RE as counteroffer authorized. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td align="right"><strong>082</strong></td>
+<td><strong>Baseline</strong></td>
+<td><strong>Counteroffer review — medium-confidence evidence</strong></td>
+<td>Canonical Patch-3 regression case; exercises the corrected “evidence is usable but not strong enough...” construction. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td align="right"><strong>002</strong></td>
+<td><strong>Baseline</strong></td>
+<td><strong>Counteroffer review — verification + capacity</strong></td>
+<td>Exercises the combined review-reason branch: verification concern <strong>and</strong> capacity frontier. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td align="right"><strong>051</strong></td>
+<td><strong>Baseline</strong></td>
+<td><strong>Counteroffer review — capacity + repayment guardrail</strong></td>
+<td>Exercises the distinct combined capacity/repayment-review narrative. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td align="right"><strong>446</strong></td>
+<td><strong>Baseline</strong></td>
+<td><strong>Counteroffer review — processor continuity</strong></td>
+<td>Exercises the processor-continuity review explanation. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td align="right"><strong>149</strong></td>
+<td><strong>Baseline</strong></td>
+<td><strong>Counteroffer review — verification only</strong></td>
+<td>Separates the pure verification branch from merchant 002&#39;s verification-plus-capacity branch. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td align="right"><strong>003</strong></td>
+<td><strong>Baseline</strong></td>
+<td><strong>Counteroffer review — capacity only</strong></td>
+<td>Exercises the pure capacity-frontier review wording. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">9</td>
+<td align="right"><strong>749</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td><strong>Underwriting review — capacity/resilience + negative liquidity</strong></td>
+<td>Strong manual-review example and a visually valuable stress case: negative liquidity, review-eligible structure, no funding. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">10</td>
+<td align="right"><strong>298</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td><strong>Underwriting review — medium data confidence</strong></td>
+<td>Distinct manual-review reason: evidence usable but insufficient for straight-through authorization. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">11</td>
+<td align="right"><strong>738</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td><strong>Evidence decline</strong></td>
+<td>Other half of the canonical 738 scenario-isolation pair: 28 usable days versus 30 required, no funded lifecycle. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">12</td>
+<td align="right"><strong>004</strong></td>
+<td><strong>Baseline</strong></td>
+<td><strong>No feasible structure — ordinary complete search</strong></td>
+<td>Clean normal no-feasible case: 11 alternatives tested, complete search, no feasible candidate, no funding. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">13</td>
+<td align="right"><strong>082</strong></td>
+<td><strong>Recession Energy</strong></td>
+<td><strong>No feasible structure — stress-floor/non-improvement path</strong></td>
+<td>Particularly valuable because the same merchant is review-eligible in Baseline but becomes governed no-feasible under Recession Energy/non-improvement-floor treatment. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">14</td>
+<td align="right"><strong>009</strong></td>
+<td><strong>Baseline</strong></td>
+<td><strong>Policy hard stop — elevated fraud/verification risk</strong></td>
+<td>Exercises <code>FRAUD_TIER_3</code> plain-English branch. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">15</td>
+<td align="right"><strong>120</strong></td>
+<td><strong>Baseline</strong></td>
+<td><strong>Policy hard stop — specific verification conflict</strong></td>
+<td>Exercises the distinct non-remediable verification-conflict branch. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">16</td>
+<td align="right"><strong>056</strong></td>
+<td><strong>Baseline</strong></td>
+<td><strong>Policy hard stop — processor continuity</strong></td>
+<td>Exercises the hard-stop processor-continuity branch, distinct from processor continuity causing review. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">17</td>
+<td align="right"><strong>102</strong></td>
+<td><strong>Baseline</strong></td>
+<td><strong>Policy hard stop — evidence-confidence boundary</strong></td>
+<td>Exercises the evidence-confidence hard-stop branch. [export reference: filecite</td>
+</tr>
+<tr>
+<td align="right">18*</td>
+<td align="right"><strong>018</strong></td>
+<td><strong>Baseline</strong></td>
+<td><strong>Policy hard stop — generic policy/verification/covenant fallback</strong></td>
+<td>I recommend this final screenshot because it proves the helper&#39;s governed fallback wording as well. [export reference: filecite</td>
+</tr>
+</tbody></table>
+<p>I would actually capture <strong>all 18</strong>. The first 13 give excellent outcome/strategy/scenario coverage; 14–18 exhaust the five materially different hard-stop helper outputs.</p>
+<p>The reason this is more defensible than seven screenshots is that <code>R26 P03 __Review Reason Plain English</code> contains separate branches for verification+capacity, verification, processor continuity, medium confidence, repayment+capacity, repayment, capacity, and fallback. [export reference: filecite | turn85file0 | L62-L96] The hard-stop helper separately contains fraud-tier, verification-conflict, processor-continuity, medium-confidence, and generic-policy branches. [export reference: filecite | turn85file0 | L98-L152] We should demonstrate the branches that actually occur in the current population rather than pretending the seven final outcomes alone exhaust the visible narrative system.</p>
+<p><strong>Capture the full P03 page for each case</strong>, not cropped narrative-only screenshots. That makes each artifact simultaneously evidence for merchant/scenario selection, request, governed outcome, proposed structure behavior, narrative behavior, funded/nonfunded lifecycle behavior, monitoring, and servicing.</p>
+<hr>
+<h1>Final P03 alt-text pass</h1>
+<p>For Power BI, go to each visual&#39;s <strong>Format visual → General → Properties → Alt text</strong>. Where I identify an existing dynamic measure, use <strong>fx → Format style: Field value → R1Measures → specified measure</strong>. Do not paste the measure name as literal text.</p>
+<table>
+<thead>
+<tr>
+<th>Visual</th>
+<th>Alt-text treatment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Page title — Merchant Application &amp; Account Journey</strong></td>
+<td><strong>Static:</strong> <code>Merchant Application and Account Journey. Interactive view of the selected synthetic merchant and scenario from application request through governed decision, funded-account monitoring, and servicing.</code></td>
+</tr>
+<tr>
+<td><strong>Left merchant-profile KPI/card area</strong></td>
+<td><strong>Static:</strong> <code>Merchant profile for the selected merchant, including industry, size tier, annual sales range, relationship stage, relationship quality, prior advances, and prior funded amount.</code></td>
+</tr>
+<tr>
+<td><strong>Merchant request</strong></td>
+<td><strong>Static:</strong> <code>Merchant request for the selected application and scenario, including application date, requested amount, use of funds, acquisition channel, requested remittance rate, payback multiple, payoff horizon, and total repayment.</code></td>
+</tr>
+<tr>
+<td><strong>Proposed structure</strong></td>
+<td><strong>Dynamic:</strong> bind <strong><code>R26 P03 Selected Structure Alt Text</code></strong>. This is the current accessibility measure specifically built to describe the governed selected amount, remittance rate, payback multiple, horizon, and repayment—or state that no governed selected structure exists. [export reference: filecite</td>
+</tr>
+<tr>
+<td><strong>Decision class card</strong></td>
+<td><strong>Static:</strong> <code>High-level governed decision class for the selected merchant and scenario: Authorized, Review, or Declined.</code></td>
+</tr>
+<tr>
+<td><strong>Decision label card</strong></td>
+<td><strong>Dynamic:</strong> bind <strong><code>R26 P03 Decision Tile Alt Text</code></strong>. It reports the governed decision class and business-facing outcome label and appends the candidate-search summary where applicable. [export reference: filecite</td>
+</tr>
+<tr>
+<td><strong>Narratives area</strong></td>
+<td><strong>Dynamic:</strong> bind <strong><code>R26 P03 Narrative Alt Text</code></strong>. Do this on the visual/container that represents the narrative section, rather than repeating it on all three narrative cards. It concatenates Merchant operating evidence, Structure assessment, and Decision rationale in screen-reader order. [export reference: filecite</td>
+</tr>
+<tr>
+<td><strong>Account performance</strong></td>
+<td><strong>Static:</strong> <code>Account performance across the funded synthetic account lifecycle. The chart shows remaining receivable and remittance pace by monitoring date. Tooltips provide monitoring status, remitted to date, expected to date, and cumulative shortfall. Nonfunded application-scenarios have no account-performance series.</code></td>
+</tr>
+<tr>
+<td><strong>Monitoring journey</strong></td>
+<td><strong>Static:</strong> <code>Monitoring journey across the funded synthetic account lifecycle. The chart shows governed monitoring status by monitoring date from Paid off through Dormant or no remittance. Tooltips provide monitoring status, primary alert family, daily shortfall alert, remittance pace, cumulative shortfall, days since remittance, operational alert-family count, and raw alert-condition count. Nonfunded application-scenarios have no monitoring journey.</code></td>
+</tr>
+<tr>
+<td><strong>Servicing &amp; intervention</strong></td>
+<td><strong>Dynamic:</strong> bind <strong><code>R26 P03 Servicing Alt Text</code></strong>. It is already lifecycle-aware: nonfunded paths explicitly report that no funded-account servicing/intervention evidence exists; funded paths describe intervention, action, queue, exposure, and reason. [export reference: filecite</td>
+</tr>
+</tbody></table>
+<h3>Two accessibility details I recommend</h3>
+<p>For the <strong>Decision class</strong> and <strong>Decision label</strong> cards, don&#39;t bind <code>R26 P03 Decision Tile Alt Text</code> to both. That would make a screen reader announce substantially the same decision twice. Use the short static description on Decision class and the full dynamic measure on Decision label.</p>
+<p>Likewise, don&#39;t bind <code>R26 P03 Narrative Alt Text</code> independently to all three narrative visuals. The measure deliberately combines all three sections in the logical order <strong>Merchant operating evidence → Structure assessment → Decision rationale</strong>. [export reference: filecite | turn83file3 | L265-L281] Use it once on the logical narrative group/carrier; for the individual narrative visuals, either leave redundant alt text off if Power BI permits that cleanly, or use concise static purpose descriptions rather than repeating the complete narrative three times.</p>
+<p>This 18-case capture set plus the final accessibility pass will give P03 a much stronger evidence package than the minimum seven-outcome requirement, while still being bounded and purposeful.</p>
+</div></article><article id="m-c3d5b147-46fe-4f7a-8fc0-8d8601dd004c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00042 · 2026-09-03T16:21:31.983000-04:00 · active path</p><div class="bubble"><p>updated temporal boundary / interpretation boundary write-up for P03?</p>
+</div></article><article id="m-935a2ed0-f0b8-407c-9b68-fea2cc68a9f4" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00043 · 2026-09-03T16:21:58.061636-04:00 · active path</p><div class="bubble"><p>Yes. The old P03 boundary language should be updated now that the page is explicitly combining <strong>decision-time application evidence with the R26 funded lifecycle, monitoring journey, and servicing evidence</strong>. P03 still displays the source-cutoff control, but the current page can legitimately show synthetic lifecycle dates after that cutoff. [export reference: filecite | turn91file2 | L37-L47] The successor evidence also establishes that funded lifecycle exists only for authorized paths, while review/decline paths must have zero lifecycle rows. [export reference: filecite | turn83file3 | L347-L363]</p>
+<p>I recommend replacing the existing P03 footer boundary text with this:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Decision-time source evidence is anchored to the 2026-07-23 observed-source cutoff. Authorized synthetic accounts may subsequently show modeled funding, monitoring, servicing, and payoff activity through the governed lifecycle horizon ending 2026-11-22. Dates after the source cutoff are synthetic forward lifecycle evidence, not later-observed merchant facts.</p>
+</blockquote>
+<blockquote>
+<p><strong>Interpretation boundary:</strong> Deterministic synthetic portfolio. Baseline and Recession Energy are alternative governed scenarios for the same application—not forecasts, sequential states, or actual merchant outcomes. Decisions, proposed structures, narratives, lifecycle, monitoring, and servicing reflect the certified R26 simulation; only authorized funded paths have downstream account-lifecycle evidence. Review and decline paths do not imply funding or subsequent account performance.</p>
+</blockquote>
+<p>That is the version I would use on the physical P03 page.</p>
+<p>A few reasons the wording is important:</p>
+<ul>
+<li><strong>“Observed-source cutoff” cannot mean “nothing on the page may occur after July 23.”</strong> P03&#39;s lifecycle is intentionally synthetic-forward. For example, merchant 738 Baseline is governed approved and physically funded July 25, while its Recession Energy path is an evidence decline with no lifecycle row. [export reference: filecite | turn82file1 | L8-L14]</li>
+<li>The R26 QA explicitly enforces <strong>one lifecycle row for an authorized outcome and zero lifecycle rows for a nonauthorized outcome</strong>. [export reference: filecite | turn83file3 | L347-L363]</li>
+<li>The broader Power BI temporal control establishes <strong>2026-11-22 as the evidence endpoint</strong>, with no post-evidence carry-forward beyond it. [export reference: filecite | turn92file14 | L475-L485] [export reference: filecite | turn92file14 | L526-L541]</li>
+<li>The interpretation language should prevent a reader from treating <strong>Recession Energy as “what happens later”</strong> to the Baseline account. P03 is scenario-isolated at application-scenario grain; it must not leak Baseline facts into Recession Energy or infer funding merely from authorization. [export reference: filecite | turn77file10 | L1074-L1089]</li>
+</ul>
+<p>If you need a <strong>shortened footer version</strong> because the current P03 text box is tight, I would use:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Source evidence through 2026-07-23; later funding and account activity through 2026-11-22 are governed synthetic-forward lifecycle evidence, not later-observed merchant facts.<br><strong>Interpretation boundary:</strong> Deterministic synthetic portfolio. Baseline and Recession Energy are alternative scenarios, not forecasts or sequential states; only authorized funded paths have downstream lifecycle, monitoring, and servicing evidence.</p>
+</blockquote>
+<p>I prefer the <strong>full version for P03</strong> if it fits. It is materially clearer than the old generic boundary statement now that P03 tells the complete application-to-account story.</p>
+</div></article><article id="m-9f608bea-1d65-4f85-8857-bc2dee00bfac" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00044 · 2026-09-03T16:23:04.966000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: e9af2630-99c0-469f-aa67-c7bd31e0638e.png</p><div class="bubble"><p>those are super long. we have two lines to fit both: </p>
+</div></article><article id="m-88b55e39-0663-4202-a370-7de1bfbf2364" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00045 · 2026-09-03T16:23:10.756169-04:00 · active path</p><div class="bubble"><p>Agreed. For this footer, I would compress them to:</p>
+<p><strong>Temporal boundary:</strong> Source evidence through 2026-07-23; later lifecycle activity through 2026-11-22 is governed synthetic-forward evidence, not later-observed history.<br><strong>Interpretation boundary:</strong> Deterministic synthetic evidence; Baseline and Recession Energy are alternative scenarios, not forecasts or sequential states.</p>
+<p>That preserves the two most important controls without overwhelming the page.</p>
+</div></article><article id="m-0d5da717-c26f-4963-836b-2e69334b90f5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00046 · 2026-09-03T16:29:29.579000-04:00 · active path</p><div class="bubble"><p>there is no visual container narratives section. they are three distinct tables. please provide alt text for each narrative section.</p>
+</div></article><article id="m-bb651034-e2e3-4d9b-975b-60a8eb1857f5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00047 · 2026-09-03T16:29:31.746301-04:00 · active path</p><div class="bubble"><p>Correct. Since the three narratives are <strong>three distinct table visuals</strong>, each should have its own concise alt text describing that visual&#39;s purpose. We should <strong>not</strong> use the combined <code>R26 P03 Narrative Alt Text</code> on each one because that would cause substantial repetition.</p>
+<p>Use:</p>
+<ul>
+<li><p><strong>Merchant operating evidence:</strong><br><code>Explains the operating and verification evidence available for the selected merchant and scenario, including relevant sales, liquidity, payment, and evidence-quality observations.</code></p>
+</li>
+<li><p><strong>Risk &amp; economics assessment:</strong><br><code>Explains how the requested structure was evaluated for the selected merchant and scenario, including alternative structures, modeled economics, policy constraints, and the basis for the selected or supportable structure.</code></p>
+</li>
+<li><p><strong>Decision:</strong><br><code>Explains the governed final decision for the selected merchant and scenario, including authorization, review, or decline rationale and whether funding occurred.</code></p>
+</li>
+</ul>
+<p>These are deliberately <strong>static purpose descriptions</strong>, rather than repeating the visible narrative verbatim. The screen reader can then encounter the actual table content after understanding what each section represents.</p>
+<p>I would use these three and <strong>not bind <code>R26 P03 Narrative Alt Text</code> to any of the individual narrative tables</strong>. The combined measure can remain in the model as an accessibility/support artifact, but the physical P03 layout is better served by distinct alt text for each actual visual.</p>
+</div></article><article id="m-287b70f2-710a-4613-bbe2-3cb7cc4e11a2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00048 · 2026-09-03T16:32:04.608000-04:00 · active path</p><div class="bubble"><p>should this say proposed structure instead of selected? our subtitle ok?  Follow synthetic merchant applications from request through evidence, governed decision and selected structure; funded paths continue through performance, monitoring and servicing.  </p>
+</div></article><article id="m-c5a1c268-e49e-482c-b2be-b4d17e2204fe" class="message assistant"><p class="meta"><strong>Assistant</strong> · C118-M00049 · 2026-09-03T16:32:06.633143-04:00 · active path</p><div class="bubble"><p>Yes. <strong>“Proposed structure” is better than “selected structure” in the subtitle.</strong></p>
+<p>“Selected structure” is technically meaningful inside the strategy engine, but on P03 it can imply that the structure has been authorized. That is not true for cases such as <strong>Counteroffer review</strong>, where P03 displays a review-eligible proposed structure that has <strong>not</strong> been authorized. Your 082 example demonstrates exactly that distinction.</p>
+<p>I would use:</p>
+<blockquote>
+<p><strong>Follow synthetic merchant applications from request through evidence, governed decision and proposed structure; funded paths continue through performance, monitoring and servicing.</strong></p>
+</blockquote>
+<p>I think the rest of the subtitle is strong. It accurately communicates the page&#39;s left-to-right story and, importantly, <strong>“funded paths continue”</strong> makes clear that downstream account performance is conditional on actual governed funding.</p>
+<p>One tiny stylistic option is adding the Oxford comma:</p>
+<blockquote>
+<p><strong>Follow synthetic merchant applications from request through evidence, governed decision, and proposed structure; funded paths continue through performance, monitoring, and servicing.</strong></p>
+</blockquote>
+<p><strong>I prefer this final version.</strong></p>
+</div></article><article id="m-ec198197-9f20-4674-90a3-4d0e5096882f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C118-M00050 · 2026-09-03T16:38:25.255000-04:00 · active path</p><p class="note">6 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 2dc0eba5-de3e-4b09-8db5-215db4df5576.png; 0e190743-c7cf-4cf1-8ec0-d243e77c8d52.png; 398b38f5-bc8a-4f07-afc6-867900bf2b81.png; b6f78905-d40e-499a-8a33-00a551d9b6dc.png; 63de6190-ac83-4826-8578-a9b3630102f4.png; 56398611-92e9-4bdf-b7e1-5405c12e27b4.png</p><div class="bubble"><p>I have completed P03 and all that is left is to capture evidence. I have to run an errand. I will capture P03 evidence when I return. In the meantime, please proceed with a P04 step by step to-do list. Here is the current P04. Note, this is where we left off previously before going back to remediation/correction. When evaluating the P04 to-do. let&#39;s determine the story we have told so far and what story we want to tell on this tab. Does the current set-up accomplish that story? Do we need to alter the current set-up? Remove/add/etc. Please evaluate and provide a detailed roadmap for us to follow. Lean on our source of truth and process for this exercise.  Current P04: </p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

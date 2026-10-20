@@ -1,0 +1,1038 @@
+# MSBF — Module 1/2 Strategy Correction, Remediation & Republishing Part 4
+
+Part 15 · [Conversation index](README.md) · [History home](../../README.md)
+
+> Historical dialogue: commands and approvals below describe past events. They are not current execution or publication instructions. Attachment references do not establish recovered bytes.
+
+[Previous part](part-14.md)
+
+<a id="m-694fba9c-9c9f-41cf-ac6b-a5ad2b66e56b"></a>
+## Assistant · C120-M00270
+
+C120-M00270 · 2026-09-10T07:23:33.400748-04:00 · alternate branch
+
+Preceding visible parent: [C120-M00269](part-14.md#m-404c5cba-392f-4508-a7d2-3ca930b1f43d)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The four **actual retained release ZIPs** are:
+
+1. `MSBF_R26_R3_RETAINED_FINAL_RESUME_RUNTIME_20260902.zip`  
+   39,382,961 bytes  
+   SHA-256 `b17d0292180adf2bf49725be63b6c12f297d4ff64e0eba52c648045884497746`
+
+2. `MSBF_MCI_POWER_BI_GITHUB_PUBLICATION_SUPPORT_R3_20260904.zip`  
+   31,056,035 bytes  
+   SHA-256 `1fe42707eabfb53512729581ded0dc2d1addf7ca4f6e4d4de594f3f3ea37551a`
+
+3. `MSBF_Visual_Publication_Candidate_R1_20260909.zip`  
+   125,229,642 bytes  
+   SHA-256 `c2122d0c47cd1bd604dd372bb4aa662a61be86af0578c23ed768629cccd855b5`
+
+4. `MSBF_Cohort_R3_Editorial_Patch_R1_20260908.zip`  
+   9,613,925 bytes  
+   SHA-256 `aadcb403b662fc5e53280fd92357e53db4f4c9bcad6b1111ba286d61f9f2bcc3`
+
+Those are the exact carriers R20 requires to be freshly rehashed before upload; projected component folders are not substitutes. [export reference: filecite | turn111file4 | L206-L217]
+
+Below is the prompt I recommend giving **Part 5** so it owns the release-engineering finish line from the R6 freeze through hosted closure.
+
+---
+
+# COPY/PASTE PROMPT — PART 5 RELEASE ENGINEERING TO PUBLICATION CLOSURE
+
+```text
+MSBF — MODULE 1/2 STRATEGY CORRECTION, REMEDIATION & REPUBLISHING PART 5
+FINAL RELEASE-ENGINEERING EXECUTION
+
+This is continuation, not restart.
+
+The documentation/editorial work is complete.
+
+Current local disposition:
+FINAL_LOCAL_EDITORIAL_FREEZE_READY_FOR_RELEASE_ENGINEERING
+
+Exact final local integrated candidate:
+MSBF_FINAL_INTEGRATED_PUBLICATION_CANDIDATE_R6_20260910_FINAL_MICROPOLISH.zip
+
+Bytes:
+279632507
+
+SHA-256:
+31611a7c90ad7a0b597ecc3c0a5592c2aa7c031a82b5c7fbcc40750c8e8d0bf2
+
+Treat that R6 candidate as the current owner-approved final local
+publication tree unless a release-engineering check finds a concrete
+problem.
+
+Do NOT perform another README rewrite, another visual pass, another
+history rebuild, another technical remediation cycle, another database
+execution, another Power BI refresh, another cohort calculation, or a
+generalized campaign-runner build.
+
+The next work is release engineering.
+
+======================================================================
+1. CONTROLLING AUTHORITY
+======================================================================
+
+Operating model:
+IA-GOV-20260822-001
+
+Controlling integrated acceptance:
+IA-D-R20-INT-001
+
+Disposition:
+ACCEPT_WITH_OBSERVATIONS
+
+Conditional publication authority:
+IA-PUB-R20-INTEGRATED-001
+
+Accepted pre-history baseline:
+MSBF_FINAL_INTEGRATED_PUBLICATION_CANDIDATE_R3_20260909_R19_EMBEDDED.zip
+
+SHA-256:
+ef1b1858f020a06109c86f8dc36cb56b86e85c8bf161794f686dd229d78265a7
+
+History/current-release finalization has since produced R4, R5, and R6
+as bounded source-owner derivatives.
+
+The R6 editorial pass preserved:
+- accepted technical payloads;
+- R26 projection;
+- Power BI projection and PBIX/DataModel;
+- cohort;
+- frozen visual family;
+- history;
+- runbook;
+- validators.
+
+Do not reopen those accepted payloads absent an actual mismatch.
+
+R18/R19 HOLD decisions remain historical.
+R20 is the controlling accepting decision.
+
+Route B remains qualified only for:
+portable checkpoint restore + isolated retained-final
+M2.11/M2.12/G3-v2 replay.
+
+Route D remains NOT_QUALIFIED.
+
+No Campaign Scale or Module 3 runtime/database authority is granted.
+
+======================================================================
+2. OWNER EXECUTION MODEL
+======================================================================
+
+Andrew will execute PowerShell/Git commands on his Windows machine.
+
+Authoritative local repository:
+D:\x\m
+
+Do not claim you pushed, tagged, published, downloaded, or Windows-tested
+anything unless Andrew returns terminal output proving it.
+
+Your job is to:
+
+1. prepare exact commands;
+2. interpret each returned result;
+3. fail closed on a mismatch;
+4. advance only when the prior gate passes;
+5. preserve exact identities;
+6. minimize unnecessary prompt cycles by grouping safe read-only checks;
+7. separate pre-push, publication, and post-publication closure.
+
+Do not ask Andrew to manually invent hashes, paths, or release metadata
+when they can be derived from returned evidence.
+
+======================================================================
+3. RELEASE ASSETS — EXACT LOCKS
+======================================================================
+
+The four actual retained release ZIPs are:
+
+A.
+MSBF_R26_R3_RETAINED_FINAL_RESUME_RUNTIME_20260902.zip
+Bytes: 39382961
+SHA-256:
+b17d0292180adf2bf49725be63b6c12f297d4ff64e0eba52c648045884497746
+
+B.
+MSBF_MCI_POWER_BI_GITHUB_PUBLICATION_SUPPORT_R3_20260904.zip
+Bytes: 31056035
+SHA-256:
+1fe42707eabfb53512729581ded0dc2d1addf7ca4f6e4d4de594f3f3ea37551a
+
+C.
+MSBF_Visual_Publication_Candidate_R1_20260909.zip
+Bytes: 125229642
+SHA-256:
+c2122d0c47cd1bd604dd372bb4aa662a61be86af0578c23ed768629cccd855b5
+
+D.
+MSBF_Cohort_R3_Editorial_Patch_R1_20260908.zip
+Bytes: 9613925
+SHA-256:
+aadcb403b662fc5e53280fd92357e53db4f4c9bcad6b1111ba286d61f9f2bcc3
+
+These are the exact release assets.
+
+Do not:
+- reconstruct them from component directories;
+- recompress them;
+- rename them casually;
+- alter their contents;
+- use projected repo folders as substitutes.
+
+Before upload, freshly verify all four physical carriers on Windows.
+
+======================================================================
+4. PHASE A — FRESH RELEASE-ASSET VERIFICATION
+======================================================================
+
+First help Andrew locate the four exact ZIPs.
+
+If they are in one directory, provide one PowerShell verification block.
+If split across directories, accept explicit full paths.
+
+The verification should capture for each:
+- full path;
+- existence;
+- exact filename;
+- exact byte size;
+- fresh SHA-256;
+- comparison to R20 lock;
+- ZIP readability;
+- preferably member count;
+- no mutation.
+
+Produce a compact machine-readable or tabular result.
+
+Fail closed if:
+- a file is missing;
+- filename differs unexpectedly;
+- size differs;
+- SHA differs;
+- archive cannot be read.
+
+Do not move to Git work until all four return exact PASS.
+
+Also verify the retained R6 candidate itself:
+MSBF_FINAL_INTEGRATED_PUBLICATION_CANDIDATE_R6_20260910_FINAL_MICROPOLISH.zip
+
+Expected:
+279632507 bytes
+SHA-256:
+31611a7c90ad7a0b597ecc3c0a5592c2aa7c031a82b5c7fbcc40750c8e8d0bf2
+
+Record:
+RELEASE_ASSET_PREFLIGHT = PASS
+only after fresh checks succeed.
+
+======================================================================
+5. PHASE B — FRESH GIT / REMOTE / HISTORICAL TAG PREFLIGHT
+======================================================================
+
+Before any mutation, give Andrew a READ-ONLY PowerShell/Git block.
+
+At minimum capture:
+
+- git version
+- repo root
+- current branch
+- git status --short / --branch
+- local HEAD
+- local origin/main
+- remote URL
+- git fetch --prune --tags if appropriate and read-only for working tree
+- remote main identity
+- local branches/upstreams
+- existing relevant tags
+- annotated tag object identity
+- peeled commit identity
+- recent graph/history
+- core.autocrlf
+- core.longpaths
+
+Historical public reference identities previously recorded:
+
+Public main predecessor reference:
+46fb1f9198475678edc9cabdeefd2f91a59e49c2
+
+Historical Module 2 v2.0.0 annotated tag object:
+fcf32b615142a06075a7fccede26a97042ca8194
+
+Historical Module 2 v2.0.0 peeled commit:
+500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+
+Treat these as reference values until freshly verified.
+
+Critical rule:
+DO NOT REPOINT, FORCE-MOVE, DELETE, OR RECREATE THE OLD v2.0.0 TAG.
+
+If the live remote differs unexpectedly from the recorded state:
+STOP and explain the exact difference before mutation.
+
+If the working tree is not clean:
+STOP and identify the files before applying R6.
+
+The intended new stable release tag is:
+module-2-g3-v2.1.0
+
+Do not create it yet in this phase.
+
+======================================================================
+6. PHASE C — MATERIALIZE R6 INTO A SAFE STAGING TREE
+======================================================================
+
+Do not blindly unzip over D:\x\m.
+
+First establish a short-path staging directory, for example:
+
+D:\MSBF_RELEASE_R6_STAGING_20260910
+
+or another safe owner-visible location.
+
+Cleanly extract the R6 candidate into that new directory.
+
+Verify:
+- clean extraction;
+- exact candidate member count;
+- no path collisions;
+- no path traversal;
+- no symlink surprises;
+- no nested unexpected repo root ambiguity;
+- root files look like the intended Git tree.
+
+Run the existing validators against the extracted R6 tree:
+
+Expected current validator results from Part 5:
+Public release validation PASS
+Governed manifest files: 2880
+Module 2 stage folders: 12
+
+Candidate overlay validation PASS
+Governed candidate files: 248
+
+Freshly rerun them.
+
+Do not modify validator code.
+
+Also perform targeted checks for:
+- absence of all eleven excluded R22 paths;
+- absence of complete excluded private payloads;
+- no private evidence carrier accidentally present;
+- no private history/control ZIP included;
+- no standalone font files newly introduced;
+- expected PBIX identity retained;
+- visual family present;
+- README and docs entry points present.
+
+Do not yet mutate D:\x\m.
+
+======================================================================
+7. PHASE D — CONSTRUCT THE OWNER CHECKOUT UPDATE SAFELY
+======================================================================
+
+The final R6 tree must become the intended Git working tree.
+
+Prefer a deterministic copy/mirror procedure that:
+- operates from the validated R6 staging tree;
+- targets D:\x\m;
+- preserves .git;
+- changes only tracked/publication-tree files;
+- does not copy private source/control packages;
+- does not copy the R6 outer ZIP into the repository unless it is
+  explicitly a governed repository member;
+- does not delete .git;
+- does not copy temporary validation output into the repository.
+
+Before applying:
+- make a read-only inventory of current D:\x\m;
+- optionally create a safe owner backup/snapshot outside the repo if
+  needed for rollback;
+- confirm the target path.
+
+Provide Andrew exact PowerShell commands.
+
+After applying R6 to the checkout, immediately run:
+
+git status --short
+git diff --stat
+git diff --name-status
+
+Then compare the resulting working-tree file population to the extracted
+R6 staging tree, excluding only .git and explicitly approved local-only
+items.
+
+Require deterministic equality.
+
+Do not proceed if:
+- files are missing;
+- extra governed files exist;
+- unexpected deletions occur;
+- protected files differ from R6;
+- private material appears.
+
+======================================================================
+8. PHASE E — PRE-COMMIT PUBLICATION GATE
+======================================================================
+
+Run all required checks against the ACTUAL D:\x\m checkout.
+
+At minimum:
+
+A. Exact tree/release checks
+- R6 file-tree equality
+- manifest reconciliation
+- SHA256SUMS reconciliation
+- package inventory reconciliation
+
+B. Existing validators
+- tools/validate_public_release.py
+- historical rc2 candidate-overlay validator
+
+Expected:
+Public release validation PASS
+Governed manifest files: 2880
+Module 2 stage folders: 12
+
+Candidate overlay validation PASS
+Governed candidate files: 248
+
+C. Protected payload identities
+Freshly verify:
+- accepted PBIX SHA-256
+- embedded DataModel if tooling supports it without modification
+- Power BI public projection count/hash controls
+- visual-family protected files
+- cohort public files
+- R26 projection
+- runbook
+- frozen history
+
+Accepted PBIX:
+MSBF_Merchant_Credit_Intelligence_M2_v2.1.0-rc2.pbix
+
+Expected bytes:
+27635305
+
+Expected SHA-256:
+ca46e8551860836a0cf4ff9239c42fcf8df02f1705596b9f8ca1bd047b5294e4
+
+Expected DataModel SHA-256:
+24396d02c0fbcb782cc9918e842886711146b8ff9455c8822d2aeaf009b96061
+
+Do NOT rename or resave the PBIX.
+
+D. Public/private checks
+- eleven R22 excluded paths absent
+- targeted private-content scanner passes
+- no private audit/evidence carrier in Git tree
+- no raw owner history PDF unless explicitly public-safe and intended
+- no credential/secrets findings
+
+E. Documentation checks
+- README renders coherently in source
+- key image links resolve
+- P03 link path resolves
+- poster links resolve
+- Module 1/2 lineage links resolve
+- cohort and Power BI links resolve
+- Current Use Guide resolves
+- no stale localhost/temp/session file links
+- no broken relative docs links
+
+F. Git checks
+- inspect full changed-file list
+- ensure only intended publication changes
+- no .gitignore surprise
+- no CRLF/line-ending mass rewrite
+- no unexpectedly huge unintended generated files
+- no private ZIPs staged
+
+Present Andrew a concise PRE-COMMIT GATE summary.
+
+Only if all hard checks pass:
+PRE_COMMIT_GATE = PASS
+
+======================================================================
+9. PHASE F — COMMIT BINDING
+======================================================================
+
+Once PRE_COMMIT_GATE = PASS, provide the exact Git commands to stage
+and commit.
+
+Do not use:
+git add .
+without first showing why it is safe.
+
+Prefer:
+- explicit reviewed set, or
+- git add -A only after the exact working-tree equality and private-file
+  checks have passed.
+
+Before commit:
+git diff --cached --stat
+git diff --cached --name-status
+
+If feasible, run a final staged-content validation.
+
+Use a professional commit message such as:
+
+Publish Module 2 / G3 v2.1.0 integrated successor
+
+or another concise message that accurately covers the full integrated
+release.
+
+After commit, record:
+- commit SHA
+- tree SHA if useful
+- parent SHA
+- branch
+- timestamp
+- commit subject
+
+Bind the exact final commit identity to:
+- R6 candidate identity;
+- R20 authority;
+- four release-asset identities.
+
+Do not create the release tag until this binding is validated.
+
+======================================================================
+10. PHASE G — NEW STABLE TAG AND PRE-PUSH VERIFICATION
+======================================================================
+
+The intended new stable tag is:
+
+module-2-g3-v2.1.0
+
+Create a NEW annotated tag only after commit binding passes.
+
+Use an appropriate annotated tag message.
+
+Before push, verify:
+- old module-2-g3-v2.0.0 tag object unchanged;
+- old peeled target unchanged;
+- new v2.1.0 tag points to the intended final commit;
+- current branch points to the intended commit;
+- no unexpected local divergence;
+- working tree clean after commit.
+
+Show:
+git show-ref --tags
+git rev-parse module-2-g3-v2.1.0^{tag}
+git rev-parse module-2-g3-v2.1.0^{commit}
+
+and corresponding v2.0.0 checks.
+
+Do not force-push.
+Do not force-tag.
+Do not delete old tags.
+
+Set:
+PRE_PUSH_GATE = PASS
+only after this is verified.
+
+======================================================================
+11. PHASE H — PUSH THE COMMIT AND NEW TAG
+======================================================================
+
+Only after PRE_PUSH_GATE = PASS:
+
+Provide Andrew the exact push commands.
+
+Prefer explicit pushes, for example:
+- push the intended branch;
+- push the new tag separately.
+
+Do not use ambiguous --mirror or force options.
+
+After push, verify using fresh remote reads:
+- remote branch now contains the intended commit;
+- new tag exists remotely;
+- new tag peels to the intended commit;
+- old tag remains unchanged.
+
+Record:
+REMOTE_BINDING = PASS
+
+Do not yet claim release publication until the GitHub release exists.
+
+======================================================================
+12. PHASE I — CREATE / PUBLISH THE GITHUB RELEASE
+======================================================================
+
+Release identity:
+module-2-g3-v2.1.0
+
+The release should be tied to the exact new stable tag.
+
+The four upload assets are EXACTLY the four locked ZIPs from Phase A.
+
+Do not upload:
+- R6 integrated candidate ZIP unless specifically authorized as a
+  separate release asset;
+- R5/R6 overlays;
+- private editorial-control ZIPs;
+- private history-freeze evidence;
+- audit-return carrier;
+- raw chat PDFs;
+- private Route-B checkpoint backups;
+- private Desktop evidence;
+- private cohort source/repro carrier.
+
+Prepare professional release notes based on the accepted public story.
+
+The release notes should communicate:
+- Module 2 / G3 v2.1.0 integrated successor;
+- corrected governed structure-search / authority model;
+- funded lifecycle through M2.4–M2.10;
+- R26 monitoring calibration;
+- M2.11 bounded strategy/account-treatment comparisons;
+- G3-v2 source certification;
+- accepted Power BI P01–P04;
+- P03 explainability;
+- cohort report;
+- visual/teaching documentation;
+- synthetic/non-production scope;
+- current-use/reproducibility limitations.
+
+Do not claim:
+- production deployment;
+- real customer/funds activity;
+- causal impact;
+- CECL;
+- audited realized profitability;
+- regulatory approval;
+- autonomous operation;
+- arbitrary fresh-campaign execution;
+- Route D qualification.
+
+Andrew may publish using GitHub UI or a safe CLI path if available.
+If Part 5 supplies commands, they must use the exact tag and exact assets.
+
+After publication, capture:
+- release URL
+- release title
+- tag shown
+- published timestamp
+- asset names
+- asset sizes if visible
+
+Set:
+PUBLICATION_EVENT = COMPLETE
+only after actual hosted release evidence exists.
+
+======================================================================
+13. PHASE J — HOSTED DOWNLOAD VERIFICATION
+======================================================================
+
+This is mandatory and must use the ACTUAL GitHub-hosted assets.
+
+Do not verify the local originals and call that hosted verification.
+
+Download all four hosted release ZIPs into a new clean Windows directory,
+for example:
+
+D:\MSBF_HOSTED_VERIFY_v2_1_0_20260910
+
+For each hosted download verify:
+
+- exact filename
+- exact size
+- SHA-256
+- comparison to R20 lock
+- clean download completion
+
+Expected hashes remain:
+
+R26 runtime:
+b17d0292180adf2bf49725be63b6c12f297d4ff64e0eba52c648045884497746
+
+Power BI R3:
+1fe42707eabfb53512729581ded0dc2d1addf7ca4f6e4d4de594f3f3ea37551a
+
+Visual package:
+c2122d0c47cd1bd604dd372bb4aa662a61be86af0578c23ed768629cccd855b5
+
+Cohort package:
+aadcb403b662fc5e53280fd92357e53db4f4c9bcad6b1111ba286d61f9f2bcc3
+
+Any mismatch:
+STOP RELEASE CLOSURE.
+
+Do not assume GitHub-generated source-code ZIPs should match these
+custom release-asset ZIPs.
+
+======================================================================
+14. PHASE K — WINDOWS-NATIVE CLEAN EXTRACTION
+======================================================================
+
+The audit specifically requires Windows-native verification of the
+actual hosted assets.
+
+Use Windows-native extraction behavior appropriate to the files,
+preferably including Explorer-compatible extraction where practical.
+
+For each hosted ZIP:
+- extract to a fresh short-path directory;
+- verify no extraction error;
+- verify expected root/member readability;
+- capture failure/success evidence;
+- note longest relevant path if useful.
+
+This must be the hosted copy, not the local pre-upload original.
+
+Do not substitute:
+- Python zipfile only;
+- Linux unzip only;
+- earlier local extraction.
+
+If one hosted ZIP fails Windows-native extraction:
+release closure remains HOLD until resolved.
+
+Set:
+WINDOWS_HOSTED_EXTRACTION = PASS
+only when all four succeed.
+
+======================================================================
+15. PHASE L — ANONYMOUS / PUBLIC NAVIGATION VERIFICATION
+======================================================================
+
+Verify the repository and release as a public reader would encounter them.
+
+Prefer an incognito/private browser or otherwise anonymous-access check.
+
+Check at minimum:
+
+Repository front door:
+- root README renders;
+- primary hero image renders;
+- enterprise architecture renders;
+- structure-search image renders;
+- P03 screenshot renders;
+- P01/portfolio image renders;
+- Module 1 and Module 2 lineage renders.
+
+Navigation:
+- executive brief link
+- documentation portal
+- Current Use Guide
+- P03 explainability route
+- learning/poster route
+- visual portfolio
+- requirements/validation hub
+- source/provenance guide
+- cohort report
+- Power BI supporting material where intended
+
+Release:
+- tag visible
+- release notes visible
+- all four assets downloadable
+- filenames correct
+- no private assets exposed
+
+Historical integrity:
+- old v2.0.0 tag/release remains intact
+- new v2.1.0 is prospective successor, not retroactive rewrite
+
+Record:
+ANONYMOUS_PUBLIC_NAVIGATION = PASS
+only after actual public checks.
+
+======================================================================
+16. PHASE M — RELEASE-CLOSURE RECORD
+======================================================================
+
+Only after:
+- remote commit/tag binding PASS;
+- release published;
+- hosted hashes PASS;
+- Windows extraction PASS;
+- anonymous navigation PASS;
+
+prepare the genuine release-closure record.
+
+It should capture actual observed facts only:
+
+- final publication commit SHA;
+- new tag object and peeled target;
+- preserved old tag object and peeled target;
+- release URL;
+- release timestamp;
+- four hosted asset filenames;
+- exact hosted sizes/hashes;
+- Windows-native extraction results;
+- anonymous navigation results;
+- final README/repository identity;
+- R20 authority linkage;
+- any nonblocking observation.
+
+Do not backdate or invent events.
+
+The closure record may require a small post-publication documentation
+commit to main.
+
+If so:
+- do NOT move the already published v2.1.0 tag;
+- do NOT rewrite the release commit;
+- make the closure addendum a later commit;
+- preserve tag immutability;
+- rerun only the scoped documentation/manifest/link checks needed for
+  that closure commit.
+
+Do not turn the post-publication closure commit into a new technical
+release.
+
+======================================================================
+17. RELEASE NOTES / MARKETING QUALITY
+======================================================================
+
+Keep the public presentation consistent with the now-approved R6 editorial
+experience.
+
+The GitHub release should feel polished and concise.
+
+Lead with the business/system value:
+merchant evidence → governed structure search → explicit authority →
+funded account lifecycle → explainable portfolio intelligence.
+
+Highlight:
+- 750 synthetic merchants
+- 1,500 application-scenario paths
+- 6,519 reportable structures
+- 130 funded scenario paths
+- 15,600 monitoring rows
+- P01–P04 Power BI
+- P03 business-facing explainability
+- 70/70 G3-v2 source certification
+
+Always preserve denominators and scope.
+
+Do not create a badge wall or audit-jargon-heavy release page.
+
+Give readers clear routes:
+- executive brief
+- architecture
+- module documentation
+- P03 explainability
+- cohort report
+- Power BI
+- learning/posters
+- Current Use Guide
+- validation/provenance
+
+Use the accepted visual assets already in the repository.
+Do not regenerate images for the release page.
+
+======================================================================
+18. STOP / ESCALATION RULES
+======================================================================
+
+STOP immediately and return the exact evidence if any of these occur:
+
+- any of the four release ZIP hashes or sizes differ;
+- R6 hash differs;
+- live public predecessor/tag identity differs unexpectedly;
+- old historical tag would need modification;
+- checkout cannot be made equal to R6;
+- protected payload differs;
+- existing validator fails;
+- private R22 content reappears;
+- a private evidence/control package would be uploaded;
+- hosted release asset hash differs;
+- Windows-native extraction fails;
+- anonymous repository navigation exposes broken core links;
+- a material claim must be changed to publish safely.
+
+Do NOT solve such a stop by:
+- rerunning accepted technical work;
+- modifying the PBIX;
+- weakening validators;
+- changing accepted release ZIPs;
+- deleting historical failures;
+- force-pushing;
+- retagging v2.0.0;
+- rewriting R20 authority.
+
+Return the blocker for bounded resolution.
+
+======================================================================
+19. DESIRED END STATE
+======================================================================
+
+The target final state is:
+
+- R6 publication tree committed.
+- module-2-g3-v2.1.0 stable tag created and pushed.
+- public Module 2/G3 v2.0.0 prospectively superseded by v2.1.0.
+- historical v2.0.0 tag remains unchanged.
+- four exact release ZIPs hosted.
+- hosted copies hash-identical to locked originals.
+- hosted copies Windows-native extract successfully.
+- repository/readme/navigation work anonymously.
+- public/private boundary remains clean.
+- genuine release-closure record exists.
+- Campaign Scale and Module 3 authority remain separate.
+- Route D remains unqualified.
+- no technical or visual artifact has been unnecessarily reopened.
+
+Once that state is established, provide:
+
+1. final publication summary;
+2. exact commit SHA;
+3. exact new tag object and peeled target;
+4. preserved old tag object and target;
+5. release URL;
+6. hosted asset verification table;
+7. Windows extraction result;
+8. anonymous-navigation result;
+9. final release-closure artifact/package;
+10. concise handoff for Campaign Scale / Module 3 rebasing.
+
+Work in substantial controlled increments.
+Do not create unnecessary owner prompts.
+But stop on any hard mismatch before crossing a publication boundary.
+```
+
+A couple of implementation choices in that prompt are deliberate.
+
+First, **Part 5 should drive you command-by-command rather than just give one giant “publish everything” script**. Up through read-only checks and staging it can batch aggressively; once it reaches commit/tag/push/release, each irreversible boundary should be evidenced before the next one.
+
+Second, the R6 documentation should now be treated as finished. Its root already says exactly what we need it to say: this is an end-to-end demonstration of credit strategy, analytical engineering, risk governance, portfolio intelligence, and executive decision support, while keeping development/provenance disclosure and current-use limitations explicit. [export reference: filecite | turn110file0 | L89-L112]
+
+Third, keep the **Current Use Guide** unchanged through release engineering. It accurately distinguishes file inspection, PBIX viewing, Route A, checkpoint-qualified Route B, and the absence of a general fresh-campaign launcher. [export reference: filecite | turn109file1 | L247-L280]
+
+So at this point I would pass the prompt to **Part 5** and let it own the entire finish-line operation. Part 4 has done its job: architecture, visual/publication design, audit qualification, history, and documentation direction are closed enough that the remaining work is controlled promotion and verification.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-bbb21e28-cf5d-4bcb-b41a-121a51b8b118"></a>
+## Andrew / user · C120-M00271
+
+C120-M00271 · 2026-09-24T07:15:55.879011-04:00 · active path
+
+Preceding visible parent: [C120-M00268](part-14.md#m-0c72b767-53c3-4d8a-a958-f6e3e249d0f4)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Summarize the AI lessons we encountered, what was going off track and how did we notice /resolve. I want to make a LinkedIn post that showcases what I learned across my 35k YTD AI interactions.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-03a64586-74d6-4ec3-8180-8797e0bfb459"></a>
+## Assistant · C120-M00272
+
+C120-M00272 · 2026-09-24T07:15:57.954229-04:00 · active path
+
+Preceding visible parent: [C120-M00271](part-15.md#m-bbb21e28-cf5d-4bcb-b41a-121a51b8b118)
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Your strongest LinkedIn angle is probably **not “35,000 prompts taught me how to prompt better.”** It is:
+
+> **35,000 AI interactions taught me that getting value from AI is less about prompting and more about governing the work.**
+
+That is much more distinctive—and it is genuinely supported by what happened across MSBF and the other long-form work we have done.
+
+A useful way to organize the lessons is **what went wrong → how we detected it → what control fixed it**.
+
+| Lesson | What started going off track | How we noticed | What resolved it |
+|---|---|---|---|
+| **1. Long context creates silent drift.** | Previously settled facts slowly mutated: stage meanings shifted, old counts resurfaced, a predecessor implementation began masquerading as current. | You recognized statements that were individually plausible but inconsistent with the project history—for example treating the historical ~230-position catalog as a current executable R26 recipe. | Frozen baselines, source hierarchy, exact version labels, current-vs-historical bridges, and explicit nonregression rules. |
+| **2. AI will often optimize for coherence before truth.** | When a gap existed, the model sometimes produced the explanation that made the story flow best rather than stopping at the evidentiary boundary. | Claims sounded polished but were unsupported—e.g. suggesting users could simply run every program in sequence, or implying a current generalized campaign launcher existed. | Require the answer to distinguish **demonstrated / documented / inferred / future**. If the evidence is absent, say so instead of completing the story. |
+| **3. “Looks right” is a dangerous acceptance criterion.** | Some visual outputs were attractive but contained duplicated stages, wrong numbers, incorrect terminology, fabricated labels, or distorted relationships. | We compared each visual against physical source facts rather than judging aesthetics alone. | Separate **visual review** from **factual review**. Good design never gets to override the source. |
+| **4. Consistency can become sameness.** | The first teaching materials began looking like another executive pitch. A coherent visual system was flattening distinct audiences into one template. | You noticed that the artifacts were polished but not doing different jobs. | **“Same world. Different camera.”** Architecture = engineering camera; pitch = executive camera; cohort = analytical camera; masterclass = teaching camera; posters = explainer camera. |
+| **5. AI needs immutable reference points.** | Once a document had been revised several times, there was a risk that later work would silently rewrite what had already been accepted. | Hash mismatches, changed terminology, or a “new improved” version that could no longer be reconciled to the accepted artifact. | Exact SHA-256 locks, immutable accepted packages, version-separated successors, before/after registers, and protected-byte comparisons. |
+| **6. A model can correctly solve the wrong problem.** | At one point the publication work became too visually centered even though the actual release included R26, Power BI, cohort, history, run procedures, repository metadata, audit authority, and Git publication. | You stopped the process and said the Git publication was “bigger than the visual package.” | Re-establish the full system boundary before continuing. Scope correction is sometimes more important than output correction. |
+| **7. Independent validation matters most when the output is convincing.** | AI-generated work can be detailed enough that errors are difficult to notice because everything around them is coherent. | Independent Audit found 11 explicitly private R22 evidence files in a tree that otherwise looked publication-ready. | Treat audit as a different role with different incentives. Builder says “is it complete?” Auditor asks “what should not be here?” |
+| **8. Failure evidence is valuable.** | There is a natural temptation to clean up failed runs and present only the successful path. | The actual development history contained strict STOPs, comparator failures, script bugs, PowerShell variable collisions, wrong-page edits, rejected decks, and unsuccessful package attempts. | Preserve failures and corrections as evidence. A mature system shows **how controls caught defects**, not a fictional history in which defects never occurred. |
+| **9. Automation needs bounded authority.** | A script or AI step that is technically capable of doing more can easily overrun the intended boundary. | Examples included the need to ensure qualification wrote only to the isolated PostgreSQL cluster and never to accepted source databases, and later to prevent Git mutation before publication authority existed. | Explicit allowlists, read-only preflights, STOP conditions, isolated environments, “not authorized” lists, and phased mutation. |
+| **10. False negatives can be as dangerous as false positives.** | The strict Phase-2 comparator stopped because PostgreSQL deparsed equivalent SQL with redundant-parenthesis differences. | Source identity and checkpoint identity matched while one normalized schema-text comparison failed. | Preserve the original STOP, then create a **bounded comparator exception** rather than weakening the test globally. Controls should be corrected narrowly, not bypassed. |
+| **11. Fix the harness—not the successful run.** | After the isolated R26 execution succeeded, a PowerShell `$B`/`$b` case-insensitive variable collision caused the post-run harness to fail. | Execution output existed and reconciled; the defect was clearly downstream of the successful engine run. | Continue from the preserved result instead of rerunning the database work merely to make the wrapper look cleaner. |
+| **12. Explainability is a product feature, not documentation afterthought.** | Initially P03 was one Power BI page among many. | You recognized that its ability to explain **merchant evidence → risk/economics → decision** in plain language was one of the portfolio’s strongest capabilities. | Elevate explanation architecture to first-class status and validate it across the full population—not just four attractive examples. |
+| **13. Source-of-record and reader experience should be different layers.** | Improving marketability could easily have turned accepted BRDs and validation reports into marketing copy. | We saw that rewriting authoritative records would undermine auditability. | Keep originals immutable; add polished reading companions, navigation, visual summaries, and business explanations around them. |
+| **14. “Final” is a state that needs evidence.** | Long projects produce many things called final: final technical build, final visual, final candidate, final history freeze, final editorial freeze. | Each “final” still had a different unresolved gate. | Define finality explicitly: **technical final, audit final, publication final, hosted-delivery final**. Never let the adjective replace the gate. |
+| **15. Human judgment is not the last step—it is the control plane.** | AI could generate enormous volumes of work quickly, but it could not reliably decide when a change was strategically wrong, visually off-brand, improperly scoped, or materially misleading. | Many of the most important course corrections came from you saying, essentially, “That is not what this system is supposed to mean.” | The human owns objectives, authority, acceptance, scope, risk tolerance, and meaning. AI accelerates execution inside that governance. |
+
+A few of the most LinkedIn-worthy examples are especially memorable.
+
+**The 230-program lesson:** AI saw a detailed execution catalog and inferred a runnable sequence. The catalog was real; the conclusion was not. That taught us that **a collection of executable things is not automatically an execution procedure**.
+
+**The private R22 lesson:** the repository was technically impressive and visually polished, yet Independent Audit found private evidence in the public projection. That is a strong demonstration that **quality and governance are orthogonal**. A beautiful, correct analytical system can still be packaged incorrectly.
+
+**The PostgreSQL comparator lesson:** a control correctly stopped the process, but the control itself needed refinement. Instead of saying “the test is annoying, ignore it,” we preserved the failure and proved the exception was limited to deparse-equivalent parentheses. That is a very good example of **governing the governor**.
+
+**The visual lesson:** consistency initially became homogeneity. “Same world. Different camera” became a useful design rule far beyond slides: keep the system identity consistent, but optimize each artifact for the question its audience is trying to answer.
+
+**The P03 lesson:** one of the highest-value outcomes was not a more complicated model. It was the ability to explain a governed decision so a nontechnical reader could understand the *why*, while retaining the exact technical rationale underneath. That is a strong statement about where analytics creates organizational value.
+
+## The larger lesson
+
+If I reduced your year to one concept, it would be:
+
+> **AI scales execution faster than it scales judgment.**
+
+That changes the bottleneck.
+
+At low usage, the challenge is getting AI to produce something useful.
+
+At very high usage, the challenge becomes:
+
+- preserving intent across thousands of turns;
+- preventing plausible drift;
+- controlling what is allowed to change;
+- distinguishing current truth from historical truth;
+- validating attractive outputs;
+- preserving failure evidence;
+- deciding when to stop;
+- and building a system in which the AI can be wrong without the project becoming wrong.
+
+That is a considerably more sophisticated lesson than “write better prompts.”
+
+## A strong LinkedIn-post structure
+
+I would build the post around something like this:
+
+**Hook**
+
+> I’ve crossed roughly 35,000 AI interactions this year.
+>
+> The biggest lesson wasn’t how to prompt.
+>
+> It was how to govern.
+
+Then explain that at enough scale, AI stops feeling like a chatbot and starts behaving more like a very fast team whose work requires **architecture, controls, source authority, versioning, QA, independent challenge, and explicit decision rights**.
+
+Then use perhaps **five lessons**, not all fifteen:
+
+1. **Plausible is not the same as grounded.**
+2. **Freeze what is true before asking AI to improve it.**
+3. **Separate builder and auditor roles.**
+4. **Preserve failures; they tell you whether your controls work.**
+5. **AI scales execution. Humans still govern meaning.**
+
+Then give 2–3 concrete examples:
+- visual that looked excellent but had incorrect technical facts;
+- 230-source catalog mistaken for an executable run procedure;
+- private files caught in an otherwise release-ready repository;
+- comparator STOP that required a bounded control correction.
+
+And I would end with something close to:
+
+> The more I use AI, the less I think of “prompt engineering” as the core skill.
+>
+> The real skill is designing a decision system around the AI:
+>
+> **What is authoritative?  
+> What can change?  
+> What requires evidence?  
+> What stops the process?  
+> Who gets to approve the result?**
+>
+> At 35,000 interactions, my biggest productivity gain hasn’t come from trusting AI more.
+>
+> It has come from getting much better at knowing **where trust ends and governance begins.**
+
+That is probably the strongest thesis from this body of work. It presents you not merely as someone who uses AI heavily, but as someone who learned how to **operationalize it under real analytical and governance constraints**.
+<!-- END_SOURCE_MESSAGE -->

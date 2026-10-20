@@ -1,0 +1,1599 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence — part 10 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence — part 10</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-09.html">Previous part</a><a href="part-11.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-15b609c5-bd1c-4f81-85e7-51913e9b5c81" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00123 · 2026-08-19T19:24:27.193000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E00_DATA_SOURCES_IN_CURRENT_FILE.png</p><div class="bubble"><p>PS C:\Windows\System32&gt; $work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot; </p>
+<blockquote>
+<blockquote>
+<p>$ev   = Join-Path $work &quot;evidence\local_engine_pending&quot; </p>
+<p>@&#39; 
+A1B DESKTOP IDENTITY HELPER TOOLING OBSERVATION </p>
+<p>Date: 2026-08-19 </p>
+<p>Operation: 
+Capture-A1bDesktopIdentity.ps1 </p>
+<p>Observed failure: 
+The helper attempted to use Get-AppxPackage. PowerShell located that command 
+in the Appx module, but the module could not load in the current PowerShell 7 
+environment: </p>
+<p>Operation is not supported on this platform. (0x80131539) </p>
+<p>Power BI Desktop remained open. 
+No Power BI refresh occurred. 
+No Power Query Refresh Preview occurred. 
+No model processing occurred. 
+No PBIP or semantic-model repair was performed. </p>
+<p>The Power BI About dialog independently showed: 
+Version 2.156.951.0 64-bit (July 2026) </p>
+<p>Next action: 
+Capture the active PBIDesktop process/executable/version using native process 
+and CIM evidence without relying on the Appx module. 
+&#39;@ | 
+    Set-Content <code>         -LiteralPath &quot;$ev\E00_DESKTOP_IDENTITY_HELPER_TOOLING_OBSERVATION.txt&quot;</code> 
+        -Encoding utf8 
+PS C:\Windows\System32&gt; $work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot; </p>
+<blockquote>
+<p>$ev   = Join-Path $work &quot;evidence\local_engine_pending&quot; </p>
+<p>$processes = @( 
+    Get-CimInstance Win32_Process | 
+    Where-Object { $_.Name -ieq &quot;PBIDesktop.exe&quot; } 
+) </p>
+<p>if ($processes.Count -eq 0) { 
+    throw &quot;STOP: no active PBIDesktop.exe process found.&quot; 
+} </p>
+<p>$records = foreach ($p in $processes) { </p>
+<pre><code>$exe = [string]$p.ExecutablePath 
+
+$fileVersion = $null 
+$productVersion = $null 
+
+if ($exe -and (Test-Path -LiteralPath $exe)) { 
+    $vi = (Get-Item -LiteralPath $exe).VersionInfo 
+    $fileVersion = $vi.FileVersion 
+    $productVersion = $vi.ProductVersion 
+} 
+
+[pscustomobject]@{ 
+    process_id = [int]$p.ProcessId 
+    parent_process_id = [int]$p.ParentProcessId 
+    process_name = [string]$p.Name 
+    executable_path = $exe 
+    command_line = [string]$p.CommandLine 
+    file_version = $fileVersion 
+    product_version = $productVersion 
+} 
+</code></pre>
+<p>} </p>
+<p>$records | Format-List </p>
+<p>[pscustomobject]@{ 
+    event = &quot;A1B_POWER_BI_DESKTOP_PROCESS_IDENTITY&quot; 
+    captured_local = (Get-Date).ToString(&quot;o&quot;) 
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;) 
+    about_dialog_version = &quot;2.156.951.0&quot; 
+    about_dialog_architecture = &quot;64-bit&quot; 
+    about_dialog_release = &quot;July 2026&quot; 
+    active_process_count = $records.Count 
+    processes = @($records) 
+} | 
+    ConvertTo-Json -Depth 8 | 
+    Set-Content <code>         -LiteralPath &quot;$ev\E00_POWER_BI_DESKTOP_PROCESS_IDENTITY.json&quot;</code> 
+        -Encoding utf8 </p>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>process_id        : 11356 
+parent_process_id : 23168 
+process_name      : PBIDesktop.exe 
+executable_path   : C:\Program Files\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_2.156.951.0_x64__8wekyb3d8bbwe\bin\pbidesktop.exe 
+command_line      : &quot;C:\Program Files\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_2.156.951.0_x64__8wekyb3d8bbwe\bin\pbidesktop.exe&quot; &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\project\MSBF_PBI_A1A_Local_Construction_R1.pbip&quot; 
+file_version      : 2.156.951.0 
+product_version   : 2.156.951.0 (26.07)+c9381f8e5efc99c8de04425f1572e841914690d8                     Also, anytime I&#39;m providing you a screenshot, like the attached, I am also saving it in our evidence folder and in my chatgpt_interaction folders</p>
+</div></article><article id="m-75d669dd-c33f-4978-a98b-ea8b4415fcd1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00124 · 2026-08-19T19:24:53.718719-04:00 · active path</p><div class="bubble"><p>This is good progress. Two pre-refresh controls are now materially established, and the third has a clear path.</p>
+<p>Your <strong>global Privacy</strong> screenshot shows that Power BI is enforcing each file/source’s privacy settings and that <strong>“Always ignore Privacy Level settings” is not selected</strong>. Your About dialog identifies <strong>Power BI Desktop 2.156.951.0, 64-bit, July 2026</strong>. The native CIM capture independently resolves the live <code>PBIDesktop.exe</code> to the WindowsApps path with matching file/product version <code>2.156.951.0</code>, so the substance of the Desktop-identity requirement is satisfied. Audit required both direct privacy enforcement and Desktop process/executable/version evidence before first A1b refresh. [export reference: filecite | turn16file3 | L188-L205]</p>
+<p>The current-file Data Source Settings screenshot is also useful: it proves that <strong>before A1b source evaluation, Desktop has no registered current-file source</strong>, with the explicit warning that hand-authored queries may not be listed. Preserve that screenshot as a pre-registration observation; it is not yet the required screenshot showing the actual <code>S:\</code> privacy classification.</p>
+<p>One correction before we continue: the package gate looks for the mandatory evidence under <code>evidence\local_engine_return</code>, whereas the commands I gave you wrote the helper observation and native identity JSON to <code>local_engine_pending</code>. The supplied gate explicitly requires the screenshots, privacy attestation, Desktop identity, synthetic-root mapping, A1a baseline preflight, and A1b boundary evidence under <code>local_engine_return</code>. We should reconcile that now rather than discover it at gate time.</p>
+<h3>1. Normalize the evidence location</h3>
+<p>Run this while Desktop remains open:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+
+$pending = Join-Path $work &quot;evidence\local_engine_pending&quot;
+$return  = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+New-Item `
+    -ItemType Directory `
+    -Path $return `
+    -Force |
+    Out-Null
+
+# Preserve the helper failure in the controlling return-evidence directory.
+if (Test-Path -LiteralPath &quot;$pending\E00_DESKTOP_IDENTITY_HELPER_TOOLING_OBSERVATION.txt&quot;) {
+    Copy-Item `
+        -LiteralPath &quot;$pending\E00_DESKTOP_IDENTITY_HELPER_TOOLING_OBSERVATION.txt&quot; `
+        -Destination &quot;$return\E00_DESKTOP_IDENTITY_HELPER_TOOLING_OBSERVATION.txt&quot; `
+        -Force
+}
+</code></pre>
+<p>Because you are already saving every screenshot in the evidence folder, make sure these exact files are in <code>local_engine_return</code>:</p>
+<pre><code class="language-text">E00_PRIVACY_GLOBAL_ENFORCEMENT.png
+E00_POWER_BI_DESKTOP_ABOUT.png
+</code></pre>
+<p>Save the current screenshot showing <strong>“We didn&#39;t find any data sources in this file”</strong> separately as:</p>
+<pre><code class="language-text">E00_DATA_SOURCES_IN_CURRENT_FILE_PRE_REGISTRATION.png
+</code></pre>
+<p>That is useful adverse/pre-state evidence, but it should <strong>not</strong> masquerade as the required <code>E00_PRIVACY_DATA_SOURCE_SETTINGS.png</code>.</p>
+<h3>2. Write the native Desktop identity in the schema the gate expects</h3>
+<p>Your native capture is stronger than the failed Appx helper, but the package gate expects fields named <code>identity_status</code> and <code>resolved_version</code>. Create the controlling machine-readable identity from the process you just physically observed:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+$processes = @(
+    Get-CimInstance Win32_Process |
+    Where-Object { $_.Name -ieq &quot;PBIDesktop.exe&quot; }
+)
+
+if ($processes.Count -ne 1) {
+    throw &quot;STOP: expected exactly one active PBIDesktop.exe; found $($processes.Count).&quot;
+}
+
+$p = $processes[0]
+$exe = [string]$p.ExecutablePath
+
+if (-not $exe -or -not (Test-Path -LiteralPath $exe)) {
+    throw &quot;STOP: active Power BI Desktop executable path cannot be resolved.&quot;
+}
+
+$vi = (Get-Item -LiteralPath $exe).VersionInfo
+
+$identity = [ordered]@{
+    captured_utc       = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+    process_id         = [int]$p.ProcessId
+    process_name       = [string]$p.Name
+    parent_process_id  = [int]$p.ParentProcessId
+    executable_path    = $exe
+    command_line       = [string]$p.CommandLine
+    file_version       = [string]$vi.FileVersion
+    product_version    = [string]$vi.ProductVersion
+    resolved_version   = [string]$vi.FileVersion
+    version_source     = &quot;EXECUTABLE_FILE_VERSION_AND_ABOUT_DIALOG&quot;
+    about_version      = &quot;2.156.951.0&quot;
+    about_architecture = &quot;64-bit&quot;
+    about_release      = &quot;July 2026&quot;
+    appx_lookup        = &quot;NOT_REQUIRED_EXECUTABLE_IDENTITY_RESOLVED&quot;
+    identity_status    = &quot;PASS&quot;
+}
+
+$identity |
+    ConvertTo-Json -Depth 6 |
+    Set-Content `
+        -LiteralPath &quot;$return\E00_POWER_BI_DESKTOP_PROCESS_IDENTITY.json&quot; `
+        -Encoding utf8
+
+$identity | Format-List
+</code></pre>
+<p>Required reconciliation:</p>
+<pre><code class="language-text">process_id        11356   # if the same process remains open
+executable_path   ...\Microsoft.MicrosoftPowerBIDesktop_2.156.951.0_x64...\pbidesktop.exe
+file_version      2.156.951.0
+resolved_version  2.156.951.0
+identity_status   PASS
+</code></pre>
+<p>The audit specifically left Desktop identity as an observation only until A1b, and required it closed before refresh. [export reference: filecite | turn16file3 | L203-L207]</p>
+<h3>3. Register the isolated <code>S:\</code> source without performing Refresh All</h3>
+<p>Your current-file screenshot establishes why the required source permission is not visible yet: the file uses hand-authored M and Desktop has not registered its source in this session.</p>
+<p>Close the Data Source Settings dialog, then choose:</p>
+<p><strong>Home → Transform data</strong></p>
+<p>This is permitted at this stage; the runbook explicitly calls for opening Transform Data to verify the 79-query inventory before the refresh phase. [export reference: filecite | turn17file0 | L41-L53]</p>
+<p>Once Power Query Editor opens, <strong>do not click Refresh Preview → Refresh All</strong> and do not Close &amp; Apply.</p>
+<p>First visually confirm the query count says:</p>
+<pre><code class="language-text">Queries [79]
+</code></pre>
+<p>Then select:</p>
+<pre><code class="language-text">stg_POWER_BI_DATA_CATALOG
+</code></pre>
+<p>This existing governed query should be sufficient to make Desktop resolve its <code>S:\pbi</code> source. If Power BI displays:</p>
+<pre><code class="language-text">Information is required about data privacy
+</code></pre>
+<p>click <strong>Continue</strong>.</p>
+<p>For this isolated, fully inventoried synthetic A1b root, I recommend setting the source to <strong>Public</strong> rather than repeating the A1a Private failure. Independent Audit expressly permits Public <strong>only</strong> for an isolated MSBF synthetic root containing no unrelated personal or production data; the prohibited configuration is broad <code>C:\ Public</code> or global privacy ignore. [export reference: filecite | turn16file3 | L194-L201]</p>
+<p>The important distinction is:</p>
+<pre><code class="language-text">A1a:
+C:\  → Public
+OVERBROAD / not reusable
+
+A1b:
+S:\ isolated synthetic root → Public
+PERMITTED for this bounded local evidence run
+</code></pre>
+<p>If Desktop identifies the scopes separately as <code>S:\pbi</code> and <code>S:\build</code>, classify each consistently. Do <strong>not</strong> classify <code>C:\</code>.</p>
+<p>If selecting the query immediately produces some other error before a privacy dialog appears, stop and send me the error. Do not troubleshoot by refreshing.</p>
+<h3>4. After source registration, capture the required exact privacy screenshot</h3>
+<p>Without running Refresh All, return to <strong>Data Source Settings</strong>.</p>
+<p>We need the screenshot to show the actual registered isolated source(s), for example:</p>
+<pre><code class="language-text">S:\
+</code></pre>
+<p>or:</p>
+<pre><code class="language-text">S:\pbi
+S:\build
+</code></pre>
+<p>with the applied privacy classification.</p>
+<p>Use <strong>Edit Permissions</strong> if necessary to expose the exact privacy-level setting for the screenshot.</p>
+<p>Save the final proof as exactly:</p>
+<pre><code class="language-text">E00_PRIVACY_DATA_SOURCE_SETTINGS.png
+</code></pre>
+<p>in <code>evidence\local_engine_return</code>.</p>
+<p>The previous <code>C:\</code> global-permissions screenshot should also remain preserved as historical evidence, but it is <strong>not</strong> the controlling A1b source setting.</p>
+<h3>5. Then create the privacy attestation</h3>
+<p>Only after the UI actually shows the <code>S:\</code> classification, run:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+$privacy = [ordered]@{
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    contains_unrelated_personal_or_production_data = $false
+    isolated_synthetic_root_only = $true
+
+    global_privacy_enforcement_enabled = $true
+    ignore_privacy_levels = $false
+    fast_combine_enabled = $false
+
+    privacy_level = &quot;Public&quot;
+
+    source_scopes = @(
+        &quot;S:\pbi&quot;,
+        &quot;S:\build&quot;
+    )
+
+    screenshot_data_source_settings = &quot;E00_PRIVACY_DATA_SOURCE_SETTINGS.png&quot;
+    screenshot_global_privacy = &quot;E00_PRIVACY_GLOBAL_ENFORCEMENT.png&quot;
+
+    source_owner_attestation = `
+        &quot;Direct Power BI UI evidence confirms privacy enforcement. Public classification is limited to the isolated, inventoried MSBF synthetic S:\ source boundary and is not a production privacy standard.&quot;
+}
+
+$privacy |
+    ConvertTo-Json -Depth 6 |
+    Set-Content `
+        -LiteralPath &quot;$return\E00_PRIVACY_ATTESTATION.json&quot; `
+        -Encoding utf8
+
+$privacy | Format-List
+</code></pre>
+<p>If Desktop registers only <code>S:\</code> rather than the two subroots, **do not use this exact block yet**; send me the screenshot and we will make <code>source_scopes</code> match the physical UI exactly. The attestation should never claim finer scoping than Desktop actually shows.</p>
+<h3>Current gate position</h3>
+<pre><code class="language-text">A1a accepted baseline                         PASS
+A1b 32/32/79/60 boundary                      PASS
+S:\ isolated synthetic mapping                PASS
+Global privacy enforcement                    PASS
+Desktop About/version                         PASS
+Desktop executable/process identity           PASS substantively
+Helper Appx failure                            PRESERVED TOOLING OBSERVATION
+Current-file pre-registration source state     CAPTURED
+Exact S:\ privacy registration                 NEXT
+Privacy attestation                            WAITING FOR S:\ UI
+Pre-refresh evidence gate                      NOT YET RUN
+Refresh Preview / Refresh All                  PROHIBITED
+Close &amp; Apply                                  PROHIBITED
+Desktop Refresh                                PROHIBITED
+</code></pre>
+<p>And yes—continue saving every screenshot both in the formal evidence directory and in your ChatGPT interaction archive. That gives Independent Audit the same strong chronology/non-omission trail that proved valuable during A1a.</p>
+<p><strong>Next action:</strong> open <strong>Transform Data</strong>, confirm <code>Queries [79]</code>, select <code>stg_POWER_BI_DATA_CATALOG</code>, and show me what happens—especially any privacy dialog and the source path it identifies.</p>
+</div></article><article id="m-7645c4a6-e268-4a8d-87a0-3a1fe75f0819" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00125 · 2026-08-19T19:51:32.885000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E00_DATA_SOURCE_SETTINGS_02.png; E00_STG_POWER_BI_DATA_CATALOG.png</p><div class="bubble"><p>PS C:\Windows\System32&gt; $work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot; </p>
+<blockquote>
+<blockquote>
+<p>$pending = Join-Path $work &quot;evidence\local_engine_pending&quot; 
+$return  = Join-Path $work &quot;evidence\local_engine_return&quot; </p>
+<p>New-Item <code>     -ItemType Directory</code> 
+    -Path $return ` 
+    -Force | 
+    Out-Null </p>
+<h1>Preserve the helper failure in the controlling return-evidence directory.</h1>
+<p>if (Test-Path -LiteralPath &quot;$pending\E00_DESKTOP_IDENTITY_HELPER_TOOLING_OBSERVATION.txt&quot;) { 
+    Copy-Item <code>         -LiteralPath &quot;$pending\E00_DESKTOP_IDENTITY_HELPER_TOOLING_OBSERVATION.txt&quot;</code> 
+        -Destination &quot;$return\E00_DESKTOP_IDENTITY_HELPER_TOOLING_OBSERVATION.txt&quot; ` 
+        -Force 
+} 
+PS C:\Windows\System32&gt; $work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot; </p>
+<blockquote>
+<p>$return = Join-Path $work &quot;evidence\local_engine_return&quot; </p>
+<p>$processes = @( 
+    Get-CimInstance Win32_Process | 
+    Where-Object { $_.Name -ieq &quot;PBIDesktop.exe&quot; } 
+) </p>
+<p>if ($processes.Count -ne 1) { 
+    throw &quot;STOP: expected exactly one active PBIDesktop.exe; found $($processes.Count).&quot; 
+} </p>
+<p>$p = $processes[0] 
+$exe = [string]$p.ExecutablePath </p>
+<p>if (-not $exe -or -not (Test-Path -LiteralPath $exe)) { 
+    throw &quot;STOP: active Power BI Desktop executable path cannot be resolved.&quot; 
+} </p>
+<p>$vi = (Get-Item -LiteralPath $exe).VersionInfo </p>
+<p>$identity = [ordered]@{ 
+    captured_utc       = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;) 
+    process_id         = [int]$p.ProcessId 
+    process_name       = [string]$p.Name 
+    parent_process_id  = [int]$p.ParentProcessId 
+    executable_path    = $exe 
+    command_line       = [string]$p.CommandLine 
+    file_version       = [string]$vi.FileVersion 
+    product_version    = [string]$vi.ProductVersion 
+    resolved_version   = [string]$vi.FileVersion 
+    version_source     = &quot;EXECUTABLE_FILE_VERSION_AND_ABOUT_DIALOG&quot; 
+    about_version      = &quot;2.156.951.0&quot; 
+    about_architecture = &quot;64-bit&quot; 
+    about_release      = &quot;July 2026&quot; 
+    appx_lookup        = &quot;NOT_REQUIRED_EXECUTABLE_IDENTITY_RESOLVED&quot; 
+    identity_status    = &quot;PASS&quot; 
+} </p>
+<p>$identity | 
+    ConvertTo-Json -Depth 6 | 
+    Set-Content <code>         -LiteralPath &quot;$return\E00_POWER_BI_DESKTOP_PROCESS_IDENTITY.json&quot;</code> 
+        -Encoding utf8 </p>
+<p>$identity | Format-List </p>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>Name  : captured_utc 
+Value : 2026-08-19T23:32:23.4381847Z </p>
+<p>Name  : process_id 
+Value : 11356 </p>
+<p>Name  : process_name 
+Value : PBIDesktop.exe </p>
+<p>Name  : parent_process_id 
+Value : 23168 </p>
+<p>Name  : executable_path 
+Value : C:\Program Files\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_2.156.951.0_x64__8wekyb3d8bbwe\bin\pbidesktop.exe </p>
+<p>Name  : command_line 
+Value : &quot;C:\Program Files\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_2.156.951.0_x64__8wekyb3d8bbwe\bin\pbidesktop.exe&quot; &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\project\MSBF_PBI_A1A_Local_Construction_R1.pbip&quot; </p>
+<p>Name  : file_version 
+Value : 2.156.951.0 </p>
+<p>Name  : product_version 
+Value : 2.156.951.0 (26.07)+c9381f8e5efc99c8de04425f1572e841914690d8 </p>
+<p>Name  : resolved_version 
+Value : 2.156.951.0 </p>
+<p>Name  : version_source 
+Value : EXECUTABLE_FILE_VERSION_AND_ABOUT_DIALOG </p>
+<p>Name  : about_version 
+Value : 2.156.951.0 </p>
+<p>Name  : about_architecture 
+Value : 64-bit </p>
+<p>Name  : about_release 
+Value : July 2026 </p>
+<p>Name  : appx_lookup 
+Value : NOT_REQUIRED_EXECUTABLE_IDENTITY_RESOLVED </p>
+<p>Name  : identity_status 
+Value : PASS                            PATH STILL SHOWS C:</p>
+</div></article><article id="m-d8308b9f-9c99-40e3-9758-fb7a689b97b6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00126 · 2026-08-19T19:57:19.559518-04:00 · active path</p><div class="bubble"><p>The screenshot explains it: <strong>Power Query is successfully reading the A1b source through <code>S:\</code>**, but **Data Source Settings is still showing only the old global <code>C:\</code> permission</strong>. That means the <code>S:</code> drive mapping has not created a distinct privacy-permission entry in Desktop. Because the audit explicitly requires the privacy boundary itself to be a dedicated MSBF synthetic root—not broad <code>C:\</code>—we should treat this as a pre-refresh blocker rather than proceed. The audit’s stop condition is explicit: if the only executable route leaves the privacy boundary at <code>C:\</code>, stop. [export reference: filecite | turn16file3 | L194-L201]</p>
+<p>Your Power Query screenshot is still valuable: it proves <code>pBuildRoot = S:\build</code>, <code>Queries [79]</code>, and <code>stg_POWER_BI_DATA_CATALOG</code> successfully evaluates with 214 rows. So the semantic source path is correct; the unresolved issue is specifically <strong>Power BI’s privacy-source registration</strong>.</p>
+<p>Microsoft’s documentation confirms that Power Query privacy is attached to the recognized <strong>data-source path</strong>, and the path displayed in Data Source Settings is derived from the connector’s source parameters. It also warns against globally ignoring privacy levels. [export reference: cite | turn376300search0 | turn376300search3]</p>
+<h3>Do not refresh or Close &amp; Apply</h3>
+<p>At this point preserve the current state. Do <strong>not</strong>:</p>
+<pre><code class="language-text">Refresh All
+Close &amp; Apply
+Desktop Refresh
+edit the old C:\ permission
+globally ignore privacy levels
+</code></pre>
+<p>The Desktop process identity is now fully resolved and reconciles perfectly:</p>
+<pre><code class="language-text">PBIDesktop.exe
+2.156.951.0
+64-bit
+WindowsApps executable resolved
+identity_status = PASS
+</code></pre>
+<p>So <code>PBI-F-006</code> has the required source-owner evidence. The remaining open precondition is <code>PBI-F-004</code>.</p>
+<h3>Preserve this exact privacy-registration observation</h3>
+<p>Run:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1B_DEDICATED_ROOT_PRIVACY_REGISTRATION_OBSERVATION&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    power_query_objects = 79
+    selected_query = &quot;stg_POWER_BI_DATA_CATALOG&quot;
+    selected_query_preview_rows = 214
+    selected_query_preview_status = &quot;PASS&quot;
+
+    pDataRoot = &quot;S:\pbi&quot;
+    pBuildRoot = &quot;S:\build&quot;
+
+    mapped_root = &quot;S:\&quot;
+    mapped_target = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\synthetic_root&quot;
+
+    global_privacy_enforcement = &quot;ENABLED&quot;
+    ignore_privacy_levels = $false
+
+    data_source_settings_observed_global_entries = @(
+        &quot;C:\&quot;
+    )
+
+    dedicated_s_root_permission_visible = $false
+
+    refresh_preview_all_executed = $false
+    close_and_apply_executed = $false
+    desktop_refresh_executed = $false
+
+    disposition = &quot;HOLD_PRE_REFRESH_PRIVACY_BOUNDARY&quot;
+} |
+    ConvertTo-Json -Depth 6 |
+    Set-Content `
+        -LiteralPath &quot;$return\E00_DEDICATED_ROOT_PRIVACY_REGISTRATION_OBSERVATION.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Preserve the two latest screenshots as:</p>
+<pre><code class="language-text">E00_DATA_SOURCE_SETTINGS_02.png
+E00_STG_POWER_BI_DATA_CATALOG.png
+</code></pre>
+<h3>Recommended correction</h3>
+<p>The cleanest fix is to **stop using a mapped <code>S:</code> drive backed by a <code>C:\</code> folder for the privacy boundary**. Power BI appears to be resolving the underlying File source permission to the physical drive/root rather than treating the <code>SUBST</code> alias as a separate privacy source.</p>
+<p>Instead, we should use a <strong>dedicated local UNC share</strong> for the synthetic root, for example:</p>
+<pre><code class="language-text">\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi
+\\localhost\MSBF_PBI_A1B_SYNTHETIC\build
+</code></pre>
+<p>This gives Power Query a distinct source path that is not <code>C:\</code>, while still pointing only to the fully inventoried synthetic folder. Power Query privacy settings are keyed to recognized source paths, so a UNC source should surface as its own permission boundary rather than inherit the old <code>C:\</code> entry. [export reference: cite | turn376300search3 | turn376300search4]</p>
+<p>However, changing <code>pDataRoot</code> and <code>pBuildRoot</code> from <code>S:\...</code> to a dedicated governed synthetic root <strong>is allowed by the audit</strong>, while any broader A1a source change is not. The authorization explicitly permits changing only those two parameters to dedicated synthetic roots. [export reference: filecite | turn16file5 | L69-L86]</p>
+<p>Before I give you the exact PowerShell commands to create the isolated UNC share and patch only those two parameter values, I want to keep this bounded and reproducible. The next step will be:</p>
+<pre><code class="language-text">1. Close Power Query without Apply.
+2. Close Power BI without saving any data-processing state.
+3. Create a dedicated read-only local SMB share over synthetic_root.
+4. Change only pDataRoot and pBuildRoot to the UNC paths.
+5. Re-run the static 32/32/79/60 boundary verifier.
+6. Reopen Desktop.
+7. Capture the UNC source in Data Source Settings.
+8. Set its privacy classification.
+9. Run the pre-refresh gate.
+10. Only then permit Refresh Preview.
+</code></pre>
+<p>That is preferable to trying to force <code>S:</code> into Desktop’s permission store or altering the historical <code>C:\</code> permission.</p>
+<p>Your current gate state is therefore:</p>
+<pre><code class="language-text">A1a baseline                              PASS
+A1b 32/32/79/60 boundary                 PASS
+Power Query 79-query inventory            PASS
+stg_POWER_BI_DATA_CATALOG preview          PASS — 214 rows
+Global privacy enforcement                PASS
+Desktop process/version identity          PASS
+Dedicated S:\ semantic paths              PASS
+Dedicated S:\ privacy entry               FAIL / NOT PRESENT
+PBI-F-004                                 OPEN
+First Refresh All                         PROHIBITED
+</code></pre>
+<p>The right next move is to replace the <code>SUBST</code>-based privacy boundary with an isolated UNC source, not to continue refreshing.</p>
+</div></article><article id="m-9b10c5ea-feac-48b1-ac98-06e6c7745475" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00127 · 2026-08-19T20:37:42.808000-04:00 · active path</p><div class="bubble"><p>Please give instructions for: 3. Create a dedicated read-only local SMB share over synthetic_root.
+4. Change only pDataRoot and pBuildRoot to the UNC paths.
+5. Re-run the static 32/32/79/60 boundary verifier.
+6. Reopen Desktop.
+7. Capture the UNC source in Data Source Settings.
+8. Set its privacy classification.
+9. Run the pre-refresh gate.
+10. Only then permit Refresh Preview.</p>
+</div></article><article id="m-0db6109e-c521-450e-8a64-d2b53507df0f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00128 · 2026-08-19T20:38:06.476786-04:00 · active path</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-d6302927-6bbd-4532-a95e-f6c69a9f0774" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00129 · 2026-08-19T20:45:49.497000-04:00 · active path</p><div class="bubble"><p>PS C:\WINDOWS\system32&gt; $work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;</p>
+<blockquote>
+<blockquote>
+<p>$syntheticRoot = Join-Path $work &quot;synthetic_root&quot;
+$shareName = &quot;MSBF_PBI_A1B_SYNTHETIC&quot;</p>
+<p>if (-not (Test-Path -LiteralPath $syntheticRoot)) {
+    throw &quot;STOP: synthetic_root does not exist.&quot;
+}</p>
+<p>Get-ChildItem -LiteralPath $syntheticRoot</p>
+</blockquote>
+</blockquote>
+<pre><code>Directory: C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\synthetic_root
+</code></pre>
+<p>Mode                 LastWriteTime         Length Name</p>
+<hr>
+<p>d-----         8/19/2026   6:10 PM                build
+d-----         8/19/2026   6:10 PM                pbi</p>
+<p>PS C:\WINDOWS\system32&gt; $existing = Get-SmbShare `</p>
+<blockquote>
+<blockquote>
+<pre><code>-Name $shareName `
+-ErrorAction SilentlyContinue
+</code></pre>
+<p>if ($existing) {
+    Write-Host &quot;Existing share found:&quot;
+    $existing |
+        Select-Object Name,Path,Description |
+        Format-List</p>
+<pre><code>if ($existing.Path -cne $syntheticRoot) {
+    throw &quot;STOP: existing share name points somewhere else.&quot;
+}
+</code></pre>
+<p>}
+else {
+    New-SmbShare <code>        -Name $shareName</code>
+        -Path $syntheticRoot <code>        -ReadAccess $env:USERNAME</code>
+        -Description &quot;MSBF Power BI A1b isolated synthetic evidence root&quot;
+}</p>
+</blockquote>
+</blockquote>
+<p>Name                   ScopeName Path                                                    Description</p>
+<hr>
+<p>MSBF_PBI_A1B_SYNTHETIC *         C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\synthetic_root MSBF Power BI A1b isolated ...</p>
+<p>PS C:\WINDOWS\system32&gt; Get-SmbShare `</p>
+<blockquote>
+<blockquote>
+<pre><code>-Name $shareName |
+Select-Object `
+    Name,
+    Path,
+    Description |
+Format-List
+</code></pre>
+<p>Get-SmbShareAccess `
+    -Name $shareName |
+    Format-Table -AutoSize</p>
+</blockquote>
+</blockquote>
+<p>Name        : MSBF_PBI_A1B_SYNTHETIC
+Path        : C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\synthetic_root
+Description : MSBF Power BI A1b isolated synthetic evidence root</p>
+<p>Name                   ScopeName AccountName  AccessControlType AccessRight</p>
+<hr>
+<p>MSBF_PBI_A1B_SYNTHETIC *         Owner\Andrew Allow             Read</p>
+<p>PS C:\WINDOWS\system32&gt; $uncRoot  = &quot;\localhost\MSBF_PBI_A1B_SYNTHETIC&quot;</p>
+<blockquote>
+<blockquote>
+<p>$uncPbi   = &quot;$uncRoot\pbi&quot;
+$uncBuild = &quot;$uncRoot\build&quot;</p>
+<p>[pscustomobject]@{
+    unc_root_exists  = Test-Path -LiteralPath $uncRoot
+    unc_pbi_exists   = Test-Path -LiteralPath $uncPbi
+    unc_build_exists = Test-Path -LiteralPath $uncBuild
+} | Format-List</p>
+</blockquote>
+</blockquote>
+<p>unc_root_exists  : True
+unc_pbi_exists   : True
+unc_build_exists : True</p>
+<p>PS C:\WINDOWS\system32&gt; $return = Join-Path $work &quot;evidence\local_engine_return&quot;</p>
+<blockquote>
+<blockquote>
+<p>$share = Get-SmbShare -Name $shareName
+$access = @(Get-SmbShareAccess -Name $shareName)</p>
+<p>[pscustomobject]@{
+    event = &quot;A1B_DEDICATED_SYNTHETIC_SMB_ROOT&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)</p>
+<pre><code>share_name = $share.Name
+physical_path = $share.Path
+
+unc_root = $uncRoot
+pDataRoot_target = $uncPbi
+pBuildRoot_target = $uncBuild
+
+unc_root_exists = Test-Path -LiteralPath $uncRoot
+unc_pbi_exists = Test-Path -LiteralPath $uncPbi
+unc_build_exists = Test-Path -LiteralPath $uncBuild
+
+purpose = &quot;ISOLATED_MSBF_SYNTHETIC_POWER_BI_A1B_SOURCE&quot;
+unrelated_personal_or_production_data = $false
+
+share_access = @(
+    $access | ForEach-Object {
+        [pscustomobject]@{
+            account = $_.AccountName
+            access_control_type = $_.AccessControlType
+            access_right = $_.AccessRight
+        }
+    }
+)
+</code></pre>
+<p>} |
+    ConvertTo-Json -Depth 8 |
+    Set-Content <code>        -LiteralPath &quot;$return\E00_SYNTHETIC_SMB_ROOT.json&quot;</code>
+        -Encoding utf8
+PS C:\WINDOWS\system32&gt; $model = Join-Path $work `</p>
+<blockquote>
+<pre><code>&quot;project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;
+</code></pre>
+<p>$before = Join-Path $return `
+    &quot;E00_MODEL_BIM_PRE_UNC_PARAMETER_PATCH.bim&quot;</p>
+<p>Copy-Item <code>    -LiteralPath $model</code>
+    -Destination $before `
+    -Force</p>
+<p>$beforeHash = (
+    Get-FileHash $model -Algorithm SHA256
+).Hash.ToLowerInvariant()</p>
+<p>Write-Host &quot;Before model.bim:&quot;
+Write-Host $beforeHash
+Before model.bim:
+43e5ccd3f48fe5e1125fe8d7a1278625ebfa08763b66b46708ec73276a2ae656
+PS C:\WINDOWS\system32&gt; $m = Get-Content -LiteralPath $model -Raw |</p>
+<blockquote>
+<pre><code>ConvertFrom-Json
+</code></pre>
+<p>$m.model.expressions |
+    Where-Object {
+        $_.name -in @(&quot;pDataRoot&quot;,&quot;pBuildRoot&quot;)
+    } |
+    Select-Object name,expression |
+    Format-List</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>name       : pDataRoot
+expression : &quot;S:\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]</p>
+<p>name       : pBuildRoot
+expression : &quot;S:\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]</p>
+<p>PS C:\WINDOWS\system32&gt; $dataExpr = @(</p>
+<blockquote>
+<blockquote>
+<pre><code>$m.model.expressions |
+Where-Object { $_.name -ceq &quot;pDataRoot&quot; }
+</code></pre>
+<p>)</p>
+<p>$buildExpr = @(
+    $m.model.expressions |
+    Where-Object { $_.name -ceq &quot;pBuildRoot&quot; }
+)</p>
+<p>if ($dataExpr.Count -ne 1 -or $buildExpr.Count -ne 1) {
+    throw &quot;STOP: expected exactly one pDataRoot and one pBuildRoot.&quot;
+}</p>
+<p>$dataExpr[0].expression = `
+    &#39;&quot;\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;</p>
+<p>$buildExpr[0].expression = `
+    &#39;&quot;\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;
+PS C:\WINDOWS\system32&gt; $raw = IO.File (historical reference: :WriteAllText()::ReadAllText($model)</p>
+<blockquote>
+<p>$oldData  = &#39;&quot;S:\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;
+$newData  = &#39;&quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;</p>
+<p>$oldBuild = &#39;&quot;S:\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;
+$newBuild = &#39;&quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;</p>
+<p>$dataMatches  = ([regex]::Matches(
+    $raw,
+    [regex]::Escape($oldData)
+)).Count</p>
+<p>$buildMatches = ([regex]::Matches(
+    $raw,
+    [regex]::Escape($oldBuild)
+)).Count</p>
+<p>Write-Host &quot;pDataRoot matches: &quot; $dataMatches
+Write-Host &quot;pBuildRoot matches:&quot; $buildMatches</p>
+<p>if ($dataMatches -ne 1 -or $buildMatches -ne 1) {
+    throw &quot;STOP: parameter replacement population is not exactly 1 + 1.&quot;
+}</p>
+<p>$patched = $raw.Replace($oldData,$newData)
+$patched = $patched.Replace($oldBuild,$newBuild)</p>
+<pre><code>$model,
+$patched,
+[Text.UTF8Encoding]::new($false)
+</code></pre>
+<p>)
+pDataRoot matches:  0
+pBuildRoot matches: 0
+STOP: parameter replacement population is not exactly 1 + 1.
+At line:23 char:5</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<ul>
+<li><pre><code>throw &quot;STOP: parameter replacement population is not exactly 1 +  ...
+</code></pre>
+</li>
+<li><pre><code>~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+</code></pre>
+<ul>
+<li>CategoryInfo          : OperationStopped: (STOP: parameter... exactly 1 + 1.:String) [], RuntimeException</li>
+<li>FullyQualifiedErrorId : STOP: parameter replacement population is not exactly 1 + 1.</li>
+</ul>
+</li>
+</ul>
+</div></article><article id="m-a92cca82-44c8-49b1-8c0b-da2d9f4b86f9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00130 · 2026-08-19T20:46:54.470333-04:00 · active path</p><div class="bubble"><p>Good stop. <strong>Nothing was written to <code>model.bim</code></strong>: your script threw before <code>[IO.File]::WriteAllText(...)</code>. Also, the earlier assignments to <code>$m.model.expressions[...]</code> only changed the in-memory PowerShell object; they were never serialized.</p>
+<p>The mismatch happened because <code>model.bim</code> stores the M expression as JSON text, so the raw file contains escaped inner quotes and backslashes such as:</p>
+<pre><code class="language-text">&quot;expression&quot;: &quot;\&quot;S:\\pbi\&quot; meta [IsParameterQuery=true, Type=\&quot;Text\&quot;, IsParameterQueryRequired=true]&quot;
+</code></pre>
+<p>Your search strings omitted those JSON escapes. We also need to patch the two external parameter <code>.m</code> files so the external Power Query source and embedded <code>model.bim</code> remain in parity.</p>
+<p>The audit permits exactly this kind of change: only <code>pDataRoot</code> and <code>pBuildRoot</code> may be changed to dedicated governed synthetic roots; other A1a source changes are prohibited. [export reference: filecite | turn16file5 | L69-L86]</p>
+<h2>1. First prove the failed attempt made no change</h2>
+<p>Run:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+$model = Join-Path $work `
+    &quot;project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;
+
+$before = Join-Path $return `
+    &quot;E00_MODEL_BIM_PRE_UNC_PARAMETER_PATCH.bim&quot;
+
+$currentHash = (
+    Get-FileHash $model -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+$beforeHash = (
+    Get-FileHash $before -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+[pscustomobject]@{
+    model_current_sha256 = $currentHash
+    preserved_before_sha256 = $beforeHash
+    unchanged = ($currentHash -ceq $beforeHash)
+} | Format-List
+
+if ($currentHash -cne $beforeHash) {
+    throw &quot;STOP: model.bim changed during the failed replacement attempt.&quot;
+}
+
+Write-Host &quot;FAILED PATCH ATTEMPT NONMUTATION PASS.&quot;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">unchanged : True
+FAILED PATCH ATTEMPT NONMUTATION PASS.
+</code></pre>
+<p>Preserve the failed attempt too:</p>
+<pre><code class="language-powershell">@&#39;
+A1B UNC PARAMETER PATCH TOOLING OBSERVATION
+
+Date: 2026-08-19
+
+Operation:
+Attempted raw model.bim replacement of pDataRoot and pBuildRoot from S:\ paths
+to the dedicated localhost SMB root.
+
+Observed condition:
+The raw replacement population returned 0 matches for each parameter because
+the search strings did not account for model.bim JSON escaping of the embedded
+Power Query M expression.
+
+The script stopped before File.WriteAllText executed.
+
+No model.bim write occurred.
+No external Power Query parameter file was changed.
+No Desktop refresh occurred.
+No Close &amp; Apply occurred.
+No semantic processing occurred.
+
+Follow-up:
+Correct the raw JSON match strings, patch exactly the two authorized parameter
+definitions and their external .m counterparts, verify parity, and rerun the
+static A1b boundary.
+&#39;@ |
+    Set-Content `
+        -LiteralPath &quot;$return\E00_UNC_PARAMETER_PATCH_TOOLING_OBSERVATION.txt&quot; `
+        -Encoding utf8
+</code></pre>
+<hr>
+<h1>2. Inspect the four governed parameter files before changing them</h1>
+<p>Run:</p>
+<pre><code class="language-powershell">$dataM = Join-Path $work &quot;power_query\parameters\pDataRoot.m&quot;
+$buildM = Join-Path $work &quot;power_query\parameters\pBuildRoot.m&quot;
+
+Write-Host &quot;===== pDataRoot.m =====&quot;
+Get-Content -LiteralPath $dataM
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== pBuildRoot.m =====&quot;
+Get-Content -LiteralPath $buildM
+</code></pre>
+<p>You should see approximately:</p>
+<pre><code class="language-text">&quot;S:\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]
+</code></pre>
+<p>and:</p>
+<pre><code class="language-text">&quot;S:\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]
+</code></pre>
+<p>If they show something materially different, stop and paste the output.</p>
+<hr>
+<h1>3. Preserve all four before-state identities</h1>
+<pre><code class="language-powershell">$patchRoot = Join-Path $return &quot;E00_UNC_PARAMETER_PATCH&quot;
+$beforeRoot = Join-Path $patchRoot &quot;before&quot;
+$afterRoot  = Join-Path $patchRoot &quot;after&quot;
+
+New-Item -ItemType Directory -Path $beforeRoot -Force | Out-Null
+New-Item -ItemType Directory -Path $afterRoot  -Force | Out-Null
+
+Copy-Item -LiteralPath $model  -Destination &quot;$beforeRoot\model.bim&quot;     -Force
+Copy-Item -LiteralPath $dataM  -Destination &quot;$beforeRoot\pDataRoot.m&quot;  -Force
+Copy-Item -LiteralPath $buildM -Destination &quot;$beforeRoot\pBuildRoot.m&quot; -Force
+
+$beforeIdentities = @(
+    $model,
+    $dataM,
+    $buildM
+) | ForEach-Object {
+    [pscustomobject]@{
+        path = $_
+        bytes = (Get-Item -LiteralPath $_).Length
+        sha256 = (
+            Get-FileHash -LiteralPath $_ -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+}
+
+$beforeIdentities |
+    Export-Csv `
+        -LiteralPath &quot;$patchRoot\BEFORE_SHA256.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+$beforeIdentities | Format-Table -AutoSize
+</code></pre>
+<hr>
+<h1>4. Perform the exact bounded patch</h1>
+<p>Use this block exactly:</p>
+<pre><code class="language-powershell">$uncRoot  = &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC&quot;
+$uncPbi   = &quot;$uncRoot\pbi&quot;
+$uncBuild = &quot;$uncRoot\build&quot;
+
+# ------------------------------------------------------------------
+# A. Patch the external Power Query parameter definitions.
+# ------------------------------------------------------------------
+
+$expectedDataExternal =
+    &#39;&quot;S:\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;
+
+$expectedBuildExternal =
+    &#39;&quot;S:\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;
+
+$newDataExternal =
+    &#39;&quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;
+
+$newBuildExternal =
+    &#39;&quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;
+
+$dataRawExternal  = [IO.File]::ReadAllText($dataM)
+$buildRawExternal = [IO.File]::ReadAllText($buildM)
+
+if ($dataRawExternal.Trim() -cne $expectedDataExternal) {
+    throw &quot;STOP: external pDataRoot.m does not match the expected S:\ baseline.&quot;
+}
+
+if ($buildRawExternal.Trim() -cne $expectedBuildExternal) {
+    throw &quot;STOP: external pBuildRoot.m does not match the expected S:\ baseline.&quot;
+}
+
+# ------------------------------------------------------------------
+# B. Prepare the exact raw JSON values used inside model.bim.
+# ------------------------------------------------------------------
+
+$raw = [IO.File]::ReadAllText($model)
+
+$oldDataJson =
+    &#39;\&quot;S:\\pbi\&quot; meta [IsParameterQuery=true, Type=\&quot;Text\&quot;, IsParameterQueryRequired=true]&#39;
+
+$newDataJson =
+    &#39;\&quot;\\\\localhost\\MSBF_PBI_A1B_SYNTHETIC\\pbi\&quot; meta [IsParameterQuery=true, Type=\&quot;Text\&quot;, IsParameterQueryRequired=true]&#39;
+
+$oldBuildJson =
+    &#39;\&quot;S:\\build\&quot; meta [IsParameterQuery=true, Type=\&quot;Text\&quot;, IsParameterQueryRequired=true]&#39;
+
+$newBuildJson =
+    &#39;\&quot;\\\\localhost\\MSBF_PBI_A1B_SYNTHETIC\\build\&quot; meta [IsParameterQuery=true, Type=\&quot;Text\&quot;, IsParameterQueryRequired=true]&#39;
+
+$dataMatches = (
+    [regex]::Matches(
+        $raw,
+        [regex]::Escape($oldDataJson)
+    )
+).Count
+
+$buildMatches = (
+    [regex]::Matches(
+        $raw,
+        [regex]::Escape($oldBuildJson)
+    )
+).Count
+
+Write-Host &quot;model.bim pDataRoot matches: &quot; $dataMatches
+Write-Host &quot;model.bim pBuildRoot matches:&quot; $buildMatches
+
+if ($dataMatches -ne 1 -or $buildMatches -ne 1) {
+    throw &quot;STOP: expected exactly one embedded pDataRoot and one pBuildRoot value.&quot;
+}
+
+# ------------------------------------------------------------------
+# C. Build all three changed files in memory before writing anything.
+# ------------------------------------------------------------------
+
+$patchedModel = $raw.Replace($oldDataJson, $newDataJson)
+$patchedModel = $patchedModel.Replace($oldBuildJson, $newBuildJson)
+
+# Validate patched JSON before committing it.
+$null = $patchedModel | ConvertFrom-Json
+
+# ------------------------------------------------------------------
+# D. Commit exactly three governed files.
+# ------------------------------------------------------------------
+
+[IO.File]::WriteAllText(
+    $dataM,
+    $newDataExternal + [Environment]::NewLine,
+    [Text.UTF8Encoding]::new($false)
+)
+
+[IO.File]::WriteAllText(
+    $buildM,
+    $newBuildExternal + [Environment]::NewLine,
+    [Text.UTF8Encoding]::new($false)
+)
+
+[IO.File]::WriteAllText(
+    $model,
+    $patchedModel,
+    [Text.UTF8Encoding]::new($false)
+)
+
+Write-Host &quot;&quot;
+Write-Host &quot;UNC parameter patch committed.&quot;
+</code></pre>
+<p>Expected match population:</p>
+<pre><code class="language-text">model.bim pDataRoot matches:  1
+model.bim pBuildRoot matches: 1
+UNC parameter patch committed.
+</code></pre>
+<p>This does <strong>not</strong> reserialize the whole BIM; it changes only the exact two embedded parameter values.</p>
+<hr>
+<h1>5. Verify the new parameter values and external/embedded parity</h1>
+<p>Run:</p>
+<pre><code class="language-powershell">$modelObj = Get-Content -LiteralPath $model -Raw |
+    ConvertFrom-Json
+
+$embedded = @(
+    $modelObj.model.expressions |
+    Where-Object {
+        $_.name -in @(&quot;pDataRoot&quot;,&quot;pBuildRoot&quot;)
+    } |
+    Sort-Object name |
+    Select-Object name,expression
+)
+
+$embedded | Format-Table -AutoSize
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== external pDataRoot =====&quot;
+Get-Content -LiteralPath $dataM
+
+Write-Host &quot;&quot;
+Write-Host &quot;===== external pBuildRoot =====&quot;
+Get-Content -LiteralPath $buildM
+</code></pre>
+<p>Required embedded results:</p>
+<pre><code class="language-text">pBuildRoot  &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot; meta [...]
+pDataRoot   &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot; meta [...]
+</code></pre>
+<p>Then prove exact semantic parity:</p>
+<pre><code class="language-powershell">$embeddedData = string (historical reference: `
+    $modelObj.model.expressions |
+    Where-Object { $_.name -ceq &quot;pDataRoot&quot; }
+`; referenced bytes not established here).expression
+
+$embeddedBuild = string (historical reference: `
+    $modelObj.model.expressions |
+    Where-Object { $_.name -ceq &quot;pBuildRoot&quot; }
+`; referenced bytes not established here).expression
+
+$externalData = (
+    [IO.File]::ReadAllText($dataM)
+).Trim()
+
+$externalBuild = (
+    [IO.File]::ReadAllText($buildM)
+).Trim()
+
+$parity = @(
+    [pscustomobject]@{
+        parameter = &quot;pDataRoot&quot;
+        embedded = $embeddedData
+        external = $externalData
+        exact_match = ($embeddedData -ceq $externalData)
+    },
+    [pscustomobject]@{
+        parameter = &quot;pBuildRoot&quot;
+        embedded = $embeddedBuild
+        external = $externalBuild
+        exact_match = ($embeddedBuild -ceq $externalBuild)
+    }
+)
+
+$parity | Format-Table -AutoSize
+
+$parity |
+    Export-Csv `
+        -LiteralPath &quot;$patchRoot\PARAMETER_EMBEDDED_EXTERNAL_PARITY.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+if (@($parity | Where-Object { -not $_.exact_match }).Count -gt 0) {
+    throw &quot;STOP: embedded/external parameter parity failed.&quot;
+}
+
+Write-Host &quot;PARAMETER PARITY PASS.&quot;
+</code></pre>
+<hr>
+<h1>6. Capture exact before/after hashes and limit the changed population</h1>
+<pre><code class="language-powershell">Copy-Item -LiteralPath $model  -Destination &quot;$afterRoot\model.bim&quot;     -Force
+Copy-Item -LiteralPath $dataM  -Destination &quot;$afterRoot\pDataRoot.m&quot;  -Force
+Copy-Item -LiteralPath $buildM -Destination &quot;$afterRoot\pBuildRoot.m&quot; -Force
+
+$afterIdentities = @(
+    $model,
+    $dataM,
+    $buildM
+) | ForEach-Object {
+    [pscustomobject]@{
+        path = $_
+        bytes = (Get-Item -LiteralPath $_).Length
+        sha256 = (
+            Get-FileHash -LiteralPath $_ -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+}
+
+$afterIdentities |
+    Export-Csv `
+        -LiteralPath &quot;$patchRoot\AFTER_SHA256.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+$afterIdentities | Format-Table -AutoSize
+</code></pre>
+<p>Also write a bounded change record:</p>
+<pre><code class="language-powershell">[pscustomobject]@{
+    event = &quot;A1B_DEDICATED_UNC_PARAMETER_PATCH&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    authorization_basis = &quot;PBI-F-004_A1B_DEDICATED_SYNTHETIC_ROOT&quot;
+
+    pDataRoot_before = &quot;S:\pbi&quot;
+    pDataRoot_after = &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot;
+
+    pBuildRoot_before = &quot;S:\build&quot;
+    pBuildRoot_after = &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot;
+
+    changed_external_m_files = 2
+    changed_embedded_parameter_values = 2
+    whole_bim_reserialization = $false
+
+    table_count_change = 0
+    relationship_count_change = 0
+    query_count_change = 0
+    measure_count_change = 0
+    page_change = 0
+    visual_change = 0
+
+    refresh_executed = $false
+    close_apply_executed = $false
+
+    status = &quot;PATCHED_PENDING_STATIC_BOUNDARY_REVERIFY&quot;
+} |
+    ConvertTo-Json -Depth 6 |
+    Set-Content `
+        -LiteralPath &quot;$patchRoot\UNC_PARAMETER_PATCH_CONTROL.json&quot; `
+        -Encoding utf8
+</code></pre>
+<hr>
+<h1>7. Re-run the static A1b 32/32/79/60 verifier</h1>
+<p>The package runbook requires a pre-refresh boundary check before any model processing. [export reference: filecite | turn17file0 | L26-L39]</p>
+<p>Run:</p>
+<pre><code class="language-powershell">&amp; &quot;$work\tools\Verify-A1bPreRefreshBoundary.ps1&quot; `
+    -PackageRoot $work *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$return\E00_A1B_PRE_REFRESH_BOUNDARY_AFTER_UNC_PATCH.txt&quot;
+</code></pre>
+<p>Required state remains:</p>
+<pre><code class="language-text">tables                    32
+relationships             32
+power_query_objects       79
+measures                  60
+
+a1b_tables                18
+a1b_relationships         26
+a1b_power_query_objects   32
+a1b_measures              60
+
+technical_shell_pages      1
+visuals                    0
+
+inactive_relationships:
+REL-076 only
+
+bidirectional_relationships:
+none
+
+scenario_code_relationships:
+none
+</code></pre>
+<p>And critically:</p>
+<pre><code class="language-text">pDataRoot  → \\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi
+pBuildRoot → \\localhost\MSBF_PBI_A1B_SYNTHETIC\build
+</code></pre>
+<p><strong>If this verifier does not PASS, stop. Do not reopen Desktop.</strong></p>
+<hr>
+<h1>8. Reopen Desktop</h1>
+<p>Assuming the boundary verifier passes, open:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819
+\project
+\MSBF_PBI_A1A_Local_Construction_R1.pbip
+</code></pre>
+<p>Do <strong>not</strong> click a Refresh banner.</p>
+<p>Go directly to:</p>
+<p><strong>Home → Transform data</strong></p>
+<p>Confirm:</p>
+<pre><code class="language-text">Queries [79]
+</code></pre>
+<p>Then select:</p>
+<pre><code class="language-text">stg_POWER_BI_DATA_CATALOG
+</code></pre>
+<p>At this point Power Query should try to resolve:</p>
+<pre><code class="language-text">\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi
+</code></pre>
+<p>rather than <code>S:\</code> or <code>C:\</code>.</p>
+<hr>
+<h1>9. Register and capture the UNC privacy source</h1>
+<p>If Power BI raises:</p>
+<pre><code class="language-text">Information is required about data privacy
+</code></pre>
+<p>choose <strong>Continue</strong>.</p>
+<p>For this bounded execution, set the dedicated synthetic UNC source to:</p>
+<pre><code class="language-text">Public
+</code></pre>
+<p>That is permitted by Audit only because the source is an isolated, fully inventoried synthetic root; broad <code>C:\ Public</code> and globally ignoring privacy remain prohibited. [export reference: filecite | turn16file3 | L188-L201]</p>
+<p>If Power BI presents the two paths separately:</p>
+<pre><code class="language-text">\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi
+\\localhost\MSBF_PBI_A1B_SYNTHETIC\build
+</code></pre>
+<p>set both consistently to <code>Public</code>.</p>
+<p>If it recognizes only the parent:</p>
+<pre><code class="language-text">\\localhost\MSBF_PBI_A1B_SYNTHETIC
+</code></pre>
+<p>that is also acceptable because that parent contains only the inventoried <code>pbi</code> and <code>build</code> synthetic directories.</p>
+<p>Do <strong>not</strong> select or modify <code>C:\</code>.</p>
+<p>Then open:</p>
+<p><strong>Data source settings</strong></p>
+<p>Capture the exact UNC source entry and privacy classification as:</p>
+<pre><code class="language-text">E00_PRIVACY_DATA_SOURCE_SETTINGS.png
+</code></pre>
+<p>We need the screenshot to visibly establish a boundary beginning with:</p>
+<pre><code class="language-text">\\localhost\MSBF_PBI_A1B_SYNTHETIC
+</code></pre>
+<p>—not <code>C:\</code>.</p>
+<hr>
+<h1>10. Create the privacy attestation from the actual UI scope</h1>
+<p>Do not run this until you know whether Desktop registered the parent root or the two subroots.</p>
+<p>If it registers the <strong>parent UNC root</strong>, use:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    source_scope = &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC&quot;
+    privacy_level = &quot;Public&quot;
+
+    physical_backing_root =
+        &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\synthetic_root&quot;
+
+    isolated_synthetic_root_only = $true
+    contains_unrelated_personal_or_production_data = $false
+
+    global_privacy_enforcement_enabled = $true
+    ignore_privacy_levels = $false
+    fast_combine_enabled = $false
+
+    pDataRoot = &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot;
+    pBuildRoot = &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot;
+
+    screenshot_data_source_settings =
+        &quot;E00_PRIVACY_DATA_SOURCE_SETTINGS.png&quot;
+
+    screenshot_global_privacy =
+        &quot;E00_PRIVACY_GLOBAL_ENFORCEMENT.png&quot;
+
+    status = &quot;PASS&quot;
+} |
+    ConvertTo-Json -Depth 6 |
+    Set-Content `
+        -LiteralPath &quot;$return\E00_PRIVACY_ATTESTATION.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>If Desktop shows two distinct subroots instead, send me the screenshot first and we will make the attestation match the physical UI exactly.</p>
+<hr>
+<h1>11. Re-capture Desktop identity after reopen</h1>
+<p>Because this will be a new Desktop process, re-run your successful native identity capture. The evidence should correspond to the actual process used for the eventual A1b refresh.</p>
+<p>Use the same native CIM block that worked before and overwrite:</p>
+<pre><code class="language-text">E00_POWER_BI_DESKTOP_PROCESS_IDENTITY.json
+</code></pre>
+<p>with the new process ID while retaining:</p>
+<pre><code class="language-text">file_version      2.156.951.0
+resolved_version  2.156.951.0
+identity_status   PASS
+</code></pre>
+<p>The A1b audit explicitly requires Desktop About/version and active process/executable identity before first refresh. [export reference: filecite | turn16file3 | L203-L207]</p>
+<hr>
+<h1>12. Run the formal pre-refresh evidence gate</h1>
+<p>Only after all of these exist:</p>
+<pre><code class="language-text">E00_PRIVACY_GLOBAL_ENFORCEMENT.png
+E00_PRIVACY_DATA_SOURCE_SETTINGS.png
+E00_PRIVACY_ATTESTATION.json
+
+E00_POWER_BI_DESKTOP_ABOUT.png
+E00_POWER_BI_DESKTOP_PROCESS_IDENTITY.json
+
+E00_SYNTHETIC_ROOT_MAPPING.json
+E00_A1A_BASELINE_PREFLIGHT.json
+E00_A1B_PRE_REFRESH_BOUNDARY.json
+</code></pre>
+<p>run:</p>
+<pre><code class="language-powershell">&amp; &quot;$work\tools\Verify-A1bPreRefreshEvidenceGate.ps1&quot; `
+    -PackageRoot $work *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$return\E00_A1B_PRE_REFRESH_EVIDENCE_GATE.txt&quot;
+</code></pre>
+<p>The runbook makes this gate mandatory before Refresh Preview, Close &amp; Apply, or Desktop refresh. [export reference: filecite | turn17file0 | L26-L39]</p>
+<p>We need:</p>
+<pre><code class="language-text">PASS
+</code></pre>
+<p>No waiver.</p>
+<hr>
+<h1>13. Only after PASS: permit Refresh Preview</h1>
+<p>If—and only if—the evidence gate passes, the first allowed engine action becomes:</p>
+<p><strong>Power Query Editor → Refresh Preview → Refresh All</strong></p>
+<p>Then:</p>
+<pre><code class="language-text">Stop on any query error.
+Do not Close &amp; Apply until all 79 queries evaluate successfully.
+</code></pre>
+<p>The authorized sequence is explicitly: successful Power Query evaluation first, then Close &amp; Apply/model processing, then Desktop data refresh. [export reference: filecite | turn17file0 | L51-L67]</p>
+<h3>Where you are right now</h3>
+<pre><code class="language-text">SMB share                            PASS
+Share access                         READ-ONLY
+UNC reachability                     PASS
+Failed patch                         NONMUTATING
+Correct UNC patch                    NEXT
+32/32/79/60 reverification           AFTER PATCH
+Desktop reopen                       AFTER STATIC PASS
+UNC privacy registration             AFTER REOPEN
+Privacy attestation                  AFTER UI EVIDENCE
+Pre-refresh evidence gate            AFTER ALL ABOVE
+Refresh Preview                      STILL PROHIBITED
+</code></pre>
+<p>Run <strong>Steps 1–7 first</strong>. Send me the output from the corrected patch, parity test, and <code>Verify-A1bPreRefreshBoundary.ps1</code> before reopening Power BI.</p>
+</div></article><article id="m-27f590b8-ae3f-413e-b531-8f96bcc7bdfb" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00131 · 2026-08-19T20:56:53.665000-04:00 · active path</p><div class="bubble"><p>PS C:\WINDOWS\system32&gt; $work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;</p>
+<blockquote>
+<blockquote>
+<p>$return = Join-Path $work &quot;evidence\local_engine_return&quot;</p>
+<p>$model = Join-Path $work `
+    &quot;project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;</p>
+<p>$before = Join-Path $return `
+    &quot;E00_MODEL_BIM_PRE_UNC_PARAMETER_PATCH.bim&quot;</p>
+<p>$currentHash = (
+    Get-FileHash $model -Algorithm SHA256
+).Hash.ToLowerInvariant()</p>
+<p>$beforeHash = (
+    Get-FileHash $before -Algorithm SHA256
+).Hash.ToLowerInvariant()</p>
+<p>[pscustomobject]@{
+    model_current_sha256 = $currentHash
+    preserved_before_sha256 = $beforeHash
+    unchanged = ($currentHash -ceq $beforeHash)
+} | Format-List</p>
+<p>if ($currentHash -cne $beforeHash) {
+    throw &quot;STOP: model.bim changed during the failed replacement attempt.&quot;
+}</p>
+<p>Write-Host &quot;FAILED PATCH ATTEMPT NONMUTATION PASS.&quot;</p>
+</blockquote>
+</blockquote>
+<p>model_current_sha256    : 43e5ccd3f48fe5e1125fe8d7a1278625ebfa08763b66b46708ec73276a2ae656
+preserved_before_sha256 : 43e5ccd3f48fe5e1125fe8d7a1278625ebfa08763b66b46708ec73276a2ae656
+unchanged               : True</p>
+<p>FAILED PATCH ATTEMPT NONMUTATION PASS.
+PS C:\WINDOWS\system32&gt; @&#39;</p>
+<blockquote>
+<blockquote>
+<p>A1B UNC PARAMETER PATCH TOOLING OBSERVATION</p>
+<p>Date: 2026-08-19</p>
+<p>Operation:
+Attempted raw model.bim replacement of pDataRoot and pBuildRoot from S:\ paths
+to the dedicated localhost SMB root.</p>
+<p>Observed condition:
+The raw replacement population returned 0 matches for each parameter because
+the search strings did not account for model.bim JSON escaping of the embedded
+Power Query M expression.</p>
+<p>The script stopped before File.WriteAllText executed.</p>
+<p>No model.bim write occurred.
+No external Power Query parameter file was changed.
+No Desktop refresh occurred.
+No Close &amp; Apply occurred.
+No semantic processing occurred.</p>
+<p>Follow-up:
+Correct the raw JSON match strings, patch exactly the two authorized parameter
+definitions and their external .m counterparts, verify parity, and rerun the
+static A1b boundary.
+&#39;@ |
+    Set-Content <code>        -LiteralPath &quot;$return\E00_UNC_PARAMETER_PATCH_TOOLING_OBSERVATION.txt&quot;</code>
+        -Encoding utf8
+PS C:\WINDOWS\system32&gt; $dataM = Join-Path $work &quot;power_query\parameters\pDataRoot.m&quot;</p>
+<blockquote>
+<p>$buildM = Join-Path $work &quot;power_query\parameters\pBuildRoot.m&quot;</p>
+<p>Write-Host &quot;===== pDataRoot.m =====&quot;
+Get-Content -LiteralPath $dataM</p>
+<p>Write-Host &quot;&quot;
+Write-Host &quot;===== pBuildRoot.m =====&quot;
+Get-Content -LiteralPath $buildM
+===== pDataRoot.m =====
+&quot;S:\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>===== pBuildRoot.m =====
+&quot;S:\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]
+PS C:\WINDOWS\system32&gt; $patchRoot = Join-Path $return &quot;E00_UNC_PARAMETER_PATCH&quot;</p>
+<blockquote>
+<blockquote>
+<p>$beforeRoot = Join-Path $patchRoot &quot;before&quot;
+$afterRoot  = Join-Path $patchRoot &quot;after&quot;</p>
+<p>New-Item -ItemType Directory -Path $beforeRoot -Force | Out-Null
+New-Item -ItemType Directory -Path $afterRoot  -Force | Out-Null</p>
+<p>Copy-Item -LiteralPath $model  -Destination &quot;$beforeRoot\model.bim&quot;     -Force
+Copy-Item -LiteralPath $dataM  -Destination &quot;$beforeRoot\pDataRoot.m&quot;  -Force
+Copy-Item -LiteralPath $buildM -Destination &quot;$beforeRoot\pBuildRoot.m&quot; -Force</p>
+<p>$beforeIdentities = @(
+    $model,
+    $dataM,
+    $buildM
+) | ForEach-Object {
+    [pscustomobject]@{
+        path = $_
+        bytes = (Get-Item -LiteralPath $<em>).Length
+        sha256 = (
+            Get-FileHash -LiteralPath $</em> -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+}</p>
+<p>$beforeIdentities |
+    Export-Csv <code>        -LiteralPath &quot;$patchRoot\BEFORE_SHA256.csv&quot;</code>
+        -NoTypeInformation `
+        -Encoding utf8</p>
+<p>$beforeIdentities | Format-Table -AutoSize</p>
+</blockquote>
+</blockquote>
+<p>path                                                                                                         bytes sha2
+                                                                                                                   56</p>
+<hr>
+<p>C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim 463726 4...
+C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\power_query\parameters\pDataRoot.m                                     82 d...
+C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\power_query\parameters\pBuildRoot.m                                    84 f...</p>
+<p>PS C:\WINDOWS\system32&gt; $uncRoot  = &quot;\localhost\MSBF_PBI_A1B_SYNTHETIC&quot;</p>
+<blockquote>
+<blockquote>
+<p>$uncPbi   = &quot;$uncRoot\pbi&quot;
+$uncBuild = &quot;$uncRoot\build&quot;</p>
+<h1>------------------------------------------------------------------</h1>
+<h1>A. Patch the external Power Query parameter definitions.</h1>
+<h1>------------------------------------------------------------------</h1>
+<p>$expectedDataExternal =
+    &#39;&quot;S:\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;</p>
+<p>$expectedBuildExternal =
+    &#39;&quot;S:\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;</p>
+<p>$newDataExternal =
+    &#39;&quot;\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;</p>
+<p>$newBuildExternal =
+    &#39;&quot;\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;</p>
+<p>$dataRawExternal  = IO.File (historical reference: :WriteAllText()::ReadAllText($dataM)
+$buildRawExternal = IO.File (historical reference: :WriteAllText()::ReadAllText($buildM)</p>
+<p>if ($dataRawExternal.Trim() -cne $expectedDataExternal) {
+    throw &quot;STOP: external pDataRoot.m does not match the expected S:\ baseline.&quot;
+}</p>
+<p>if ($buildRawExternal.Trim() -cne $expectedBuildExternal) {
+    throw &quot;STOP: external pBuildRoot.m does not match the expected S:\ baseline.&quot;
+}</p>
+<h1>------------------------------------------------------------------</h1>
+<h1>B. Prepare the exact raw JSON values used inside model.bim.</h1>
+<h1>------------------------------------------------------------------</h1>
+<p>$raw = IO.File (historical reference: :WriteAllText()::ReadAllText($model)</p>
+<p>$oldDataJson =
+    &#39;&quot;S:\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;</p>
+<p>$newDataJson =
+    &#39;&quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;</p>
+<p>$oldBuildJson =
+    &#39;&quot;S:\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;</p>
+<p>$newBuildJson =
+    &#39;&quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]&#39;</p>
+<p>$dataMatches = (
+    [regex]::Matches(
+        $raw,
+        [regex]::Escape($oldDataJson)
+    )
+).Count</p>
+<p>$buildMatches = (
+    [regex]::Matches(
+        $raw,
+        [regex]::Escape($oldBuildJson)
+    )
+).Count</p>
+<p>Write-Host &quot;model.bim pDataRoot matches: &quot; $dataMatches
+Write-Host &quot;model.bim pBuildRoot matches:&quot; $buildMatches</p>
+<p>if ($dataMatches -ne 1 -or $buildMatches -ne 1) {
+    throw &quot;STOP: expected exactly one embedded pDataRoot and one pBuildRoot value.&quot;
+}</p>
+<h1>------------------------------------------------------------------</h1>
+<h1>C. Build all three changed files in memory before writing anything.</h1>
+<h1>------------------------------------------------------------------</h1>
+<p>$patchedModel = $raw.Replace($oldDataJson, $newDataJson)
+$patchedModel = $patchedModel.Replace($oldBuildJson, $newBuildJson)</p>
+<h1>Validate patched JSON before committing it.</h1>
+<p>$null = $patchedModel | ConvertFrom-Json</p>
+<h1>------------------------------------------------------------------</h1>
+<h1>D. Commit exactly three governed files.</h1>
+<h1>------------------------------------------------------------------</h1>
+<pre><code>$dataM,
+$newDataExternal + [Environment]::NewLine,
+[Text.UTF8Encoding]::new($false)
+</code></pre>
+<p>)</p>
+<pre><code>$buildM,
+$newBuildExternal + [Environment]::NewLine,
+[Text.UTF8Encoding]::new($false)
+</code></pre>
+<p>)</p>
+<pre><code>$model,
+$patchedModel,
+[Text.UTF8Encoding]::new($false)
+</code></pre>
+<p>)</p>
+<p>Write-Host &quot;&quot;
+Write-Host &quot;UNC parameter patch committed.&quot;
+model.bim pDataRoot matches:  1
+model.bim pBuildRoot matches: 1</p>
+</blockquote>
+</blockquote>
+<p>UNC parameter patch committed.
+PS C:\WINDOWS\system32&gt; $modelObj = Get-Content -LiteralPath $model -Raw |</p>
+<blockquote>
+<blockquote>
+<pre><code>ConvertFrom-Json
+</code></pre>
+<p>$embedded = @(
+    $modelObj.model.expressions |
+    Where-Object {
+        $_.name -in @(&quot;pDataRoot&quot;,&quot;pBuildRoot&quot;)
+    } |
+    Sort-Object name |
+    Select-Object name,expression
+)</p>
+<p>$embedded | Format-Table -AutoSize</p>
+<p>Write-Host &quot;&quot;
+Write-Host &quot;===== external pDataRoot =====&quot;
+Get-Content -LiteralPath $dataM</p>
+<p>Write-Host &quot;&quot;
+Write-Host &quot;===== external pBuildRoot =====&quot;
+Get-Content -LiteralPath $buildM</p>
+</blockquote>
+</blockquote>
+<p>name       expression</p>
+<hr>
+<p>pBuildRoot &quot;\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequ...
+pDataRoot  &quot;\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequir...</p>
+<p>===== external pDataRoot =====
+&quot;\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]</p>
+<p>===== external pBuildRoot =====
+&quot;\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequired=true]
+PS C:\WINDOWS\system32&gt; $embeddedData = string (historical reference: `</p>
+<blockquote>
+<blockquote>
+<pre><code>$modelObj.model.expressions |
+Where-Object { $_.name -ceq &quot;pDataRoot&quot; }
+</code></pre>
+<p>`; referenced bytes not established here).expression</p>
+<p>$embeddedBuild = string (historical reference: <code>    $modelObj.model.expressions |     Where-Object { $_.name -ceq &quot;pBuildRoot&quot; }</code>; referenced bytes not established here).expression</p>
+<p>$externalData = (
+    IO.File (historical reference: :WriteAllText()::ReadAllText($dataM)
+).Trim()</p>
+<p>$externalBuild = (
+    IO.File (historical reference: :WriteAllText()::ReadAllText($buildM)
+).Trim()</p>
+<p>$parity = @(
+    [pscustomobject]@{
+        parameter = &quot;pDataRoot&quot;
+        embedded = $embeddedData
+        external = $externalData
+        exact_match = ($embeddedData -ceq $externalData)
+    },
+    [pscustomobject]@{
+        parameter = &quot;pBuildRoot&quot;
+        embedded = $embeddedBuild
+        external = $externalBuild
+        exact_match = ($embeddedBuild -ceq $externalBuild)
+    }
+)</p>
+<p>$parity | Format-Table -AutoSize</p>
+<p>$parity |
+    Export-Csv <code>        -LiteralPath &quot;$patchRoot\PARAMETER_EMBEDDED_EXTERNAL_PARITY.csv&quot;</code>
+        -NoTypeInformation `
+        -Encoding utf8</p>
+<p>if (@($parity | Where-Object { -not $_.exact_match }).Count -gt 0) {
+    throw &quot;STOP: embedded/external parameter parity failed.&quot;
+}</p>
+<p>Write-Host &quot;PARAMETER PARITY PASS.&quot;</p>
+</blockquote>
+</blockquote>
+<p>parameter  embedded</p>
+<hr>
+<p>pDataRoot  &quot;\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequir...
+pBuildRoot &quot;\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot; meta [IsParameterQuery=true, Type=&quot;Text&quot;, IsParameterQueryRequ...</p>
+<p>PARAMETER PARITY PASS.
+PS C:\WINDOWS\system32&gt; Copy-Item -LiteralPath $model  -Destination &quot;$afterRoot\model.bim&quot;     -Force</p>
+<blockquote>
+<blockquote>
+<p>Copy-Item -LiteralPath $dataM  -Destination &quot;$afterRoot\pDataRoot.m&quot;  -Force
+Copy-Item -LiteralPath $buildM -Destination &quot;$afterRoot\pBuildRoot.m&quot; -Force</p>
+<p>$afterIdentities = @(
+    $model,
+    $dataM,
+    $buildM
+) | ForEach-Object {
+    [pscustomobject]@{
+        path = $_
+        bytes = (Get-Item -LiteralPath $<em>).Length
+        sha256 = (
+            Get-FileHash -LiteralPath $</em> -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+}</p>
+<p>$afterIdentities |
+    Export-Csv <code>        -LiteralPath &quot;$patchRoot\AFTER_SHA256.csv&quot;</code>
+        -NoTypeInformation `
+        -Encoding utf8</p>
+<p>$afterIdentities | Format-Table -AutoSize</p>
+</blockquote>
+</blockquote>
+<p>path                                                                                                         bytes sha2
+                                                                                                                   56</p>
+<hr>
+<p>C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim 463796 b...
+C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\power_query\parameters\pDataRoot.m                                    115 2...
+C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\power_query\parameters\pBuildRoot.m                                   117 1...</p>
+<p>PS C:\WINDOWS\system32&gt; [pscustomobject]@{</p>
+<blockquote>
+<blockquote>
+<pre><code>event = &quot;A1B_DEDICATED_UNC_PARAMETER_PATCH&quot;
+captured_local = (Get-Date).ToString(&quot;o&quot;)
+captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+authorization_basis = &quot;PBI-F-004_A1B_DEDICATED_SYNTHETIC_ROOT&quot;
+
+pDataRoot_before = &quot;S:\pbi&quot;
+pDataRoot_after = &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot;
+
+pBuildRoot_before = &quot;S:\build&quot;
+pBuildRoot_after = &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot;
+
+changed_external_m_files = 2
+changed_embedded_parameter_values = 2
+whole_bim_reserialization = $false
+
+table_count_change = 0
+relationship_count_change = 0
+query_count_change = 0
+measure_count_change = 0
+page_change = 0
+visual_change = 0
+
+refresh_executed = $false
+close_apply_executed = $false
+
+status = &quot;PATCHED_PENDING_STATIC_BOUNDARY_REVERIFY&quot;
+</code></pre>
+<p>} |
+    ConvertTo-Json -Depth 6 |
+    Set-Content <code>        -LiteralPath &quot;$patchRoot\UNC_PARAMETER_PATCH_CONTROL.json&quot;</code>
+        -Encoding utf8
+PS C:\WINDOWS\system32&gt; &amp; &quot;$work\tools\Verify-A1bPreRefreshBoundary.ps1&quot; `</p>
+<blockquote>
+<pre><code>-PackageRoot $work *&gt;&amp;1 |
+Tee-Object `
+    -FilePath &quot;$return\E00_A1B_PRE_REFRESH_BOUNDARY_AFTER_UNC_PATCH.txt&quot;
+</code></pre>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>&amp; : File C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819\tools\Verify-A1bPreRefreshBoundary.ps1 cannot be loaded because
+running scripts is disabled on this system. For more information, see about_Execution_Policies at
+https:/go.microsoft.com/fwlink/?LinkID=135170.
+At line:1 char:3</p>
+<ul>
+<li>&amp; &quot;$work\tools\Verify-A1bPreRefreshBoundary.ps1&quot; `</li>
+<li><pre><code>+ CategoryInfo          : SecurityError: (:) [], PSSecurityException
++ FullyQualifiedErrorId : UnauthorizedAccess
+</code></pre>
+</li>
+</ul>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

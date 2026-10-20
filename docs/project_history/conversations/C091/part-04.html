@@ -1,0 +1,1937 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence — part 04 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence — part 04</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-03.html">Previous part</a><a href="part-05.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-66970bec-2389-4727-a9f9-7d4a2df37375" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00059 · 2026-08-19T09:16:34.791351-04:00 · active path</p><div class="bubble"><p>Yes. Your authorization is sufficiently bounded to proceed <strong>inside the derived A1a working copy only</strong>. The screenshots physically establish both failure branches:</p>
+<pre><code class="language-text">stg_/Dim branch:
+Expression.Error: The value isn&#39;t a single-character string.
+Value=\\
+
+Fact branch:
+BUILD_CATALOG_READ: Power BI build catalog could not be read.
+Path=[Error]
+</code></pre>
+<p>This is consistent with a common path-literal defect in the three shared M definitions. The existing static package verified all 47 definitions were present and lexically balanced, but that did not prove Power Query runtime behavior. [export reference: filecite | turn10file0 | L43-L67]</p>
+<p>We will preserve the failed execution, close without applying it, patch <strong>only</strong> the three authorized definitions in both their external <code>.m</code> copies and their embedded <code>model.bim</code> expressions, capture exact before/after hashes and changed lines, rerun static boundary checks, and then resume Desktop. The audit continues to permit A1a execution while prohibiting A1b and any expansion of the semantic footprint. [export reference: filecite | turn9file0 | L102-L123]</p>
+<h2>1. Preserve the two screenshots and failed-refresh record</h2>
+<p>Leave Power Query open for the moment. Open a separate <strong>PowerShell 7</strong> window and run this block.</p>
+<p>It will give you two file-selection windows so you do not have to know the screenshot paths manually.</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+New-Item -ItemType Directory -Force -Path $ev | Out-Null
+
+Add-Type -AssemblyName System.Windows.Forms
+
+function Select-EvidenceImage {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Title,
+
+        [Parameter(Mandatory=$true)]
+        [string]$DestinationName
+    )
+
+    $dialog = New-Object System.Windows.Forms.OpenFileDialog
+    $dialog.Title = $Title
+    $dialog.Filter = &quot;PNG images (*.png)|*.png|JPEG images (*.jpg;*.jpeg)|*.jpg;*.jpeg|All files (*.*)|*.*&quot;
+    $dialog.Multiselect = $false
+
+    $result = $dialog.ShowDialog()
+
+    if ($result -ne [System.Windows.Forms.DialogResult]::OK) {
+        throw &quot;Screenshot selection cancelled. Stop.&quot;
+    }
+
+    $destination = Join-Path $ev $DestinationName
+
+    Copy-Item `
+        -LiteralPath $dialog.FileName `
+        -Destination $destination `
+        -Force
+
+    return $destination
+}
+
+$stgScreenshot = Select-EvidenceImage `
+    -Title &quot;Select screenshot showing stg_POWER_BI_DATA_CATALOG single-character error&quot; `
+    -DestinationName &quot;E02_REFRESH_ATTEMPT1_STG_CATALOG_ERROR.png&quot;
+
+$factScreenshot = Select-EvidenceImage `
+    -Title &quot;Select screenshot showing Fact BUILD_CATALOG_READ error&quot; `
+    -DestinationName &quot;E02_REFRESH_ATTEMPT1_FACT_BUILD_CATALOG_ERROR.png&quot;
+
+$failureRecord = [ordered]@{
+    schema_version = &quot;1.0&quot;
+    event = &quot;A1A_POWER_QUERY_REFRESH_PREVIEW_ATTEMPT_1&quot;
+    timestamp_local = (Get-Date).ToString(&quot;o&quot;)
+    timestamp_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    result = &quot;FAILED_COMMON_M_PATH_LITERAL_DEFECT&quot;
+
+    governed_state = [ordered]@{
+        semantic_tables = 14
+        relationships = 6
+        power_query_queries = 47
+        explicit_measures = 0
+        substantive_report_pages = 0
+        technical_shell_pages = 1
+        visual_objects = 0
+        a1b_objects = 0
+    }
+
+    execution_state = [ordered]@{
+        refresh_preview_attempted = $true
+        refresh_preview_succeeded = $false
+        apply_changes_performed = $false
+        close_and_apply_performed = $false
+        semantic_model_refresh_performed = $false
+    }
+
+    root_failure = [ordered]@{
+        upstream_query = &quot;stg_POWER_BI_DATA_CATALOG&quot;
+        error_type = &quot;Expression.Error&quot;
+        error_text = &quot;The value isn&#39;t a single-character string.&quot;
+        error_value = &quot;\\&quot;
+    }
+
+    downstream_failure = [ordered]@{
+        error_code = &quot;BUILD_CATALOG_READ&quot;
+        error_text = &quot;Power BI build catalog could not be read.&quot;
+        path_state = &quot;[Error]&quot;
+    }
+
+    affected_shared_definitions = @(
+        &quot;stg_POWER_BI_DATA_CATALOG&quot;,
+        &quot;fxReadCatalogedCsv&quot;,
+        &quot;fxReadBuildCsv&quot;
+    )
+
+    source_owner_authorization = [ordered]@{
+        authorized = $true
+        authorization_date = &quot;2026-08-19&quot;
+        scope = &quot;THREE_DEFINITION_A1A_M_RUNTIME_HOTFIX_DERIVED_WORKING_COPY_ONLY&quot;
+        semantic_count_change_authorized = $false
+        business_logic_change_authorized = $false
+        a1b_authorized = $false
+        audit_notification_required = $true
+    }
+
+    evidence_files = @(
+        [IO.Path]::GetFileName($stgScreenshot),
+        [IO.Path]::GetFileName($factScreenshot)
+    )
+}
+
+$failureRecord |
+    ConvertTo-Json -Depth 8 |
+    Set-Content `
+        -LiteralPath &quot;$ev\E02_REFRESH_ATTEMPT1_FAILURE.json&quot; `
+        -Encoding utf8
+
+@(
+    $stgScreenshot
+    $factScreenshot
+) |
+    ForEach-Object {
+        [pscustomobject]@{
+            file = [IO.Path]::GetFileName($_)
+            bytes = (Get-Item -LiteralPath $_).Length
+            sha256 = (
+                Get-FileHash -LiteralPath $_ -Algorithm SHA256
+            ).Hash.ToLowerInvariant()
+        }
+    } |
+    Export-Csv `
+        -LiteralPath &quot;$ev\E02_REFRESH_ATTEMPT1_SCREENSHOT_HASHES.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+Write-Host &quot;&quot;
+Write-Host &quot;Failed-refresh evidence preserved.&quot;
+Write-Host &quot;STG evidence:  $stgScreenshot&quot;
+Write-Host &quot;Fact evidence: $factScreenshot&quot;
+</code></pre>
+<p>If the screenshots do not currently exist as files on your PC, use <strong>Snipping Tool → Save As</strong> for each screenshot first, then run the block.</p>
+<h2>2. Close the failed Power Query execution without applying it</h2>
+<p>Now go back to Power Query Editor.</p>
+<p>Click its upper-right <strong>X</strong>.</p>
+<p>When asked about pending changes, choose:</p>
+<pre><code class="language-text">Discard changes
+</code></pre>
+<p>Do <strong>not</strong> choose Apply.</p>
+<p>Back in Desktop, close Desktop.</p>
+<p>If it asks whether to save the project, choose:</p>
+<pre><code class="language-text">Don&#39;t Save
+</code></pre>
+<p>This preserves the previously verified technical-shell baseline and prevents the failed refresh state from being committed.</p>
+<p>Once Desktop is fully closed, continue below.</p>
+<hr>
+<h1>3. Run the controlled three-definition hotfix</h1>
+<p>This next block does all of the following automatically:</p>
+<ul>
+<li>refuses to run if Power BI Desktop is still open;</li>
+<li>verifies all three target <code>.m</code> files exist;</li>
+<li>preserves exact pre-hotfix copies;</li>
+<li>records pre-hotfix SHA-256 values;</li>
+<li>changes only the malformed Windows backslash literals;</li>
+<li>patches the <strong>matching embedded M expressions in <code>model.bim</code> without reserializing the whole BIM</strong>;</li>
+<li>verifies each embedded expression had exactly one match;</li>
+<li>records all changed line numbers and before/after text;</li>
+<li>records post-hotfix hashes;</li>
+<li>proves no fourth external M definition changed;</li>
+<li>produces an evidence manifest.</li>
+</ul>
+<p>Run it as one block:</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+Set-StrictMode -Version Latest
+
+$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+$modelPath = Join-Path $work `
+    &quot;project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;
+
+$targets = [ordered]@{
+    &quot;stg_POWER_BI_DATA_CATALOG&quot; = Join-Path $work `
+        &quot;power_query\staging\stg_POWER_BI_DATA_CATALOG.m&quot;
+
+    &quot;fxReadCatalogedCsv&quot; = Join-Path $work `
+        &quot;power_query\functions\fxReadCatalogedCsv.m&quot;
+
+    &quot;fxReadBuildCsv&quot; = Join-Path $work `
+        &quot;power_query\functions\fxReadBuildCsv.m&quot;
+}
+
+# ------------------------------------------------------------
+# HARD PRECONDITIONS
+# ------------------------------------------------------------
+
+$pbiProcesses = @(
+    Get-Process `
+        -Name &quot;PBIDesktop&quot; `
+        -ErrorAction SilentlyContinue
+)
+
+if ($pbiProcesses.Count -gt 0) {
+    throw &quot;Power BI Desktop is still running. Close Desktop before applying the hotfix.&quot;
+}
+
+if (-not (Test-Path -LiteralPath $modelPath)) {
+    throw &quot;model.bim not found: $modelPath&quot;
+}
+
+foreach ($item in $targets.GetEnumerator()) {
+    if (-not (Test-Path -LiteralPath $item.Value)) {
+        throw &quot;Target M file not found: $($item.Value)&quot;
+    }
+}
+
+$hotfixRoot = Join-Path $ev `
+    &quot;E03_M_RUNTIME_HOTFIX_R1&quot;
+
+$beforeRoot = Join-Path $hotfixRoot &quot;before&quot;
+$afterRoot  = Join-Path $hotfixRoot &quot;after&quot;
+
+New-Item -ItemType Directory -Force -Path $beforeRoot | Out-Null
+New-Item -ItemType Directory -Force -Path $afterRoot  | Out-Null
+
+# ------------------------------------------------------------
+# RECORD FULL POWER-QUERY TREE HASHES BEFORE HOTFIX
+# ------------------------------------------------------------
+
+$allMFilesBefore = @(
+    Get-ChildItem `
+        -LiteralPath (Join-Path $work &quot;power_query&quot;) `
+        -File `
+        -Recurse `
+        -Filter &quot;*.m&quot; |
+    Sort-Object FullName
+)
+
+$preTree = foreach ($file in $allMFilesBefore) {
+    [pscustomobject]@{
+        relative_path = $file.FullName.Substring($work.Length + 1)
+        bytes = $file.Length
+        sha256 = (
+            Get-FileHash `
+                -LiteralPath $file.FullName `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+}
+
+$preTree |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\POWER_QUERY_TREE_BEFORE.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+# ------------------------------------------------------------
+# COPY AND HASH TARGETS BEFORE
+# ------------------------------------------------------------
+
+$beforeHashes = @()
+
+foreach ($item in $targets.GetEnumerator()) {
+
+    $name = $item.Key
+    $path = $item.Value
+
+    Copy-Item `
+        -LiteralPath $path `
+        -Destination (Join-Path $beforeRoot &quot;$name.m&quot;) `
+        -Force
+
+    $beforeHashes += [pscustomobject]@{
+        object = $name
+        artifact = &quot;EXTERNAL_M&quot;
+        path = $path.Substring($work.Length + 1)
+        sha256_before = (
+            Get-FileHash `
+                -LiteralPath $path `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+}
+
+Copy-Item `
+    -LiteralPath $modelPath `
+    -Destination (Join-Path $beforeRoot &quot;model.bim&quot;) `
+    -Force
+
+$modelHashBefore = (
+    Get-FileHash `
+        -LiteralPath $modelPath `
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+# ------------------------------------------------------------
+# EXACT M RUNTIME REPAIR FUNCTION
+# ------------------------------------------------------------
+
+function Repair-A1aMDefinition {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+
+        [Parameter(Mandatory=$true)]
+        [string]$Text
+    )
+
+    $result = $Text
+
+    switch ($Name) {
+
+        &quot;stg_POWER_BI_DATA_CATALOG&quot; {
+
+            $result = $result.Replace(
+                &#39;{&quot;/&quot;, &quot;\\&quot;}&#39;,
+                &#39;{&quot;/&quot;, &quot;\&quot;}&#39;
+            )
+
+            $result = $result.Replace(
+                &#39;&quot;\\data\\POWER_BI_DATA_CATALOG.csv&quot;&#39;,
+                &#39;&quot;\data\POWER_BI_DATA_CATALOG.csv&quot;&#39;
+            )
+        }
+
+        &quot;fxReadCatalogedCsv&quot; {
+
+            $result = $result.Replace(
+                &#39;{&quot;/&quot;, &quot;\\&quot;}&#39;,
+                &#39;{&quot;/&quot;, &quot;\&quot;}&#39;
+            )
+
+            $result = $result.Replace(
+                &#39;Text.Replace(CatalogRow[package_path], &quot;/&quot;, &quot;\\&quot;)&#39;,
+                &#39;Text.Replace(CatalogRow[package_path], &quot;/&quot;, &quot;\&quot;)&#39;
+            )
+
+            $result = $result.Replace(
+                &#39;Root &amp; &quot;\\&quot; &amp; RelativePath&#39;,
+                &#39;Root &amp; &quot;\&quot; &amp; RelativePath&#39;
+            )
+        }
+
+        &quot;fxReadBuildCsv&quot; {
+
+            $result = $result.Replace(
+                &#39;{&quot;/&quot;, &quot;\\&quot;}&#39;,
+                &#39;{&quot;/&quot;, &quot;\&quot;}&#39;
+            )
+
+            $result = $result.Replace(
+                &#39;Root &amp; &quot;\\&quot; &amp; Text.Replace(relativePath, &quot;/&quot;, &quot;\\&quot;)&#39;,
+                &#39;Root &amp; &quot;\&quot; &amp; Text.Replace(relativePath, &quot;/&quot;, &quot;\&quot;)&#39;
+            )
+        }
+
+        default {
+            throw &quot;Unexpected hotfix object: $Name&quot;
+        }
+    }
+
+    if ($result -ceq $Text) {
+        throw &quot;No text changed for $Name. Stop rather than applying an unproven patch.&quot;
+    }
+
+    return $result
+}
+
+# ------------------------------------------------------------
+# BUILD EXACT BEFORE/AFTER DEFINITIONS
+# ------------------------------------------------------------
+
+$definitions = @{}
+
+foreach ($item in $targets.GetEnumerator()) {
+
+    $name = $item.Key
+    $path = $item.Value
+
+    $beforeText = [IO.File]::ReadAllText($path)
+    $afterText  = Repair-A1aMDefinition `
+        -Name $name `
+        -Text $beforeText
+
+    # Ensure malformed double-backslash form is actually removed
+    # from the known path-construction expressions.
+    if (
+        $afterText.Contains(&#39;{&quot;/&quot;, &quot;\\&quot;}&#39;) -or
+        $afterText.Contains(&#39;Root &amp; &quot;\\&quot;&#39;) -or
+        $afterText.Contains(&#39;&quot;/&quot;, &quot;\\&quot;&#39;)
+    ) {
+        throw &quot;Malformed path literal remains in $name after proposed repair.&quot;
+    }
+
+    $definitions[$name] = [pscustomobject]@{
+        before = $beforeText
+        after  = $afterText
+        path   = $path
+    }
+}
+
+# ------------------------------------------------------------
+# BUILD CHANGED-LINE EVIDENCE BEFORE WRITING
+# ------------------------------------------------------------
+
+$lineDiff = @()
+
+foreach ($name in $targets.Keys) {
+
+    $beforeLines = @(
+        $definitions[$name].before -split &quot;`r?`n&quot;
+    )
+
+    $afterLines = @(
+        $definitions[$name].after -split &quot;`r?`n&quot;
+    )
+
+    $max = [Math]::Max(
+        $beforeLines.Count,
+        $afterLines.Count
+    )
+
+    for ($i = 0; $i -lt $max; $i++) {
+
+        $beforeLine = if ($i -lt $beforeLines.Count) {
+            $beforeLines[$i]
+        } else {
+            $null
+        }
+
+        $afterLine = if ($i -lt $afterLines.Count) {
+            $afterLines[$i]
+        } else {
+            $null
+        }
+
+        if ($beforeLine -cne $afterLine) {
+
+            $lineDiff += [pscustomobject]@{
+                object = $name
+                line_number = $i + 1
+                before = $beforeLine
+                after = $afterLine
+            }
+        }
+    }
+}
+
+# Exact expected changed-line population = 7
+if ($lineDiff.Count -ne 7) {
+    $lineDiff |
+        Format-Table -AutoSize |
+        Out-String |
+        Write-Host
+
+    throw &quot;Expected exactly 7 changed M lines; observed $($lineDiff.Count). Stop.&quot;
+}
+
+$lineDiff |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\M_RUNTIME_EXACT_LINE_DIFF.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+# ------------------------------------------------------------
+# PATCH MODEL.BIM WITHOUT RE-SERIALIZING THE DOCUMENT
+# ------------------------------------------------------------
+
+$modelRaw = [IO.File]::ReadAllText($modelPath)
+
+foreach ($name in $targets.Keys) {
+
+    $beforeExpressionJson = [System.Text.Json.JsonSerializer]::Serialize(
+        $definitions[$name].before
+    )
+
+    $afterExpressionJson = [System.Text.Json.JsonSerializer]::Serialize(
+        $definitions[$name].after
+    )
+
+    $matchCount = (
+        [regex]::Matches(
+            $modelRaw,
+            [regex]::Escape($beforeExpressionJson)
+        )
+    ).Count
+
+    if ($matchCount -ne 1) {
+        throw &quot;Embedded model expression for $name matched $matchCount times; expected exactly 1.&quot;
+    }
+
+    $modelRaw = $modelRaw.Replace(
+        $beforeExpressionJson,
+        $afterExpressionJson
+    )
+}
+
+# ------------------------------------------------------------
+# WRITE EXTERNAL DEFINITIONS AND MODEL.BIM
+# ------------------------------------------------------------
+
+foreach ($name in $targets.Keys) {
+
+    [IO.File]::WriteAllText(
+        $definitions[$name].path,
+        $definitions[$name].after,
+        [Text.UTF8Encoding]::new($false)
+    )
+
+    [IO.File]::WriteAllText(
+        (Join-Path $afterRoot &quot;$name.m&quot;),
+        $definitions[$name].after,
+        [Text.UTF8Encoding]::new($false)
+    )
+}
+
+[IO.File]::WriteAllText(
+    $modelPath,
+    $modelRaw,
+    [Text.UTF8Encoding]::new($false)
+)
+
+Copy-Item `
+    -LiteralPath $modelPath `
+    -Destination (Join-Path $afterRoot &quot;model.bim&quot;) `
+    -Force
+
+# ------------------------------------------------------------
+# VERIFY EMBEDDED EXPRESSIONS NOW MATCH EXTERNAL M
+# ------------------------------------------------------------
+
+$parsedModel = Get-Content `
+    -LiteralPath $modelPath `
+    -Raw |
+    ConvertFrom-Json
+
+foreach ($name in $targets.Keys) {
+
+    $modelExpression = @(
+        $parsedModel.model.expressions |
+        Where-Object { $_.name -ceq $name }
+    )
+
+    if ($modelExpression.Count -ne 1) {
+        throw &quot;Expected one embedded expression named $name; found $($modelExpression.Count).&quot;
+    }
+
+    $external = [IO.File]::ReadAllText(
+        $targets[$name]
+    )
+
+    if ($modelExpression[0].expression -cne $external) {
+        throw &quot;Embedded model M does not exactly match external M for $name.&quot;
+    }
+}
+
+# ------------------------------------------------------------
+# RECORD AFTER HASHES
+# ------------------------------------------------------------
+
+$hashRows = @()
+
+foreach ($name in $targets.Keys) {
+
+    $path = $targets[$name]
+
+    $before = @(
+        $beforeHashes |
+        Where-Object { $_.object -ceq $name }
+    )[0]
+
+    $hashRows += [pscustomobject]@{
+        object = $name
+        artifact = &quot;EXTERNAL_M&quot;
+        relative_path = $path.Substring($work.Length + 1)
+        sha256_before = $before.sha256_before
+        sha256_after = (
+            Get-FileHash `
+                -LiteralPath $path `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+        changed = $true
+    }
+}
+
+$hashRows += [pscustomobject]@{
+    object = &quot;model.bim&quot;
+    artifact = &quot;EMBEDDED_MODEL&quot;
+    relative_path = $modelPath.Substring($work.Length + 1)
+    sha256_before = $modelHashBefore
+    sha256_after = (
+        Get-FileHash `
+            -LiteralPath $modelPath `
+            -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+    changed = $true
+}
+
+$hashRows |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\M_RUNTIME_BEFORE_AFTER_HASHES.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+# ------------------------------------------------------------
+# PROVE NO OTHER EXTERNAL M FILE CHANGED
+# ------------------------------------------------------------
+
+$postTree = foreach (
+    $file in @(
+        Get-ChildItem `
+            -LiteralPath (Join-Path $work &quot;power_query&quot;) `
+            -File `
+            -Recurse `
+            -Filter &quot;*.m&quot; |
+        Sort-Object FullName
+    )
+) {
+    [pscustomobject]@{
+        relative_path = $file.FullName.Substring($work.Length + 1)
+        bytes = $file.Length
+        sha256 = (
+            Get-FileHash `
+                -LiteralPath $file.FullName `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+}
+
+$postTree |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\POWER_QUERY_TREE_AFTER.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+$treeComparison = foreach ($before in $preTree) {
+
+    $after = @(
+        $postTree |
+        Where-Object {
+            $_.relative_path -ceq $before.relative_path
+        }
+    )
+
+    if ($after.Count -ne 1) {
+        throw &quot;Power Query tree object mismatch: $($before.relative_path)&quot;
+    }
+
+    [pscustomobject]@{
+        relative_path = $before.relative_path
+        sha256_before = $before.sha256
+        sha256_after = $after[0].sha256
+        changed = (
+            $before.sha256 -cne $after[0].sha256
+        )
+    }
+}
+
+$treeComparison |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\POWER_QUERY_TREE_CHANGE_CONTROL.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+$changedExternalM = @(
+    $treeComparison |
+    Where-Object { $_.changed }
+)
+
+$expectedChangedPaths = @(
+    $targets.Values |
+    ForEach-Object {
+        $_.Substring($work.Length + 1)
+    }
+)
+
+if ($changedExternalM.Count -ne 3) {
+    throw &quot;Expected exactly 3 changed external M files; observed $($changedExternalM.Count).&quot;
+}
+
+foreach ($changed in $changedExternalM) {
+
+    if ($changed.relative_path -cnotin $expectedChangedPaths) {
+        throw &quot;Unauthorized external M change detected: $($changed.relative_path)&quot;
+    }
+}
+
+# ------------------------------------------------------------
+# WRITE GOVERNANCE RECORD
+# ------------------------------------------------------------
+
+$governance = [ordered]@{
+    schema_version = &quot;1.0&quot;
+    hotfix_id = &quot;A1A-M-RUNTIME-HF01&quot;
+    date = &quot;2026-08-19&quot;
+
+    authority = [ordered]@{
+        authority_type = &quot;SOURCE_OWNER_EXPLICIT_AUTHORIZATION&quot;
+        scope = &quot;THREE_DEFINITION_A1A_M_RUNTIME_HOTFIX_DERIVED_WORKING_COPY_ONLY&quot;
+        audit_notification_status = &quot;PENDING_POST_ACTION_DISCLOSURE&quot;
+    }
+
+    defect = [ordered]@{
+        runtime = &quot;POWER_QUERY_M&quot;
+        root_error = &quot;Expression.Error: The value isn&#39;t a single-character string.&quot;
+        malformed_value = &quot;\\&quot;
+        cause = &quot;Windows backslash represented as a two-character M string.&quot;
+    }
+
+    changed_definitions = @(
+        &quot;stg_POWER_BI_DATA_CATALOG&quot;,
+        &quot;fxReadCatalogedCsv&quot;,
+        &quot;fxReadBuildCsv&quot;
+    )
+
+    boundaries = [ordered]@{
+        tables_before = 14
+        tables_after_expected = 14
+        relationships_before = 6
+        relationships_after_expected = 6
+        queries_before = 47
+        queries_after_expected = 47
+        measures_before = 0
+        measures_after_expected = 0
+        substantive_pages = 0
+        technical_shell_pages = 1
+        visuals = 0
+        a1b_objects = 0
+        business_logic_changed = $false
+        source_selection_changed = $false
+        grain_changed = $false
+        key_design_changed = $false
+    }
+
+    local_engine_holds = @(
+        &quot;AUD-SCN-004&quot;,
+        &quot;AUD-REL-005&quot;,
+        &quot;AUD-ASOF-003&quot;
+    )
+
+    pbi_wp2 = &quot;HOLD&quot;
+    a1b = &quot;NOT_AUTHORIZED&quot;
+}
+
+$governance |
+    ConvertTo-Json -Depth 10 |
+    Set-Content `
+        -LiteralPath &quot;$hotfixRoot\A1A_M_RUNTIME_HOTFIX_GOVERNANCE.json&quot; `
+        -Encoding utf8
+
+Write-Host &quot;&quot;
+Write-Host &quot;============================================================&quot;
+Write-Host &quot;A1A M-runtime hotfix applied.&quot;
+Write-Host &quot;External M definitions changed: 3&quot;
+Write-Host &quot;Expected changed M lines:       7&quot;
+Write-Host &quot;model.bim expressions updated:  3&quot;
+Write-Host &quot;A1b changes:                    0&quot;
+Write-Host &quot;============================================================&quot;
+Write-Host &quot;&quot;
+Write-Host &quot;Evidence:&quot;
+Write-Host $hotfixRoot
+</code></pre>
+<h2>4. What the seven authorized line changes should be</h2>
+<p>The evidence CSV should show exactly these semantic changes:</p>
+<pre><code class="language-text">stg_POWER_BI_DATA_CATALOG
+  Text.TrimEnd ... {&quot;/&quot;, &quot;\\&quot;}  → {&quot;/&quot;, &quot;\&quot;}
+  &quot;\\data\\POWER_BI_DATA_CATALOG.csv&quot;
+                              → &quot;\data\POWER_BI_DATA_CATALOG.csv&quot;
+
+fxReadCatalogedCsv
+  Text.TrimEnd ... {&quot;/&quot;, &quot;\\&quot;}  → {&quot;/&quot;, &quot;\&quot;}
+  Text.Replace(..., &quot;/&quot;, &quot;\\&quot;)  → Text.Replace(..., &quot;/&quot;, &quot;\&quot;)
+  Root &amp; &quot;\\&quot; &amp; RelativePath    → Root &amp; &quot;\&quot; &amp; RelativePath
+
+fxReadBuildCsv
+  Text.TrimEnd ... {&quot;/&quot;, &quot;\\&quot;}  → {&quot;/&quot;, &quot;\&quot;}
+  Root &amp; &quot;\\&quot; &amp; Text.Replace(..., &quot;/&quot;, &quot;\\&quot;)
+                              → Root &amp; &quot;\&quot; &amp; Text.Replace(..., &quot;/&quot;, &quot;\&quot;)
+</code></pre>
+<p>Nothing else should change.</p>
+<hr>
+<h1>5. Rerun the static semantic boundary verifier</h1>
+<p>Because the old pre-shell verifier expects zero pages, <strong>do not use it</strong> now.</p>
+<p>Use the corrected shell-aware verifier that already produced PASS:</p>
+<pre><code class="language-powershell">$downloads = Join-Path $HOME &quot;Downloads&quot;
+
+$verifier = Join-Path $downloads `
+    &quot;Verify-A1aTechnicalShellBoundary.ps1&quot;
+
+&amp; $verifier `
+    -PackageRoot $work `
+    -SourceRoot `
+    &quot;C:\MSBF\MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818&quot;
+</code></pre>
+<p>Required result remains:</p>
+<pre><code class="language-text">semantic_tables             14
+relationships                6
+power_query_queries         47
+explicit_measures            0
+semantic_activation_objects 67
+
+technical_shell_pages        1
+substantive_report_pages     0
+visual_objects               0
+a1b_tokens                   0
+active_page_resolves         true
+status                       PASS
+</code></pre>
+<p>That count is controlling: the audit authorized one technical page but explicitly kept the semantic A1a footprint at 67 objects. [export reference: filecite | turn9file0 | L63-L83]</p>
+<h2>6. One additional check before reopening Desktop</h2>
+<p>Run this:</p>
+<pre><code class="language-powershell">$hotfixRoot = Join-Path $ev &quot;E03_M_RUNTIME_HOTFIX_R1&quot;
+
+$diff = Import-Csv `
+    &quot;$hotfixRoot\POWER_QUERY_TREE_CHANGE_CONTROL.csv&quot;
+
+$changed = @(
+    $diff |
+    Where-Object { $_.changed -eq &quot;True&quot; }
+)
+
+$changed |
+    Format-Table `
+        relative_path,
+        sha256_before,
+        sha256_after `
+        -AutoSize
+
+Write-Host &quot;&quot;
+Write-Host &quot;Changed external M files:&quot; $changed.Count
+</code></pre>
+<p>It must say:</p>
+<pre><code class="language-text">Changed external M files: 3
+</code></pre>
+<p>No more, no fewer.</p>
+<hr>
+<h1>7. Then resume Desktop</h1>
+<p>If <strong>both</strong> controls pass:</p>
+<pre><code class="language-text">Shell-aware boundary verifier = PASS
+Changed external M files       = 3
+</code></pre>
+<p>reopen the same derived PBIP:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819
+\project
+\MSBF_PBI_A1A_Local_Construction_R1.pbip
+</code></pre>
+<p>Then:</p>
+<p><strong>Home → Transform data</strong></p>
+<p>Before refreshing, click:</p>
+<pre><code class="language-text">stg_POWER_BI_DATA_CATALOG
+</code></pre>
+<p>It should now evaluate rather than throw the single-character error.</p>
+<p>Then click:</p>
+<pre><code class="language-text">fxReadBuildCsv
+</code></pre>
+<p>The function itself should no longer show the malformed path-literal failure.</p>
+<p>Only after those upstream definitions behave normally should you run:</p>
+<pre><code class="language-text">Refresh Preview → Refresh All
+</code></pre>
+<p>again.</p>
+<h3>Do not go directly to Close &amp; Apply</h3>
+<p>We will treat that as:</p>
+<pre><code class="language-text">Refresh Preview Attempt 2
+</code></pre>
+<p>and compare it against the recorded failed Attempt 1.</p>
+<p>If Attempt 2 succeeds cleanly, <strong>stop before Close &amp; Apply and send me the result</strong>. Then we will record the successful query-layer execution before physically loading the 14 tables.</p>
+<p>Also, when the Independent Audit is free, we will disclose exactly what happened: Attempt 1 failed at runtime, you explicitly authorized <code>A1A-M-RUNTIME-HF01</code>, the hotfix changed three existing M definitions only, exact before/after hashes and seven line changes were preserved, no object count or business interpretation changed, and all three local-engine holds remained open. That preserves the “No Cold Handoffs” evidence chain rather than retroactively pretending the original code executed successfully.</p>
+</div></article><article id="m-73acb1f9-174f-4c34-9196-668aa3b97c46" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00060 · 2026-08-19T09:20:12.148000-04:00 · active path</p><div class="bubble"><p>ParentContainsErrorRecordException:
+Line |
+ 301 |      $beforeExpressionJson = [System.Text.Json.JsonSerializer]::Serial …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find an overload for &quot;Serialize&quot; and the argument count: &quot;1&quot;.</p>
+</div></article><article id="m-0da0cd84-4dde-4b60-a47f-99f4d8390a96" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00061 · 2026-08-19T09:20:15.535549-04:00 · active path</p><div class="bubble"><p>That failure is in the <strong>PowerShell evidence/hotfix script</strong>, not in Power BI or the M correction itself.</p>
+<p><code>System.Text.Json.JsonSerializer.Serialize()</code> is overloaded in a way PowerShell cannot resolve from a single dynamically typed argument in your environment. The block stopped <strong>before the three <code>.m</code> files or <code>model.bim</code> were written</strong>, so the governed working project should still be unchanged from the pre-hotfix state.</p>
+<p>Do <strong>not</strong> reopen Desktop yet.</p>
+<p>First, record this scripting interruption and verify that nothing was partially written. Run this in the same PowerShell 7 session:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+$hotfixRoot = Join-Path $ev &quot;E03_M_RUNTIME_HOTFIX_R1&quot;
+$beforeRoot = Join-Path $hotfixRoot &quot;before&quot;
+
+@&#39;
+A1A M-RUNTIME HOTFIX SCRIPT INTERRUPTION
+
+Date: 2026-08-19
+
+The first A1A-M-RUNTIME-HF01 execution stopped during preparation of the
+embedded model.bim expression replacements.
+
+PowerShell error:
+Cannot find an overload for &quot;Serialize&quot; and the argument count: &quot;1&quot;.
+
+The failure occurred before the script&#39;s WRITE EXTERNAL DEFINITIONS AND
+MODEL.BIM section.
+
+No Power BI Desktop execution occurred during this interruption.
+The current source files are being independently compared to the preserved
+pre-hotfix copies before execution resumes.
+&#39;@ |
+    Set-Content `
+        -LiteralPath &quot;$hotfixRoot\HOTFIX_SCRIPT_INTERRUPTION_01.txt&quot; `
+        -Encoding utf8
+
+$targets = [ordered]@{
+    &quot;stg_POWER_BI_DATA_CATALOG&quot; = Join-Path $work `
+        &quot;power_query\staging\stg_POWER_BI_DATA_CATALOG.m&quot;
+
+    &quot;fxReadCatalogedCsv&quot; = Join-Path $work `
+        &quot;power_query\functions\fxReadCatalogedCsv.m&quot;
+
+    &quot;fxReadBuildCsv&quot; = Join-Path $work `
+        &quot;power_query\functions\fxReadBuildCsv.m&quot;
+}
+
+$modelPath = Join-Path $work `
+    &quot;project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;
+
+$preResumeChecks = @()
+
+foreach ($name in $targets.Keys) {
+
+    $current = $targets[$name]
+    $before  = Join-Path $beforeRoot &quot;$name.m&quot;
+
+    $currentHash = (
+        Get-FileHash -LiteralPath $current -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+
+    $beforeHash = (
+        Get-FileHash -LiteralPath $before -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+
+    $preResumeChecks += [pscustomobject]@{
+        object = $name
+        current_sha256 = $currentHash
+        preserved_before_sha256 = $beforeHash
+        unchanged_since_failure = ($currentHash -ceq $beforeHash)
+    }
+}
+
+$currentModelHash = (
+    Get-FileHash -LiteralPath $modelPath -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+$beforeModelHash = (
+    Get-FileHash `
+        -LiteralPath (Join-Path $beforeRoot &quot;model.bim&quot;) `
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+$preResumeChecks += [pscustomobject]@{
+    object = &quot;model.bim&quot;
+    current_sha256 = $currentModelHash
+    preserved_before_sha256 = $beforeModelHash
+    unchanged_since_failure = ($currentModelHash -ceq $beforeModelHash)
+}
+
+$preResumeChecks |
+    Format-Table -AutoSize
+
+$preResumeChecks |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\HOTFIX_PRE_RESUME_INTEGRITY.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+if (@($preResumeChecks | Where-Object {
+    $_.unchanged_since_failure -ne $true
+}).Count -gt 0) {
+    throw &quot;One or more governed files changed before hotfix resume. STOP.&quot;
+}
+
+Write-Host &quot;&quot;
+Write-Host &quot;PRE-RESUME INTEGRITY PASS — no hotfix writes occurred.&quot;
+</code></pre>
+<p>You should see all four <code>unchanged_since_failure</code> values as:</p>
+<pre><code class="language-text">True
+</code></pre>
+<p>and:</p>
+<pre><code class="language-text">PRE-RESUME INTEGRITY PASS — no hotfix writes occurred.
+</code></pre>
+<h3>Then resume the hotfix with this corrected block</h3>
+<p>This replaces the problematic <code>.NET Serialize()</code> call with PowerShell&#39;s <code>ConvertTo-Json -Compress</code>, which gives us the quoted/escaped JSON string needed to locate each M expression inside <code>model.bim</code>.</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+
+# Re-establish these objects in case the prior error affected scope.
+$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+$hotfixRoot = Join-Path $ev &quot;E03_M_RUNTIME_HOTFIX_R1&quot;
+$beforeRoot = Join-Path $hotfixRoot &quot;before&quot;
+$afterRoot  = Join-Path $hotfixRoot &quot;after&quot;
+
+$modelPath = Join-Path $work `
+    &quot;project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;
+
+$targets = [ordered]@{
+    &quot;stg_POWER_BI_DATA_CATALOG&quot; = Join-Path $work `
+        &quot;power_query\staging\stg_POWER_BI_DATA_CATALOG.m&quot;
+
+    &quot;fxReadCatalogedCsv&quot; = Join-Path $work `
+        &quot;power_query\functions\fxReadCatalogedCsv.m&quot;
+
+    &quot;fxReadBuildCsv&quot; = Join-Path $work `
+        &quot;power_query\functions\fxReadBuildCsv.m&quot;
+}
+
+function Repair-A1aMDefinition {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+
+        [Parameter(Mandatory=$true)]
+        [string]$Text
+    )
+
+    $result = $Text
+
+    switch ($Name) {
+
+        &quot;stg_POWER_BI_DATA_CATALOG&quot; {
+            $result = $result.Replace(
+                &#39;{&quot;/&quot;, &quot;\\&quot;}&#39;,
+                &#39;{&quot;/&quot;, &quot;\&quot;}&#39;
+            )
+
+            $result = $result.Replace(
+                &#39;&quot;\\data\\POWER_BI_DATA_CATALOG.csv&quot;&#39;,
+                &#39;&quot;\data\POWER_BI_DATA_CATALOG.csv&quot;&#39;
+            )
+        }
+
+        &quot;fxReadCatalogedCsv&quot; {
+            $result = $result.Replace(
+                &#39;{&quot;/&quot;, &quot;\\&quot;}&#39;,
+                &#39;{&quot;/&quot;, &quot;\&quot;}&#39;
+            )
+
+            $result = $result.Replace(
+                &#39;Text.Replace(CatalogRow[package_path], &quot;/&quot;, &quot;\\&quot;)&#39;,
+                &#39;Text.Replace(CatalogRow[package_path], &quot;/&quot;, &quot;\&quot;)&#39;
+            )
+
+            $result = $result.Replace(
+                &#39;Root &amp; &quot;\\&quot; &amp; RelativePath&#39;,
+                &#39;Root &amp; &quot;\&quot; &amp; RelativePath&#39;
+            )
+        }
+
+        &quot;fxReadBuildCsv&quot; {
+            $result = $result.Replace(
+                &#39;{&quot;/&quot;, &quot;\\&quot;}&#39;,
+                &#39;{&quot;/&quot;, &quot;\&quot;}&#39;
+            )
+
+            $result = $result.Replace(
+                &#39;Root &amp; &quot;\\&quot; &amp; Text.Replace(relativePath, &quot;/&quot;, &quot;\\&quot;)&#39;,
+                &#39;Root &amp; &quot;\&quot; &amp; Text.Replace(relativePath, &quot;/&quot;, &quot;\&quot;)&#39;
+            )
+        }
+
+        default {
+            throw &quot;Unexpected hotfix object: $Name&quot;
+        }
+    }
+
+    if ($result -ceq $Text) {
+        throw &quot;No text changed for $Name. Stop.&quot;
+    }
+
+    return $result
+}
+
+# Recreate exact before/after definitions from preserved BEFORE evidence,
+# not from an assumed in-memory state.
+$definitions = @{}
+
+foreach ($name in $targets.Keys) {
+
+    $preservedBeforePath = Join-Path $beforeRoot &quot;$name.m&quot;
+
+    $beforeText = [IO.File]::ReadAllText(
+        $preservedBeforePath
+    )
+
+    $afterText = Repair-A1aMDefinition `
+        -Name $name `
+        -Text $beforeText
+
+    $definitions[$name] = [pscustomobject]@{
+        before = $beforeText
+        after = $afterText
+        path = $targets[$name]
+    }
+}
+
+# Reconfirm the exact seven changed lines.
+$lineDiff = @()
+
+foreach ($name in $targets.Keys) {
+
+    $beforeLines = @(
+        $definitions[$name].before -split &quot;`r?`n&quot;
+    )
+
+    $afterLines = @(
+        $definitions[$name].after -split &quot;`r?`n&quot;
+    )
+
+    $max = [Math]::Max(
+        $beforeLines.Count,
+        $afterLines.Count
+    )
+
+    for ($i = 0; $i -lt $max; $i++) {
+
+        $beforeLine = if ($i -lt $beforeLines.Count) {
+            $beforeLines[$i]
+        } else {
+            $null
+        }
+
+        $afterLine = if ($i -lt $afterLines.Count) {
+            $afterLines[$i]
+        } else {
+            $null
+        }
+
+        if ($beforeLine -cne $afterLine) {
+            $lineDiff += [pscustomobject]@{
+                object = $name
+                line_number = $i + 1
+                before = $beforeLine
+                after = $afterLine
+            }
+        }
+    }
+}
+
+$lineDiff |
+    Format-Table -AutoSize
+
+if ($lineDiff.Count -ne 7) {
+    throw &quot;Expected exactly 7 changed M lines; observed $($lineDiff.Count).&quot;
+}
+
+$lineDiff |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\M_RUNTIME_EXACT_LINE_DIFF.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+# ------------------------------------------------------------
+# PATCH model.bim USING POWERSHELL JSON STRING SERIALIZATION
+# ------------------------------------------------------------
+
+$modelRaw = [IO.File]::ReadAllText(
+    (Join-Path $beforeRoot &quot;model.bim&quot;)
+)
+
+$embeddedMatchEvidence = @()
+
+foreach ($name in $targets.Keys) {
+
+    # ConvertTo-Json on a string gives the exact quoted JSON string,
+    # including escaping of quotes/newlines/backslashes.
+    $beforeExpressionJson = ConvertTo-Json `
+        -InputObject $definitions[$name].before `
+        -Compress
+
+    $afterExpressionJson = ConvertTo-Json `
+        -InputObject $definitions[$name].after `
+        -Compress
+
+    $matchCount = (
+        [regex]::Matches(
+            $modelRaw,
+            [regex]::Escape($beforeExpressionJson)
+        )
+    ).Count
+
+    $embeddedMatchEvidence += [pscustomobject]@{
+        object = $name
+        before_expression_matches_in_model = $matchCount
+    }
+
+    if ($matchCount -ne 1) {
+        throw &quot;Embedded model expression for $name matched $matchCount times; expected exactly 1.&quot;
+    }
+
+    $modelRaw = $modelRaw.Replace(
+        $beforeExpressionJson,
+        $afterExpressionJson
+    )
+}
+
+$embeddedMatchEvidence |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\EMBEDDED_EXPRESSION_MATCH_CONTROL.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+# ------------------------------------------------------------
+# WRITE ONLY THE 3 M FILES + model.bim
+# ------------------------------------------------------------
+
+New-Item -ItemType Directory -Force -Path $afterRoot |
+    Out-Null
+
+foreach ($name in $targets.Keys) {
+
+    [IO.File]::WriteAllText(
+        $targets[$name],
+        $definitions[$name].after,
+        [Text.UTF8Encoding]::new($false)
+    )
+
+    [IO.File]::WriteAllText(
+        (Join-Path $afterRoot &quot;$name.m&quot;),
+        $definitions[$name].after,
+        [Text.UTF8Encoding]::new($false)
+    )
+}
+
+[IO.File]::WriteAllText(
+    $modelPath,
+    $modelRaw,
+    [Text.UTF8Encoding]::new($false)
+)
+
+Copy-Item `
+    -LiteralPath $modelPath `
+    -Destination (Join-Path $afterRoot &quot;model.bim&quot;) `
+    -Force
+
+# ------------------------------------------------------------
+# VERIFY MODEL EMBEDDING AGAINST THE 3 EXTERNAL M FILES
+# ------------------------------------------------------------
+
+$parsedModel = Get-Content `
+    -LiteralPath $modelPath `
+    -Raw |
+    ConvertFrom-Json
+
+$embeddedParity = @()
+
+foreach ($name in $targets.Keys) {
+
+    $expr = @(
+        $parsedModel.model.expressions |
+        Where-Object { $_.name -ceq $name }
+    )
+
+    if ($expr.Count -ne 1) {
+        throw &quot;Expected exactly one model expression named $name; observed $($expr.Count).&quot;
+    }
+
+    $externalText = [IO.File]::ReadAllText(
+        $targets[$name]
+    )
+
+    $parity = (
+        $expr[0].expression -ceq $externalText
+    )
+
+    $embeddedParity += [pscustomobject]@{
+        object = $name
+        embedded_equals_external = $parity
+    }
+
+    if (-not $parity) {
+        throw &quot;Embedded/external M parity failed for $name.&quot;
+    }
+}
+
+$embeddedParity |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\EMBEDDED_EXTERNAL_M_PARITY.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+# ------------------------------------------------------------
+# BEFORE/AFTER HASH EVIDENCE
+# ------------------------------------------------------------
+
+$hashRows = @()
+
+foreach ($name in $targets.Keys) {
+
+    $beforePath = Join-Path $beforeRoot &quot;$name.m&quot;
+    $afterPath  = $targets[$name]
+
+    $hashRows += [pscustomobject]@{
+        object = $name
+        artifact = &quot;EXTERNAL_M&quot;
+        sha256_before = (
+            Get-FileHash `
+                -LiteralPath $beforePath `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+        sha256_after = (
+            Get-FileHash `
+                -LiteralPath $afterPath `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+        changed = $true
+    }
+}
+
+$hashRows += [pscustomobject]@{
+    object = &quot;model.bim&quot;
+    artifact = &quot;EMBEDDED_MODEL&quot;
+    sha256_before = (
+        Get-FileHash `
+            -LiteralPath (Join-Path $beforeRoot &quot;model.bim&quot;) `
+            -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+    sha256_after = (
+        Get-FileHash `
+            -LiteralPath $modelPath `
+            -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+    changed = $true
+}
+
+$hashRows |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\M_RUNTIME_BEFORE_AFTER_HASHES.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+Write-Host &quot;&quot;
+Write-Host &quot;==============================================&quot;
+Write-Host &quot;A1A-M-RUNTIME-HF01 WRITE PHASE COMPLETE&quot;
+Write-Host &quot;External M files changed:       3&quot;
+Write-Host &quot;Expected changed source lines:  7&quot;
+Write-Host &quot;Embedded expressions changed:   3&quot;
+Write-Host &quot;==============================================&quot;
+</code></pre>
+<p>If that succeeds, we still need to prove that <strong>only those three external <code>.m</code> files</strong> changed relative to the pre-hotfix tree. Run:</p>
+<pre><code class="language-powershell">$preTree = Import-Csv `
+    &quot;$hotfixRoot\POWER_QUERY_TREE_BEFORE.csv&quot;
+
+$postTree = foreach (
+    $file in @(
+        Get-ChildItem `
+            -LiteralPath (Join-Path $work &quot;power_query&quot;) `
+            -File `
+            -Recurse `
+            -Filter &quot;*.m&quot; |
+        Sort-Object FullName
+    )
+) {
+    [pscustomobject]@{
+        relative_path = $file.FullName.Substring($work.Length + 1)
+        bytes = $file.Length
+        sha256 = (
+            Get-FileHash `
+                -LiteralPath $file.FullName `
+                -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+    }
+}
+
+$postTree |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\POWER_QUERY_TREE_AFTER.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+$treeComparison = foreach ($before in $preTree) {
+
+    $after = @(
+        $postTree |
+        Where-Object {
+            $_.relative_path -ceq $before.relative_path
+        }
+    )
+
+    if ($after.Count -ne 1) {
+        throw &quot;Tree mismatch for $($before.relative_path).&quot;
+    }
+
+    [pscustomobject]@{
+        relative_path = $before.relative_path
+        sha256_before = $before.sha256
+        sha256_after = $after[0].sha256
+        changed = (
+            $before.sha256 -cne $after[0].sha256
+        )
+    }
+}
+
+$treeComparison |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\POWER_QUERY_TREE_CHANGE_CONTROL.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+$changed = @(
+    $treeComparison |
+    Where-Object { $_.changed -eq $true }
+)
+
+$changed |
+    Format-Table `
+        relative_path,
+        sha256_before,
+        sha256_after `
+        -AutoSize
+
+Write-Host &quot;&quot;
+Write-Host &quot;Changed external M files:&quot; $changed.Count
+
+if ($changed.Count -ne 3) {
+    throw &quot;Expected exactly 3 changed external M files.&quot;
+}
+</code></pre>
+<p>Required:</p>
+<pre><code class="language-text">Changed external M files: 3
+</code></pre>
+<p>Then rerun the already-corrected shell-aware verifier:</p>
+<pre><code class="language-powershell">$verifier = Join-Path $HOME `
+    &quot;Downloads\Verify-A1aTechnicalShellBoundary.ps1&quot;
+
+&amp; $verifier `
+    -PackageRoot $work `
+    -SourceRoot `
+    &quot;C:\MSBF\MSBF_PBI_A1A_LOCAL_CONSTRUCTION_R1_20260818&quot;
+</code></pre>
+<p>We still require:</p>
+<pre><code class="language-text">semantic_tables             14
+relationships                6
+power_query_queries         47
+explicit_measures            0
+technical_shell_pages        1
+substantive_report_pages     0
+visual_objects               0
+a1b_tokens                   0
+active_page_resolves         true
+status                       PASS
+</code></pre>
+<p>The audit-approved compatibility exception permits execution only inside this exact one-shell/14/6/47/0 boundary and still prohibits A1b or silent expansion. [export reference: filecite | turn9file0 | L102-L123]</p>
+<p><strong>Send me the output from the pre-resume integrity check first.</strong> If all four rows are <code>True</code>, you can immediately run the corrected resume block above.</p>
+</div></article><article id="m-66c1279d-175e-406b-97f1-311de596db4a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00062 · 2026-08-19T09:25:07.433000-04:00 · active path</p><div class="bubble"><p>object                    line_number before                                                                after</p>
+<hr>
+<p>stg_POWER_BI_DATA_CATALOG           3     Root = Text.TrimEnd(pDataRoot, {&quot;/&quot;, &quot;\&quot;}),                          Root = Text.TrimEnd(pDataRoot, {&quot;/&quot;, &quot;&quot;}),
+stg_POWER_BI_DATA_CATALOG           4     Path = Root &amp; &quot;\data\POWER_BI_DATA_CATALOG.csv&quot;,                    Path = Root &amp; &quot;\data\POWER_BI_DATA_CATALOG.csv&quot;,
+fxReadCatalogedCsv                  6     Root = Text.TrimEnd(pDataRoot, {&quot;/&quot;, &quot;\&quot;}),                          Root = Text.TrimEnd(pDataRoot, {&quot;/&quot;, &quot;&quot;}),
+fxReadCatalogedCsv                  7     RelativePath = Text.Replace(CatalogRow[package_path], &quot;/&quot;, &quot;\&quot;),     RelativePath = Text.Replace(CatalogRow[package_path], &quot;/&quot;, &quot;&quot;),
+fxReadCatalogedCsv                  8     FullPath = Root &amp; &quot;\&quot; &amp; RelativePath,                                FullPath = Root &amp; &quot;&quot; &amp; RelativePath,
+fxReadBuildCsv                      4     Root = Text.TrimEnd(pBuildRoot, {&quot;/&quot;, &quot;\&quot;}),                         Root = Text.TrimEnd(pBuildRoot, {&quot;/&quot;, &quot;&quot;}),
+fxReadBuildCsv                      5     FullPath = Root &amp; &quot;\&quot; &amp; Text.Replace(relativePath, &quot;/&quot;, &quot;\&quot;),       FullPath = Root &amp; &quot;&quot; &amp; Text.Replace(relativePath, &quot;/&quot;, &quot;&quot;),</p>
+<p>Exception:
+Line |
+ 204 |          throw &quot;Embedded model expression for $name matched $matchCoun …
+     |          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Embedded model expression for stg_POWER_BI_DATA_CATALOG matched 0 times; expected exactly 1.</p>
+</div></article><article id="m-9c33c9b5-c690-4e5e-a360-393252bef433" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00063 · 2026-08-19T09:25:27.958854-04:00 · active path</p><div class="bubble"><p>We found a second <strong>hotfix-script matching defect</strong>, not a defect in the seven M changes. The seven proposed changes are exactly the intended ones.</p>
+<p>The <code>0 times</code> result is occurring because the script tried to find the <strong>external <code>.m</code> file text byte-for-byte inside <code>model.bim</code></strong>. The embedded M expression is semantically the same, but its line-ending/JSON representation is normalized inside <code>model.bim</code>, so the external-file serialization is not an exact raw-text match.</p>
+<p>The script again stopped <strong>before the write phase</strong>, so first confirm that nothing was changed. Keep Desktop closed.</p>
+<h3>1. Reconfirm pre-hotfix integrity</h3>
+<p>Run:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+$hotfixRoot = Join-Path $ev &quot;E03_M_RUNTIME_HOTFIX_R1&quot;
+$beforeRoot = Join-Path $hotfixRoot &quot;before&quot;
+
+$modelPath = Join-Path $work `
+    &quot;project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;
+
+$targets = [ordered]@{
+    &quot;stg_POWER_BI_DATA_CATALOG&quot; = Join-Path $work `
+        &quot;power_query\staging\stg_POWER_BI_DATA_CATALOG.m&quot;
+
+    &quot;fxReadCatalogedCsv&quot; = Join-Path $work `
+        &quot;power_query\functions\fxReadCatalogedCsv.m&quot;
+
+    &quot;fxReadBuildCsv&quot; = Join-Path $work `
+        &quot;power_query\functions\fxReadBuildCsv.m&quot;
+}
+
+$checks = foreach ($name in $targets.Keys) {
+    $current = $targets[$name]
+    $before  = Join-Path $beforeRoot &quot;$name.m&quot;
+
+    [pscustomobject]@{
+        object = $name
+        unchanged = (
+            (Get-FileHash $current -Algorithm SHA256).Hash -ceq
+            (Get-FileHash $before  -Algorithm SHA256).Hash
+        )
+    }
+}
+
+$checks += [pscustomobject]@{
+    object = &quot;model.bim&quot;
+    unchanged = (
+        (Get-FileHash $modelPath -Algorithm SHA256).Hash -ceq
+        (Get-FileHash (Join-Path $beforeRoot &quot;model.bim&quot;) -Algorithm SHA256).Hash
+    )
+}
+
+$checks | Format-Table -AutoSize
+
+if (@($checks | Where-Object { -not $_.unchanged }).Count -gt 0) {
+    throw &quot;STOP: a governed file changed during the interrupted hotfix.&quot;
+}
+
+Write-Host &quot;PRE-WRITE INTEGRITY PASS&quot;
+</code></pre>
+<p>All four rows should be <code>True</code>.</p>
+<h3>2. Record this second interruption</h3>
+<pre><code class="language-powershell">@&#39;
+A1A M-RUNTIME HOTFIX SCRIPT INTERRUPTION 02
+
+Date: 2026-08-19
+
+The second A1A-M-RUNTIME-HF01 attempt successfully reproduced the exact
+seven intended M-source line changes but stopped before writing files.
+
+Observed condition:
+The script searched model.bim for a JSON serialization derived from the
+external .m file text and found zero exact matches for
+stg_POWER_BI_DATA_CATALOG.
+
+Cause:
+The M expression embedded in model.bim is semantically equivalent to the
+external definition but its line-ending/JSON representation is normalized.
+External-file bytes therefore cannot be used as the raw model.bim search
+identity.
+
+Remediation:
+The next write attempt derives each before/after embedded expression from
+the actual parsed model.bim expression and performs a targeted raw JSON
+replacement of that embedded representation.
+
+No governed Power BI file was written during this interruption.
+&#39;@ |
+    Set-Content `
+        -LiteralPath &quot;$hotfixRoot\HOTFIX_SCRIPT_INTERRUPTION_02.txt&quot; `
+        -Encoding utf8
+</code></pre>
+<h2>3. Apply the corrected write phase</h2>
+<p>This version deliberately maintains <strong>two representations</strong>:</p>
+<ul>
+<li>external <code>.m</code> → repaired from the preserved external source;</li>
+<li>embedded <code>model.bim</code> expression → repaired from the actual embedded expression.</li>
+</ul>
+<p>That avoids relying on identical line-ending bytes.</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+
+function Repair-A1aMDefinition {
+    param(
+        [Parameter(Mandatory=$true)][string]$Name,
+        [Parameter(Mandatory=$true)][string]$Text
+    )
+
+    $result = $Text
+
+    switch ($Name) {
+        &quot;stg_POWER_BI_DATA_CATALOG&quot; {
+            $result = $result.Replace(
+                &#39;{&quot;/&quot;, &quot;\\&quot;}&#39;,
+                &#39;{&quot;/&quot;, &quot;\&quot;}&#39;
+            )
+            $result = $result.Replace(
+                &#39;&quot;\\data\\POWER_BI_DATA_CATALOG.csv&quot;&#39;,
+                &#39;&quot;\data\POWER_BI_DATA_CATALOG.csv&quot;&#39;
+            )
+        }
+
+        &quot;fxReadCatalogedCsv&quot; {
+            $result = $result.Replace(
+                &#39;{&quot;/&quot;, &quot;\\&quot;}&#39;,
+                &#39;{&quot;/&quot;, &quot;\&quot;}&#39;
+            )
+            $result = $result.Replace(
+                &#39;Text.Replace(CatalogRow[package_path], &quot;/&quot;, &quot;\\&quot;)&#39;,
+                &#39;Text.Replace(CatalogRow[package_path], &quot;/&quot;, &quot;\&quot;)&#39;
+            )
+            $result = $result.Replace(
+                &#39;Root &amp; &quot;\\&quot; &amp; RelativePath&#39;,
+                &#39;Root &amp; &quot;\&quot; &amp; RelativePath&#39;
+            )
+        }
+
+        &quot;fxReadBuildCsv&quot; {
+            $result = $result.Replace(
+                &#39;{&quot;/&quot;, &quot;\\&quot;}&#39;,
+                &#39;{&quot;/&quot;, &quot;\&quot;}&#39;
+            )
+            $result = $result.Replace(
+                &#39;Root &amp; &quot;\\&quot; &amp; Text.Replace(relativePath, &quot;/&quot;, &quot;\\&quot;)&#39;,
+                &#39;Root &amp; &quot;\&quot; &amp; Text.Replace(relativePath, &quot;/&quot;, &quot;\&quot;)&#39;
+            )
+        }
+
+        default {
+            throw &quot;Unexpected hotfix target: $Name&quot;
+        }
+    }
+
+    if ($result -ceq $Text) {
+        throw &quot;No repair occurred for $Name.&quot;
+    }
+
+    $result
+}
+
+# Always start from the preserved pre-hotfix BIM.
+$modelBeforePath = Join-Path $beforeRoot &quot;model.bim&quot;
+$modelRaw = [IO.File]::ReadAllText($modelBeforePath)
+
+$modelParsed = Get-Content `
+    -LiteralPath $modelBeforePath `
+    -Raw |
+    ConvertFrom-Json
+
+$embeddedEvidence = @()
+
+foreach ($name in $targets.Keys) {
+
+    $expr = @(
+        $modelParsed.model.expressions |
+        Where-Object { $_.name -ceq $name }
+    )
+
+    if ($expr.Count -ne 1) {
+        throw &quot;Expected exactly one embedded expression named $name; found $($expr.Count).&quot;
+    }
+
+    # IMPORTANT: use the expression actually embedded in model.bim,
+    # not the external .m bytes.
+    $embeddedBefore = [string]$expr[0].expression
+    $embeddedAfter  = Repair-A1aMDefinition `
+        -Name $name `
+        -Text $embeddedBefore
+
+    $jsonBefore = ConvertTo-Json `
+        -InputObject $embeddedBefore `
+        -Compress
+
+    $jsonAfter = ConvertTo-Json `
+        -InputObject $embeddedAfter `
+        -Compress
+
+    $matchCount = (
+        [regex]::Matches(
+            $modelRaw,
+            [regex]::Escape($jsonBefore)
+        )
+    ).Count
+
+    $embeddedEvidence += [pscustomobject]@{
+        object = $name
+        embedded_expression_match_count = $matchCount
+        embedded_before_length = $embeddedBefore.Length
+        embedded_after_length = $embeddedAfter.Length
+    }
+
+    if ($matchCount -ne 1) {
+        throw &quot;Actual embedded expression for $name matched $matchCount raw JSON values; expected 1.&quot;
+    }
+
+    $modelRaw = $modelRaw.Replace(
+        $jsonBefore,
+        $jsonAfter
+    )
+}
+
+$embeddedEvidence |
+    Format-Table -AutoSize
+
+$embeddedEvidence |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\EMBEDDED_EXPRESSION_MATCH_CONTROL.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+# Rebuild external repaired definitions from preserved BEFORE files.
+$externalAfter = @{}
+
+foreach ($name in $targets.Keys) {
+
+    $beforeText = [IO.File]::ReadAllText(
+        (Join-Path $beforeRoot &quot;$name.m&quot;)
+    )
+
+    $externalAfter[$name] = Repair-A1aMDefinition `
+        -Name $name `
+        -Text $beforeText
+}
+
+# Only now perform writes.
+foreach ($name in $targets.Keys) {
+    [IO.File]::WriteAllText(
+        $targets[$name],
+        $externalAfter[$name],
+        [Text.UTF8Encoding]::new($false)
+    )
+}
+
+[IO.File]::WriteAllText(
+    $modelPath,
+    $modelRaw,
+    [Text.UTF8Encoding]::new($false)
+)
+
+Write-Host &quot;&quot;
+Write-Host &quot;WRITE PHASE COMPLETE&quot;
+</code></pre>
+<p>The <code>EMBEDDED_EXPRESSION_MATCH_CONTROL</code> output must show:</p>
+<pre><code class="language-text">stg_POWER_BI_DATA_CATALOG    1
+fxReadCatalogedCsv           1
+fxReadBuildCsv               1
+</code></pre>
+<p>If any value is not <code>1</code>, the block stops before writing.</p>
+<h2>4. Verify embedded/external semantic parity</h2>
+<p>Because line endings may differ, we should now compare normalized M rather than raw bytes:</p>
+<pre><code class="language-powershell">$modelAfter = Get-Content `
+    -LiteralPath $modelPath `
+    -Raw |
+    ConvertFrom-Json
+
+$parity = foreach ($name in $targets.Keys) {
+
+    $expr = @(
+        $modelAfter.model.expressions |
+        Where-Object { $_.name -ceq $name }
+    )[0]
+
+    $external = [IO.File]::ReadAllText($targets[$name])
+
+    $embeddedNorm = ([string]$expr.expression) -replace &quot;`r`n&quot;, &quot;`n&quot;
+    $externalNorm = $external -replace &quot;`r`n&quot;, &quot;`n&quot;
+
+    [pscustomobject]@{
+        object = $name
+        normalized_embedded_equals_external = (
+            $embeddedNorm -ceq $externalNorm
+        )
+    }
+}
+
+$parity | Format-Table -AutoSize
+
+$parity |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\EMBEDDED_EXTERNAL_M_NORMALIZED_PARITY.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+
+if (@($parity | Where-Object {
+    -not $_.normalized_embedded_equals_external
+}).Count -gt 0) {
+    throw &quot;Embedded/external normalized M parity failed.&quot;
+}
+
+Write-Host &quot;EMBEDDED/EXTERNAL NORMALIZED PARITY PASS&quot;
+</code></pre>
+<p>Required:</p>
+<pre><code class="language-text">stg_POWER_BI_DATA_CATALOG    True
+fxReadCatalogedCsv           True
+fxReadBuildCsv               True
+
+EMBEDDED/EXTERNAL NORMALIZED PARITY PASS
+</code></pre>
+<p>Then we will do the 47-file tree-diff and shell-aware boundary verification before Desktop is reopened.</p>
+<p>The important point is that the evidence already supports the intended correction: <strong>exactly seven source lines across three existing definitions</strong>, with no table/query/relationship/measure expansion. The A1a authorization remains bounded to 14 tables, 6 relationships, 47 queries, zero measures, and the one technical shell. [export reference: filecite | turn9file0 | L63-L79]</p>
+<p>Run <strong>Step 1 first</strong>. If all four rows are <code>True</code>, proceed through Steps 2–4 and paste the resulting match-control and parity output.</p>
+</div></article><article id="m-37fc3aba-46b2-4c99-ad6a-069f5564ea17" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00064 · 2026-08-19T09:28:54.998000-04:00 · active path</p><div class="bubble"><p>Exception:
+Line |
+ 113 |          throw &quot;Actual embedded expression for $name matched $matchCou …
+     |          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Actual embedded expression for stg_POWER_BI_DATA_CATALOG matched 0 raw JSON values; expected 1.</p>
+</div></article><article id="m-97c445e5-fa1d-4c36-b8fb-25d8b81a9001" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00065 · 2026-08-19T09:28:59.343487-04:00 · active path</p><div class="bubble"><p>That tells us the embedded <code>model.bim</code> representation is <strong>not a single JSON string value</strong>, which explains both zero-match attempts. The most likely structure is that Power BI stores each M expression as a <strong>JSON array of source lines</strong>, not one multiline string. We should stop trying to infer its serialization.</p>
+<p>Nothing has been written by this attempt because the script again failed before the write section. Keep Desktop closed.</p>
+<p>We’ll inspect the actual embedded structure first, then make the patch against what is physically there.</p>
+<h3>1. Confirm no partial write occurred again</h3>
+<p>Run:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1A_TECHNICAL_SHELL_WORKING_R1_20260819&quot;
+$ev   = Join-Path $work &quot;evidence\local_engine_return&quot;
+$hotfixRoot = Join-Path $ev &quot;E03_M_RUNTIME_HOTFIX_R1&quot;
+$beforeRoot = Join-Path $hotfixRoot &quot;before&quot;
+
+$modelPath = Join-Path $work `
+    &quot;project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;
+
+$targets = [ordered]@{
+    &quot;stg_POWER_BI_DATA_CATALOG&quot; = Join-Path $work `
+        &quot;power_query\staging\stg_POWER_BI_DATA_CATALOG.m&quot;
+    &quot;fxReadCatalogedCsv&quot; = Join-Path $work `
+        &quot;power_query\functions\fxReadCatalogedCsv.m&quot;
+    &quot;fxReadBuildCsv&quot; = Join-Path $work `
+        &quot;power_query\functions\fxReadBuildCsv.m&quot;
+}
+
+$checks = foreach ($name in $targets.Keys) {
+    [pscustomobject]@{
+        object = $name
+        unchanged = (
+            (Get-FileHash $targets[$name] -Algorithm SHA256).Hash -ceq
+            (Get-FileHash (Join-Path $beforeRoot &quot;$name.m&quot;) -Algorithm SHA256).Hash
+        )
+    }
+}
+
+$checks += [pscustomobject]@{
+    object = &quot;model.bim&quot;
+    unchanged = (
+        (Get-FileHash $modelPath -Algorithm SHA256).Hash -ceq
+        (Get-FileHash (Join-Path $beforeRoot &quot;model.bim&quot;) -Algorithm SHA256).Hash
+    )
+}
+
+$checks | Format-Table -AutoSize
+
+if (@($checks | Where-Object { -not $_.unchanged }).Count -gt 0) {
+    throw &quot;STOP: a governed file changed.&quot;
+}
+
+Write-Host &quot;PRE-WRITE INTEGRITY PASS&quot;
+</code></pre>
+<p>We still want all four <code>True</code>.</p>
+<h3>2. Inspect how Power BI actually stores the three expressions</h3>
+<p>Then run:</p>
+<pre><code class="language-powershell">$modelBeforePath = Join-Path $beforeRoot &quot;model.bim&quot;
+
+$model = Get-Content `
+    -LiteralPath $modelBeforePath `
+    -Raw |
+    ConvertFrom-Json
+
+$diagnostic = foreach ($name in $targets.Keys) {
+
+    $expr = @(
+        $model.model.expressions |
+        Where-Object { $_.name -ceq $name }
+    )
+
+    if ($expr.Count -ne 1) {
+        throw &quot;Expected one expression named $name; found $($expr.Count).&quot;
+    }
+
+    $value = $expr[0].expression
+
+    [pscustomobject]@{
+        object = $name
+        expression_type = $value.GetType().FullName
+        expression_count = @($value).Count
+        first_element_type = if (@($value).Count -gt 0) {
+            @($value)[0].GetType().FullName
+        } else {
+            $null
+        }
+        first_element = if (@($value).Count -gt 0) {
+            @($value)[0]
+        } else {
+            $null
+        }
+    }
+}
+
+$diagnostic | Format-List
+
+$diagnostic |
+    Export-Csv `
+        -LiteralPath &quot;$hotfixRoot\MODEL_BIM_EXPRESSION_STRUCTURE_DIAGNOSTIC.csv&quot; `
+        -NoTypeInformation `
+        -Encoding utf8
+</code></pre>
+<p>I expect something like:</p>
+<pre><code class="language-text">expression_type  : System.Object[]
+expression_count : several lines
+first_element    : let
+</code></pre>
+<p>rather than <code>System.String</code>.</p>
+<h3>3. Capture the actual raw <code>model.bim</code> fragments</h3>
+<p>Also run this. It extracts a small read-only window around each expression name:</p>
+<pre><code class="language-powershell">$raw = [IO.File]::ReadAllText($modelBeforePath)
+
+foreach ($name in $targets.Keys) {
+
+    $needle = &#39;&quot;name&quot;: &quot;&#39; + $name + &#39;&quot;&#39;
+    $index = $raw.IndexOf(
+        $needle,
+        [System.StringComparison]::Ordinal
+    )
+
+    if ($index -lt 0) {
+        throw &quot;Could not locate raw model.bim name: $name&quot;
+    }
+
+    $start = [Math]::Max(0, $index - 200)
+    $length = [Math]::Min(
+        2200,
+        $raw.Length - $start
+    )
+
+    $fragment = $raw.Substring($start, $length)
+
+    $out = Join-Path $hotfixRoot `
+        (&quot;RAW_MODEL_FRAGMENT_&quot; + $name + &quot;.txt&quot;)
+
+    [IO.File]::WriteAllText(
+        $out,
+        $fragment,
+        [Text.UTF8Encoding]::new($false)
+    )
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;========== $name ==========&quot;
+    Write-Host $fragment
+}
+</code></pre>
+<p>This does not modify anything.</p>
+<h3>Why this is the right move</h3>
+<p>Your seven external M changes are already exactly what we intended:</p>
+<pre><code class="language-text">2 lines  stg_POWER_BI_DATA_CATALOG
+3 lines  fxReadCatalogedCsv
+2 lines  fxReadBuildCsv
+--------------------------------
+7 total
+</code></pre>
+<p>The only unresolved issue is <strong>how those same lines are physically encoded inside <code>model.bim</code></strong>. We should patch the actual representation instead of repeatedly guessing at JSON serialization.</p>
+<p>The A1a footprint remains unchanged at 14 tables, 6 relationships, 47 queries, zero explicit measures, and one technical shell page. [export reference: filecite | turn9file0 | L63-L79]</p>
+<p>Paste the output from <strong>Step 2</strong>. If it confirms an array-of-lines representation, I can give you a much simpler and safer hotfix that replaces only the affected array elements in <code>model.bim</code>, with no whole-file reserialization.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

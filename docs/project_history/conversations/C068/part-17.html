@@ -1,0 +1,1647 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Merchant POS Lending Simulator — part 17 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>Merchant POS Lending Simulator — part 17</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-16.html">Previous part</a><a href="part-18.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-d7bd3f1a-e317-4114-b429-96a3a21f6f84" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00234 · 2026-07-25T21:14:32.474651-04:00 · active path</p><div class="bubble"><h1>M1.7 — Source Quality &amp; Data Confidence</h1>
+<p>The complete <strong>M1.7 v0.2 governed module</strong> is built, statically validated, integrated into the current project repository, and ready for controlled PostgreSQL execution against the accepted M1.6 state.</p>
+<p>M1.7 is <strong>not yet accepted</strong>. Live execution, evidence export, independent review, and formal sign-off remain required.</p>
+<h2>Primary downloads</h2>
+<h3>Standalone M1.7 package</h3>
+<p>Download MSBF M1.7 v0.2 (historical reference: <code>sandbox:[session]/MSBF_M1_7_v0_2.zip</code>; referenced bytes not established here)</p>
+<p>Download the M1.7 SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_7_v0_2.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+bda85363cf84e9db2657515ec4f01a29a3b0358733f84fe9813d38b2708713f0
+
+Archive size
+250,596 bytes
+
+Files
+43
+</code></pre>
+<p>Canonical long-form copy:</p>
+<p>Download the canonical M1.7 package (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m1_7_source_quality_data_confidence_v0_2.zip</code>; referenced bytes not established here)</p>
+<h3>Updated full project repository</h3>
+<p>This package contains the accepted project through M1.6 plus the complete M1.7 source package in <strong>Ready for Execution</strong> status.</p>
+<p>Download MSBF Project v0.2 — M1.7 Ready for Execution (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_7_READY_FOR_EXECUTION_Windows.zip</code>; referenced bytes not established here)</p>
+<p>Download the full-project SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_7_READY_FOR_EXECUTION_Windows.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+2c94e7675840777fe5b1b1d6f5a7fc95218e8bbde4123c662615b152df85d460
+
+Archive size
+5,819,200 bytes
+
+Files
+559
+</code></pre>
+<p>Canonical long-form copy:</p>
+<p>Download the canonical full-project repository (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_7_READY_FOR_EXECUTION.zip</code>; referenced bytes not established here)</p>
+<p>Both packages passed CRC, full-extraction, inventory, and extracted-file hash validation.</p>
+<hr>
+<h1>What M1.7 does</h1>
+<p>M1.7 converts accepted source contracts and persisted M1.6 scenario histories into:</p>
+<ol>
+<li><strong>Scenario-aware source-quality evidence</strong> for every application and source family.</li>
+<li><strong>Application-level data-confidence decisions</strong> governing whether downstream feature engineering may proceed.</li>
+</ol>
+<p>The principal design boundary is:</p>
+<blockquote>
+<p><strong>Data confidence is not credit risk.</strong></p>
+</blockquote>
+<p>M1.7 evaluates whether the evidence is usable, complete, current, and reconciling. It does not determine whether the merchant is creditworthy.</p>
+<h2>Governed scenarios</h2>
+<pre><code class="language-text">BASELINE
+RECESSION_ENERGY
+</code></pre>
+<h2>Governed applications</h2>
+<pre><code class="language-text">750 applications per scenario
+1,500 application-scenario records
+</code></pre>
+<h2>Source families</h2>
+<pre><code class="language-text">POS_DAILY
+DEPOSIT_DAILY
+BUSINESS_CREDIT
+OWNER_CREDIT
+VERIFICATION
+OBLIGATIONS
+COLLATERAL_AVAILABILITY
+</code></pre>
+<h2>Expected physical outputs</h2>
+<table>
+<thead>
+<tr>
+<th>Output</th>
+<th>Grain</th>
+<th align="right">Expected rows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>msbf_m1.source_snapshot</code></td>
+<td>Run × scenario × application × source</td>
+<td align="right">10,500</td>
+</tr>
+<tr>
+<td><code>msbf_m1.application_data_confidence_snapshot</code></td>
+<td>Run × scenario × application</td>
+<td align="right">1,500</td>
+</tr>
+<tr>
+<td>Canonical reconciliation universe</td>
+<td>Source + application confidence</td>
+<td align="right">12,000</td>
+</tr>
+</tbody></table>
+<p>Open the M1.7 architecture diagram (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/diagrams/M1_7_ARCHITECTURE.png</code>; referenced bytes not established here)</p>
+<p>Open the architecture specification (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/docs/M1_7_ARCHITECTURE.md</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Physical schema extension</h1>
+<p>M1.7 includes a controlled, idempotent schema migration.</p>
+<h2>Existing table alteration</h2>
+<pre><code class="language-text">msbf_m1.source_snapshot
+</code></pre>
+<p>adds:</p>
+<pre><code class="language-text">scenario_id
+</code></pre>
+<p>This changes the source-evidence grain from application/source to:</p>
+<pre><code class="language-text">module1_run_id
++ scenario_id
++ merchant_application_id
++ source_code
+</code></pre>
+<h2>New table</h2>
+<pre><code class="language-text">msbf_m1.application_data_confidence_snapshot
+</code></pre>
+<p>The new table stores:</p>
+<ul>
+<li>weighted application confidence;</li>
+<li>confidence tier;</li>
+<li>available, warning, and failed-source counts;</li>
+<li>material source conflicts;</li>
+<li>fallback pathway;</li>
+<li>manual-review recommendation;</li>
+<li>feature-engineering readiness;</li>
+<li>canonical row hash;</li>
+<li>run and scenario lineage.</li>
+</ul>
+<h2>Current physical-design totals after migration</h2>
+<pre><code class="language-text">71 designed parent/non-child tables
+1,059 designed table columns
+</code></pre>
+<p>The original G0 acceptance evidence remains historically unchanged:</p>
+<pre><code class="language-text">G0 accepted design
+70 physical parent tables
+1,041 designed columns
+</code></pre>
+<p>M1.7 adds one table and eighteen designed columns; it does not rewrite the G0 milestone.</p>
+<p>Open the physical schema extension SQL (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/sql/45_msbf_m1_7_schema_policy_extension_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Open the schema-extension table catalog (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/catalogs/M1_7_SCHEMA_EXTENSION_TABLES.csv</code>; referenced bytes not established here)</p>
+<p>Open the schema-extension column catalog (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/catalogs/M1_7_SCHEMA_EXTENSION_COLUMNS.csv</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Source-confidence methodology</h1>
+<p>Each source receives five bounded component scores.</p>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th align="right">Weight</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Availability</td>
+<td align="right">30%</td>
+<td>Whether the source can be used</td>
+</tr>
+<tr>
+<td>History depth</td>
+<td align="right">15%</td>
+<td>Whether the required observation window exists</td>
+</tr>
+<tr>
+<td>Freshness</td>
+<td align="right">15%</td>
+<td>Whether evidence is current as of the application date</td>
+</tr>
+<tr>
+<td>Completeness</td>
+<td align="right">20%</td>
+<td>Observed versus expected records</td>
+</tr>
+<tr>
+<td>Reconciliation</td>
+<td align="right">20%</td>
+<td>Agreement with independently derived evidence</td>
+</tr>
+</tbody></table>
+<pre><code class="language-text">Source Confidence
+=
+0.30 × Availability
++ 0.15 × History Depth
++ 0.15 × Freshness
++ 0.20 × Completeness
++ 0.20 × Reconciliation
+</code></pre>
+<p>Each component and the final result are bounded to:</p>
+<pre><code class="language-text">0.00 through 1.00
+</code></pre>
+<h2>Source-quality statuses</h2>
+<pre><code class="language-text">PASS
+WARNING
+FAIL
+</code></pre>
+<p>A source may trigger:</p>
+<ul>
+<li>a fallback path;</li>
+<li>manual review;</li>
+<li>an unresolved conflict;</li>
+<li>a block on downstream feature construction.</li>
+</ul>
+<hr>
+<h1>Application-confidence methodology</h1>
+<p>Source evidence is aggregated using governed source criticality weights.</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th align="right">Application weight</th>
+<th>Criticality</th>
+<th>Fallback</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>POS daily</td>
+<td align="right">30%</td>
+<td>Blocking</td>
+<td>POS data remediation</td>
+</tr>
+<tr>
+<td>Deposit daily</td>
+<td align="right">20%</td>
+<td>Supplemental</td>
+<td>POS-only fallback</td>
+</tr>
+<tr>
+<td>Business credit</td>
+<td align="right">12%</td>
+<td>Review</td>
+<td>Business-credit review</td>
+</tr>
+<tr>
+<td>Owner credit</td>
+<td align="right">10%</td>
+<td>Review</td>
+<td>Owner-credit review</td>
+</tr>
+<tr>
+<td>Verification</td>
+<td align="right">12%</td>
+<td>Review</td>
+<td>Verification review</td>
+</tr>
+<tr>
+<td>Obligations</td>
+<td align="right">10%</td>
+<td>Review</td>
+<td>Obligation review</td>
+</tr>
+<tr>
+<td>Collateral availability</td>
+<td align="right">6%</td>
+<td>Optional</td>
+<td>Unsecured or review</td>
+</tr>
+</tbody></table>
+<pre><code class="language-text">Application Confidence
+=
+Σ(Source Confidence × Source Weight)
+− Missing POS Penalty
+− Missing Deposit Penalty
+− Conflict Count × Conflict Penalty
+</code></pre>
+<h2>Confidence tiers</h2>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Governed threshold and conditions</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>HIGH</code></td>
+<td>Score ≥ 0.90, no failed sources, no material conflicts</td>
+</tr>
+<tr>
+<td><code>MEDIUM</code></td>
+<td>Score ≥ 0.75, POS usable, no material conflicts</td>
+</tr>
+<tr>
+<td><code>LOW</code></td>
+<td>Score ≥ 0.50 and POS usable</td>
+</tr>
+<tr>
+<td><code>INSUFFICIENT</code></td>
+<td>All other conditions</td>
+</tr>
+</tbody></table>
+<p>The application result also stores:</p>
+<pre><code class="language-text">ready_for_feature_engineering_flag
+manual_review_recommended_flag
+fallback_path_code
+conflict_count
+available_source_count
+warning_source_count
+fail_source_count
+</code></pre>
+<p>Open the parameter dictionary (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/docs/M1_7_PARAMETER_DICTIONARY.md</code>; referenced bytes not established here)</p>
+<p>Open the machine-readable parameter dictionary (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/catalogs/M1_7_PARAMETER_DICTIONARY.csv</code>; referenced bytes not established here)</p>
+<p>Open the governed parameter values (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/catalogs/M1_7_PARAMETER_VALUES.csv</code>; referenced bytes not established here)</p>
+<p>Open the source-policy matrix (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/catalogs/M1_7_SOURCE_POLICY_MATRIX.csv</code>; referenced bytes not established here)</p>
+<hr>
+<h1>M1.6 performance lessons applied proactively</h1>
+<p>M1.7 was designed to avoid the runtime problems encountered during M1.6.</p>
+<h2>Accepted histories are summarized once</h2>
+<p>The persisted M1.6 POS and deposit scenario tables are read into compact application-scenario summaries.</p>
+<p>The module does not repeatedly rebuild:</p>
+<ul>
+<li>M1.4 POS history;</li>
+<li>M1.5 liquidity history;</li>
+<li>M1.6 scenario blueprints.</li>
+</ul>
+<h2>Expensive inputs are materialized once</h2>
+<p>Generation materializes and indexes:</p>
+<pre><code class="language-text">Accepted POS scenario summary
+Accepted deposit scenario summary
+750-row merchant liquidity profile
+Source-quality blueprint
+Application-confidence blueprint
+Expected canonical snapshot
+Actual canonical snapshot
+</code></pre>
+<h2>Validation does not regenerate business logic</h2>
+<p>Scripts 48, 50, 51, and 52 operate on:</p>
+<ul>
+<li>persisted M1.7 rows;</li>
+<li>stored generation evidence;</li>
+<li>independently recomputed hashes from physical fields.</li>
+</ul>
+<p>They do not rerun source-quality or application-confidence generation.</p>
+<h2>Planner and runtime controls</h2>
+<p>Generation and validation use:</p>
+<pre><code class="language-sql">SET LOCAL work_mem = &#39;64MB&#39;;
+SET LOCAL jit = off;
+</code></pre>
+<p>Newly populated physical tables are indexed and analyzed before reconciliation.</p>
+<h2>Progress notices</h2>
+<p>Script 47 reports four execution phases:</p>
+<pre><code class="language-text">Phase 1 — Materialize accepted source inputs
+Phase 2 — Create source-quality snapshots
+Phase 3 — Aggregate application confidence
+Phase 4 — Perform canonical reconciliation
+</code></pre>
+<hr>
+<h1>SQL execution order</h1>
+<p>Run the following in DBeaver against:</p>
+<pre><code class="language-text">msbf_strategy
+</code></pre>
+<p>Use <strong>Execute SQL Script</strong>, not current-statement execution.</p>
+<table>
+<thead>
+<tr>
+<th align="right">Order</th>
+<th>Script</th>
+<th>Required result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td>45 — Schema and policy extension (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/sql/45_msbf_m1_7_schema_policy_extension_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>One new table, scenario column present, 12 parameter definitions, 18 values</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td>46 — Preflight (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/tests/46_msbf_m1_7_preflight_validation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td><code>preflight_status = PASS</code></td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td>47 — Generation (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/sql/47_msbf_m1_7_source_quality_confidence_generation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>10,500 + 1,500 rows; zero mismatches</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td>48 — Positive validation (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/sql/48_msbf_m1_7_source_quality_confidence_validation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>60 of 60 PASS</td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td>49 — Negative controls (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/sql/49_msbf_m1_7_negative_control_tests_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>5 of 5 PASS</td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td>50 — Acceptance finalizer (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/sql/50_msbf_m1_7_acceptance_finalize_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>Gate PASS; <code>M1_7_ACCEPTED</code></td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td>51 — Master report (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/tests/51_MSBF_M1_7_Source_Quality_Data_Confidence_Master_Report_v0_2.sql</code>; referenced bytes not established here)</td>
+<td><code>overall_m1_7_status = PASS</code></td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td>52 — Detailed report (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/tests/52_MSBF_M1_7_Source_Quality_Data_Confidence_Detail_Report_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>Sixteen result sets; mismatch and error sets empty</td>
+</tr>
+</tbody></table>
+<p>Open the complete execution guide (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/docs/M1_7_EXECUTION_AND_VALIDATION_GUIDE.md</code>; referenced bytes not established here)</p>
+<h2>Required generation checkpoint</h2>
+<pre><code class="language-text">run_status                        M1_7_GENERATED
+source_snapshot_rows              10,500
+application_confidence_rows        1,500
+expected canonical entities       12,000
+actual canonical entities         12,000
+row-level mismatches                    0
+source set hash                   non-null
+confidence set hash               non-null
+combined set hash                 non-null
+generation_status                     PASS
+</code></pre>
+<p>After script 47 commits successfully, <strong>do not rerun it</strong>.</p>
+<hr>
+<h1>Contingency scripts</h1>
+<p>These are not part of the normal execution order.</p>
+<h2>45A — Failed-generation recovery check</h2>
+<p>Open the recovery check (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/tests/45A_msbf_m1_7_failed_generation_recovery_check_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Run only after:</p>
+<ul>
+<li>script 47 is cancelled or fails before commit; and</li>
+<li><code>ROLLBACK;</code> has been executed.</li>
+</ul>
+<p>It confirms that no M1.7 business rows or evidence were committed.</p>
+<h2>47A — Generation-evidence reconstruction</h2>
+<p>Open the reconstruction script (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/tests/47A_msbf_m1_7_generation_reconciliation_reconstructed_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Run only when:</p>
+<ul>
+<li>script 47 committed successfully; but</li>
+<li>DBeaver lost or closed the generation result tab.</li>
+</ul>
+<p>It reconstructs the generation checkpoint read-only. It does not generate or update business rows.</p>
+<hr>
+<h1>Validation framework</h1>
+<p>M1.7 includes:</p>
+<pre><code class="language-text">60 positive validation controls
+5 negative controls
+16 detailed evidence result sets
+</code></pre>
+<p>The positive controls cover:</p>
+<ul>
+<li>all accepted predecessor gates and hashes;</li>
+<li>parameter and source-weight integrity;</li>
+<li>row counts and unique grains;</li>
+<li>seven sources per application and scenario;</li>
+<li>source-contract and as-of alignment;</li>
+<li>history-date and observation-count integrity;</li>
+<li>completeness and reconciliation identities;</li>
+<li>source and application score bounds;</li>
+<li>status and tier domains;</li>
+<li>canonical row and set hashes;</li>
+<li>POS and deposit reproduction;</li>
+<li>fallback-path rules;</li>
+<li>application-score and tier reconstruction;</li>
+<li>feature-readiness and manual-review logic;</li>
+<li>matched baseline/stress coverage;</li>
+<li>expected stress-confidence direction;</li>
+<li>source and confidence-tier diversity;</li>
+<li>no-future-data controls;</li>
+<li>strict stage boundaries;</li>
+<li>generation-evidence completeness.</li>
+</ul>
+<p>The negative controls confirm fail-closed rejection of:</p>
+<pre><code class="language-text">Disabled M1.7 generation
+Invalid source-weight sum
+Unapproved source contract
+Unapproved scenario
+Attempted post-generation rerun
+</code></pre>
+<p>Open the validation matrix (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/docs/M1_7_VALIDATION_MATRIX.md</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Evidence to export</h1>
+<p>Retain structured exports for:</p>
+<pre><code class="language-text">45 schema and policy checkpoint
+46 preflight
+47 generation
+48 positive validations
+49 negative controls
+50 acceptance finalizer
+51 master report
+52 all sixteen detailed result sets
+completed M1.7 acceptance milestone
+</code></pre>
+<p>Detailed result sets 14 and 16 must retain their headers and contain zero rows:</p>
+<pre><code class="language-text">Row-Level Deterministic Mismatches
+Blocking Resolution Errors
+</code></pre>
+<p>Open the evidence instructions (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/evidence/README.md</code>; referenced bytes not established here)</p>
+<p>Open the acceptance-milestone template (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/evidence/templates/MSBF_M1_7_Source_Quality_Data_Confidence_Build_Acceptance_Milestone_v0_2_template.txt</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Static package validation</h1>
+<p>The completed package passed its defined static controls:</p>
+<pre><code class="language-text">SQL files checked                         10
+SQL source lines                       1,901
+Positive validation controls              60
+Negative controls                           5
+Detailed-report result sets                16
+Expected source rows                   10,500
+Expected confidence rows                1,500
+Expected canonical entities            12,000
+Physical dependency tables                 37
+Physical dependency columns               587
+
+SQL lexical-balance errors                  0
+Invalid DML target columns                  0
+Session-level random() calls                0
+Destructive M1 operations                   0
+Large upstream blueprint rebuilds           0
+Catalog parse errors                         0
+Static warnings                              0
+</code></pre>
+<p>Open the package-validation report (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<p>Open the machine-readable static-validation results (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/catalogs/M1_7_STATIC_VALIDATION.json</code>; referenced bytes not established here)</p>
+<p>Open the final build report (historical reference: <code>sandbox:[session]/MSBF_M1_7_FINAL_BUILD_REPORT.json</code>; referenced bytes not established here)</p>
+<p>A PostgreSQL server was not available in the artifact-build environment. Static validation cannot establish live runtime, query-plan behavior, transactional execution, or acceptance.</p>
+<hr>
+<h1>Stage boundary</h1>
+<p>M1.7 does not create:</p>
+<ul>
+<li>obligation snapshots;</li>
+<li>collateral or guarantee evidence;</li>
+<li>business or owner credit evidence;</li>
+<li>verification or KYB outcomes;</li>
+<li>fraud-risk evidence;</li>
+<li>processor-continuity decisions;</li>
+<li>underwriting features;</li>
+<li>merchant-risk components;</li>
+<li>EAD or LGD;</li>
+<li>Expected Loss;</li>
+<li>pricing or offer decisions;</li>
+<li>approval, counteroffer, review, or decline outcomes;</li>
+<li>Module 1 latest or archive outputs.</li>
+</ul>
+<p>These boundaries are enforced by the validation package.</p>
+<h1>Next stage after M1.7 acceptance</h1>
+<p>The planned next module is:</p>
+<blockquote>
+<p><strong>M1.8 — Verification, Fraud &amp; Operational Continuity</strong></p>
+</blockquote>
+<p>M1.8 will consume accepted M1.7 source-quality evidence while preserving separate dimensions for:</p>
+<pre><code class="language-text">credit risk
+fraud risk
+data confidence
+processor continuity
+</code></pre>
+<p>Open the M1.8 handoff plan (historical reference: <code>sandbox:[session]/build_m1_7/MSBF_Project_v0_2_M1_7_READY/09_M1_7/NEXT_STEP_M1_8_VERIFICATION_FRAUD_CONTINUITY.md</code>; referenced bytes not established here)</p>
+<p>The current controlled progression is:</p>
+<pre><code class="language-text">G0 Physical Foundation
+PASS
+
+→
+
+G1 Governed Run Control
+PASS
+
+→
+
+M1.2 Deterministic Merchant Population
+PASS
+
+→
+
+M1.3 Application &amp; Requested Structure
+PASS
+
+→
+
+M1.4 Enterprise Merchant Ecosystem
+PASS
+
+→
+
+M1.5 Daily Deposit &amp; Liquidity History
+PASS
+
+→
+
+M1.6 Matched Scenario Overlays
+PASS
+
+→
+
+M1.7 Source Quality &amp; Data Confidence
+READY FOR LIVE EXECUTION
+
+→
+
+M1.8 Verification, Fraud &amp; Operational Continuity
+PENDING M1.7 ACCEPTANCE
+</code></pre>
+</div></article><article id="m-e8d44768-76e1-43e0-9e75-189c6538aec3" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00235 · 2026-07-25T21:30:53.879632-04:00 · active path</p><div class="bubble"><h1>M1.7 final determination: <strong>Passed and accepted</strong></h1>
+<p>I reviewed both evidence batches in full, including the preflight, generation checkpoint, 55 positive controls, five negative controls, acceptance finalizer, master report, all fifteen detailed-report exports, and the zero-row deterministic-mismatch and blocking-resolution-error files.</p>
+<p>No implementation or validation defect was identified. <strong>No hotfix is required.</strong></p>
+<p>The evidence supports formal acceptance of:</p>
+<blockquote>
+<p><strong>M1.7 — Source Quality &amp; Data Confidence v0.2</strong></p>
+</blockquote>
+<h2>Acceptance results</h2>
+<table>
+<thead>
+<tr>
+<th>Validation area</th>
+<th align="right">Final result</th>
+<th>Disposition</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Final run status</td>
+<td align="right"><code>M1_7_ACCEPTED</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Acceptance gate</td>
+<td align="right"><code>M1_7_SOURCE_QUALITY_CONFIDENCE — PASS</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Applications represented</td>
+<td align="right">750</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Governed source families</td>
+<td align="right">7</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Source-snapshot rows</td>
+<td align="right">5,250</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Expected canonical rows</td>
+<td align="right">5,250</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Actual canonical rows</td>
+<td align="right">5,250</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Row-level deterministic mismatches</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Positive validations</td>
+<td align="right">55 of 55 PASS</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Negative controls</td>
+<td align="right">5 of 5 PASS</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Failed evidence records</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Blocking resolution errors</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Downstream analytical rows</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Master-report result</td>
+<td align="right"><code>overall_m1_7_status = PASS</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Detailed-report result sets</td>
+<td align="right">15 complete</td>
+<td>Pass</td>
+</tr>
+</tbody></table>
+<p>The mismatch and blocking-error exports contain the required headers and zero data rows.</p>
+<h2>Deterministic and governance reconciliation</h2>
+<p>The stored and independently reconstructed M1.7 source-quality set reconciles exactly:</p>
+<pre><code class="language-text">M1.7 source-quality set hash
+de56a458d9ec0b344886850592c4e6c8
+</code></pre>
+<p>All previously accepted identities remained unchanged:</p>
+<pre><code class="language-text">Parameter snapshot   bd09e598c82db96e47459d77fd11e7c8
+Profile snapshot     462cbd2ed92f68e5bdecf6b17537a973
+Source snapshot      93c3d1368fb2450ab4a08e2b721f92d3
+Population hash      9b706c926260a3ef1ae8ac95eed5d0bf
+Application hash     01485256b9b5748fb412743d35ced602
+POS-history hash     d1971e8d319483c187ec0c0483a31e33
+Deposit-history hash bbe96dd24fbbba3af4a587dd475a88d0
+Scenario-set hash    3f85921bf6fc30ddc6cee146085e58c5
+</code></pre>
+<h2>Source-quality portfolio results</h2>
+<pre><code class="language-text">Available source rows              4,889
+Partial source rows                  182
+Unavailable source rows              179
+
+Pass-quality rows                  2,877
+Warning-quality rows               1,193
+Fail-quality rows                    963
+Conflict rows                         38
+
+Controlled fallback/review rows    2,373
+
+Average source confidence        0.924689
+Average application confidence   0.914717
+</code></pre>
+<p>The quality counts reconcile when the 179 unavailable rows are retained as their separate availability state rather than silently classified as observed poor performance.</p>
+<h3>Application confidence tiers</h3>
+<table>
+<thead>
+<tr>
+<th>Confidence tier</th>
+<th align="right">Applications</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>High</td>
+<td align="right">625</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td align="right">42</td>
+</tr>
+<tr>
+<td>Low</td>
+<td align="right">52</td>
+</tr>
+<tr>
+<td>Review</td>
+<td align="right">31</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td align="right"><strong>750</strong></td>
+</tr>
+</tbody></table>
+<h3>Critical-source and fallback routing</h3>
+<pre><code class="language-text">POS fail-closed applications             10
+Verification fail-closed applications    10
+Source-conflict review applications      38
+Deposit POS-only fallback applications   75
+Critical-source stop applications        20
+</code></pre>
+<p>This is a particularly important design result. The module does not convert missing or conflicting evidence into favorable merchant attributes:</p>
+<pre><code class="language-text">Missing POS evidence          ≠ zero merchant sales
+Missing deposit evidence      ≠ strong liquidity
+Missing obligations evidence  ≠ no existing obligations
+Missing collateral evidence   ≠ no collateral exists
+Unavailable verification      ≠ verification passed
+</code></pre>
+<p>Each non-pass source condition remains visible and receives an explicit fail-closed, fallback, refresh, or manual-review path.</p>
+<h2>POS/deposit reconciliation</h2>
+<p>The paired-source results show coherent separation among high-quality paired evidence, warning-level discrepancies, and unavailable-source conditions:</p>
+<pre><code class="language-text">PASS / PASS paired applications        644
+Average reconciliation score       0.995703
+Minimum PASS reconciliation score  0.902227
+
+WARNING / WARNING applications          23
+Average warning reconciliation      0.825034
+
+Applications with one or both
+paired sources unavailable               83
+</code></pre>
+<p>The source-contract requirements, global thresholds, freshness limits, history requirements, and reconciliation standards were applied without creating substantive merchant-risk conclusions prematurely.</p>
+<h2>Stage-boundary confirmation</h2>
+<p>M1.7 generated source-quality and confidence evidence only. The following remained ungenerated:</p>
+<ul>
+<li>obligations;</li>
+<li>collateral availability;</li>
+<li>guarantees;</li>
+<li>business-credit observations;</li>
+<li>owner-credit observations;</li>
+<li>verification results;</li>
+<li>feature snapshots;</li>
+<li>fraud or credit-risk components;</li>
+<li>EAD and LGD;</li>
+<li>Expected Loss;</li>
+<li>pricing and offer decisions;</li>
+<li>latest contract outputs;</li>
+<li>archive contract outputs.</li>
+</ul>
+<p>The module therefore remained within its approved boundary.</p>
+<h2>Formal sign-off</h2>
+<blockquote>
+<p><strong>M1.7 is passed and accepted. M1.8 — Verification, Fraud &amp; Processor Continuity is authorized.</strong></p>
+</blockquote>
+<p>This acceptance applies to synthetic source availability, completeness, freshness, paired-source reconciliation, confidence, and controlled routing. It is not production data-quality certification, regulatory approval, information-security certification, calibrated risk validation, fair-lending validation, or authorization for production use.</p>
+<hr>
+<h1>Updated full project repository</h1>
+<h2>Recommended Windows-compatible project delivery</h2>
+<p>Download MSBF Project v0.2 — M1.7 Complete FINAL (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_7_COMPLETE_FINAL_Windows.zip</code>; referenced bytes not established here)</p>
+<p>Download the SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_7_COMPLETE_FINAL_Windows.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+8dfb4edfcfcfff8aefa6ba9300ef6425198fb0ab9c1b5f89512548bb70da3411
+
+Archive size
+5,709,778 bytes
+
+Files
+589
+
+Longest internal path
+190 characters
+</code></pre>
+<p>The archive passed:</p>
+<pre><code class="language-text">CRC validation                      PASS
+Complete extraction                 PASS
+Source / ZIP inventory match        589 / 589
+Missing or extra files              0
+In-archive hash mismatches          0
+Extracted-file hash mismatches      0
+Windows/DOS ZIP metadata            PASS
+ZIP64                               Not used
+</code></pre>
+<p>Extract near the drive root, preferably:</p>
+<pre><code class="language-text">C:\MSBF\
+</code></pre>
+<h2>Canonical long-form project delivery</h2>
+<p>Download the canonical full-project ZIP (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_7_COMPLETE_FINAL.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_7_COMPLETE_FINAL.zip.sha256</code>; referenced bytes not established here)</p>
+<p>The Windows-compatible and canonical ZIPs contain identical project content and hashes.</p>
+<h2>Standalone accepted M1.7 package</h2>
+<p>Download the standalone M1.7 v0.2 Complete package (historical reference: <code>sandbox:[session]/MSBF_M1_7_v0_2_COMPLETE_FINAL.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_7_v0_2_COMPLETE_FINAL.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+f4b648b5c18eceb341a807f1682516df2aab0dc7eab9c92795a4f3e0df634df0
+
+Files
+74
+</code></pre>
+<hr>
+<h1>Key acceptance records</h1>
+<ul>
+<li>M1.7 evidence review and formal sign-off (historical reference: <code>sandbox:[session]/M1_7_LIVE_EXECUTION_EVIDENCE_REVIEW_AND_SIGNOFF.md</code>; referenced bytes not established here)</li>
+<li>Completed M1.7 acceptance milestone (historical reference: <code>sandbox:[session]/MSBF_M1_7_Source_Quality_Data_Confidence_Build_Acceptance_Milestone_v0_2.txt</code>; referenced bytes not established here)</li>
+<li>Machine-readable validation summary (historical reference: <code>sandbox:[session]/M1_7_LIVE_EXECUTION_VALIDATION_SUMMARY_v0_2.json</code>; referenced bytes not established here)</li>
+<li>M1.7 evidence index (historical reference: <code>sandbox:[session]/M1_7_EVIDENCE_INDEX.md</code>; referenced bytes not established here)</li>
+<li>Updated project status (historical reference: <code>sandbox:[session]/PROJECT_STATUS_M1_7_COMPLETE.md</code>; referenced bytes not established here)</li>
+<li>M1.8 next-stage plan (historical reference: <code>sandbox:[session]/CURRENT_NEXT_STEP_M1_8_VERIFICATION_FRAUD_PROCESSOR_CONTINUITY.md</code>; referenced bytes not established here)</li>
+<li>Final package build report (historical reference: <code>sandbox:[session]/MSBF_M1_7_COMPLETE_BUILD_REPORT.json</code>; referenced bytes not established here)</li>
+</ul>
+<p>The accepted project progression is now:</p>
+<pre><code class="language-text">G0 Physical Foundation
+PASS
+
+→
+
+G1 Governed Run Control
+PASS
+
+→
+
+M1.2 Deterministic Merchant Population
+PASS
+
+→
+
+M1.3 Application &amp; Requested Structure
+PASS
+
+→
+
+M1.4 Enterprise Merchant Ecosystem
+PASS
+
+→
+
+M1.5 Daily Deposit &amp; Liquidity History
+PASS
+
+→
+
+M1.6 Matched Scenario Overlays
+PASS
+
+→
+
+M1.7 Source Quality &amp; Data Confidence
+PASS
+
+→
+
+M1.8 Verification, Fraud &amp; Processor Continuity
+AUTHORIZED
+</code></pre>
+</div></article><article id="m-cb0e7420-34bc-4b35-891e-ce80899a646a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00236 · 2026-07-25T21:43:39.699000-04:00 · active path</p><div class="bubble"><p>wow, you really did not read my last prompt at all. I provided all the execution evidence from the M1.7. why did you proceed to build M1.7 again........</p>
+</div></article><article id="m-bace4899-4c37-4aef-8279-adb93a4fc7d7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00237 · 2026-07-25T21:47:38.064000-04:00 · active path</p><div class="bubble"><p>Build M1.8 — Verification, Fraud &amp; Processor Continuity as a complete governed module. Use the accepted M1.7 repository as the baseline. Produce architecture, schema changes, parameter dictionary, preflight, generation, validation, negative controls, acceptance, master report, detail reports, documentation, manifest, SHA-256, and updated full-project ZIP. Apply the performance lessons from prior modules proactively: no unnecessary blueprint regeneration, materialize expensive intermediates once, avoid self-joins where window functions suffice, index and ANALYZE before downstream joins, separate persisted generation from read-only validation, and include recovery behavior. Do not stop for interim design approval unless a material ambiguity would change the module’s business purpose.</p>
+</div></article><article id="m-edb40a48-a6e6-47c3-93f0-760d0735b543" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00238 · 2026-07-25T22:56:49.893171-04:00 · active path</p><div class="bubble"><h1>M1.8 — Verification, Fraud &amp; Processor Continuity</h1>
+<p>The complete <strong>M1.8 v0.2 governed module</strong> is built, statically validated, integrated into the accepted M1.7 repository, and ready for controlled PostgreSQL execution.</p>
+<p>M1.8 is <strong>not yet accepted</strong>. Live execution, structured evidence export, independent evidence review, and formal milestone sign-off remain required.</p>
+<h2>Primary deliveries</h2>
+<h3>Standalone M1.8 package</h3>
+<p>Download MSBF M1.8 v0.2 (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2.zip</code>; referenced bytes not established here)</p>
+<p>Download the standalone ZIP SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+6cf64b2bffcf396ccb3540297de221252d0d2357cea00056f862447435285330
+
+Archive size
+357,934 bytes
+
+Files
+39
+</code></pre>
+<p>Canonical long-form copy:</p>
+<p>Download the canonical M1.8 package (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m1_8_verification_fraud_processor_continuity_v0_2.zip</code>; referenced bytes not established here)</p>
+<h3>Updated full project repository</h3>
+<p>This contains the complete accepted project through M1.7 plus M1.8 in <strong>Ready for Live Execution</strong> status.</p>
+<p>Download MSBF Project v0.2 — M1.8 Ready for Execution (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_8_READY_FOR_EXECUTION_Windows.zip</code>; referenced bytes not established here)</p>
+<p>Download the full-project ZIP SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_8_READY_FOR_EXECUTION_Windows.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+3cca828bec4e4f8b42aae58930c48c25c79cabc2e9cb88bc7716cf748ddaf57e
+
+Archive size
+6,071,409 bytes
+
+Files
+631
+</code></pre>
+<p>Canonical long-form copy:</p>
+<p>Download the canonical full-project repository (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_8_READY_FOR_EXECUTION.zip</code>; referenced bytes not established here)</p>
+<p>Both full-project ZIPs contain identical project content. Extract near the drive root, preferably:</p>
+<pre><code class="language-text">C:\MSBF\
+</code></pre>
+<hr>
+<h1>Module purpose</h1>
+<p>M1.8 creates transparent, deterministic synthetic evidence for:</p>
+<ul>
+<li>business and beneficial-owner verification;</li>
+<li>sanctions screening;</li>
+<li>bank-account ownership matching;</li>
+<li>processor-account matching;</li>
+<li>independent fraud indicators;</li>
+<li>baseline processor continuity;</li>
+<li>recession-stress processor continuity;</li>
+<li>application-level routing and reason codes.</li>
+</ul>
+<p>It preserves four analytically distinct dimensions:</p>
+<pre><code class="language-text">M1.7 Data Confidence
+≠
+Verification / KYB Evidence
+≠
+Fraud Risk
+≠
+Processor Continuity
+≠
+Future Credit Risk
+</code></pre>
+<p>Fraud and continuity evidence may affect routing, review, and later feature construction, but M1.8 does <strong>not</strong> create a credit-risk score, Expected Loss, price, approval decision, counteroffer, or adverse action.</p>
+<p>Open the M1.8 architecture diagram (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/diagrams/M1_8_ARCHITECTURE.png</code>; referenced bytes not established here)</p>
+<p>Open the architecture specification (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/docs/M1_8_ARCHITECTURE.md</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Expected physical outputs</h1>
+<h2>Atomic verification evidence</h2>
+<pre><code class="language-text">750 applications
+×
+6 governed checks
+=
+4,500 verification-result rows
+</code></pre>
+<p>Governed checks:</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Primary evidence source</th>
+<th>Intended role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>KYB_ENTITY</code></td>
+<td>Verification</td>
+<td>Business-entity validation</td>
+</tr>
+<tr>
+<td><code>BENEFICIAL_OWNER</code></td>
+<td>Verification</td>
+<td>Ownership evidence</td>
+</tr>
+<tr>
+<td><code>SANCTIONS</code></td>
+<td>Verification</td>
+<td>Sanctions-screen evidence</td>
+</tr>
+<tr>
+<td><code>BANK_ACCOUNT_MATCH</code></td>
+<td>Deposit daily</td>
+<td>Operating-account ownership consistency</td>
+</tr>
+<tr>
+<td><code>PROCESSOR_MATCH</code></td>
+<td>POS daily</td>
+<td>Merchant/processor relationship consistency</td>
+</tr>
+<tr>
+<td><code>FRAUD_SCREEN</code></td>
+<td>Verification plus observed signals</td>
+<td>Independent synthetic fraud assessment</td>
+</tr>
+</tbody></table>
+<h2>Application-level summary</h2>
+<pre><code class="language-text">750 application verification/fraud summary rows
+</code></pre>
+<p>The summary preserves:</p>
+<ul>
+<li>check results and reason codes;</li>
+<li>fraud score and tier;</li>
+<li>baseline processor-continuity tier;</li>
+<li>stressed processor-continuity tier;</li>
+<li>manual-review recommendation;</li>
+<li>hard-stop recommendation;</li>
+<li>controlled route:<ul>
+<li><code>CLEAR</code>;</li>
+<li><code>REVIEW</code>;</li>
+<li><code>STOP</code>;</li>
+<li><code>INSUFFICIENT_EVIDENCE</code>;</li>
+</ul>
+</li>
+<li>canonical row hash.</li>
+</ul>
+<h2>Canonical reconciliation universe</h2>
+<pre><code class="language-text">4,500 atomic check entities
++
+750 application-summary entities
+=
+5,250 canonical entities
+</code></pre>
+<hr>
+<h1>Physical schema changes</h1>
+<p>M1.8 includes an idempotent schema and policy extension.</p>
+<h2>Existing table extension</h2>
+<pre><code class="language-text">msbf_m1.verification_result
+</code></pre>
+<p>adds:</p>
+<pre><code class="language-text">manual_review_recommended_flag
+result_reason_code
+row_hash
+</code></pre>
+<p>The governed status domain supports:</p>
+<pre><code class="language-text">PASS
+REVIEW
+FAIL
+UNAVAILABLE
+</code></pre>
+<p><code>UNAVAILABLE</code> remains distinct from <code>FAIL</code>, preventing missing evidence from being interpreted as a substantive failed verification.</p>
+<h2>New application-level table</h2>
+<pre><code class="language-text">msbf_m1.application_verification_fraud_snapshot
+</code></pre>
+<p>This table stores the accepted application-level separation of:</p>
+<ul>
+<li>M1.7 data confidence;</li>
+<li>verification status;</li>
+<li>independent fraud score and tier;</li>
+<li>processor-continuity tiers;</li>
+<li>routing and reasons;</li>
+<li>manual-review and hard-stop indicators;</li>
+<li>run lineage;</li>
+<li>canonical hash.</li>
+</ul>
+<h2>Physical-design totals after migration</h2>
+<pre><code class="language-text">71 designed parent/non-child tables
+1,079 designed table columns
+</code></pre>
+<p>The historical G0 milestone remains unchanged:</p>
+<pre><code class="language-text">G0 accepted foundation
+70 physical parent tables
+1,041 designed columns
+</code></pre>
+<p>M1.8 adds one table and eighteen designed columns without rewriting prior acceptance evidence.</p>
+<p>Download script 52 — schema and policy extension (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/sql/52_msbf_m1_8_schema_policy_extension_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Open the schema-extension table catalog (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/catalogs/M1_8_SCHEMA_EXTENSION_TABLES.csv</code>; referenced bytes not established here)</p>
+<p>Open the schema-extension column catalog (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/catalogs/M1_8_SCHEMA_EXTENSION_COLUMNS.csv</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Fraud methodology</h1>
+<p>The fraud score is transparent and additive rather than opaque.</p>
+<pre><code class="language-text">Fraud Score
+=
+Base Fraud Points
++
+Bank-Account Mismatch Points
++
+Processor Mismatch Points
++
+Identity-Conflict Points
++
+Abnormal-Refund Points
++
+Abnormal-Chargeback Points
+</code></pre>
+<p>Governed synthetic point values include:</p>
+<pre><code class="language-text">Bank-account mismatch       40 points
+Processor mismatch          35 points
+Identity conflict           30 points
+Abnormal refunds            12 points
+Abnormal chargebacks        18 points
+</code></pre>
+<p>Fraud tiers are controlled by governed thresholds:</p>
+<pre><code class="language-text">Tier 2 threshold            10
+Tier 3 threshold            25
+Tier 4 threshold            45
+Tier 5 threshold            70
+</code></pre>
+<p>The evidence retains the contributing reason flags so a high fraud tier can be explained rather than presented as an unexplained score.</p>
+<hr>
+<h1>Processor-continuity methodology</h1>
+<p>Processor continuity is assessed independently under:</p>
+<pre><code class="language-text">Accepted M1.4 baseline POS history
+and
+Accepted M1.6 RECESSION_ENERGY POS scenario
+</code></pre>
+<p>The continuity analysis excludes dates before the governed processor-account opening date.</p>
+<p>Observed evidence includes:</p>
+<ul>
+<li>active-day share;</li>
+<li>degraded-day share;</li>
+<li>outage-day share;</li>
+<li>connection-gap share;</li>
+<li>recent outage behavior;</li>
+<li>baseline continuity tier;</li>
+<li>stressed continuity tier;</li>
+<li>deterioration under stress.</li>
+</ul>
+<p>This provides operating-continuity evidence without conflating it with merchant creditworthiness or source-data confidence.</p>
+<p>Open the design and generation specification (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/docs/M1_8_DESIGN_AND_GENERATION_SPECIFICATION.md</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Performance engineering</h1>
+<p>The M1.6 runtime lessons are embedded proactively.</p>
+<p>M1.8 does <strong>not</strong> regenerate:</p>
+<pre><code class="language-text">M1.4 POS blueprints
+M1.5 liquidity blueprints
+M1.6 scenario blueprints
+M1.7 source-quality logic
+</code></pre>
+<p>Instead:</p>
+<pre><code class="language-text">Accepted physical application, relationship, source-quality,
+baseline POS and scenario POS tables
+
+→ compact merchant/application aggregation
+
+→ indexed 750-row application input
+
+→ 4,500 atomic checks
+
+→ 750 application summaries
+
+→ one expected/actual canonical reconciliation
+</code></pre>
+<p>Performance controls include:</p>
+<pre><code class="language-sql">SET LOCAL work_mem = &#39;64MB&#39;;
+SET LOCAL jit = off;
+SET LOCAL lock_timeout = &#39;10s&#39;;
+SET LOCAL statement_timeout = &#39;15min&#39;;
+</code></pre>
+<p>The module also:</p>
+<ul>
+<li>materializes expensive intermediate inputs once;</li>
+<li>avoids large self-joins;</li>
+<li>aggregates baseline and stressed processor evidence before row expansion;</li>
+<li>indexes temporary and persistent outputs before downstream use;</li>
+<li>runs <code>ANALYZE</code> after physical persistence;</li>
+<li>prevents validation and reporting from rebuilding business logic;</li>
+<li>emits generation-phase notices;</li>
+<li>supplies recovery and read-only evidence-reconstruction paths.</li>
+</ul>
+<hr>
+<h1>Exact execution order</h1>
+<p>Run these files in DBeaver against the accepted <code>msbf_strategy</code> database:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Order</th>
+<th>Script</th>
+<th>Required checkpoint</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td>52 — Schema and policy extension (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/sql/52_msbf_m1_8_schema_policy_extension_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>Extension status <code>PASS</code>; gate and policy registered</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td>53 — Preflight (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/tests/53_msbf_m1_8_preflight_validation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td><code>preflight_status = PASS</code></td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td>54 — Generation (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/sql/54_msbf_m1_8_verification_fraud_continuity_generation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>4,500 + 750 rows; zero mismatches</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td>55 — Positive validation (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/sql/55_msbf_m1_8_verification_fraud_continuity_validation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>60 of 60 <code>PASS</code></td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td>56 — Negative controls (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/sql/56_msbf_m1_8_negative_control_tests_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>6 of 6 <code>PASS</code></td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td>57 — Acceptance finalizer (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/sql/57_msbf_m1_8_acceptance_finalize_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>Gate <code>PASS</code>; run <code>M1_8_ACCEPTED</code></td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td>58 — Master report (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/tests/58_MSBF_M1_8_Verification_Fraud_Processor_Continuity_Master_Report_v0_2.sql</code>; referenced bytes not established here)</td>
+<td><code>overall_m1_8_status = PASS</code></td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td>59 — Detailed report (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/tests/59_MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>17 result sets; mismatch/error sets empty</td>
+</tr>
+</tbody></table>
+<p>Open the complete execution and validation guide (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/docs/M1_8_EXECUTION_AND_VALIDATION_GUIDE.md</code>; referenced bytes not established here)</p>
+<h2>Required generation result</h2>
+<pre><code class="language-text">run_status                         M1_8_GENERATED
+verification_result_rows                 4,500
+application_summary_rows                   750
+expected canonical entities              5,250
+actual canonical entities                5,250
+row-level mismatches                         0
+verification set hash                 non-null
+summary set hash                      non-null
+combined set hash                     non-null
+generation_status                         PASS
+</code></pre>
+<p>After script 54 commits successfully, <strong>do not rerun it</strong>.</p>
+<hr>
+<h1>Contingency scripts</h1>
+<p>These are not part of the normal execution sequence.</p>
+<h2>52A — Failed-generation recovery check</h2>
+<p>Download the recovery-state check (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/tests/52A_msbf_m1_8_failed_generation_recovery_check_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Use only when script 54 was cancelled or failed before commit and you have executed:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>It verifies that M1.8 business rows, evidence, and gate results did not persist.</p>
+<h2>54A — Generation-evidence reconstruction</h2>
+<p>Download the read-only generation reconstruction (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/tests/54A_msbf_m1_8_generation_reconciliation_reconstructed_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Use only when script 54 committed successfully but its DBeaver result tab was lost or closed.</p>
+<p>It reconstructs the checkpoint without regenerating or updating business records.</p>
+<hr>
+<h1>Validation framework</h1>
+<p>M1.8 includes:</p>
+<pre><code class="language-text">60 positive controls
+6 negative controls
+17 detailed evidence result sets
+</code></pre>
+<p>The controls cover:</p>
+<ul>
+<li>accepted G1–M1.7 gate and hash preservation;</li>
+<li>exact application/check cardinality;</li>
+<li>six checks per application;</li>
+<li>source-quality alignment;</li>
+<li>unavailable-evidence handling;</li>
+<li>check-status and reason-code integrity;</li>
+<li>fraud-score reconstruction;</li>
+<li>fraud-tier reconstruction;</li>
+<li>baseline and stress continuity calculations;</li>
+<li>processor-open boundary handling;</li>
+<li>baseline/stress continuity-tier reconstruction;</li>
+<li>routing and hard-stop logic;</li>
+<li>manual-review logic;</li>
+<li>data-confidence separation;</li>
+<li>credit-risk boundary preservation;</li>
+<li>canonical row hashes;</li>
+<li>verification, summary, and combined set hashes;</li>
+<li>strict stage boundaries;</li>
+<li>zero blocking configuration errors.</li>
+</ul>
+<p>The six negative controls prove fail-closed rejection of:</p>
+<pre><code class="language-text">Disabled M1.8 generation
+Invalid fraud-tier ordering
+Missing required governed parameter
+Unapproved M1.8 policy profile
+Prerequisite run-status drift
+Attempted post-generation rerun
+</code></pre>
+<p>Open the validation matrix (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/docs/M1_8_VALIDATION_MATRIX.md</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Evidence to retain</h1>
+<p>Structured CSV exports are sufficient. Execution logs are optional unless diagnosing a defect.</p>
+<p>Retain:</p>
+<pre><code class="language-text">52 schema/policy-extension checkpoint
+53 preflight result
+54 generation checkpoint
+55 positive-validation results
+56 negative-control results
+57 acceptance-finalizer result
+58 one-row master report
+59 all seventeen detailed-report result sets
+completed M1.8 acceptance milestone
+</code></pre>
+<p>In the detailed report:</p>
+<pre><code class="language-text">Result Set 15 — Row-Level Deterministic Mismatches
+Result Set 17 — Blocking Resolution Errors
+</code></pre>
+<p>must preserve their headers and contain zero data rows.</p>
+<p>Open the evidence instructions (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/evidence/README.md</code>; referenced bytes not established here)</p>
+<p>Open the acceptance-milestone template (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/evidence/templates/MSBF_M1_8_Verification_Fraud_Processor_Continuity_Build_Acceptance_Milestone_v0_2_template.txt</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Documentation and catalogs</h1>
+<ul>
+<li>Package README (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/README.md</code>; referenced bytes not established here)</li>
+<li>Parameter Dictionary — Markdown (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/docs/M1_8_PARAMETER_DICTIONARY.md</code>; referenced bytes not established here)</li>
+<li>Parameter Dictionary — CSV (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/catalogs/M1_8_PARAMETER_DICTIONARY.csv</code>; referenced bytes not established here)</li>
+<li>Governed Parameter Values (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/catalogs/M1_8_PARAMETER_VALUES.csv</code>; referenced bytes not established here)</li>
+<li>Verification Check Matrix (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/catalogs/M1_8_VERIFICATION_CHECK_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Field Dictionary (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/catalogs/M1_8_FIELD_DICTIONARY.csv</code>; referenced bytes not established here)</li>
+<li>Expected Results (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/catalogs/M1_8_EXPECTED_RESULTS.json</code>; referenced bytes not established here)</li>
+<li>Run Configuration (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/catalogs/M1_8_RUN_CONFIGURATION.json</code>; referenced bytes not established here)</li>
+<li>Execution Order (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/catalogs/M1_8_EXECUTION_ORDER.csv</code>; referenced bytes not established here)</li>
+<li>Physical Dependency Catalog (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/catalogs/M1_8_PHYSICAL_DEPENDENCY_COLUMNS.csv</code>; referenced bytes not established here)</li>
+<li>Release Notes (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/RELEASE_NOTES.md</code>; referenced bytes not established here)</li>
+<li>Package Validation Report (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Machine-Readable Static Validation (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/catalogs/M1_8_STATIC_VALIDATION.json</code>; referenced bytes not established here)</li>
+<li>Final Build Report (historical reference: <code>sandbox:[session]/MSBF_M1_8_FINAL_BUILD_REPORT.json</code>; referenced bytes not established here)</li>
+<li>Updated Project Status (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_8_READY_FOR_EXECUTION/MSBF_M1_8/PROJECT_STATUS.md</code>; referenced bytes not established here)</li>
+</ul>
+<hr>
+<h1>Static package validation</h1>
+<p>The completed package passed all defined static controls:</p>
+<pre><code class="language-text">SQL files checked                         10
+SQL source lines                       2,142
+Helper and guard functions                 7
+Positive validation controls              60
+Negative controls                           6
+Detailed-report result sets                17
+Expected verification rows              4,500
+Expected summary rows                      750
+Expected canonical entities             5,250
+Parameter dictionary rows                  42
+Physical dependency tables                 17
+Physical dependency columns                82
+
+Static errors                                0
+Static warnings                              0
+</code></pre>
+<p>The checks found:</p>
+<pre><code class="language-text">Session-level random() calls                 0
+Destructive M1 business operations           0
+Accepted-history blueprint rebuilds          0
+Invalid persistent DML target columns        0
+Broken internal links                        0
+Catalog parsing errors                       0
+</code></pre>
+<h2>ZIP validation</h2>
+<h3>Standalone package</h3>
+<pre><code class="language-text">Source / ZIP files             39 / 39
+CRC validation                 PASS
+Complete extraction            PASS
+Hash mismatches                   0
+Windows/DOS metadata           PASS
+ZIP64                          Not used
+Maximum internal path          123 characters
+</code></pre>
+<h3>Full project repository</h3>
+<pre><code class="language-text">Source / ZIP files             631 / 631
+CRC validation                 PASS
+Complete extraction            PASS
+Hash mismatches                     0
+Windows/DOS metadata           PASS
+ZIP64                          Not used
+Maximum internal path          190 characters
+</code></pre>
+<p>A PostgreSQL server was unavailable in the artifact-build environment. Static validation cannot establish live runtime, planner behavior, transactional execution, business-output distributions, or formal acceptance.</p>
+<hr>
+<h1>Stage boundary and next module</h1>
+<p>M1.8 does not generate:</p>
+<ul>
+<li>underwriting cash-flow features;</li>
+<li>merchant credit-risk components;</li>
+<li>calibrated fraud or credit models;</li>
+<li>obligations;</li>
+<li>collateral or guarantee values;</li>
+<li>EAD or LGD;</li>
+<li>Expected Loss;</li>
+<li>pricing;</li>
+<li>an offer;</li>
+<li>approval, counteroffer, review, or decline outcomes;</li>
+<li>Module 1 latest or archive contract rows.</li>
+</ul>
+<p>After M1.8 live acceptance, the next authorized module is:</p>
+<blockquote>
+<p><strong>M1.9 — As-of Cash-Flow Feature Engineering</strong></p>
+</blockquote>
+<p>Open the M1.9 handoff plan (historical reference: <code>sandbox:[session]/MSBF_M1_8_Verification_Fraud_Processor_Continuity_v0_2/NEXT_STEP_M1_9_AS_OF_CASHFLOW_FEATURE_ENGINEERING.md</code>; referenced bytes not established here)</p>
+<p>The controlled progression is now:</p>
+<pre><code class="language-text">G0 Physical Foundation
+PASS
+
+→
+
+G1 Governed Run Control
+PASS
+
+→
+
+M1.2–M1.7
+PASS
+
+→
+
+M1.8 Verification, Fraud &amp; Processor Continuity
+READY FOR LIVE EXECUTION
+
+→
+
+M1.9 As-of Cash-Flow Feature Engineering
+PENDING M1.8 ACCEPTANCE
+</code></pre>
+</div></article><article id="m-522c6cc1-d993-4732-a4ca-2e67bbbd4cf7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00239 · 2026-07-25T23:11:58.264000-04:00 · active path</p><p class="note">Attachment references: 55_msbf_m1_8_verification_fraud_continuity_validation_v0_2_results_20260725.csv; 54_msbf_m1_8_verification_fraud_continuity_generation_v0_2_results_20260725.csv; 53_msbf_m1_8_preflight_validation_v0_2_results_20260725.csv; 52_msbf_m1_8_schema_policy_extension_v0_2_results_20260725.csv</p><div class="bubble"><p>M1_8_POS_48_STRESS_NONIMPROVEMENT is a fail.  also, I notice something different about program 55 versus earlier versions of the same in prior modules. Prior modules output one result set. program 55 output 61! different result sets.  A bunch (or maybe all but the last) just have m1_8_add_check variable and 1 row (usually null).  please review the fail and why we are outputting so many result sets and produce a hotfix for M1_8 to correct. thank you.</p>
+</div></article><article id="m-c775ea3c-c1c8-4881-b002-e9334c88ffe9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00240 · 2026-07-25T23:34:20.025669-04:00 · active path</p><div class="bubble"><h2>M1.8 review: two defects confirmed</h2>
+<p>The M1.8 generation itself completed successfully:</p>
+<pre><code class="language-text">Verification rows       4,500
+Application summaries     750
+Canonical entities      5,250
+Generation mismatches       0
+Generation status        PASS
+</code></pre>
+<p>Positive validation then produced <strong>59 of 60 passes</strong>. The sole substantive failure was:</p>
+<pre><code class="language-text">M1_8_POS_48_STRESS_NONIMPROVEMENT
+Observed improvements: 18
+Required improvements:  0
+</code></pre>
+<p>M1.8 is therefore <strong>not yet accepted</strong>, but the failure is isolated and correctable without rerunning generation.</p>
+<h3>Why 18 stress tiers improved</h3>
+<p>The original methodology classified baseline and stressed processor-continuity tiers independently. Two characteristics made a lower stressed tier possible for a small number of merchants:</p>
+<ul>
+<li>Baseline classification included a <strong>recent-outage-rate</strong> dimension, while the stressed classification used the full-panel degradation, outage, and connection-gap rates.</li>
+<li>The adverse scenario did not apply a final <strong>non-improvement floor</strong> to the interpreted risk tier.</li>
+</ul>
+<p>Because M1.6 preserves merchant-level deterministic event timing, 18 merchants happened to have stressed aggregate rates that mapped to a numerically lower tier than their baseline pattern.</p>
+<p>The observed baseline and stress rates are not being changed. The corrected governed methodology is:</p>
+<pre><code class="language-text">Final Stress Continuity Tier
+=
+greatest(
+    Baseline Continuity Tier,
+    Independently Classified Stress Continuity Tier
+)
+</code></pre>
+<p>This is the appropriate stress-testing interpretation: an adverse scenario may leave continuity risk unchanged or worsen it, but it should not produce a lower interpreted risk tier.</p>
+<hr>
+<h1>Why script 55 created 61 result sets</h1>
+<p>Your observation is exactly correct.</p>
+<p>The original script contained 60 independent statements shaped like:</p>
+<pre><code class="language-sql">SELECT pg_temp.m1_8_add_check(...);
+</code></pre>
+<p>The helper function returns <code>void</code>, but each standalone <code>SELECT</code> is still a SQL query. DBeaver therefore created:</p>
+<pre><code class="language-text">60 one-row result sets containing m1_8_add_check / null
++
+1 final result set containing the 60 validation records
+=
+61 result sets
+</code></pre>
+<p>The revised script executes all checks inside one PL/pgSQL block:</p>
+<pre><code class="language-sql">DO $checks$
+BEGIN
+    PERFORM pg_temp.m1_8_add_check(...);
+    ...
+END;
+$checks$;
+</code></pre>
+<p>It then issues one final <code>SELECT</code>.</p>
+<p>The revised script therefore produces <strong>one user-facing validation result set containing 60 rows</strong>.</p>
+<hr>
+<h1>Consolidated M1.8 v0.2R1 hotfix</h1>
+<p>Download the complete M1.8 v0.2R1 Continuity Hotfix (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download the ZIP SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+3a1f09990a67cc5f2b39fbd53b3fcac25df09dba3dd23958fd5a72f7f5a94f57
+</code></pre>
+<p>Canonical long-form copy:</p>
+<p>Download the canonical hotfix package (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m1_8_v0_2R1_continuity_hotfix.zip</code>; referenced bytes not established here)</p>
+<p>The archive passed:</p>
+<pre><code class="language-text">CRC validation                     PASS
+Complete extraction                PASS
+Extracted-file hash comparison     PASS
+Static SQL lexical validation      PASS
+Positive-check inventory           60
+Standalone helper SELECT calls      0
+ZIP64                              Not used
+</code></pre>
+<h2>Key files</h2>
+<ul>
+<li>Hotfix notes (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix/HOTFIX_NOTES_v0_2R1.md</code>; referenced bytes not established here)</li>
+<li>Execution guide (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix/docs/M1_8_v0_2R1_EXECUTION_GUIDE.md</code>; referenced bytes not established here)</li>
+<li>Package-validation report (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Machine-readable expected results (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix/catalogs/M1_8_R1_EXPECTED_RESULTS.json</code>; referenced bytes not established here)</li>
+<li>Execution-order catalog (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix/catalogs/M1_8_R1_EXECUTION_ORDER.csv</code>; referenced bytes not established here)</li>
+</ul>
+<hr>
+<h1>Exact recovery sequence</h1>
+<p>Do <strong>not</strong> rerun the original scripts 52, 53, or 54. The generated M1.8 records are committed and reconciled.</p>
+<h2>1. Run the fail-closed recovery diagnosis</h2>
+<p>Download script 52B (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix/tests/52B_msbf_m1_8_failed_continuity_validation_recovery_check_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>Required final field:</p>
+<pre><code class="language-text">recovery_state_status = PASS
+</code></pre>
+<p>It should confirm:</p>
+<pre><code class="language-text">run_status                   M1_8_FAILED
+positive checks              60
+positive passes              59
+positive failures             1
+failed code                  M1_8_POS_48_STRESS_NONIMPROVEMENT
+verification rows          4,500
+summary rows                 750
+stress-tier improvements      18
+canonical entities         5,250
+original hashes reconcile    yes
+acceptance gate rows           0
+blocking errors                0
+</code></pre>
+<p>If this script does not return <code>PASS</code>, stop before applying remediation.</p>
+<h2>2. Apply the governed continuity-tier remediation</h2>
+<p>Download script 54B (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix/sql/54B_msbf_m1_8_continuity_tier_floor_remediation_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>This script:</p>
+<ul>
+<li>records the original validation failure as durable audit evidence;</li>
+<li>revises the methodology to <code>M1_8_METHOD_V1_1</code>;</li>
+<li>enables the governed stress-tier floor;</li>
+<li>corrects the 18 affected summary interpretations;</li>
+<li>leaves all observed continuity rates unchanged;</li>
+<li>leaves all 4,500 atomic verification rows unchanged;</li>
+<li>recomputes application-summary row hashes;</li>
+<li>rebuilds the summary and combined set hashes;</li>
+<li>updates the policy and generation evidence;</li>
+<li>returns the run to <code>M1_8_GENERATED</code>.</li>
+</ul>
+<p>Required final result:</p>
+<pre><code class="language-text">run_status                 M1_8_GENERATED
+verification rows                 4,500
+summary rows                        750
+corrected summary rows               18
+remaining improvements                0
+canonical entities                5,250
+remediation_status                 PASS
+</code></pre>
+<p>The new summary and combined hashes will differ legitimately from the original hashes because 18 interpreted tier/status values changed.</p>
+<h2>3. Run the revised positive validation</h2>
+<p>Download revised script 55 (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix/sql/55_msbf_m1_8_verification_fraud_continuity_validation_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>This version produces <strong>one final 60-row result set</strong>, not 61 separate result sets.</p>
+<p>Required result:</p>
+<pre><code class="language-text">60 checks
+60 PASS
+0 FAIL
+run_status = M1_8_VALIDATED
+</code></pre>
+<p>Control 48 should report:</p>
+<pre><code class="language-text">improvements=0 floor_enabled=true
+</code></pre>
+<h2>4. Run the revised negative controls</h2>
+<p>Download revised script 56 (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix/sql/56_msbf_m1_8_negative_control_tests_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>Required:</p>
+<pre><code class="language-text">6 / 6 PASS
+run_status = M1_8_VALIDATED
+</code></pre>
+<p>The script also verifies that the negative-control tests did not remove the revised continuity-floor policy.</p>
+<h2>5. Finalize acceptance</h2>
+<p>Download revised script 57 (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix/sql/57_msbf_m1_8_acceptance_finalize_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>Acceptance now explicitly requires:</p>
+<pre><code class="language-text">60 / 60 positive checks PASS
+6 / 6 negative controls PASS
+0 stress-tier improvements
+stress-tier floor enabled
+4,500 verification rows
+750 summary rows
+5,250 canonical entities
+exact reconstructed hashes
+0 downstream rows
+0 blocking errors
+</code></pre>
+<p>Required final state:</p>
+<pre><code class="language-text">gate_status = PASS
+run_status  = M1_8_ACCEPTED
+</code></pre>
+<h2>6. Produce the master report</h2>
+<p>Download revised script 58 (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix/tests/58_MSBF_M1_8_Verification_Fraud_Processor_Continuity_Master_Report_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>Required final field:</p>
+<pre><code class="language-text">overall_m1_8_status = PASS
+</code></pre>
+<p>The report now displays:</p>
+<pre><code class="language-text">methodology_version
+stress_floor_enabled
+stress_tier_improvements
+</code></pre>
+<h2>7. Produce the detailed evidence</h2>
+<p>Download revised script 59 (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix/tests/59_MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>It retains the 17 governed evidence sets. The continuity migration report now includes:</p>
+<pre><code class="language-text">baseline_tier
+stress_tier
+tier_delta
+applications
+worsening_apps
+</code></pre>
+<p>No <code>tier_delta</code> should be negative.</p>
+<p>These result sets must contain headers and zero data rows:</p>
+<pre><code class="language-text">15 — Row-Level Deterministic Mismatches
+17 — Blocking Resolution Errors
+</code></pre>
+<hr>
+<h1>Evidence to retain</h1>
+<p>Keep the original v0.2 validation export showing the 59/60 result. Add exports from:</p>
+<pre><code class="language-text">52B recovery diagnosis
+54B controlled remediation
+55 v0.2R1 positive validation
+56 v0.2R1 negative controls
+57 v0.2R1 acceptance
+58 v0.2R1 master report
+59 v0.2R1 seventeen detail reports
+</code></pre>
+<p>That creates the appropriate audit history:</p>
+<pre><code class="language-text">Validation identified a methodology defect
+→ Root cause isolated
+→ Generated rate evidence preserved
+→ Governed interpretation corrected
+→ Hashes rebuilt
+→ Validation output design corrected
+→ Validation rerun
+→ Acceptance considered
+</code></pre>
+<h2>Clean-build source replacements</h2>
+<p>The package also contains corrected future clean-build versions of scripts 52 and 54:</p>
+<ul>
+<li>Revised schema/policy extension (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix/source_replacements/sql/52_msbf_m1_8_schema_policy_extension_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>Revised full generation source (historical reference: <code>sandbox:[session]/MSBF_M1_8_v0_2R1_Continuity_Hotfix/source_replacements/sql/54_msbf_m1_8_verification_fraud_continuity_generation_v0_2R1.sql</code>; referenced bytes not established here)</li>
+</ul>
+<p>These are repository replacements. <strong>Do not run them during the current recovery sequence.</strong></p>
+<blockquote>
+<p><strong>Current disposition: M1.8 generation remains valid; formal M1.8 acceptance is pending the v0.2R1 recovery and validation sequence.</strong></p>
+</blockquote>
+</div></article><article id="m-7a196f0f-a7a8-4d33-b35d-bc3966cada61" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00241 · 2026-07-25T23:54:43.794000-04:00 · active path</p><p class="note">Attachment references: 57_msbf_m1_8_acceptance_finalize_v0_2R1_results_20260725.csv; 56_msbf_m1_8_negative_control_tests_v0_2R1_results_20260725.csv; 55_msbf_m1_8_verification_fraud_continuity_validation_v0_2R1_results_20260725.csv; 54B_msbf_m1_8_continuity_tier_floor_remediation_v0_2R1_results_20260725.csv; 52B_msbf_m1_8_failed_continuity_validation_recovery_check_v0_2R1_results_20260725.csv; 55_msbf_m1_8_verification_fraud_continuity_validation_v0_2_results_20260725(1).csv; 54_msbf_m1_8_verification_fraud_continuity_generation_v0_2_results_20260725(1).csv; 53_msbf_m1_8_preflight_validation_v0_2_results_20260725(1).csv; 52_msbf_m1_8_schema_policy_extension_v0_2_results_20260725(1).csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Master_Report_v0_2R1_20260725.csv</p><div class="bubble"><p>Here is the batch 1 of 2 for M1.8 execution evidence. Do not do anything but intake at this point until after I issue batch 2 of 2 and further instructions.</p>
+</div></article><article id="m-0fd5ce23-723a-40b6-b5b3-018013b19c90" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00242 · 2026-07-25T23:55:25.760503-04:00 · active path</p><div class="bubble"><p>Received batch 1 of 2 for the M1.8 execution evidence:</p>
+<ul>
+<li>Original v0.2 schema/policy extension</li>
+<li>Original v0.2 preflight</li>
+<li>Original v0.2 generation</li>
+<li>Original v0.2 validation showing the continuity issue</li>
+<li>v0.2R1 recovery diagnosis</li>
+<li>v0.2R1 continuity-tier remediation</li>
+<li>v0.2R1 revised positive validation</li>
+<li>v0.2R1 negative controls</li>
+<li>v0.2R1 acceptance finalizer</li>
+<li>v0.2R1 master report</li>
+</ul>
+<p>I will not analyze, validate, or determine M1.8 acceptance until you provide batch 2 and further instructions.</p>
+</div></article><article id="m-8bec103c-943c-4ddb-8aa5-5bf46e7c41a1" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00243 · 2026-07-25T23:56:42.537000-04:00 · active path</p><p class="note">Attachment references: MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Row_Level_Deterministic_Mismatches_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Sample_Application_Profiles_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Industry_Diagnostics_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Partner_Channel_Diagnostics_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Disposition_And_Reason_Diagnostics_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Continuity_Stress_Migration_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Stress_Processor_Continuity_Diagnostics_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Baseline_Processor_Continuity_Diagnostics_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Fraud_Reason_Flag_Diagnostics_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Fraud_Score_And_Tier_Diagnostics_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Hard_Stop_And_Manual_Review_Diagnostics_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Source_Availability_And_Quality_Diagnostics_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Verification_Check_Result_Summary_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Entity_And_Stage_Boundary_Row_Counts_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Run_And_Acceptance_State_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_Blocking_Resolution_Errors_20260725.csv; MSBF_M1_8_Verification_Fraud_Processor_Continuity_Detail_Report_v0_2R1_M1_8_Evidence_20260725.csv</p><div class="bubble"><p>Remainder of M1.8 evidence. Validate M1.8 is a success. If it is approved, sign off M1.8 and update full project zip.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

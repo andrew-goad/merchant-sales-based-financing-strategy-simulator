@@ -1,0 +1,934 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 19 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 19</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-18.html">Previous part</a><a href="part-20.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-94b2538c-1ec6-4cbe-8daf-849510ff0daf" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00497 · 2026-08-27T13:52:38.534980-04:00 · active path</p><div class="bubble"><p>Use a <strong>single-row table</strong> directly under <code>Merchant request</code>, with these fields in this exact left-to-right order:</p>
+<table>
+<thead>
+<tr>
+<th>Order</th>
+<th>Display name</th>
+<th>Type</th>
+<th>Source / measure</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><strong>Capacity</strong></td>
+<td>Measure</td>
+<td><code>P03 Capacity</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Coverage</strong></td>
+<td>Measure</td>
+<td><code>P03 Coverage</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Resilience</strong></td>
+<td>Measure</td>
+<td><code>P03 Resilience</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Risk</strong></td>
+<td>Measure</td>
+<td><code>P03 Risk</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Expected loss</strong></td>
+<td>Measure</td>
+<td><code>P03 Expected Loss</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Economics</strong></td>
+<td>Measure</td>
+<td><code>P03 Economics</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Interpretation</strong></td>
+<td>Measure</td>
+<td><code>P03 Interpretation</code></td>
+</tr>
+</tbody></table>
+<p>I would rename the measures from the earlier <code>... Display</code> wording to these cleaner names because they are now purpose-built for a compact table.</p>
+<p>Use these definitions.</p>
+<h3><code>P03 Capacity</code></h3>
+<pre><code class="language-DAX">P03 Capacity =
+VAR _Evidence =
+    SELECTEDVALUE ( FactApplicationScenario[capacity_evidence_status] )
+RETURN
+    IF (
+        _Evidence = &quot;BLOCKED&quot;,
+        BLANK (),
+        SELECTEDVALUE (
+            FactApplicationScenario[residual_daily_operating_cash_flow]
+        )
+    )
+</code></pre>
+<p>Format: <strong>Currency</strong>, 0 decimals.</p>
+<p>Display header: <strong>Capacity</strong></p>
+<hr>
+<h3><code>P03 Coverage</code></h3>
+<pre><code class="language-DAX">P03 Coverage =
+VAR _Evidence =
+    SELECTEDVALUE ( FactApplicationScenario[capacity_evidence_status] )
+RETURN
+    IF (
+        _Evidence = &quot;BLOCKED&quot;,
+        BLANK (),
+        SELECTEDVALUE (
+            FactApplicationScenario[sales_linked_payment_coverage_ratio]
+        )
+    )
+</code></pre>
+<p>Format: custom <strong><code>0.00x</code></strong></p>
+<p>Display header: <strong>Coverage</strong></p>
+<p>The source definition supports using this as the operating-cash-flow-to-obligation-burden relationship. [export reference: filecite | turn63file4 | L119-L122]</p>
+<hr>
+<h3><code>P03 Resilience</code></h3>
+<p>Because we want both score and governed tier in one narrow column, keep this one as text:</p>
+<pre><code class="language-DAX">P03 Resilience =
+VAR _Evidence =
+    SELECTEDVALUE (
+        FactApplicationScenario[operating_resilience_evidence_status]
+    )
+VAR _Score =
+    SELECTEDVALUE (
+        FactApplicationScenario[operating_resilience_score]
+    )
+VAR _Tier =
+    SELECTEDVALUE (
+        FactApplicationScenario[resilience_tier]
+    )
+RETURN
+    IF (
+        _Evidence = &quot;BLOCKED&quot;,
+        BLANK (),
+        IF (
+            ISBLANK ( _Score ),
+            BLANK (),
+            FORMAT ( _Score, &quot;0.0&quot; )
+                &amp; &quot; · T&quot;
+                &amp; FORMAT ( _Tier, &quot;0&quot; )
+        )
+    )
+</code></pre>
+<p>Display header: <strong>Resilience</strong></p>
+<p>Both score and tier are governed source outputs, so we are not inventing a reporting band. [export reference: filecite | turn63file13 | L452-L454]</p>
+<hr>
+<h3><code>P03 Risk</code></h3>
+<pre><code class="language-DAX">P03 Risk =
+VAR _Evidence =
+    SELECTEDVALUE (
+        FactApplicationScenario[integrated_risk_evidence_status]
+    )
+VAR _Score =
+    SELECTEDVALUE (
+        FactApplicationScenario[integrated_risk_score]
+    )
+VAR _Tier =
+    SELECTEDVALUE (
+        FactApplicationScenario[integrated_risk_tier]
+    )
+RETURN
+    IF (
+        _Evidence = &quot;BLOCKED&quot;,
+        BLANK (),
+        IF (
+            ISBLANK ( _Score ),
+            BLANK (),
+            FORMAT ( _Score, &quot;0.0&quot; )
+                &amp; &quot; · T&quot;
+                &amp; FORMAT ( _Tier, &quot;0&quot; )
+        )
+    )
+</code></pre>
+<p>Display header: <strong>Risk</strong></p>
+<hr>
+<h3><code>P03 Expected Loss</code></h3>
+<pre><code class="language-DAX">P03 Expected Loss =
+VAR _Evidence =
+    SELECTEDVALUE (
+        FactApplicationScenario[loss_evidence_status]
+    )
+RETURN
+    IF (
+        _Evidence = &quot;BLOCKED&quot;,
+        BLANK (),
+        SELECTEDVALUE (
+            FactApplicationScenario[schedule_adjusted_comparative_loss_rate]
+        )
+    )
+</code></pre>
+<p>Format: <strong>Percentage, 2 decimals</strong></p>
+<p>Display header: <strong>Expected loss</strong></p>
+<p>This remains explicitly <strong>synthetic comparative expected loss</strong>, not CECL or a production-calibrated loss estimate. [export reference: filecite | turn67file0 | L27-L29]</p>
+<hr>
+<h3><code>P03 Economics</code></h3>
+<p>For this one, combine risk-adjusted contribution and annualized return:</p>
+<pre><code class="language-DAX">P03 Economics =
+VAR _Evidence =
+    SELECTEDVALUE (
+        FactApplicationScenario[unit_economics_evidence_status]
+    )
+VAR _Contribution =
+    SELECTEDVALUE (
+        FactApplicationScenario[risk_adjusted_contribution_amount]
+    )
+VAR _Return =
+    SELECTEDVALUE (
+        FactApplicationScenario[annualized_risk_adjusted_return_rate]
+    )
+RETURN
+    IF (
+        _Evidence = &quot;BLOCKED&quot;,
+        BLANK (),
+        IF (
+            ISBLANK ( _Contribution ),
+            BLANK (),
+            FORMAT (
+                _Contribution,
+                &quot;$#,0;($#,0);$0&quot;
+            )
+                &amp;
+                IF (
+                    NOT ISBLANK ( _Return ),
+                    &quot; · &quot; &amp; FORMAT ( _Return, &quot;0.0%&quot; ),
+                    &quot;&quot;
+                )
+        )
+    )
+</code></pre>
+<p>Display header: <strong>Economics</strong></p>
+<p>The source economics layer explicitly defines risk-adjusted contribution and annualized risk-adjusted return as separate governed outputs, so pairing them here is analytically coherent. [export reference: filecite | turn68file0 | L19-L34]</p>
+<hr>
+<h3><code>P03 Interpretation</code></h3>
+<p>This is the only field that translates the governed evidence into plain English.</p>
+<pre><code class="language-DAX">P03 Interpretation =
+VAR _FinalOutcome =
+    SELECTEDVALUE (
+        FactFinalDecision[final_decision_outcome_code]
+    )
+
+VAR _ContractEvidence =
+    SELECTEDVALUE (
+        FactApplicationScenario[contract_evidence_status]
+    )
+
+VAR _Affordability =
+    SELECTEDVALUE (
+        FactApplicationScenario[affordability_status]
+    )
+
+VAR _ResidualCashFlow =
+    SELECTEDVALUE (
+        FactApplicationScenario[residual_daily_operating_cash_flow]
+    )
+
+VAR _EconomicStatus =
+    SELECTEDVALUE (
+        FactApplicationScenario[economic_status]
+    )
+
+VAR _RiskTier =
+    SELECTEDVALUE (
+        FactApplicationScenario[integrated_risk_tier]
+    )
+
+VAR _CapacityIssue =
+    _Affordability = &quot;UNAFFORDABLE&quot;
+        || (
+            NOT ISBLANK ( _ResidualCashFlow )
+                &amp;&amp; _ResidualCashFlow &lt; 0
+        )
+
+VAR _EconomicsIssue =
+    _EconomicStatus = &quot;BELOW_HURDLE&quot;
+        || _EconomicStatus = &quot;NEGATIVE_CONTRIBUTION&quot;
+
+VAR _RiskIssue =
+    NOT ISBLANK ( _RiskTier )
+        &amp;&amp; _RiskTier &gt;= 4
+
+RETURN
+    SWITCH (
+        TRUE (),
+
+        _FinalOutcome = &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;
+            || _ContractEvidence = &quot;BLOCKED&quot;,
+            &quot;Insufficient underwriting evidence&quot;,
+
+        _FinalOutcome = &quot;FINAL_OFFER_AUTHORIZED&quot;,
+            &quot;Within governed thresholds&quot;,
+
+        _CapacityIssue &amp;&amp; _EconomicsIssue,
+            &quot;Capacity / economics threshold exceeded&quot;,
+
+        _CapacityIssue &amp;&amp; _RiskIssue,
+            &quot;Affordability / risk threshold exceeded&quot;,
+
+        _CapacityIssue,
+            &quot;Affordability / capacity threshold exceeded&quot;,
+
+        _EconomicsIssue,
+            &quot;Economic hurdle not met&quot;,
+
+        _RiskIssue,
+            &quot;Risk threshold exceeded&quot;,
+
+        _FinalOutcome = &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;,
+            &quot;Structure requires review&quot;,
+
+        _FinalOutcome = &quot;DECLINE_POLICY_AUTHORIZED&quot;,
+            &quot;Governed policy threshold exceeded&quot;,
+
+        &quot;Within governed thresholds&quot;
+    )
+</code></pre>
+<p>Display header: <strong>Interpretation</strong></p>
+<p>That intentionally does <strong>not</strong> repeat <code>Approved</code>, <code>Review</code>, <code>Policy decline</code>, etc. The colored decision card already owns that information.</p>
+<h2>Build order in the visual</h2>
+<p>Add them to the table in exactly this order:</p>
+<p><strong>Capacity → Coverage → Resilience → Risk → Expected loss → Economics → Interpretation</strong></p>
+<p>Then:</p>
+<ul>
+<li>turn <strong>Totals OFF</strong></li>
+<li>turn <strong>Column subtotals OFF</strong></li>
+<li>keep only <strong>one data row</strong></li>
+<li>keep the visual <strong>untitled</strong></li>
+<li>widen <code>Interpretation</code> the most</li>
+<li>give <code>Economics</code> slightly more width than the other numeric columns</li>
+<li>keep <code>Capacity</code>, <code>Coverage</code>, <code>Resilience</code>, <code>Risk</code>, and <code>Expected loss</code> comparatively tight.</li>
+</ul>
+<p>One small naming point: although the underlying field is <code>residual_daily_operating_cash_flow</code>, I would <strong>not</strong> call the header <code>Residual cash flow</code>. <code>Capacity</code> is better for the underwriting narrative, and the tooltip can explain that it represents residual daily operating cash flow after modeled obligation burden.</p>
+<p>Once you have this table rendering, send me a screenshot before we do any conditional formatting or tooltip work.</p>
+</div></article><article id="m-1b0f9d97-285e-4385-bfb5-c78d42606977" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00498 · 2026-08-27T13:53:55.444000-04:00 · active path</p><div class="bubble"><p>so, the earlier P03 Capacity Display are now unusable? I have to create a whole new set of DAX? I had already created all of those measures.</p>
+</div></article><article id="m-6af2e0ac-cdd1-4906-bbd5-fc9f14433131" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00499 · 2026-08-27T13:54:02.409399-04:00 · active path</p><div class="bubble"><p>No. <strong>Do not recreate them.</strong> The earlier <code>P03 Capacity Display</code>, <code>P03 Coverage Display</code>, <code>P03 Resilience Display</code>, <code>P03 Risk Display</code>, <code>P03 Expected Loss Display</code>, and <code>P03 Economics Display</code> measures are still usable.</p>
+<p>I overcorrected when adapting from cards to a table. The presentation changed; the underlying DAX does not need to.</p>
+<p>Use the measures you already created in the table in this order:</p>
+<ol>
+<li><code>P03 Capacity Display</code></li>
+<li><code>P03 Coverage Display</code></li>
+<li><code>P03 Resilience Display</code></li>
+<li><code>P03 Risk Display</code></li>
+<li><code>P03 Expected Loss Display</code></li>
+<li><code>P03 Economics Display</code></li>
+<li><code>P03 Decision Readout</code></li>
+</ol>
+<p>Then rename the <strong>visual column headers only</strong> to:</p>
+<p><strong>Capacity | Coverage | Resilience | Risk | Expected loss | Economics | Interpretation</strong></p>
+<p>The only possible adjustment is cosmetic: because those earlier measures return text such as <code>INSUFFICIENT EVIDENCE</code>, they may make the table wider than we want. But first build the table with the existing measures exactly as they are. If the blocked-state wording proves visually awkward, we can make a <strong>small formatting refinement to those same measures</strong> rather than creating a duplicate DAX family.</p>
+<p>So: <strong>no new six-measure set. Keep what you already built.</strong> The only question is whether we want to rename <code>P03 Decision Readout</code> to <code>P03 Interpretation</code>; I would actually leave the measure name alone and just rename its displayed table header to <strong>Interpretation</strong>.</p>
+</div></article><article id="m-142541f2-06ca-4049-ae9d-204ef2301bc6" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00500 · 2026-08-27T14:04:57.262000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 2d7442ed-54a8-4546-82ae-fd2b08dc474f.png</p><div class="bubble"><p>need to resolve positioning, but here it is. One concern - context - if i did not know what I was looking at (and even knowing - I&#39;m scratching my head a bit) - how do I interpret this </p>
+</div></article><article id="m-13716e30-d0e5-468a-8111-b7d27b503a03" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00501 · 2026-08-27T14:05:03.650189-04:00 · active path</p><div class="bubble"><p>You are right. <strong>The table is analytically correct, but not self-explanatory enough yet.</strong> A reader can see numbers, but they do not immediately know what “good,” “bad,” or “material” means.</p>
+<p>The main issue is that we are showing <strong>raw governed metrics without enough semantic framing</strong>.</p>
+<p>I would fix this without making the row much larger.</p>
+<p>The best solution is to turn each column into <strong>value + concise interpretation</strong>, either through the displayed text itself or the column label.</p>
+<p>For example, instead of:</p>
+<p><strong>Capacity:</strong> <code>$80 / DAY</code></p>
+<p>use:</p>
+<p><strong>Capacity:</strong> <code>$80/day surplus</code></p>
+<p>Instead of:</p>
+<p><strong>Coverage:</strong> <code>1.32x</code></p>
+<p>use:</p>
+<p><strong>Coverage:</strong> <code>1.32x covered</code></p>
+<p>Instead of:</p>
+<p><strong>Resilience:</strong> <code>92.7 · TIER 1</code></p>
+<p>use:</p>
+<p><strong>Resilience:</strong> <code>92.7 · Tier 1</code></p>
+<p>and make the tooltip explain that Tier 1 is the strongest governed resilience tier.</p>
+<p>Instead of:</p>
+<p><strong>Risk:</strong> <code>11.0 · TIER 1</code></p>
+<p>use:</p>
+<p><strong>Risk:</strong> <code>11.0 · Tier 1</code></p>
+<p>with tooltip explaining lower integrated-risk score / Tier 1 = lower relative risk.</p>
+<p>For expected loss:</p>
+<p><strong>Expected loss:</strong> <code>4.18% · Partial</code></p>
+<p>is actually fairly understandable, but the tooltip should say:</p>
+<blockquote>
+<p>Synthetic comparative expected-loss rate; lower is better. Partial indicates governed comparative-loss evidence is usable but not complete.</p>
+</blockquote>
+<p>For economics:</p>
+<p><strong>Economics:</strong> <code>$1,828 · 39.9% ann.</code></p>
+<p>is powerful, but it needs one line of explanation in the tooltip:</p>
+<blockquote>
+<p>Risk-adjusted contribution and annualized risk-adjusted return after modeled loss, costs and capital charge.</p>
+</blockquote>
+<p>The biggest improvement would be the <strong>Interpretation</strong> field. Right now:</p>
+<blockquote>
+<p><code>Offer authorized — economics and risk within decision boundary</code></p>
+</blockquote>
+<p>still partly repeats the decision card.</p>
+<p>I would shorten it to something more diagnostic, such as:</p>
+<blockquote>
+<p><strong>Capacity, risk and economics within governed thresholds</strong></p>
+</blockquote>
+<p>That answers “why” much more directly.</p>
+<p>So the row becomes conceptually:</p>
+<p><strong>Capacity</strong><br><code>$80/day surplus</code></p>
+<p><strong>Coverage</strong><br><code>1.32x covered</code></p>
+<p><strong>Resilience</strong><br><code>92.7 · Tier 1</code></p>
+<p><strong>Risk</strong><br><code>11.0 · Tier 1</code></p>
+<p><strong>Expected loss</strong><br><code>4.18% · Partial</code></p>
+<p><strong>Economics</strong><br><code>$1,828 · 39.9% ann.</code></p>
+<p><strong>Interpretation</strong><br><code>Capacity, risk and economics within governed thresholds</code></p>
+<p>That is much easier to read as an underwriting story.</p>
+<p>I would <strong>not add a separate heading or explanatory paragraph</strong> above the row. The page is already tight. Instead, use <strong>good labels + tooltips</strong>.</p>
+<p>One additional improvement may be worth considering: rename the columns slightly more explicitly:</p>
+<p><strong>Cash-flow capacity | Payment coverage | Resilience | Integrated risk | Expected loss | Risk-adjusted economics | Interpretation</strong></p>
+<p>That costs some horizontal room, but it removes a lot of ambiguity.</p>
+<p>My preference, given your layout, would be:</p>
+<p><strong>Capacity | Coverage | Resilience | Risk | Expected loss | Economics | Interpretation</strong></p>
+<p>and let the <strong>tooltips carry the exact definitions</strong>.</p>
+<p>The row is worth keeping. We just need to make it read like an underwriting explanation instead of a model-output dump.</p>
+</div></article><article id="m-62e0eafb-af10-44e3-9de2-1729bfd20a1b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00502 · 2026-08-27T14:31:03.975000-04:00 · active path</p><div class="bubble"><p>Thought about this some more. This is arguably the most key aspect of P03. We have to dedicate more space to this story. Not only these rolled up components but the underlying merchant aspects that led to those components. When I was interviewing they did not care about resilience so much as knowing what would make a merchant resilient or not. I think we need to free up space. A few ideas. 1) remove the bottom left daily warning table. It is already covered by the chart directly above; 2) possibly combine the two right hand charts using a double Y axis. They already have the same x-axis. Turning pro on for this response. Please think through how best to tell the P03 story that&#39;ll win folks over in my interviews. They need to know that I know how to properly evaluate these merchants risk when launching a product such as this.</p>
+</div></article><article id="m-c03cbbc4-cdb0-44e7-9625-47ed7f31415b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00503 · 2026-08-27T14:43:54.978013-04:00 · active path</p><div class="bubble"><p>You are right to stop and redesign rather than squeeze one more row into the existing P03. <strong>The underwriting rationale should become the centerpiece of the page</strong>, not a thin diagnostic strip between the request and the decision card.</p>
+<p>The current page is strong at showing <strong>what happened after the decision</strong>, but an interviewer evaluating credit strategy will care more about whether you can explain:</p>
+<blockquote>
+<p>What evidence did you examine?<br>What did it say about the merchant’s ability to absorb the obligation?<br>How did that translate into risk, expected loss, and economics?<br>Why did that support this structure—or no structure?</p>
+</blockquote>
+<p>That requires three visible levels:</p>
+<ol>
+<li><strong>Merchant operating evidence</strong></li>
+<li><strong>Underwriting assessment</strong></li>
+<li><strong>Governed decision rationale</strong></li>
+</ol>
+<h2>Recommended P03 redesign</h2>
+<h3>1. Remove <code>Monitoring exceptions</code></h3>
+<p>I agree completely.</p>
+<p>The table is useful for exact daily records, but it is not carrying enough unique narrative value on P03:</p>
+<ul>
+<li><code>Monitoring journey</code> already shows when the status changed.</li>
+<li><code>Remittance performance</code> already shows the pace deterioration.</li>
+<li>the existing chart tooltips can preserve exact dates, shortfalls, statuses, and monitoring reasons;</li>
+<li>P04 is now explicitly the portfolio servicing-and-exceptions workbench.</li>
+</ul>
+<p>Removing the table is not abandoning information. It is <strong>moving detailed exception review to the page designed for it</strong> and using P03 to explain the complete underwriting-to-performance story.</p>
+<p>Keep the monitoring chart, but enrich its tooltip with:</p>
+<ul>
+<li>monitoring status;</li>
+<li>primary monitoring reason;</li>
+<li>daily shortfall;</li>
+<li>cumulative shortfall;</li>
+<li>remittance pace;</li>
+<li>days since remittance.</li>
+</ul>
+<p>That retains the useful daily evidence without occupying permanent canvas space.</p>
+<hr>
+<h3>2. Combine the two right-hand charts</h3>
+<p>I also support this, with one important design constraint: make it one clearly labeled <strong>dual-axis lifecycle chart</strong>, not two equally weighted lines whose scales are easy to confuse.</p>
+<p>Current Power BI line charts support a secondary Y-axis for measures with different scales, and Power BI’s current axis guidance emphasizes separately labeled axes for dual-axis visuals. [export reference: cite | turn854520search3 | turn854520search1]</p>
+<p>Call the combined visual:</p>
+<h2><strong>Account performance</strong></h2>
+<p>Use:</p>
+<ul>
+<li><strong>X-axis:</strong> observation date</li>
+<li><strong>Primary Y-axis:</strong> remaining receivable, dollars</li>
+<li><strong>Secondary Y-axis:</strong> remittance fulfillment, percent</li>
+<li><strong>Reference line:</strong> 100% on the remittance axis</li>
+</ul>
+<p>Recommended visual treatment:</p>
+<ul>
+<li>remaining receivable: solid, visually dominant trajectory;</li>
+<li>remittance fulfillment: contrasting line style and slightly lighter visual weight;</li>
+<li>retain the 100% dotted benchmark;</li>
+<li>show both axis titles explicitly;</li>
+<li>retain a legend;</li>
+<li>turn data labels off;</li>
+<li>tooltip: date, remaining receivable, cumulative actual remittance, cumulative expected remittance, remittance fulfillment.</li>
+</ul>
+<p>The axes should <strong>not</strong> be synchronized. Dollars and percentages have different meanings. The chart is showing two co-timed lifecycle signals, not asserting that their magnitudes are directly comparable.</p>
+<p>This consolidation should release nearly the entire current top-right chart footprint for underwriting content.</p>
+<hr>
+<h1>The revised visual hierarchy</h1>
+<p>I would organize the main canvas approximately like this:</p>
+<pre><code class="language-text">┌─────────────────────────────────────────────────────────────────────────────┐
+│ Title / subtitle                       Merchant slicer   Scenario slicer     │
+├──────────────┬──────────────────────────────────────────┬───────────────────┤
+│ Merchant     │ Application request                      │ Decision outcome  │
+│ profile      │                                          │                   │
+│              ├──────────────────────────────────────────┤ Funded terms      │
+│              │ UNDERWRITING RATIONALE                   │                   │
+│              │                                          │                   │
+│              │ Merchant operating evidence              │                   │
+│              │ [one-row evidence table]                 │                   │
+│              │                                          │                   │
+│              │ Underwriting assessment                  │                   │
+│              │ [one-row assessment table]               │                   │
+│              │                                          │                   │
+│              │ Why this outcome                         │                   │
+│              │ [wide rationale sentence]                │                   │
+├──────────────┼────────────────────────┬─────────────────────────────────────┤
+│              │ Monitoring journey     │ Account performance                 │
+│              │                        │ receivable $ + remittance %          │
+├──────────────┴────────────────────────┴─────────────────────────────────────┤
+│ Servicing outcome — compact account-level result                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Provenance and interpretation boundary                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>The top half then answers:</p>
+<blockquote>
+<p><strong>Who applied? What did they request? What did we observe? What did it mean? What did we decide?</strong></p>
+</blockquote>
+<p>The bottom half answers:</p>
+<blockquote>
+<p><strong>How did the account subsequently perform, and where did it end?</strong></p>
+</blockquote>
+<p>That is the interview-winning P03 story.</p>
+<hr>
+<h1>Underwriting rationale: the exact content</h1>
+<h2>Row 1 — Merchant operating evidence</h2>
+<p>This should expose the concrete merchant behaviors and operating conditions that fed the higher-order assessments.</p>
+<p>Use these seven columns:</p>
+<table>
+<thead>
+<tr>
+<th>Display name</th>
+<th>Physical source</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Eligible sales / day</strong></td>
+<td><code>FactApplicationScenario[avg_daily_eligible_sales_30d]</code></td>
+</tr>
+<tr>
+<td><strong>Available liquidity</strong></td>
+<td><code>FactApplicationScenario[average_available_balance_30d]</code></td>
+</tr>
+<tr>
+<td><strong>Negative-balance days</strong></td>
+<td><code>FactApplicationScenario[negative_balance_day_rate_30d]</code></td>
+</tr>
+<tr>
+<td><strong>NSFs</strong></td>
+<td><code>FactApplicationScenario[nsf_count_30d]</code></td>
+</tr>
+<tr>
+<td><strong>Operating pattern</strong></td>
+<td><code>FactApplicationScenario[archetype_code]</code></td>
+</tr>
+<tr>
+<td><strong>Processor continuity</strong></td>
+<td><code>FactApplicationScenario[processor_continuity_status]</code></td>
+</tr>
+<tr>
+<td><strong>Evidence quality</strong></td>
+<td>combined <code>data_confidence_tier</code>, <code>verification_disposition</code>, and optionally <code>feature_completeness_status</code></td>
+</tr>
+</tbody></table>
+<p>These fields all exist in the curated application-scenario fact alongside the downstream capacity, resilience, risk, loss, and economics outputs. [export reference: filecite | turn64file0 | L12-L13]</p>
+<p>A supported merchant row could read:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Eligible sales / day</th>
+<th align="right">Available liquidity</th>
+<th align="right">Negative-balance days</th>
+<th align="right">NSFs</th>
+<th>Operating pattern</th>
+<th>Processor continuity</th>
+<th>Evidence quality</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">$2.1K</td>
+<td align="right">$50.6K</td>
+<td align="right">0.0%</td>
+<td align="right">0</td>
+<td>Stable</td>
+<td>Stable</td>
+<td>High · Clear</td>
+</tr>
+</tbody></table>
+<p>That immediately gives an interviewer something meaningful to discuss.</p>
+<p>Instead of saying:</p>
+<blockquote>
+<p>“The merchant had a resilience score of 92.7,”</p>
+</blockquote>
+<p>you can say:</p>
+<blockquote>
+<p>“The merchant had a stable operating pattern, no recent NSF activity, no negative-balance days, strong available liquidity, stable processor continuity, and high-confidence verified evidence.”</p>
+</blockquote>
+<p>That is a much stronger demonstration of merchant-risk judgment.</p>
+<hr>
+<h2>Row 2 — Underwriting assessment</h2>
+<p>I would replace visible <strong>Resilience</strong> with <strong>Post-funding liquidity</strong>. Preserve the resilience measure for tooltips, but do not spend one of the six principal positions on the opaque roll-up.</p>
+<p>Use:</p>
+<table>
+<thead>
+<tr>
+<th>Display name</th>
+<th>Physical source</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Payment coverage</strong></td>
+<td><code>sales_linked_payment_coverage_ratio</code></td>
+</tr>
+<tr>
+<td><strong>Residual capacity</strong></td>
+<td><code>residual_daily_operating_cash_flow</code></td>
+</tr>
+<tr>
+<td><strong>Post-funding liquidity</strong></td>
+<td><code>post_financing_liquidity_buffer_amount</code></td>
+</tr>
+<tr>
+<td><strong>Integrated risk</strong></td>
+<td><code>integrated_risk_score</code> + <code>integrated_risk_tier</code></td>
+</tr>
+<tr>
+<td><strong>Expected loss</strong></td>
+<td><code>schedule_adjusted_comparative_loss_rate</code></td>
+</tr>
+<tr>
+<td><strong>Risk-adjusted economics</strong></td>
+<td><code>risk_adjusted_contribution_amount</code> + <code>annualized_risk_adjusted_return_rate</code></td>
+</tr>
+</tbody></table>
+<p>The source model defines payment coverage as operating cash flow divided by total obligation burden and residual daily capacity as operating cash flow after total daily obligation burden. [export reference: filecite | turn63file4 | L119-L123]</p>
+<p>A supported row could read:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Payment coverage</th>
+<th align="right">Residual capacity</th>
+<th align="right">Post-funding liquidity</th>
+<th align="right">Integrated risk</th>
+<th align="right">Expected loss</th>
+<th align="right">Risk-adjusted economics</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1.32x · Affordable</td>
+<td align="right">$80/day surplus</td>
+<td align="right">$52.1K</td>
+<td align="right">11.0 · Tier 1</td>
+<td align="right">4.18% · Partial</td>
+<td align="right">$1,828 · 39.9% ann.</td>
+</tr>
+</tbody></table>
+<p>That is far easier to explain than the current row because each value follows from a recognizable underwriting question:</p>
+<ul>
+<li><strong>Coverage:</strong> Does operating cash flow cover total obligations?</li>
+<li><strong>Residual capacity:</strong> What remains after the proposed burden?</li>
+<li><strong>Post-funding liquidity:</strong> What liquidity cushion remains after financing?</li>
+<li><strong>Integrated risk:</strong> What is the combined relative risk profile?</li>
+<li><strong>Expected loss:</strong> What comparative loss burden accompanies the exposure?</li>
+<li><strong>Economics:</strong> Is the structure worthwhile after costs, loss, and capital?</li>
+</ul>
+<p>The economics layer explicitly defines risk-adjusted contribution after comparative loss and capital charge, and annualizes that contribution against requested funding and payoff horizon. [export reference: filecite | turn68file0 | L12-L35]</p>
+<hr>
+<h2>Row 3 — Why this outcome</h2>
+<p>Do <strong>not</strong> keep Interpretation as a narrow seventh table column.</p>
+<p>Give it the full width of the underwriting section:</p>
+<h3><strong>Why this outcome</strong></h3>
+<blockquote>
+<p>Strong payment coverage, positive residual cash flow, substantial post-funding liquidity, low integrated risk, and positive risk-adjusted economics.</p>
+</blockquote>
+<p>For other outcomes:</p>
+<p><strong>Counteroffer review</strong></p>
+<blockquote>
+<p>Merchant economics remain viable, but the requested structure exceeds sustainable cash-flow capacity; a reduced structure requires review.</p>
+</blockquote>
+<p><strong>Policy decline</strong></p>
+<blockquote>
+<p>Negative residual cash flow and an economic hurdle breach prevent a sustainable structure.</p>
+</blockquote>
+<p><strong>Evidence decline</strong></p>
+<blockquote>
+<p>Critical underwriting or comparative-loss evidence is unavailable; the assessment cannot be completed.</p>
+</blockquote>
+<p>This sentence should be controlled by <code>FactFinalDecision</code> for the terminal outcome and by the governed application-scenario statuses/reasons for the explanation. <code>FactFinalDecision</code> remains the authority for whether the row was authorized, routed to counteroffer review, or declined. [export reference: filecite | turn60file0 | L12-L13]</p>
+<p>The language should avoid overstating causality. The underlying Module 1 documentation expressly treats diagnostics as explanatory unless they are explicitly consumed by downstream decisioning. [export reference: filecite | turn68file5 | L465-L480] That means:</p>
+<ul>
+<li>label Row 1 <strong>Merchant operating evidence</strong>, not “causal drivers”;</li>
+<li>label Row 2 <strong>Underwriting assessment</strong>;</li>
+<li>reserve <strong>Why this outcome</strong> for the governed decision interpretation.</li>
+</ul>
+<hr>
+<h1>What happens to the measures already created</h1>
+<p>Do not delete or rebuild them.</p>
+<p>Reuse:</p>
+<ul>
+<li><code>P03 Capacity Display</code> → <strong>Residual capacity</strong></li>
+<li><code>P03 Coverage Display</code> → <strong>Payment coverage</strong></li>
+<li><code>P03 Risk Display</code> → <strong>Integrated risk</strong></li>
+<li><code>P03 Expected Loss Display</code> → <strong>Expected loss</strong></li>
+<li><code>P03 Economics Display</code> → <strong>Risk-adjusted economics</strong></li>
+<li><code>P03 Decision Readout</code> → revise and enlarge as the full-width <strong>Why this outcome</strong> statement</li>
+</ul>
+<p>Retain:</p>
+<ul>
+<li><code>P03 Resilience Display</code></li>
+</ul>
+<p>but move it to a tooltip, perhaps on <strong>Operating pattern</strong> or <strong>Integrated risk</strong>:</p>
+<blockquote>
+<p>Operating resilience: 92.7, Tier 1. The visible operating evidence shows the underlying factors used to contextualize this roll-up.</p>
+</blockquote>
+<p>The genuinely new DAX population should therefore be limited to:</p>
+<ul>
+<li>eligible sales display;</li>
+<li>available liquidity display;</li>
+<li>negative-balance-days display;</li>
+<li>NSF display;</li>
+<li>operating-pattern presentation;</li>
+<li>processor-continuity presentation;</li>
+<li>evidence-quality presentation;</li>
+<li>post-funding-liquidity display;</li>
+<li>revised full-width rationale.</li>
+</ul>
+<p>You are not discarding the prior work. You are <strong>promoting the meaningful metrics and demoting the opaque aggregate</strong>.</p>
+<hr>
+<h1>Bottom-of-page lifecycle design</h1>
+<p>After removing <code>Monitoring exceptions</code> and merging the performance charts, preserve:</p>
+<h2>Monitoring journey</h2>
+<p>This still earns its place because it shows how the account migrated through Current, Watch, Underperforming, Severe shortfall, and Paid off.</p>
+<h2>Account performance</h2>
+<p>The new dual-axis chart tells the financial lifecycle:</p>
+<ul>
+<li>receivable decreases;</li>
+<li>remittance fulfillment moves above or below the expected path;</li>
+<li>the 100% benchmark remains visible.</li>
+</ul>
+<h2>Servicing outcome</h2>
+<p>Keep the servicing record, but compress and rename it from <code>Servicing &amp; intervention</code> to:</p>
+<h3><strong>Servicing outcome</strong></h3>
+<p>Suggested columns:</p>
+<p><strong>Disposition | Treatment | Exposure | Reason | Lifecycle state</strong></p>
+<p>For merchant 000312, that would read conceptually:</p>
+<p><strong>Active servicing | Temporary payment cycle | $518.04 | Severe shortfall | Reassessment due</strong></p>
+<p>P04 owns the detailed operational workbench. P03 only needs the final account-level outcome that completes the journey.</p>
+<hr>
+<h1>The interview narrative this page should support</h1>
+<p>A disciplined 45-second walkthrough would be:</p>
+<blockquote>
+<p>“I begin with evidence sufficiency and the merchant’s actual operating profile—not just an aggregate score. I evaluate eligible sales, liquidity, negative-balance and NSF behavior, operating pattern, processor continuity, and verification quality. I then translate those fundamentals into payment coverage, residual cash-flow capacity, post-financing liquidity, integrated risk, comparative expected loss, and risk-adjusted economics. The governed policy layer determines whether the requested structure is sustainable, needs restructuring, must be declined, or cannot be assessed because evidence is insufficient. The lower half then shows whether the funded account’s performance validated or challenged the original underwriting assessment and how servicing responded.”</p>
+</blockquote>
+<p>That communicates:</p>
+<ul>
+<li>merchant cash-flow underwriting;</li>
+<li>evidence governance;</li>
+<li>affordability and capacity;</li>
+<li>integrated credit risk;</li>
+<li>loss estimation;</li>
+<li>unit economics;</li>
+<li>structure selection;</li>
+<li>lifecycle monitoring;</li>
+<li>servicing feedback.</li>
+</ul>
+<p>That is much stronger than leading with “resilience score 92.7.”</p>
+<h2>Recommended construction order</h2>
+<ol>
+<li>Remove <code>Monitoring exceptions</code>.</li>
+<li>Create the dual-axis <code>Account performance</code> visual and validate it across high-pace and low-pace merchants.</li>
+<li>Move the decision card and funded terms into the released upper-right space.</li>
+<li>Build <code>Merchant operating evidence</code>.</li>
+<li>Reuse the existing measures for <code>Underwriting assessment</code>, replacing visible Resilience with Post-funding liquidity.</li>
+<li>Convert <code>P03 Decision Readout</code> into a full-width <code>Why this outcome</code> sentence.</li>
+<li>Compress <code>Servicing outcome</code>.</li>
+<li>Update the subtitle to:</li>
+</ol>
+<blockquote>
+<p><strong>Follow one synthetic application from merchant operating evidence and underwriting rationale through funding, performance, monitoring and servicing.</strong></p>
+</blockquote>
+<p>This is the one bounded P03 enhancement worth reopening the frozen candidate for. It changes P03 from an attractive account trace into a credible demonstration of <strong>how you would launch, underwrite, monitor, and defend a merchant financing product</strong>.</p>
+</div></article><article id="m-f731f0ad-0c2f-4110-80b9-addeacd77ca6" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00504 · 2026-08-27T15:03:38.830000-04:00 · active path</p><div class="bubble"><p>I like how you said this, and I think there could be value in having an automated text interpretation box vs having a capacity/coverage/decision line : “The merchant had a stable operating pattern, no recent NSF activity, no negative-balance days, strong available liquidity, stable processor continuity, and high-confidence verified evidence.” thoughts?</p>
+</div></article><article id="m-d613f3a6-cc6e-4039-b51e-b653e8bcd5fa" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00505 · 2026-08-27T15:10:28.322976-04:00 · active path</p><div class="bubble"><p>Yes. <strong>That is the stronger direction.</strong> I would replace the current seven-column underwriting table with a wide, automated <strong>Underwriting rationale</strong> panel.</p>
+<p>The key is not to replace numbers with vague prose. The panel should translate the governed evidence into a short narrative while retaining the decisive quantitative values. That gives an interviewer both:</p>
+<ul>
+<li>the merchant behavior you evaluated; and</li>
+<li>the financial/risk conclusion you drew from it.</li>
+</ul>
+<p>The curated application-scenario fact already contains the operating evidence needed for this: sales, liquidity, negative-balance activity, NSFs, operating archetype, processor continuity, evidence quality, capacity, risk, comparative loss, and economics. [export reference: filecite | turn64file0 | L12-L13]</p>
+<h2>Recommended design</h2>
+<p>Use <strong>three dynamic text measures</strong>, visually grouped inside one bordered panel:</p>
+<h3>Underwriting rationale</h3>
+<p><strong>Merchant evidence</strong>  </p>
+<blockquote>
+<p>The merchant showed a stable operating pattern, no recent NSF or negative-balance activity, $50.6K in average available liquidity, stable processor continuity, and high-confidence evidence with clear verification.</p>
+</blockquote>
+<p><strong>Structure assessment</strong>  </p>
+<blockquote>
+<p>At the requested structure, operating cash flow covered total obligations 1.32x, leaving $80 per day of residual capacity. Integrated risk was Tier 1, comparative expected loss was 4.18%, and risk-adjusted contribution was $1,828, or 39.9% annualized.</p>
+</blockquote>
+<p><strong>Why this outcome</strong>  </p>
+<blockquote>
+<p>The requested structure remained within governed capacity, risk, and economic boundaries.</p>
+</blockquote>
+<p>The green card beside or immediately above it continues to say:</p>
+<blockquote>
+<p><strong>APPROVED</strong><br>Final offer</p>
+</blockquote>
+<p>That division is clean:</p>
+<ul>
+<li><strong>Decision card:</strong> What happened?</li>
+<li><strong>Merchant evidence:</strong> What did we observe?</li>
+<li><strong>Structure assessment:</strong> What did the requested structure imply?</li>
+<li><strong>Why this outcome:</strong> Why did those facts support the result?</li>
+</ul>
+<h2>Why this is better than the current row</h2>
+<p>The existing row requires the reader to know that:</p>
+<ul>
+<li>coverage above 1.00x generally represents cash-flow coverage;</li>
+<li>positive residual capacity is preferable;</li>
+<li>Tier 1 is favorable;</li>
+<li>lower comparative expected loss is preferable;</li>
+<li>positive risk-adjusted contribution and annualized return support economics;</li>
+<li><code>PARTIAL</code> describes evidence quality rather than a failed result.</li>
+</ul>
+<p>That is too much decoding for an executive or interviewer.</p>
+<p>The narrative demonstrates that you understand how to translate technical outputs into credit judgment:</p>
+<blockquote>
+<p>“I did not approve this merchant because the model produced a Tier 1 label. I considered the stability of sales and processor activity, liquidity behavior, adverse account events, evidence quality, obligation coverage, residual cash flow, expected loss, and risk-adjusted economics.”</p>
+</blockquote>
+<p>That is the interview story you want.</p>
+<h2>Do not use one uninterrupted paragraph</h2>
+<p>A single large paragraph would become difficult to scan. Visually group three measures under one title:</p>
+<pre><code class="language-text">UNDERWRITING RATIONALE
+
+Merchant evidence
+[dynamic sentence]
+
+Structure assessment
+[dynamic sentence]
+
+Why this outcome
+[dynamic sentence]
+</code></pre>
+<p>That can appear as one cohesive box while remaining easy to read.</p>
+<p>I would name the measures:</p>
+<pre><code class="language-text">P03 Merchant Evidence Narrative
+P03 Structure Assessment Narrative
+P03 Decision Rationale
+</code></pre>
+<p>Your existing measures are still useful:</p>
+<pre><code class="language-text">P03 Capacity Display
+P03 Coverage Display
+P03 Resilience Display
+P03 Risk Display
+P03 Expected Loss Display
+P03 Economics Display
+</code></pre>
+<p>The new <code>P03 Structure Assessment Narrative</code> can reuse those values. None of that work is wasted.</p>
+<h2>What the merchant-evidence sentence should cover</h2>
+<p>The first sentence should emphasize the <strong>underlying evidence</strong>, not “resilience.”</p>
+<p>Its preferred components are:</p>
+<ul>
+<li>operating pattern or archetype;</li>
+<li>NSF activity;</li>
+<li>negative-balance-day activity;</li>
+<li>average available liquidity;</li>
+<li>processor continuity;</li>
+<li>data confidence;</li>
+<li>verification disposition.</li>
+</ul>
+<p>Depending on space and materiality, it can also mention sales level or sales trend.</p>
+<p>A positive case might read:</p>
+<blockquote>
+<p>The merchant showed a stable operating pattern, no recent NSF or negative-balance activity, $50.6K in average available liquidity, stable processor continuity, and high-confidence evidence with clear verification.</p>
+</blockquote>
+<p>A weaker but still decisionable merchant might read:</p>
+<blockquote>
+<p>The merchant showed a volatile operating pattern, two recent NSF events, negative balances on 6.7% of recent days, monitored processor continuity, and medium-confidence evidence requiring verification review.</p>
+</blockquote>
+<p>An evidence-deficient case might read:</p>
+<blockquote>
+<p>Critical underwriting evidence was unavailable or blocked; merchant capacity, resilience, risk, comparative loss, and economics could not be assessed reliably.</p>
+</blockquote>
+<p>That last state is important. Where evidence is blocked, the source methodology requires downstream economic conclusions to remain unavailable rather than being represented as zero or favorable. [export reference: filecite | turn68file0 | L43-L49]</p>
+<h2>Avoid unsupported adjectives</h2>
+<p>The sentence you quoted includes <strong>“strong available liquidity.”</strong> That is natural language, but we should only say “strong” if we map it to an accepted source status or governed threshold.</p>
+<p>Safer wording is:</p>
+<blockquote>
+<p><code>$50.6K in average available liquidity</code></p>
+</blockquote>
+<p>or:</p>
+<blockquote>
+<p><code>positive post-financing liquidity of $52.1K</code></p>
+</blockquote>
+<p>That is more precise and gives the interviewer the evidence directly.</p>
+<p>Likewise:</p>
+<ul>
+<li>use <code>high-confidence evidence</code> only when <code>data_confidence_tier = HIGH</code>;</li>
+<li>use <code>clear verification</code> only when <code>verification_disposition = CLEAR</code>;</li>
+<li>use <code>stable processor continuity</code> only when the source says <code>STABLE</code>;</li>
+<li>use <code>no recent NSF activity</code> only when <code>nsf_count_30d = 0</code>;</li>
+<li>use <code>no negative-balance days</code> only when the rate is zero.</li>
+</ul>
+<p>This keeps the narrative deterministic and auditable rather than promotional.</p>
+<h2>Structure-assessment sentence</h2>
+<p>The second line should preserve the core numerical evidence. I would use:</p>
+<ul>
+<li>payment coverage;</li>
+<li>residual daily capacity;</li>
+<li>post-financing liquidity;</li>
+<li>integrated risk tier;</li>
+<li>comparative expected-loss rate;</li>
+<li>risk-adjusted contribution;</li>
+<li>annualized risk-adjusted return.</li>
+</ul>
+<p>I would <strong>not lead with resilience score</strong>. Resilience can remain in a tooltip because the first narrative already explains what made the merchant operationally resilient or vulnerable.</p>
+<p>A good sentence pattern is:</p>
+<blockquote>
+<p>At the requested structure, operating cash flow covered total obligations <strong>[coverage]</strong>, leaving <strong>[residual capacity]</strong> and <strong>[post-financing liquidity]</strong>. Integrated risk was <strong>[tier]</strong>, comparative expected loss was <strong>[rate]</strong>, and risk-adjusted contribution was <strong>[amount]</strong>, or <strong>[annualized return]</strong> annualized.</p>
+</blockquote>
+<p>That walks through the underwriting chain in the right order:</p>
+<blockquote>
+<p><strong>Affordability → remaining capacity → liquidity cushion → risk → loss → economics</strong></p>
+</blockquote>
+<h2>Decision-rationale sentence</h2>
+<p>The third line should not repeat the red/yellow/green card. It should explain the binding conclusion.</p>
+<h3>Final offer</h3>
+<blockquote>
+<p>The requested structure remained within governed capacity, risk, and economic boundaries.</p>
+</blockquote>
+<h3>Counteroffer review</h3>
+<blockquote>
+<p>Merchant economics remained viable, but the requested structure exceeded sustainable cash-flow capacity; a reduced structure required review.</p>
+</blockquote>
+<h3>Policy decline driven by capacity</h3>
+<blockquote>
+<p>The requested structure produced insufficient coverage and negative residual cash flow, exceeding the governed affordability boundary.</p>
+</blockquote>
+<h3>Policy decline driven by economics</h3>
+<blockquote>
+<p>The structure did not generate sufficient risk-adjusted contribution to meet the governed economic hurdle.</p>
+</blockquote>
+<h3>Multiple constraints</h3>
+<blockquote>
+<p>Affordability, integrated risk, and risk-adjusted economics did not support a sustainable structure.</p>
+</blockquote>
+<h3>Evidence decline</h3>
+<blockquote>
+<p>Critical underwriting evidence was unavailable, preventing a reliable capacity, risk, loss, and economic assessment.</p>
+</blockquote>
+<p><code>FactFinalDecision</code> must remain authoritative for the terminal result; the application-scenario evidence explains the result but must not override it. That fact contains the final outcome, authorization/review/decline flags, offer terms, and final decision reason. [export reference: filecite | turn60file0 | L12-L13]</p>
+<h2>Page-layout recommendation</h2>
+<p>I would now make these changes:</p>
+<ol>
+<li>Remove the current seven-column interpretation table.</li>
+<li>Remove the bottom-left <code>Monitoring exceptions</code> table.</li>
+<li>Combine receivable trajectory and remittance performance into the planned dual-axis <strong>Account performance</strong> chart.</li>
+<li>Use the released space for a wide <strong>Underwriting rationale</strong> box.</li>
+<li>Retain the green/yellow/red decision card and funded terms.</li>
+<li>Keep <code>Monitoring journey</code> and a compressed <code>Servicing outcome</code> beneath the underwriting section.</li>
+</ol>
+<p>The top half of P03 would then tell:</p>
+<blockquote>
+<p><strong>Merchant → Request → Evidence → Assessment → Decision → Terms</strong></p>
+</blockquote>
+<p>The bottom half would tell:</p>
+<blockquote>
+<p><strong>Performance → Monitoring → Servicing outcome</strong></p>
+</blockquote>
+<h2>Recommended final P03 narrative</h2>
+<p>A strong interviewer walkthrough becomes:</p>
+<blockquote>
+<p>“The page starts with the merchant and requested structure. The underwriting rationale then explains the operating evidence I considered—sales behavior, liquidity, negative-balance and NSF activity, processor continuity, and evidence quality. It translates those facts into obligation coverage, residual capacity, post-financing liquidity, integrated risk, comparative expected loss, and risk-adjusted economics. The governed decision layer then determines whether the requested structure is supportable, needs restructuring, fails policy, or cannot be evaluated because evidence is insufficient. The lower half shows whether the funded account’s subsequent performance supported or challenged the original assessment.”</p>
+</blockquote>
+<p>That is significantly stronger than presenting a resilience score or a thin metrics row. It makes P03 an <strong>explainable merchant-underwriting case study</strong>, which should become one of the most persuasive pages in the portfolio.</p>
+</div></article><article id="m-54f59a76-b3d4-42d9-b0a5-8706a564631c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00506 · 2026-08-27T16:03:37.434000-04:00 · active path</p><div class="bubble"><p>I will handle a first pass at freeing up space. I agree with your recommendations. Please construct the measures/columns/guidance to build the underwriting narrative and any related output we wish to show. Create this carefully and credibly and make it translate complexity/thorough evaluation in a way that anyone can understand and that also demonstrates my grasp of the material to interviewers and those with an advanced knowledge. It must accomplish that dual purpose in a way that comes off easy and professionally.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

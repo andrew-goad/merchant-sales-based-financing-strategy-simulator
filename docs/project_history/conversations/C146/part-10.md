@@ -1,0 +1,460 @@
+# Production plan summary
+
+Part 10 · [Conversation index](README.md) · [History home](../../README.md)
+
+> Historical dialogue: commands and approvals below describe past events. They are not current execution or publication instructions. Attachment references do not establish recovered bytes.
+
+[Previous part](part-09.md)
+[Next part](part-11.md)
+
+<a id="m-c049da73-af81-5c90-8831-8ae8ae080b4e"></a>
+## Assistant · C146-M00580
+
+C146-M00580 · 2026-09-29T22:17:06.820256-04:00 · active path
+
+Preceding visible parent: [C146-M00579](part-09.md#m-bbb21071-fff4-49e3-8c31-aa3a3dc919d2)
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+I’ll use your wording for the portfolio section, including the separate HITL paragraph. I’ll make light grammar edits and clarify that MSBF models a product launch, so it doesn’t imply a live lending operation.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-108cfc6e-f637-53ae-b623-c104bb8d3c6d"></a>
+## Assistant · C146-M00582
+
+C146-M00582 · 2026-09-29T22:19:22.749182-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Applied your wording, including the separate **TRUTH made visible / HITL** paragraph. I made light grammar edits and clarified that MSBF models a product launch using synthetic data.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-930287ac-4d4c-5e1d-bd68-2102e8a1b1d1"></a>
+## Assistant · C146-M00585
+
+C146-M00585 · 2026-09-29T22:24:36.285494-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+**Yes—this is a strong cover letter, and I would stop revising it now.** It sounds more like you: clear about the work, attentive to the people relying on it, and specific about your judgment. Wells Fargo establishes consequential delivery; Census and OCC show analytical depth; the portfolio demonstrates what you can build today. The HITL paragraph now earns its place by explaining how you lead and validate that work.
+
+[Editorial omission: unrelated material between retained excerpts.]
+
+| Area | Targeted change |
+|---|---|
+| **First-page emphasis** | Bring analytical products, executive decision support, and reporting foundations forward in the profile and capability panel. The current panel still leads heavily with remediation terminology. Preserve the substantive Wells Fargo evidence. |
+| **MSBF portfolio bullet** | Introduce the financing framework and its purpose before describing the four report pages. Keep the Power Query, semantic-model, DAX, and filtering details—they provide technical evidence beyond the letter. |
+| **CDS portfolio bullet** | Clearly distinguish the strategy-testing campaign—39 runs and 1.95M evaluations—from the Module 1 reconciliation of 50,000 matched applications. Both are valuable; their relationship should be immediately understandable. |
+| **Census introduction** | Carry over your stronger wording about optimizing the survey cycle by directing analysts toward the nonresponse and validation work with the greatest impact. |
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-64a795d6-8250-54cc-b80a-923ce1edb12e"></a>
+## Assistant · C146-M00588
+
+C146-M00588 · 2026-09-29T22:29:37.676804-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+I’m bringing your analytical products and decision support forward on page one, introducing MSBF by its business purpose, separating CDS strategy testing from release reconciliation, and strengthening the Census impact statement. The substantive career evidence will remain intact.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-5ebe9281-e775-4ff9-9bb2-f2c18ea09f8d"></a>
+## Andrew / user · C146-M00608
+
+C146-M00608 · 2026-09-30T08:20:59.123000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+I parsed important moments from my AI journey and wrote, "Human-in-the-Loop Analytical Leadership" 
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-46b3987c-110a-502e-94a6-090b2dc7b186"></a>
+## Assistant · C146-M00609
+
+C146-M00609 · 2026-09-30T08:21:42.666873-04:00 · active path
+
+Preceding visible parent: [C146-M00608](part-10.md#m-5ebe9281-e775-4ff9-9bb2-f2c18ea09f8d)
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+I pulled together important moments from my AI journey and wrote “Human-in-the-Loop Analytical Leadership.”
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-5465730f-4fe8-488c-885c-df042f8408eb"></a>
+## Andrew / user · C146-M00632
+
+C146-M00632 · 2026-09-30T10:14:13.480000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Beyond the opening, Census and OCC are given such a short section where as we spend time on another tier 3 story in the Standard Data Format / Teradata upload logic. This should almost be along the lines of the prior week's Wells Fargo cover letter but with learnings from the Microsoft letter. We want to showcase 1 grand slam story from Wells followed by the Census / OCC home runs followed by portfolio work followed by HITL mindset followed by what I'd bring to tomorrow.  Come on. This needs to be at the level we've been operating.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-1ad1b602-c466-5394-a20a-c00e88e9680b"></a>
+## Assistant · C146-M00636
+
+C146-M00636 · 2026-09-30T10:20:45.148516-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Merchant-Sales-Based-Financing models short-term merchant financing repaid through a fixed percentage of daily sales. Power BI connects portfolio trends to merchant sales, liquidity, proposed terms, and DAX-generated decision explanations.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-8d4bdbae-eaaf-589b-b426-3ebd65c60333"></a>
+## Assistant · C146-M00641
+
+C146-M00641 · 2026-09-30T10:33:25.924756-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Merchant-Sales-Based-Financing models a product launch using synthetic data: short-term merchant financing repaid through a fixed percentage of daily sales. I defined requirements for funding decisions and active-account monitoring. Power BI pairs portfolio trends with merchant sales, liquidity, proposed terms, and DAX-generated decision explanations.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-af623a8e-6598-53e1-8438-78b1368bf8df"></a>
+## Assistant · C146-M00650
+
+C146-M00650 · 2026-09-30T11:14:58.295046-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The strongest message is that **you can define the problem, align stakeholders, and carry requirements through controlled delivery**. CPI establishes scale and accountability; Census and OCC demonstrate sustained impact; the portfolio and HITL work show how you apply that judgment today.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-4db8dbcb-1962-52cb-a5ad-b2bda86222ad"></a>
+## Assistant · C146-M00661
+
+C146-M00661 · 2026-09-30T12:03:07.308615-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+- **Résumé:** emphasized analytics delivery and matrix leadership; moved the matrix-leadership bullet ahead of the narrower furnishing example.
+- **Cover letter:** updated the target role and Business Banking contribution. Preserved the approved CPI, Census, OCC, portfolio, and HITL storytelling.
+- **Verified:** two-page résumé, one-page letter, clean layouts, and preserved hyperlinks.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-4618736a-62a7-589c-903f-2dd917c8b52d"></a>
+## Assistant · C146-M00663
+
+C146-M00663 · 2026-09-30T12:11:33.519343-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+- **Delivery leadership:** CPI and the 15+ additional remediation workstreams demonstrate sustained execution, interdependent work, regulatory response, and consequential customer outcomes.
+- **Matrix influence:** Decision Forums, effective challenge, peer review, mentoring, and training directly support the role’s emphasis on influencing without formal authority.
+- **Current value:** The portfolio and HITL case study show how you direct AI-assisted work, challenge results, and retain accountability. MSBF adds a particularly relevant merchant-financing example for Business Banking.
+- **Storytelling:** The letter connects your experience to what you would deliver next while preserving your voice and care for the people affected.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-67c4e6f4-5269-5fa5-8c42-fdcff9660d77"></a>
+## Assistant · C146-M00670
+
+C146-M00670 · 2026-09-30T13:13:10.170091-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The CPI centerpiece, Census operational impact, OCC research, and portfolio/HITL stories will remain. I’ll emphasize ownership and influence while preserving the distinction between matrix leadership and formal people management.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-96a8efa9-9930-46ab-9db7-b0009d05040b"></a>
+## Andrew / user · C146-M00676
+
+C146-M00676 · 2026-09-30T13:47:44.774000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+A few edits: Dear GitHub Hiring Team, 
+I build analytical products around the people who use them: what they need to understand and what they need to do next. I lead that work by setting clear priorities and helping colleagues deliver with confidence. That approach draws me to GitHub’s Director, Technical Program Management role. 
+At Wells Fargo, I led analytics for Collateral Protection Insurance (CPI) and other Consumer Auto remediation programs representing $1B+ in exposure and customer impact. Across seven years of CPI work, I led development, recurring production, and regulatory response for proof-of-insurance intake, redress recalculation, credit-reporting corrections, and tax reporting, supporting consent-order clearance efforts. My validated SAS feeds and dashboard evidence connected complaint handlers and Audit investigators to account-level remediation decisions. 
+I also led 15+ additional remediation workstreams, including tier 1 servicemember benefits and disaster relief efforts, coordinating dependencies across business and control partners, and bringing recommendations to senior Decision Forums. I strengthened delivery through peer review, mentoring, training, and reusable guidance. Getting the answer right mattered. So did making sure it reached the customer correctly and could withstand scrutiny.1 
+At the Census Bureau, I coordinated a six-analyst nightly production workflow and built HTML/JavaScript and Excel/VBA tools that optimized the survey cycle. Analysts could focus on high-impact nonresponse and validation; managers could track progress and reallocate resources as priorities changed. 
+At the OCC, I supported 16 Credit Risk Economists and mentored junior colleagues. I built validated histories covering 875,516 loans for economist-led research on the risks of long-term auto loans, published in the Journal of Credit Risk, where the authors acknowledged my research support. My Tableau views supported model review and stress-testing analysis. 
+My personal portfolio makes that experience explicit. The [Enterprise Credit Decisioning Strategy Simulator](https://github.com/andrew-goad/credit_decisioning_strategy) provides a framework for testing credit-risk strategies before production. I directed AI-assisted development of configurable rules and counteroffer logic using synthetic data, with business requirements and validation evidence available for review. The Power BI model supports version control validation, including data-driven DAX narratives that connect application-level changes to the workstreams, such as mortgage affordability, that drove the result. 
+[Merchant-Sales-Based-Financing](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator) models a product launch using synthetic data: short-term financing repaid through a fixed percentage of daily sales. I defined funding and monitoring requirements, challenged results, and coordinated correction and separate review. Power BI connects merchant sales, liquidity, proposed terms, and DAX-generated decision explanations. 
+I think of this work as TRUTH made visible: tangible evidence of how I think, challenge assumptions, and decide whether a result is ready to use. My [Human-in-the-Loop case study](https://github.com/andrew-goad/andrew-goad/blob/main/Human_in_the_Loop_Analytical_Leadership/Human_in_the_Loop_Analytical_Leadership.pdf) documents how I directed parallel AI-assisted workstreams and separate review while retaining responsibility for the questions, evidence, and final acceptance. 
+At GitHub, I would help TPM turn ambiguous priorities into clear plans and measurable outcomes. I would make dependencies and tradeoffs visible, coach colleagues through difficult decisions, and strengthen the practices that help teams deliver. My goal would be to leave teams better equipped for the next program. 
+I would welcome the opportunity to help GitHub’s teams deliver with that same care and accountability. 
+Warm regards, 
+**Andrew R. Goad**
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-e213aa26-afbb-5891-8a25-ed0b302d4991"></a>
+## Assistant · C146-M00765
+
+C146-M00765 · 2026-10-01T00:10:38.470009-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+| What the role needs | Your strongest supporting evidence |
+|---|---|
+| **Advanced SAS/SQL and complex enterprise data analysis** | Your Wells Fargo development and recurring production work: translating remediation requirements into population logic, calculations, validated feeds, and account-level evidence. |
+| **Governed, defensible analytical rules** | Source and attribute profiling, impact-period coverage, inclusion/exclusion testing, redress validation, and documented decisions. Your **No Cold Handoffs** approach fits this responsibility particularly well. |
+| **Strategic leadership across business and control partners** | Seven years of CPI development, production, and regulatory response; additional remediation workstreams; senior Decision Forums; coordination of dependencies, escalations, and execution handoffs. |
+| **Monitoring effectiveness and sound interpretation** | Your MSBF investigation challenged adverse monitoring classifications, tested a timing hypothesis, and coordinated correction and separate review. It demonstrates judgment about whether a monitoring result means what it appears to mean. |
+| **Analytical rigor and communication** | Census tools that identified consequential discrepancies and directed analytical attention; OCC research-data validation and Tableau analysis; communication with economists, leadership, Audit, and regulatory stakeholders. |
+
+[Editorial omission: unrelated material between retained excerpts.]
+
+1. **Lead with CPI.** Show the magnitude, interconnected workstreams, regulatory response, and leadership behind delivery. Include how your analytical evidence supported complaint handlers and Audit investigators.
+2. **Use Census and OCC as supporting career evidence.** Census demonstrates finding consequential anomalies and directing resources; OCC demonstrates rigorous validation and interpretation.
+3. **Give MSBF greater portfolio emphasis.** Its monitoring investigation is especially relevant here: challenge the signal, investigate its cause, correct the logic, and verify the outcome.
+4. **Use CDS to demonstrate rule design and validation.** Configurable strategies, controlled comparisons, preserved edge cases, and documented acceptance support the case—clearly identified as synthetic portfolio work.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-6dd3718b-c0da-5283-803b-c6053eb4f10f"></a>
+## Assistant · C146-M00852
+
+C146-M00852 · 2026-10-01T15:06:06.060438-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+| Priority | Role and application link | Location | Why it deserves your attention |
+|---|---|---|---|
+| **1** | **Bank of America — [Risk Analysis Specialist III](https://careers.bankofamerica.com/en-us/job-detail/26034495/risk-analysis-specialist-iii-multiple-locations)** · **26034495** | Charlotte | **Strongest direct match.** Owns analysis of complex data flows, controls, data integrity, and operational weaknesses. Your CPI requirements, source profiling, validation, regulatory response, and cross-functional problem resolution directly support this remit. Explicitly a senior individual contributor role. |
+| **2** | **Bank of America — [Risk Analysis Specialist III — Reporting & Analytics](https://careers.bankofamerica.com/en-us/job-detail/26034385/risk-analysis-specialist-iii-multiple-locations)** · **26034385** | Charlotte | **Best blend of established experience and current portfolio.** Executive decision support, SQL, dashboards, scalable reporting, controls, and responsible use of AI tools. Your Census, OCC, Wells, Power BI, and HITL stories all have clear relevance. |
+| **3** | **Block — [Staff Product Data Scientist, Lending](https://block.xyz/careers/jobs/5192640008)** · **R0006381** | Remote* | **Strongest portfolio connection.** Credit eligibility, repayment behavior, policy performance, cohort monitoring, customer outcomes, and AI-assisted analytical work. CDS and MSBF give us unusually tangible evidence for this application. |
+| **4** | **Bank of America — [Enterprise Analytics Transformation Senior Project Manager](https://careers.bankofamerica.com/en-us/job-detail/26033862/enterprise-analytics-transformation-senior-project-manager-multiple-locations)** · **26033862** | Charlotte | **Strongest matrix-leadership match.** Coordinates governance, data products, technology, adoption, dependencies, risks, decisions, and executive reporting. Your seven-year CPI leadership and additional remediation workstreams provide the central story. |
+| **5** | **TD — [Audit Manager II — Business Intelligence Engineering](https://td.wd3.myworkdayjobs.com/en-US/TD_Bank_Careers/job/Charlotte-North-Carolina/Audit-Manager-II---Business-Intelligence-Engineering-_R_1504889)** · **R_1504889** | Charlotte — on-site | **Strong analytics fit despite the audit title.** The specific remit emphasizes dashboards, executive metrics, reporting architecture, SQL, source reconciliation, automation, and data governance. Your Microsoft application is an excellent starting point. |
+| **6** | **TD — [Quality Assurance Manager, Fair & Responsible Banking](https://td.wd3.myworkdayjobs.com/en-US/TD_Bank_Careers/job/Charlotte-North-Carolina/Quality-Assurance-Manager--Fair---Responsible-Banking--US-_R_1513214)** · **R_1513214** | Charlotte or Greenville — hybrid | **Strong customer-remediation and effective-challenge fit.** Reviews high-risk complaints, performs QA and peer review, identifies trends, and strengthens evidence and review standards. Your Wells work connecting complaint handlers and Audit investigators to remediation decisions is particularly relevant. |
+
+[Editorial omission: unrelated material between retained excerpts.]
+
+| Role | Assessment |
+|---|---|
+| **BofA — [Business Control Manager — AI and Policy Governance and Oversight](https://careers.bankofamerica.com/en-us/job-detail/26033303/business-control-manager-ai-and-policy-governance-and-oversight-multiple-locations)** · **26033303** · Charlotte | **High-value strategic application.** Combines enforcement-action remediation, AI/Copilot governance, requirements, controls, adoption, and executive forums. Your story connects well. The qualification needing the most careful treatment is experience supporting AI governance: your HITL work provides evidence, but should remain clearly distinguished from enterprise AI oversight. [export reference: genui | {"citation":{"ref":"turn78view1"}}] |
+| **Block — [Senior Data Scientist, Risk and Support](https://block.xyz/careers/jobs/5412922008)** · **R0006980** · Remote* | Strong connection to the Airbnb application: operational performance, prioritization, analytical standards, and customer outcomes. Census workforce deployment and Wells delivery leadership translate. Contact-demand forecasting and staffing models make it less direct than Lending, but I would **not** discard it over that transferable-skill difference. [export reference: genui | {"citation":{"ref":"turn80search1"}}] |
+| **BofA — [Business Control Manager: Regulatory Adherence](https://careers.bankofamerica.com/en-us/job-detail/26029871/business-control-manager-regulatory-adherence-multiple-locations)** · **26029871** · Charlotte | Strong fit for requirements interpretation, impact assessment, evidence, effective challenge, executive communication, and matrix leadership. Lower priority because it moves you further toward regulatory oversight and away from analytical product ownership. [export reference: genui | {"citation":{"ref":"turn78view2"}}] |
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-4ee43eae-d52a-4710-9664-672700fa8974"></a>
+## Andrew / user · C146-M00894
+
+C146-M00894 · 2026-10-01T19:55:53.353000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+One of the next steps for my Merchant-Sales-Based-Financing GitHub portfolio will likely dive into that realm. Long story short, there are roughly 230 SQL programs in that portfolio, each representing a different module / business requirement. For my initial 750 merchant cohort I ran those programs sequentially while testing each requirement. I've since developed a wrapper that uses a handful of PowerShell commands to run the full end-to-end process. Results matched and were successful for the same 750 merchant population. When attempting to run 2.5k merchants locally, bottlenecks reared their head. 
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-d90fdc2a-6c44-5a28-8ffc-aa5abbb7fe0b"></a>
+## Assistant · C146-M00895
+
+C146-M00895 · 2026-10-01T19:57:04.709579-04:00 · active path
+
+Preceding visible parent: [C146-M00894](part-10.md#m-4ee43eae-d52a-4710-9664-672700fa8974)
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+My Merchant-Sales-Based-Financing GitHub portfolio provides a practical next step. I automated roughly 230 SQL programs using a PowerShell wrapper and confirmed the outputs matched my sequential runs for a 750-merchant cohort. Scaling to 2,500 merchants locally exposed performance bottlenecks. Understanding those bottlenecks and evaluating what a cloud platform could offer are areas I’m interested in exploring next.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-9f489677-e273-4abc-a970-808f783cdef0"></a>
+## Andrew / user · C146-M00902
+
+C146-M00902 · 2026-10-01T20:15:09.629000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+let's tailor a resume/cover letter/copy paste job descriptions to this Wells Fargo role:. obviously the MSBF project needs to be a big part of the story - but also tell my Grand Slam and Home Run stories and use the flow that has worked - maybe give me weight to the OCC credit risk work.  position: Senior Risk Analytics Consultant (Merchant Services)
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-66e72cd0-d3fb-530f-b471-637af690ae51"></a>
+## Assistant · C146-M00903
+
+C146-M00903 · 2026-10-01T20:15:32.789932-04:00 · active path
+
+Preceding visible parent: [C146-M00902](part-10.md#m-9f489677-e273-4abc-a970-808f783cdef0)
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+I’ll tailor this around merchant credit decisions and ongoing monitoring, with MSBF as the lead portfolio example and more emphasis on OCC credit-risk work. I’ll preserve the CPI leadership story and the flow that has worked, while keeping the synthetic portfolio distinct from professional merchant-services experience.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-d84cc1d0-2f51-5b5d-b1e8-0d3aa4e3ecc9"></a>
+## Assistant · C146-M00904
+
+C146-M00904 · 2026-10-01T20:17:22.724091-04:00 · active path
+
+Preceding visible parent: [C146-M00903](part-10.md#m-66e72cd0-d3fb-530f-b471-637af690ae51)
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The strongest connection is MSBF’s work on funding decisions, counteroffers, and monitoring after funding. OCC adds credit-risk depth through longitudinal loan research, stress-testing segmentation, and lifetime-risk analysis.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-f3918ce4-1981-5ead-846d-bd0caaf03fe1"></a>
+## Assistant · C146-M00905
+
+C146-M00905 · 2026-10-01T20:23:18.310128-04:00 · active path
+
+Preceding visible parent: [C146-M00904](part-10.md#m-d84cc1d0-2f51-5b5d-b1e8-0d3aa4e3ecc9)
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+I’m keeping the two-page résumé format and the established letter opening. MSBF will show both sides of the decision: evaluating funding options and testing whether monitoring classifications make sense after funding. OCC will add the research, stress-testing, and lifetime credit-risk evidence behind that judgment.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-74f8f94a-02d0-5ab0-98b1-1add5d2629d2"></a>
+## Assistant · C146-M00906
+
+C146-M00906 · 2026-10-01T20:27:09.556839-04:00 · active path
+
+Preceding visible parent: [C146-M00905](part-10.md#m-f3918ce4-1981-5ead-846d-bd0caaf03fe1)
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The draft now gives MSBF two connected examples: funding and counteroffer decisions, followed by the monitoring investigation. OCC retains its full research and credit-risk evidence. The documents still fit two résumé pages and one letter page; I’m checking the final wording, links, and copy/paste entries now.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-8b19b558-4889-5693-8112-5c94cf035508"></a>
+## Assistant · C146-M00907
+
+C146-M00907 · 2026-10-01T20:29:32.940672-04:00 · active path
+
+Preceding visible parent: [C146-M00906](part-10.md#m-74f8f94a-02d0-5ab0-98b1-1add5d2629d2)
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+**MSBF takes the lead in the portfolio story**, covering funding, counteroffers, and monitoring. OCC receives greater emphasis through credit-risk research, DFAST, and lifetime-risk analysis. CPI, Tier 1 remediation leadership, and Census remain prominent.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-0ced225e-1e32-4e24-ba5b-fcb317d8cb0a"></a>
+## Andrew / user · C146-M00911
+
+C146-M00911 · 2026-10-01T20:45:10.804000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+similar to the loudoun e-mail earlier, but even shorter, draft an e-mail about this role to Loudoun. make sure to mention the connection to my MSBF portfolio. keep it short, personable, and appreciative in my voice.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-5e9a84fa-1166-57a0-8c75-adaaf0c73d29"></a>
+## Assistant · C146-M00912
+
+C146-M00912 · 2026-10-01T20:45:25.898325-04:00 · active path
+
+Preceding visible parent: [C146-M00911](part-10.md#m-0ced225e-1e32-4e24-ba5b-fcb317d8cb0a)
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+I’ll keep it brief and make the MSBF connection clear. I’m using the writing-block format so it’s easy to copy.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-205a270f-d2dc-54ee-94bc-f2b443106f83"></a>
+## Assistant · C146-M00913
+
+C146-M00913 · 2026-10-01T20:45:41.119914-04:00 · active path
+
+Preceding visible parent: [C146-M00912](part-10.md#m-5e9a84fa-1166-57a0-8c75-adaaf0c73d29)
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+I applied to one more Wells Fargo role: **R-577689 — Senior Risk Analytics Consultant (Merchant Services).** It connects closely with my OCC credit-risk work and my Merchant-Sales-Based-Financing (MSBF) portfolio, which explores merchant funding decisions and ongoing monitoring.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-85298b23-82c0-401f-b7b9-1cf84f3451a8"></a>
+## Andrew / user · C146-M00960
+
+C146-M00960 · 2026-10-02T14:19:38.188000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Merchant-Sales-Based-Financing models short-term merchant financing repaid through a fixed percentage of daily sales, using synthetic data. I defined funding and monitoring requirements, challenged results, and coordinated correction and separate review. Power BI connects merchant sales, liquidity, proposed terms, and DAX-generated decision explanations.
+
+[Editorial omission: unrelated material between retained excerpts.]
+
+Portfolio and professional recommendations
+Enterprise Credit Decisioning Strategy Simulator: https://github.com/andrew-goad/credit_decisioning_strategy
+Merchant-Sales-Based-Financing: https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator
+Human-in-the-Loop case study: https://github.com/andrew-goad/andrew-goad/blob/main/Human_in_the_Loop_Analytical_Leadership/Human_in_the_Loop_Analytical_Leadership.pdf
+Professional recommendations: https://github.com/andrew-goad/andrew-goad/blob/main/Andrew_R_Goad_Recommendation_Letters.pdf
+Reference contact details available upon request.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-d7d96d33-53e0-5802-b291-d74f4939ba55"></a>
+## Assistant · C146-M00962
+
+C146-M00962 · 2026-10-02T14:21:14.689717-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Merchant-Sales-Based-Financing models financing repaid through a fixed share of merchant sales, using synthetic data. I defined funding and monitoring requirements, challenged results, and coordinated correction and separate review. Power BI connects sales, liquidity, proposed terms, and decision explanations.
+
+[Editorial omission: unrelated material between retained excerpts.]
+
+Portfolio and professional recommendations
+Credit Decisioning: https://github.com/andrew-goad/credit_decisioning_strategy
+Merchant Financing: https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator
+Human-in-the-Loop: https://github.com/andrew-goad/andrew-goad/blob/main/Human_in_the_Loop_Analytical_Leadership/Human_in_the_Loop_Analytical_Leadership.pdf
+Recommendations: https://github.com/andrew-goad/andrew-goad/blob/main/Andrew_R_Goad_Recommendation_Letters.pdf
+Reference contact details available upon request.
+:::
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-bfb420c0-0aa5-5291-88a0-8f00537b84a9"></a>
+## Assistant · C146-M01001
+
+C146-M01001 · 2026-10-02T19:02:14.731257-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The comparison with the final Microsoft and GitHub letters surfaced two worthwhile improvements: make your leadership more explicit in the HITL paragraph, and give the BI and audit letters stronger evidence of the process you have led across your career. I’m also bringing the most relevant résumé bullets forward while keeping CPI and the 15+ additional workstreams first.
+<!-- END_SOURCE_MESSAGE -->

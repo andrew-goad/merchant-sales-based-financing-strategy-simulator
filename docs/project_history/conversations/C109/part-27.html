@@ -1,0 +1,1450 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 27 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 27</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-26.html">Previous part</a><a href="part-28.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-cb6523de-50e6-4a62-959f-83f37ea27cd6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00587 · 2026-09-01T13:47:52.158258-04:00 · active path</p><div class="bubble"><p>That is the right question. Looking only at the <strong>current R1 population and the type of product we modeled</strong>, I would not immediately call the chart wrong—but I would <strong>challenge the business meaning of “Accounts requiring attention.”</strong></p>
+<p>For Baseline, we have <strong>103 funded account paths</strong>. The new chart peaks at roughly <strong>190–200 active alert flags</strong> and about <strong>80–90 accounts requiring attention</strong>. Those two magnitudes mean very different things.</p>
+<p>The alert-flag count can make sense. An account can trip more than one condition on the same date—pace/watch, daily shortfall, liquidity stress, zero-sales streak, days-since-remittance, etc. A peak around 200 flags across 103 accounts is only about <strong>two simultaneous flags per account</strong> at the worst point. For a short-duration merchant-financing product with daily remittance and deliberately sensitive early-warning monitoring, that is plausible.</p>
+<p>The more important question is the dark line. If <strong>80–90 of 103 accounts are genuinely “requiring attention,”</strong> that means roughly <strong>78–87% of the portfolio</strong> is being represented as operationally noteworthy at the early peak. That is very high if “requiring attention” means “someone should work this account.”</p>
+<p>And our current DAX definition explains why: we included all of these statuses:</p>
+<pre><code class="language-text">WATCH
+UNDERPERFORMING
+SEVERE_SHORTFALL
+DORMANT_NO_REMITTANCE
+</code></pre>
+<p>That means <strong>WATCH alone qualifies an account as “requiring attention.”</strong></p>
+<p>I think that may be the issue—not the data.</p>
+<h3>What the curve itself suggests</h3>
+<p>The shape actually looks coherent for this type of synthetic product:</p>
+<p><strong>Funding/activation</strong>
+→ lots of early volatility as daily remittance begins<br>→ many accounts temporarily fall below expected cumulative pace<br>→ alert counts peak<br>→ cumulative remittance catches up<br>→ accounts stabilize/pay off<br>→ signals decay toward almost zero.</p>
+<p>That pattern is reinforced by the other P02 visuals. Remittance fulfillment falls sharply early and then recovers steadily toward 100%. Receivable balances run off rapidly. Payoff timing eventually becomes materially earlier than plan. So a large early monitoring spike followed by substantial resolution is internally consistent.</p>
+<p>What I do <strong>not</strong> yet believe is that every <code>WATCH</code> account should be described to an executive as <strong>requiring attention</strong>.</p>
+<p>There is an important operational distinction:</p>
+<p><strong>WATCH</strong><br>= something is outside its normal monitoring band; observe it.</p>
+<p><strong>UNDERPERFORMING / SEVERE_SHORTFALL / DORMANT_NO_REMITTANCE</strong><br>= sufficiently adverse behavior that operational attention may actually be warranted.</p>
+<p>That distinction matters because otherwise the dashboard implies a servicing organization would need to work 80%+ of newly funded merchants, which would be a poor monitoring design even if the underlying statistical alerting were behaving exactly as intended.</p>
+<h3>My preferred refinement</h3>
+<p>I would keep <strong>Active alert flags</strong> exactly as it is.</p>
+<p>Then I would test two account-level series separately:</p>
+<ol>
+<li><p><strong>Accounts on watch</strong></p>
+<pre><code class="language-text">WATCH
++ UNDERPERFORMING
++ SEVERE_SHORTFALL
++ DORMANT_NO_REMITTANCE
+</code></pre>
+</li>
+<li><p><strong>Accounts requiring attention</strong></p>
+<pre><code class="language-text">UNDERPERFORMING
++ SEVERE_SHORTFALL
++ DORMANT_NO_REMITTANCE
+</code></pre>
+</li>
+</ol>
+<p>The first measures monitoring breadth. The second measures more actionable deterioration.</p>
+<p>Then we can see the actual population behavior. My suspicion is that the large dark line is being driven heavily by ordinary <code>WATCH</code> states. If so, the current data are fine, but the label is too strong.</p>
+<p>For an executive P02, the strongest pairing may ultimately be:</p>
+<blockquote>
+<p><strong>Active alert flags</strong><br><strong>Accounts requiring attention</strong></p>
+</blockquote>
+<p>where the second line excludes simple WATCH.</p>
+<p>Then the tooltip can additionally show:</p>
+<blockquote>
+<p>Accounts on watch</p>
+</blockquote>
+<p>That gives a clean hierarchy:</p>
+<p><strong>signals → watch population → actionable attention population</strong></p>
+<p>and avoids implying that every mild pace deviation needs intervention.</p>
+<h3>What would concern me</h3>
+<p>I would become concerned about the strategy/monitoring logic—not just the report—if after excluding WATCH we still find that <strong>50–80% of the Baseline funded population is UNDERPERFORMING, SEVERE_SHORTFALL, or DORMANT simultaneously</strong> shortly after funding.</p>
+<p>That would suggest one of three things:</p>
+<ul>
+<li>the monitoring thresholds are too sensitive;</li>
+<li>expected remittance trajectories do not match the synthetic cash-flow behavior being generated; or</li>
+<li>the strategy is authorizing merchants whose post-funding behavior systematically violates the monitoring assumptions.</li>
+</ul>
+<p>That would be worth taking back to the Module 1/2 remediation chat.</p>
+<p>But if the actionable population is, say, <strong>10–25 accounts out of 103 at the peak</strong>, while another 50–60 are simply WATCH, the current system would look much more intuitively reasonable for a high-frequency merchant-financing monitoring framework.</p>
+<p>So I recommend we <strong>do not freeze this one semantic choice yet</strong>. The next useful step is to calculate the daily peak counts separately for:</p>
+<ul>
+<li>WATCH</li>
+<li>UNDERPERFORMING</li>
+<li>SEVERE_SHORTFALL</li>
+<li>DORMANT_NO_REMITTANCE</li>
+<li>distinct accounts with any non-current status</li>
+<li>distinct accounts with actionable status excluding WATCH</li>
+</ul>
+<p>That will tell us whether we have a <strong>monitoring-strategy issue</strong> or simply a <strong>Power BI labeling/aggregation issue</strong>.</p>
+</div></article><article id="m-50050dea-8efd-445f-971c-a1c07bf61c96" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00588 · 2026-09-01T14:02:28.102000-04:00 · active path</p><div class="bubble"><p>feedback from our remediation/corrections chat: P01 / P02 direction
+The current P01 and P02 refinements are directionally strong.</p>
+<p>For P01, preserve the improved successor decision taxonomy and executive reconciliation:</p>
+<pre><code>
+</code></pre>
+<pre><code>Approved as requested
+Counteroffer authorized
+Counteroffer review
+Underwriting review
+Evidence decline
+No feasible structure
+Policy hard stop
+</code></pre>
+<p>The current Baseline and Recession Energy counts reconcile coherently to funded paths and the new supportable-path KPI. Preserve the richer industry/economics tooltip, slicer behavior, accessibility work, and the distinction between decision/funding facts fixed at the governed source cutoff versus synthetic-forward account performance.</p>
+<p>For P02, preserve the revised lifecycle framing:</p>
+<pre><code>
+</code></pre>
+<pre><code>Receivable runoff
+Remittance fulfillment
+Attention signals
+Payoff timing vs plan
+</code></pre>
+<p>Also preserve the observation-period behavior and the intended distinction between fixed funded-cohort definition and the selected lifecycle observation window.</p>
+<h2>Open question — alerts versus accounts requiring attention</h2>
+<p>We should <strong>not yet conclude that there is a monitoring-strategy defect</strong>.</p>
+<p>The current evidence suggests three possible explanations:</p>
+<ol>
+<li><p><strong>Most likely: Power BI semantic/labeling issue.</strong></p>
+<p>The existing “Accounts requiring attention” measure counts all of:</p>
+<pre><code>
+</code></pre>
+<pre><code>WATCH
+UNDERPERFORMING
+SEVERE_SHORTFALL
+DORMANT_NO_REMITTANCE
+</code></pre>
+<p>That makes <code>WATCH</code> operationally equivalent to more serious deterioration. The underlying monitoring signals may be reasonable while the executive label overstates severity.</p>
+</li>
+<li><p><strong>Possible: DAX/account aggregation issue.</strong>
+ We need to confirm that the measure is counting distinct current account paths at the correct as-of grain and is not inadvertently inflating counts through duplicated rows, multiple monitoring records, or incorrect status resolution. </p>
+</li>
+<li><p><strong>Possible but not established: underlying monitoring/strategy issue.</strong>
+ If a very large share of active accounts remains <code>UNDERPERFORMING</code>, <code>SEVERE_SHORTFALL</code>, or <code>DORMANT_NO_REMITTANCE</code> after excluding ordinary <code>WATCH</code>, then the finding may belong upstream in monitoring thresholds, expected-remittance trajectories, or compatibility between authorized structures and simulated account behavior.</p>
+</li>
+</ol>
+<p><strong>Do not change the underlying monitoring strategy yet. First produce the evidence needed to distinguish these cases.</strong></p>
+<h2>Required diagnostic</h2>
+<p>Preserve the existing four-state measure for comparison, and create temporary diagnostic measures at the same current/as-of account grain for:</p>
+<pre><code>
+</code></pre>
+<pre><code>WATCH
+UNDERPERFORMING
+SEVERE_SHORTFALL
+DORMANT_NO_REMITTANCE
+</code></pre>
+<p>Also calculate:</p>
+<pre><code>
+</code></pre>
+<pre><code>Any non-current monitoring account
+= WATCH
++ UNDERPERFORMING
++ SEVERE_SHORTFALL
++ DORMANT_NO_REMITTANCE
+
+Actionable attention account
+= UNDERPERFORMING
++ SEVERE_SHORTFALL
++ DORMANT_NO_REMITTANCE
+</code></pre>
+<p>All account measures should:</p>
+<ul>
+<li>count distinct application/account paths; </li>
+<li>use the same governed as-of date logic as the existing P02 measure; </li>
+<li>exclude paid-off accounts consistently; </li>
+<li>resolve only the applicable current/as-of monitoring status; </li>
+<li>avoid duplicate inflation from multiple monitoring rows.</li>
+</ul>
+<p>For <strong>Baseline and Recession Energy separately</strong>, report for each status and the two aggregate populations:</p>
+<pre><code>
+</code></pre>
+<pre><code>Peak distinct-account count
+Date of peak
+Peak % of originally funded cohort
+Peak % of active / not-paid-off accounts on that date
+</code></pre>
+<p>If useful, create a temporary diagnostic table or chart. It does not need to become part of the final executive page.</p>
+<h2>Preferred final semantic hierarchy</h2>
+<p>Unless the diagnostic evidence shows otherwise, the preferred executive hierarchy is:</p>
+<p><strong>Active alert flags</strong></p>
+<p>Individual monitoring signals. Multiple simultaneous flags may exist on one account.</p>
+<p><strong>Accounts flagged for monitoring</strong></p>
+<p>Distinct active accounts in any of:</p>
+<pre><code>
+</code></pre>
+<pre><code>WATCH
+UNDERPERFORMING
+SEVERE_SHORTFALL
+DORMANT_NO_REMITTANCE
+</code></pre>
+<p><strong>Accounts requiring attention</strong></p>
+<p>Distinct active accounts in:</p>
+<pre><code>
+</code></pre>
+<pre><code>UNDERPERFORMING
+SEVERE_SHORTFALL
+DORMANT_NO_REMITTANCE
+</code></pre>
+<p>The likely final P02 visual should remain simple:</p>
+<pre><code>
+</code></pre>
+<pre><code>Active alert flags
+Accounts requiring attention
+</code></pre>
+<p>with tooltip detail showing:</p>
+<pre><code>
+</code></pre>
+<pre><code>Accounts flagged for monitoring
+WATCH
+UNDERPERFORMING
+SEVERE_SHORTFALL
+DORMANT_NO_REMITTANCE
+</code></pre>
+<p>Do not freeze that semantic change until the diagnostic is complete.</p>
+<h2>Interpretation</h2>
+<p>A large <strong>alert-flag</strong> count is not itself concerning because one account can carry multiple simultaneous signals.</p>
+<p>A large population including ordinary <code>WATCH</code> may also be reasonable for an intentionally sensitive, short-duration daily-remittance monitoring framework.</p>
+<p>The question that matters is how many <strong>active accounts remain in materially adverse states after WATCH is excluded</strong>.</p>
+<p>Use judgment rather than hard policy thresholds, but broadly:</p>
+<pre><code>
+</code></pre>
+<pre><code>~10–25% actionable at peak:
+plausibly consistent with sensitive early-warning monitoring
+
+~25–40%:
+inspect thresholds and transition behavior
+
+~40%+:
+increasingly strong reason to test the underlying monitoring assumptions
+</code></pre>
+<p>These are diagnostic heuristics only, <strong>not new governed policy limits</strong>.</p>
+<h2>Decision after the diagnostic</h2>
+<p>Return one of these conclusions:</p>
+<pre><code>
+</code></pre>
+<pre><code>A. POWER BI SEMANTIC / LABELING ISSUE
+Underlying monitoring population appears coherent; refine the executive measure and terminology only.
+
+B. POWER BI GRAIN / DAX ISSUE
+Counts were inflated or mis-resolved; correct the measure and revalidate P02.
+
+C. POTENTIAL M1/M2 MONITORING-STRATEGY FINDING
+Actionable adverse-state prevalence remains materially high after correct account-level measurement;
+</code></pre>
+</div></article><article id="m-ad13d5cb-d6ba-4943-be0d-1f7d0b93d1fb" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00589 · 2026-09-01T14:04:02.787793-04:00 · active path</p><div class="bubble"><p>That feedback is well framed, and the physical Power BI logic lets us narrow the possibilities before we even run the diagnostic.</p>
+<p>Two points are already established. First, the current <code>Accounts requiring attention</code> measure is <strong>not obviously suffering duplicate-row inflation</strong>: it iterates one <code>ApplicationScenarioKey</code> at a time, resolves that path’s latest monitoring date/status, excludes paid-off paths, and returns at most <code>1</code> per path. [export reference: filecite | turn96file0 | L177-L214] Second, <code>Active alert flags</code> is intentionally a <strong>flag count</strong>, not an account count: up to six simultaneous alert flags can contribute for one non-paid-off account on a date. [export reference: filecite | turn97file4 | L422-L458]</p>
+<p>There is also an important upstream fact: the successor M2.6 source logic itself places <code>WATCH</code>, <code>UNDERPERFORMING</code>, <code>SEVERE_SHORTFALL</code>, and <code>DORMANT_NO_REMITTANCE</code> into a servicing/review pathway, including <code>recommended_action_flag</code> and <code>review_required_flag</code>. [export reference: filecite | turn93file6 | L108-L124] So Power BI did not invent the four-state grouping. What remains unresolved is whether <strong>“Accounts requiring attention” is the best executive label</strong> and whether the prevalence of the materially adverse states is reasonable.</p>
+<p>We should run the requested diagnostic now, without changing P02.</p>
+<h2>Step 1 — add temporary diagnostic measures</h2>
+<p>Open <strong>DAX Query View</strong>. Create a new query tab and paste the entire block below. Then click <strong>Update model with changes</strong>.</p>
+<pre><code class="language-DAX">DEFINE
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 DIAG Watch Paths As Of] =
+        IF (
+            [R1 P01 As Of Evidence Status] = &quot;VALID&quot;,
+            COALESCE (
+                SUMX (
+                    VALUES (
+                        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+                    ),
+                    VAR _LatestDate =
+                        CALCULATE (
+                            [R1 P01 __Latest Monitoring Date As Of]
+                        )
+                    VAR _MonitoringStatus =
+                        CALCULATE (
+                            [R1 P02 __Monitoring Status As Of]
+                        )
+                    VAR _PaidOffFlag =
+                        CALCULATE (
+                            [R1 P02 __Paid-Off Flag As Of]
+                        )
+                    RETURN
+                        IF (
+                            NOT ISBLANK ( _LatestDate )
+                                &amp;&amp; _PaidOffFlag &lt;&gt; &quot;t&quot;
+                                &amp;&amp; _MonitoringStatus = &quot;WATCH&quot;,
+                            1,
+                            0
+                        )
+                ),
+                0
+            )
+        )
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 DIAG Underperforming Paths As Of] =
+        IF (
+            [R1 P01 As Of Evidence Status] = &quot;VALID&quot;,
+            COALESCE (
+                SUMX (
+                    VALUES (
+                        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+                    ),
+                    VAR _LatestDate =
+                        CALCULATE (
+                            [R1 P01 __Latest Monitoring Date As Of]
+                        )
+                    VAR _MonitoringStatus =
+                        CALCULATE (
+                            [R1 P02 __Monitoring Status As Of]
+                        )
+                    VAR _PaidOffFlag =
+                        CALCULATE (
+                            [R1 P02 __Paid-Off Flag As Of]
+                        )
+                    RETURN
+                        IF (
+                            NOT ISBLANK ( _LatestDate )
+                                &amp;&amp; _PaidOffFlag &lt;&gt; &quot;t&quot;
+                                &amp;&amp; _MonitoringStatus = &quot;UNDERPERFORMING&quot;,
+                            1,
+                            0
+                        )
+                ),
+                0
+            )
+        )
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 DIAG Severe Shortfall Paths As Of] =
+        IF (
+            [R1 P01 As Of Evidence Status] = &quot;VALID&quot;,
+            COALESCE (
+                SUMX (
+                    VALUES (
+                        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+                    ),
+                    VAR _LatestDate =
+                        CALCULATE (
+                            [R1 P01 __Latest Monitoring Date As Of]
+                        )
+                    VAR _MonitoringStatus =
+                        CALCULATE (
+                            [R1 P02 __Monitoring Status As Of]
+                        )
+                    VAR _PaidOffFlag =
+                        CALCULATE (
+                            [R1 P02 __Paid-Off Flag As Of]
+                        )
+                    RETURN
+                        IF (
+                            NOT ISBLANK ( _LatestDate )
+                                &amp;&amp; _PaidOffFlag &lt;&gt; &quot;t&quot;
+                                &amp;&amp; _MonitoringStatus = &quot;SEVERE_SHORTFALL&quot;,
+                            1,
+                            0
+                        )
+                ),
+                0
+            )
+        )
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 DIAG Dormant No-Remittance Paths As Of] =
+        IF (
+            [R1 P01 As Of Evidence Status] = &quot;VALID&quot;,
+            COALESCE (
+                SUMX (
+                    VALUES (
+                        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+                    ),
+                    VAR _LatestDate =
+                        CALCULATE (
+                            [R1 P01 __Latest Monitoring Date As Of]
+                        )
+                    VAR _MonitoringStatus =
+                        CALCULATE (
+                            [R1 P02 __Monitoring Status As Of]
+                        )
+                    VAR _PaidOffFlag =
+                        CALCULATE (
+                            [R1 P02 __Paid-Off Flag As Of]
+                        )
+                    RETURN
+                        IF (
+                            NOT ISBLANK ( _LatestDate )
+                                &amp;&amp; _PaidOffFlag &lt;&gt; &quot;t&quot;
+                                &amp;&amp; _MonitoringStatus = &quot;DORMANT_NO_REMITTANCE&quot;,
+                            1,
+                            0
+                        )
+                ),
+                0
+            )
+        )
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 DIAG Accounts Flagged For Monitoring As Of] =
+        [R1 P02 DIAG Watch Paths As Of]
+            + [R1 P02 DIAG Underperforming Paths As Of]
+            + [R1 P02 DIAG Severe Shortfall Paths As Of]
+            + [R1 P02 DIAG Dormant No-Remittance Paths As Of]
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 DIAG Actionable Attention Paths As Of] =
+        [R1 P02 DIAG Underperforming Paths As Of]
+            + [R1 P02 DIAG Severe Shortfall Paths As Of]
+            + [R1 P02 DIAG Dormant No-Remittance Paths As Of]
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 DIAG Non-Paid-Off Paths As Of] =
+        IF (
+            [R1 P01 As Of Evidence Status] = &quot;VALID&quot;,
+            COALESCE (
+                SUMX (
+                    VALUES (
+                        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+                    ),
+                    VAR _LatestDate =
+                        CALCULATE (
+                            [R1 P01 __Latest Monitoring Date As Of]
+                        )
+                    VAR _PaidOffFlag =
+                        CALCULATE (
+                            [R1 P02 __Paid-Off Flag As Of]
+                        )
+                    RETURN
+                        IF (
+                            NOT ISBLANK ( _LatestDate )
+                                &amp;&amp; _PaidOffFlag &lt;&gt; &quot;t&quot;,
+                            1,
+                            0
+                        )
+                ),
+                0
+            )
+        )
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 DIAG Flagged % Original Cohort] =
+        DIVIDE (
+            [R1 P02 DIAG Accounts Flagged For Monitoring As Of],
+            [R1 P02 Cohort Funded Account Paths]
+        )
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 DIAG Actionable % Original Cohort] =
+        DIVIDE (
+            [R1 P02 DIAG Actionable Attention Paths As Of],
+            [R1 P02 Cohort Funded Account Paths]
+        )
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 DIAG Flagged % Non-Paid-Off] =
+        DIVIDE (
+            [R1 P02 DIAG Accounts Flagged For Monitoring As Of],
+            [R1 P02 DIAG Non-Paid-Off Paths As Of]
+        )
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 DIAG Actionable % Non-Paid-Off] =
+        DIVIDE (
+            [R1 P02 DIAG Actionable Attention Paths As Of],
+            [R1 P02 DIAG Non-Paid-Off Paths As Of]
+        )
+
+EVALUATE
+ROW (
+    &quot;Watch&quot;, [R1 P02 DIAG Watch Paths As Of],
+    &quot;Underperforming&quot;, [R1 P02 DIAG Underperforming Paths As Of],
+    &quot;Severe shortfall&quot;, [R1 P02 DIAG Severe Shortfall Paths As Of],
+    &quot;Dormant no-remittance&quot;, [R1 P02 DIAG Dormant No-Remittance Paths As Of],
+    &quot;Flagged for monitoring&quot;, [R1 P02 DIAG Accounts Flagged For Monitoring As Of],
+    &quot;Actionable attention&quot;, [R1 P02 DIAG Actionable Attention Paths As Of],
+    &quot;Non-paid-off paths&quot;, [R1 P02 DIAG Non-Paid-Off Paths As Of]
+)
+</code></pre>
+<p>These use exactly the same path-level latest-status and paid-off logic as the existing P02 measure. The current measure already uses one <code>ApplicationScenarioKey</code> per iteration and one latest status per path. [export reference: filecite | turn96file0 | L177-L214]</p>
+<p>After they are created, put all measures beginning:</p>
+<pre><code class="language-text">R1 P02 DIAG
+</code></pre>
+<p>into:</p>
+<pre><code class="language-text">P02 | Diagnostic - Attention
+</code></pre>
+<p>Do <strong>not</strong> change the live chart yet.</p>
+<hr>
+<h1>Step 2 — create a temporary diagnostic table on P02</h1>
+<p>This is the fastest way to see whether the curve is being driven by WATCH.</p>
+<ol>
+<li>Go to <strong>P02 – Cohort Lifecycle</strong>.</li>
+<li>Click a blank area of the canvas.</li>
+<li>On the Visualizations pane, select <strong>Table</strong>.</li>
+<li>Place it temporarily over the lower footer area or off to the side; we will delete it later.</li>
+<li>Add these fields in this order:</li>
+</ol>
+<pre><code class="language-text">DimAsOfDate[AsOfDate]
+R1 P02 Active Account Paths As Of
+R1 P02 DIAG Non-Paid-Off Paths As Of
+R1 P02 DIAG Watch Paths As Of
+R1 P02 DIAG Underperforming Paths As Of
+R1 P02 DIAG Severe Shortfall Paths As Of
+R1 P02 DIAG Dormant No-Remittance Paths As Of
+R1 P02 DIAG Accounts Flagged For Monitoring As Of
+R1 P02 DIAG Actionable Attention Paths As Of
+R1 P02 Active Alert Flags As Of
+R1 P02 DIAG Actionable % Original Cohort
+R1 P02 DIAG Actionable % Non-Paid-Off
+</code></pre>
+<p>Rename for this visual:</p>
+<pre><code class="language-text">Date
+Active paths
+Non-paid-off paths
+Watch
+Underperforming
+Severe shortfall
+Dormant
+Flagged for monitoring
+Actionable attention
+Alert flags
+Actionable % funded cohort
+Actionable % active
+</code></pre>
+<p>Set the two percentage measures to <strong>Percentage / 1 decimal</strong>.</p>
+<hr>
+<h1>Step 3 — run Baseline first</h1>
+<p>Use:</p>
+<pre><code class="language-text">Scenario:            Baseline
+Industry:            All
+Acquisition source:  All
+Observation period:  7/23/2026 – 11/22/2026
+</code></pre>
+<p>Then sort the temporary table by <strong>Date ascending</strong>.</p>
+<p>What we are looking for is the daily decomposition behind the teal/dark curves.</p>
+<p>The accounting identities should hold on every date:</p>
+<pre><code class="language-text">Flagged for monitoring
+=
+WATCH
++ UNDERPERFORMING
++ SEVERE_SHORTFALL
++ DORMANT_NO_REMITTANCE
+</code></pre>
+<p>and:</p>
+<pre><code class="language-text">Actionable attention
+=
+UNDERPERFORMING
++ SEVERE_SHORTFALL
++ DORMANT_NO_REMITTANCE
+</code></pre>
+<p>If either fails, we have a DAX/status-resolution issue.</p>
+<p>Also compare:</p>
+<pre><code class="language-text">Non-paid-off paths
+vs
+R1 P02 Active Account Paths As Of
+</code></pre>
+<p>The existing Active measure additionally requires remaining exposure &gt; 0. [export reference: filecite | turn96file0 | L144-L175] If those diverge materially, we should understand why before choosing the denominator.</p>
+<hr>
+<h1>Step 4 — easiest way to identify the peaks</h1>
+<p>Rather than manually scan 120 rows six times, create a <strong>temporary line chart</strong> below or over the existing Attention chart.</p>
+<p>Use:</p>
+<h3>X-axis</h3>
+<pre><code class="language-text">DimAsOfDate[AsOfDate]
+</code></pre>
+<h3>Y-axis</h3>
+<pre><code class="language-text">R1 P02 DIAG Watch Paths As Of
+R1 P02 DIAG Underperforming Paths As Of
+R1 P02 DIAG Severe Shortfall Paths As Of
+R1 P02 DIAG Dormant No-Remittance Paths As Of
+R1 P02 DIAG Actionable Attention Paths As Of
+</code></pre>
+<p>Turn <strong>markers on temporarily</strong>.</p>
+<p>Hover the peak of each series and record:</p>
+<pre><code class="language-text">Peak count
+Peak date
+</code></pre>
+<p>At each peak date, the temporary table will give us:</p>
+<pre><code class="language-text">Peak % originally funded
+Peak % non-paid-off/active
+</code></pre>
+<p>Then repeat after changing only:</p>
+<pre><code class="language-text">Scenario → Recession Energy
+</code></pre>
+<hr>
+<h1>Step 5 — what I want you to send me</h1>
+<p>We do not need dozens of screenshots.</p>
+<p>For <strong>Baseline</strong>, send one screenshot of the temporary diagnostic chart/table around the peak region.</p>
+<p>For <strong>Recession Energy</strong>, send the equivalent screenshot.</p>
+<p>If you can easily read the peak values, include these twelve facts:</p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Population</th>
+<th align="right">Peak count</th>
+<th>Peak date</th>
+<th align="right">% funded cohort</th>
+<th align="right">% active/non-paid-off</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Baseline</td>
+<td>WATCH</td>
+<td align="right"></td>
+<td></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr>
+<td>Baseline</td>
+<td>Underperforming</td>
+<td align="right"></td>
+<td></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr>
+<td>Baseline</td>
+<td>Severe shortfall</td>
+<td align="right"></td>
+<td></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr>
+<td>Baseline</td>
+<td>Dormant</td>
+<td align="right"></td>
+<td></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr>
+<td>Baseline</td>
+<td>Flagged for monitoring</td>
+<td align="right"></td>
+<td></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr>
+<td>Baseline</td>
+<td>Actionable attention</td>
+<td align="right"></td>
+<td></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr>
+<td>Recession Energy</td>
+<td>WATCH</td>
+<td align="right"></td>
+<td></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr>
+<td>Recession Energy</td>
+<td>Underperforming</td>
+<td align="right"></td>
+<td></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr>
+<td>Recession Energy</td>
+<td>Severe shortfall</td>
+<td align="right"></td>
+<td></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr>
+<td>Recession Energy</td>
+<td>Dormant</td>
+<td align="right"></td>
+<td></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr>
+<td>Recession Energy</td>
+<td>Flagged for monitoring</td>
+<td align="right"></td>
+<td></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr>
+<td>Recession Energy</td>
+<td>Actionable attention</td>
+<td align="right"></td>
+<td></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+</tbody></table>
+<p>I will then make the A/B/C determination from the remediation chat.</p>
+<h2>One useful finding already</h2>
+<p>The physical source makes this more interesting than a simple Power BI naming mistake.</p>
+<p><code>R1FactDailyMonitoring</code> is a clean <strong>ApplicationScenarioKey × monitoring_day_index</strong> fact with 15,600 rows: 130 funded paths × 120 days. It carries the six individual alert flags, final monitoring status, and paid-off flag. [export reference: filecite | turn93file0 | L10-L12] Independent R17 evidence confirms exactly 130 paths and 120 rows per path—103 Baseline and 27 Recession Energy. [export reference: filecite | turn93file12 | L293-L305]</p>
+<p>So there is no obvious physical row-count pathology behind the chart.</p>
+<p>And, importantly, the upstream M2.6 operational logic itself currently says that a non-paid-off account in <strong>any of the four states including WATCH</strong> receives a review/recommended-action treatment, while severe shortfall can get the higher temporary-remittance-review treatment. [export reference: filecite | turn93file6 | L108-L124]</p>
+<p>Therefore, if the diagnostic tells us WATCH dominates the population, the conclusion may be nuanced:</p>
+<blockquote>
+<p><strong>Power BI terminology can be improved, but WATCH being operationally reviewable is also an intentional upstream design choice—not merely a reporting accident.</strong></p>
+</blockquote>
+<p>If, however, the non-WATCH adverse population is itself very large, then we have the evidence needed to take a bounded monitoring finding back upstream.</p>
+<p>For now, <strong>do not alter or delete the existing P02 Attention signals chart</strong>. It remains our comparison control until this diagnostic closes.</p>
+</div></article><article id="m-608c58f5-d129-4d21-8ad8-d3e030f55d92" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00590 · 2026-09-01T14:14:39.190000-04:00 · active path</p><div class="bubble"><p>instead of finding a blank spot on P02, can I not just create a clone (duplicate of P02) and delete everything you do not want to see and place this new table where you want to do the comparison?</p>
+</div></article><article id="m-ce102dea-a24a-4d89-9fee-73490c65c188" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00591 · 2026-09-01T14:14:47.853357-04:00 · active path</p><div class="bubble"><p>Yes. That is actually the cleaner way to do this diagnostic.</p>
+<p>Duplicate P02 and treat the duplicate as a temporary <strong>diagnostic workspace</strong>. That keeps the production P02 untouched, preserves the current Attention signals visual for comparison, and gives us enough room to inspect the status composition properly.</p>
+<p>I would do it this way:</p>
+<ol>
+<li>Right-click the <strong>P02 – Cohort Lifecycle</strong> page tab.</li>
+<li>Choose <strong>Duplicate page</strong>.</li>
+<li>Rename the duplicate to something explicit, for example:
+<code>P02-DIAG – Attention States</code></li>
+<li>On the duplicate, keep the existing slicers because we want the same Scenario, Industry, Acquisition source, and Observation period context.</li>
+<li>Keep the existing <strong>Attention signals</strong> chart somewhere on the page as the control visual.</li>
+<li>Delete the other visuals you do not need for this diagnostic:<ul>
+<li>Receivable runoff</li>
+<li>Remittance fulfillment</li>
+<li>Payoff timing vs plan</li>
+<li>left KPI card block</li>
+<li>provenance/footer text if it is in the way</li>
+</ul>
+</li>
+<li>Use the freed space for:<ul>
+<li>one large diagnostic line chart across the top or left;</li>
+<li>one large diagnostic table underneath or beside it.</li>
+</ul>
+</li>
+</ol>
+<p>For the diagnostic line chart, use:</p>
+<pre><code class="language-text">X-axis
+DimAsOfDate[AsOfDate]
+
+Y-axis
+R1 P02 DIAG Watch Paths As Of
+R1 P02 DIAG Underperforming Paths As Of
+R1 P02 DIAG Severe Shortfall Paths As Of
+R1 P02 DIAG Dormant No-Remittance Paths As Of
+R1 P02 DIAG Actionable Attention Paths As Of
+</code></pre>
+<p>I would also add this sixth line temporarily:</p>
+<pre><code class="language-text">R1 P02 DIAG Accounts Flagged For Monitoring As Of
+</code></pre>
+<p>That gives us the complete hierarchy visually: individual states → total flagged → actionable subset.</p>
+<p>For the table, use:</p>
+<pre><code class="language-text">Date
+Active paths
+Non-paid-off paths
+Watch
+Underperforming
+Severe shortfall
+Dormant
+Flagged for monitoring
+Actionable attention
+Alert flags
+Actionable % funded cohort
+Actionable % non-paid-off
+</code></pre>
+<p>I would make the table <strong>wide and tall</strong>, because the objective here is QA rather than presentation quality.</p>
+<p>One additional advantage of the cloned page: you can leave <strong>markers on, data labels on selectively, and visual headers visible</strong> without compromising the executive page. We can be much more forensic on this page.</p>
+<p>I would retain the existing Attention signals chart on the diagnostic page because it gives us a direct visual reconciliation target:</p>
+<pre><code class="language-text">Current dark line
+Accounts requiring attention
+=
+WATCH + UNDERPERFORMING + SEVERE_SHORTFALL + DORMANT_NO_REMITTANCE
+</code></pre>
+<p>The new diagnostics should reproduce that line exactly. If they do not, that immediately points to a grain or resolution problem.</p>
+<p>So yes: <strong>duplicate P02, strip it down, and use the duplicate as our laboratory.</strong> That is preferable to squeezing temporary visuals into the finished page.</p>
+</div></article><article id="m-6d5cb212-0067-4d57-8181-51acc6f699f0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00592 · 2026-09-01T16:13:56.192000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 71bb7c03-534f-4d1e-b316-08f829b28871.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-f7bb0c9a-728d-4255-88cf-075473ca71d5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00593 · 2026-09-01T16:14:00.308708-04:00 · active path</p><div class="bubble"><p>This is exactly the diagnostic we needed, and it already answers a lot for <strong>Baseline</strong>.</p>
+<h3>What the table proves</h3>
+<p>First, the Power BI grain looks correct. Your identities reconcile row by row:</p>
+<pre><code class="language-text">Monitoring
+= Watch + Underperforming + Severe shortfall + Dormant
+
+Attention
+= Underperforming + Severe shortfall + Dormant
+</code></pre>
+<p>For example, on <strong>8/8/2026</strong>:</p>
+<pre><code class="language-text">Watch                 35
+Underperforming       27
+Severe shortfall       3
+Dormant               11
+-------------------------
+Monitoring            76
+
+Actionable attention:
+27 + 3 + 11 =         41
+</code></pre>
+<p>That exactly matches the table. The existing measure is also explicitly iterating one <code>ApplicationScenarioKey</code> at a time, resolving the latest status, and excluding paid-off paths, so there is no indication here of duplicate-row inflation. [export reference: filecite | turn96file0 | L177-L214]</p>
+<p>Second, in the portion shown, <strong>Active</strong> and <strong>Non-paid-off</strong> are identical. That is useful because it means the active-account denominator is not introducing a hidden denominator problem in this period.</p>
+<p>So at this point I would effectively rule out:</p>
+<blockquote>
+<p><strong>B. POWER BI GRAIN / DAX ISSUE</strong></p>
+</blockquote>
+<p>for Baseline unless something surprising appears later.</p>
+<hr>
+<h1>What the Baseline population actually says</h1>
+<p>There are two distinct phases.</p>
+<h3>Phase 1 — widespread WATCH, little real deterioration</h3>
+<p>From roughly <strong>8/1 through 8/7</strong>, the population is dominated by WATCH:</p>
+<ul>
+<li>8/1: 75 Watch, <strong>0 actionable</strong></li>
+<li>8/4: 83 Watch, <strong>0 actionable</strong></li>
+<li>8/5: <strong>89 Watch</strong>, 0 actionable</li>
+<li>8/7: 73 Watch, 0 actionable</li>
+</ul>
+<p>So the very large early dark line in the existing P02 chart is indeed primarily a <strong>semantic issue</strong>. Calling those accounts “requiring attention” materially overstates what is occurring during this phase.</p>
+<p>On 8/5:</p>
+<pre><code class="language-text">89 / 101 non-paid-off accounts ≈ 88%
+</code></pre>
+<p>are flagged for monitoring, but <strong>none</strong> are yet in Underperforming, Severe shortfall, or Dormant.</p>
+<p>That is a very different business statement from “89 accounts require attention.”</p>
+<h3>Phase 2 — a real adverse-state population emerges</h3>
+<p>Beginning <strong>8/8</strong>, however, this is no longer merely WATCH.</p>
+<p>On 8/8:</p>
+<pre><code class="language-text">Underperforming       27
+Severe shortfall       3
+Dormant               11
+-------------------------
+Actionable             41
+</code></pre>
+<p>Against:</p>
+<pre><code class="language-text">Original funded cohort       103
+Non-paid-off paths           100
+</code></pre>
+<p>that is:</p>
+<pre><code class="language-text">41 / 103 = 39.8% of funded cohort
+41 / 100 = 41.0% of non-paid-off accounts
+</code></pre>
+<p>Your table displays exactly those ~0.40 / 0.41 values.</p>
+<p>And this is not a one-day spike. The visible rows show actionable attention staying broadly around <strong>30–40 accounts</strong> for multiple weeks:</p>
+<ul>
+<li>8/9: 38</li>
+<li>8/10: 33</li>
+<li>8/11: 35</li>
+<li>8/12: 40</li>
+<li>8/13: 37</li>
+<li>8/14: 35</li>
+<li>8/15: 35</li>
+<li>8/16: 34</li>
+<li>8/17: 32</li>
+<li>8/18: 31</li>
+<li>8/19: 32</li>
+<li>8/20: 33</li>
+<li>8/21: 33</li>
+<li>8/22: 30</li>
+<li>8/23: 31</li>
+<li>8/24: 30</li>
+<li>8/25: 31</li>
+<li>8/26: 31</li>
+</ul>
+<p>That is the more important finding.</p>
+<hr>
+<h1>The status transitions themselves look coherent</h1>
+<p>There is an interesting pattern around 8/23–8/24:</p>
+<p>Earlier:</p>
+<pre><code class="language-text">Dormant ≈ 11
+Severe shortfall ≈ 0–4
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-text">8/23: Dormant 3, Severe 8
+8/24: Dormant 0, Severe 11
+8/25: Dormant 0, Severe 12
+8/26: Dormant 0, Severe 13
+</code></pre>
+<p>That looks like <strong>state migration</strong>, not duplicated accounts. Accounts appear to be transitioning from one adverse state into another while the aggregate attention population stays around 30.</p>
+<p>That increases my confidence that the DAX is reading an internally coherent status engine.</p>
+<p>The source itself is at exactly one row per <code>ApplicationScenarioKey × monitoring_day_index</code>, with six independent alert flags plus one governed monitoring status and paid-off flag. [export reference: filecite | turn93file0 | L10-L12]</p>
+<hr>
+<h1>The alert count also now makes sense</h1>
+<p>Take 8/12:</p>
+<pre><code class="language-text">Non-paid-off accounts       96
+Monitoring accounts         85
+Actionable accounts         40
+Active alert flags         199
+</code></pre>
+<p>199 is <strong>not 199 accounts</strong>. Each account can carry up to six alert flags:</p>
+<ul>
+<li>daily shortfall</li>
+<li>cumulative pace watch</li>
+<li>cumulative pace high</li>
+<li>zero-sales streak</li>
+<li>liquidity stress</li>
+<li>horizon overrun</li>
+</ul>
+<p>That six-flag construction is exactly what the current source/measure implements. [export reference: filecite | turn97file4 | L422-L458]</p>
+<p>So ~199 alerts across 96 active accounts is perfectly plausible mathematically—about 2.1 concurrent flags per active account.</p>
+<p>I see no concern with the <strong>Active alerts</strong> series itself.</p>
+<hr>
+<h1>Where this leaves us</h1>
+<p>For Baseline alone, I would currently characterize the evidence as:</p>
+<h3>Power BI semantic issue: confirmed</h3>
+<p>The current label:</p>
+<blockquote>
+<p><strong>Accounts requiring attention</strong></p>
+</blockquote>
+<p>cannot include WATCH.</p>
+<p>The early period proves why. We would be telling the executive that 89 accounts require attention when <strong>89 are WATCH and zero are in the materially adverse states</strong>.</p>
+<p>The preferred hierarchy from the remediation chat is correct:</p>
+<pre><code class="language-text">Active alert flags
+Accounts flagged for monitoring
+Accounts requiring attention
+</code></pre>
+<p>with the final <code>Accounts requiring attention</code> measure excluding WATCH.</p>
+<h3>DAX/grain issue: not supported</h3>
+<p>The counts reconcile cleanly, are account-path based, use a single current/as-of status, and exclude paid-off accounts consistently. The physical fact grain is also clean. [export reference: filecite | turn93file0 | L10-L12]</p>
+<h3>Monitoring-strategy question: still legitimately open</h3>
+<p>This is where the screenshot changes my view.</p>
+<p>Your remediation chat proposed:</p>
+<pre><code class="language-text">~10–25% actionable at peak       plausibly reasonable
+~25–40%                          inspect
+~40%+                            increasingly strong reason to investigate
+</code></pre>
+<p>Baseline reaches approximately:</p>
+<pre><code class="language-text">39.8% of original funded cohort
+41.0% of active/non-paid-off population
+</code></pre>
+<p>and remains around 30–40% for a meaningful period.</p>
+<p>So this is <strong>right at the boundary where I would not dismiss the upstream monitoring question</strong>.</p>
+<p>That does <strong>not</strong> establish a defect. There are legitimate reasons why a newly originated daily-remittance portfolio could experience a concentrated early warning period. But the sustained magnitude is high enough that it deserves explanation.</p>
+<p>There is another reason not to dismiss it: upstream M2.6 deliberately treats all four states—including WATCH—as review/recommended-action conditions. The source sets <code>recommended_action_flag</code> and <code>review_required_flag</code> for WATCH, UNDERPERFORMING, SEVERE_SHORTFALL, and DORMANT_NO_REMITTANCE. [export reference: filecite | turn93file6 | L108-L124]</p>
+<p>So there are really <strong>two separate questions</strong>:</p>
+<ol>
+<li><p>Is P02 labeling WATCH too strongly?<br><strong>Yes.</strong></p>
+</li>
+<li><p>Does the underlying monitoring engine itself create too many genuinely adverse states or reviews?<br><strong>Possibly; Baseline evidence is high enough to warrant testing, but we need Recession Energy before concluding.</strong></p>
+</li>
+</ol>
+<h2>Next step</h2>
+<p>Don&#39;t change anything yet.</p>
+<p>Switch the diagnostic page to:</p>
+<pre><code class="language-text">Scenario: Recession Energy
+Industry: All
+Acquisition source: All
+Full observation period
+</code></pre>
+<p>and send me the equivalent screenshot.</p>
+<p>We already have enough Baseline evidence that we do <strong>not</strong> need to manually extract every peak. The Recession Energy decomposition will tell us whether the ~40% Baseline actionable peak is:</p>
+<ul>
+<li>peculiar to Baseline,</li>
+<li>similarly present under stress,</li>
+<li>substantially worse under stress as we would expect, or</li>
+<li>behaving paradoxically.</li>
+</ul>
+<p>After that screenshot I can make the requested formal determination:</p>
+<p><strong>A. Power BI semantic/labeling only</strong><br>or<br><strong>A + C. Power BI semantic correction plus a bounded M1/M2 monitoring-strategy finding</strong></p>
+<p>I no longer expect <strong>B</strong> to be the outcome.</p>
+</div></article><article id="m-1e260a08-de23-4e1a-a750-47b267f4e7ed" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00594 · 2026-09-01T16:18:06.543000-04:00 · active path</p><div class="bubble"><p>pausing this power bi work until remediation/correction chat examines further. it seems a strategy update needs to be made.</p>
+</div></article><article id="m-e019796f-5833-4bbe-863f-001e28c41c0f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00595 · 2026-09-01T16:18:11.465430-04:00 · active path</p><div class="bubble"><p>Agreed. <strong>Pause the Power BI refinement here.</strong> We have enough evidence that continuing P02—and especially proceeding into P03/P04 lifecycle interpretation—could cause us to build presentation logic around monitoring semantics that may change upstream.</p>
+<p>I would record the current state as:</p>
+<pre><code class="language-text">POWER BI REFINEMENT — CONTROLLED PAUSE
+
+P01
+- R1 successor rebase complete
+- Evidence captured
+- No current P01 defect identified
+- Preserve without further mutation
+
+P02
+- R1 successor rebase substantially complete
+- Diagnostic workspace created
+- Alert-flag grain validated
+- Account-status DAX/grain appears coherent
+- Executive WATCH/attention labeling issue identified
+- Baseline actionable-state prevalence warrants upstream review
+- Final Attention signals semantics NOT frozen
+
+P02-DIAG
+- Retain intact as diagnostic evidence
+- Do not delete until upstream remediation closes
+
+P03–P06
+- Do not continue successor refinement until the remediation/correction work determines whether monitoring strategy or downstream lifecycle outputs will change
+</code></pre>
+<p>Most importantly, <strong>do not “fix” P02 locally yet</strong> by merely excluding WATCH. The diagnostic established that the reporting terminology needs refinement, but it also exposed a potentially substantive upstream question: Baseline reaches roughly 40% actionable adverse-state prevalence at peak and remains elevated for a meaningful period. Meanwhile, the upstream servicing logic intentionally treats WATCH alongside the adverse states as review/recommended-action conditions. [export reference: filecite | turn93file6 | L108-L124]</p>
+<p>The evidence also substantially reduces the likelihood that this is merely duplicate inflation: the successor monitoring population is physically 130 account paths × 120 days, with the accepted 103 Baseline / 27 Recession Energy split. [export reference: filecite | turn93file12 | L293-L305]</p>
+<p>So the remediation chat should determine whether it needs to change:</p>
+<p><strong>monitoring thresholds → status transitions → WATCH semantics → servicing/review routing → intervention logic → downstream account/lifecycle outputs</strong></p>
+<p>before we resume Power BI.</p>
+<p>Your current PBIP is saved, and the diagnostic page gives us an excellent before-state. <strong>Preserve this exact candidate.</strong> When the remediation work returns with its corrected successor outputs, we can rebase from this point rather than reconstructing P01/P02. [export reference: memcite]</p>
+</div></article><article id="m-0a148967-3d4b-4759-bbc4-53d38a6151d1" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00596 · 2026-09-01T19:15:33.840000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260901-231521).md</p><div class="bubble"><p>see attached prompt from the remediation/correction chat</p>
+</div></article><article id="m-6074c1ce-5a26-4a54-9cd3-d79a4069ebe8" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00597 · 2026-09-01T19:15:36.847296-04:00 · active path</p><div class="bubble"><p>I reviewed the remediation/correction chat&#39;s prompt. It resolves the pause cleanly: <strong>we should resume Power BI, make a bounded P02 semantic correction, preserve M2.5/M2.6 unchanged, freeze P02 after validation, and continue P03–P06.</strong> The calibration question is explicitly an observation, not a defect or authorization for strategy recalibration. [export reference: filecite | turn98file0 | L5-L9]</p>
+<p>The key change is also well designed. The current chart mixes a <strong>condition count</strong> with an <strong>account count</strong>. The corrected main chart puts both lines at account-path grain: <strong>Accounts with active alerts</strong> and <strong>Accounts in adverse monitoring status</strong>. The existing alert-condition count remains valid but moves into the tooltip. [export reference: filecite | turn98file0 | L51-L78]</p>
+<h2>Step 1 — preserve the diagnostic page</h2>
+<p>Keep:</p>
+<pre><code class="language-text">P02-DIAG - Attention States
+</code></pre>
+<p>Do <strong>not</strong> delete it after we&#39;re finished.</p>
+<p>Hide it from normal report navigation:</p>
+<ol>
+<li>Right-click the <code>P02-DIAG - Attention States</code> page tab.</li>
+<li>Choose <strong>Hide page</strong>.</li>
+<li>It should remain visible to you in Desktop but hidden to ordinary report consumers.</li>
+</ol>
+<p>The remediation prompt explicitly requires retaining it as hidden engineering evidence. [export reference: filecite | turn98file0 | L353-L379]</p>
+<p>Add a text box somewhere obvious on that diagnostic page containing:</p>
+<blockquote>
+<p><strong>OPEN_CALIBRATION_OBSERVATION_NO_POLICY_CHANGE</strong><br>Power BI presentation uses accepted M2.5/M2.6 facts unchanged. Historical adverse monitoring status is not equivalent to the M2.6 servicing-review queue.</p>
+</blockquote>
+<hr>
+<h1>Step 2 — create the four permanent P02 measures</h1>
+<p>We already have the helper measures the remediation prompt told us to verify:</p>
+<pre><code class="language-text">[R1 P01 __Latest Monitoring Date As Of]
+[R1 P01 __Active Alert Count As Of]
+[R1 P02 __Monitoring Status As Of]
+[R1 P02 __Paid-Off Flag As Of]
+[R1 P02 DIAG Non-Paid-Off Paths As Of]
+</code></pre>
+<p>So no substitutions are necessary.</p>
+<p>Open <strong>DAX Query View → New query</strong> and paste this complete block:</p>
+<pre><code class="language-DAX">DEFINE
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 Account Paths with Active Alerts As Of] =
+        VAR _EvidenceValid =
+            [R1 P01 As Of Evidence Status] = &quot;VALID&quot;
+        RETURN
+            IF (
+                _EvidenceValid,
+                COALESCE (
+                    SUMX (
+                        VALUES (
+                            &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+                        ),
+                        VAR _LatestDate =
+                            CALCULATE (
+                                [R1 P01 __Latest Monitoring Date As Of]
+                            )
+                        VAR _PaidOffFlag =
+                            CALCULATE (
+                                [R1 P02 __Paid-Off Flag As Of]
+                            )
+                        VAR _ActiveAlertCount =
+                            CALCULATE (
+                                [R1 P01 __Active Alert Count As Of]
+                            )
+                        RETURN
+                            IF (
+                                NOT ISBLANK ( _LatestDate )
+                                    &amp;&amp; COALESCE ( _PaidOffFlag, &quot;f&quot; ) &lt;&gt; &quot;t&quot;
+                                    &amp;&amp; COALESCE ( _ActiveAlertCount, 0 ) &gt; 0,
+                                1,
+                                0
+                            )
+                    ),
+                    0
+                )
+            )
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 Adverse Monitoring Account Paths As Of] =
+        VAR _EvidenceValid =
+            [R1 P01 As Of Evidence Status] = &quot;VALID&quot;
+        RETURN
+            IF (
+                _EvidenceValid,
+                COALESCE (
+                    SUMX (
+                        VALUES (
+                            &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+                        ),
+                        VAR _LatestDate =
+                            CALCULATE (
+                                [R1 P01 __Latest Monitoring Date As Of]
+                            )
+                        VAR _MonitoringStatus =
+                            CALCULATE (
+                                [R1 P02 __Monitoring Status As Of]
+                            )
+                        VAR _PaidOffFlag =
+                            CALCULATE (
+                                [R1 P02 __Paid-Off Flag As Of]
+                            )
+                        RETURN
+                            IF (
+                                NOT ISBLANK ( _LatestDate )
+                                    &amp;&amp; COALESCE ( _PaidOffFlag, &quot;f&quot; ) &lt;&gt; &quot;t&quot;
+                                    &amp;&amp; _MonitoringStatus
+                                        IN {
+                                            &quot;UNDERPERFORMING&quot;,
+                                            &quot;SEVERE_SHORTFALL&quot;,
+                                            &quot;DORMANT_NO_REMITTANCE&quot;
+                                        },
+                                1,
+                                0
+                            )
+                    ),
+                    0
+                )
+            )
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 Alert Conditions per Alerted Account] =
+        DIVIDE (
+            [R1 P01 Active Alert Flags As Of],
+            [R1 P02 Account Paths with Active Alerts As Of],
+            0
+        )
+
+    MEASURE &#39;R1Measures&#39;[R1 P02 Adverse Monitoring Share of Active Paths] =
+        DIVIDE (
+            [R1 P02 Adverse Monitoring Account Paths As Of],
+            [R1 P02 DIAG Non-Paid-Off Paths As Of],
+            0
+        )
+
+EVALUATE
+ROW (
+    &quot;Accounts with active alerts&quot;,
+        [R1 P02 Account Paths with Active Alerts As Of],
+    &quot;Accounts in adverse monitoring status&quot;,
+        [R1 P02 Adverse Monitoring Account Paths As Of],
+    &quot;Active alert conditions&quot;,
+        [R1 P01 Active Alert Flags As Of],
+    &quot;Conditions per alerted account&quot;,
+        [R1 P02 Alert Conditions per Alerted Account],
+    &quot;Adverse share of active paths&quot;,
+        [R1 P02 Adverse Monitoring Share of Active Paths],
+    &quot;Active/non-paid-off paths&quot;,
+        [R1 P02 DIAG Non-Paid-Off Paths As Of]
+)
+</code></pre>
+<p>Then:</p>
+<ol>
+<li>Click <strong>Update model with changes</strong>.</li>
+<li>Return to Model view.</li>
+<li>Select these four new measures.</li>
+<li>Set Display folder:</li>
+</ol>
+<pre><code class="language-text">P02 | Cohort Lifecycle
+</code></pre>
+<p>Do not modify any existing M2.5/M2.6 source field or measure logic. That boundary is explicit. [export reference: filecite | turn98file0 | L34-L46]</p>
+<hr>
+<h1>Step 3 — update the production P02 chart</h1>
+<p>Return to:</p>
+<pre><code class="language-text">P02 - Cohort Lifecycle
+</code></pre>
+<p>Select the current <strong>Attention signals</strong> chart.</p>
+<h3>Change title</h3>
+<p>Go to:</p>
+<p><strong>Format visual → General → Title</strong></p>
+<p>Change:</p>
+<pre><code class="language-text">Attention signals
+</code></pre>
+<p>to:</p>
+<pre><code class="language-text">Monitoring breadth and severity
+</code></pre>
+<h3>Replace Y-axis series</h3>
+<p>Remove:</p>
+<pre><code class="language-text">R1 P02 Active Alert Flags As Of
+R1 P02 Attention Account Paths As Of
+</code></pre>
+<p>Add, in this order:</p>
+<pre><code class="language-text">R1 P02 Account Paths with Active Alerts As Of
+R1 P02 Adverse Monitoring Account Paths As Of
+</code></pre>
+<p>Use <strong>Rename for this visual</strong>:</p>
+<pre><code class="language-text">Accounts with active alerts
+Accounts in adverse monitoring status
+</code></pre>
+<p>Now both primary lines are <strong>distinct account-path counts</strong>. That is the core correction required by the remediation decision. [export reference: filecite | turn98file0 | L53-L78]</p>
+<hr>
+<h1>Step 4 — build the tooltip</h1>
+<p>Add these to the chart&#39;s <strong>Tooltips</strong> well, in this order:</p>
+<pre><code class="language-text">R1 P02 Account Paths with Active Alerts As Of
+R1 P02 Adverse Monitoring Account Paths As Of
+R1 P01 Active Alert Flags As Of
+R1 P02 Alert Conditions per Alerted Account
+R1 P02 Adverse Monitoring Share of Active Paths
+R1 P02 DIAG Non-Paid-Off Paths As Of
+R1 P02 DIAG Watch Paths As Of
+R1 P02 DIAG Underperforming Paths As Of
+R1 P02 DIAG Severe Shortfall Paths As Of
+R1 P02 DIAG Dormant No-Remittance Paths As Of
+</code></pre>
+<p>Rename for this visual:</p>
+<pre><code class="language-text">Accounts with active alerts
+Accounts in adverse monitoring status
+Active alert conditions
+Alert conditions per alerted account
+Adverse monitoring share of active paths
+Active / non-paid-off accounts
+Watch accounts
+Underperforming accounts
+Severe-shortfall accounts
+Dormant / no-remittance accounts
+</code></pre>
+<p>Format:</p>
+<pre><code class="language-text">Alert conditions per alerted account     Decimal, 2 places
+Adverse monitoring share                 Percentage, 1 decimal
+Everything else                          Whole number
+</code></pre>
+<p>This gives the exact hierarchy the remediation chat requested: signaling breadth → condition volume → adverse population → status decomposition. [export reference: filecite | turn98file0 | L316-L350]</p>
+<hr>
+<h1>Step 5 — update the chart alt text</h1>
+<p>Our current dynamic alt-text measure is now stale because it explicitly describes the old two lines as active alert flags and all four non-current statuses. [export reference: filecite | turn95file1 | L39-L49]</p>
+<p>Create this <strong>complete replacement</strong> measure:</p>
+<pre><code class="language-DAX">R1 P02 Monitoring Breadth Severity Alt Text =
+VAR _Scenario =
+    SELECTEDVALUE (
+        &#39;DimScenario&#39;[ScenarioLabel],
+        &quot;selected scenario&quot;
+    )
+VAR _Alerted =
+    [R1 P02 Account Paths with Active Alerts As Of]
+VAR _Adverse =
+    [R1 P02 Adverse Monitoring Account Paths As Of]
+RETURN
+    &quot;Monitoring breadth and severity over the selected observation period for &quot;
+        &amp; _Scenario
+        &amp; &quot;. Accounts with active alerts counts distinct active, non-paid-off paths with one or more active monitoring conditions. &quot;
+        &amp; &quot;Accounts in adverse monitoring status counts distinct active paths classified as Underperforming, Severe Shortfall, or Dormant No Remittance. &quot;
+        &amp; &quot;Multiple alert conditions may apply to one path, so active alert conditions shown in the tooltip can exceed the number of accounts. &quot;
+        &amp; &quot;At the current context, accounts with active alerts &quot;
+        &amp; FORMAT ( _Alerted, &quot;#,0&quot; )
+        &amp; &quot; and accounts in adverse monitoring status &quot;
+        &amp; FORMAT ( _Adverse, &quot;#,0&quot; )
+        &amp; &quot;.&quot;
+</code></pre>
+<p>Place it in:</p>
+<pre><code class="language-text">P02 | Cohort Lifecycle
+</code></pre>
+<p>Then:</p>
+<ol>
+<li>Select <strong>Monitoring breadth and severity</strong>.</li>
+<li><strong>Format visual → General → Alt text → fx</strong>.</li>
+<li>Format style: <strong>Field value</strong>.</li>
+<li>Base field on:</li>
+</ol>
+<pre><code class="language-text">R1 P02 Monitoring Breadth Severity Alt Text
+</code></pre>
+<ol start="5">
+<li>Click <strong>OK</strong>.</li>
+</ol>
+<p>The requested accessibility distinction is explicit in the remediation prompt. [export reference: filecite | turn98file0 | L381-L387]</p>
+<hr>
+<h1>Step 6 — do not alter the rest of P02</h1>
+<p>Leave unchanged:</p>
+<ul>
+<li>Receivable runoff;</li>
+<li>Remittance fulfillment;</li>
+<li>Payoff timing vs plan;</li>
+<li>left cohort profile;</li>
+<li>all four slicers;</li>
+<li>interaction behavior;</li>
+<li>provenance;</li>
+<li>temporal/interpretation boundary.</li>
+</ul>
+<p>Our previous work on those components remains accepted directionally by the remediation review.</p>
+<hr>
+<h1>Step 7 — Baseline validation</h1>
+<p>Set:</p>
+<pre><code class="language-text">Scenario:            Baseline
+Industry:            All
+Acquisition source:  All
+Observation period:  7/23/2026 – 11/22/2026
+</code></pre>
+<p>The critical validation is <strong>day 14</strong>, corresponding to the 8/8/2026 diagnostic row.</p>
+<p>Hover the chart at <strong>8/8/2026</strong>.</p>
+<p>We already know from the diagnostic evidence that:</p>
+<pre><code class="language-text">Watch                         35
+Underperforming               27
+Severe shortfall               3
+Dormant                       11
+
+Accounts in adverse status:
+27 + 3 + 11 =                 41
+</code></pre>
+<p>Therefore the tooltip must show:</p>
+<pre><code class="language-text">Accounts in adverse monitoring status = 41
+</code></pre>
+<p>That exact Baseline day-14 reproduction is a required freeze control. [export reference: filecite | turn98file0 | L389-L420]</p>
+<p>Also verify at several dates:</p>
+<pre><code class="language-text">Accounts with active alerts
+    &lt;= Active / non-paid-off accounts
+
+Accounts in adverse monitoring status
+    &lt;= Active / non-paid-off accounts
+
+Accounts in adverse monitoring status
+    &lt;= Accounts with active alerts
+</code></pre>
+<p>If the third inequality fails on a date, <strong>do not automatically change the DAX</strong>. The remediation prompt allows an exception if exact source evidence establishes one; send me the date and values.</p>
+<hr>
+<h1>Step 8 — Recession Energy validation</h1>
+<p>Switch only:</p>
+<pre><code class="language-text">Scenario → Recession Energy
+</code></pre>
+<p>Confirm the same three inequalities across representative early, middle, and late dates.</p>
+<p>Also verify that the chart remains populated by the selected Scenario, unlike Receivable runoff, which intentionally preserves both scenarios.</p>
+<hr>
+<h1>Step 9 — preserve the calibration observation</h1>
+<p>The final Power BI documentation should carry:</p>
+<pre><code class="language-text">Calibration observation:
+OPEN_CALIBRATION_OBSERVATION_NO_POLICY_CHANGE
+
+Current decision:
+Complete Power BI using accepted M2.5/M2.6 policy and source facts unchanged.
+
+Power BI treatment:
+Separate alert-condition volume, account-level monitoring breadth,
+and adverse monitoring status.
+
+Future calibration:
+Deferred until explicit objectives exist for false-positive prevalence,
+servicing capacity, acceptable duration in adverse status,
+and payoff-horizon tolerance.
+</code></pre>
+<p>Do <strong>not</strong> characterize this as an identified monitoring defect. That is expressly prohibited by the returned decision. [export reference: filecite | turn98file0 | L437-L461]</p>
+<h2>Resulting P02 story</h2>
+<p>The page will now answer three different questions correctly:</p>
+<p><strong>How broad is monitoring activity?</strong><br>→ Accounts with active alerts.</p>
+<p><strong>How severe is the monitored population?</strong><br>→ Accounts in adverse monitoring status.</p>
+<p><strong>How many individual warning conditions are firing?</strong><br>→ Active alert conditions, available in the tooltip.</p>
+<p>And the diagnostic page retains the deeper WATCH/Underperforming/Severe/Dormant decomposition without turning the executive page into an engineering dashboard.</p>
+<p>This is a materially better semantic contract than either the predecessor <code>Review signals</code> chart or our first R1 <code>Attention signals</code> version.</p>
+</div></article><article id="m-f695b949-522b-4bbf-9cab-18dd5ed3f182" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00598 · 2026-09-02T07:53:14.855000-04:00 · active path</p><p class="note">Attachment references: MSBF_POWER_BI_R26_PARALLEL_HANDOFF_20260902(1).zip; MSBF_POWER_BI_R26_PARALLEL_HANDOFF_20260902_PACKAGE_RECEIPT(1).json; MSBF_PBI_R1_PARALLEL_REFINEMENT_C1_20260901.Report.zip; MSBF_PBI_R1_PARALLEL_REFINEMENT_C1_20260901.SemanticModel.zip</p><div class="bubble"><h1>COPY/PASTE PROMPT — MSBF POWER BI R26 PARALLEL SOURCE REBASE</h1>
+<p>Continue <strong>MSBF — Power BI Executive Portfolio Intelligence</strong>. Treat <code>MSBF_POWER_BI_R26_PARALLEL_HANDOFF_20260902.zip</code> as the governing candidate-only handoff while the focused R26 Independent Audit runs in parallel. Verify the package, complete carrier, source validation, and embedded exact R26 PASS result before substantive work.</p>
+<p>Create a new working copy named approximately <code>MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902</code>; do not overwrite the current pre-R26 refinement candidate or immutable R22 baseline.</p>
+<p>Exact candidate identities: R26 result <code>113450c7167c8a5e1b40497c4e39506d276aa0e057bbeb3f316561af5d4096c3</code>; policy <code>6c6a6f8103bb7276c5d1063d900d96070903e82b5f7143431bc150556e092027</code>; certification <code>G3V2_R26_C053DC064AB32A4D21864F94</code> 70/70 PASS; source root <code>618ac7ad9278ad0c3876601eb75336bb166132d412f9eae221a145cda770d41f</code>; simulation bundle <code>569ea013b573b9c1e49592cbca0f078861b8d11f55462c3c49d718462c5b12ee</code>; Power BI bundle <code>b858965c48cd3aa0ca8ef9277305c2b2377db11cec03c1f48690c772764f98af</code>. Publication is NOT AUTHORIZED and R26 remains candidate-only pending focused audit.</p>
+<p>Point the new copy to the supplied complete <code>carrier</code> root. Update <code>R1FactDailyMonitoring</code> Power Query to retain its existing 36 fields and load the 11 R26 fields documented in <code>docs/R26_POWER_BI_REBASE_INSTRUCTIONS.md</code>. Do not reconstruct operational-family logic in DAX. Refresh the six R26 M2.11/M2.12 objects. Preserve unchanged R4 facts and R1FactIntervention through R1FactPortfolioPerformance; R26 M2.6-M2.10 are byte-exact to R17.</p>
+<p>For P02 use the R26 source distinction: main line <strong>Accounts with operational alerts</strong> = distinct active/non-paid-off paths where <code>operational_alert_family_count &gt; 0</code>; main line <strong>Accounts in adverse monitoring status</strong> = distinct active/non-paid-off paths in UNDERPERFORMING, SEVERE_SHORTFALL, or DORMANT_NO_REMITTANCE; tooltip/support <strong>Raw alert conditions</strong> = sum of <code>raw_alert_condition_count</code>; tooltip/support <strong>Operational alert families</strong> = sum of <code>operational_alert_family_count</code>. Use <code>dax/R26_P02_MEASURE_RECOMMENDATIONS.dax</code>, adapting only exact existing helper-measure names if necessary.</p>
+<p>Reconcile <code>docs/R26_MONITORING_CHECKPOINTS.csv</code>, including Baseline day 14 = 100 active / 12 operationally alerted / 11 adverse. Validate full refresh; 15,600 monitoring rows / 47 columns; exact unique policy SHA; operational/adverse counts &lt;= active; M2.6 endpoint 126 closed / 3 outreach / 1 temporary-remittance review; M2.11 populations 52,152 / 12,000 / 1,040; G3-v2 70/70 with R26 certification; intended P05/P06 filter behavior; P01/P03/P04 nonregression except already approved refinement work; and save/close/reopen.</p>
+<p>Return exact working project identity, source/carrier identity, Power Query changes, measures changed, P02 Baseline/Recession screenshots, checkpoint reconciliation, P05/P06 identity verification, refresh/save/reopen evidence, and complete before/after candidate diff. Continue candidate-only work while audit is pending; stop only for a genuine source contradiction, owner design decision, or required physical Desktop evidence.
+My current Power BI is also attached. I&#39;d like to avoid re-work if possible.</p>
+</div></article><article id="m-ec9cbe86-3d1a-4ca4-99cc-de3989f5415e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00599 · 2026-09-02T08:06:34.327691-04:00 · active path</p><div class="bubble"><p>I used your <strong>current attached refinement candidate as the base</strong>, so we are not rebuilding P01/P02 or throwing away yesterday’s work. I applied the R26 rebase as a narrow source/model/report delta on top of it.</p>
+<p>The governing handoff itself verifies <code>PASS</code>, clean extraction, 64 archive members, exact R26 result SHA <code>113450…096c3</code>, candidate-only audit-pending authority, and no publication authority. [export reference: filecite | turn99file0 | L2-L15]</p>
+<h2>Static R26 rebase status</h2>
+<pre><code class="language-text">MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902
+
+STATIC_REBASE_PASS_DESKTOP_REQUIRED
+</code></pre>
+<p>The current candidate changed from:</p>
+<pre><code class="language-text">Tables             54  → 54
+Columns         1,770  → 1,781
+Relationships      54  → 54
+Measures          254  → 262
+PQ expressions     52  → 52
+Pages               7  → 7
+Visuals           132  → 132
+</code></pre>
+<p>I preserved <strong>P01, P03, P04, P05 and P06 byte-for-byte at page-directory level</strong>. <code>P02-DIAG - Attention States</code> remains hidden and unchanged. Only two production P02 visual files were changed.</p>
+<h3>What was changed</h3>
+<p><code>R1FactDailyMonitoring</code> now has the required <strong>47-column schema</strong>, adding the 11 R26 source-owned fields:</p>
+<pre><code class="language-text">raw_alert_condition_count
+pace_family_active_flag
+pace_family_severity_code
+no_remittance_family_active_flag
+sales_dormancy_family_active_flag
+liquidity_family_active_flag
+horizon_family_active_flag
+operational_alert_family_count
+primary_operational_alert_family_code
+operational_alert_payload
+r26_policy_sha256
+</code></pre>
+<p>The model now points to:</p>
+<pre><code class="language-text">C:\MSBF\R26\power_bi\carrier
+</code></pre>
+<p>and identifies its source handoff as:</p>
+<pre><code class="language-text">MSBF_POWER_BI_R26_PARALLEL_HANDOFF_20260902
+</code></pre>
+<p>The six R26 M2.11/M2.12 object schemas remain compatible with the existing model. No manual reconstruction of P05/P06 is required.</p>
+<h3>P02 was rebased directly from your finished page</h3>
+<p>Your existing <strong>Monitoring breadth and severity</strong> visual now uses:</p>
+<pre><code class="language-text">Accounts with operational alerts
+    = R26 P02 Accounts with Operational Alerts As Of
+
+Accounts in adverse monitoring status
+    = R26 P02 Accounts in Adverse Monitoring Status As Of
+</code></pre>
+<p>The tooltip now carries:</p>
+<pre><code class="language-text">Raw alert conditions
+Operational alert families
+Raw conditions per alerted account
+Operational families per alerted account
+Active / non-paid-off accounts
+Remaining receivable
+Remittance fulfillment
+Average payoff variance
+</code></pre>
+<p>The <strong>Remittance fulfillment</strong> tooltip was also updated so it no longer exposes the ambiguous pre-R26 alert terminology.</p>
+<p>I retained but hid the four preliminary pre-R26 P02 semantic measures instead of deleting them, so we preserve before-state evidence without allowing them to drive the executive page.</p>
+<p>The Power BI model footer identity is now:</p>
+<pre><code class="language-text">PBI_R26_PARALLEL_REFINEMENT_C1_20260902
+</code></pre>
+<h2>Source validation already completed</h2>
+<p>Against the physical R26 carrier, I independently reproduced all nine supplied monitoring checkpoints exactly.</p>
+<p>Most importantly:</p>
+<pre><code class="language-text">Baseline day 14 / 2026-08-08
+Active paths                  100
+Raw-alerted paths              50
+Operationally alerted paths    12
+Adverse-status paths           11
+Raw alert conditions          102
+Operational alert families     23
+</code></pre>
+<p>The R26 policy SHA is unique across all 15,600 monitoring rows and equals exactly:</p>
+<pre><code class="language-text">6c6a6f8103bb7276c5d1063d900d96070903e82b5f7143431bc150556e092027
+</code></pre>
+<p>I also reproduced the unchanged M2.6 endpoint:</p>
+<pre><code class="language-text">Closed / no further action             126
+Targeted merchant outreach review        3
+Temporary-remittance adjustment review   1
+</code></pre>
+<p>and verified the R26 P05/P06 identities:</p>
+<pre><code class="language-text">Candidate evaluations        52,152
+Application simulations      12,000
+Account simulations           1,040
+G3-v2 controls                   70
+G3-v2 certification          G3V2_R26_C053DC064AB32A4D21864F94
+</code></pre>
+<p>All six raw P05/P06 object hashes match the embedded R26 Power BI identity and bundle <code>b858965c…f98af</code>.</p>
+<h2>Deliverables</h2>
+<p>Download the complete R26 parallel delivery package (historical reference: <code>sandbox:[session]/MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY.zip</code>; referenced bytes not established here)</p>
+<p>Open the start guide (historical reference: <code>sandbox:[session]/MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Download the patched Report folder (historical reference: <code>sandbox:[session]/MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902.Report.zip</code>; referenced bytes not established here)</p>
+<p>Download the patched Semantic Model folder (historical reference: <code>sandbox:[session]/MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902.SemanticModel.zip</code>; referenced bytes not established here)</p>
+<p>Open the complete before/after file diff (historical reference: <code>sandbox:[session]/MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY/evidence/BEFORE_AFTER_FILE_DIFF.csv</code>; referenced bytes not established here)</p>
+<p>Open the monitoring-checkpoint reconciliation (historical reference: <code>sandbox:[session]/MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY/evidence/R26_MONITORING_CHECKPOINT_RECONCILIATION.csv</code>; referenced bytes not established here)</p>
+<p>Open the P05/P06 identity verification (historical reference: <code>sandbox:[session]/MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY/evidence/P05_P06_IDENTITY_VERIFICATION.json</code>; referenced bytes not established here)</p>
+<p>Open the static rebase validation (historical reference: <code>sandbox:[session]/MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY/evidence/STATIC_REBASE_VALIDATION.json</code>; referenced bytes not established here)</p>
+<p>Open the semantic/report delta (historical reference: <code>sandbox:[session]/MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY/evidence/SEMANTIC_AND_REPORT_DELTA.json</code>; referenced bytes not established here)</p>
+<p>Open the Desktop checkpoint DAX (historical reference: <code>sandbox:[session]/MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY/tests/R26_DESKTOP_CHECKPOINTS.dax</code>; referenced bytes not established here)</p>
+<p>Open the R26 carrier preparation script (historical reference: <code>sandbox:[session]/MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902_DELIVERY/scripts/00_PREPARE_R26_CARRIER.ps1</code>; referenced bytes not established here)</p>
+<h2>Your next action — physical Desktop checkpoint</h2>
+<p>There is no reason to manually recreate any visuals or measures I patched.</p>
+<ol>
+<li>Save and close your current pre-R26 project; preserve it unchanged.</li>
+<li>Extract the delivery ZIP to a short location such as:<pre><code class="language-text">C:\MSBF\PowerBI\R26_Parallel
+</code></pre>
+</li>
+<li>Run the supplied PowerShell carrier-preparation script against the R26 handoff ZIP. It verifies the handoff hash, catalog, monitoring file and policy identity before installing:<pre><code class="language-text">C:\MSBF\R26\power_bi\carrier
+</code></pre>
+</li>
+<li>Open:<pre><code class="language-text">project\
+MSBF_PBI_R26_PARALLEL_REFINEMENT_C1_20260902.Report\
+definition.pbir
+</code></pre>
+Power BI supports opening a <code>definition.pbir</code> directly; because this one has a relative <code>byPath</code> reference, it opens the sibling semantic model with it. [export reference: cite | turn212282search0]</li>
+<li><strong>Refresh All.</strong></li>
+<li>Run the supplied <code>R26_DESKTOP_CHECKPOINTS.dax</code>.</li>
+<li>Capture P02 Baseline and Recession Energy full-page screenshots plus one monitoring tooltip screenshot.</li>
+<li>Verify P05/P06 render and their intended profile-filter behavior remains intact.</li>
+<li>Save → close Desktop → reopen <code>definition.pbir</code> → rerun the key checkpoint.</li>
+</ol>
+<p>I deliberately removed the copied pre-R26 <code>cache.abf</code> from this branch so the R26 project cannot appear successful merely by rendering yesterday’s cached model.</p>
+<h3>Current gate</h3>
+<pre><code class="language-text">Current authority:
+R26 CANDIDATE ONLY — focused Independent Audit pending
+
+Static source/carrier validation:
+PASS
+
+Static Power BI source rebase:
+PASS
+
+P01/P03/P04 nonregression:
+PASS
+
+P05/P06 report-page nonregression:
+PASS
+
+P05/P06 R26 source identity:
+PASS
+
+Physical Power BI refresh:
+PENDING OWNER DESKTOP
+
+P02 R26 screenshots/tooltips:
+PENDING OWNER DESKTOP
+
+Save / close / reopen:
+PENDING OWNER DESKTOP
+
+Publication:
+NOT AUTHORIZED
+</code></pre>
+<p>Once you complete that Desktop checkpoint, send me the screenshots/results and we can close the R26 rebase without redoing the P01/P02 work.</p>
+</div></article><article id="m-afc980b4-d940-4dae-ab8b-0eba393bd6c3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00600 · 2026-09-02T08:15:05.789000-04:00 · active path</p><div class="bubble"><p>give me more details about this: Run the supplied PowerShell carrier-preparation script against the R26 handoff ZIP. It verifies the handoff hash, catalog, monitoring file and policy identity before installing:</p>
+<pre><code>
+</code></pre>
+<pre><code>C:\MSBF\R26\power_bi\carrier. i see your power bi script, but is there anything i need to have in certain places in my local drives, etc before running that?
+</code></pre>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

@@ -1,0 +1,880 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 14 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 14</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-13.html">Previous part</a><a href="part-15.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-b6585ff2-0b40-42ab-9034-da9b0ef7d829" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00367 · 2026-08-26T21:23:00.697515-04:00 · active path</p><div class="bubble"><p>Yes — <strong>this works very well. Keep it.</strong></p>
+<p>The chart is now self-explanatory without requiring hover:</p>
+<ul>
+<li><strong>4 — Severe shortfall</strong></li>
+<li><strong>3 — Underperforming</strong></li>
+<li><strong>2 — Watch</strong></li>
+<li><strong>1 — Current</strong></li>
+<li><strong>0 — Paid off</strong></li>
+</ul>
+<p>The horizontal guides also make the movement between monitoring states much easier to interpret. This now reads like a genuine <strong>ordinal monitoring-state trajectory</strong>, rather than a mysterious numeric line.</p>
+<p>Two minor refinements only:</p>
+<ol>
+<li><strong>Keep the numeric 0–4 labels.</strong> In this implementation they help anchor the reference-line labels rather than creating confusion.</li>
+<li>If Power BI allows you to make all five reference-line labels consistently left- or right-aligned without fighting the visual, do that. Right now Severe shortfall/Underperforming are left while Watch/Current/Paid off are right. That&#39;s not a problem, but consistent placement would be slightly cleaner. If placement becomes fiddly, leave it exactly as shown.</li>
+</ol>
+<p>I would <strong>not add a Y-axis title</strong> now. The labeled states already explain the scale better than an axis title could.</p>
+<h3>Monitoring journey is essentially complete</h3>
+<p>This is also a nice portfolio visual because it communicates something that the adjacent charts don&#39;t:</p>
+<ul>
+<li>Receivable trajectory → <strong>balance liquidation</strong></li>
+<li>Remittance performance → <strong>cumulative contractual pace</strong></li>
+<li>Monitoring journey → <strong>governed risk/attention state</strong></li>
+</ul>
+<p>Those are three distinct dimensions of the merchant lifecycle.</p>
+<p>Now let&#39;s build the last major P03 component: <strong>Servicing &amp; exceptions</strong>.</p>
+<p>Before creating anything, look through the Fields pane for tables with names containing <strong>Servicing</strong>, <strong>Exception</strong>, <strong>Alert</strong>, <strong>Case</strong>, or similar. Give me the table names you find. We should use the actual operational-event grain if it exists rather than infer servicing activity from <code>FactAccountDaily</code>.</p>
+</div></article><article id="m-a0d301e8-48aa-409f-9931-3349562b50c2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00368 · 2026-08-26T21:25:11.942000-04:00 · active path</p><div class="bubble"><p>next visual to build</p>
+</div></article><article id="m-35776bd2-1634-4639-9bf6-a346c1efecb0" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00369 · 2026-08-26T21:25:17.446883-04:00 · active path</p><div class="bubble"><p>Build <strong>Monitoring exceptions</strong> next. It complements the Monitoring journey without duplicating it and uses fields we already know exist in <code>FactAccountDaily</code>.</p>
+<p>Create a <strong>Table</strong> visual in the open space beneath or beside Monitoring journey. Use these fields/measures:</p>
+<pre><code class="language-DAX">P03 Daily Shortfall =
+SUM ( FactAccountDaily[daily_shortfall_amount] )
+</code></pre>
+<pre><code class="language-DAX">P03 Cumulative Shortfall =
+MAX ( FactAccountDaily[cumulative_shortfall_amount] )
+</code></pre>
+<pre><code class="language-DAX">P03 Days Since Remittance =
+MAX ( FactAccountDaily[days_since_last_positive_remittance] )
+</code></pre>
+<p>Then populate the table with:</p>
+<pre><code class="language-text">FactAccountDaily[monitoring_date]
+P03 Monitoring Status
+P03 Daily Shortfall
+P03 Cumulative Shortfall
+P03 Cumulative Pace Ratio
+P03 Days Since Remittance
+</code></pre>
+<p>Rename the displayed headers to:</p>
+<pre><code class="language-text">Date
+Status
+Daily shortfall
+Cumulative shortfall
+Pace
+Days since remittance
+</code></pre>
+<p>Title the visual:</p>
+<p><strong>Monitoring exceptions</strong></p>
+<p>Then apply a <strong>visual-level filter</strong>:</p>
+<pre><code class="language-text">FactAccountDaily[monitoring_status_rank] &gt; 1
+</code></pre>
+<p>That removes ordinary <code>CURRENT</code> and <code>PAID_OFF</code> days and leaves only the periods where the merchant required elevated monitoring—Watch, Underperforming, Severe shortfall.</p>
+<p>For formatting, use currency for both shortfall fields, percentage for Pace, whole number for Days since remittance, and short date for Date. Sort <strong>Date ascending</strong>.</p>
+<p>For Merchant 000749, I expect this to give us a compact event-like history showing the intermittent Watch periods and the late-October Severe shortfall episode. Once we see how many rows it produces, we can decide whether this remains a table or whether we should collapse consecutive exception days into a more executive-friendly operational summary.</p>
+</div></article><article id="m-9e099898-4d85-4cce-8c54-9ea00110df5c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00370 · 2026-08-27T02:41:57.482000-04:00 · active path</p><div class="bubble"><p>the monitoring status &gt; 1 also leads to a bunch of rows where status = NOT AVAILABLE</p>
+</div></article><article id="m-5bf2b702-1011-4012-9189-dd5382af4f89" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00371 · 2026-08-27T02:42:00.875922-04:00 · active path</p><div class="bubble"><p>Yes. That is the <strong>same table-grain problem we&#39;ve already encountered</strong>, and we should correct course rather than patch it.</p>
+<p><code>P03 Monitoring Status</code> is a <code>SELECTEDVALUE</code> measure. By putting that measure into a detail table alongside other measures, Power BI is generating evaluation contexts in which <code>FactAccountDaily[monitoring_status_code]</code> isn&#39;t uniquely resolved. The <code>&gt; 1</code> filter can still be true while the display measure returns <code>NOT AVAILABLE</code>.</p>
+<p>For this visual, <strong>use the actual column</strong>, not the measure.</p>
+<h3>Change the table</h3>
+<p>Remove:</p>
+<p><code>P03 Monitoring Status</code></p>
+<p>Replace it with:</p>
+<p><code>FactAccountDaily[monitoring_status_code]</code></p>
+<p>The table should now be:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Display name</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>monitoring_date</code></td>
+<td>Date</td>
+</tr>
+<tr>
+<td><code>monitoring_status_code</code></td>
+<td>Status</td>
+</tr>
+<tr>
+<td><code>[P03 Daily Shortfall]</code></td>
+<td>Daily shortfall</td>
+</tr>
+<tr>
+<td><code>[P03 Cumulative Shortfall]</code></td>
+<td>Cumulative shortfall</td>
+</tr>
+<tr>
+<td><code>[P03 Cumulative Pace Ratio]</code></td>
+<td>Pace</td>
+</tr>
+<tr>
+<td><code>[P03 Days Since Remittance]</code></td>
+<td>Days since remittance</td>
+</tr>
+</tbody></table>
+<p>Keep the visual filter:</p>
+<p><strong><code>monitoring_status_rank &gt; 1</code></strong></p>
+<p>That should give us only the actual daily rows where the account is:</p>
+<p><strong>Watch / Underperforming / Severe shortfall</strong></p>
+<p>and eliminate the artificial <code>NOT AVAILABLE</code> rows.</p>
+<h3>This reinforces our emerging construction rule</h3>
+<p>We&#39;ve now encountered this enough times that I&#39;d make it explicit:</p>
+<p><strong>Chart tooltip:</strong> scalar <code>SELECTEDVALUE</code> measure is appropriate.<br><strong>Table row:</strong> use the actual row-level column.<br><strong>Chart Y-axis requiring aggregation:</strong> explicit numeric measure.<br><strong>Card:</strong> scalar measure.</p>
+<p>So <code>P03 Monitoring Status</code> remains useful for the <strong>Monitoring journey tooltip</strong>, but it should not be used as the Status column in this detail table.</p>
+<p>Try that substitution before changing anything else. If the resulting exception table is still excessively long, the next question becomes more interesting: whether we want <strong>every elevated-monitoring day</strong> or a much cleaner <strong>exception-transition/event history</strong>.</p>
+</div></article><article id="m-4998066a-d092-4977-8a4e-b6af022e50ae" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00372 · 2026-08-27T02:47:12.236000-04:00 · active path</p><div class="bubble"><p>ok, is there additional visuals for this page?</p>
+</div></article><article id="m-9ef909da-5bde-4295-9635-3501101c09e9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00373 · 2026-08-27T02:47:16.570882-04:00 · active path</p><div class="bubble"><p>Yes, but <strong>I would stop at one additional substantive visual after Monitoring exceptions</strong>. P03 is already telling most of its story, and adding visuals just because space exists would weaken it.</p>
+<p>The one missing dimension is <strong>actual servicing activity</strong>.</p>
+<p>Right now P03 covers:</p>
+<ol>
+<li><strong>Merchant profile</strong> — who is this merchant and what prior relationship did we have?</li>
+<li><strong>Merchant request &amp; decision</strong> — what did they request and what decision occurred?</li>
+<li><strong>Funded terms</strong> — what was actually funded?</li>
+<li><strong>Receivable trajectory</strong> — how did the balance liquidate?</li>
+<li><strong>Remittance performance</strong> — how did cumulative payment pace behave?</li>
+<li><strong>Monitoring journey</strong> — how did the governed monitoring state evolve?</li>
+<li><strong>Monitoring exceptions</strong> — what were the elevated-monitoring days and associated shortfall/pace conditions?</li>
+</ol>
+<p>What&#39;s missing is:</p>
+<blockquote>
+<p><strong>Did anyone actually have to service/intervene on this account, and what happened?</strong></p>
+</blockquote>
+<h3>Final candidate: Servicing activity</h3>
+<p>I would make this a <strong>compact table</strong>, not another chart.</p>
+<p>Ideally:</p>
+<p><strong>Servicing activity</strong></p>
+<p><code>Date | Type | Reason | Status | Resolution</code></p>
+<p>or whatever the actual servicing fact supports.</p>
+<p>That is materially different from Monitoring exceptions:</p>
+<ul>
+<li><strong>Monitoring exceptions</strong> = system-detected performance conditions.</li>
+<li><strong>Servicing activity</strong> = operational response/action.</li>
+</ul>
+<p>That distinction is analytically strong and will also set up the later dedicated <strong>Servicing &amp; Exceptions</strong> page.</p>
+<h3>What I would <em>not</em> add</h3>
+<p>I would not add:</p>
+<ul>
+<li>another KPI strip;</li>
+<li>daily sales;</li>
+<li>a separate payoff-slippage chart;</li>
+<li>cumulative remittance dollars;</li>
+<li>another alert-count chart;</li>
+<li>risk/economics;</li>
+<li>acquisition information;</li>
+<li>endpoint reconciliation.</li>
+</ul>
+<p>Those either duplicate information already communicated or belong more naturally on later authorized pages.</p>
+<h3>One possible enhancement after construction</h3>
+<p>There is one thing I might eventually add <strong>without consuming another visual slot</strong>: tooltips on Receivable trajectory and Remittance performance containing useful daily context—status, actual remittance, expected remittance, shortfall, etc.</p>
+<p>That would deepen P03 without cluttering it.</p>
+<p>So I think we&#39;re very close to the correct page boundary. <strong>Monitoring exceptions + one Servicing activity table should complete P03.</strong></p>
+<p>Before we build that last visual, look at your Fields pane for a fact table whose name contains something like <code>Servicing</code>, <code>Case</code>, <code>Exception</code>, <code>Intervention</code>, or <code>Action</code>. If there is one, give me its name and we&#39;ll build the final visual directly from the proper operational grain.</p>
+</div></article><article id="m-4e2bacae-f428-46fb-8370-b5d75d9630eb" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00374 · 2026-08-27T02:54:02.957000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260827-065223).md; Pasted markdown (2)(7).md; Pasted markdown (3)(1).md</p><div class="bubble"><table>
+<thead>
+<tr>
+<th>module1_run_id servicing_queue_code servicing_queue_rank burden_units manual_review_flag description definition_status row_hash created_at</th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>NO_SERVICING_REQUIRED</td>
+<td>0</td>
+<td>0</td>
+<td>False</td>
+<td>No servicing workload is required.</td>
+<td>APPROVED</td>
+<td>8dc4d0a846b84239585e4f86a694d42d</td>
+<td>8/4/2026</td>
+</tr>
+<tr>
+<td>1</td>
+<td>ACTIVE_REASSESSMENT</td>
+<td>1</td>
+<td>2</td>
+<td>False</td>
+<td>Active account awaits governed reassessment.</td>
+<td>APPROVED</td>
+<td>27af5a2b6fd70309c8b8bc41e5f06a1a</td>
+<td>8/4/2026</td>
+</tr>
+<tr>
+<td>1</td>
+<td>GOVERNANCE_REVIEW_HOLD</td>
+<td>2</td>
+<td>5</td>
+<td>True</td>
+<td>Account remains in controlled governance review.</td>
+<td>APPROVED</td>
+<td>1dda09ae9e5fafae40017974c395edd2</td>
+<td>8/4/2026</td>
+</tr>
+</tbody></table>
+</div></article><article id="m-70f622d6-fcce-4d48-904b-25ddb7b05391" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00375 · 2026-08-27T02:54:07.388369-04:00 · active path</p><div class="bubble"><p>Yes. This is much better than the simple three-row servicing-queue dimension, and the supplied data changes what I recommend for the final P03 section.</p>
+<p>The important discovery is that we actually have <strong>three different layers of servicing information</strong>:</p>
+<ul>
+<li><strong>Strategy/intervention:</strong> what the governed process says should be reviewed or considered. For example, merchant 312 receives <code>TEMPORARY_REMITTANCE_ADJUSTMENT_REVIEW</code>, while merchant 98 receives <code>TARGETED_MERCHANT_OUTREACH_REVIEW</code>. Critically, the source explicitly says <code>NO_PAYMENT_CHANGE_EXECUTED</code> / <code>NO_MERCHANT_CONTACT_EXECUTED</code>, so these are governed review recommendations, not claims that somebody actually contacted the merchant or changed the payment. [export reference: filecite | turn43file2 | L3-L4]</li>
+<li><strong>Servicing execution:</strong> what the synthetic servicing process subsequently did. Merchant 312 has simulated temporary-payment processing with payment-event counts, scheduled/processed/returned/retry amounts and residual exposure; merchant 98 instead lands in a servicing-review hold. [export reference: filecite | turn43file0 | L5-L6]</li>
+<li><strong>Certified servicing outcome:</strong> the later portfolio-performance layer reconciles those outcomes. Merchant 312 is <code>ACTIVE_RECONCILED / ACTIVE_REASSESSMENT</code>, while merchant 98 is <code>CONTROLLED_REVIEW / GOVERNANCE_REVIEW_HOLD</code>. [export reference: filecite | turn43file1 | L6-L7]</li>
+</ul>
+<p>That is a genuinely good story.</p>
+<h3>I would change the final visual</h3>
+<p>Rather than a generic <strong>“Servicing activity”</strong> table with <code>Date | Type | Reason | Status | Resolution</code>, make the final section:</p>
+<p><strong>Servicing &amp; intervention</strong></p>
+<p>And use a compact, one-row table at the selected merchant/scenario grain:</p>
+<p><strong>Intervention | Queue | Exposure | Execution | Final state</strong></p>
+<p>For example, merchant 312 should conceptually read something like:</p>
+<p><code>Temporary remittance adjustment review | Servicing review | $518 | Temporary payment processing | Reassessment due</code></p>
+<p>Merchant 98:</p>
+<p><code>Targeted merchant outreach review | Servicing review | $462 | Servicing review hold | Review hold</code></p>
+<p>And a normal merchant might simply show:</p>
+<p><code>No further action | Closed | $0 | No processing | Closed</code></p>
+<p>This is much more valuable than another chart.</p>
+<h3>One important boundary</h3>
+<p>I would <strong>not use the Observation-date slicer to filter this table</strong>. These supplied servicing/intervention tables appear to be account/scenario outcome records, not daily observations. The <code>created_at</code> dates are artifact/process dates, not merchant servicing-event dates. So we should not manufacture a daily servicing timeline from them.</p>
+<p>That also means our page now has a nice distinction:</p>
+<p><strong>daily lifecycle evidence</strong>
+→ Receivable trajectory<br>→ Remittance performance<br>→ Monitoring journey / exceptions</p>
+<p><strong>account/scenario servicing outcome</strong>
+→ Servicing &amp; intervention</p>
+<h3>Next step</h3>
+<p>Let&#39;s build <strong>Servicing &amp; intervention</strong> now.</p>
+<p>First, tell me the Power BI table name corresponding to the file containing these fields:</p>
+<p><code>strategy_outcome_code</code><br><code>servicing_action_code</code><br><code>servicing_queue_code</code><br><code>recommended_action_exposure_amount</code><br><code>primary_intervention_reason_code</code></p>
+<p>That is the third dataset you supplied, and <strong>that is where I want to start the visual</strong>. We can then bring in the execution/final-state layer with measures if necessary rather than creating another sprawling cross-grain table.</p>
+</div></article><article id="m-dc9c49f3-5ba6-4a36-9942-0ad7a5d2f465" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00376 · 2026-08-27T02:56:38.355000-04:00 · active path</p><div class="bubble"><p>FactIntervention and I&#39;ve made it viewable (removed hide)</p>
+</div></article><article id="m-9b4ab8fa-d016-4245-8d2b-bb707a853e4e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00377 · 2026-08-27T02:56:41.624206-04:00 · active path</p><div class="bubble"><p>Perfect. <code>FactIntervention</code> is the correct starting point, and since you&#39;ve exposed it, <strong>let&#39;s use its actual columns rather than create unnecessary measures</strong>.</p>
+<p>For the final P03 section, create a <strong>Table</strong> visual titled <strong>Servicing &amp; intervention</strong>. Add these <code>FactIntervention</code> columns in this exact order:</p>
+<table>
+<thead>
+<tr>
+<th>FactIntervention field</th>
+<th>Rename for this visual</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>strategy_outcome_code</code></td>
+<td><strong>Intervention</strong></td>
+</tr>
+<tr>
+<td><code>servicing_action_code</code></td>
+<td><strong>Action</strong></td>
+</tr>
+<tr>
+<td><code>servicing_queue_code</code></td>
+<td><strong>Queue</strong></td>
+</tr>
+<tr>
+<td><code>recommended_action_exposure_amount</code></td>
+<td><strong>Exposure</strong></td>
+</tr>
+<tr>
+<td><code>primary_intervention_reason_code</code></td>
+<td><strong>Reason</strong></td>
+</tr>
+</tbody></table>
+<p>These fields are all at the same merchant/application/scenario intervention grain, so this is much cleaner than mixing in daily monitoring fields. The source supports outcomes ranging from closed/no-action to targeted outreach review and temporary-remittance-adjustment review. [export reference: filecite | turn43file2 | L3-L8]</p>
+<h3>Formatting</h3>
+<p>Use:</p>
+<ul>
+<li><strong>Exposure:</strong> Currency, 0 decimals.</li>
+<li>Turn <strong>Word wrap OFF</strong> initially for values.</li>
+<li>Keep column headers on.</li>
+<li>Make <strong>Intervention</strong> the widest column.</li>
+<li>Make <strong>Reason</strong> reasonably wide, but don&#39;t let the long technical code dominate the page.</li>
+<li>No totals.</li>
+<li>No conditional formatting yet.</li>
+</ul>
+<p>For your current Merchant <strong>000749 / Baseline</strong>, expect a fairly uneventful row: the source has that merchant as <code>CLOSED_NO_FURTHER_ACTION</code>, <code>NO_ACTION_CLOSED</code>, <code>CLOSED</code>, $0 exposure, with a paid-off/closed reason. [export reference: filecite | turn43file2 | L24-L24] That&#39;s actually useful UAT because P03 must represent both problem merchants and merchants requiring no intervention.</p>
+<h3>Then test a more interesting merchant</h3>
+<p>After 749 renders correctly, switch Merchant to <strong>000312 / Baseline</strong>.</p>
+<p>That should give us a much stronger test case:</p>
+<p><code>TEMPORARY_REMITTANCE_ADJUSTMENT_REVIEW</code><br>→ <code>TEMPORARY_REMITTANCE_REVIEW</code><br>→ <code>SERVICING_REVIEW</code><br>→ <code>$518.04</code></p>
+<p>with a severe-shortfall/reassessment reason. [export reference: filecite | turn43file2 | L3-L3]</p>
+<p><strong>Show me the resulting table for 312 before we add the execution outcome.</strong> If it behaves properly, we&#39;ll decide whether to extend this same visual with the downstream execution/final state or whether the five intervention fields already tell the story cleanly enough.</p>
+</div></article><article id="m-0de15ec7-9acc-4328-8a7f-16390d115481" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00378 · 2026-08-27T03:06:06.405000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 5b3f1d86-29ad-4921-906c-b08e93e36551.png</p><div class="bubble"><p>we need to create new columns for intervention / action / queue / reason to make them more professional: </p>
+</div></article><article id="m-195ca25a-1f91-48c9-aa3f-f6acd8108520" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00379 · 2026-08-27T03:06:09.964743-04:00 · active path</p><div class="bubble"><p>Yes. The raw codes are useful for governance but <strong>too technical for the report surface</strong>. I would preserve the source columns unchanged and add four calculated presentation columns to <code>FactIntervention</code>, exactly like we did for Use, Channel, and Decision.</p>
+<p>For the current source population, we should translate the business meaning rather than merely replace underscores with spaces. The intervention source distinguishes, for example, temporary-remittance review, targeted outreach review, and closed/no-further-action states. [export reference: filecite | turn43file2 | L3-L5]</p>
+<h3>1. Intervention</h3>
+<pre><code class="language-DAX">P03 Intervention =
+SWITCH (
+    FactIntervention[strategy_outcome_code],
+    &quot;CLOSED_NO_FURTHER_ACTION&quot;, &quot;No further action&quot;,
+    &quot;TARGETED_MERCHANT_OUTREACH_REVIEW&quot;, &quot;Merchant outreach review&quot;,
+    &quot;TEMPORARY_REMITTANCE_ADJUSTMENT_REVIEW&quot;, &quot;Remittance adjustment review&quot;,
+    SUBSTITUTE (
+        PROPER (
+            SUBSTITUTE (
+                FactIntervention[strategy_outcome_code],
+                &quot;_&quot;,
+                &quot; &quot;
+            )
+        ),
+        &quot;No Further Action&quot;,
+        &quot;No further action&quot;
+    )
+)
+</code></pre>
+<h3>2. Action</h3>
+<pre><code class="language-DAX">P03 Servicing Action =
+SWITCH (
+    FactIntervention[servicing_action_code],
+    &quot;NO_ACTION_CLOSED&quot;, &quot;No action — closed&quot;,
+    &quot;OUTREACH_REVIEW_QUEUE&quot;, &quot;Outreach review&quot;,
+    &quot;TEMPORARY_REMITTANCE_REVIEW&quot;, &quot;Remittance review&quot;,
+    SUBSTITUTE (
+        PROPER (
+            SUBSTITUTE (
+                FactIntervention[servicing_action_code],
+                &quot;_&quot;,
+                &quot; &quot;
+            )
+        ),
+        &quot;No Action Closed&quot;,
+        &quot;No action — closed&quot;
+    )
+)
+</code></pre>
+<h3>3. Queue</h3>
+<p>The queue population is especially clean:</p>
+<pre><code class="language-DAX">P03 Servicing Queue =
+SWITCH (
+    FactIntervention[servicing_queue_code],
+    &quot;CLOSED&quot;, &quot;Closed&quot;,
+    &quot;SERVICING_REVIEW&quot;, &quot;Servicing review&quot;,
+    PROPER (
+        SUBSTITUTE (
+            FactIntervention[servicing_queue_code],
+            &quot;_&quot;,
+            &quot; &quot;
+        )
+    )
+)
+</code></pre>
+<h3>4. Reason</h3>
+<p>This is where I would be most aggressive about removing technical implementation language. The user doesn&#39;t need <code>M2_6_REASON_...</code>.</p>
+<pre><code class="language-DAX">P03 Intervention Reason =
+SWITCH (
+    FactIntervention[primary_intervention_reason_code],
+    &quot;M2_6_REASON_PAID_OFF_CLOSED&quot;, &quot;Paid off&quot;,
+    &quot;M2_6_REASON_SEVERE_SHORTFALL_OUTREACH_REVIEW&quot;, &quot;Severe shortfall&quot;,
+    &quot;M2_6_REASON_SEVERE_SHORTFALL_TEMPORARY_REMITTANCE_REVIEW&quot;, &quot;Severe shortfall&quot;,
+    SUBSTITUTE (
+        PROPER (
+            SUBSTITUTE (
+                SUBSTITUTE (
+                    FactIntervention[primary_intervention_reason_code],
+                    &quot;M2_6_REASON_&quot;,
+                    &quot;&quot;
+                ),
+                &quot;_&quot;,
+                &quot; &quot;
+            )
+        ),
+        &quot;Paid Off Closed&quot;,
+        &quot;Paid off&quot;
+    )
+)
+</code></pre>
+<p>The fallback is intentional. If another accepted code appears while you&#39;re testing merchants, it will still produce readable text instead of BLANK.</p>
+<h3>Then rebuild that bottom-right table</h3>
+<p>Use only:</p>
+<p><strong>Intervention | Action | Queue | Exposure | Reason</strong></p>
+<p>with:</p>
+<ul>
+<li><code>P03 Intervention</code></li>
+<li><code>P03 Servicing Action</code></li>
+<li><code>P03 Servicing Queue</code></li>
+<li><code>recommended_action_exposure_amount</code></li>
+<li><code>P03 Intervention Reason</code></li>
+</ul>
+<p>For merchant <strong>000749</strong>, your current row should become approximately:</p>
+<p><strong>No further action | No action — closed | Closed | $0 | Paid off</strong></p>
+<p>That&#39;s dramatically better than what is on screen now.</p>
+<p>One additional change: give this table a visible title:</p>
+<h3><strong>Servicing &amp; intervention</strong></h3>
+<p>Then test <strong>000312 / Baseline</strong>. That&#39;s the merchant I most want to see next because its source row contains an actual intervention-review case rather than the uneventful paid-off outcome shown for 749. [export reference: filecite | turn43file2 | L3-L3]</p>
+<p>Also, your overall P03 layout is coming together very well. I would <strong>turn totals off on Monitoring exceptions</strong>—the current <code>Total</code> row doesn&#39;t make semantic sense for Pace or Days since remittance and visually implies aggregations that aren&#39;t useful to the merchant story.</p>
+</div></article><article id="m-8c6c62ef-dd46-4c6a-9c34-0f7517b1cc23" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00380 · 2026-08-27T03:09:28.768000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: e1425d6c-6611-4aa9-bf48-2969a2e069da.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-440dea21-2a95-4ec4-a57e-d5a627ba18dc" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00381 · 2026-08-27T03:09:36.373911-04:00 · active path</p><div class="bubble"><p>The error is because <strong>DAX does not have a <code>PROPER()</code> function</strong>. That was my mistake. Power Query has <code>Text.Proper</code>, Excel has <code>PROPER</code>, but DAX does not.</p>
+<p>For these presentation columns, the cleanest approach is actually better anyway: use explicit mappings for the governed codes and a simple readable fallback.</p>
+<p>Replace <code>P03 Intervention</code> with:</p>
+<pre><code class="language-DAX">P03 Intervention =
+SWITCH (
+    FactIntervention[strategy_outcome_code],
+    &quot;CLOSED_NO_FURTHER_ACTION&quot;, &quot;No further action&quot;,
+    &quot;TARGETED_MERCHANT_OUTREACH_REVIEW&quot;, &quot;Merchant outreach review&quot;,
+    &quot;TEMPORARY_REMITTANCE_ADJUSTMENT_REVIEW&quot;, &quot;Remittance adjustment review&quot;,
+    SUBSTITUTE (
+        FactIntervention[strategy_outcome_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<p>And revise the other three similarly:</p>
+<pre><code class="language-DAX">P03 Servicing Action =
+SWITCH (
+    FactIntervention[servicing_action_code],
+    &quot;NO_ACTION_CLOSED&quot;, &quot;No action — closed&quot;,
+    &quot;OUTREACH_REVIEW_QUEUE&quot;, &quot;Outreach review&quot;,
+    &quot;TEMPORARY_REMITTANCE_REVIEW&quot;, &quot;Remittance review&quot;,
+    SUBSTITUTE (
+        FactIntervention[servicing_action_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<pre><code class="language-DAX">P03 Servicing Queue =
+SWITCH (
+    FactIntervention[servicing_queue_code],
+    &quot;CLOSED&quot;, &quot;Closed&quot;,
+    &quot;SERVICING_REVIEW&quot;, &quot;Servicing review&quot;,
+    SUBSTITUTE (
+        FactIntervention[servicing_queue_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<pre><code class="language-DAX">P03 Intervention Reason =
+SWITCH (
+    FactIntervention[primary_intervention_reason_code],
+    &quot;M2_6_REASON_PAID_OFF_CLOSED&quot;, &quot;Paid off&quot;,
+    &quot;M2_6_REASON_SEVERE_SHORTFALL_OUTREACH_REVIEW&quot;, &quot;Severe shortfall&quot;,
+    &quot;M2_6_REASON_SEVERE_SHORTFALL_TEMPORARY_REMITTANCE_REVIEW&quot;, &quot;Severe shortfall&quot;,
+    SUBSTITUTE (
+        SUBSTITUTE (
+            FactIntervention[primary_intervention_reason_code],
+            &quot;M2_6_REASON_&quot;,
+            &quot;&quot;
+        ),
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<p>For the known values, these will produce the polished labels we want. The fallback is only there as protection if we encounter another code during UAT; it may remain uppercase, but it will at least be readable rather than erroring or returning blank.</p>
+<p>I would create all four with these versions, then replace the raw fields in <strong>Servicing &amp; intervention</strong> with the new presentation columns.</p>
+</div></article><article id="m-39c6c495-ef08-40e6-85f2-ddc8b95a20d3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00382 · 2026-08-27T03:13:08.512000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 14cf2764-9915-4671-baf3-621bb5f92562.png; Pasted markdown(20260827-071303).md</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-e5549117-69a3-4ad9-9b71-ad78e7432ed1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00383 · 2026-08-27T03:13:15.709906-04:00 · active path</p><div class="bubble"><p>The error confirms Power BI is currently creating <strong><code>P03 Intervention</code> as a measure</strong>, not a calculated column.</p>
+<p>Because a measure evaluates over filter context, <code>FactIntervention[strategy_outcome_code]</code> can contain many rows, so Power BI cannot determine one value. For this use case, we want a <strong>row-level presentation column</strong>.</p>
+<p>Do this instead:</p>
+<ol>
+<li>In the Fields pane, click <strong><code>FactIntervention</code></strong>.</li>
+<li>Go to <strong>Table tools / Modeling → New column</strong>.</li>
+<li>Make sure you choose <strong>New column</strong>, not <strong>New measure</strong>.</li>
+<li>Paste:</li>
+</ol>
+<pre><code class="language-DAX">P03 Intervention =
+SWITCH (
+    FactIntervention[strategy_outcome_code],
+    &quot;CLOSED_NO_FURTHER_ACTION&quot;, &quot;No further action&quot;,
+    &quot;TARGETED_MERCHANT_OUTREACH_REVIEW&quot;, &quot;Merchant outreach review&quot;,
+    &quot;TEMPORARY_REMITTANCE_ADJUSTMENT_REVIEW&quot;, &quot;Remittance adjustment review&quot;,
+    SUBSTITUTE (
+        FactIntervention[strategy_outcome_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<p>That should work immediately because each row has exactly one <code>strategy_outcome_code</code>. The source confirms these codes are row-level attributes of <code>FactIntervention</code>. [export reference: filecite | turn44file0 | L3-L5]</p>
+<p>Then create the other three using <strong>New column</strong> as well:</p>
+<pre><code class="language-DAX">P03 Servicing Action =
+SWITCH (
+    FactIntervention[servicing_action_code],
+    &quot;NO_ACTION_CLOSED&quot;, &quot;No action — closed&quot;,
+    &quot;OUTREACH_REVIEW_QUEUE&quot;, &quot;Outreach review&quot;,
+    &quot;TEMPORARY_REMITTANCE_REVIEW&quot;, &quot;Remittance review&quot;,
+    SUBSTITUTE (
+        FactIntervention[servicing_action_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<pre><code class="language-DAX">P03 Servicing Queue =
+SWITCH (
+    FactIntervention[servicing_queue_code],
+    &quot;CLOSED&quot;, &quot;Closed&quot;,
+    &quot;SERVICING_REVIEW&quot;, &quot;Servicing review&quot;,
+    SUBSTITUTE (
+        FactIntervention[servicing_queue_code],
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<pre><code class="language-DAX">P03 Intervention Reason =
+SWITCH (
+    FactIntervention[primary_intervention_reason_code],
+    &quot;M2_6_REASON_PAID_OFF_CLOSED&quot;, &quot;Paid off&quot;,
+    &quot;M2_6_REASON_SEVERE_SHORTFALL_OUTREACH_REVIEW&quot;, &quot;Severe shortfall&quot;,
+    &quot;M2_6_REASON_SEVERE_SHORTFALL_TEMPORARY_REMITTANCE_REVIEW&quot;, &quot;Severe shortfall&quot;,
+    SUBSTITUTE (
+        SUBSTITUTE (
+            FactIntervention[primary_intervention_reason_code],
+            &quot;M2_6_REASON_&quot;,
+            &quot;&quot;
+        ),
+        &quot;_&quot;,
+        &quot; &quot;
+    )
+)
+</code></pre>
+<p>Then replace the raw columns in the visual with these four calculated columns.</p>
+<p>A quick visual check: in the Fields pane, a <strong>column</strong> will have the column-style icon, while a <strong>measure</strong> has the calculator icon. For these four objects, we want columns.</p>
+</div></article><article id="m-e34633b3-fde8-4f75-9c08-6a72d3efac3e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00384 · 2026-08-27T03:51:05.142000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 8e6b3ca4-3c56-4c45-8013-1787cdb835eb.png</p><div class="bubble"><p>I&#39;d thinking about removing evidence from the Merchant request &amp; decision table and placing it in a nicely formatted card in this white space: I&#39;m thinking like a green approve, yellow (counteroffer review), red decline. something that grabs the users attention and lets them know immediately without searching and also looks visually appealing.</p>
+</div></article><article id="m-a21bc333-02e8-4457-b6b8-648f756f265d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00385 · 2026-08-27T03:51:08.801798-04:00 · active path</p><div class="bubble"><p>Yes. <strong>I would do this.</strong> It improves the information hierarchy materially.</p>
+<p>Right now <code>Decision</code> is buried at the far right of a dense request table. But the decision is arguably the <strong>single most important result of the application stage</strong>. The table should explain <em>what was requested</em>; a prominent decision object should tell the viewer <em>what happened</em>.</p>
+<p>I would use that white space for a compact <strong>Decision card</strong>.</p>
+<h3>1. Remove <code>Decision</code> from Merchant request &amp; decision</h3>
+<p>Then I would actually rename that section:</p>
+<p><strong>Merchant request</strong></p>
+<p>It becomes a clean factual record:</p>
+<p><code>Application | Applied | Requested | Use | Channel | Remittance | Payoff days | Repayment</code></p>
+<h3>2. Create a short decision-display measure</h3>
+<p>We already have the underlying decision outcome. Create:</p>
+<pre><code class="language-DAX">P03 Decision Display =
+VAR _Decision =
+    SELECTEDVALUE ( DimDecisionOutcome[final_decision_outcome_code] )
+RETURN
+    SWITCH (
+        _Decision,
+        &quot;FINAL_OFFER_AUTHORIZED&quot;, &quot;APPROVED&quot;,
+        &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;, &quot;REVIEW&quot;,
+        &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;, &quot;DECLINED&quot;,
+        &quot;DECLINE_POLICY_AUTHORIZED&quot;, &quot;DECLINED&quot;,
+        &quot;NOT AVAILABLE&quot;
+    )
+</code></pre>
+<p>If your exact codes differ, we can adjust them, but those are the ones we&#39;ve physically encountered during P03 construction.</p>
+<h3>3. Make the card visually prominent</h3>
+<p>Put a Card visual in exactly the white area you&#39;ve highlighted.</p>
+<p>I would make it roughly:</p>
+<pre><code class="language-text">DECISION
+
+✓ APPROVED
+Final offer
+</code></pre>
+<p>or</p>
+<pre><code class="language-text">DECISION
+
+! REVIEW
+Counteroffer review
+</code></pre>
+<p>or</p>
+<pre><code class="language-text">DECISION
+
+× DECLINED
+Evidence decline
+</code></pre>
+<p>The <strong>large word</strong> is the immediate signal. Then we can retain a smaller descriptive outcome beneath it if the native card supports a secondary value/reference label cleanly.</p>
+<h3>4. Use conditional color — but carefully</h3>
+<p>Your green/yellow/red concept is exactly right here because these colors carry an intuitive decision meaning.</p>
+<p>I would use:</p>
+<ul>
+<li><strong>APPROVED → green</strong></li>
+<li><strong>REVIEW → amber/yellow</strong></li>
+<li><strong>DECLINED → red</strong></li>
+<li><strong>NOT AVAILABLE → neutral gray</strong></li>
+</ul>
+<p>I would <strong>not color the entire background a saturated green/red</strong>. That would be too loud relative to the rest of this report.</p>
+<p>Instead, keep the card background white and conditionally color either:</p>
+<ul>
+<li>the large decision text, <strong>or</strong></li>
+<li>a restrained accent/bar/background tint if the Card visual gives us a polished implementation.</li>
+</ul>
+<p>That keeps it consistent with the sophisticated visual language of P01/P02/P03 while still making the decision impossible to miss.</p>
+<h3>5. I would add a second measure for the specific outcome</h3>
+<p>Because <code>APPROVED</code> versus <code>DECLINED</code> alone loses useful information:</p>
+<pre><code class="language-DAX">P03 Decision Detail =
+VAR _Decision =
+    SELECTEDVALUE ( DimDecisionOutcome[final_decision_outcome_code] )
+RETURN
+    SWITCH (
+        _Decision,
+        &quot;FINAL_OFFER_AUTHORIZED&quot;, &quot;Final offer&quot;,
+        &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;, &quot;Counteroffer review&quot;,
+        &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;, &quot;Evidence decline&quot;,
+        &quot;DECLINE_POLICY_AUTHORIZED&quot;, &quot;Policy decline&quot;,
+        &quot;Not available&quot;
+    )
+</code></pre>
+<p>Then the object can read:</p>
+<p><strong>APPROVED</strong><br>Final offer</p>
+<p>rather than merely <code>Final offer</code>.</p>
+<p>That is better executive communication because <strong>status and reason/outcome are different pieces of information</strong>.</p>
+<h3>6. One semantic nuance: use <code>REVIEW</code>, not yellow “counteroffer”</h3>
+<p>I&#39;d make the big yellow state <strong>REVIEW</strong>, with <code>Counteroffer review</code> underneath.</p>
+<p>Why? Because <code>COUNTEROFFER_REVIEW_REQUIRED</code> is not itself an approved counteroffer. The governed outcome says <strong>review required</strong>. We shouldn&#39;t visually elevate that into a completed counteroffer.</p>
+<p>So our three-state visual language becomes:</p>
+<p><strong>APPROVED</strong><br>Final offer</p>
+<p><strong>REVIEW</strong><br>Counteroffer review</p>
+<p><strong>DECLINED</strong><br>Policy decline / Evidence decline</p>
+<p>That is both visually compelling and semantically precise.</p>
+<p>And your screenshot shows <strong>Merchant 000388 / Evidence decline</strong>, so that is actually an excellent merchant for building the red state first. Once it works, we can switch to 749 to test green and one of our known counteroffer merchants to test amber.</p>
+</div></article><article id="m-7f68f36d-0a92-4c5e-8a4a-15eda7faa5c1" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00386 · 2026-08-27T03:59:43.493000-04:00 · active path</p><div class="bubble"><p>step by step advice on creating this element</p>
+</div></article><article id="m-f14bbba3-0117-46c8-96f5-1abc0cf5a4b6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00387 · 2026-08-27T03:59:49.916636-04:00 · active path</p><div class="bubble"><p>Yes. Build it as a <strong>small two-line decision panel</strong> rather than a generic card with too much chrome.</p>
+<p>First, remove <code>Decision</code> from the <strong>Merchant request &amp; decision</strong> table and rename that section <strong>Merchant request</strong>.</p>
+<p>Then create these two measures in your P03 measure area:</p>
+<pre><code class="language-DAX">P03 Decision Display =
+VAR _Decision =
+    SELECTEDVALUE ( DimDecisionOutcome[final_decision_outcome_code] )
+RETURN
+    SWITCH (
+        _Decision,
+        &quot;FINAL_OFFER_AUTHORIZED&quot;, &quot;APPROVED&quot;,
+        &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;, &quot;REVIEW&quot;,
+        &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;, &quot;DECLINED&quot;,
+        &quot;DECLINE_POLICY_AUTHORIZED&quot;, &quot;DECLINED&quot;,
+        &quot;NOT AVAILABLE&quot;
+    )
+</code></pre>
+<pre><code class="language-DAX">P03 Decision Detail =
+VAR _Decision =
+    SELECTEDVALUE ( DimDecisionOutcome[final_decision_outcome_code] )
+RETURN
+    SWITCH (
+        _Decision,
+        &quot;FINAL_OFFER_AUTHORIZED&quot;, &quot;Final offer&quot;,
+        &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;, &quot;Counteroffer review&quot;,
+        &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;, &quot;Evidence decline&quot;,
+        &quot;DECLINE_POLICY_AUTHORIZED&quot;, &quot;Policy decline&quot;,
+        &quot;Not available&quot;
+    )
+</code></pre>
+<p>Now create a third measure that will drive the color:</p>
+<pre><code class="language-DAX">P03 Decision Color =
+VAR _Decision =
+    [P03 Decision Display]
+RETURN
+    SWITCH (
+        _Decision,
+        &quot;APPROVED&quot;, &quot;#2E7D32&quot;,
+        &quot;REVIEW&quot;, &quot;#B8860B&quot;,
+        &quot;DECLINED&quot;, &quot;#C62828&quot;,
+        &quot;#6B7280&quot;
+    )
+</code></pre>
+<p>Next, insert a <strong>Card</strong> visual into the white space to the left of Funded terms.</p>
+<p>Put <code>[P03 Decision Display]</code> into the card.</p>
+<p>Format it like this:</p>
+<ul>
+<li>Title: <strong>Off</strong></li>
+<li>Category label: <strong>Off</strong></li>
+<li>Callout value: large, around <strong>22–28 pt</strong></li>
+<li>Font weight: bold</li>
+<li>Background: white</li>
+<li>Border: off or very subtle</li>
+<li>Shadow: off</li>
+<li>Padding: modest</li>
+</ul>
+<p>Then conditionally format the callout color:</p>
+<ol>
+<li>Select the card.</li>
+<li>Format pane.</li>
+<li>Find <strong>Callout value → Color</strong>.</li>
+<li>Click <strong>fx</strong>.</li>
+<li>Format style: <strong>Field value</strong>.</li>
+<li>Based on field: <code>[P03 Decision Color]</code>.</li>
+<li>Apply.</li>
+</ol>
+<p>That gives you the green / amber / red signal.</p>
+<p>Now add the smaller explanatory line. The cleanest way is a <strong>second Card</strong> directly beneath the first.</p>
+<p>Put <code>[P03 Decision Detail]</code> in that second card and format it:</p>
+<ul>
+<li>font around <strong>11–13 pt</strong></li>
+<li>neutral dark gray</li>
+<li>category label off</li>
+<li>background off</li>
+<li>border off</li>
+</ul>
+<p>Above both cards, insert a tiny text box:</p>
+<p><strong>Decision</strong></p>
+<p>Use the same section-title treatment you already use elsewhere.</p>
+<p>So visually, the element becomes:</p>
+<pre><code class="language-text">Decision
+
+DECLINED
+Evidence decline
+</code></pre>
+<p>or:</p>
+<pre><code class="language-text">Decision
+
+APPROVED
+Final offer
+</code></pre>
+<p>or:</p>
+<pre><code class="language-text">Decision
+
+REVIEW
+Counteroffer review
+</code></pre>
+<p>I would not add a colored background box yet. The colored word itself should be enough, and it will fit the restrained style of the rest of the page.</p>
+<p>Finally, UAT the three states. Use:</p>
+<ul>
+<li>Merchant <strong>000388</strong> for a decline state</li>
+<li>Merchant <strong>000749</strong> for approved/final offer</li>
+<li>one merchant you already identified with <code>COUNTEROFFER_REVIEW_REQUIRED</code> for review</li>
+</ul>
+<p>If all three change correctly with the Merchant slicer, the element is done.</p>
+</div></article><article id="m-ece65ec0-6c94-4406-91b8-976a2df7b34f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00388 · 2026-08-27T04:17:14.482000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: f5734c4d-ff12-4ebf-9c83-2cc7cec73b27.png</p><div class="bubble"><p>showing not available:</p>
+</div></article><article id="m-486a3ede-4af5-4dc8-a278-42dc877b960d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00389 · 2026-08-27T04:17:20.436585-04:00 · active path</p><div class="bubble"><p>That makes sense. The problem is <strong>not the card</strong>; it is the table I used in the measure.</p>
+<p><code>DimDecisionOutcome</code> is a lookup/dimension table. Your Merchant and Scenario slicers do not necessarily back-filter that dimension to one outcome, so:</p>
+<pre><code class="language-DAX">SELECTEDVALUE ( DimDecisionOutcome[final_decision_outcome_code] )
+</code></pre>
+<p>sees multiple decision codes and returns blank → our measure converts that to <code>NOT AVAILABLE</code>.</p>
+<p>For P03 we should get the selected merchant&#39;s actual decision from <strong><code>FactFinalDecision</code></strong>, which is at the application/scenario decision grain.</p>
+<h3>1. Replace <code>P03 Decision Display</code></h3>
+<p>Use:</p>
+<pre><code class="language-DAX">P03 Decision Display =
+VAR _Decision =
+    SELECTEDVALUE (
+        FactFinalDecision[final_decision_outcome_code]
+    )
+RETURN
+    SWITCH (
+        _Decision,
+        &quot;FINAL_OFFER_AUTHORIZED&quot;, &quot;APPROVED&quot;,
+        &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;, &quot;REVIEW&quot;,
+        &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;, &quot;DECLINED&quot;,
+        &quot;DECLINE_POLICY_AUTHORIZED&quot;, &quot;DECLINED&quot;,
+        &quot;NOT AVAILABLE&quot;
+    )
+</code></pre>
+<p>You <strong>do not need to unhide <code>FactFinalDecision</code></strong> to reference it in a measure.</p>
+<h3>2. Replace <code>P03 Decision Detail</code> too</h3>
+<pre><code class="language-DAX">P03 Decision Detail =
+VAR _Decision =
+    SELECTEDVALUE (
+        FactFinalDecision[final_decision_outcome_code]
+    )
+RETURN
+    SWITCH (
+        _Decision,
+        &quot;FINAL_OFFER_AUTHORIZED&quot;, &quot;Final offer&quot;,
+        &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;, &quot;Counteroffer review&quot;,
+        &quot;DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED&quot;, &quot;Evidence decline&quot;,
+        &quot;DECLINE_POLICY_AUTHORIZED&quot;, &quot;Policy decline&quot;,
+        &quot;Not available&quot;
+    )
+</code></pre>
+<p><code>P03 Decision Color</code> can remain unchanged because it relies on <code>[P03 Decision Display]</code>, not directly on the underlying table.</p>
+<h3>3. Test Merchant 000749 first</h3>
+<p>Your existing Merchant Request table already tells us this merchant is:</p>
+<p><strong>Final offer</strong></p>
+<p>So after replacing the measure, that box should immediately change from:</p>
+<p><code>NOT AVAILABLE</code></p>
+<p>to:</p>
+<p><strong>APPROVED</strong></p>
+<p>and the conditional font should become green.</p>
+<p>Then add the second smaller card underneath with <code>[P03 Decision Detail]</code>, which should show:</p>
+<p><strong>Final offer</strong></p>
+<h3>Why this is the correct architecture</h3>
+<p>This is another useful distinction for the model:</p>
+<ul>
+<li><strong><code>DimDecisionOutcome</code></strong> → defines/describes the possible decision outcomes.</li>
+<li><strong><code>FactFinalDecision</code></strong> → tells us <strong>which decision this application actually received under the selected scenario</strong>.</li>
+</ul>
+<p>For a merchant-specific status card, we need the second one.</p>
+<p>Once 749 works, switch to <strong>000388</strong>. From your screenshot, that merchant should return <strong>DECLINED / Evidence decline</strong>. Then we can verify the red conditional formatting and finish the card design.</p>
+</div></article><article id="m-b646dbc8-92c2-41d3-99ca-7d114040f6b2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00390 · 2026-08-27T04:51:48.431000-04:00 · active path</p><p class="note">4 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: b00fd36b-41b1-4280-b522-0d5f604174c8.png; 0a9255e7-4803-4c2c-99dc-1f8625d421bf.png; 03fa0cc6-523a-4e0c-8656-27c6cef263ca.png; 0d1f3ed8-05a3-4a9e-b8e0-3cf9141d9913.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-e0aef418-52f9-43fc-8957-9b584773f440" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00391 · 2026-08-27T04:51:54.332986-04:00 · active path</p><div class="bubble"><p>These screenshots validate the decision element very well. I would <strong>keep this design</strong>.</p>
+<p>The three states are immediately understandable:</p>
+<ul>
+<li><strong>APPROVED / Final offer</strong> — green</li>
+<li><strong>REVIEW / Counteroffer review</strong> — amber</li>
+<li><strong>DECLINED / Evidence decline</strong> or <strong>Policy decline</strong> — red</li>
+</ul>
+<p>This is materially better than burying the outcome in the request table. The eye now goes naturally from <strong>Merchant → Request → Decision → Funded terms → Performance/servicing</strong>.</p>
+<p>A few refinements stand out from the UAT screenshots:</p>
+<ol>
+<li><p><strong>Rename <code>Merchant request &amp; decision</code> permanently to <code>Merchant request</code>.</strong> The card now owns the decision outcome, so the old heading would be redundant.</p>
+</li>
+<li><p><strong>The blank downstream visuals for REVIEW/DECLINED are logically correct.</strong> A merchant that wasn&#39;t funded should not have funded terms, receivable trajectory, remittance performance, monitoring history, or servicing intervention fabricated for it. I would not fill those with zeros.</p>
+</li>
+<li><p>But the completely empty downstream region is a little ambiguous. I recommend adding a small measure-driven message such as:</p>
+<p><strong>Not funded — lifecycle monitoring not applicable</strong></p>
+<p>It could appear once in the lifecycle area when there is no funded advance rather than putting “Not available” into every visual. That tells the viewer the blank space is intentional.</p>
+</li>
+<li><p><strong>Fix <code>Prior funded</code> formatting.</strong> Merchant 301 currently shows <code>$86.56723K</code>. Change that display to something like <strong>$86.6K</strong> (or <code>$86,567</code> if you prefer full dollars). The five-decimal K value looks unfinished.</p>
+</li>
+<li><p>I like that Merchant 301 demonstrates something important: the profile can show <strong>RETURNING GOOD / 1 prior advance / prior funded amount</strong> while the current application is still declined. That makes the 360 concept much stronger because relationship history clearly does not predetermine the current decision.</p>
+</li>
+<li><p>Keep the card dimensions and placement. The decision card is visually prominent without overwhelming the page. I would not add icons, gradients, or more decoration.</p>
+</li>
+</ol>
+<p>The next improvement I would make is the <strong>single “Not funded” lifecycle-state message</strong>, because your REVIEW and DECLINED screenshots expose that UX need very clearly. After that, P03 is close to a finished page rather than a construction prototype.</p>
+</div></article><article id="m-d28e93a6-64b2-48b9-b531-8ff6628234f3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00392 · 2026-08-27T04:54:53.407000-04:00 · active path</p><div class="bubble"><p>regarding, But the completely empty downstream region is a little ambiguous. I recommend adding a small measure-driven message such as:</p>
+<p><strong>Not funded — lifecycle monitoring not applicable</strong></p>
+<p>It could appear once in the lifecycle area when there is no funded advance rather than putting “Not available” into every visual. That tells the viewer the blank space is intentional.               It would seem that our DECLINED and REVIEW card would already signal this</p>
+</div></article><article id="m-edef8328-45c9-4f79-979f-5c0daf63d532" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00393 · 2026-08-27T04:54:59.280715-04:00 · active path</p><div class="bubble"><p>Yes — I agree. <strong>The DECLINED and REVIEW decision cards already communicate why the downstream lifecycle area is blank.</strong> Adding a separate “Not funded — lifecycle monitoring not applicable” message would be redundant and would start cluttering a page that is currently very clean.</p>
+<p>For this page, I would keep the behavior exactly as it is:</p>
+<ul>
+<li><strong>APPROVED</strong> → funded terms and lifecycle visuals populate.</li>
+<li><strong>REVIEW</strong> → no funded terms/lifecycle visuals.</li>
+<li><strong>DECLINED</strong> → no funded terms/lifecycle visuals.</li>
+</ul>
+<p>That actually reinforces the business logic visually: the journey stops at the decision when no advance is funded.</p>
+<p>The only thing I would consider is ensuring the <strong>Funded terms</strong> section itself remains blank rather than showing zeros, which it already does in your screenshots. That is sufficient. I would not add another explanatory message.</p>
+</div></article><article id="m-8773d51c-07b1-4e3b-9983-50e70549691b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00394 · 2026-08-27T04:59:04.811000-04:00 · active path</p><div class="bubble"><p>The title and subtitle would seem to need work. This isn&#39;t necessarily a 360 view of a merchant relationship but rather one particular merchant application. And perhaps we need to drill a bit into my documentation to see why that is for this stage of development. I know we had planned a 1 year / 3 year / 5 year product strategy launch, so we should be seeing accounts created, closed, new accounts, etc. but perhaps we haven&#39;t quite got there by end of module 2. let&#39;s investigate.</p>
+</div></article><article id="m-9ad366f4-034a-4316-bcd7-70e130e07e48" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00395 · 2026-08-27T04:59:36.378371-04:00 · active path</p><div class="bubble"><p>Yes. I investigated the roadmap, and your instinct is correct: <strong>the page we have built is not yet a true “Merchant Relationship 360.”</strong> It is much closer to an <strong>application-to-account lifecycle view</strong> for one merchant/application/scenario.</p>
+<h3>Why the model behaves this way</h3>
+<p>The strategic roadmap deliberately starts narrower than the eventual relationship vision. Year 1 is <strong>“Launch, Control, and Learn”</strong>: one core product, controlled launch, daily account-performance monitoring, early-warning status, and basic account-management actions. [export reference: filecite | turn46file0 | L32-L52]</p>
+<p>There <em>is</em> some relationship awareness in Year 1. Q3 explicitly calls for analysis of <strong>new versus returning merchants</strong> and pilots for line reduction, freeze, renewal, and workout; Year 1 also lists basic increase/maintain/reduce/freeze/renew/workout capabilities. [export reference: filecite | turn46file0 | L99-L108] [export reference: filecite | turn46file0 | L120-L134] That explains why our current <code>DimMerchant</code> contains things such as relationship stage, relationship quality, prior advance count, and prior funded amount.</p>
+<p>But the roadmap does <strong>not</strong> say that Year 1 already contains a fully simulated multi-generation merchant relationship history. In fact, the more sophisticated relationship capability is explicitly deferred.</p>
+<p>Years 2–3 introduce differentiation among <strong>new, repeat, renewed, and previously distressed merchants</strong>, relationship/renewal pricing, prequalified renewals, treatment tracking, and merchant lifetime/relationship value. [export reference: filecite | turn46file0 | L206-L220] [export reference: filecite | turn47file0 | L11-L26]</p>
+<p>Then Years 3–5 explicitly say the objective is to transform the portfolio <strong>“from reactive application decisioning into proactive merchant-relationship and capital management.”</strong> That&#39;s where continuous merchant health, automated renewal/re-underwriting, relationship-level profitability/value, broader facilities for proven merchants, cross-sell, retention, and relationship-manager strategy appear. [export reference: filecite | turn47file0 | L64-L88]</p>
+<p>And the maturity matrix is especially revealing:</p>
+<blockquote>
+<p>Year 1 performance = <strong>Daily remittance status</strong><br>Years 2–3 = <strong>Merchant health and treatment</strong><br>Years 3–5 = <strong>Continuous lifecycle optimization</strong><br>5+ = <strong>Ecosystem performance intelligence</strong>. [export reference: filecite | turn47file0 | L141-L154]</p>
+</blockquote>
+<p>So what we&#39;re seeing in Power BI is actually consistent with the roadmap.</p>
+<h3>What P03 really is</h3>
+<p>Our current page follows:</p>
+<p><strong>Merchant → current application → decision → funding → account performance → monitoring → intervention/servicing</strong></p>
+<p>The merchant profile provides <strong>prior-relationship context</strong>, but those prior advances are attributes feeding the current decision. They are not separate historical advances/accounts whose complete lifecycles are represented in the current Module 2 analytical population.</p>
+<p>That&#39;s exactly what we discovered empirically when Merchant 000301 showed:</p>
+<p><strong>Prior advances = 1 / Prior funded ≈ $86.6K</strong></p>
+<p>while the current application is a <strong>Policy decline</strong> and there is no corresponding prior-account lifecycle available to navigate on this page.</p>
+<p>So calling the page <strong>Merchant Relationship 360</strong> overstates what the present model actually supplies.</p>
+<h2>I would rename it now</h2>
+<p>My strongest recommendation is:</p>
+<h3><strong>Merchant Application &amp; Account Journey</strong></h3>
+<p>Subtitle:</p>
+<blockquote>
+<p><strong>Follow one synthetic merchant application from request and decision through funding, performance, monitoring and servicing.</strong></p>
+</blockquote>
+<p>That precisely describes the page we actually built.</p>
+<p>It also works beautifully with declined/review applications: their journey legitimately ends at decision, while funded applications continue through the account lifecycle.</p>
+<p>There is another benefit: this essentially means we have organically built what our roadmap called <strong>Application &amp; Account Journey</strong>, rather than the originally planned Merchant Relationship 360. That is not a failure—we learned the model boundary by building against it.</p>
+<h3>What happens to the real Merchant Relationship 360?</h3>
+<p><strong>Keep it on the roadmap, but defer it until the data supports the name.</strong></p>
+<p>A genuine future Merchant Relationship 360 should eventually let us select Merchant <code>000301</code> and see something conceptually like:</p>
+<p><strong>Relationship established → Application A01 → Advance 1 → performance/payoff → Application A02 → decision → Advance 2 → renewal/re-underwriting → current relationship posture</strong></p>
+<p>with multiple accounts/advances, closures, repeat applications, renewals, cumulative relationship economics, and possibly merchant-services/deposit relationships.</p>
+<p>That becomes increasingly appropriate as the simulator matures into Years 2–3 and especially Years 3–5. The roadmap explicitly puts renewal/repeat performance and merchant lifetime/relationship value into Years 2–3, and relationship-level value and broader facilities into Years 3–5. [export reference: filecite | turn47file0 | L37-L49] [export reference: filecite | turn47file0 | L81-L88]</p>
+<p>I would therefore <strong>not manufacture that history now</strong> merely to justify the page title.</p>
+<h3>One implication for our page roadmap</h3>
+<p>We originally had both:</p>
+<ul>
+<li><strong>Merchant Relationship 360</strong></li>
+<li><strong>Application &amp; Account Journey</strong></li>
+</ul>
+<p>I now think the physical build has shown us those should <strong>not both be current-wave pages</strong>.</p>
+<p>The page we&#39;re building is P03 <strong>Application &amp; Account Journey</strong>.</p>
+<p>The richer <strong>Merchant Relationship 360</strong> should move to a later simulator/model wave when we have actual multi-application/multi-advance longitudinal relationship data. At that point it becomes a genuinely differentiated experience rather than a second page rearranging the same current application.</p>
+<p>That is exactly the sort of useful discovery Audit authorized the build-first operating model to surface.</p>
+<p><strong>So I recommend changing the title and subtitle now to <code>Merchant Application &amp; Account Journey</code> and the wording above.</strong> Then we finish this page against that truthful contract and document that full Merchant Relationship 360 is deferred pending multi-generation relationship/account history. [export reference: memcite]</p>
+</div></article><article id="m-70a79c4f-1185-47da-88de-5e5b6d1285d8" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00396 · 2026-08-27T05:03:35.922000-04:00 · active path</p><div class="bubble"><p>I confirmed with my earlier build chat: No. <strong>By the end of Module 2, the current synthetic population does not have merchants with multiple applications.</strong></p>
+<p>The important distinction is:</p>
+<ul>
+<li><strong>Merchant population:</strong> 4,352 merchants. </li>
+<li><strong>Application population:</strong> 750 applications. </li>
+<li>Those 750 applications represent <strong>750 distinct merchants</strong> in the current governed build. </li>
+<li>A merchant can accumulate many downstream records because of scenarios, candidate structures, simulations, servicing/account observations, etc., but those are <strong>not additional applications</strong>. </li>
+<li>Therefore, the current relationship at the application level is effectively <strong>1 merchant → 0 or 1 application</strong>, not <strong>1 merchant → many applications</strong>.</li>
+</ul>
+<p>That matters for the Power BI work we are doing. When we select a Merchant ID today, we can safely treat the associated application as singular. We <strong>should not design the Merchant Detail page as though multiple historical applications already exist</strong>.</p>
+<p>However, I would preserve the model architecture so that <strong>merchant → multiple applications</strong> can be introduced later. That is a very natural evolution for Module 3 / the longitudinal portfolio: a merchant could apply, receive an advance, perform over time, seek a renewal or additional advance, and generate another application/decision cycle. That is where the merchant-level history becomes substantially more valuable.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

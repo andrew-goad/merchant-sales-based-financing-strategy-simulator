@@ -1,0 +1,1155 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing — part 06 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing — part 06</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-05.html">Previous part</a><a href="part-07.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-9d7011e3-0045-4bcb-a390-c04c8fb906e2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00080 · 2026-08-29T22:54:43.483639-04:00 · active path</p><div class="bubble"><h1>Source Integration / M2.4 R1 failure diagnosed</h1>
+<p>I verified the uploaded results ZIP against its SHA-256 sidecar and extracted the complete runtime receipt and PostgreSQL log. [export reference: filecite | turn15file0 | L1-L5] [export reference: filecite | turn15file1 | L7-L12]</p>
+<p>The fail-closed boundary worked correctly:</p>
+<pre><code class="language-text">R4 source database modified                 NO
+Failed R1 clone retained                    msbf_r1_m2_4_20260829_223315
+Compatibility rows loaded                   1,500
+Compatibility population hash               PASS
+M2.4 generation started                     NO
+Counterfactual downstream outputs created   NO
+Accepted authority changed                  NO
+</code></pre>
+<h2>Exact root cause</h2>
+<p>The runtime stopped in <code>01_FINALIZE_COMPATIBILITY_AND_CONFIGURATION.sql</code> at:</p>
+<pre><code class="language-text">ERROR: function msbf_ctl.m2_4_hash_jsonb(jsonb) does not exist
+</code></pre>
+<p>The R4 database descends from the accepted <strong>table-only snapshot mirror</strong>. That mirror accurately reconstructed the 253 accepted data objects, columns, keys, and rows, but intentionally did not recreate PostgreSQL functions, triggers, indexes, or views.</p>
+<p>The M2.4 transformed sources assumed those accepted support objects were already present. In particular, the finalization program needed:</p>
+<pre><code class="language-text">msbf_ctl.m2_4_hash_jsonb(jsonb)
+</code></pre>
+<p>to rebuild the changed M2.4 policy configuration hash.</p>
+<p>This is classified as:</p>
+<pre><code class="language-text">SOURCE_INTEGRATION_RUNTIME_SUPPORT_OBJECT_GAP
+</code></pre>
+<p>It is not:</p>
+<ul>
+<li>an R4 strategy or policy defect;</li>
+<li>an accepted data-snapshot defect;</li>
+<li>an M2.4 booking/funding methodology defect;</li>
+<li>an outcome-population defect; or</li>
+<li>a change to the accepted predecessor.</li>
+</ul>
+<h2>Exact retained state</h2>
+<p>The R1 preparation transaction committed before the failure. Therefore the failed clone already contains:</p>
+<ul>
+<li>the archived predecessor M2.4–M2.12 closure evidence;</li>
+<li>the nine-row downstream-rebase status population;</li>
+<li>empty M2.4 physical output tables;</li>
+<li>no active M2.4–M2.12 closure claims;</li>
+<li><code>run_status = M2_3_ACCEPTED</code>;</li>
+<li>the exact 1,500-row R4 compatibility source; and</li>
+<li>the expected compatibility distribution:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Compatibility outcome</th>
+<th align="right">Rows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Final offer authorized</td>
+<td align="right">130</td>
+</tr>
+<tr>
+<td>Review required</td>
+<td align="right">250</td>
+</tr>
+<tr>
+<td>Insufficient-evidence decline</td>
+<td align="right">234</td>
+</tr>
+<tr>
+<td>Policy/no-feasible/hard-stop decline</td>
+<td align="right">886</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td align="right"><strong>1,500</strong></td>
+</tr>
+</tbody></table>
+<p>The failed finalization program was transactional, so its source-integration registry, compatibility immutability trigger, compatibility views, and updated policy configuration were rolled back. M2.4 generation never began.</p>
+<h1>R2 correction</h1>
+<p>I prepared a <strong>resume runtime</strong> rather than repeating the already successful preparation and compatibility load.</p>
+<p>R2 treats this failed database as immutable correction history:</p>
+<pre><code class="language-text">msbf_r1_m2_4_20260829_223315
+</code></pre>
+<p>It preflights that exact stopping state, creates a new clone, and restores the complete M2.4 support-object dependency set from the accepted physical source.</p>
+<h2>Accepted support objects restored</h2>
+<p>R2 restores:</p>
+<pre><code class="language-text">7 accepted M2.4 functions
+1 immutable-archive trigger
+5 accepted support indexes
+4 governed M2.4 views
+</code></pre>
+<p>This includes:</p>
+<ul>
+<li>deterministic JSONB and registry hashing;</li>
+<li>generation-, validation-, and acceptance-readiness assertions;</li>
+<li>prohibited-real-world-payload protection;</li>
+<li>archive immutability;</li>
+<li>matched Baseline/stress comparison;</li>
+<li>M2.4 consumption, Power BI, and lineage views.</li>
+</ul>
+<p>The fragments are source-bound to the accepted M2.4 schema/policy source:</p>
+<pre><code class="language-text">Accepted source SHA-256:
+eb673af9966986614a67a203bf7d1807c72aa809d71f512b4c2d0928f617745a
+</code></pre>
+<p>R2 resolves <strong>14 of 14 active function, trigger, and view dependencies</strong> across finalization, generation, positive validation, negative controls, acceptance, and post-acceptance validation.</p>
+<h2>Additional hardening</h2>
+<p>R2 also:</p>
+<ul>
+<li>installs support objects in dependency-safe core → configuration → lifecycle order;</li>
+<li>replaces the abbreviated R1 configuration assertion with a complete policy-field, payload, source-registry, count, hash, and authority-boundary assertion;</li>
+<li>executes an actual compatibility-table mutation attempt and requires the immutability trigger to reject it;</li>
+<li>restores the archive trigger required by negative controls 015 and 016;</li>
+<li>corrects two stale evidence narratives from <code>6,212</code> to the new exact canonical count of <code>6,425</code>;</li>
+<li>exports the M2.4 Power BI and lineage views in addition to the core evidence;</li>
+<li>verifies the failed R1 database before and after and requires exact nonmutation; and</li>
+<li>retains M2.5–M2.12 as <code>PENDING_REBASE</code>.</li>
+</ul>
+<p>Construction results:</p>
+<pre><code class="language-text">Static controls                         27 / 27 PASS
+Active runtime dependencies             14 / 14 RESOLVED
+Python compilation                      PASS
+ZIP integrity                           PASS
+Clean-extraction manifest mismatches      0
+Maximum archive path                     85 characters
+Database execution                      NOT YET RUN
+</code></pre>
+<h1>Download R2</h1>
+<p>Download the Source Integration / M2.4 R2 resume runtime (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R2_RESUME_RUNTIME_20260830.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R2_RESUME_RUNTIME_20260830.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package size:
+255,900 bytes
+
+SHA-256:
+dc3c2a7ace5882ebc5adc3478c78dc79e9dc82e4c7e3e4945119bd831db5c7e4
+</code></pre>
+<p>Supporting controls:</p>
+<p>Open the R2 START HERE guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R2_RESUME_20260830/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Open the R1 failure analysis and R2 correction record (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R2_RESUME_20260830/docs/01_R1_FAILURE_ANALYSIS_AND_R2_CORRECTION.md</code>; referenced bytes not established here)</p>
+<p>Open the R2 method and authority boundary (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R2_RESUME_20260830/docs/02_R2_METHOD_AND_AUTHORITY_BOUNDARY.md</code>; referenced bytes not established here)</p>
+<p>Open the accepted support-object requirements (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R2_RESUME_20260830/manifests/01_ACCEPTED_SUPPORT_OBJECT_REQUIREMENTS.csv</code>; referenced bytes not established here)</p>
+<p>Open the complete runtime-dependency coverage (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R2_RESUME_20260830/evidence/02_RUNTIME_DEPENDENCY_COVERAGE.csv</code>; referenced bytes not established here)</p>
+<p>Open the static-validation results (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R2_RESUME_20260830/evidence/01_STATIC_VALIDATION_RESULTS.csv</code>; referenced bytes not established here)</p>
+<p>Open the R2 build receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R2_RESUME_20260830/BUILD_RECEIPT.json</code>; referenced bytes not established here)</p>
+<p>Open the final package receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R2_FINAL_PACKAGE_RECEIPT_20260830.json</code>; referenced bytes not established here)</p>
+<p>Open the clean-extraction receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R2_CLEAN_EXTRACTION_RECEIPT_20260830.json</code>; referenced bytes not established here)</p>
+<h1>Run R2</h1>
+<p>Extract the ZIP into:</p>
+<pre><code class="language-text">C:\MSBF
+</code></pre>
+<p>The resulting folder should be:</p>
+<pre><code class="language-text">C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R2
+</code></pre>
+<p>Preserve both databases unchanged:</p>
+<pre><code class="language-text">msbf_r1b_p2c_r4_20260829_204955
+msbf_r1_m2_4_20260829_223315
+</code></pre>
+<p>Run:</p>
+<pre><code class="language-powershell">cd C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R2
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_SOURCE_INTEGRATION_M2_4_R2.ps1
+</code></pre>
+<p>The runtime will preflight the failed R1 state before creating a new database resembling:</p>
+<pre><code class="language-text">msbf_r1_m2_4_r2_YYYYMMDD_HHMMSS
+</code></pre>
+<p>It will then execute:</p>
+<pre><code class="language-text">Accepted core support-object restoration
+→ compatibility configuration finalization
+→ accepted lifecycle-assertion restoration
+→ compatibility immutability negative smoke
+→ M2.4 generation
+→ 120 positive controls
+→ 20 negative controls
+→ M2.4 candidate acceptance
+→ post-acceptance validation
+→ evidence and Power BI/lineage exports
+</code></pre>
+<p>After either <code>PASS</code> or <code>FAIL</code>, upload the generated results ZIP and sidecar from:</p>
+<pre><code class="language-text">C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R2\results
+</code></pre>
+<p>Do not rerun it.</p>
+</div></article><article id="m-a77b53de-3d62-4714-9ae6-0ce3f7504b8c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00081 · 2026-08-30T01:23:48.737000-04:00 · active path</p><p class="note">Attachment references: msbf_r1_m2_4_r2_20260830_011809_SOURCE_INTEGRATION_M2_4_R2_RESULTS.zip; msbf_r1_m2_4_r2_20260830_011809_SOURCE_INTEGRATION_M2_4_R2_RESULTS.zip.sha256</p><div class="bubble"><p>MSBF M1/M2 R1 Source Integration + M2.4 Rebase R2 Resume
+Resume source: msbf_r1_m2_4_20260829_223315
+The failed R1 database will not be modified.
+A new disposable R2 clone will be created.</p>
+<p>PostgreSQL password for local user postgres (not stored):</p>
+<p>Source Integration / M2.4 R2 finished: FAIL
+R1 failed-clone source modified: NO
+Clone retained: msbf_r1_m2_4_r2_20260830_011809
+Results: C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R2\results\msbf_r1_m2_4_r2_20260830_011809_SOURCE_INTEGRATION_M2_4_R2_RESULTS.zip
+SHA-256: 217508c50c4c251e1ba6637757fb4ff68bcb88ad614849ac282130241ffb3b95
+Failure: RuntimeError(&#39;Command failed (1): C:\Program Files\PostgreSQL\17\bin\createdb.exe -h localhost -p 5432 -U postgres -T msbf_r1_m2_4_20260829_223315 msbf_r1_m2_4_r2_20260830_011809&#39;)
+Source Integration / M2.4 R2 stopped fail-closed. Upload the generated result ZIP and sidecar from C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R2\results.
+At C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R2\RUN_SOURCE_INTEGRATION_M2_4_R2.ps1:14 char:28</p>
+<ul>
+<li>... DE -ne 0) { throw &quot;Source Integration / M2.4 R2 stopped fail-closed.  ...</li>
+<li><pre><code>            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+</code></pre>
+<ul>
+<li>CategoryInfo          : OperationStopped: (Source Integrat...2_4_R2\results.:String) [], RuntimeException</li>
+<li>FullyQualifiedErrorId : Source Integration / M2.4 R2 stopped fail-closed. Upload the generated result ZIP and sidecar from C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R2\results.</li>
+</ul>
+</li>
+</ul>
+</div></article><article id="m-815c3f60-9234-4030-98c5-295364c7a8da" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00082 · 2026-08-30T01:37:26.276631-04:00 · active path</p><div class="bubble"><h1>R2 failed because the PostgreSQL data volume was full</h1>
+<p>I verified the uploaded R2 results package against its sidecar. [export reference: filecite | turn15file0 | L1-L5] [export reference: filecite | turn15file1 | L7-L12]</p>
+<p>The exact PostgreSQL error was:</p>
+<pre><code class="language-text">createdb: error: database creation failed:
+ERROR: could not extend file &quot;base/1443346/1443164&quot;:
+No space left on device
+</code></pre>
+<p>This occurred while PostgreSQL was copying the R1 resume source into the new R2 clone. The run remained at <code>PREFLIGHT</code>:</p>
+<pre><code class="language-text">Support-object restoration executed     NO
+M2.4 generation executed                NO
+M2.4 validation executed                NO
+Counterfactual outputs created          NO
+Accepted authority changed              NO
+</code></pre>
+<p>The terminal statement that the target clone was “retained” was not reliable: <code>createdb</code> failed, and the runtime had not yet checked whether a catalog entry survived. R3 corrects that receipt defect.</p>
+<p>Classification:</p>
+<pre><code class="language-text">LOCAL_POSTGRESQL_STORAGE_EXHAUSTION
+</code></pre>
+<p>This is not an M1/M2 strategy defect, compatibility defect, or M2.4 method failure.</p>
+<h2>Storage-recovery boundary</h2>
+<p>The accumulated disposable clones are consuming the PostgreSQL data volume. Their runtime evidence packages have already been uploaded and preserved, so R3 can remove the superseded local database copies while retaining the two databases still needed:</p>
+<pre><code class="language-text">RETAIN
+msbf_r1b_p2c_r4_20260829_204955
+msbf_r1_m2_4_20260829_223315
+</code></pre>
+<p>R3 is authorized to remove only these exact superseded disposable names:</p>
+<pre><code class="language-text">msbf_r1b_20260828_173127
+msbf_r1b_r2_20260828_180030
+msbf_r1b_r3_20260828_194153
+msbf_r1b_p2a_20260828_221607
+msbf_r1b_p2a_r2_20260828_225742
+msbf_r1b_p2b_r2_20260829_072702
+msbf_r1b_p2b_r3_20260829_080240
+msbf_r1b_p2c_20260829_103722
+msbf_r1b_p2c_r2_20260829_184119
+msbf_r1b_p2c_r3_20260829_190652
+msbf_r1_m2_4_r2_20260830_011809
+</code></pre>
+<p>Some may already be absent. That is accepted and recorded.</p>
+<p>No unknown MSBF database is deleted. Unknown names are reported only.</p>
+<h2>R3 improvements</h2>
+<p>The new runtime performs one controlled sequence:</p>
+<ol>
+<li>Captures every <code>msbf_*</code> database and its exact size.</li>
+<li>Verifies the R4 source and M2.4 resume-source control states.</li>
+<li>Drops only the exact superseded names above.</li>
+<li>Re-verifies both retained sources after cleanup.</li>
+<li>Reads the actual PostgreSQL data directory and available disk space.</li>
+<li>Requires sufficient space based on:<ul>
+<li>the physical source-database size;</li>
+<li>a 1.35 clone multiplier;</li>
+<li>2 GiB additional overhead; and</li>
+<li>a 6 GiB absolute minimum.</li>
+</ul>
+</li>
+<li>Creates the new clone only after that gate passes.</li>
+<li>Resumes the previously constructed M2.4 support-object, generation, validation, negative-control, acceptance, and export chain.</li>
+<li>Re-verifies both retained source databases on every exit path.</li>
+<li>Reports a clone as created only when PostgreSQL confirms that it actually exists.</li>
+</ol>
+<p>Running the supplied launcher constitutes explicit approval to delete <strong>only</strong> the listed superseded disposable databases.</p>
+<h1>Download R3</h1>
+<p>Download the Source Integration / M2.4 R3 storage-recovery runtime (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R3_STORAGE_RECOVERY_RUNTIME_20260830.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R3_STORAGE_RECOVERY_RUNTIME_20260830.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package size:
+277,272 bytes
+
+SHA-256:
+3b63836b1b72bb6c35d53c99bc92bbf61d06f7bf4e30d41064220157a3aa4e3c
+
+ZIP integrity:
+PASS
+
+Archive members:
+37
+
+Maximum archive path:
+105 characters
+</code></pre>
+<p>Supporting controls:</p>
+<p>Open the R3 START HERE guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R3_STORAGE_RECOVERY_RUNTIME_20260830/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Open the R2 failure analysis and R3 correction record (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R3_STORAGE_RECOVERY_RUNTIME_20260830/docs/03_R2_NO_SPACE_FAILURE_AND_R3_STORAGE_RECOVERY.md</code>; referenced bytes not established here)</p>
+<p>Open the exact cleanup and retention profile (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R3_STORAGE_RECOVERY_RUNTIME_20260830/config/R3_STORAGE_RECOVERY_PROFILE.json</code>; referenced bytes not established here)</p>
+<p>Open the R3 static-validation results (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R3_STORAGE_RECOVERY_RUNTIME_20260830/evidence/03_R3_STATIC_VALIDATION_RESULTS.csv</code>; referenced bytes not established here)</p>
+<p>Open the R3 build receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R3_STORAGE_RECOVERY_RUNTIME_20260830/BUILD_RECEIPT.json</code>; referenced bytes not established here)</p>
+<p>Open the final package receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R3_FINAL_PACKAGE_RECEIPT_20260830.json</code>; referenced bytes not established here)</p>
+<h2>Run R3</h2>
+<p>Extract the ZIP into:</p>
+<pre><code class="language-text">C:\MSBF
+</code></pre>
+<p>The resulting folder should be:</p>
+<pre><code class="language-text">C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R3
+</code></pre>
+<p>Close any pgAdmin query windows connected specifically to the disposable MSBF databases, then run:</p>
+<pre><code class="language-powershell">cd C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R3
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_SOURCE_INTEGRATION_M2_4_R3.ps1
+</code></pre>
+<p>The launcher asks once for the local PostgreSQL password. It then performs the approved cleanup, disk preflight, clone, and M2.4 resume automatically.</p>
+<p>After either <code>PASS</code> or <code>FAIL</code>, upload the generated results ZIP and sidecar from:</p>
+<pre><code class="language-text">C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R3\results
+</code></pre>
+<p>Do not rerun it; the generated database inventory, cleanup receipts, disk-space receipt, source-preservation controls, and M2.4 evidence will govern the next action.</p>
+</div></article><article id="m-19e37920-088d-4c38-8c35-2a2cafc4c61a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00083 · 2026-08-30T01:44:15.065000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: msbf_r1_m2_4_r3_20260830_014013_SOURCE_INTEGRATION_M2_4_R3_RESULTS.zip.sha256; msbf_r1_m2_4_r3_20260830_014013_SOURCE_INTEGRATION_M2_4_R3_RESULTS.zip; 2cb1de9f-1f39-4aa7-9c7b-007bce11205a.png</p><div class="bubble"><p>MSBF M1/M2 R1 Source Integration + M2.4 Rebase R3 
+Purpose: approved cleanup of superseded disposable databases, disk-space preflight, and M2.4 resume 
+Retained sources: msbf_r1b_p2c_r4_20260829_204955 and msbf_r1_m2_4_20260829_223315 </p>
+<p>The cleanup is restricted to the exact database names in config\R3_STORAGE_RECOVERY_PROFILE.json. 
+Unknown databases are reported and never deleted. </p>
+<p>PostgreSQL password for local user postgres (not stored): </p>
+<p>Source Integration / M2.4 R3 finished: FAIL 
+R1 resume source modified: NO 
+R4 source modified: NO 
+Approved cleanup executed: True 
+Clone created: True 
+Clone retained: msbf_r1_m2_4_r3_20260830_014013 
+Results: C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R3\results\msbf_r1_m2_4_r3_20260830_014013_SOURCE_INTEGRATION_M2_4_R3_RESULTS.zip 
+SHA-256: 68c3ba4f966bd5a827ec74507ac1bd12937fbe9eca7035c4d4672100b481083b 
+Failure: RuntimeError(&#39;Command failed (3): C:\Program Files\PostgreSQL\17\bin\psql.exe -h localhost -p 5432 -U postgres -d msbf_r1_m2_4_r3_20260830_014013 -X -v ON_ERROR_STOP=1 -f C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R3\sql\02_M2_4_GENERATION_R1_TRANSFORMED.sql&#39;) 
+Source Integration / M2.4 R3 stopped fail-closed. Upload the generated result ZIP and sidecar from C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R3\results. 
+At C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R3\RUN_SOURCE_INTEGRATION_M2_4_R3.ps1:21 char:28 </p>
+<ul>
+<li>... DE -ne 0) { throw &quot;Source Integration / M2.4 R3 stopped fail-closed.  ... </li>
+<li><pre><code>            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+</code></pre>
+<ul>
+<li>CategoryInfo          : OperationStopped: (Source Integrat...2_4_R3\results.:String) [], RuntimeException </li>
+<li>FullyQualifiedErrorId : Source Integration / M2.4 R3 stopped fail-closed. Upload the generated result ZIP and sidecar from C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R3\results.                    Confirming that 6gb were freed. This was 1.5gb prior to the cleanup.</li>
+</ul>
+</li>
+</ul>
+</div></article><article id="m-4f240123-3e64-4ee9-82c5-eece8d86fd4f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00084 · 2026-08-30T02:09:23.720065-04:00 · active path</p><div class="bubble"><h1>Storage recovery succeeded; M2.4 failure isolated</h1>
+<p>The cleanup did what it was intended to do. I verified the uploaded R3 result package and sidecar. [export reference: filecite | turn15file0 | L1-L5] [export reference: filecite | turn15file1 | L7-L12]</p>
+<p>Your visible free space increased from approximately <strong>1.5 GB to 7.77 GB</strong>, a net improvement of about <strong>6.27 GB</strong>. The runtime recorded <strong>8,336,411,723 bytes</strong> of superseded PostgreSQL database content removed. The difference is consistent with the retained source databases, the newly created R3 clone, and normal PostgreSQL/filesystem overhead.</p>
+<p>The cleanup remained properly bounded:</p>
+<pre><code class="language-text">Approved cleanup executed               TRUE
+Unknown databases deleted               0
+R4 strategy source modified             NO
+R1 resume source modified               NO
+New R3 clone created                    YES
+</code></pre>
+<h2>Exact M2.4 failure</h2>
+<p>Storage was no longer the problem. R3 proceeded into M2.4 generation and failed on the first insert into:</p>
+<pre><code class="language-text">msbf_m2.application_booking_funding_source_snapshot
+</code></pre>
+<p>PostgreSQL reported that <code>created_at</code> was null even though the column is <code>NOT NULL</code>.</p>
+<p>The accepted physical table definition includes:</p>
+<pre><code class="language-sql">created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+</code></pre>
+<p>The accepted table-only snapshot mirror had preserved:</p>
+<ul>
+<li>column name;</li>
+<li>data type; and</li>
+<li>nullability;</li>
+</ul>
+<p>but it had not preserved the column’s default expression.</p>
+<p>That exposed a broader physical-semantics gap. The mirror also omitted:</p>
+<pre><code class="language-text">Accepted column defaults          18
+Accepted identity generators       2
+Accepted named CHECK/FK rules     34
+</code></pre>
+<p>The M2.4 generation transaction failed before commit, so no partial booking, funding, account, advance, portfolio, evidence, or acceptance population was committed.</p>
+<pre><code class="language-text">M2.4 generation committed               FALSE
+M2.4 output rows committed               0
+Counterfactual downstream results        0
+Accepted authority changed               FALSE
+</code></pre>
+<p>Classification:</p>
+<pre><code class="language-text">SNAPSHOT_MIRROR_PHYSICAL_SEMANTICS_GAP
+</code></pre>
+<p>This is not a counteroffer-strategy defect, an R4 policy defect, or a defect in the accepted M2.4 booking/funding calculations.</p>
+<h1>R4 physical-semantics resume runtime</h1>
+<p>I prepared a comprehensive R4 correction rather than patching only <code>created_at</code>.</p>
+<p>R4 restores and validates:</p>
+<ul>
+<li>all <strong>18 accepted default expressions</strong>;</li>
+<li>both <strong>accepted identity columns</strong>;</li>
+<li>all <strong>34 active named CHECK and foreign-key constraints</strong> required by this execution chain;</li>
+<li>accepted <code>run_evidence</code> and <code>acceptance_gate_result</code> control-table semantics; and</li>
+<li>the complete M2.4 insert-time physical contract.</li>
+</ul>
+<p>It then runs the unchanged accepted/transformed M2.4 chain:</p>
+<pre><code class="language-text">Physical-semantics restoration
+→ physical-semantics validation
+→ M2.4 generation
+→ 120 positive controls
+→ 20 negative controls
+→ M2.4 candidate acceptance
+→ post-acceptance validation
+→ Power BI and lineage exports
+</code></pre>
+<h2>Final R4 controls</h2>
+<p>The runtime will not return <code>PASS</code> unless it establishes all of these exact results:</p>
+<pre><code class="language-text">Run status                              M2_4_ACCEPTED
+Contract status                         ACCEPTED
+
+Source-snapshot rows                    1,500
+Activation-snapshot rows                1,500
+Activation-latest rows                  1,500
+Activation-archive rows                 1,500
+
+Synthetic accounts                        130
+Synthetic funded advances                 130
+Initial portfolio rows                    130
+Total governed M2.4 physical rows        6,390
+
+Contract-registry rows                       1
+M2.4 evidence rows                         165
+Positive controls                      120 / 120
+Negative controls                        20 / 20
+Acceptance gate                           PASS
+
+Baseline funded paths                      103
+Recession Energy funded paths               27
+Stress activation improvements               0
+Stress funded-amount improvements             0
+
+M2.4 rebase status          VALIDATED_CANDIDATE
+M2.5–M2.12 statuses         8 × PENDING_REBASE
+</code></pre>
+<p>Construction validation passed:</p>
+<pre><code class="language-text">Static controls                      18 / 18 PASS
+Accepted defaults                    18
+Accepted identities                   2
+Accepted named constraints           34
+Final runtime controls               21
+Python compilation                   PASS
+Clean-extraction mismatches             0
+ZIP integrity                        PASS
+Maximum archive path                  90 characters
+Accepted authority changed           FALSE
+</code></pre>
+<h1>Download R4</h1>
+<p>Download the Source Integration / M2.4 R4 physical-semantics runtime (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R4_PHYSICAL_SEMANTICS_RESUME_RUNTIME_20260830.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R4_PHYSICAL_SEMANTICS_RESUME_RUNTIME_20260830.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package size:
+120,433 bytes
+
+SHA-256:
+c083d5f0d6ac62059ddaf0b36d2ebb1c9de166f04a0fa9f800bf3798797e1707
+
+ZIP integrity:
+PASS
+</code></pre>
+<p>Supporting controls:</p>
+<p>Open the R4 START HERE guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R4_PHYSICAL_SEMANTICS_RESUME_20260830/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Open the R3 failure analysis and R4 correction record (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R4_PHYSICAL_SEMANTICS_RESUME_20260830/docs/01_R3_FAILURE_ANALYSIS_AND_R4_CORRECTION.md</code>; referenced bytes not established here)</p>
+<p>Open the method and authority boundary (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R4_PHYSICAL_SEMANTICS_RESUME_20260830/docs/02_R4_METHOD_AND_AUTHORITY_BOUNDARY.md</code>; referenced bytes not established here)</p>
+<p>Open the accepted column-semantics register (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R4_PHYSICAL_SEMANTICS_RESUME_20260830/config/ACCEPTED_COLUMN_SEMANTICS.csv</code>; referenced bytes not established here)</p>
+<p>Open the accepted constraint-semantics register (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R4_PHYSICAL_SEMANTICS_RESUME_20260830/config/ACCEPTED_CONSTRAINT_SEMANTICS.csv</code>; referenced bytes not established here)</p>
+<p>Open the static-validation results (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R4_PHYSICAL_SEMANTICS_RESUME_20260830/evidence/01_R4_STATIC_VALIDATION_RESULTS.csv</code>; referenced bytes not established here)</p>
+<p>Open the R4 construction receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R4_PHYSICAL_SEMANTICS_RESUME_20260830/BUILD_RECEIPT.json</code>; referenced bytes not established here)</p>
+<p>Open the final package receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R4_PHYSICAL_SEMANTICS_FINAL_PACKAGE_RECEIPT_20260830.json</code>; referenced bytes not established here)</p>
+<p>Open the clean-extraction receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R4_PHYSICAL_SEMANTICS_CLEAN_EXTRACTION_RECEIPT_20260830.json</code>; referenced bytes not established here)</p>
+<h1>Run R4</h1>
+<p>Extract the ZIP into:</p>
+<pre><code class="language-text">C:\MSBF
+</code></pre>
+<p>It should create:</p>
+<pre><code class="language-text">C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R4
+</code></pre>
+<p>Preserve these databases unchanged:</p>
+<pre><code class="language-text">msbf_r1_m2_4_r3_20260830_014013
+msbf_r1b_p2c_r4_20260829_204955
+</code></pre>
+<p>Run:</p>
+<pre><code class="language-powershell">cd C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R4
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_SOURCE_INTEGRATION_M2_4_R4.ps1
+</code></pre>
+<p>The runtime will first check the actual PostgreSQL data-volume free space. Your current <strong>7.77 GB</strong> should be sufficient for one additional clone, but the margin is tight, so the runtime will stop before cloning if the exact byte-level requirement is not met.</p>
+<p>It will create a new database resembling:</p>
+<pre><code class="language-text">msbf_r1_m2_4_r4_20260830_XXXXXX
+</code></pre>
+<p>After either <code>PASS</code> or <code>FAIL</code>, upload the generated results ZIP and sidecar from:</p>
+<pre><code class="language-text">C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R4\results
+</code></pre>
+<p>Do not rerun it.</p>
+</div></article><article id="m-96ebf12f-91bd-4114-8de2-df0372e86b96" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00085 · 2026-08-30T02:21:19.404000-04:00 · active path</p><p class="note">Attachment references: msbf_r1_m2_4_r4_20260830_021541_SOURCE_INTEGRATION_M2_4_R4_RESULTS.zip; msbf_r1_m2_4_r4_20260830_021541_SOURCE_INTEGRATION_M2_4_R4_RESULTS.zip.sha256</p><div class="bubble"><p>MSBF M1/M2 R1 Source Integration + M2.4 Rebase R4 Resume 
+Resume source: msbf_r1_m2_4_r3_20260830_014013 
+Purpose: restore accepted defaults, identities, CHECK/FK constraints, then resume M2.4 generation 
+The failed R3 database will not be modified. A new disposable clone will be created. </p>
+<p>PostgreSQL password for local user postgres (not stored): </p>
+<p>Source Integration / M2.4 R4 finished: FAIL 
+R3 resume source modified: NO 
+Clone created: True 
+Clone retained: msbf_r1_m2_4_r4_20260830_021541 
+Last stage: M2_4_POSITIVE_VALIDATION 
+Results: C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R4\results\msbf_r1_m2_4_r4_20260830_021541_SOURCE_INTEGRATION_M2_4_R4_RESULTS.zip 
+SHA-256: 19ec082dd0ba2da415f113e01759cb0684b12462d1b65fe437484861afb4d6c7 
+Failure: RuntimeError(&#39;Command failed (3): C:\Program Files\PostgreSQL\17\bin\psql.exe -h localhost -p 5432 -U postgres -d msbf_r1_m2_4_r4_20260830_021541 -X -v ON_ERROR_STOP=1 -f C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R4\sql\03_M2_4_POSITIVE_VALIDATION_R1_TRANSFORMED.sql&#39;) 
+Source Integration / M2.4 R4 stopped fail-closed. Upload the generated results ZIP and sidecar from C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R4\results. 
+At C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R4\RUN_SOURCE_INTEGRATION_M2_4_R4.ps1:10 char:28 </p>
+<ul>
+<li>... DE -ne 0) { throw &quot;Source Integration / M2.4 R4 stopped fail-closed.  ... </li>
+<li><pre><code>            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+</code></pre>
+<ul>
+<li>CategoryInfo          : OperationStopped: (Source Integrat...2_4_R4\results.:String) [], RuntimeException </li>
+<li>FullyQualifiedErrorId : Source Integration / M2.4 R4 stopped fail-closed. Upload the generated results ZIP and sidecar from C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R4\results.                    NOTE: Space should not be a worry now. I have 13.5gb free currently and I&#39;m moving another 10gb or so now to my D drive.</li>
+</ul>
+</li>
+</ul>
+</div></article><article id="m-e9eeba54-a1d7-4f02-b231-fd243060bfa3" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00086 · 2026-08-30T02:44:13.036492-04:00 · active path</p><div class="bubble"><h1>M2.4 generation succeeded; the remaining failure is a validation-boundary issue</h1>
+<p>I verified the uploaded R4 results ZIP and its sidecar. [export reference: filecite | turn15file0 | L1-L5] [export reference: filecite | turn15file1 | L7-L12]</p>
+<p>The storage recovery was successful. PostgreSQL created the new clone, restored the missing physical semantics, and completed M2.4 generation. Your current 13.5 GB of free space—and the additional space you are moving to <code>D:</code>—should be sufficient for the next clone. The next runtime still performs an exact byte-level disk preflight before creating anything.</p>
+<pre><code class="language-text">STORAGE RECOVERY                       PASS
+PHYSICAL SEMANTICS RESTORATION         PASS
+M2.4 GENERATION                        PASS
+M2.4 GENERATED ROWS                    6,390
+M2.4 CANONICAL ENTITIES                6,425
+ROW-LEVEL MISMATCHES                   0
+STRESS ACTIVATION IMPROVEMENTS         0
+STRESS FUNDED-AMOUNT IMPROVEMENTS      0
+POSITIVE VALIDATION                    119 / 120
+NEGATIVE CONTROLS                      NOT RUN
+ACCEPTANCE                             NOT RUN
+ACCEPTED AUTHORITY CHANGED             FALSE
+</code></pre>
+<h2>The remaining failed control</h2>
+<p>The one positive control inconsistent with the current architecture is:</p>
+<pre><code class="language-text">M2_4_POS_107_NO_M2_5_TABLES
+</code></pre>
+<p>Its original requirement is:</p>
+<pre><code class="language-text">Number of M2.5 tables = 0
+</code></pre>
+<p>But the disposable predecessor was reconstructed from the complete M2.12/G3 snapshot. That snapshot correctly contains two accepted M2.5 control tables:</p>
+<pre><code class="language-text">msbf_ctl.m2_5_policy_profile
+msbf_ctl.m2_5_portfolio_monitoring_contract_registry
+</code></pre>
+<p>Those tables exist physically because the snapshot mirror preserves the accepted full schema. However:</p>
+<ul>
+<li>all active M2.5–M2.12 contract-registry rows were removed;</li>
+<li>all M2.5–M2.12 acceptance gates were removed;</li>
+<li>all M2.5–M2.12 evidence and closure claims were removed;</li>
+<li>all predecessor control rows were archived; and</li>
+<li>all eight stages are explicitly marked <code>PENDING_REBASE</code>.</li>
+</ul>
+<p>The original control was appropriate for the first chronological M2.4 clean build, when M2.5 had not yet been installed. It is not appropriate for a successor rebase conducted inside a complete M2.12 snapshot mirror.</p>
+<p>Classification:</p>
+<pre><code class="language-text">M2_4_STAGE_ORDER_VALIDATION_CONTRACT_MISMATCH
+</code></pre>
+<p>This is not:</p>
+<ul>
+<li>a strategy defect;</li>
+<li>an R4 counteroffer-policy defect;</li>
+<li>an M2.4 generation defect;</li>
+<li>a booking or funding calculation defect;</li>
+<li>a physical-table-semantics defect; or</li>
+<li>a downstream-result discrepancy.</li>
+</ul>
+<h2>R5 correction</h2>
+<p>R5 does not simply assume this diagnosis.</p>
+<p>Before creating another clone, it will run the <strong>original 120 controls</strong> against:</p>
+<pre><code class="language-text">msbf_r1_m2_4_r4_20260830_021541
+</code></pre>
+<p>inside a transaction that is rolled back. It will proceed only if it proves exactly:</p>
+<pre><code class="language-text">Total controls                 120
+PASS                           119
+FAIL                             1
+
+Failed control:
+M2_4_POS_107_NO_M2_5_TABLES
+
+Observed value:
+2
+
+Original threshold:
+0
+</code></pre>
+<p>Any different result stops the runtime before cloning.</p>
+<p>After that exact diagnosis, R5 creates a new clone and replaces only that obsolete stage-order assertion with:</p>
+<pre><code class="language-text">M2_4_POS_107_DOWNSTREAM_REBASE_BOUNDARY
+</code></pre>
+<p>The corrected control requires:</p>
+<pre><code class="language-text">Preserved M2.5 schema tables             2
+M2.5–M2.12 stages pending rebase         8
+Active downstream contract registries    0
+Active downstream acceptance gates       0
+Active downstream evidence rows          0
+</code></pre>
+<p>This preserves the full accepted schema while proving that no later stage has been improperly activated or represented as accepted.</p>
+<p>R5 then completes:</p>
+<pre><code class="language-text">120 positive controls
+20 accepted negative controls
+M2.4 candidate acceptance
+post-acceptance validation
+Power BI portfolio-activation export
+M2.4 lineage export
+downstream-rebase boundary evidence
+</code></pre>
+<p>It does <strong>not</strong> repeat M2.4 generation.</p>
+<h1>Download R5</h1>
+<p>Download the M2.4 R5 validation-resume runtime (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R5_VALIDATION_RESUME_RUNTIME_20260830.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R5_VALIDATION_RESUME_RUNTIME_20260830.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package size:
+60,500 bytes
+
+SHA-256:
+601b9c9818d06690e4225e169895e909c65eaddbc96a1f698439e7eb6b8f7f78
+
+ZIP integrity:
+PASS
+
+Archive members:
+18
+
+Maximum archive path:
+84 characters
+</code></pre>
+<p>Supporting controls:</p>
+<p>Open the R5 START HERE guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R5_VALIDATION_RESUME_20260830/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Open the R4 failure analysis and R5 correction (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R5_VALIDATION_RESUME_20260830/docs/01_R4_FAILURE_ANALYSIS_AND_R5_CORRECTION.md</code>; referenced bytes not established here)</p>
+<p>Open the R5 method and authority boundary (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R5_VALIDATION_RESUME_20260830/docs/02_R5_METHOD_AND_AUTHORITY_BOUNDARY.md</code>; referenced bytes not established here)</p>
+<p>Open the R5 static-validation results (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R5_VALIDATION_RESUME_20260830/evidence/01_R5_STATIC_VALIDATION_RESULTS.csv</code>; referenced bytes not established here)</p>
+<p>Open the R5 build receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R5_VALIDATION_RESUME_20260830/BUILD_RECEIPT.json</code>; referenced bytes not established here)</p>
+<p>Open the final package receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R5_FINAL_PACKAGE_RECEIPT_20260830.json</code>; referenced bytes not established here)</p>
+<p>Open the clean-extraction receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R5_CLEAN_EXTRACTION_RECEIPT_20260830.json</code>; referenced bytes not established here)</p>
+<h1>Run R5</h1>
+<p>Extract the ZIP into:</p>
+<pre><code class="language-text">C:\MSBF
+</code></pre>
+<p>This should create:</p>
+<pre><code class="language-text">C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R5
+</code></pre>
+<p>Preserve the generated R4 source database:</p>
+<pre><code class="language-text">msbf_r1_m2_4_r4_20260830_021541
+</code></pre>
+<p>Run:</p>
+<pre><code class="language-powershell">cd C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R5
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_SOURCE_INTEGRATION_M2_4_R5.ps1
+</code></pre>
+<p>The runtime will create a new clone only after the exact 119/120 diagnostic is confirmed.</p>
+<p>After either <code>PASS</code> or <code>FAIL</code>, upload the generated results ZIP and sidecar from:</p>
+<pre><code class="language-text">C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R5\results
+</code></pre>
+<p>Do not rerun it.</p>
+</div></article><article id="m-3f4d79cd-b9aa-4a54-958a-0b27f18e3b97" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00087 · 2026-08-30T02:51:44.104000-04:00 · active path</p><p class="note">Attachment references: msbf_r1_m2_4_r5_20260830_024714_SOURCE_INTEGRATION_M2_4_R5_RESULTS.zip; msbf_r1_m2_4_r5_20260830_024714_SOURCE_INTEGRATION_M2_4_R5_RESULTS.zip.sha256</p><div class="bubble"><p>MSBF M1/M2 R1 Source Integration + M2.4 Rebase R5 Validation Resume 
+Resume source: msbf_r1_m2_4_r4_20260830_021541 
+Purpose: diagnose the exact R4 positive-control failure, apply the full-snapshot downstream-rebase control, and complete M2.4 validation/acceptance 
+The R4 generated-state database will not be modified. A new disposable clone is created only after the exact 119/120 diagnostic is confirmed. </p>
+<p>PostgreSQL password for local user postgres (not stored): </p>
+<p>Source Integration / M2.4 R5 finished: FAIL 
+R4 generated-state source modified: NO 
+Clone created: True 
+Clone retained: msbf_r1_m2_4_r5_20260830_024714 
+Last stage: POST_ACCEPTANCE_VALIDATION 
+Results: C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R5\results\msbf_r1_m2_4_r5_20260830_024714_SOURCE_INTEGRATION_M2_4_R5_RESULTS.zip 
+SHA-256: 3d99e15c4070a0b203ae6017c740b8c9b3a76dac211c8b195876d65f11b043cc 
+Failure: RuntimeError(&#39;Command failed (3): C:\Program Files\PostgreSQL\17\bin\psql.exe -h localhost -p 5432 -U postgres -d msbf_r1_m2_4_r5_20260830_024714 -X -v ON_ERROR_STOP=1 -f C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R5\sql\06_POST_ACCEPTANCE_R1_VALIDATION.sql&#39;) 
+Source Integration / M2.4 R5 stopped fail-closed. Upload the generated results ZIP and sidecar from C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R5\results. 
+At C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R5\RUN_SOURCE_INTEGRATION_M2_4_R5.ps1:10 char:28 </p>
+<ul>
+<li>... DE -ne 0) { throw &quot;Source Integration / M2.4 R5 stopped fail-closed.  ... </li>
+<li><pre><code>            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+</code></pre>
+<ul>
+<li>CategoryInfo          : OperationStopped: (Source Integrat...2_4_R5\results.:String) [], RuntimeException </li>
+<li>FullyQualifiedErrorId : Source Integration / M2.4 R5 stopped fail-closed. Upload the generated results ZIP and sidecar from C:\MSBF\R1_SOURCE_INTEGRATION_M2_4_R5\results.                 20.5gb free now. Why do we keep having so many iterations with this M2_4? Let&#39;s learn and anticipate better. It is impacting our leap progress.</li>
+</ul>
+</li>
+</ul>
+</div></article><article id="m-995aac92-41f4-4689-b585-68320ac1abfe" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00088 · 2026-08-30T03:04:33.620183-04:00 · active path</p><div class="bubble"><p>You are right to call this out. The fail-closed controls protected the work, but the M2.4 integration became too iterative and pushed too much first-time runtime discovery onto you.</p>
+<p>I verified the uploaded R5 evidence package and sidecar. [export reference: filecite | turn15file0 | L1-L5] [export reference: filecite | turn15file1 | L7-L12]</p>
+<h1>What actually happened in R5</h1>
+<p>R5 completed and committed all substantive M2.4 work:</p>
+<pre><code class="language-text">Corrected positive controls       120 / 120 PASS
+Accepted negative controls         20 / 20 PASS
+M2.4 acceptance finalizer                 PASS
+Run status                         M2_4_ACCEPTED
+Contract status                    ACCEPTED
+Acceptance gate                    PASS
+Synthetic accounts                 130
+Synthetic advances                 130
+Portfolio positions                130
+</code></pre>
+<p>The only failure was the custom post-acceptance validation query.</p>
+<p>It joined:</p>
+<pre><code class="language-text">msbf_m12r1d.pbi_fact_final_decision.module1_run_id
+</code></pre>
+<p>which is physically <code>text</code>, to:</p>
+<pre><code class="language-text">msbf_m2.synthetic_advance_funding.module1_run_id
+</code></pre>
+<p>which is physically <code>bigint</code>.</p>
+<p>The query relied on an implicit comparison:</p>
+<pre><code class="language-sql">d.module1_run_id = a.module1_run_id
+</code></pre>
+<p>PostgreSQL correctly rejected:</p>
+<pre><code class="language-text">operator does not exist: text = bigint
+</code></pre>
+<p>So the M2.4 business generation, validation, negative controls, and acceptance are already complete in:</p>
+<pre><code class="language-text">msbf_r1_m2_4_r5_20260830_024714
+</code></pre>
+<p>The failed query occurred afterward, before the successor-only rebase status was changed from:</p>
+<pre><code class="language-text">RUNTIME_CANDIDATE
+</code></pre>
+<p>to:</p>
+<pre><code class="language-text">VALIDATED_CANDIDATE
+</code></pre>
+<h1>Why M2.4 took too many rounds</h1>
+<p>There were two separate issues.</p>
+<h2>The technical reason</h2>
+<p>M2.4 was the first time this workstream moved from a successful counterfactual decision population into a physically reconstructed downstream accepted stage. That exposed physical PostgreSQL dependencies not present in the initial table-only snapshot mirror:</p>
+<table>
+<thead>
+<tr>
+<th>Round</th>
+<th>First hard stop</th>
+<th>Hidden boundary exposed</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>R1</td>
+<td>Missing <code>m2_4_hash_jsonb</code></td>
+<td>Functions, triggers, indexes and views</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>No disk space during clone</td>
+<td>Disposable-database retention</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>Missing <code>created_at</code> default</td>
+<td>Defaults, identities and constraints</td>
+</tr>
+<tr>
+<td>R4</td>
+<td>Obsolete “no M2.5 tables” test</td>
+<td>Chronological-build validation versus full-snapshot rebase</td>
+</tr>
+<tr>
+<td>R5</td>
+<td><code>text = bigint</code></td>
+<td>Cross-contract physical type mismatch</td>
+</tr>
+</tbody></table>
+<p>None of these changed the R4 strategy result. They were integration-environment and validation-contract findings.</p>
+<h2>The process reason</h2>
+<p>The larger issue is mine: each package thoroughly corrected the latest observed failure, but it did not always compile and exercise the <strong>entire remaining M2.4 closure path</strong> before I asked you to run it.</p>
+<p>The fail-closed design was safe, but safety alone was not enough. It allowed your desktop to become the first integration test for a later script that could have been preflighted against the current checkpoint.</p>
+<p>That is exactly the behavior we wanted to avoid when you authorized large, high-leverage leaps.</p>
+<h1>Operating-model correction</h1>
+<p>Effective now, a downstream runtime will not be sent merely because the immediately preceding defect was patched.</p>
+<p>Before a package reaches you, it must include:</p>
+<ol>
+<li><p><strong>Full remaining-path compilation.</strong> Every remaining read-only validation and evidence-export query must run successfully against the live source checkpoint before a clone is created.</p>
+</li>
+<li><p><strong>An explicit physical type contract.</strong> Cross-contract keys and metrics must use source-bound casts and null-safe comparisons. Implicit text/numeric joins are prohibited.</p>
+</li>
+<li><p><strong>Read-only preflight before mutation.</strong> The source database is fully checked first. A new clone is created only after the complete remaining path passes.</p>
+</li>
+<li><p><strong>Resume instead of replay.</strong> Work that already passed is not repeated. R6 will not rerun M2.4 generation, positive controls, negative controls, or acceptance.</p>
+</li>
+<li><p><strong>Export rehearsal.</strong> Every evidence and Power BI export query is compiled and cardinality-tested before finalization.</p>
+</li>
+<li><p><strong>Source nonmutation proof.</strong> The source checkpoint is fingerprinted before and after on all success and failure paths.</p>
+</li>
+<li><p><strong>Consolidated downstream planning.</strong> M2.5–M2.12 will be treated as one dependency-inventory and rebase program with stage checkpoints—not eight reactive repetitions of the M2.4 experience.</p>
+</li>
+</ol>
+<p>Open the full M2.4 iteration root-cause and operating-model correction (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R6_CLOSURE_COMPILER_20260830/docs/01_M2_4_ITERATION_ROOT_CAUSE_AND_NEW_OPERATING_MODEL.md</code>; referenced bytes not established here)</p>
+<h1>R6 is a closure operation, not another M2.4 rerun</h1>
+<p>I prepared a compact R6 closure compiler.</p>
+<p>Before creating a clone, it runs the complete corrected post-acceptance validation and all remaining view/export counts against the R5 database in a <strong>read-only transaction</strong>.</p>
+<p>The corrected term reconciliation uses explicit key and metric conversions, including:</p>
+<pre><code class="language-sql">NULLIF(d.module1_run_id::text, &#39;&#39;)::bigint
+NULLIF(d.scenario_id::text, &#39;&#39;)::bigint
+NULLIF(d.selected_funding_amount::text, &#39;&#39;)::numeric
+NULLIF(d.selected_horizon_days::text, &#39;&#39;)::integer
+</code></pre>
+<p>and null-safe comparisons:</p>
+<pre><code class="language-sql">IS DISTINCT FROM
+</code></pre>
+<p>Only after that entire path passes will R6:</p>
+<ol>
+<li>create one clone;</li>
+<li>change the successor-only M2.4 rebase status to <code>VALIDATED_CANDIDATE</code>;</li>
+<li>run the complete final control set;</li>
+<li>export the M2.4 source, activation, account, advance, portfolio, validation, gate, lineage, compatibility, Power BI and downstream-rebase evidence;</li>
+<li>verify the R5 source remained byte-for-byte logically unchanged.</li>
+</ol>
+<p>It does <strong>not</strong> repeat:</p>
+<pre><code class="language-text">M2.4 generation
+120 positive controls
+20 negative controls
+M2.4 acceptance
+</code></pre>
+<p>Your current <strong>20.5 GB free space is ample</strong> for this closure clone. The runtime still checks exact PostgreSQL data-volume bytes before cloning.</p>
+<h1>Download R6</h1>
+<p>Download the M2.4 R6 closure-compiler runtime (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R6_CLOSURE_COMPILER_RUNTIME_20260830.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R6_CLOSURE_COMPILER_RUNTIME_20260830.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package size:
+38,967 bytes
+
+SHA-256:
+6c2471205e0674c6156a05e0415cd4fed4b7cea277effb3eed20f53bc2de0a86
+
+ZIP integrity:
+PASS
+
+Archive members:
+16
+
+Maximum archive path:
+104 characters
+</code></pre>
+<p>Supporting controls:</p>
+<p>Open the R6 START HERE guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R6_CLOSURE_COMPILER_20260830/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Open the R5 failure analysis and R6 correction (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R6_CLOSURE_COMPILER_20260830/docs/02_R5_FAILURE_ANALYSIS_AND_R6_CORRECTION.md</code>; referenced bytes not established here)</p>
+<p>Open the R6 method and authority boundary (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R6_CLOSURE_COMPILER_20260830/docs/03_R6_METHOD_AND_AUTHORITY_BOUNDARY.md</code>; referenced bytes not established here)</p>
+<p>Open the R6 static-validation results (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R6_CLOSURE_COMPILER_20260830/evidence/01_R6_STATIC_VALIDATION_RESULTS.csv</code>; referenced bytes not established here)</p>
+<p>Open the final package receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R6_FINAL_PACKAGE_RECEIPT_20260830.json</code>; referenced bytes not established here)</p>
+<p>Open the clean-extraction receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_R1_SOURCE_INTEGRATION_M2_4_R6_CLEAN_EXTRACTION_RECEIPT_20260830.json</code>; referenced bytes not established here)</p>
+<h1>Run R6</h1>
+<p>Extract the ZIP into:</p>
+<pre><code class="language-text">C:\MSBF
+</code></pre>
+<p>It should create:</p>
+<pre><code class="language-text">C:\MSBF\R1_M2_4_R6
+</code></pre>
+<p>Preserve this accepted-state R5 database:</p>
+<pre><code class="language-text">msbf_r1_m2_4_r5_20260830_024714
+</code></pre>
+<p>Run:</p>
+<pre><code class="language-powershell">cd C:\MSBF\R1_M2_4_R6
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_M2_4_R6.ps1
+</code></pre>
+<p>R6 will first exercise the <strong>entire remaining path against R5 read-only</strong>. If any query still has a type, object, view, cardinality, or export problem, it will stop before creating another clone.</p>
+<p>After either <code>PASS</code> or <code>FAIL</code>, upload the generated result ZIP and sidecar from:</p>
+<pre><code class="language-text">C:\MSBF\R1_M2_4_R6\results
+</code></pre>
+<p>The intended next leap after an R6 pass is not another narrow M2.4 iteration. It is a consolidated M2.5–M2.12 dependency inventory, full-path precompiler, and governed downstream rebase plan before the next desktop execution.</p>
+</div></article><article id="m-32225086-692b-491d-bb76-35246a650813" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00089 · 2026-08-30T03:11:33.945000-04:00 · active path</p><p class="note">Attachment references: msbf_r1_m2_4_r6_20260830_030634_M2_4_R6_CLOSURE_RESULTS.zip; msbf_r1_m2_4_r6_20260830_030634_M2_4_R6_CLOSURE_RESULTS.zip.sha256</p><div class="bubble"><p>MSBF M1/M2 R1 M2.4 R6 Closure Compiler
+Purpose: full-path read-only preflight, corrected typed post-acceptance validation, VALIDATED_CANDIDATE finalization, and complete evidence export
+Source accepted-state database: msbf_r1_m2_4_r5_20260830_024714</p>
+<p>The R5 database is preflighted read-only and will not be modified.
+A new disposable clone is created only after every remaining closure query compiles and passes.</p>
+<p>PostgreSQL password for local user postgres (not stored):</p>
+<p>M2.4 R6 closure finished: PASS
+R5 accepted-state source modified: NO
+Clone created: True
+Clone retained: msbf_r1_m2_4_r6_20260830_030634
+Last stage: COMPLETE
+Results: C:\MSBF\R1_M2_4_R6\results\msbf_r1_m2_4_r6_20260830_030634_M2_4_R6_CLOSURE_RESULTS.zip
+SHA-256: a66b5278b9f86888b1210d8097a3bbd64bd6b1af2385be3477778493fa5b4bd6</p>
+<p>PASS. Upload the generated *_M2_4_R6_CLOSURE_RESULTS.zip and sidecar from:
+C:\MSBF\R1_M2_4_R6\results            I agree with the next leap: consolidated M2.5–M2.12 dependency inventory, full-path precompiler, and governed downstream rebase plan before the next desktop execution.  Please proceed and do not stop unless you explicitly need something from me that we have not already decided.</p>
+</div></article><article id="m-b90ddebc-8592-4571-a0fc-971f9d2140bc" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00090 · 2026-08-30T03:57:21.707326-04:00 · active path</p><div class="bubble"><h1>M2.5–M2.12 consolidated precompiler and rebase plan complete</h1>
+<p>I verified the successful M2.4 R6 closure package and its SHA-256 sidecar as the immutable source candidate for the remaining Module 2 chain. [export reference: filecite | turn16file0 | L1-L5] [export reference: filecite | turn16file1 | L7-L11]</p>
+<pre><code class="language-text">M2.4 source candidate             msbf_r1_m2_4_r6_20260830_030634
+M2.4 rebase status               VALIDATED_CANDIDATE
+M2.4 run / contract / gate       M2_4_ACCEPTED / ACCEPTED / PASS
+Funded accounts / advances       130 / 130
+Baseline / stress funded paths   103 / 27
+Downstream stages pending        8
+Active downstream closures       0
+Accepted authority changed       FALSE
+</code></pre>
+<p>The next desktop action is now the <strong>full-path read-only precompiler</strong> we agreed should precede any further mutating execution. It does not create a clone and does not modify PostgreSQL.</p>
+<h2>What the consolidated analysis established</h2>
+<p>The accepted M2.5–M2.12 normal chain contains:</p>
+<pre><code class="language-text">Accepted execution positions              64
+Physical exact accepted source files       62
+Declared missing accepted report bytes      2
+Program/object dependency rows           1,508
+Stage/object-origin records                464
+Support-object requirements                262
+Physical column requirements             3,638
+Primary/unique-key requirements            128
+Foreign-key requirements                    90
+Named constraint occurrences              485
+Positive-control identities classified   1,132
+</code></pre>
+<p>The two missing source files are the accepted M2.12 master and detail reports:</p>
+<pre><code class="language-text">Program 226 HF24
+Declared SHA-256:
+e7ab6bdf4ae660f5a051b43c9e0b039fb5495e8b8c6259a5ca8cccc9d06e83a7
+
+Program 227 HF26
+Declared SHA-256:
+7b7fa0103fda0f1e1bd043aa14e926fa748db291dcb63873ca576d34ea54ab11
+</code></pre>
+<p>Their identities are documented, but their executable bytes are absent from the supplied repository tree. No unrelated report source has been substituted. The successor release will need newly governed M2.12 master and detail reports, while preserving this predecessor packaging finding.</p>
+<h2>Governed two-wave rebase</h2>
+<h3>Wave A — operational and lifecycle chain</h3>
+<pre><code class="language-text">M2.5 → M2.6 → M2.7 → M2.8 → M2.9 → M2.10
+</code></pre>
+<p>One operator command will drive the six stages through stage-level checkpoints. M2.8 and M2.9 use checkpoint-derived payment-event, lifecycle-transition and exception populations rather than predecessor hard-coded counts.</p>
+<p>Expected principal populations include:</p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th align="right">Successor population</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>M2.5 source / daily monitoring</td>
+<td align="right">130 / 15,600</td>
+</tr>
+<tr>
+<td>M2.6 source / strategy</td>
+<td align="right">130 / 130</td>
+</tr>
+<tr>
+<td>M2.7 source / activation / account</td>
+<td align="right">130 / 130 / 130</td>
+</tr>
+<tr>
+<td>M2.8 source / servicing execution</td>
+<td align="right">130 / 130; events and transitions live-derived</td>
+</tr>
+<tr>
+<td>M2.9 account source / certification</td>
+<td align="right">130 / 130; event and exception counts live-derived</td>
+</tr>
+<tr>
+<td>M2.10 source / KPI / queue</td>
+<td align="right">130 / 72 / 3</td>
+</tr>
+</tbody></table>
+<h3>Wave B — strategy and enterprise certification</h3>
+<pre><code class="language-text">M2.11 successor strategy simulation
+→
+M2.12 successor G3 certification
+</code></pre>
+<p>M2.11 cannot be replayed unchanged. Its predecessor source uses 557 M2.2 candidates and 59 operational accounts, while the corrected successor physically carries:</p>
+<pre><code class="language-text">Application-scenario rows       1,500
+Reportable candidate rows       6,519
+Final-decision rows             1,500
+Operational accounts              130
+</code></pre>
+<p>The successor M2.11 adapter will consume the R4 application, candidate and final-decision facts plus successor M2.7/M2.10 account, KPI and queue outputs. If all 6,519 reportable candidates enter the accepted eight-profile simulation, the candidate-evaluation population is 52,152 rows.</p>
+<p>M2.12 will then construct a candidate:</p>
+<pre><code class="language-text">M2_G3_CONSUMPTION_BUNDLE v2
+</code></pre>
+<p>with revised source, contract, project and population identities. It will not reuse predecessor hashes as though they govern the corrected strategy.</p>
+<h1>Precompiler operating-model improvement</h1>
+<p>The read-only runtime now explicitly validates the complete live surface before Wave A construction:</p>
+<ul>
+<li>exact accepted source and missing-source provenance identities;</li>
+<li>R6 source state and nonmutation;</li>
+<li>all objects, columns, functions, views, triggers, indexes and sequences;</li>
+<li>exact numeric precision and scale—not only broad data type;</li>
+<li>nullability, defaults, identities and generated semantics;</li>
+<li>primary, unique and foreign-key definitions;</li>
+<li>named constraints;</li>
+<li>all prior-stage dependencies;</li>
+<li>stage-owned table availability;</li>
+<li>all required R4 fields for M2.11;</li>
+<li>fixed and dynamic cardinality-predictor readiness;</li>
+<li>validation-control transformation coverage;</li>
+<li>M2.12 certification structure;</li>
+<li>database size and disk inventory; and</li>
+<li>portable evidence packaging.</li>
+</ul>
+<p>All PostgreSQL sessions are forced to:</p>
+<pre><code class="language-text">default_transaction_read_only = on
+</code></pre>
+<p>The source fingerprint must be identical before and after, including on failure paths. This is the operating-model correction intended to prevent another sequence in which your desktop becomes the first test of each later-stage assumption.</p>
+<p>A successful run returns:</p>
+<pre><code class="language-text">PASS_WITH_PLANNED_TRANSFORMATIONS
+</code></pre>
+<p>That means no unexplained live gap remains and the two governed rebase runtimes can be constructed. It does not claim M2.5–M2.12 have already run or become accepted.</p>
+<h2>Complete planning package</h2>
+<p>Download the consolidated precompiler and rebase-plan package (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package size:
+1,177,136 bytes
+
+SHA-256:
+6ddf7b3a3ed5684e1ee59722074e13f73181c476adc48d47b7f026c6810fcd74
+
+ZIP integrity:
+PASS
+
+Clean extraction:
+PASS
+</code></pre>
+<p>Key documents:</p>
+<p>Open the plan start guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Open the R6 closure evidence review (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830/docs/01_R6_CLOSURE_EVIDENCE_REVIEW.md</code>; referenced bytes not established here)</p>
+<p>Open the consolidated dependency inventory (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830/docs/02_CONSOLIDATED_DEPENDENCY_INVENTORY.md</code>; referenced bytes not established here)</p>
+<p>Open the full-path precompiler design (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830/docs/03_FULL_PATH_PRECOMPILER_DESIGN.md</code>; referenced bytes not established here)</p>
+<p>Open the governed downstream rebase plan (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830/docs/04_GOVERNED_DOWNSTREAM_REBASE_PLAN.md</code>; referenced bytes not established here)</p>
+<p>Open the M2.11/M2.12 strategy and certification boundary (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830/docs/05_M2_11_M2_12_STRATEGY_AND_CERTIFICATION_BOUNDARY.md</code>; referenced bytes not established here)</p>
+<p>Open the static package-validation results (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830/evidence/03_STATIC_PACKAGE_VALIDATION_RESULTS.csv</code>; referenced bytes not established here)</p>
+<p>Machine-readable controlling registers:</p>
+<p>Accepted 64-position execution manifest (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830/manifests/01_ACCEPTED_EXECUTION_MANIFEST_M2_5_M2_12.csv</code>; referenced bytes not established here)</p>
+<p>Program/object dependency register (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830/manifests/03_PROGRAM_OBJECT_DEPENDENCY_REGISTER.csv</code>; referenced bytes not established here)</p>
+<p>Governed stage-rebase plan (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830/manifests/14_GOVERNED_STAGE_REBASE_PLAN.csv</code>; referenced bytes not established here)</p>
+<p>M2.11 successor source-adapter plan (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830/manifests/12_M2_11_SUCCESSOR_SOURCE_ADAPTER_PLAN.csv</code>; referenced bytes not established here)</p>
+<p>M2.12 successor certification plan (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830/manifests/13_M2_12_SUCCESSOR_CERTIFICATION_PLAN.csv</code>; referenced bytes not established here)</p>
+<h1>Desktop action required: read-only precompiler</h1>
+<p>Use the smaller standalone runtime package for execution:</p>
+<p>Download the M2.5–M2.12 read-only precompiler runtime (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_READ_ONLY_PRECOMPILER_RUNTIME_20260830.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_READ_ONLY_PRECOMPILER_RUNTIME_20260830.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Runtime size:
+953,855 bytes
+
+SHA-256:
+77b97a2c64141c5d872cd8b82cf39cfa55ac9ea6325887c6ddf055b28f2f0615
+
+ZIP integrity:
+PASS
+
+Clean extraction:
+PASS
+
+Maximum archive path:
+81 characters
+</code></pre>
+<p>Open the runtime START HERE guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_CONSOLIDATED_PRECOMPILER_AND_REBASE_PLAN_20260830/runtime/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Extract the runtime ZIP into:</p>
+<pre><code class="language-text">C:\MSBF
+</code></pre>
+<p>It should create:</p>
+<pre><code class="language-text">C:\MSBF\M2_5_12_PRECOMPILER
+</code></pre>
+<p>Run:</p>
+<pre><code class="language-powershell">cd C:\MSBF\M2_5_12_PRECOMPILER
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_M2_5_M2_12_PRECOMPILER.ps1
+</code></pre>
+<p>The runtime will use this source read-only:</p>
+<pre><code class="language-text">msbf_r1_m2_4_r6_20260830_030634
+</code></pre>
+<p>It will not create a clone, so storage consumption should be limited to the exported evidence package.</p>
+<p>After completion, upload the generated result ZIP and SHA-256 sidecar from:</p>
+<pre><code class="language-text">C:\MSBF\M2_5_12_PRECOMPILER\results
+</code></pre>
+<p>Do not rerun after either <code>PASS_WITH_PLANNED_TRANSFORMATIONS</code> or <code>FAIL</code>. The live compilation result will be used to construct the full Wave A and Wave B runtimes before the next mutating desktop execution.</p>
+</div></article><article id="m-ee6e0cb4-6102-4498-9e7f-97c131d04cbf" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00091 · 2026-08-30T06:57:40.057000-04:00 · active path</p><div class="bubble"><p>C:\MSBF\R1_M2_4_R6\results
+PS C:\MSBF\R1_M2_4_R6&gt; cd C:\MSBF\M2_5_12_PRECOMPILER</p>
+<blockquote>
+<blockquote>
+<p>powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_M2_5_M2_12_PRECOMPILER.ps1
+At C:\MSBF\M2_5_12_PRECOMPILER\RUN_M2_5_M2_12_PRECOMPILER.ps1:19 char:26</p>
+</blockquote>
+</blockquote>
+<ul>
+<li>Write-Host &quot;$Here\results&quot;</li>
+<li><pre><code>                     ~
+</code></pre>
+</li>
+</ul>
+<p>The string is missing the terminator: &quot;.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : TerminatorExpectedAtEndOfString</p>
+</div></article><article id="m-b5c088c3-fbf7-4838-8778-46d2cc22a623" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00092 · 2026-08-30T06:58:46.761729-04:00 · active path</p><div class="bubble"><p>This one is straightforward, and it occurred <strong>before the precompiler executed at all</strong>.</p>
+<p>The cause is the launcher instruction I gave you: it invoked legacy <strong>Windows PowerShell 5.1</strong> via <code>powershell.exe</code>. The <code>.ps1</code> file is UTF-8 without a BOM and contains one Unicode em dash (<code>—</code>). Windows PowerShell 5.1 can misread those UTF-8 bytes and interpret part of them as a quotation mark, producing the misleading:</p>
+<pre><code class="language-text">The string is missing the terminator: &quot;.
+</code></pre>
+<p>Your installed <strong>PowerShell 7.6.5 (<code>pwsh.exe</code>) handles the file correctly</strong>. No PostgreSQL connection or database query occurred from this failed attempt.</p>
+<h3>Run the existing package — no new download needed</h3>
+<p>From your current terminal:</p>
+<pre><code class="language-powershell">cd C:\MSBF\M2_5_12_PRECOMPILER
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_M2_5_M2_12_PRECOMPILER.ps1
+</code></pre>
+<p>Or, since you are already in PowerShell 7, this should also work:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+cd C:\MSBF\M2_5_12_PRECOMPILER
+.\RUN_M2_5_M2_12_PRECOMPILER.ps1
+</code></pre>
+<p>I recommend the first command because it explicitly pins the runtime to PowerShell 7.</p>
+<h3>Process correction going forward</h3>
+<p>I am also treating this as another packaging/runtime lesson. Future Windows launchers will be:</p>
+<ul>
+<li>ASCII-only where practical;</li>
+<li>or explicitly UTF-8-with-BOM;</li>
+<li>validated under both <code>pwsh.exe</code> and legacy <code>powershell.exe</code> when relevant;</li>
+<li>and launcher commands will prefer the already verified PowerShell 7 environment.</li>
+</ul>
+<p>You do <strong>not</strong> need another package for this precompiler. Run the existing one with <code>pwsh.exe</code>.</p>
+<p>When it completes, upload its result ZIP and sidecar from:</p>
+<pre><code class="language-text">C:\MSBF\M2_5_12_PRECOMPILER\results
+</code></pre>
+<p>If it returns a substantive precompiler <code>FAIL</code>, do not rerun; send that evidence package and I’ll continue directly into the consolidated Wave A/Wave B construction work.</p>
+</div></article><article id="m-da5b4b92-c8ae-4d99-8880-18a25a58494b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C111-M00093 · 2026-08-30T07:01:11.137000-04:00 · active path</p><div class="bubble"><p>MSBF M1/M2 — M2.5 through M2.12 Full-Path Precompiler
+Source database: msbf_r1_m2_4_r6_20260830_030634</p>
+<p>This action is read-only. It does not create a clone or modify any database.</p>
+<p>PostgreSQL password for local user postgres (not stored):</p>
+<p>M2.5-M2.12 full-path precompiler finished: FAIL
+Source database modified: NO
+Clone created: NO
+Results: C:\MSBF\M2_5_12_PRECOMPILER\results\m2_5_12_precompiler_20260830_070028_RESULTS.zip
+SHA-256: 95b5997c9742c12a41a706ae32de8f63ac0b0ecc5de039aadb30179abafac678
+Failure: RuntimeError(&quot;Command failed (1): C:\Program Files\PostgreSQL\17\bin\psql.exe -h localhost -p 5432 -U postgres -d msbf_r1_m2_4_r6_20260830_030634 -X --csv -v ON_ERROR_STOP=1 -c select schemaname schema_name,sequencename sequence_name,data_type,start_value,\n              minimum_value,maximum_value,increment_by,cycle from pg_sequences where schemaname in (&#39;msbf_ctl&#39;,&#39;msbf_m1&#39;,&#39;msbf_m2&#39;,&#39;msbf_ref&#39;,&#39;msbf_m12r1d&#39;,&#39;msbf_m12r1e&#39;) order by 1,2&quot;)
+Exception: C:\MSBF\M2_5_12_PRECOMPILER\RUN_M2_5_M2_12_PRECOMPILER.ps1:15
+Line |
+  15 |    throw &quot;M2.5-M2.12 precompiler stopped fail-closed. Upload the gener …
+     |    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | M2.5-M2.12 precompiler stopped fail-closed. Upload the generated results ZIP and sidecar from C:\MSBF\M2_5_12_PRECOMPILER\results.</p>
+</div></article><article id="m-c7a4cb26-fbf9-4d41-8245-461b73393aab" class="message assistant"><p class="meta"><strong>Assistant</strong> · C111-M00094 · 2026-08-30T07:03:00.785057-04:00 · active path</p><div class="bubble"><p>This failure is fully understood and does <strong>not</strong> require another diagnostic upload.</p>
+<p>The precompiler stopped in its own PostgreSQL catalog inventory before any substantive M2.5–M2.12 dependency analysis. The query used:</p>
+<pre><code class="language-sql">minimum_value,
+maximum_value
+</code></pre>
+<p>from <code>pg_sequences</code>. PostgreSQL 17 actually exposes those fields as:</p>
+<pre><code class="language-sql">min_value,
+max_value
+</code></pre>
+<p>along with <code>increment_by</code>, <code>cycle</code>, <code>cache_size</code>, and <code>last_value</code>. [export reference: cite | turn781170search0 | turn781170search13]</p>
+<p>So this is:</p>
+<pre><code class="language-text">POSTGRESQL_SYSTEM_CATALOG_COLUMN_BINDING_DEFECT
+</code></pre>
+<p>not a Module 2 dependency, source, strategy, or data defect.</p>
+<p>The important boundaries held:</p>
+<pre><code class="language-text">Source database modified    NO
+Clone created               NO
+Accepted authority changed  NO
+</code></pre>
+<h2>I corrected more than the two column names</h2>
+<p>The new R2 precompiler now:</p>
+<ul>
+<li>uses the correct <code>min_value</code> / <code>max_value</code> PostgreSQL 17 vocabulary;</li>
+<li>captures <code>cache_size</code> and <code>last_value</code> too;</li>
+<li>performs a <strong>catalog-capability preflight</strong> before the full inventory, verifying that the live PostgreSQL server exposes every catalog column the runtime intends to use;</li>
+<li>records the exact PostgreSQL version and <code>pg_sequences</code> schema;</li>
+<li>remains forced read-only via <code>default_transaction_read_only=on</code>;</li>
+<li>preserves the R6 source fingerprint on every success/failure path;</li>
+<li>uses an ASCII-only, UTF-8-BOM PowerShell launcher so both PowerShell 7 and legacy Windows PowerShell parse it safely;</li>
+<li>passed Python compilation, ZIP integrity, and static binding checks.</li>
+</ul>
+<p>This is exactly the sort of anticipatory check we wanted after the M2.4 experience: the runtime now validates its <strong>own platform assumptions</strong> before performing the full dependency inventory.</p>
+<h1>Download R2</h1>
+<p>Download the corrected M2.5–M2.12 read-only precompiler R2 (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_READ_ONLY_PRECOMPILER_R2_RUNTIME_20260830.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_READ_ONLY_PRECOMPILER_R2_RUNTIME_20260830.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package size:
+983,249 bytes
+
+SHA-256:
+a5710ea2c11e469d096991cda736790dc52dea65efc8c82f5a435791bd45bf83
+
+ZIP integrity:
+PASS
+
+Maximum archive path:
+84 characters
+</code></pre>
+<p>Open the R2 START HERE guide (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_READ_ONLY_PRECOMPILER_R2_20260830/00_START_HERE.md</code>; referenced bytes not established here)</p>
+<p>Open the R1 failure / R2 correction record (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_READ_ONLY_PRECOMPILER_R2_20260830/docs/06_R1_CATALOG_FAILURE_AND_R2_CORRECTION.md</code>; referenced bytes not established here)</p>
+<p>Open the final package receipt (historical reference: <code>sandbox:[session]/MSBF_M1M2_M2_5_M2_12_READ_ONLY_PRECOMPILER_R2_FINAL_PACKAGE_RECEIPT_20260830.json</code>; referenced bytes not established here)</p>
+<h2>Run R2</h2>
+<p>Extract into:</p>
+<pre><code class="language-text">C:\MSBF
+</code></pre>
+<p>so that you have:</p>
+<pre><code class="language-text">C:\MSBF\M2_5_12_PRECOMPILER_R2
+</code></pre>
+<p>Then run with PowerShell 7:</p>
+<pre><code class="language-powershell">cd C:\MSBF\M2_5_12_PRECOMPILER_R2
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\RUN_M2_5_M2_12_PRECOMPILER_R2.ps1
+</code></pre>
+<p>It remains completely read-only against:</p>
+<pre><code class="language-text">msbf_r1_m2_4_r6_20260830_030634
+</code></pre>
+<p>No clone will be created.</p>
+<p>After either <code>PASS_WITH_PLANNED_TRANSFORMATIONS</code> or <code>FAIL</code>, upload the generated results ZIP and sidecar from:</p>
+<pre><code class="language-text">C:\MSBF\M2_5_12_PRECOMPILER_R2\results
+</code></pre>
+<p>Do not rerun it. If it passes, I’ll proceed directly into constructing the consolidated Wave A (<code>M2.5–M2.10</code>) and Wave B (<code>M2.11–M2.12</code>) runtimes rather than returning to one-stage-at-a-time iteration.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

@@ -1,0 +1,961 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Campaign Scale 750 - 2,500 - 25,000 Part 2 — part 07 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Campaign Scale 750 - 2,500 - 25,000 Part 2 — part 07</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-06.html">Previous part</a><a href="part-08.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-5a450aa5-08fe-4586-a5da-190ea75a92fe" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00127 · 2026-09-12T22:21:43.725182-04:00 · active path</p><div class="bubble"><p><strong>Your pause was warranted. I completed a targeted review and found three additional validation gaps in the unfinished campaign extension.</strong> I did <strong>not</strong> find changes to the retained business-calculation files or evidence that these gaps affected the accepted 750 result.</p>
+<p>The important distinction is that the new adapter can accept certain inputs that do not meet the approved source’s requirements. That needs correction before we rely on it for fresh campaigns.</p>
+<p><strong>Targeted review report (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_ADAPTER_FIDELITY_REVIEW_R1_20260912.md</code>; referenced bytes not established here)</strong> · <strong>Review evidence package (historical reference: <code>sandbox:[session]/MSBF_CAMPAIGN_ADAPTER_FIDELITY_REVIEW_R1_20260912.zip</code>; referenced bytes not established here)</strong></p>
+<h2>What I reviewed</h2>
+<p>I focused on the places where the campaign process introduces interpretation rather than simply executing retained source: expected cardinalities, configuration validation, input relationships, candidate keys, scenario dependencies, comparison behavior, and the recent runtime changes.</p>
+<p>The physical checks established:</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Retained vendor files compared with the tested R2 runtime</td>
+<td><strong>67/67 unchanged</strong></td>
+</tr>
+<tr>
+<td>Curated upstream programs compared with publication locks</td>
+<td><strong>24/24 match</strong></td>
+</tr>
+<tr>
+<td>Existing engineering test suite</td>
+<td><strong>189 tests pass</strong></td>
+</tr>
+<tr>
+<td>Corrected cardinalities across three population sizes and one/two/three scenarios</td>
+<td><strong>9/9 combinations match the documented grains</strong></td>
+</tr>
+<tr>
+<td>Additional exact-comparator checks</td>
+<td>Correctly distinguish changed decimals, null versus empty string, boolean versus number, and changed business values</td>
+</tr>
+<tr>
+<td>New negative input/configuration tests</td>
+<td><strong>Three validation gaps reproduced</strong></td>
+</tr>
+</tbody></table>
+<p><strong>The existing tests passing did not prevent these findings.</strong> That reinforces your point: we need counterexamples derived from the approved source rules, not just tests that confirm the adapter’s own assumptions.</p>
+<p>This was a review of the retained approved sources and delivered packages—not a new live audit of every remote GitHub file.</p>
+<h2>The three additional findings</h2>
+<h3>1. Application-to-merchant identity is not fully checked</h3>
+<p>The approved M1.3 source constructs an original application ID as:</p>
+<pre><code class="language-text">merchant_application_id = merchant_id + &quot;_A01&quot;
+</code></pre>
+<p>Its source validation checks that relationship.</p>
+<p>The new handoff validator checks population prefixes, uniqueness, and consistency across scenarios, but does not enforce that exact relationship.</p>
+<p><strong>Reproduction:</strong> I swapped the merchants associated with two applications and made the corresponding feature rows consistent with the swap. Counts and the validator’s existing relationships still passed—even though the application IDs no longer belonged to their assigned merchants.</p>
+<p><strong>Required correction:</strong> enforce the source-owned application/merchant relationship, not merely matching prefixes and counts.</p>
+<h3>2. Candidate uniqueness is checked at a weaker grain than the engine requires</h3>
+<p>The new validator checks uniqueness of:</p>
+<pre><code class="language-text">scenario + application + candidate_id
+</code></pre>
+<p>The retained R4 engine also requires <strong>candidate IDs to be globally unique</strong>.</p>
+<p><strong>Reproduction:</strong> A test input contained 200 candidate rows and 200 unique composite keys, but only 199 distinct candidate IDs because one ID was reused for another application. The handoff validator accepted it.</p>
+<p><strong>Required correction:</strong> check global candidate-ID uniqueness as well as parent relationships.</p>
+<p>The downstream engine’s existing uniqueness control remains protective. This finding shows that the early handoff gate is incomplete—not that the approved engine silently accepts ambiguous candidates.</p>
+<h3>3. A custom stress-only configuration can pass without its required baseline</h3>
+<p>The custom planner and handoff validator can accept:</p>
+<pre><code class="language-text">scenario_set = [&quot;RECESSION_ENERGY&quot;]
+</code></pre>
+<p>But the retained R4 governing logic requires a matched <code>BASELINE</code> application when evaluating a non-baseline scenario.</p>
+<p><strong>Reproduction:</strong> The stress-only handoff passed. Calling the unchanged retained governing function with that missing baseline produced a <code>KeyError</code> on the baseline lookup.</p>
+<p><strong>Required correction:</strong> explicitly enforce the matched-baseline dependency before admitting that configuration.</p>
+<p>The named 2,500 profile already contains both required scenarios. This particular gap concerns the custom-configuration path; it does not change the intended two-scenario profile.</p>
+<h2>What these findings mean for the 750 acceptance</h2>
+<p>I checked the specific implicated conditions in the <strong>actual accepted Reference A/B return</strong>, rather than assuming they were satisfied:</p>
+<table>
+<thead>
+<tr>
+<th>Accepted 750 evidence</th>
+<th align="right">Observed result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Application/scenario rows checked</td>
+<td align="right">1,500</td>
+</tr>
+<tr>
+<td>Application-to-merchant identity violations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Non-baseline rows lacking a matched baseline</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Candidate input rows / globally distinct IDs</td>
+<td align="right"><strong>6,397 / 6,397</strong></td>
+</tr>
+<tr>
+<td>Evaluated R4 candidate rows / globally distinct IDs</td>
+<td align="right"><strong>6,519 / 6,519</strong></td>
+</tr>
+</tbody></table>
+<p><strong>None of these three problems is present in those accepted inputs and outputs.</strong> The accepted 750 validation therefore remains intact.</p>
+<p>There is another important boundary: the new handoff explicitly returns a <strong>structural validation result</strong>, not campaign authorization or proof of fresh generation. The fresh execution path remains blocked. Its documented limitations already distinguish structural checks from economic calculation and producing-chain validation. [export reference: filecite | turn29file1 | L159-L165]</p>
+<p>Nevertheless, the structural checks I supplied were incomplete relative to these source-owned requirements. We should fix them—not dismiss them because another stage might eventually catch the error.</p>
+<h2>The proportionate next step</h2>
+<p><strong>Pause the next provider-integration leap long enough to close these three findings in one bounded correction.</strong> No new owner-machine diagnostic, database restore, or full 750 rerun is needed.</p>
+<p>Alongside the fixes, add a compact source-to-adapter checklist for each new assumption:</p>
+<pre><code class="language-text">Approved source rule and location
+    → required grain or invariant
+    → where the runtime enforces it
+    → valid test
+    → counterexample that must fail
+</code></pre>
+<p>That is not a demand to duplicate every MSBF calculation inside the adapter. A producing-stage control can satisfy an obligation if the runtime requires and validates its evidence. What we must avoid is assuming that a structurally plausible file—or a matching count—establishes more than it actually does.</p>
+<p><strong>My conclusion is not “we found no other misses.” We found three more, localized them to unfinished validation code, and verified that they are absent from the accepted 750 evidence.</strong> Correcting those gaps and strengthening the source-derived negative tests is the right next step before continuing toward fresh 2,500 execution.</p>
+</div></article><article id="m-ac71db19-4dab-4c88-985e-4304c98bd90f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00128 · 2026-09-12T22:28:33.813000-04:00 · active path</p><div class="bubble"><p>quick related aside - within the 750 population, we noticed in the Power BI work that each merchant only had one application. at least in that initial 750 cohort. was this expected or possibly related to the application-to-merchant identity issue you are discussing? it should be noted that the power bi we created for the 750 assumes only one application per merchant. when we expand into multiple applications per merchant, we will need a redesign of the current power bi.</p>
+</div></article><article id="m-afc44832-b50b-4d72-857a-d81d764ea24a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00129 · 2026-09-12T22:28:52.545816-04:00 · active path</p><div class="bubble"><p>I’ll check the accepted application grain and distinguish original applications from scenario and candidate-replay rows. That should clarify whether this affects Power BI.</p>
+</div></article><article id="m-c742cb9b-f371-4b11-9615-b50e8c069d20" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00130 · 2026-09-12T22:30:39.628510-04:00 · active path</p><div class="bubble"><p><strong>Yes—one original application per merchant was expected in the accepted 750 cohort. It was not caused by the application-to-merchant validation gap.</strong> The approved M1.3 source deliberately generates the original application identifier as <code>merchant_id + &quot;_A01&quot;</code>, and its validation checks that relationship. [export reference: filecite | turn31file0 | L41-L53]</p>
+<h2>Three different grains—not multiple original applications</h2>
+<p>The accepted configuration distinguishes:</p>
+<table>
+<thead>
+<tr>
+<th>Population element</th>
+<th>Meaning in the 750 cohort</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>750 merchants</strong></td>
+<td>The synthetic merchant population.</td>
+</tr>
+<tr>
+<td><strong>750 original applications</strong></td>
+<td>One initial financing application per merchant.</td>
+</tr>
+<tr>
+<td><strong>1,500 application-scenario rows</strong></td>
+<td>Those same applications evaluated under two alternative scenarios—not two separate applications per merchant.</td>
+</tr>
+</tbody></table>
+<p>The retained verification population confirms 750 original applications with six checks each. The accepted application-scenario export contains 1,500 rows. [export reference: filecite | turn27file0 | L12-L24] [export reference: filecite | turn31file0 | L108-L126]</p>
+<p>Additional <strong>candidate/replay application records</strong> must also be distinguished from original applications. They support analytical evaluation and should not be counted indiscriminately as additional merchant application events. The source clarification expressly distinguishes original applications from later candidate/replay applications and historical versions. [export reference: filecite | turn31file1 | L237-L241]</p>
+<h2>The identity issue is about ownership, not application count</h2>
+<p>The missing adapter check concerns this relationship:</p>
+<pre><code class="language-text">Merchant M000001 → Application M000001_A01
+</code></pre>
+<p>The negative test deliberately swapped the merchants assigned to two applications. There was <strong>still one application per merchant</strong>, and all counts still matched—but each application was now associated with the wrong merchant. The unfinished adapter failed to reject that inconsistency. It did not generate the one-application restriction or collapse multiple applications into one. [export reference: filecite | turn31file0 | L47-L53]</p>
+<p>The actual accepted 750 data had <strong>zero application-to-merchant identity violations</strong>. Therefore, this finding does not indicate a defect in the cohort used for the accepted Power BI work. [export reference: filecite | turn31file0 | L116-L126]</p>
+<h2>Your Power BI boundary should remain explicit</h2>
+<p><strong>Increasing the number of merchants is different from introducing multiple original applications per merchant.</strong></p>
+<p>For the immediate fresh 2,500 profile, the intended expansion remains:</p>
+<pre><code class="language-text">2,500 merchants
+2,500 original applications
+5,000 application-scenario rows under two scenarios
+</code></pre>
+<p>That increases population size while retaining the existing original-application grain. The current expected-count design explicitly assumes one original application per merchant; application-scenario counts are separate from physical application rows introduced during candidate replay. [export reference: filecite | turn27file1 | L94-L100]</p>
+<p>Given your statement that the existing Power BI report assumes one application per merchant, <strong>multiple-original-application support should be a separately scoped enhancement—not something silently introduced during the 2,500 scaling work.</strong> Its design review would need to address:</p>
+<ul>
+<li><strong>Data relationships:</strong> one merchant to many original applications, with scenarios and candidates remaining distinct.</li>
+<li><strong>Measures and navigation:</strong> separate merchant, application, and funded-account counts; application-level drill-through; and denominators that do not double-count merchants.</li>
+<li><strong>Timing and exposure:</strong> application dates, repeat applications, and any treatment of existing obligations or overlapping financing required by the intended business design.</li>
+</ul>
+<p>That is not merely a visual refresh. It would require coordinated review of the producing logic, data contracts, semantic model, and report measures. A larger population alone does not create that requirement, although the larger dataset would still need its own refresh/performance qualification when Power BI work resumes.</p>
+<p><strong>The scope boundary for now is: preserve one original application per merchant for the fresh 2,500 campaign; repair the identity check within that profile; defer multiple-original-application support and its Power BI redesign to an explicit future workstream.</strong> The <code>_A01</code> rule should be enforced as the current profile’s source rule—not misrepresented as a permanent limitation of the eventual platform.</p>
+</div></article><article id="m-9566dfef-22c1-4120-bb4e-3b9c5f16a0a2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00131 · 2026-09-12T22:31:07.360000-04:00 · active path</p><div class="bubble"><p>additional context: it should be noted, the original module 1 chat answered this for the power bi work: QUESTION: do i have merchants with multiple applications by end of module 2?</p>
+<p>No. <strong>By the end of Module 2, the current synthetic population does not have merchants with multiple applications.</strong></p>
+<p>The important distinction is:</p>
+<ul>
+<li><strong>Merchant population:</strong> 4,352 merchants. </li>
+<li><strong>Application population:</strong> 750 applications. </li>
+<li>Those 750 applications represent <strong>750 distinct merchants</strong> in the current governed build. </li>
+<li>A merchant can accumulate many downstream records because of scenarios, candidate structures, simulations, servicing/account observations, etc., but those are <strong>not additional applications</strong>. </li>
+<li>Therefore, the current relationship at the application level is effectively <strong>1 merchant → 0 or 1 application</strong>, not <strong>1 merchant → many applications</strong>.</li>
+</ul>
+<p>That matters for the Power BI work we are doing. When we select a Merchant ID today, we can safely treat the associated application as singular. We <strong>should not design the Merchant Detail page as though multiple historical applications already exist</strong>.</p>
+<p>However, I would preserve the model architecture so that <strong>merchant → multiple applications</strong> can be introduced later. That is a very natural evolution for Module 3 / the longitudinal portfolio: a merchant could apply, receive an advance, perform over time, seek a renewal or additional advance, and generate another application/decision cycle. That is where the merchant-level history becomes substantially more valuable.</p>
+</div></article><article id="m-6daae228-bf78-4c22-bd0e-d9db4303ebf3" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00132 · 2026-09-12T22:31:37.261864-04:00 · active path</p><div class="bubble"><p>That clarifies the intended business relationship. I’ll check the population scope so we do not conflate original applications with scenario or replay records.</p>
+</div></article><article id="m-f98c0e05-c02c-4d4d-997b-9479249aa853" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00133 · 2026-09-12T22:33:25.068662-04:00 · active path</p><div class="bubble"><p>That context reinforces the intended application relationship. <strong>But the older answer contains an important count error: 4,352 was the number of canonical entity rows, not the number of merchants.</strong> I checked the original acceptance records because that figure conflicted with the established 750-merchant cohort.</p>
+<h2>The corrected population interpretation</h2>
+<p>The original M1.2 acceptance explicitly records <strong>750 unique synthetic merchants</strong> and <strong>4,352 canonical entity rows</strong>. The larger total includes merchants, owner/guarantor records, industry assignments, partner-channel definitions, processor accounts, and relationship snapshots. It is not a count of distinct merchants. [export reference: filecite | turn33file0 | L44-L64] [export reference: filecite | turn33file0 | L94-L98]</p>
+<p>M1.3 then deliberately creates <strong>one original application for each of those 750 merchants</strong>. Its documented output grain is “one submitted application per accepted merchant,” and its acceptance results show 750 applications and 750 unique merchants. [export reference: filecite | turn33file1 | L128-L149] [export reference: filecite | turn33file4 | L317-L325]</p>
+<table>
+<thead>
+<tr>
+<th>Measure</th>
+<th>Accepted cohort meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>750 merchants</strong></td>
+<td>Distinct synthetic merchant identities</td>
+</tr>
+<tr>
+<td><strong>750 original applications</strong></td>
+<td>One initial financing request per merchant</td>
+</tr>
+<tr>
+<td><strong>4,352 canonical entity rows</strong></td>
+<td>Combined population-related records across several entity types—not 4,352 merchants</td>
+</tr>
+<tr>
+<td><strong>1,500 application-scenario rows</strong></td>
+<td>The original applications evaluated under two scenarios—not 1,500 independent financing requests</td>
+</tr>
+</tbody></table>
+<p>The 1,500 application-scenario rows were also confirmed in the accepted Reference A/B evidence. [export reference: filecite | turn31file0 | L108-L126]</p>
+<p>Therefore, <strong>we should not carry forward “4,352 merchants, of which 750 applied” as a source-supported fact.</strong> The older answer’s distinction between original applications and downstream analytical records was useful; its merchant denominator was incorrect.</p>
+<h2>Your Power BI assumption remains appropriate</h2>
+<p>For the accepted applicant cohort, the observed business relationship is:</p>
+<pre><code class="language-text">750 merchants
+    → 750 original applications
+    → one original application per merchant
+</code></pre>
+<p>Your broader reporting convention of <strong>one merchant → zero or one original application</strong> remains a sensible way to accommodate a merchant without an application. But in this particular accepted cohort, the documented result is exactly one for each merchant—not a larger population of non-applicants.</p>
+<p>Scenario evaluations, candidate structures, simulations, and servicing observations must remain distinct from a <strong>second original financing application</strong>. Their existence does not, by itself, require a multi-application Merchant Detail experience.</p>
+<p>Given your description of the Power BI design, <strong>there is no reason from this finding to redesign the existing report or suggest that its singular-application assumption was wrong.</strong></p>
+<h2>This is still separate from the identity-validation gap</h2>
+<p>The adapter finding concerns <strong>which merchant owns an application</strong>, not how many original applications a merchant has.</p>
+<p>For example, swapping the merchants associated with two applications preserves one application per merchant and preserves every aggregate count. Nevertheless, both associations become wrong. That was the negative case the unfinished adapter failed to reject. The review found <strong>zero such identity violations in the accepted 750 evidence</strong>. [export reference: filecite | turn31file0 | L41-L53] [export reference: filecite | turn31file0 | L118-L126]</p>
+<p>So the conclusions remain separate:</p>
+<p><strong>One original application per merchant:</strong> expected and source-supported.<br><strong>Missing identity check in the new adapter:</strong> a real validation omission to correct before fresh-provider qualification.<br><strong>Incorrect application ownership in the accepted 750:</strong> not found.</p>
+<h2>Scope to preserve going forward</h2>
+<p>For the immediate fresh 2,500 profile, we should retain <strong>one original application per merchant</strong>, with scenario and candidate expansion handled separately. That increases campaign size without introducing repeat-application behavior.</p>
+<p>Multiple original applications—renewals, repeat requests, or another financing cycle—should remain an explicitly scoped future enhancement. As you noted, that would require coordinated work on the producing logic, application history, lineage, Power BI relationships, measures, and navigation. The older answer’s mention of Module 3 is a possible future direction, <strong>not evidence that this capability already exists or authorization to introduce it now</strong>.</p>
+<p><strong>The practical correction is to the historical explanation’s count, not to the accepted cohort or its Power BI design: 750 merchants, 750 original applications, and 4,352 population-related canonical entity rows.</strong></p>
+</div></article><article id="m-c059ad04-5ac1-4308-92fc-b0cb59749044" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00134 · 2026-09-12T22:35:00.679000-04:00 · active path</p><div class="bubble"><p>thank you. now let&#39;s get back to the three findings. are you original recommendations for those three findings, still valid?</p>
+</div></article><article id="m-268c1487-da62-4eb3-9441-d9e12cbed042" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00135 · 2026-09-12T22:35:29.724119-04:00 · active path</p><div class="bubble"><p>Yes—the application-count clarification does not remove any of the three gaps. I’ll verify the recommended fixes remain correctly scoped to the current one-original-application-per-merchant profile.</p>
+</div></article><article id="m-70ed576b-ffbd-4b31-b5d9-87cf4c4a9642" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00136 · 2026-09-12T22:36:50.898675-04:00 · active path</p><div class="bubble"><p><strong>Yes—all three original recommendations remain valid.</strong> The application/Power BI discussion clarifies <strong>where the first rule applies</strong>; it does not invalidate any of the findings.</p>
+<p>The corrections should remain narrowly focused on making the new campaign validators enforce the approved source’s requirements—not changing the business logic or expanding into multiple-original-application support.</p>
+<h2>1. Application-to-merchant identity: still valid, scoped to original applications</h2>
+<p><strong>Keep the recommendation:</strong> enforce the approved relationship:</p>
+<pre><code class="language-text">original_application_id = merchant_id + &quot;_A01&quot;
+</code></pre>
+<p>for the current one-original-application-per-merchant profile. The approved M1.3 generator constructs this relationship, and its validator checks it. The new handoff omitted that check. [export reference: filecite | turn33file0 | L11-L23]</p>
+<p>Having exactly one application per merchant does <strong>not</strong> establish correct ownership. Two applications can be assigned to the wrong merchants while preserving every count and the one-to-one relationship.</p>
+<p><strong>Required regression:</strong> swap two application-to-merchant associations while preserving counts and cross-scenario consistency. The corrected validator must reject the input.</p>
+<p><strong>Scope clarification:</strong> apply <code>_A01</code> to the <strong>original application identity</strong>, not indiscriminately to candidate/replay records. Do not turn it into a permanent platform restriction. A future multi-application design would require an explicitly revised identity contract; that is outside this correction and the current 2,500 profile.</p>
+<h2>2. Candidate-ID uniqueness: unchanged</h2>
+<p><strong>Keep the recommendation:</strong> require candidate IDs to be unique across the entire candidate handoff for the current execution—not merely unique within:</p>
+<pre><code class="language-text">scenario_id + original_application_id + candidate_id
+</code></pre>
+<p>The retained R4 engine already requires this stronger uniqueness rule. The new handoff should reject an incompatible input early rather than rely on a later engine check. [export reference: filecite | turn33file0 | L25-L37]</p>
+<p><strong>Required regressions:</strong> reuse a candidate ID under a different application and, separately, under a different scenario. Both must fail even when the composite keys remain unique.</p>
+<p>The one-original-application-per-merchant convention does not change this requirement: an original application can have multiple candidate structures. <strong>Candidate volume remains data-dependent; the correction must not hardcode the historical 6,397 or 6,519 counts.</strong></p>
+<h2>3. Matched-baseline requirement: unchanged</h2>
+<p><strong>Keep the recommendation:</strong> reject a configuration containing a non-baseline scenario without <code>BASELINE</code>, and verify that <strong>each non-baseline application record has its corresponding baseline record</strong>.</p>
+<p>A baseline somewhere in the dataset is insufficient. The retained governing function depends on a baseline for the same application. The review reproduced a stress-only handoff that passed the new validator but failed that source dependency. [export reference: filecite | turn33file0 | L39-L51]</p>
+<p><strong>Required regressions:</strong> reject a stress-only configuration and reject an otherwise valid dataset with one application’s baseline missing. Preserve acceptance of the supported baseline/stress pair.</p>
+<p>This does not change the named 2,500 configuration, which already includes <code>BASELINE</code> and <code>RECESSION_ENERGY</code>. Nor should the fix silently add scenarios or remove the approved stress-floor rule.</p>
+<h2>What remains unchanged</h2>
+<p>The review found <strong>none of these three defects in the accepted 750 inputs/results</strong>: zero incorrect application/merchant identities, zero missing matched baselines, and globally unique candidate IDs in both inspected candidate surfaces. The accepted 750 validation remains closed. [export reference: filecite | turn33file0 | L78-L96]</p>
+<p>The review documented the findings but <strong>did not implement their fixes</strong>. The next step remains one bounded source-conformance correction: implement the three checks, add the source-derived counterexamples, record each rule’s source and enforcement point, and rerun the existing and targeted tests. [export reference: filecite | turn33file0 | L98-L109]</p>
+<p><strong>No Power BI redesign, multiple-application enhancement, published business-logic change, or repeat full-750 run is required to close these findings.</strong></p>
+</div></article><article id="m-0e85a09f-1dab-4fa1-92b8-522e7d4a743c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00137 · 2026-09-12T22:41:57.057000-04:00 · active path</p><div class="bubble"><p>Perform recommended fixes for these three findings. Then update the MSBF_750_VALIDATION_... documentation/package/report with an amendment identifying these findings / actions taken / why they have no impact to 750 validation - also document the steps taken to identify, including the campaign scale expected-count helper issue that triggered this review. if that campaign scale-expected-count helper still remains at issue, correct and document that as well. proceed with this next correction and documentation leap.</p>
+</div></article><article id="m-331970c2-7fa6-4c46-9d14-cfc4ce96892d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00138 · 2026-09-12T22:42:16.031185-04:00 · active path</p><div class="bubble"><p>I’ll correct and test the three validators, verify the expected-count fix, then amend the 750 report and publication packages while preserving the accepted disposition and original evidence.</p>
+</div></article><article id="m-237e7101-f2cf-4204-91f4-eee1b8db7c68" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00139 · 2026-09-12T22:45:21.619840-04:00 · active path</p><div class="bubble"><p>The count helper is already corrected in Leap 1; I’ll preserve it and test across scenario counts, keeping new changes confined to planner/input validation.</p>
+</div></article><article id="m-c6819a5f-07dc-4ff2-b76f-cbef3dbf04cf" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00140 · 2026-09-12T22:54:28.605007-04:00 · active path</p><div class="bubble"><p>The three checks now reject the original counterexamples, and all 214 tests pass. Direct 750 checks found no ownership, baseline, candidate-ID, or verification-pair defects.</p>
+</div></article><article id="m-09dc5994-6261-4b98-b3f7-11e3c3a59357" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00141 · 2026-09-12T23:09:03.472134-04:00 · active path</p><div class="bubble"><h2>The three fixes and the 750 documentation amendment are complete</h2>
+<p><strong>All three adapter findings are corrected and regression-tested.</strong> The expected-count helper was already corrected in Leap 1 R1; I preserved that correction and independently reverified it.</p>
+<p><strong>The accepted 750 validation remains unchanged.</strong> Direct examination of the retained 750 files found none of the implicated ownership, baseline, candidate-uniqueness, or verification-grain violations.</p>
+<h3>Deliverables</h3>
+<table>
+<thead>
+<tr>
+<th>Deliverable</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Revised 750 validation report — PDF (historical reference: <code>sandbox:[session]/MSBF_750_Validation_Report_R2_20260912.pdf</code>; referenced bytes not established here)</strong></td>
+<td><strong>26 pages</strong>, including the six-page Amendment A1 covering discovery, corrections, testing, and the no-impact assessment.</td>
+</tr>
+<tr>
+<td><strong>Complete publication-handoff package — R2 (historical reference: <code>sandbox:[session]/MSBF_750_VALIDATION_PUBLICATION_HANDOFF_R2_20260912.zip</code>; referenced bytes not established here)</strong></td>
+<td><strong>219.5 MB.</strong> Updated documentation, audit registers, original evidence, prior and corrected engineering packages, and publication-handoff instructions.</td>
+</tr>
+<tr>
+<td><strong>Compact publication candidate — R2 (historical reference: <code>sandbox:[session]/MSBF_750_VALIDATION_PUBLICATION_CANDIDATE_R2_20260912.zip</code>; referenced bytes not established here)</strong></td>
+<td><strong>842 KB.</strong> Amended report, selected evidence, closure records, and publication materials without the large private annex.</td>
+</tr>
+<tr>
+<td><strong>Corrected engineering extension — Leap 1 R2 (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP1_R2_20260912.zip</code>; referenced bytes not established here)</strong></td>
+<td><strong>37.4 MB.</strong> Actual corrected code, tests, source-to-adapter obligations, change set, and engineering evidence. <strong>Not an owner-run 2,500 release.</strong></td>
+</tr>
+</tbody></table>
+<p>The <strong>standalone six-page amendment (historical reference: <code>sandbox:[session]/MSBF_750_Validation_Amendment_A1_20260912.pdf</code>; referenced bytes not established here)</strong> and <strong>editable revised report (historical reference: <code>sandbox:[session]/MSBF_750_Validation_Report_R2_20260912.docx</code>; referenced bytes not established here)</strong> are also available.</p>
+<h2>What was corrected</h2>
+<table>
+<thead>
+<tr>
+<th>Finding</th>
+<th>Implemented action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>F2500-AR-01 — Application ownership</strong></td>
+<td>Enforces <code>original_application_id = merchant_id + &quot;_A01&quot;</code> for the current original-application profile. Count-preserving merchant swaps now fail. Candidate/replay identifiers are not subjected to this suffix rule.</td>
+</tr>
+<tr>
+<td><strong>F2500-AR-02 — Candidate uniqueness</strong></td>
+<td>Requires candidate IDs to be unique across the entire handoff, while retaining composite-key and parent checks. Reuse across applications or scenarios now fails; candidate counts remain data-dependent.</td>
+</tr>
+<tr>
+<td><strong>F2500-AR-03 — Matched baseline</strong></td>
+<td>Rejects non-baseline configurations without <code>BASELINE</code>. Independently checks that each non-baseline application has its own baseline row. It does not silently add scenarios or weaken the stress-floor rule.</td>
+</tr>
+<tr>
+<td><strong>F2500-L1-COUNT-001 — Verification count</strong></td>
+<td>Confirmed the active helper already uses six checks per original application, independent of scenario count. Preserved it byte-for-byte and rechecked nine population/scenario combinations.</td>
+</tr>
+</tbody></table>
+<p>The obsolete count formula remains only in historical predecessor evidence and descriptions of the defect—not as the active expectation.</p>
+<h2>Testing completed</h2>
+<p><strong>The corrected full suite passes 214 tests, including 25 new source-conformance tests. The same 214 tests pass again from a clean extraction of the delivered ZIP.</strong></p>
+<p>The added tests go beyond the original three reproductions. They include cross-application and cross-scenario candidate collisions, consistently substituted original-application suffixes, a missing baseline for one application, reordered inputs, a deliberately bypassed planner, incorrect verification check codes with matching totals, and rejection of the old three-check override.</p>
+<p>The evidence preserves the important before/after distinction:</p>
+<pre><code class="language-text">Original adapter:
+The identified malformed inputs could pass.
+
+Corrected adapter:
+Those same malformed inputs are rejected.
+
+Valid structural controls:
+Continue to pass without granting campaign execution
+or claiming fresh-generation proof.
+</code></pre>
+<p>The prior <strong>189-test suite also passes on the unmodified parent</strong>. The amendment explains why that was insufficient: it lacked these source-derived counterexamples. This is documented as a validation-coverage lesson, not hidden behind a larger test count.</p>
+<p>Only <strong>two existing Python files</strong> changed from Leap 1 R1: <code>runtime/fresh_config.py</code> and <code>runtime/fresh_inputs.py</code>. All <strong>67 retained vendor files</strong> remain unchanged, and all <strong>24 curated upstream programs</strong> still match their publication locks. The count helper and comparison contract are unchanged from Leap 1 R1.</p>
+<p>Engineering validation record (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP1_R2_20260912_VALIDATION.json</code>; referenced bytes not established here) · Engineering report (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP1_R2_20260912_ENGINEERING_REPORT.md</code>; referenced bytes not established here)</p>
+<h2>Why these findings do not affect the accepted 750 validation</h2>
+<p>I reread the actual files in the hash-bound successful Reference A/B return and checked the implicated invariants directly:</p>
+<table>
+<thead>
+<tr>
+<th>Accepted 750 check</th>
+<th align="right">Observed result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Distinct merchants / original applications</td>
+<td align="right"><strong>750 / 750</strong></td>
+</tr>
+<tr>
+<td>Application-scenario rows</td>
+<td align="right"><strong>1,500</strong></td>
+</tr>
+<tr>
+<td>Original application-to-merchant identity violations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Non-baseline rows missing their application’s baseline</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Unique application/check pairs</td>
+<td align="right"><strong>4,500</strong>, with exactly six approved checks per original application</td>
+</tr>
+<tr>
+<td>Candidate input rows / distinct candidate IDs</td>
+<td align="right"><strong>6,397 / 6,397</strong></td>
+</tr>
+<tr>
+<td>Evaluated R4 candidate rows / distinct candidate IDs</td>
+<td align="right"><strong>6,519 / 6,519</strong></td>
+</tr>
+</tbody></table>
+<p>The verification check set was examined—not just its total. Each of the six approved checks occurs once for every original application.</p>
+<p><strong>This is not a repair of incorrect accepted outputs.</strong> The accepted data already satisfy these rules. The corrections strengthen the unfinished fresh-campaign adapter before it is used to qualify new inputs.</p>
+<p>The original two validation legs, original downstream STOP, sealed-contract result, audit-clock exception, and subsequent owner acceptance remain preserved. This amendment does <strong>not</strong> claim a new native campaign or a fresh reperformance of the entire downstream reconciliation.</p>
+<h2>What the amendment and handoff now contain</h2>
+<p>Amendment A1 documents the triggering expected-count issue, the source-tracing and counterexample method used to find the additional gaps, each implemented fix, the regression evidence, and the direct accepted-750 impact assessment.</p>
+<p>The packages also include a <strong>source-to-adapter obligation register</strong> linking each rule to its source path, lines, hash, enforcement point, and regression tests. Updated release-note wording and claim guidance distinguish campaign-adapter corrections from changes to approved MSBF calculations.</p>
+<p><strong>The original R1 report and all six original validation/runtime evidence archives are retained unchanged.</strong> Both revised publication packages passed manifest, checksum, archive-integrity, and clean-extraction checks. All 26 report pages and all six standalone amendment pages were visually inspected.</p>
+<p>Full-handoff validation record (historical reference: <code>sandbox:[session]/MSBF_750_VALIDATION_PUBLICATION_HANDOFF_R2_20260912_VALIDATION.json</code>; referenced bytes not established here) · Full-handoff SHA-256 (historical reference: <code>sandbox:[session]/MSBF_750_VALIDATION_PUBLICATION_HANDOFF_R2_20260912.zip.sha256</code>; referenced bytes not established here)</p>
+<p><strong>Save the complete handoff under <code>D:\MSBF_ARCHIVE</code>. No PowerShell command, database rerun, GitHub change, or Power BI action is required.</strong> Leap 1 R2 is now the corrected engineering baseline for the next fresh-population/application-provider work; fresh 2,500 execution remains gated on completing and qualifying that producing chain.</p>
+</div></article><article id="m-37b7b7cd-ad89-418d-a118-4bf088b5077b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00142 · 2026-09-12T23:24:19.300000-04:00 · active path</p><div class="bubble"><p>Thank you. What is the next leap that we can take?</p>
+</div></article><article id="m-ef809ea8-6e43-49e9-9564-b16a47d8a4c8" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00143 · 2026-09-12T23:24:48.003932-04:00 · active path</p><div class="bubble"><p>I’ll check the corrected Leap 1 baseline so the next leap advances fresh generation without reopening the accepted 750 validation.</p>
+</div></article><article id="m-71a6a2cb-61da-4655-a479-83c4f5aa3840" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00144 · 2026-09-12T23:26:30.091069-04:00 · active path</p><div class="bubble"><p><strong>The next worthwhile leap is to implement the fresh merchant-population and original-application provider.</strong> That moves us from <em>validating what a campaign input should look like</em> to <em>actually producing the first part of a new campaign from approved source logic</em>.</p>
+<p>I would scope it as:</p>
+<h2>Leap 2 — Source-Bound Fresh Population and Original-Application Provider</h2>
+<pre><code class="language-text">Validated campaign configuration
+        ↓
+Fresh run identity and bound configuration
+        ↓
+G0/G1 prerequisites and controls
+        ↓
+M1.2 merchant-population generation
+        ↓
+M1.3 original-application generation
+        ↓
+Validated population/application handoff
+</code></pre>
+<p>This is the next step specified in the corrected Leap 1 R2 engineering record. Histories, features, verification, strategy/compatibility production, and downstream scale integration remain subsequent work. [export reference: filecite | turn37file0 | L52-L54]</p>
+<p><strong>The target is one complete producing component—not the entire 2,500 campaign in one oversized leap.</strong></p>
+<h2>What this leap should deliver</h2>
+<h3>1. Connect the existing configuration to the approved generating sources</h3>
+<p>The new provider should consume the explicit population size, seed, business date, scenario configuration, and source identity established by Leap 1.</p>
+<p>Its job is to supply fresh execution context to the approved G0/G1 and M1.2/M1.3 components. It must not replace their business calculations with a newly invented synthetic-data generator.</p>
+<p>The central engineering task is to distinguish:</p>
+<table>
+<thead>
+<tr>
+<th>Source element</th>
+<th>Treatment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Approved generation rules, allocation methods, and deterministic calculations</td>
+<td>Preserve their semantics.</td>
+</tr>
+<tr>
+<td>Historical population/run identifiers and local paths</td>
+<td>Bind to the new campaign context.</td>
+</tr>
+<tr>
+<td>Snapshot hashes and reconciliation checks</td>
+<td>Recalculate and validate against that context—not remove the checks.</td>
+</tr>
+<tr>
+<td>Fixed example counts</td>
+<td>Derive the corresponding expectations from the approved grain and configured population.</td>
+</tr>
+</tbody></table>
+<p>Each adaptation should be linked to its approved source rule, enforcement point, and tests using the source-to-adapter obligation register we just established. That register is already part of the corrected baseline. [export reference: filecite | turn37file0 | L46-L48]</p>
+<h3>2. Produce a genuinely new population and its original applications</h3>
+<p>For the intended 2,500 profile, this component’s output target is:</p>
+<pre><code class="language-text">2,500 distinct merchants
+2,500 original applications
+One original application per merchant
+Correct application-to-merchant ownership
+Required supporting population records
+Source-bound run and population lineage
+</code></pre>
+<p>These are <strong>targets for the implementation and its validation</strong>, not results already achieved.</p>
+<p>The current profile continues to use one original application per merchant. Multiple original applications and the associated Power BI redesign remain a separate enhancement. [export reference: filecite | turn37file0 | L52-L54]</p>
+<p>This component should not yet claim to produce the complete 5,000-row application-scenario analytical handoff, verification outcomes, candidate structures, or financing decisions. Those belong to later producing stages.</p>
+<h3>3. Make the component usable through the common runtime</h3>
+<p>The provider should be integrated behind the existing configuration interface—not delivered as a collection of SQL files you must execute manually.</p>
+<p>It should establish its required platform objects and static configuration through a packaged setup path. <strong>Normal fresh generation should not obtain merchant/application rows from Reference R1 or a prior campaign subject.</strong> Accepted sources and static scaffolding can be reused; the new population must be generated.</p>
+<p>For your environment, the eventual execution paths remain under <code>D:\MSBF_CAMPAIGNS</code>, with delivered ZIPs under <code>D:\MSBF_ARCHIVE</code>. There is no need to reinstall Python or PostgreSQL to satisfy this component’s freshness requirement.</p>
+<h2>How we should test it</h2>
+<p>The recent findings give us a useful testing discipline: <strong>derive tests from the source obligations, including cases that preserve totals while breaking relationships.</strong></p>
+<p>For this leap, I would require:</p>
+<table>
+<thead>
+<tr>
+<th>Test area</th>
+<th>What it should establish</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Deterministic generation</strong></td>
+<td>The same governed seed/configuration produces the same semantic population/application output at the tested boundary.</td>
+</tr>
+<tr>
+<td><strong>Parameter binding</strong></td>
+<td>Size, seed, date, and run identity reach the producing sources correctly; unsupported combinations are rejected explicitly.</td>
+</tr>
+<tr>
+<td><strong>Identity and relationships</strong></td>
+<td>Merchants and original applications have the required unique identities and correct ownership; swaps, duplicates, missing parents, and orphan applications fail.</td>
+</tr>
+<tr>
+<td><strong>Configuration integrity</strong></td>
+<td>Missing parameters, inconsistent snapshots, or altered bound configuration stop generation rather than bypass controls.</td>
+</tr>
+<tr>
+<td><strong>Source fidelity</strong></td>
+<td>Every changed context binding is documented; protected calculation semantics remain unchanged.</td>
+</tr>
+<tr>
+<td><strong>Failure behavior</strong></td>
+<td>Partial generation is not reported as complete, and diagnostic evidence is preserved.</td>
+</tr>
+</tbody></table>
+<p>The size tests should include the intended 2,500 configuration and supported cases that exercise allocation or boundary behavior—not only configurations where two different formulas happen to produce the same total.</p>
+<p>The existing <strong>214-test corrected suite</strong> remains the regression baseline. Its recorded PASS includes the three recent fixes, but it is explicitly offline evidence—not native SQL execution or fresh-population proof. New provider tests must extend that evidence rather than inherit its PASS label. [export reference: filecite | turn37file0 | L32-L38] [export reference: filecite | turn37file1 | L75-L94]</p>
+<h2>What a successful next delivery would mean</h2>
+<p>The desired delivery is:</p>
+<blockquote>
+<p><strong>An implemented, source-traceable population/application provider integrated with the existing configuration layer, accompanied by executable tests, generation controls, draft procedures, and an exact statement of its native-execution readiness.</strong></p>
+</blockquote>
+<p>It should contain actual code and test evidence—not merely a proposed execution plan.</p>
+<p>A useful completion record would distinguish:</p>
+<pre><code class="language-text">Provider implementation               COMPLETE / specific blocker
+Source-obligation coverage            Verified within component scope
+Component and regression tests        Actual recorded results
+Native PostgreSQL execution           Performed or not performed
+Fresh population/application output   Proven only if actually generated
+Full fresh 2,500 campaign              NOT YET QUALIFIED
+</code></pre>
+<p>If database execution is necessary to establish a particular property, that limitation should be explicit. A mock process test or Python reconstruction must not be presented as execution of the approved SQL.</p>
+<h2>What should stay outside this leap</h2>
+<p>I would deliberately leave histories, feature/verification production, R4-to-compatibility generation, the full downstream 2,500 run, Power BI, and publication changes outside this bounded task.</p>
+<p>That keeps the work manageable while completing a meaningful part of the eventual user workflow. The accepted 750 result and its amended documentation remain closed; the correction report identifies no need to reopen them. [export reference: filecite | turn37file0 | L40-L44]</p>
+<p><strong>No owner-machine action is needed now.</strong> The next work is implementation and component qualification. We should continue aiming for your next substantial campaign invocation to be the integrated 2,500 run that also tests the future-user procedures—not another series of small diagnostics.</p>
+<p>The next instruction can therefore be:</p>
+<blockquote>
+<p><strong>Proceed with Leap 2: implement and test the source-bound G0/G1 → M1.2 → M1.3 fresh population/original-application provider on top of Leap 1 R2. Preserve approved generating semantics, enforce the source-to-adapter obligations, and deliver actual code, test evidence, and draft component procedures. Keep histories, strategy/compatibility, and full 2,500 execution outside this bounded leap.</strong></p>
+</blockquote>
+</div></article><article id="m-381e1142-a2bf-448b-a224-41fbaa37ae33" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00145 · 2026-09-12T23:27:45.570000-04:00 · active path</p><div class="bubble"><p>Proceed with Leap 2: implement and test the source-bound G0/G1 → M1.2 → M1.3 fresh population/original-application provider on top of Leap 1 R2. Preserve approved generating semantics, enforce the source-to-adapter obligations, and deliver actual code, test evidence, and draft component procedures. Keep histories, strategy/compatibility, and full 2,500 execution outside this bounded leap.  </p>
+</div></article><article id="m-4f36b5c2-f608-47d0-8cff-7cbc0d26a477" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00146 · 2026-09-12T23:28:06.174047-04:00 · active path</p><div class="bubble"><p>I’ll build Leap 2 on Leap 1 R2, implement and test the approved population/application source path, and document procedures while keeping histories and downstream execution out of scope.</p>
+</div></article><article id="m-dc6667a2-15e6-4b25-a2f5-48fbb1a65132" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00147 · 2026-09-12T23:31:15.072064-04:00 · active path</p><div class="bubble"><p>The corrected baseline passes integrity checks; I’m preserving deterministic generation, reconciliation, regeneration guards, and source-domain restrictions while replacing only explicit historical context bindings.</p>
+</div></article><article id="m-9f0cb000-578d-4299-8488-1da15571e05a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00148 · 2026-09-12T23:40:21.776285-04:00 · active path</p><div class="bubble"><p>The source compiler now audits context substitutions while preserving 14 helper definitions; owner counts derive from the blueprint and M1.3 hashes retain run-specific lineage. Native PostgreSQL execution remains unavailable here.</p>
+</div></article><article id="m-07b9307e-ab4c-4507-8208-002416dab910" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00149 · 2026-09-13T00:00:00.213999-04:00 · active path</p><div class="bubble"><h2>Leap 2 is implemented and packaged</h2>
+<p>The extension now contains the <strong>source-bound G0/G1 → M1.2 → M1.3 population/original-application provider</strong>, its execution controls, a native PostgreSQL backend, test evidence, and draft component procedures.</p>
+<p><strong>The offline qualification passed. Native PostgreSQL execution of this new component remains pending.</strong> No fresh population or full 2,500 campaign is claimed by this delivery.</p>
+<h3>Deliverables</h3>
+<table>
+<thead>
+<tr>
+<th>Deliverable</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Leap 2 engineering extension (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP2_R1_20260912.zip</code>; referenced bytes not established here)</strong></td>
+<td><strong>37.7 MB.</strong> Actual code, approved source copies, binding rules, controls, tests, compiled example, and procedures.</td>
+</tr>
+<tr>
+<td><strong>Engineering report (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP2_R1_20260912_ENGINEERING_REPORT.md</code>; referenced bytes not established here)</strong></td>
+<td>Implementation, source preservation, testing, capability boundaries, and remaining qualification.</td>
+</tr>
+<tr>
+<td><strong>Draft component procedures (historical reference: <code>sandbox:[session]/MSBF_LEAP2_COMPONENT_PROCEDURES_DRAFT_20260912.md</code>; referenced bytes not established here)</strong></td>
+<td>Intake, configuration, compilation, native qualification, outputs, and failure handling.</td>
+</tr>
+<tr>
+<td><strong>Final validation record (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP2_R1_20260912_VALIDATION.json</code>; referenced bytes not established here)</strong></td>
+<td>Package identity, build tests, clean-extraction tests, and explicit execution limits.</td>
+</tr>
+</tbody></table>
+<p>SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP2_R1_20260912.zip.sha256</code>; referenced bytes not established here) · Final-extraction verification logs (historical reference: <code>sandbox:[session]/MSBF_LEAP2_FINAL_DELIVERY_VERIFICATION_20260912.zip</code>; referenced bytes not established here)</p>
+<h2>What this leap adds</h2>
+<h3>1. A source-bound producing component—not a replacement generator</h3>
+<p>The provider compiles <strong>20 ordered, publication-locked SQL programs</strong> covering:</p>
+<pre><code class="language-text">G0 schema and static configuration
+    → G1 run configuration, snapshots, controls, and acceptance
+    → M1.2 merchant population and supporting entities
+    → M1.3 original applications and requested structures
+    → component output and evidence
+</code></pre>
+<p>Historical run identifiers, population identifiers, expected hashes, and example counts are rebound through <strong>98 explicit, counted rules</strong>. Missing or altered source anchors stop compilation.</p>
+<p><strong>Fourteen calculation/helper function definitions remain byte-identical after compilation.</strong> The source-owned generation, allocation, request calculations, canonical reconciliation, and regeneration protections are retained rather than reimplemented as a separate Python business engine.</p>
+<p>The provider does not read Reference R1, copy accepted campaign rows, restore a backup, or invoke the retired lifecycle wrappers.</p>
+<h3>2. Fresh configuration is checked before its hashes are trusted</h3>
+<p>I added an important safeguard around fresh G1 identity binding.</p>
+<p>A parameter set must not be accepted merely because its newly calculated hash agrees with its stored hash. The provider also checks its contents against the <strong>401 source-defined scoped parameter values</strong>, allowing only the declared population-size and history-window changes.</p>
+<p>It then freezes the accepted G1 identities and supplies them unchanged to subsequent source guards. A changed parameter set, changed snapshot, or changed frozen identity must stop the component.</p>
+<p>The source-to-adapter obligation register links these requirements to source locations, enforcement points, and tests.</p>
+<h3>3. The population and application grains remain source-owned</h3>
+<p>For a configured population of 2,500, the component’s required outputs include <strong>2,500 merchants and 2,500 original applications</strong>, with correct ownership and the current <code>_A01</code> identity convention.</p>
+<p>Supporting owner/guarantor records remain data-dependent. Their count is obtained from the approved blueprint—not by scaling the historical 1,347 rows.</p>
+<p>The canonical M1.2 entity count is checked as:</p>
+<pre><code class="language-text">4 × merchant count
++ generated owner/guarantor rows
++ 5 channel definitions
+</code></pre>
+<p>These are implementation requirements, <strong>not observed generation results yet</strong>.</p>
+<p>One additional distinction is documented: the approved M1.3 request hash includes the physical <code>created_by_run_id</code>. The provider preserves that lineage. It does not substitute historical run IDs or remove that hash input to manufacture reproducibility.</p>
+<h3>4. Execution and failure handling are implemented</h3>
+<p>The native backend is restricted to a newly created component subject on an existing isolated PostgreSQL 17 environment. The controller checks source preflight results, stage status, positive and negative controls, accepted gates, canonical reconciliation, and output counts.</p>
+<p>It preserves these source requirements:</p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th align="right">Positive controls</th>
+<th align="right">Negative controls</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>G1</td>
+<td align="right">20</td>
+<td align="right">3</td>
+</tr>
+<tr>
+<td>M1.2</td>
+<td align="right">36</td>
+<td align="right">3</td>
+</tr>
+<tr>
+<td>M1.3</td>
+<td align="right">42</td>
+<td align="right">3</td>
+</tr>
+</tbody></table>
+<p><strong>Those are required control counts, not native PASS results from this build.</strong></p>
+<p>A material failure prevents dependent stages. Evidence-persistence failures cannot grant PASS or suppress the original failure. The implementation retains the subject and workspace rather than automatically repairing, dropping, or resuming them.</p>
+<h2>What physically passed</h2>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Full build suite</td>
+<td><strong>306 tests passed; zero failures, errors, or skips</strong></td>
+</tr>
+<tr>
+<td>New Leap 2 component tests</td>
+<td><strong>92</strong>, in addition to the retained 214-test baseline</td>
+</tr>
+<tr>
+<td>Same suite from the final ZIP’s clean extraction</td>
+<td><strong>306 tests passed again</strong></td>
+</tr>
+<tr>
+<td>Selected source programs</td>
+<td><strong>20/20 match publication-path locks</strong></td>
+</tr>
+<tr>
+<td>Protected calculation/helper definitions</td>
+<td><strong>14/14 unchanged after compilation</strong></td>
+</tr>
+<tr>
+<td>Retained vendor files</td>
+<td><strong>67/67 unchanged</strong></td>
+</tr>
+<tr>
+<td>Prior curated upstream sources</td>
+<td><strong>24/24 unchanged</strong></td>
+</tr>
+<tr>
+<td>Prior three adapter fixes, corrected count helper, and comparison contract</td>
+<td><strong>Unchanged</strong></td>
+</tr>
+<tr>
+<td>Final extracted package</td>
+<td>Manifest, seal, CRC, path-safety, and source-stability checks <strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Ordinary campaign invocation</td>
+<td>Confirmed <strong>blocked before password or database access</strong></td>
+</tr>
+</tbody></table>
+<p>The new tests cover source tampering, binding-count changes, preserved financial constants, configuration restrictions, frozen-hash changes, ownership and orphan violations, incomplete controls, failed preflights, evidence failures, and owned-client interruption handling.</p>
+<p>The complete 20-stage controller was exercised with a <strong>clearly labelled scripted backend</strong>. That tests orchestration and failure behavior; it is not PostgreSQL execution or synthetic-population generation.</p>
+<h2>What remains unproven</h2>
+<p>There were no PostgreSQL binaries available in this engineering environment. Consequently, this delivery has <strong>not</strong> established:</p>
+<pre><code class="language-text">Native execution of the compiled SQL
+Actual generated merchant/application values
+Native seed-reproducibility results
+Windows qualification of the new backend
+</code></pre>
+<p>The native backend and explicit developer-qualification entrypoint are included so that this remaining component test does not require rebuilding the implementation.</p>
+<p>The component also deliberately retains a narrow source context: <strong>July 23, 2026</strong>, the ordered <strong>BASELINE / RECESSION_ENERGY</strong> scenario configuration, and the retained population/history parameter domains. Compiler acceptance within those domains is not a claim that every combination has passed native controls.</p>
+<h2>Where this leaves the campaign</h2>
+<pre><code class="language-text">Leap 1 configuration and corrected handoff validation     PRESERVED
+Leap 2 source-bound provider implementation               IMPLEMENTED
+Leap 2 offline source/control qualification               PASS
+Leap 2 native population/application qualification        PENDING
+
+Histories, features, and verification generation           OUTSIDE THIS LEAP
+Strategy/compatibility production                         OUTSIDE THIS LEAP
+Full fresh 2,500 execution                                NOT READY
+Accepted 750 validation                                  UNCHANGED
+</code></pre>
+<p><strong>Save the package under <code>D:\MSBF_ARCHIVE</code>; no owner-machine execution is requested now.</strong> The next bounded qualification is a real PostgreSQL execution of this component before relying on its generated outputs. That can then support the separate history/features/verification producing work, without reopening the accepted 750 validation or expanding this leap into the entire campaign.</p>
+</div></article><article id="m-9ee9e782-7b55-4a4d-aa62-eb1f0508b289" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00150 · 2026-09-13T07:05:25.747000-04:00 · active path</p><div class="bubble"><p>I&#39;ve saved this in D:\MSBF_ARCHIVE. Let&#39;s proceed with the next bounded qualification: PostgreSQL execution of this component before relying on its generated outputs. That can then support the separate history/features/verification producing work, without reopening the accepted 750 validation or expanding this leap into the entire campaign.  </p>
+</div></article><article id="m-ac3d8f08-cb70-40d2-9778-1069b4013da2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00151 · 2026-09-13T07:05:55.313068-04:00 · active path</p><div class="bubble"><p>I’ll verify the Leap 2 native entrypoint and isolation safeguards, then provide one PowerShell block limited to G0/G1, merchant generation, and original applications.</p>
+</div></article><article id="m-cb8c90bd-f418-4215-9ae4-da7767b7d554" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00152 · 2026-09-13T07:09:01.060797-04:00 · active path</p><div class="bubble"><p>The package still passes its seal/manifest checks and all 306 offline tests; it will create a new isolated subject and stop after M1.3, leaving only native execution unproven.</p>
+</div></article><article id="m-93552de2-2bca-45d4-a80f-08757beb05bb" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00153 · 2026-09-13T07:11:26.202208-04:00 · active path</p><div class="bubble"><p><strong>Proceed with one native qualification of the population/original-application component using the Leap 2 R1 ZIP you saved.</strong> No replacement package is needed.</p>
+<p>This run uses the bundled 2,500 configuration but stops at <strong>M1.3</strong>:</p>
+<pre><code class="language-text">G0 schema and static configuration
+    → G1 run configuration and acceptance
+    → M1.2 newly generated merchant population
+    → M1.3 original applications and requested structures
+    → component controls, exports, and return package
+</code></pre>
+<p>It does <strong>not</strong> execute histories, features, verification, strategy, compatibility, or the downstream campaign. Those boundaries are enforced by the component controller. [export reference: filecite | turn39file1 | L288-L309]</p>
+<p>I reverified the saved package’s identity, manifest, and seal, checked the native command-line interface, and reran all <strong>306 offline tests successfully</strong>. That remains offline evidence; the command below is the next native PostgreSQL qualification. Launch-verification record (historical reference: <code>sandbox:[session]/MSBF_LEAP2_NATIVE_LAUNCH_VERIFICATION.json</code>; referenced bytes not established here)</p>
+<h2>Execution scope</h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>This qualification</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Population target</td>
+<td><strong>2,500 merchants and 2,500 original applications</strong></td>
+</tr>
+<tr>
+<td>Configuration</td>
+<td>The packaged <code>examples/campaign_2500.json</code>, unchanged</td>
+</tr>
+<tr>
+<td>Business date</td>
+<td><strong>July 23, 2026</strong>, preserving the approved policy context</td>
+</tr>
+<tr>
+<td>PostgreSQL endpoint</td>
+<td><code>127.0.0.1:55432</code></td>
+</tr>
+<tr>
+<td>Subject</td>
+<td>A <strong>new</strong> <code>msbf_provider_l2_...</code> database</td>
+</tr>
+<tr>
+<td>Workspace and temporary files</td>
+<td>New D:-resident directories</td>
+</tr>
+<tr>
+<td>Reference R1</td>
+<td><strong>Not read, cloned, restored, or modified by the component</strong></td>
+</tr>
+<tr>
+<td>Existing subjects and repository</td>
+<td>Not reused or overwritten</td>
+</tr>
+</tbody></table>
+<p>The component permits an existing isolated PostgreSQL server, creates its subject from <code>template0</code>, and rejects an existing subject or workspace. It does not manage PostgreSQL startup or shutdown. [export reference: filecite | turn39file0 | L55-L68]</p>
+<p>We are deliberately using <strong><code>tools/qualify_population_component.py</code></strong>, not the ordinary <code>msbf.py run</code> command. The latter remains disabled until the complete fresh-campaign path is ready. [export reference: filecite | turn39file1 | L207-L211]</p>
+<h2>Run this block once</h2>
+<p>Keep this PowerShell window open during execution. The block first checks server availability; the native component then performs the fuller identity, authentication, source, storage, and subject-existence checks. An availability response alone does not establish a valid authenticated connection. [export reference: cite | turn442288view0]</p>
+<p>Download a saved copy of the block (historical reference: <code>sandbox:[session]/MSBF_LEAP2_NATIVE_COMPONENT_RUN_BLOCK.txt</code>; referenced bytes not established here)</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$ErrorActionPreference = &#39;Stop&#39;
+
+$Zip = &#39;D:\MSBF_ARCHIVE\MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP2_R1_20260912.zip&#39;
+$ExpectedSHA256 = &#39;7cc150d8ea78eb6722ee7d905b2b02c2c0e66af15237dcb1145a7568d2885856&#39;
+$Python = &#39;C:\Python314\python.exe&#39;
+$PgBin = &#39;C:\Program Files\PostgreSQL\17\bin&#39;
+$Port = 55432
+
+if (-not (Test-Path -LiteralPath $Zip -PathType Leaf)) {
+    throw &quot;Package not found: $Zip&quot;
+}
+$ObservedSHA256 = (Get-FileHash -LiteralPath $Zip -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($ObservedSHA256 -ne $ExpectedSHA256) {
+    throw &#39;Package SHA-256 mismatch. No component execution has started.&#39;
+}
+if (-not (Test-Path -LiteralPath $Python -PathType Leaf)) {
+    throw &quot;Python not found: $Python&quot;
+}
+foreach ($Binary in @(&#39;psql.exe&#39;, &#39;createdb.exe&#39;, &#39;pg_isready.exe&#39;)) {
+    if (-not (Test-Path -LiteralPath (Join-Path $PgBin $Binary) -PathType Leaf)) {
+        throw &quot;Required PostgreSQL binary not found: $Binary&quot;
+    }
+}
+
+# Availability only. The component subsequently checks identity, storage,
+# authentication, source bindings, and that its new subject does not exist.
+Write-Host &quot;`nChecking existing PostgreSQL endpoint 127.0.0.1:$Port ...&quot;
+&amp; (Join-Path $PgBin &#39;pg_isready.exe&#39;) -h 127.0.0.1 -p $Port -U postgres -d postgres -t 5
+$ReadyExitCode = $LASTEXITCODE
+if ($ReadyExitCode -ne 0) {
+    throw &quot;PostgreSQL endpoint unavailable (pg_isready exit $ReadyExitCode). No subject was created by this block. Preserve this output; do not restore a backup or invoke old lifecycle wrappers.&quot;
+}
+
+$Stamp = [DateTime]::UtcNow.ToString(&quot;yyyyMMdd&#39;T&#39;HHmmss&#39;Z&#39;&quot;) + &#39;_&#39; + [guid]::NewGuid().ToString(&#39;N&#39;).Substring(0, 8)
+$Database = &#39;msbf_provider_l2_&#39; + $Stamp.ToLowerInvariant()
+$ToolRoot = &#39;D:\MSBF_CAMPAIGNS\tools\LEAP2_NATIVE_&#39; + $Stamp
+$Workspace = &#39;D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP2_NATIVE_&#39; + $Stamp
+$ScratchRoot = &#39;D:\MSBF_CAMPAIGNS\temp\LEAP2_NATIVE_&#39; + $Stamp
+
+foreach ($NewPath in @($ToolRoot, $Workspace, $ScratchRoot)) {
+    if (Test-Path -LiteralPath $NewPath) {
+        throw &quot;New destination already exists; no overwrite or resume: $NewPath&quot;
+    }
+}
+
+# Leave $Workspace absent: the component creates and owns that directory.
+New-Item -ItemType Directory -Path $ScratchRoot | Out-Null
+$OldTemps = @{}
+foreach ($Name in @(&#39;TEMP&#39;, &#39;TMP&#39;, &#39;TMPDIR&#39;)) {
+    $OldTemps[$Name] = [Environment]::GetEnvironmentVariable($Name, &#39;Process&#39;)
+}
+$RunExitCode = $null
+
+try {
+    foreach ($Name in @(&#39;TEMP&#39;, &#39;TMP&#39;, &#39;TMPDIR&#39;)) {
+        [Environment]::SetEnvironmentVariable($Name, $ScratchRoot, &#39;Process&#39;)
+    }
+
+    Expand-Archive -LiteralPath $Zip -DestinationPath $ToolRoot
+    $Entry = Join-Path $ToolRoot &#39;tools\qualify_population_component.py&#39;
+    $Config = Join-Path $ToolRoot &#39;examples\campaign_2500.json&#39;
+
+    foreach ($RequiredFile in @($Entry, $Config)) {
+        if (-not (Test-Path -LiteralPath $RequiredFile -PathType Leaf)) {
+            throw &quot;Required package file missing: $RequiredFile&quot;
+        }
+    }
+
+    Write-Host &quot;`nLEAP 2 NATIVE COMPONENT QUALIFICATION&quot;
+    Write-Host &#39;Scope: G0/G1 -&gt; M1.2 population -&gt; M1.3 original applications only.&#39;
+    Write-Host &#39;Configuration: packaged campaign_2500.json, unchanged.&#39;
+    Write-Host &quot;New subject: $Database&quot;
+    Write-Host &quot;Workspace:   $Workspace&quot;
+    Write-Host &#39;Reference R1 is not an input. No later campaign stages will run.&#39;
+    Write-Host &#39;&#39;
+
+    &amp; $Python -u -B $Entry `
+        --acknowledge-native-component-test `
+        --config $Config `
+        --pg-bin $PgBin `
+        --database $Database `
+        --workspace $Workspace `
+        --port $Port `
+        --user postgres
+
+    $RunExitCode = $LASTEXITCODE
+}
+finally {
+    foreach ($Name in @(&#39;TEMP&#39;, &#39;TMP&#39;, &#39;TMPDIR&#39;)) {
+        [Environment]::SetEnvironmentVariable($Name, $OldTemps[$Name], &#39;Process&#39;)
+    }
+}
+
+if ($null -ne $RunExitCode -and $RunExitCode -ne 0) {
+    Write-Warning &#39;Component stopped. Preserve its RETURN.zip or prerequisite error and workspace. Do not retry, resume, delete, edit source guards, or advance to later stages.&#39;
+}
+
+$ReturnZip = $Workspace + &#39;_RETURN.zip&#39;
+if (Test-Path -LiteralPath $ReturnZip -PathType Leaf) {
+    Write-Host &quot;`nAttach this component return: $ReturnZip&quot;
+} else {
+    Write-Host &quot;`nNo completed return ZIP found. Preserve the terminal output and any workspace: $Workspace&quot;
+}
+</code></pre>
+<p>Enter the PostgreSQL password when the native tool prompts. Press Enter only when existing trust/pgpass supplies authentication. The tool does not put the password in its command arguments or process logs. [export reference: filecite | turn39file0 | L63-L68]</p>
+<p><strong>If the initial endpoint check fails, stop there.</strong> This block does not start or repair the server, and a server-availability failure is not a component-logic result.</p>
+<h2>What a successful return must demonstrate</h2>
+<p>The controller must complete all <strong>20 source programs</strong>, satisfy the source-owned controls, and reconcile the generated outputs. The required control counts are: [export reference: filecite | turn39file0 | L70-L88]</p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th align="right">Positive controls</th>
+<th align="right">Negative controls</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>G1</td>
+<td align="right">20</td>
+<td align="right">3</td>
+</tr>
+<tr>
+<td>M1.2</td>
+<td align="right">36</td>
+<td align="right">3</td>
+</tr>
+<tr>
+<td>M1.3</td>
+<td align="right">42</td>
+<td align="right">3</td>
+</tr>
+</tbody></table>
+<p>The output should contain seven generated-table CSVs, including <strong>2,500 merchants and 2,500 original applications</strong>, with correct ownership. Owner/guarantor rows must emerge from the approved generation logic; their count is not prescribed by scaling the 750 cohort. Later-stage tables observed by this component must remain empty. [export reference: filecite | turn39file0 | L90-L108]</p>
+<p>The successful component status is:</p>
+<pre><code class="language-text">POPULATION_APPLICATION_COMPONENT_PASS
+</code></pre>
+<p>That would establish native execution for <strong>this population/application component and configuration</strong>. It would not yet establish repeat-run determinism, the complete fresh 2,500 campaign, or readiness to execute later stages automatically. The draft procedures separately identify native reproducibility testing as an additional qualification question. [export reference: filecite | turn39file0 | L110-L122]</p>
+<p><strong>Upload the emitted <code>LEAP2_NATIVE_*_RETURN.zip</code> and its <code>.validation.json</code>, whether the component passes or stops.</strong> If it stops before producing a return, provide the terminal error instead; retain any new workspace and subject unchanged.</p>
+</div></article><article id="m-f90ab389-d1ee-4933-bae9-10e78de7658d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00154 · 2026-09-13T07:18:26.404000-04:00 · active path</p><div class="bubble"><p>Checking existing PostgreSQL endpoint 127.0.0.1:55432 ...
+127.0.0.1:55432 - no response
+Exception:
+Line |
+  32 |      throw &quot;PostgreSQL endpoint unavailable (pg_isready exit $ReadyExi …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | PostgreSQL endpoint unavailable (pg_isready exit 2). No subject was created by this block. Preserve this output; do not restore a backup or invoke old lifecycle wrappers.</p>
+</div></article><article id="m-86a62141-862e-4b83-9eae-4d464f20e85a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00155 · 2026-09-13T07:18:29.823740-04:00 · active path</p><div class="bubble"><p>This is a clean infrastructure stop. <strong>Nothing in Leap 2 actually ran, and no subject database was created.</strong> The qualification block stopped exactly where it was supposed to when <code>127.0.0.1:55432</code> was unavailable.</p>
+<p>The cause is almost certainly the same as before: the isolated Reference/engineering PostgreSQL cluster is not a Windows service, so after a restart it is no longer running. We do <strong>not</strong> need to restore anything or invoke the old lifecycle wrappers.</p>
+<p>Start the existing cluster with this block:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$ErrorActionPreference = &#39;Stop&#39;
+
+$PgBin = &#39;C:\Program Files\PostgreSQL\17\bin&#39;
+$Data  = &#39;D:\MSBF_CAMPAIGNS\pg_clusters\msbf_cs_ref750_routeb_20260912_012713&#39;
+$LogDir = &#39;D:\MSBF_CAMPAIGNS\pg_logs&#39;
+$Port = 55432
+
+New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
+
+$PgCtl     = Join-Path $PgBin &#39;pg_ctl.exe&#39;
+$PgIsReady = Join-Path $PgBin &#39;pg_isready.exe&#39;
+
+Write-Host &quot;`nChecking existing cluster...&quot;
+&amp; $PgIsReady -h 127.0.0.1 -p $Port -d postgres
+
+if ($LASTEXITCODE -ne 0) {
+
+    &amp; $PgCtl status -D $Data
+    $StatusCode = $LASTEXITCODE
+
+    if ($StatusCode -eq 0) {
+        throw @&#39;
+STOP: pg_ctl reports the cluster is already running,
+but 127.0.0.1:55432 is unavailable.
+
+Do not start a second copy or delete postmaster.pid.
+&#39;@
+    }
+
+    $StartLog = Join-Path $LogDir (
+        &#39;msbf_existing_cluster_start_&#39; +
+        (Get-Date -Format &#39;yyyyMMdd_HHmmss&#39;) +
+        &#39;.log&#39;
+    )
+
+    Write-Host &quot;`nStarting existing D:-resident PostgreSQL cluster...&quot;
+    Write-Host &quot;Log: $StartLog&quot;
+
+    &amp; $PgCtl start `
+        -D $Data `
+        -l $StartLog `
+        -W `
+        -o &quot;-p $Port -h 127.0.0.1&quot;
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;PostgreSQL startup command failed. Review: $StartLog&quot;
+    }
+
+    $Ready = $false
+
+    for ($i = 1; $i -le 90; $i++) {
+        Start-Sleep -Seconds 2
+
+        &amp; $PgIsReady `
+            -h 127.0.0.1 `
+            -p $Port `
+            -d postgres *&gt; $null
+
+        if ($LASTEXITCODE -eq 0) {
+            $Ready = $true
+            break
+        }
+    }
+
+    if (-not $Ready) {
+        if (Test-Path $StartLog) {
+            Write-Host &quot;`nLast 80 log lines:&quot;
+            Get-Content $StartLog -Tail 80
+        }
+
+        throw &#39;Existing PostgreSQL cluster did not become ready.&#39;
+    }
+}
+
+Write-Host &quot;`nFINAL READINESS CHECK:&quot;
+&amp; $PgIsReady -h 127.0.0.1 -p $Port -d postgres
+
+if ($LASTEXITCODE -ne 0) {
+    throw &#39;PostgreSQL endpoint is still unavailable.&#39;
+}
+
+Write-Host &quot;`nPOSTGRESQL IS ACCEPTING CONNECTIONS ON 127.0.0.1:$Port&quot;
+Write-Host &#39;No restore was performed.&#39;
+Write-Host &#39;No campaign component was executed.&#39;
+</code></pre>
+<p>You want the end of the output to look like:</p>
+<pre><code class="language-text">127.0.0.1:55432 - accepting connections
+
+POSTGRESQL IS ACCEPTING CONNECTIONS ON 127.0.0.1:55432
+No restore was performed.
+No campaign component was executed.
+</code></pre>
+<p>Then rerun the <strong>same Leap 2 native qualification block</strong> I gave you. There is no need for a new package or revised run command because this failure occurred before the tool accessed PostgreSQL or created its <code>msbf_provider_l2_*</code> subject.</p>
+<p>One architectural note for later: this is exactly the kind of setup friction we should remove from the future-user experience. The eventual <code>setup</code>/environment layer should detect and either manage the intended PostgreSQL instance or give a simple actionable prerequisite message, rather than requiring users to know this cluster-start command. For this bounded developer qualification, though, manually starting the existing isolated cluster is appropriate.</p>
+</div></article><article id="m-eaa7081b-f309-48b1-ad6c-aed3c12b6ac6" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00156 · 2026-09-13T07:19:36.683000-04:00 · active path</p><div class="bubble"><p>I think we should include this in the process to ensure the server is available. This would probably be a common user error.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

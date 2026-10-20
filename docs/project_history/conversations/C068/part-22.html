@@ -1,0 +1,1110 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Merchant POS Lending Simulator — part 22 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>Merchant POS Lending Simulator — part 22</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-21.html">Previous part</a><a href="part-23.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-35b093d4-ed20-485b-a704-51ccabf38e34" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00293 · 2026-07-26T20:05:33.971777-04:00 · active path</p><div class="bubble"><h1>M1.13 — Exposure, Recovery &amp; Expected Loss Foundations</h1>
+<p>The complete <strong>M1.13 v0.2 governed module</strong> is built, statically validated, integrated into the accepted M1.12 repository, and ready for controlled PostgreSQL execution.</p>
+<p>M1.13 is <strong>not yet live-executed or accepted</strong>. Formal acceptance will require successful execution, structured evidence export, independent evidence review, and milestone sign-off.</p>
+<h2>Primary deliveries</h2>
+<h3>Standalone M1.13 package</h3>
+<p>Download MSBF M1.13 v0.2 (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2.zip</code>; referenced bytes not established here)</p>
+<p>Download the standalone SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+ee7749d33cfda42def7297cb1079e07aaf956ad7083e48a427307ef131283306
+
+Archive size
+317,021 bytes
+
+Files
+46
+</code></pre>
+<p>Canonical long-form copy:</p>
+<p>Download the canonical M1.13 package (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m1_13_exposure_recovery_expected_loss_foundations_v0_2.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m1_13_exposure_recovery_expected_loss_foundations_v0_2.zip.sha256</code>; referenced bytes not established here)</p>
+<h3>Updated full project repository</h3>
+<p>This repository preserves every accepted artifact through M1.12 and adds M1.13 under <code>15_M1_13</code> in <strong>Ready for Live Execution</strong> status.</p>
+<p>Download MSBF Project v0.2 — M1.13 Ready for Execution (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_13_READY_FOR_EXECUTION_Windows.zip</code>; referenced bytes not established here)</p>
+<p>Download the full-project SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_13_READY_FOR_EXECUTION_Windows.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+dcfee3a37f82a293f2ce2c60088e0b7d4935fb6bc4b9eef20f576aa5a1041793
+
+Archive size
+8,944,338 bytes
+
+Files
+1,450
+
+Longest internal path
+180 characters
+</code></pre>
+<p>Canonical full-project copy:</p>
+<p>Download the canonical M1.13-ready repository (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_13_READY_FOR_EXECUTION.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_13_READY_FOR_EXECUTION.zip.sha256</code>; referenced bytes not established here)</p>
+<p>The canonical and Windows-compatible project ZIPs contain identical content. For Windows, extract near the drive root, preferably:</p>
+<pre><code class="language-text">C:\MSBF\
+</code></pre>
+<hr>
+<h1>Module purpose</h1>
+<p>M1.13 creates a governed, scenario-aware foundation for:</p>
+<ul>
+<li>contractual-receivable exposure;</li>
+<li>daily exposure-path construction;</li>
+<li>path-weighted Exposure at Default;</li>
+<li>recovery evidence and LGD assumptions;</li>
+<li>simple comparative expected loss;</li>
+<li>schedule-adjusted comparative expected loss;</li>
+<li>matched baseline-versus-stress loss evidence.</li>
+</ul>
+<p>The analytical boundary is explicit:</p>
+<pre><code class="language-text">Synthetic merchant-risk proxy
+≠
+Contractual exposure path / EAD foundation
+≠
+Recovery / LGD foundation
+≠
+Comparative expected loss
+≠
+CECL, reserves, capital, pricing, or decisioning
+</code></pre>
+<p>M1.13 does <strong>not</strong> produce:</p>
+<ul>
+<li>calibrated probability of default;</li>
+<li>production EAD or LGD;</li>
+<li>CECL allowance or reserve;</li>
+<li>regulatory capital;</li>
+<li>pricing;</li>
+<li>an offer;</li>
+<li>approval, counteroffer, manual-review, or decline outcomes;</li>
+<li>adverse-action reasons;</li>
+<li>Module 1 latest or archive contract outputs.</li>
+</ul>
+<p>Open the M1.13 architecture diagram (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/diagrams/M1_13_ARCHITECTURE.png</code>; referenced bytes not established here)</p>
+<p>Open the architecture specification (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/docs/M1_13_ARCHITECTURE.md</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Governed physical outputs</h1>
+<h2>Daily EAD path</h2>
+<pre><code class="language-text">msbf_m1.application_ead_path_value
+</code></pre>
+<p>The table records each application’s contractual-receivable exposure from day zero through its governed expected payoff horizon.</p>
+<p>Governed grain:</p>
+<pre><code class="language-text">module1_run_id
++ scenario_id
++ merchant_application_id
++ path_day_number
+</code></pre>
+<h2>Exposure, recovery, and comparative-loss snapshot</h2>
+<pre><code class="language-text">msbf_m1.application_exposure_recovery_loss_snapshot
+</code></pre>
+<p>Governed grain:</p>
+<pre><code class="language-text">module1_run_id
++ scenario_id
++ merchant_application_id
+</code></pre>
+<h2>Lineage view</h2>
+<pre><code class="language-text">msbf_m1.v_m1_13_exposure_recovery_loss_lineage
+</code></pre>
+<p>The view exposes the accepted lineage from:</p>
+<pre><code class="language-text">M1.3 requested financing terms
++
+M1.10 capacity evidence
++
+M1.12 integrated merchant-risk proxy
++
+frozen EAD / LGD parameters
++
+source, collateral, and guarantee evidence
+</code></pre>
+<h2>Expected live cardinality</h2>
+<pre><code class="language-text">750 applications
+×
+2 matched scenarios
+=
+1,500 exposure/recovery/loss snapshots
+</code></pre>
+<p>The daily exposure-path population varies by each application’s 30-, 60-, or 90-day payoff horizon:</p>
+<pre><code class="language-text">Path Rows
+=
+2 scenarios
+×
+Σ(requested expected payoff days + day zero)
+</code></pre>
+<p>For the accepted M1.3 population:</p>
+<pre><code class="language-text">188 applications × 30 days
+337 applications × 60 days
+225 applications × 90 days
+</code></pre>
+<p>the exact expected output is:</p>
+<pre><code class="language-text">93,720 daily exposure-path rows
+</code></pre>
+<p>Combined canonical reconciliation universe:</p>
+<pre><code class="language-text">93,720 path entities
++
+1,500 snapshot entities
+=
+95,220 canonical entities
+</code></pre>
+<hr>
+<h1>Exposure methodology</h1>
+<h2>Initial exposure</h2>
+<p>M1.13 uses the requested total repayment amount as the initial contractual-receivable exposure:</p>
+<pre><code class="language-text">Initial Receivable Exposure
+=
+Requested Total Repayment Amount
+</code></pre>
+<p>This is intentionally distinct from funded principal because the modeled asset is the contractual sales-based receivable.</p>
+<h2>Governed daily payment</h2>
+<p>The daily contractual payment foundation is derived from the accepted requested structure. Under <code>RECESSION_ENERGY</code>, the adverse-scenario daily payment is capped at the accepted baseline amount:</p>
+<pre><code class="language-text">Final Stress Daily Payment
+=
+minimum(
+    Independent Stress Payment,
+    Accepted Baseline Payment
+)
+</code></pre>
+<p>An adverse scenario therefore cannot create artificially faster contractual paydown.</p>
+<h2>Exposure path</h2>
+<p>Frozen 30-, 60-, and 90-day paydown-curve parameters govern the path shape.</p>
+<p>The package includes a specific rounding safeguard:</p>
+<blockquote>
+<p>The final payoff-horizon day is explicitly set to zero ending exposure.</p>
+</blockquote>
+<p>This prevents two-decimal daily-remittance rounding from leaving a synthetic penny residual beyond the governed payoff horizon.</p>
+<hr>
+<h1>Path-weighted EAD foundation</h1>
+<p>Each path day is assigned to a governed default-timing bucket:</p>
+<pre><code class="language-text">EARLY
+MIDDLE
+LATE
+</code></pre>
+<p>The frozen weight for each bucket is distributed across the number of path days within that bucket.</p>
+<pre><code class="language-text">Daily Default-Timing Weight
+=
+Bucket Weight
+÷
+Number of Days in Bucket
+</code></pre>
+<pre><code class="language-text">Path-Weighted EAD
+=
+Σ(
+    Ending Exposure
+    ×
+    Daily Default-Timing Weight
+)
+</code></pre>
+<pre><code class="language-text">Expected EAD Rate
+=
+Path-Weighted EAD
+÷
+Initial Receivable Exposure
+</code></pre>
+<p>This produces transparent schedule-aware exposure evidence without presenting the result as a calibrated production EAD model.</p>
+<hr>
+<h1>Recovery and LGD foundation</h1>
+<p>The independent LGD foundation is:</p>
+<pre><code class="language-text">Industry LGD Baseline
++
+Scenario LGD Add-On
+−
+Supported Collateral Recovery Credit
+−
+Supported Guarantee Recovery Credit
+</code></pre>
+<p>The result is bounded by frozen LGD floor and cap parameters.</p>
+<p>Aggregate collateral and guarantee recovery credit is also bounded by a governed policy cap.</p>
+<h2>Recovery evidence states</h2>
+<pre><code class="language-text">SUPPORTED
+PARAMETER_ONLY
+CONFLICT
+</code></pre>
+<ul>
+<li><code>SUPPORTED</code> indicates usable collateral or guarantee evidence.</li>
+<li><code>PARAMETER_ONLY</code> uses the governed industry and scenario assumptions without supported recovery evidence.</li>
+<li><code>CONFLICT</code> preserves inconsistent recovery evidence and routes the record for review.</li>
+</ul>
+<p>Under <code>RECESSION_ENERGY</code>, final LGD cannot improve relative to baseline:</p>
+<pre><code class="language-text">Final Stress LGD
+=
+maximum(
+    Baseline LGD,
+    Independent Stress LGD
+)
+</code></pre>
+<hr>
+<h1>Comparative expected-loss foundations</h1>
+<p>M1.13 publishes two transparent synthetic comparison measures.</p>
+<h2>Simple comparative expected loss</h2>
+<pre><code class="language-text">Simple Comparative Expected Loss
+=
+Synthetic Merchant Risk Proxy
+×
+LGD
+×
+Initial Receivable Exposure
+</code></pre>
+<h2>Schedule-adjusted comparative expected loss</h2>
+<pre><code class="language-text">Schedule-Adjusted Comparative Expected Loss
+=
+Synthetic Merchant Risk Proxy
+×
+LGD
+×
+Path-Weighted EAD
+</code></pre>
+<h2>Comparative loss rate</h2>
+<pre><code class="language-text">Schedule-Adjusted Comparative Loss Rate
+=
+Schedule-Adjusted Comparative Expected Loss
+÷
+Initial Receivable Exposure
+</code></pre>
+<p>These are comparative analytical foundations—not forecasts, reserves, CECL outputs, or calibrated expected-loss estimates.</p>
+<p>The manual-review and reason-routing logic uses the same persisted eight-decimal comparative-loss-rate basis presented in the physical snapshot. This prevents a visible metric from disagreeing with its routing threshold because of separate rounding sequences.</p>
+<hr>
+<h1>Evidence gating</h1>
+<p>M1.13 assigns:</p>
+<pre><code class="language-text">COMPLETE
+PARTIAL
+BLOCKED
+</code></pre>
+<p>A blocked M1.12 integrated-risk record does not receive fabricated loss evidence:</p>
+<pre><code class="language-text">Synthetic Risk Proxy              NULL
+Simple Comparative Loss           NULL
+Schedule-Adjusted Comparative Loss NULL
+</code></pre>
+<p>The row remains present with an explicit controlled review route.</p>
+<p>The governing principle remains:</p>
+<pre><code class="language-text">Missing or unusable risk evidence
+≠
+low expected loss
+</code></pre>
+<hr>
+<h1>Ten governed M1.13 features</h1>
+<p>The module registers ten active features under the <code>EXPOSURE_RECOVERY_LOSS</code> family:</p>
+<ol>
+<li>Initial Receivable Exposure Amount  </li>
+<li>Path-Weighted Exposure at Default  </li>
+<li>Expected EAD Rate  </li>
+<li>Industry LGD Baseline  </li>
+<li>Recovery Rate Assumption  </li>
+<li>LGD Input Rate  </li>
+<li>Simple Comparative Expected Loss  </li>
+<li>Schedule-Adjusted Comparative Expected Loss  </li>
+<li>Schedule-Adjusted Comparative Loss Rate  </li>
+<li>Recovery Evidence Status</li>
+</ol>
+<p>Open the feature dictionary (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/catalogs/M1_13_FEATURE_DICTIONARY.csv</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Physical schema extension</h1>
+<p>M1.13 adds:</p>
+<pre><code class="language-text">2 designed parent tables
+69 designed columns
+1 governed lineage view
+10 active feature definitions
+</code></pre>
+<p>Projected physical-design totals after migration:</p>
+<pre><code class="language-text">80 designed parent/non-child tables
+1,427 designed table columns
+</code></pre>
+<p>The original G0 milestone remains historically unchanged:</p>
+<pre><code class="language-text">70 physical parent tables
+1,041 designed columns
+</code></pre>
+<p>M1.13 is a controlled post-G0 extension—not a rewrite of the accepted physical foundation.</p>
+<p>Download program 92 — schema and policy extension (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/sql/92_msbf_m1_13_schema_policy_extension_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Open the schema-extension table catalog (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/catalogs/M1_13_SCHEMA_EXTENSION_TABLES.csv</code>; referenced bytes not established here)</p>
+<p>Open the schema-extension column catalog (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/catalogs/M1_13_SCHEMA_EXTENSION_COLUMNS.csv</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Performance and error-resolution engineering</h1>
+<p>The module incorporates the principal lessons from M1.6 through M1.12 before release.</p>
+<h2>No upstream blueprint regeneration</h2>
+<p>M1.13 does not rebuild:</p>
+<pre><code class="language-text">M1.4 POS histories
+M1.5 deposit/liquidity histories
+M1.6 scenario overlays
+M1.7 source-quality logic
+M1.8 verification/fraud logic
+M1.9 cash-flow feature engineering
+M1.10 obligation/capacity logic
+M1.11 operating-resilience logic
+M1.12 integrated-risk logic
+</code></pre>
+<p>It reads accepted persisted inputs directly.</p>
+<h2>Bounded processing path</h2>
+<pre><code class="language-text">Accepted M1.12 risk snapshots
++
+Accepted M1.10 capacity snapshots
++
+Accepted M1.3 request terms
++
+Frozen EAD/LGD parameters
+        ↓
+Materialize 1,500 matched inputs once
+        ↓
+Expand only the governed 30/60/90-day paths
+        ↓
+Persist 93,720 path rows and 1,500 snapshots
+        ↓
+Index and ANALYZE
+        ↓
+Independently reconstruct physical hashes
+        ↓
+Reconcile 95,220 canonical entities once
+</code></pre>
+<h2>Runtime controls</h2>
+<pre><code class="language-sql">SET LOCAL work_mem = &#39;128MB&#39;;
+SET LOCAL jit = off;
+SET LOCAL lock_timeout = &#39;10s&#39;;
+SET LOCAL statement_timeout = &#39;20min&#39;;
+</code></pre>
+<h2>Canonical-hash safeguards</h2>
+<ul>
+<li>Expected tables use explicit target physical types before hashing.</li>
+<li>Numeric values are normalized to physical precision.</li>
+<li>Expected hashes are created before physical insertion.</li>
+<li>Whole-row hashing always uses explicit relation aliases.</li>
+<li>Physical hashes are independently reconstructed from persisted fields.</li>
+<li>Generation fails before commit unless expected and actual counts and hashes reconcile exactly.</li>
+<li>Validation and reporting read persisted outputs rather than rerunning business-generation logic.</li>
+</ul>
+<h2>SQL projection safeguards</h2>
+<p>A deep static schema/DML audit confirmed:</p>
+<pre><code class="language-text">Schema tables parsed                     80
+Persistent INSERT statements checked     14
+Persistent UPDATE statements checked     10
+Invalid persistent DML target columns     0
+Major INSERT / SELECT shape differences   0
+Unsafe whole-row hash references          0
+Invalid dependency-column references      0
+</code></pre>
+<p>The four primary generation shapes reconcile exactly:</p>
+<pre><code class="language-text">Path expected INSERT / SELECT      17 / 17
+Loss expected INSERT / SELECT      50 / 50
+Path physical INSERT / SELECT      17 / 17
+Loss physical INSERT / SELECT      50 / 50
+</code></pre>
+<h2>DBeaver behavior</h2>
+<p>Validation, negative-control, acceptance, and detailed-report working tables use session-preserved output where appropriate:</p>
+<pre><code class="language-sql">ON COMMIT PRESERVE ROWS
+</code></pre>
+<p>Their result grids remain sortable and filterable after commit within the same DBeaver session.</p>
+<p>Validation helper functions use <code>PERFORM</code>, avoiding the earlier multiple-null-result-tab behavior.</p>
+<p>Open the SQL engineering audit (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/docs/M1_13_SQL_ENGINEERING_AUDIT.md</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Exact execution order</h1>
+<p>Run these programs in DBeaver against the accepted <code>msbf_strategy</code> database.</p>
+<table>
+<thead>
+<tr>
+<th align="right">Order</th>
+<th>Program</th>
+<th>Required checkpoint</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td>92 — Schema and policy extension (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/sql/92_msbf_m1_13_schema_policy_extension_v0_2.sql</code>; referenced bytes not established here)</td>
+<td><code>schema_policy_extension_status = PASS</code></td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td>93 — Preflight validation (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/tests/93_msbf_m1_13_preflight_validation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td><code>preflight_status = PASS</code></td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td>94 — Exposure/recovery/loss generation (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/sql/94_msbf_m1_13_exposure_recovery_loss_generation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>93,720 paths + 1,500 snapshots; zero mismatches</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td>95 — Positive validation (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/sql/95_msbf_m1_13_exposure_recovery_loss_validation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>82 of 82 <code>PASS</code></td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td>96 — Negative controls (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/sql/96_msbf_m1_13_negative_control_tests_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>7 of 7 <code>PASS</code></td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td>97 — Acceptance finalizer (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/sql/97_msbf_m1_13_acceptance_finalize_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>Gate <code>PASS</code>; run <code>M1_13_ACCEPTED</code></td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td>98 — Master report (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/tests/98_MSBF_M1_13_Exposure_Recovery_Loss_Master_Report_v0_2.sql</code>; referenced bytes not established here)</td>
+<td><code>overall_m1_13_status = PASS</code></td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td>99 — Detailed report (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/tests/99_MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>20 result sets; mismatch/error sets empty</td>
+</tr>
+</tbody></table>
+<p>Open the complete M1.13 execution guide (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/docs/M1_13_EXECUTION_AND_VALIDATION_GUIDE.md</code>; referenced bytes not established here)</p>
+<h2>Required program-94 checkpoint</h2>
+<pre><code class="language-text">run_status               M1_13_GENERATED
+path rows                 93,720
+snapshot rows              1,500
+applications                 750
+scenarios                      2
+canonical entities        95,220
+row-level mismatches            0
+path set hash              non-null
+snapshot set hash          non-null
+combined set hash          non-null
+generation_status              PASS
+</code></pre>
+<p>The path-row count is calculated dynamically. For the current accepted population, it must equal 93,720.</p>
+<p>After program 94 commits successfully, <strong>do not rerun it</strong>.</p>
+<hr>
+<h1>Contingency programs</h1>
+<p>These are not part of the normal sequence.</p>
+<h2>Failed-generation recovery</h2>
+<p>Download program 92A (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/tests/92A_msbf_m1_13_failed_generation_recovery_check_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Use only after program 94 fails or is cancelled and after executing:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>Required:</p>
+<pre><code class="language-text">run_status             M1_12_ACCEPTED
+path rows              0
+snapshot rows          0
+M1.13 evidence rows    0
+M1.13 gate rows        0
+blocking errors        0
+recovery_state_status  PASS
+</code></pre>
+<h2>Lost generation-result reconstruction</h2>
+<p>Download program 94A (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/tests/94A_msbf_m1_13_generation_reconciliation_reconstructed_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Use only when program 94 commits successfully but DBeaver loses or closes its result tab.</p>
+<p>Required:</p>
+<pre><code class="language-text">generation_reconciliation_status = PASS
+</code></pre>
+<hr>
+<h1>Validation framework</h1>
+<p>M1.13 includes:</p>
+<pre><code class="language-text">82 positive controls
+7 negative controls
+20 detailed evidence result sets
+</code></pre>
+<p>The positive controls cover:</p>
+<ul>
+<li>every accepted predecessor gate;</li>
+<li>every accepted upstream hash;</li>
+<li>accepted M1.6 scenario-set scoping;</li>
+<li>exact application and scenario coverage;</li>
+<li>30/60/90-day path cardinality;</li>
+<li>unique daily path grain;</li>
+<li>initial, ending, and average exposure identities;</li>
+<li>terminal zero-exposure enforcement;</li>
+<li>scheduled-payment and paydown arithmetic;</li>
+<li>early/middle/late timing-weight reconciliation;</li>
+<li>path-weighted EAD and EAD-rate identities;</li>
+<li>industry LGD assumptions;</li>
+<li>collateral and guarantee recovery credits;</li>
+<li>LGD floor and cap bounds;</li>
+<li>recovery-evidence status and conflict routing;</li>
+<li>simple and schedule-adjusted comparative-loss identities;</li>
+<li>comparative-loss-rate identity;</li>
+<li>blocked-evidence behavior;</li>
+<li>manual-review and reason routing;</li>
+<li>matched stress payment, EAD, LGD, and loss non-improvement;</li>
+<li>row hashes and all three set hashes;</li>
+<li>no-future-data controls;</li>
+<li>strict downstream stage boundaries;</li>
+<li>zero blocking configuration errors.</li>
+</ul>
+<p>The negative controls prove fail-closed rejection of:</p>
+<pre><code class="language-text">Disabled M1.13 generation
+Unapproved M1.13 policy
+Invalid methodology basis
+Invalid default-timing-weight sum
+Unapproved accepted stress scenario
+Prerequisite run-status drift
+Attempted post-generation rerun
+</code></pre>
+<p>Open the validation matrix (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/docs/M1_13_VALIDATION_MATRIX.md</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Evidence to retain</h1>
+<p>Structured CSV exports are sufficient. Execution logs remain optional unless diagnosing a defect.</p>
+<p>Retain:</p>
+<pre><code class="language-text">92 schema and policy checkpoint
+93 preflight result
+94 generation checkpoint
+95 positive-validation result
+96 negative-control result
+97 acceptance-finalizer result
+98 one-row master report
+99 all twenty detailed-report result sets
+completed M1.13 acceptance milestone
+</code></pre>
+<p>In program 99, these result sets must preserve their headers and contain zero rows:</p>
+<pre><code class="language-text">19 — Row-Level Deterministic Mismatches
+20 — Blocking Resolution Errors
+</code></pre>
+<p>Open the evidence instructions (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/evidence/README.md</code>; referenced bytes not established here)</p>
+<p>Open the acceptance-milestone template (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/evidence/templates/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_Build_Acceptance_Milestone_v0_2_template.txt</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Documentation and catalogs</h1>
+<ul>
+<li>Package README (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/README.md</code>; referenced bytes not established here)</li>
+<li>Architecture diagram (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/diagrams/M1_13_ARCHITECTURE.png</code>; referenced bytes not established here)</li>
+<li>Design and generation specification (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/docs/M1_13_DESIGN_AND_GENERATION_SPECIFICATION.md</code>; referenced bytes not established here)</li>
+<li>Parameter dictionary — Markdown (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/docs/M1_13_PARAMETER_DICTIONARY.md</code>; referenced bytes not established here)</li>
+<li>Parameter dictionary — CSV (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/catalogs/M1_13_PARAMETER_DICTIONARY.csv</code>; referenced bytes not established here)</li>
+<li>Governed parameter values (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/catalogs/M1_13_PARAMETER_VALUES.csv</code>; referenced bytes not established here)</li>
+<li>Feature dictionary (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/catalogs/M1_13_FEATURE_DICTIONARY.csv</code>; referenced bytes not established here)</li>
+<li>Field dictionary (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/catalogs/M1_13_FIELD_DICTIONARY.csv</code>; referenced bytes not established here)</li>
+<li>Expected results (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/catalogs/M1_13_EXPECTED_RESULTS.json</code>; referenced bytes not established here)</li>
+<li>Run configuration (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/catalogs/M1_13_RUN_CONFIGURATION.json</code>; referenced bytes not established here)</li>
+<li>Execution-order catalog (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/catalogs/M1_13_EXECUTION_ORDER.csv</code>; referenced bytes not established here)</li>
+<li>Physical dependency catalog (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/catalogs/M1_13_PHYSICAL_DEPENDENCY_COLUMNS.csv</code>; referenced bytes not established here)</li>
+<li>Release notes (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/RELEASE_NOTES.md</code>; referenced bytes not established here)</li>
+<li>Package-validation report (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Deep static audit (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/catalogs/M1_13_DEEP_STATIC_AUDIT.json</code>; referenced bytes not established here)</li>
+<li>Final build report (historical reference: <code>sandbox:[session]/MSBF_M1_13_FINAL_BUILD_REPORT.json</code>; referenced bytes not established here)</li>
+</ul>
+<hr>
+<h1>Static package validation</h1>
+<p>The completed package passed all defined static controls:</p>
+<pre><code class="language-text">Controlled SQL files                          10
+SQL source lines                           4,272
+Positive validation controls                  82
+Negative controls                               7
+Detailed-report result sets                    20
+
+Expected applications                         750
+Expected scenarios                              2
+Expected snapshots                          1,500
+Expected current-portfolio path rows        93,720
+Expected canonical entities                95,220
+
+Designed parent tables added                    2
+Designed columns added                         69
+Projected parent tables                        80
+Projected designed columns                  1,427
+
+Schema tables parsed                           80
+Persistent INSERT statements checked           14
+Persistent UPDATE statements checked           10
+Invalid persistent DML target columns           0
+Major INSERT / SELECT shape differences         0
+
+SQL lexical-balance errors                      0
+Session-level random() calls                     0
+Destructive accepted-data operations             0
+Upstream blueprint-regeneration paths            0
+Standalone helper SELECT result sets             0
+Scalar md5/FILTER syntax defects                  0
+Unsafe whole-row hash references                 0
+Invalid dependency columns                       0
+Static errors                                    0
+Static warnings                                  0
+</code></pre>
+<h2>Archive validation</h2>
+<h3>Standalone package</h3>
+<pre><code class="language-text">Files                              46
+CRC validation                     PASS
+Complete extraction                PASS
+Inventory reconciliation           PASS
+Extracted-file hash comparison     PASS
+ZIP64                              Not used
+Longest internal path              118 characters
+</code></pre>
+<h3>Full project repository</h3>
+<pre><code class="language-text">Files                           1,450
+CRC validation                     PASS
+Complete extraction                PASS
+Inventory reconciliation           PASS
+Extracted-file hash comparison     PASS
+ZIP64                              Not used
+Longest internal path              180 characters
+</code></pre>
+<p>A PostgreSQL server was unavailable in the build environment. Static validation cannot establish live runtime, query-plan behavior, transactional execution, resulting exposure/LGD/loss distributions, or formal M1.13 acceptance.</p>
+<hr>
+<h1>Next stage after M1.13 acceptance</h1>
+<p>The planned next module is:</p>
+<blockquote>
+<p><strong>M1.14 — Unit Economics &amp; Risk-Adjusted Contribution Foundations</strong></p>
+</blockquote>
+<p>M1.14 will combine accepted M1.13 exposure, recovery, LGD, and comparative-loss evidence with requested funding economics to create:</p>
+<ul>
+<li>gross finance-charge and revenue foundations;</li>
+<li>funding, processor, servicing, and operating-cost assumptions;</li>
+<li>comparative expected-loss burden;</li>
+<li>contribution before and after comparative loss;</li>
+<li>scenario-aware risk-adjusted return measures;</li>
+<li>hurdle-rate and economic-review indicators.</li>
+</ul>
+<p>It will remain separate from final pricing and offer decisions.</p>
+<p>Open the M1.14 handoff plan (historical reference: <code>sandbox:[session]/build_m1_13/module/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_v0_2/NEXT_STEP_M1_14_UNIT_ECONOMICS_RISK_ADJUSTED_CONTRIBUTION.md</code>; referenced bytes not established here)</p>
+<p>The controlled progression is now:</p>
+<pre><code class="language-text">G0 Physical Foundation
+PASS
+
+→
+
+G1 Governed Run Control
+PASS
+
+→
+
+M1.2–M1.12
+PASS
+
+→
+
+M1.13 Exposure, Recovery &amp; Expected Loss Foundations
+READY FOR LIVE EXECUTION
+
+→
+
+M1.14 Unit Economics &amp; Risk-Adjusted Contribution
+PENDING M1.13 ACCEPTANCE
+</code></pre>
+</div></article><article id="m-7775ff3e-dfb2-4cf8-b5f2-f4e88127cca2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00294 · 2026-07-26T20:16:31.021000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(161).png; 93_msbf_m1_13_preflight_validation_v0_2_results_20260726.csv; 92_msbf_m1_13_schema_policy_extension_v0_2_results_20260726.csv</p><div class="bubble"><p>error in program 94_msbf_m1_13_exposure_recovery_loss_generation_v0_2.sql:</p>
+</div></article><article id="m-4e3c51ec-f8b0-4444-804a-291d71aea033" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00295 · 2026-07-26T20:32:00.520477-04:00 · active path</p><div class="bubble"><h1>Diagnosis</h1>
+<p>The M1.13 preflight and schema extension both passed. Program 94 failed because PostgreSQL does not implement:</p>
+<pre><code class="language-sql">max(boolean)
+</code></pre>
+<p>The generation script used that unsupported aggregate to resolve these two governed Boolean parameters:</p>
+<pre><code class="language-text">simple_el_publish_flag
+schedule_adjusted_el_publish_flag
+</code></pre>
+<p>The corrected expressions use PostgreSQL’s Boolean aggregate:</p>
+<pre><code class="language-sql">bool_or((resolved_value -&gt;&gt; &#39;value_boolean&#39;)::boolean)
+    FILTER (WHERE ...)
+</code></pre>
+<p>Preflight and the generation guard require exactly one typed row for each parameter, so this preserves the intended value without changing any business logic.</p>
+<p>The error occurred while building <code>_m1_13_global_params</code>, before M1.13 path rows, loss snapshots, hashes, evidence, or run-state changes were persisted.</p>
+<h2>Immediate DBeaver action</h2>
+<p>Click <strong>Stop</strong>. Do not select Retry, Skip, or Skip All.</p>
+<p>Then execute:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>Do not rerun program 92. Its schema and policy changes committed successfully:</p>
+<pre><code class="language-text">ead_path_table_exists       true
+loss_snapshot_table_exists  true
+lineage_view_exists         true
+active_feature_definitions  10
+policy_status               APPROVED
+schema extension status     PASS
+</code></pre>
+<p>Your original program 93 preflight also passed with the correct expected population:</p>
+<pre><code class="language-text">run_status          M1_12_ACCEPTED
+applications        750
+scenarios           2
+expected_path_rows  93,720
+preflight_status    PASS
+</code></pre>
+<hr>
+<h1>M1.13 v0.2R1 consolidated hotfix</h1>
+<p>Download the complete M1.13 v0.2R1 Boolean Parameter Aggregation Hotfix (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download the ZIP SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+6e75f363cb7e8b80bfc218481cb391178ea3a77008ad4e86c979965bf65f1228
+
+Files
+17
+</code></pre>
+<h2>Primary corrected files</h2>
+<ul>
+<li>92B — Failed-generation recovery check (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix/tests/92B_msbf_m1_13_failed_boolean_aggregate_recovery_check_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>93 — Version-aligned preflight (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix/tests/93_msbf_m1_13_preflight_validation_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>94 — Corrected generation (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix/sql/94_msbf_m1_13_exposure_recovery_loss_generation_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>95 — Positive validation (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix/sql/95_msbf_m1_13_exposure_recovery_loss_validation_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>96 — Negative controls (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix/sql/96_msbf_m1_13_negative_control_tests_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>97 — Acceptance finalizer (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix/sql/97_msbf_m1_13_acceptance_finalize_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>98 — Master report (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix/tests/98_MSBF_M1_13_Exposure_Recovery_Loss_Master_Report_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>99 — Detailed report (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix/tests/99_MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1.sql</code>; referenced bytes not established here)</li>
+</ul>
+<p>Supporting records:</p>
+<ul>
+<li>Hotfix notes (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix/HOTFIX_NOTES_v0_2R1.md</code>; referenced bytes not established here)</li>
+<li>Execution guide (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix/docs/M1_13_v0_2R1_EXECUTION_GUIDE.md</code>; referenced bytes not established here)</li>
+<li>Package-validation report (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Manifest (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix/MANIFEST.csv</code>; referenced bytes not established here)</li>
+<li>Internal SHA-256 inventory (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix/SHA256SUMS.txt</code>; referenced bytes not established here)</li>
+</ul>
+<hr>
+<h1>Exact recovery and execution sequence</h1>
+<h2>1. Confirm rollback state</h2>
+<p>Run:</p>
+<pre><code class="language-text">92B_msbf_m1_13_failed_boolean_aggregate_recovery_check_v0_2R1.sql
+</code></pre>
+<p>Required result:</p>
+<pre><code class="language-text">run_status                               M1_12_ACCEPTED
+path_rows                                0
+snapshot_rows                            0
+evidence_rows                            0
+gate_rows                                0
+blocking_errors                          0
+path_table_exists                        true
+snapshot_table_exists                    true
+approved_policy_exists                   true
+simple_flag_rows                         1
+schedule_flag_rows                       1
+recovery_state_status                    PASS
+</code></pre>
+<p>Stop if this result is not <code>PASS</code>.</p>
+<h2>2. Rerun the version-aligned preflight</h2>
+<p>Run:</p>
+<pre><code class="language-text">93_msbf_m1_13_preflight_validation_v0_2R1.sql
+</code></pre>
+<p>Required:</p>
+<pre><code class="language-text">preflight_status = PASS
+</code></pre>
+<h2>3. Run corrected generation</h2>
+<p>Run:</p>
+<pre><code class="language-text">94_msbf_m1_13_exposure_recovery_loss_generation_v0_2R1.sql
+</code></pre>
+<p>Required checkpoint:</p>
+<pre><code class="language-text">run_status                M1_13_GENERATED
+path_rows                 93,720
+snapshot_rows              1,500
+applications                 750
+scenarios                      2
+expected canonical rows    95,220
+actual canonical rows      95,220
+row-level mismatches            0
+generation_status              PASS
+</code></pre>
+<p>After program 94 commits successfully, do not rerun it.</p>
+<h2>4. Complete the R1 sequence</h2>
+<p>Run:</p>
+<pre><code class="language-text">95_msbf_m1_13_exposure_recovery_loss_validation_v0_2R1.sql
+
+96_msbf_m1_13_negative_control_tests_v0_2R1.sql
+
+97_msbf_m1_13_acceptance_finalize_v0_2R1.sql
+
+98_MSBF_M1_13_Exposure_Recovery_Loss_Master_Report_v0_2R1.sql
+
+99_MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1.sql
+</code></pre>
+<p>Expected final results:</p>
+<pre><code class="language-text">Positive validations       82 / 82 PASS
+Negative controls            7 / 7 PASS
+Deterministic mismatches             0
+Blocking errors                      0
+Acceptance gate                    PASS
+Run status                M1_13_ACCEPTED
+Master report                       PASS
+</code></pre>
+<p>Program 99 must produce 20 result sets. These two must contain headers and zero data rows:</p>
+<pre><code class="language-text">19 — Row-Level Deterministic Mismatches
+20 — Blocking Resolution Errors
+</code></pre>
+<h2>Contingency-only program</h2>
+<p>94A — Generation reconciliation reconstruction (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_Boolean_Parameter_Aggregation_Hotfix/tests/94A_msbf_m1_13_generation_reconciliation_reconstructed_v0_2R1.sql</code>; referenced bytes not established here) is not part of the normal sequence.</p>
+<p>Use it only if corrected program 94 commits successfully but DBeaver loses or closes the generation result tab.</p>
+<hr>
+<h1>Consolidated downstream audit</h1>
+<p>I reviewed the full program-94-through-99 path rather than changing only the first failing line.</p>
+<p>The R1 package confirms:</p>
+<pre><code class="language-text">Unsupported max(boolean) expressions remaining       0
+Governed bool_or Boolean aggregations present         4
+Positive validation controls                         82
+Negative controls                                      7
+Detailed-report result sets                           20
+Downstream files logic-equivalent to v0.2          6 / 6
+Static package status                                PASS
+ZIP CRC and complete extraction                     PASS
+</code></pre>
+<p>Only program 94 has an executable correction:</p>
+<ol>
+<li>Two unsupported <code>max(boolean)</code> aggregates became <code>bool_or(boolean)</code>.</li>
+<li>The guarantee-capacity aggregate was parenthesized before its numeric cast for parser clarity.</li>
+</ol>
+<p>No exposure-path, EAD, LGD, recovery-credit, comparative-loss, routing, threshold, cardinality, hash, validation, or acceptance formula changed. Programs 93 and 95–99 are version-aligned copies whose comment/whitespace-normalized executable logic matches the original v0.2 source exactly.</p>
+<p>Retain the original error screenshot and the original successful 92/93 exports with the R1 evidence. This documents the pre-commit defect and controlled recovery without suggesting that accepted upstream data was regenerated.</p>
+</div></article><article id="m-f6e03a2f-7d02-40ac-9863-cdde92fdf738" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00296 · 2026-07-26T20:58:33.738000-04:00 · active path</p><p class="note">Attachment references: MSBF_M1_13_Exposure_Recovery_Loss_Master_Report_v0_2R1_20260726.csv; 97_msbf_m1_13_acceptance_finalize_v0_2R1_results_20260726.csv; 96_msbf_m1_13_negative_control_tests_v0_2R1_results_20260726.csv; 95_msbf_m1_13_exposure_recovery_loss_validation_v0_2R1_results_20260726.csv; 94_msbf_m1_13_exposure_recovery_loss_generation_v0_2R1_results_20260726.csv; 93_msbf_m1_13_preflight_validation_v0_2R1_results_20260726.csv; 92B_msbf_m1_13_failed_boolean_aggregate_recovery_check_v0_2R1_results_20260726.csv; 93_msbf_m1_13_preflight_validation_v0_2_results_20260726(1).csv; 92_msbf_m1_13_schema_policy_extension_v0_2_results_20260726(1).csv</p><div class="bubble"><p>Here is the batch 1 of 2 for M1.13 execution evidence. Do not do anything but intake at this point until after I issue batch 2 of 2 and further instructions. In this prompt though, I would like you to briefly mention the remaining M1.## modules left.</p>
+</div></article><article id="m-7a801459-bfa9-4da8-92bc-b73895aec187" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00297 · 2026-07-26T21:02:19.966755-04:00 · active path</p><div class="bubble"><p>Received batch 1 of 2 for M1.13, including:</p>
+<ul>
+<li>Program 92 schema and policy extension</li>
+<li>Original and v0.2R1 program 93 preflight results</li>
+<li>Program 92B recovery check</li>
+<li>Program 94 v0.2R1 generation</li>
+<li>Program 95 positive validation</li>
+<li>Program 96 negative controls</li>
+<li>Program 97 acceptance finalizer</li>
+<li>Program 98 master report</li>
+</ul>
+<p>I will not analyze the evidence, determine acceptance, or update the repository until batch 2 and your further instructions.</p>
+<h2>Remaining Module 1 roadmap</h2>
+<p>Based on the revised build sequence, three substantive M1 modules remain after M1.13:</p>
+<ol>
+<li><p><strong>M1.14 — Unit Economics &amp; Risk-Adjusted Contribution Foundations</strong><br>Revenue, funding costs, servicing and operating costs, comparative-loss burden, contribution, risk-adjusted return, and economic hurdle evidence.</p>
+</li>
+<li><p><strong>M1.15 — Latest Output, Archive, Comparison &amp; Consumption Contract</strong><br>Final persistent Module 1 outputs, latest-versus-archive controls, matched scenario comparison, governed contract rows, versioning, and downstream consumption readiness.</p>
+</li>
+<li><p><strong>M1.16 — End-to-End QA, Evidence &amp; G2 Contract Acceptance</strong><br>Full-population reconciliation, reproducibility, scenario matching, output-contract validation, final evidence package, and the formal G2 Module 1 acceptance gate.</p>
+</li>
+</ol>
+<p>That places the project very near completion of the full Module 1 foundation.</p>
+</div></article><article id="m-73d42d8e-b16f-4107-a75a-45cfef779bfb" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00298 · 2026-07-26T21:07:03.912000-04:00 · active path</p><p class="note">Attachment references: MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_M1_13_Governed_Evidence_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Sample_Matched_Application_Profiles_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Relationship_Stage_And_Merchant_Size_Diagnostics_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Partner_Channel_Diagnostics_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Review_Fallback_And_Reason_Diagnostics_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Matched_Stress_Migration_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Comparative_Loss_Summary_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Loss_Evidence_Status_Distribution_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Integrated_Risk_Tier_And_Loss_Diagnostics_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Collateral_And_Guarantee_Diagnostics_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Recovery_Evidence_And_Basis_Distribution_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Industry_EAD_LGD_And_Comparative_Loss_Diagnostics_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Payoff_Horizon_And_Paydown_Curve_Diagnostics_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Default_Timing_Bucket_Diagnostics_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Exposure_Path_Summary_By_Scenario_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Governed_Methodology_And_Frozen_Parameters_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Entity_And_Stage_Boundary_Row_Counts_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Run_And_Acceptance_State_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Blocking_Resolution_Errors_20260726.csv; MSBF_M1_13_Exposure_Recovery_Loss_Detail_Report_v0_2R1_Row_Level_Deterministic_Mismatches_20260726.csv</p><div class="bubble"><p>Remainder of M1.13 evidence. Validate M1.13 is a success. If it is approved, sign off M1.13 and update full project zip.</p>
+</div></article><article id="m-a5f4e085-8034-4c0d-8a1f-5ec7b014975f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00299 · 2026-07-26T21:27:18.825615-04:00 · active path</p><div class="bubble"><h1>M1.13 final determination: <strong>Passed and accepted</strong></h1>
+<p>I reviewed the complete M1.13 evidence set, including:</p>
+<ul>
+<li>the v0.2 schema and policy extension;</li>
+<li>the original successful preflight;</li>
+<li>the initial pre-commit Boolean-aggregation failure;</li>
+<li>the v0.2R1 recovery-state validation;</li>
+<li>the corrected v0.2R1 generation;</li>
+<li>all 82 positive controls;</li>
+<li>all seven negative controls;</li>
+<li>the acceptance finalizer;</li>
+<li>the master report;</li>
+<li>all 20 detailed-report exports;</li>
+<li>the empty deterministic-mismatch and blocking-resolution-error results.</li>
+</ul>
+<p>The evidence supports formal acceptance of:</p>
+<blockquote>
+<p><strong>M1.13 — Exposure, Recovery &amp; Expected Loss Foundations</strong><br><strong>Accepted package revision:</strong> <code>v0.2R1</code><br><strong>Schema and policy revision:</strong> <code>v0.2</code><br><strong>Recovery through reporting revision:</strong> <code>v0.2R1</code><br><strong>Methodology:</strong> <code>M1_13_METHOD_V1</code></p>
+</blockquote>
+<h2>Acceptance results</h2>
+<table>
+<thead>
+<tr>
+<th>Validation area</th>
+<th align="right">Final result</th>
+<th>Disposition</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Final run status</td>
+<td align="right"><code>M1_13_ACCEPTED</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Acceptance gate</td>
+<td align="right"><code>M1_13_EXPOSURE_RECOVERY_LOSS_FOUNDATIONS — PASS</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Applications</td>
+<td align="right">750</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Matched scenarios</td>
+<td align="right">2</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Daily EAD-path rows</td>
+<td align="right">93,720</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Exposure/recovery/loss snapshots</td>
+<td align="right">1,500</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Canonical entities</td>
+<td align="right">95,220</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Positive validations</td>
+<td align="right">82 of 82 PASS</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Negative controls</td>
+<td align="right">7 of 7 PASS</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Row-level deterministic mismatches</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>EAD identity violations</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Recovery identity violations</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Comparative-loss identity violations</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Stress EAD improvements</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Stress LGD improvements</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Stress comparative-loss improvements</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Downstream stage-boundary rows</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Blocking resolution errors</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Master report</td>
+<td align="right"><code>overall_m1_13_status = PASS</code></td>
+<td>Pass</td>
+</tr>
+</tbody></table>
+<p>The deterministic-mismatch and blocking-resolution-error files contain their required headers and zero data rows.</p>
+<h2>Deterministic reconciliation</h2>
+<p>The persisted and independently reconstructed hashes match exactly:</p>
+<pre><code class="language-text">Daily exposure-path set
+97fa026a0c3cb5ae8584e98cd0a34555
+
+Exposure/recovery/loss snapshot set
+6a6eca57842eeaf5bf3be775cdfda754
+
+Combined M1.13 canonical set
+11dca65763f4062ad9002244ee6452f9
+</code></pre>
+<p>All accepted upstream identities also remained unchanged:</p>
+<pre><code class="language-text">Population hash       9b706c926260a3ef1ae8ac95eed5d0bf
+Application hash      01485256b9b5748fb412743d35ced602
+Scenario-set hash     3f85921bf6fc30ddc6cee146085e58c5
+Capacity-set hash     a91e82a315305a98953d013043a17d9a
+Integrated-risk hash  fb583c3fdd92f141ba5af1ddf942ffba
+</code></pre>
+<h2>Accepted synthetic portfolio evidence</h2>
+<pre><code class="language-text">Average initial contractual exposure        $30,333.38
+Average path-weighted EAD                    $15,420.30
+Average expected EAD rate                    46.5160%
+Average recovery-rate assumption             30.8757%
+Average LGD input rate                        69.1243%
+
+Total simple comparative loss                $6,439,459.43
+Total schedule-adjusted comparative loss     $3,259,257.56
+
+Partial evidence rows                        902
+Blocked evidence rows                        598
+Parameter-only recovery rows                 770
+Recovery-conflict rows                       730
+Manual-review rows                           1,486
+Hard-stop rows                               234
+</code></pre>
+<p>No application had supported collateral or guarantee recovery evidence in this synthetic campaign. Recovery credit therefore remained zero, and the 1,500 snapshots were classified as either <code>PARTIAL</code> or <code>BLOCKED</code>, rather than <code>COMPLETE</code>. That limitation remains explicit instead of creating unsupported recovery value.</p>
+<p>The adverse scenario produced:</p>
+<pre><code class="language-text">Path-weighted EAD worsenings     331
+LGD worsenings                   750
+Comparative-loss worsenings      312
+
+EAD improvements                   0
+LGD improvements                   0
+Comparative-loss improvements      0
+</code></pre>
+<p>One interpretation point is important: the published aggregate schedule-adjusted comparative-loss total is lower under stress—approximately <strong>$1.37 million</strong>, versus <strong>$1.89 million</strong> at baseline—because stress evidence gating reduces published scored rows from <strong>590 to 312</strong>. It does not represent an improved matched risk result. The row-level non-improvement controls all passed.</p>
+<h2>Correction history</h2>
+<p>The initial v0.2 generation stopped before persistent output because PostgreSQL does not support <code>max(boolean)</code>. The v0.2R1 source replaced the two Boolean parameter aggregations with governed <code>bool_or(boolean)</code> expressions.</p>
+<p>The recovery evidence confirmed before the corrected generation:</p>
+<pre><code class="language-text">M1.13 path rows       0
+M1.13 snapshot rows   0
+M1.13 evidence rows   0
+M1.13 gate rows       0
+Blocking errors       0
+</code></pre>
+<p>I also completed a SQL-aware comparison of programs 93 and 95–99. After removing comments and whitespace while preserving executable tokens, all six downstream programs were logic-equivalent to their v0.2 sources. The only executable correction was in program 94.</p>
+<blockquote>
+<p><strong>M1.13 is formally passed and accepted. M1.14 — Unit Economics &amp; Risk-Adjusted Contribution Foundations is authorized.</strong></p>
+</blockquote>
+<hr>
+<h1>Updated full project repository</h1>
+<h2>Recommended Windows-compatible delivery</h2>
+<p>Download MSBF Project v0.2 — M1.13 Complete FINAL (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_13_COMPLETE_FINAL_Windows.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_13_COMPLETE_FINAL_Windows.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+2b2abda0738bf71ee20e23b2f9f661311fbb4a18f0a320ab4aacbe50ba5886cf
+
+Archive size
+9,188,026 bytes
+
+Archive entries
+1,566
+
+Maximum internal path
+180 characters
+</code></pre>
+<p>The archive passed:</p>
+<pre><code class="language-text">CRC validation                       PASS
+Complete extraction                  PASS
+Source / ZIP inventory match         PASS
+Missing or extra files               0
+Extracted-file hash mismatches       0
+Windows/DOS ZIP metadata             PASS
+ZIP64                                Not used
+</code></pre>
+<p>Extract close to the drive root, preferably:</p>
+<pre><code class="language-text">C:\MSBF\
+</code></pre>
+<h2>Canonical full-project filename</h2>
+<p>Download the canonical M1.13-complete project ZIP (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_13_COMPLETE_FINAL.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_13_COMPLETE_FINAL.zip.sha256</code>; referenced bytes not established here)</p>
+<p>The canonical and Windows-compatible project archives are byte-identical.</p>
+<h2>Standalone accepted M1.13 package</h2>
+<p>Download the standalone M1.13 v0.2R1 Complete package (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_COMPLETE_FINAL.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_13_v0_2R1_COMPLETE_FINAL.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+1af4f32440825a7e15cc4ea87974eeedff0050bc6eb6533476f2465db81bff6a
+
+Archive size
+570,610 bytes
+
+Archive entries
+156
+</code></pre>
+<p>Download the canonical standalone M1.13 package (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m1_13_exposure_recovery_expected_loss_foundations_v0_2R1_COMPLETE_FINAL.zip</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Key acceptance records</h1>
+<ul>
+<li>Formal M1.13 evidence review and sign-off (historical reference: <code>sandbox:[session]/M1_13_LIVE_EXECUTION_EVIDENCE_REVIEW_AND_SIGNOFF.md</code>; referenced bytes not established here)</li>
+<li>Completed M1.13 acceptance milestone (historical reference: <code>sandbox:[session]/MSBF_M1_13_Exposure_Recovery_Expected_Loss_Foundations_Build_Acceptance_Milestone_v0_2R1.txt</code>; referenced bytes not established here)</li>
+<li>Machine-readable M1.13 validation summary (historical reference: <code>sandbox:[session]/M1_13_LIVE_EXECUTION_VALIDATION_SUMMARY_v0_2R1.json</code>; referenced bytes not established here)</li>
+<li>M1.13 evidence index (historical reference: <code>sandbox:[session]/M1_13_EVIDENCE_INDEX.md</code>; referenced bytes not established here)</li>
+<li>M1.13 validation and correction history (historical reference: <code>sandbox:[session]/M1_13_VALIDATION_HISTORY.md</code>; referenced bytes not established here)</li>
+<li>v0.2R1 logic-equivalence review (historical reference: <code>sandbox:[session]/M1_13_v0_2R1_LOGIC_EQUIVALENCE_REVIEW.md</code>; referenced bytes not established here)</li>
+<li>Updated project status (historical reference: <code>sandbox:[session]/PROJECT_STATUS_M1_13_COMPLETE.md</code>; referenced bytes not established here)</li>
+<li>M1.14 authorized-stage handoff (historical reference: <code>sandbox:[session]/CURRENT_NEXT_STEP_M1_14_UNIT_ECONOMICS_RISK_ADJUSTED_CONTRIBUTION.md</code>; referenced bytes not established here)</li>
+<li>Final archive and package-build report (historical reference: <code>sandbox:[session]/MSBF_M1_13_COMPLETE_BUILD_REPORT.json</code>; referenced bytes not established here)</li>
+</ul>
+<p>The governed progression is now:</p>
+<pre><code class="language-text">G0 Physical Foundation
+PASS
+
+→
+
+G1 Governed Run Control
+PASS
+
+→
+
+M1.2–M1.12
+PASS
+
+→
+
+M1.13 Exposure, Recovery &amp; Expected Loss Foundations
+PASS
+
+→
+
+M1.14 Unit Economics &amp; Risk-Adjusted Contribution Foundations
+AUTHORIZED
+</code></pre>
+</div></article><article id="m-7c9d3e13-ad70-40d0-ba4d-13cf478e79d8" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00300 · 2026-07-26T21:28:17.704000-04:00 · active path</p><div class="bubble"><p>Build M1.14 — Unit Economics &amp; Risk-Adjusted Contribution Foundations as a complete governed module. Use the accepted M1.13 repository as the baseline. Produce architecture, schema changes, parameter dictionary, preflight, generation, validation, negative controls, acceptance, master report, detail reports, documentation, manifest, SHA-256, and updated full-project ZIP. Apply the error resolution lessons, comment/header/format lessons, and performance lessons from prior modules proactively: no unnecessary blueprint regeneration, materialize expensive intermediates once, avoid self-joins where window functions suffice, index and ANALYZE before downstream joins, separate persisted generation from read-only validation, and include recovery behavior. Do not stop for interim design approval unless a material ambiguity would change the module’s business purpose.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

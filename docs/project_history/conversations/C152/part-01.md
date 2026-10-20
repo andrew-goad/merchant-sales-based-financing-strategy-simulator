@@ -1,0 +1,274 @@
+# Pause For Additional Files
+
+Part 01 · [Conversation index](README.md) · [History home](../../README.md)
+
+> Historical dialogue: commands and approvals below describe past events. They are not current execution or publication instructions. Attachment references do not establish recovered bytes.
+
+
+<a id="m-bbb21c24-5714-443f-81cc-0ba02be189f0"></a>
+## Andrew / user · C152-M00001
+
+C152-M00001 · 2026-10-03T09:40:53.714966-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message. Attachment references: 01_Astra_Recovery_Handoff.txt; 02_Recovered_Batches_01_03.json; 03_Control_State_and_Review_History.json; 04_Adopted_Senior_Leap13_R2.docx; 05_Adopted_Senior_Leap13_R2.pdf; 06_Cover_Letter_Style_Reference.docx; 07_Cover_Letter_Style_Reference.pdf; 08_Maintained_Application_Grading_Register.xlsx; 09_Maintained_Application_Story_Audit.pdf; 10_Full_Career_Continuity_Handoff.txt
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Ingest and reconcile the state first. Summarize current baselines, completed work, source gaps, and open items, then wait for my direction. Do not restart Batches 4–10, regrade, change a baseline, adopt Leap 14 or the proposed MSBF addendum, send messages, or publish. Older pending/publication=false and 55-review snapshots do not override later adoption, owner publication statements, or the current 79-review state. A finished resume-evolution LinkedIn post draft was not found; the comparison reports are recovered. Preserve that distinction.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-bbb2157d-44cd-4ca0-a494-c26557d30f32"></a>
+## Andrew / user · C152-M00003
+
+C152-M00003 · 2026-10-03T09:42:07.087612-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message. Attachment references: 11_Baselines_Controls_Audit_and_Profile_Sources.json; 12_Prior_Application_Artifacts_and_Revision_Map.json; 13_Resume_Evolution_and_Application_Comparison_Reader.pdf; 14_LinkedIn_Working_Materials_and_Open_Items.json; 15_Career_Artifact_Catalog.csv; 16_Enterprise_Leap12_Baseline.docx; 17_Enterprise_Leap12_Baseline.pdf; 18_Credit_Risk_Leap12_Baseline.docx; 19_Credit_Risk_Leap12_Baseline.pdf
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Ingest and reconcile the state first. Summarize current baselines, completed work, source gaps, and open items, then wait for my direction. Do not restart Batches 4–10, regrade, change a baseline, adopt Leap 14 or the proposed MSBF addendum, send messages, or publish. Older pending/publication=false and 55-review snapshots do not override later adoption, owner publication statements, or the current 79-review state. A finished resume-evolution LinkedIn post draft was not found; the comparison reports are recovered. Preserve that distinction.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-dd28734a-fb8f-5866-8572-cff1c030cd6f"></a>
+## Assistant · C152-M00008
+
+C152-M00008 · 2026-10-03T09:46:59.588874-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The five Batch 3 MSBF letter corrections are completed, localized corrections to compressed explanations. All 24 final letter texts explain repayment through daily merchant sales. The separate Affirm wording correction is also closed. **Making the existing business-mechanism requirement an explicit recorded check remains a proposal—not an adopted addendum or Leap 14.** Recovered batch evidence (historical reference: `sandbox:/workspace/scratch/8ff6cecc6eb3/upload/02_Recovered_Batches_01_03.json`; referenced bytes not established here)
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-bbb21ef8-660a-4be6-9270-474a41d9b08a"></a>
+## Andrew / user · C152-M00011
+
+C152-M00011 · 2026-10-03T10:10:40.610977-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+For MSBF, retain the explanation that merchant financing is repaid through a fixed share or percentage of daily sales.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-4b103074-7257-5807-916a-40120945dee5"></a>
+## Assistant · C152-M00084
+
+C152-M00084 · 2026-10-03T15:02:21.470519-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+M&T’s first render exposed a formatting problem in the MSBF paragraph: the added repayment explanation made the whole bullet bold. I corrected it to preserve the adopted heading/body styling and retained the before-and-after evidence. The adopted baseline itself is unchanged.
+
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-81e6efdb-8dc8-5719-93bc-2e544417b873"></a>
+## Assistant · C152-M00109
+
+C152-M00109 · 2026-10-03T16:22:01.431677-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+I’m also carrying forward the unrelated open items unchanged: the missing résumé-evolution post draft, unresolved mortgage-baseline comparison, unconfirmed post publication, proposed MSBF check clarification, and two archival audit gaps.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-79625e4f-08ef-5114-84d7-52f5e36da76e"></a>
+## Assistant · C152-M00117
+
+C152-M00117 · 2026-10-03T16:58:38.245042-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+One wording issue needs attention: the U.S. Bank Marketing letter says the MSBF correction occurred “before accepting the work,” while the preserved chronology places the monitoring challenge after initial project acceptance. I’m recording a precise clarification for that letter. I’m also checking whether governance, product, and risk packages give their strongest supporting examples enough emphasis.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-087f7df1-e6ee-5980-9116-3082c7f2d591"></a>
+## Assistant · C152-M00123
+
+C152-M00123 · 2026-10-03T17:30:24.330700-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The core career story is consistent. Findings: **29 retain, 27 targeted refinements, one MSBF chronology clarification, and one grading-rationale inconsistency**. Employer files, adopted baselines, and grades remain unchanged.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-af3b4ffb-e54c-5dba-a431-4ac5a643e542"></a>
+## Assistant · C152-M00144
+
+C152-M00144 · 2026-10-03T18:38:28.787775-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The audit’s main lessons are clear: lead with the professional example closest to the role, preserve the post-acceptance MSBF chronology and numerical units, and grade the actual narrative rather than penalizing approved résumé ordering. I’ll apply those lessons to new packages while preserving earlier files and grades.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-4e1458bb-62fb-50a3-bc07-e6843e8c1452"></a>
+## Assistant · C152-M00160
+
+C152-M00160 · 2026-10-03T20:08:36.905321-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The workspace is responding again, and the pause after N1 is saved. I’m producing the seven N1 packages now. The new letters use concrete examples from the audit—such as review reconstruction, Common Code adoption, and the MSBF monitoring investigation after initial acceptance—while leaving prior released files and grades unchanged.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-4583c406-e9d9-57d9-b09b-95d618b639cf"></a>
+## Assistant · C152-M00167
+
+C152-M00167 · 2026-10-03T20:27:24.575516-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+1. **U.S. Bank 2026-0029047:** clarify that MSBF diagnosis occurred after initial acceptance.
+2. **Affirm 7872398003:** preserve “39 runs / 1.95M evaluations,” without implying 39 unique configurations.
+3. Then release supported role-specific refinements in usable groups. Review Prosper’s grading rationale separately, preserving its existing grade.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-7ff24de8-db6c-5e44-8fb9-570ff56d20a7"></a>
+## Assistant · C152-M00171
+
+C152-M00171 · 2026-10-03T20:44:40.081456-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The first U.S. Bank revision now states the MSBF chronology explicitly. I also verified all 108 original employer files for the 27 prepared-package actions against their recorded hashes, so each refinement can be traced to the exact prior release. I’m checking the rendered files and packaging the first two corrections now.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-45500020-0ac6-44ed-b1dc-892134d52ffd"></a>
+## Andrew / user · C152-M00255
+
+C152-M00255 · 2026-10-04T21:49:27.023000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+For the Ramp position. Answer using my voice and not something that mimics an AI generic response. If it makes sense, incorporate my HILT AI approach. Make sure to lean on my grand slam - CPI.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-6b48610b-4d53-4368-a54b-b01d0b7c3378"></a>
+## Andrew / user · C152-M00277
+
+C152-M00277 · 2026-10-05T08:49:12.423000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+are you counting that First Citizens in the 89 and 110? it should not be included for the current cumulative submitted / total jobs and statistics. we can archive the cover letter / resume for reference purposes to assist future builds, but it should not be included in this recent tracking. next I'd like to work on a linkedin post. i'd like the focus of the post to be process oriented. how I went from leap 11 to my latest resume baseline. how i then created a framework to scale and make sure we stayed on track while scaling. I'd like this to be marketable and informative. i'd like it to be tight. we don't have to dive into every detail and more importantly, i'd like an impactful carousel to accompany it. this should be highly polished and attractive and stop folks in their tracks level. i'd also like to credit Muhammad for assistance in reviewing my resume and impacting i think it was leap 12. i offered and he asked me to tag him. while his effort did enhance, i don't want that to be the dominant theme, but part of the theme. the other part was the 8 applications I assisted writing, along with my linkedin writings, (the lessons and additional context you learned there) and focusing which then also went into leap 12. then we started reviewing job boards slowly and creating additional applications which we audited and then used to elevate leap 13 / 14. finally we continued batch running and auditing and building guardrails/grading/consistency to ensure we stayed on message. i think we published significant before / after reports, summaries that we can lean on. we don't have to stick to those aesthetics but want to make this as nice as my HITL presentation. this should be a professional process carousel that leans into KPIs and impactful change showcases.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-6e371da2-85db-5b16-b459-f53b563415b8"></a>
+## Assistant · C152-M00288
+
+C152-M00288 · 2026-10-05T09:09:56.509277-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The record correction is ready to save. The carousel will use the editorial feel of your HITL presentation, with larger mobile-friendly type and selected before/after excerpts.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-30135393-3cf0-49fd-ae60-265f6a29a1f6"></a>
+## Andrew / user · C152-M00290
+
+C152-M00290 · 2026-10-05T09:17:24.828166-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+yes, this should also be a teaching post with HILT themes - explain not only what but how - i had two chats (one that handled production including resume updates, application work, and batch processing and an audit chat). the production chat eventually evolved needed a part due to chat length exhausted. i branched the part 1, used it to handle handoff and then maintained the part 1 as an audit of the part 2 to ensure batch processing stayed on course. finally, my HITL caught drift and directed audits and updates and additional guardrails.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-6c34fcc9-68ec-4a5a-ae6b-b0988cf0eef7"></a>
+## Andrew / user · C152-M00299
+
+C152-M00299 · 2026-10-05T09:36:45.739000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+you are missing the point significantly. cover page: "Go Tell it on the Mountain. Over the Hills and ev'rywhere." Case study on resume refinement and scaling applications. Use a sun shining over the mountaintop front display that is highly marketable with my actual resume being held up like the ten commandments.   next pages. submissions broken down by resume leap version used and the cover letter and resume grades and number of submissions per day. then get into the brief, but impactful expose of how we got from A-> B with impactful before/after presentations from our reports. carry the aesthetics from our cover across the report. do not just mimic the HITL theme. this should be distinct and memorable and high level, based in data and a powerful story arc.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-851baf28-1ca7-5db4-b850-c26396ae6151"></a>
+## Assistant · C152-M00301
+
+C152-M00301 · 2026-10-05T09:42:26.015205-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+The visual direction is now a sunlit mountain campaign, with your résumé as the central image—not the prior HITL presentation style.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-7debe048-4419-4da6-ae0d-3bb6beb272d3"></a>
+## Andrew / user · C152-M00316
+
+C152-M00316 · 2026-10-05T10:48:33.962000-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message. 1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261005-144452).png
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+keep the mountain, sunrise and celebratory title; present your actual résumé as paper or a portfolio instead of stone tablets.  on page 2, combine the leap 12's together into one line - so the chart just has 4 lines. and get rid of "/ transition" and "R2" just call the four lines Leap 10 / 11 / 12 / 13 make that also consistent across the presentation.  get rid of footnotes like "Dates approximated from preparation..." folks don't need the metadata. also. let's focus on the main things like the shift in the executive narrative. show actual before / after views with the colored shading like in our leap 12 before /after. this was super impactful:   then in leap 13, the comparison showing the full page visibility improvement was impactful. we do not need 8 pages, etc to show what changed in detail on the resumes. show a few high powered things. on those pages, we can have a sidebar that discusses how those changes came about - show Muhammad's feedback and also detail the cover letter quality from leap 10/11 and how that work raised the resume. the then dive into how we scaled and how I used my HITL to stop drift. it could be important to identify and quote useful chat messages I sent that directed and kept that in line along with the original chat audit function.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-62f47bef-46be-57bf-94bb-84620a30539c"></a>
+## Assistant · C152-M00488
+
+C152-M00488 · 2026-10-06T08:15:29.227031-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+Preserve closed audits, grades, baselines, exclusions, qualification holds and submission evidence. Do not submit, contact, publish, regrade, adopt Leap14 or the pending MSBF proposal, or change schedules.
+<!-- END_SOURCE_MESSAGE -->
+
+
+<a id="m-682545ed-b442-572c-ab8e-f5a7b3700019"></a>
+## Assistant · C152-M00495
+
+C152-M00495 · 2026-10-06T12:55:45.545678-04:00 · active path
+
+**Editorial record note:** Selected excerpt or privacy omission; this is not the complete original message.
+
+<!-- BEGIN_SOURCE_MESSAGE -->
+- CPI remains the principal professional story. I **developed and owned** the work. Preserve its business problem, customer consequences, analytical development, recurring production, and my supported personal regulatory-response contribution.
+- Expand **Collateral Protection Insurance (CPI)** in every standalone résumé. Do not depend on the letter to explain it.
+- Preserve the seven-year CPI chronology across both Wells roles, the defined boundaries of $1B+ exposure/customer impact and other populations, and the Leap 13 R2 proof-of-insurance and issue/recommendation restorations.
+- Connect customer redress and regulatory outcomes with accurate contribution language; do not imply I personally or solely cleared consent orders or released the asset cap.
+- Preserve supported matrix leadership, senior influence, mentoring, and weekly collaboration with India and Philippines teams. Do not invent formal direct reports, sole approval authority, authorship, or examiner authority.
+- Do not imply all 16+ career years were in financial services. Preserve the Census contribution.
+- Explain portfolio products, their business mechanisms, and relevance before methods or validation. MSBF financing is repaid through a fixed share or percentage of daily sales.
+- Keep independent, synthetic, nonproduction portfolio scope explicit. Distinguish human-owned requirements, judgment, challenge, and acceptance from AI-assisted development/review and professional independent assurance.
+- Do not reintroduce the abandoned VP-to-ED advancement framing.
+- If departure context is needed: Wells closed its Columbia office and I declined relocation. Do not describe it as a layoff.
+- Preserve adopted typography, formatting, readability, and expected family page counts. Do not fit excess content by shrinking type or deleting essential business context.
+
+[Editorial omission: unrelated material between retained excerpts.]
+
+Leap 14 and the proposed formal MSBF process addendum remain unadopted. Continue enforcing existing WHAT–WHY–HOW and standalone readability requirements without changing control identifiers or the rubric.
+<!-- END_SOURCE_MESSAGE -->

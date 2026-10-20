@@ -1,0 +1,1217 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PostgreSQL M1.14 Execution — part 20 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>PostgreSQL M1.14 Execution — part 20</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-19.html">Previous part</a><a href="part-21.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-907da4da-3051-45a4-aecf-41e612266f56" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00266 · 2026-08-07T17:26:18.202995-04:00 · active path</p><div class="bubble"><h1>M2.12 WP1 R1 audit determination</h1>
+<p><strong>HOLD — Work Package 1 R1 is not approved, and Work Package 2 is not authorized.</strong></p>
+<p>I audited the actual physical archive:</p>
+<pre><code class="language-text">M2_12_Build_WP1_R1.zip
+
+Bytes
+241,664
+
+SHA-256
+9177e416cf2ea8eac6ed3ed0961f211332792d32e1dd130568f939c984b73600
+
+ZIP entries
+26
+</code></pre>
+<p>The package reports 87/87 static controls passed, zero known failures, and seven of seven prior findings addressed, while correctly retaining a narrow re-review hold and prohibiting WP2, SQL generation, execution, and packaging. [export reference: filecite | turn168file0 | L19-L38]</p>
+<p>Independent comparison of the R1 authorities to one another and to the accepted M2.11 physical definitions found <strong>four remaining implementation blockers</strong> and one governance-path issue.</p>
+<pre><code class="language-text">Accepted M2.11 baseline                     PASS / LOCKED
+M2.12 frozen business design                RETAINED
+WP1 R1 work-package boundary                PASS
+SQL generated                               0
+PostgreSQL executed                         NO
+
+Prior findings fully resolved               6 / 7
+Prior canonical-mapping finding             PARTIALLY RESOLVED
+
+Physical registry-field errors              4
+Undefined adapter outputs                  16
+G3 hash-semantic errors                      1
+Incomplete reproduction methods            13
+Current source-authority path mismatches    11
+
+WP1 R1 approval                              HOLD
+WP2 authorization                            NO
+</code></pre>
+<h2>Review-area disposition</h2>
+<table>
+<thead>
+<tr>
+<th>Review area</th>
+<th>Result</th>
+<th>Determination</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Accepted M2.11 baseline and stage inventory</td>
+<td><strong>PASS</strong></td>
+<td>Preserved and correctly governed.</td>
+</tr>
+<tr>
+<td>Type/domain correction</td>
+<td><strong>PASS</strong></td>
+<td>Prior 73 mismatches are resolved.</td>
+</tr>
+<tr>
+<td>Nine-phase hash dependency order</td>
+<td><strong>PASS</strong></td>
+<td>The R1 DAG is acyclic and resolves the prior latest/base-family dependency.</td>
+</tr>
+<tr>
+<td>Owned-sequence recovery architecture</td>
+<td><strong>PASS</strong></td>
+<td>The three sequence states and guarded recovery model are sufficiently defined.</td>
+</tr>
+<tr>
+<td>Program 221 transaction model</td>
+<td><strong>PASS</strong></td>
+<td>Ordinary transaction with persistent-state read-only behavior and <code>tmp_preflight_</code> only.</td>
+</tr>
+<tr>
+<td>Physical constraint/index authority</td>
+<td><strong>PASS</strong></td>
+<td>81 definitions cover PK, uniqueness, checks, FKs, triggers, indexes, and rejection surfaces.</td>
+</tr>
+<tr>
+<td>Consumption-view join plan</td>
+<td><strong>PASS</strong></td>
+<td>Seven views and 23 join-plan rows now have join type/order and multiplicity controls.</td>
+</tr>
+<tr>
+<td>Accepted registry-column mappings</td>
+<td><strong>BLOCKER</strong></td>
+<td>Four current column names do not exist physically.</td>
+</tr>
+<tr>
+<td>Adapter output completeness</td>
+<td><strong>BLOCKER</strong></td>
+<td>Sixteen canonical mapping references have no declared adapter output.</td>
+</tr>
+<tr>
+<td>G3 archive-contract-hash mapping</td>
+<td><strong>BLOCKER</strong></td>
+<td>Uses <code>archive_row_hash</code> instead of copied <code>contract_row_hash</code>.</td>
+</tr>
+<tr>
+<td>Latest/archive reproduction</td>
+<td><strong>BLOCKER</strong></td>
+<td>The 13 methods do not establish exact payload/hash reproduction.</td>
+</tr>
+<tr>
+<td>Current source-authority filenames</td>
+<td><strong>CORRECTION REQUIRED</strong></td>
+<td>Eleven declared current names are physically present only as <code>(1)</code> aliases.</td>
+</tr>
+</tbody></table>
+<h1>Blocker 1 — four accepted registry fields remain incorrect</h1>
+<p>The current <code>M2_12_STAGE_AND_CONTRACT_SOURCE_AUTHORITY.csv</code> declares:</p>
+<pre><code class="language-text">M2.3 latest-set field      latest_set_hash
+M2.3 archive-set field     archive_set_hash
+
+M2.4 latest-set field      latest_set_hash
+M2.4 archive-set field     archive_set_hash
+</code></pre>
+<p>Those columns do not exist in the accepted physical registries.</p>
+<p>The exact accepted columns are:</p>
+<pre><code class="language-text">M2.3
+decision_latest_set_hash
+decision_archive_set_hash
+
+M2.4
+activation_latest_set_hash
+activation_archive_set_hash
+</code></pre>
+<p>The same invalid references occur in the canonical adapter specification as:</p>
+<pre><code class="language-text">r05.latest_set_hash
+r05.archive_set_hash
+r06.latest_set_hash
+r06.archive_set_hash
+</code></pre>
+<h3>Consequence</h3>
+<p>A Program 222 implementation generated literally from these authorities would either:</p>
+<ul>
+<li>fail because the referenced columns do not exist; or</li>
+<li>require WP2 to infer substitute fields, which WP1 was specifically designed to prevent.</li>
+</ul>
+<p>The R1 static audit confirms that mappings are populated and marked exact, but it does not independently open the accepted DDL and resolve every relation-qualified adapter field. The submission’s claimed 327/327 exact mapping result therefore does not establish physical field validity. [export reference: filecite | turn168file0 | L44-L72]</p>
+<h1>Blocker 2 — sixteen canonical mappings reference undefined adapter outputs</h1>
+<p>The package now uses named target-typed adapter relations, which is the right architecture. However, the canonical mapping references 16 outputs that are absent from the 981-row adapter specification.</p>
+<p>Missing component-design outputs include:</p>
+<pre><code class="language-text">latest_business_key_columns
+archive_business_key_columns
+expected_contract_set_hash
+expected_stage_combined_set_hash
+expected_registry_row_hash
+expected_latest_set_hash
+expected_archive_set_hash
+required_source_edge_count
+</code></pre>
+<p>Missing component-observation outputs include:</p>
+<pre><code class="language-text">observed_positive_controls
+observed_negative_controls
+passed_source_edge_count
+certification_status
+</code></pre>
+<p>Several missing outputs are referenced by both the component-certification and contract-reproduction targets, producing 16 failed mapping references in total.</p>
+<h3>Consequence</h3>
+<p>The canonical mapping says, for example:</p>
+<pre><code class="language-text">cd.expected_latest_set_hash
+co.observed_positive_controls
+</code></pre>
+<p>but the declared adapter output schema never creates those fields. Program 222 therefore has no complete governed relation from which to construct the affected canonical rows.</p>
+<p>The correction must test more than whether a mapping contains a nonblank source expression. It must prove:</p>
+<pre><code class="language-text">canonical source relation
++ source alias
++ referenced source field
+→ exact declared adapter output
+</code></pre>
+<p>Required undefined outputs: <code>0</code>.</p>
+<h1>Blocker 3 — <code>archive_contract_row_hash</code> is mapped to the wrong identity</h1>
+<p>The current G3 registry mapping defines:</p>
+<pre><code class="language-text">archive_contract_row_hash
+← msbf_ctl.m2_12_g3_bundle_archive.archive_row_hash
+</code></pre>
+<p>That is semantically wrong.</p>
+<p>The frozen archive architecture distinguishes:</p>
+<pre><code class="language-text">contract_row_hash
+The copied G3 contract identity from latest
+
+archive_row_hash
+The physical identity of the archive row
+</code></pre>
+<p>The archive stores both identities separately. [export reference: filecite | turn159file5 | L314-L345]</p>
+<p>The frozen contract-set preimage then explicitly requires:</p>
+<pre><code class="language-text">latest contract row hash
+archive copied contract row hash
+registry row hash
+</code></pre>
+<p>—not the archive physical row hash. [export reference: filecite | turn159file5 | L347-L377]</p>
+<h3>Required correction</h3>
+<pre><code class="language-text">archive_contract_row_hash
+← msbf_ctl.m2_12_g3_bundle_archive.contract_row_hash
+</code></pre>
+<p><code>archive_row_hash</code> remains the ARCHIVE canonical-family row identity and must remain separate.</p>
+<p>This correction does <strong>not</strong> change the approved hash formula or business design. It corrects the physical implementation mapping to match the already-approved formula.</p>
+<h1>Blocker 4 — all 13 component reproduction methods are incomplete</h1>
+<p>The design requires one exact reproduction row for each of the 13 component contracts, including expected and observed counts, latest/archive hashes, exact payload mismatches, missing rows, duplicate keys, immutable trigger status, and physical row identity. The frozen successful state requires 7,129 latest rows, 7,129 archive rows, and zero reproduction mismatches. [export reference: filecite | turn159file6 | L457-L481]</p>
+<p>The current R1 adapter defines a <code>payload_mismatch_count</code> for all 13 components, but none of the 13 expressions performs the complete accepted reproduction.</p>
+<h2>Compact JSONB archives</h2>
+<p>The compact archive pattern applies to:</p>
+<pre><code class="language-text">M2.1
+M2.2 request
+M2.2 pricing
+M2.11
+</code></pre>
+<p>These archives store the business payload in <code>contract_payload</code>. The current R1 expressions explicitly remove <code>contract_payload</code> from the archive comparison and strip most business fields from the latest side.</p>
+<p>As a result, they compare only reduced metadata and hashes—not the archived business payload.</p>
+<h2>Flattened-plus-JSONB archives</h2>
+<p>The M2.3–M2.10 archives retain flattened business columns and also store <code>contract_payload</code>.</p>
+<p>The current expressions compare the flattened columns but explicitly remove and never test <code>contract_payload</code>.</p>
+<p>A malformed or incorrectly generated <code>contract_payload</code> could therefore pass M2.12 reproduction because the duplicate flattened columns remain correct.</p>
+<h2>M1.17 legacy archive</h2>
+<p>M1.17 has no <code>contract_payload</code>, so it requires its accepted legacy method. The R1 expression excludes:</p>
+<pre><code class="language-text">latest.contract_row_hash
+archive.source_latest_row_hash
+</code></pre>
+<p>without separately requiring:</p>
+<pre><code class="language-text">archive.source_latest_row_hash
+=
+latest.contract_row_hash
+</code></pre>
+<h3>Required physical method</h3>
+<p>For M2.1–M2.11, wherever <code>contract_payload</code> exists:</p>
+<pre><code class="language-sql">archive.contract_payload
+IS NOT DISTINCT FROM
+(to_jsonb(latest) - &#39;created_at&#39;)
+</code></pre>
+<p>The method must also require:</p>
+<pre><code class="language-text">archive.contract_row_hash = latest.contract_row_hash
+
+archive.source_latest_row_hash = latest.contract_row_hash
+where that physical column exists
+
+archive row hash reconstructs
+latest set hash reconstructs
+archive set hash reconstructs
+missing latest rows = 0
+missing archive rows = 0
+duplicate keys = 0
+immutable trigger exact
+</code></pre>
+<p>For flattened archives, flattened-column parity should remain as an <strong>additional</strong> control, not a substitute for <code>contract_payload</code> equality.</p>
+<p>For M1.17, use exact stable common-field parity plus the accepted source-latest-hash equality and archive-row-hash reconstruction.</p>
+<h1>Governance issue — eleven current source paths do not exist as declared</h1>
+<p><code>M2_12_WP1_SOURCE_AUTHORITY_R1.md</code> declares canonical filenames such as:</p>
+<pre><code class="language-text">M2_12_SOURCE_TO_TARGET_MAPPING.csv
+M2_12_TYPE_PRECISION_DICTIONARY.csv
+M2_12_CONSOLIDATED_IMPLEMENTATION_SPECIFICATION.md
+</code></pre>
+<p>The physical ZIP instead contains:</p>
+<pre><code class="language-text">M2_12_SOURCE_TO_TARGET_MAPPING(1).csv
+M2_12_TYPE_PRECISION_DICTIONARY(1).csv
+M2_12_CONSOLIDATED_IMPLEMENTATION_SPECIFICATION(1).md
+</code></pre>
+<p>Eleven current authority records have this condition.</p>
+<p>Their hashes are exact matches, so this is not a byte-content defect. It is nevertheless a current-authority path defect. A downstream compiler or WP2 build following the declared physical names would report missing sources.</p>
+<p>The correction should either:</p>
+<ul>
+<li>rename the actual files to their clean canonical names; or</li>
+<li>reissue the authority with their exact physical paths.</li>
+</ul>
+<p>Using clean canonical names is preferable.</p>
+<h1>Findings from the prior audit that are now closed</h1>
+<p>The correction deserves credit for materially improving WP1.</p>
+<h2>Type/domain coherence — PASS</h2>
+<p>The package corrects the prior 71 text-domain and two timestamp-domain errors and reports 1,172/1,172 coherent rows. [export reference: filecite | turn168file0 | L88-L108]</p>
+<h2>Hash dependency DAG — PASS</h2>
+<p>The nine-phase schedule now puts base-family row/set identities ahead of G3 latest, archive, registry, contract, and combined hashes without changing preimages or formulas. [export reference: filecite | turn168file0 | L112-L177]</p>
+<h2>Owned-sequence recovery — PASS</h2>
+<p>The three owned sequences now have pristine and one-row committed states, guarded <code>setval(...,1,false)</code> recovery conditions, and a proof-only 222B boundary. [export reference: filecite | turn168file0 | L182-L230]</p>
+<h2>Program 221 transaction model — PASS</h2>
+<p>The corrected ordinary-transaction/persistent-read-only model is appropriate for <code>tmp_preflight_</code> construction. [export reference: filecite | turn168file0 | L234-L262]</p>
+<h2>Constraints and view joins — PASS</h2>
+<p>The 81-row physical-constraint plan and 23-row join plan close the prior PK/uniqueness/rejection-surface and join-type/order ambiguities. [export reference: filecite | turn168file0 | L266-L341]</p>
+<p>These areas should not be reopened during R2 unless a direct dependency requires a documentation update.</p>
+<h1>Why the submitted 87/87 result missed the remaining defects</h1>
+<p>The R1 audit verifies:</p>
+<pre><code class="language-text">mapping rows populated
+specificity statuses marked exact
+type/domain labels coherent
+DAG sequence and ranks
+sequence specifications present
+constraint-table coverage
+join-plan metadata complete
+no SQL or packaging created
+</code></pre>
+<p>It does not test:</p>
+<pre><code class="language-text">every adapter field against accepted physical DDL
+every canonical alias.field against its adapter output schema
+contract_row_hash versus archive_row_hash semantics
+contract_payload parity in each reproduction query
+declared current path versus physical package path
+</code></pre>
+<p>The 87/87 result is therefore valid for the controls it performed, but it cannot support final WP1 approval. The package itself correctly retains a hold pending this independent narrow review. [export reference: filecite | turn168file0 | L343-L368]</p>
+<h1>Direction to return to the build chat</h1>
+<pre><code class="language-text">Do not begin Work Package 2 and do not generate Program 220 or any SQL.
+
+Produce one bounded correction:
+
+M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R2
+
+Preserve the accepted M2.11 baseline, approved M2.12 business design,
+all frozen counts and codes, the R1 nine-phase hash order, the R1
+owned-sequence model, the R1 Program 221 transaction model, the R1
+constraint/index catalog, and the R1 view-join plan.
+
+Correct:
+
+1. The four nonexistent M2.3/M2.4 registry hash fields:
+   decision_latest_set_hash
+   decision_archive_set_hash
+   activation_latest_set_hash
+   activation_archive_set_hash
+
+2. The sixteen canonical mappings whose referenced adapter output is
+   undefined.
+
+3. The G3 registry mapping:
+   archive_contract_row_hash = archive.contract_row_hash
+   not archive.archive_row_hash.
+
+4. All thirteen component reproduction methods so they certify exact
+   payload, copied contract hash, source-latest hash where applicable,
+   archive row hash, set hashes, counts, duplicates, missing rows, and
+   immutable trigger.
+
+5. The eleven current source-authority path mismatches.
+
+Add fail-closed controls requiring:
+
+accepted registry field references missing             0
+canonical mappings to undefined adapter outputs         0
+archive-contract-hash semantic mismatches               0
+component reproduction methods incomplete               0
+current source-authority path mismatches                 0
+frozen business semantic changes                        0
+SQL files generated                                     0
+PostgreSQL execution                                    0
+
+Stop after R2 and wait for narrow re-review.
+
+WP2 remains unauthorized.
+</code></pre>
+<h1>Current governing state</h1>
+<pre><code class="language-text">M2.12 WP1 R1                               HOLD
+M2.12 WP2                                  NOT AUTHORIZED
+Program 220                                NOT AUTHORIZED
+Programs 221–227                           NOT AUTHORIZED
+Recovery SQL                               NOT AUTHORIZED
+PostgreSQL                                 NOT AUTHORIZED
+Implementation packaging                   NOT AUTHORIZED
+Module 3                                   NOT AUTHORIZED
+Production                                 NOT AUTHORIZED
+</code></pre>
+<h2>Audit artifacts</h2>
+<ul>
+<li>Full independent R1 audit report (historical reference: <code>sandbox:[session]/M2_12_WP1_R1_INDEPENDENT_AUDIT_REPORT_20260807.md</code>; referenced bytes not established here)</li>
+<li>Finding register (historical reference: <code>sandbox:[session]/M2_12_WP1_R1_INDEPENDENT_AUDIT_FINDINGS_20260807.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable audit summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R1_INDEPENDENT_AUDIT_SUMMARY_20260807.json</code>; referenced bytes not established here)</li>
+<li>Ready-to-paste R2 correction prompt (historical reference: <code>sandbox:[session]/M2_12_WP1_R1_IMPLEMENTATION_CONTROL_CORRECTION_R2_PROMPT_20260807.md</code>; referenced bytes not established here)</li>
+<li>Four invalid accepted-source fields (historical reference: <code>sandbox:[session]/M2_12_WP1_R1_INVALID_PHYSICAL_SOURCE_FIELDS_20260807.csv</code>; referenced bytes not established here)</li>
+<li>Sixteen undefined adapter outputs (historical reference: <code>sandbox:[session]/M2_12_WP1_R1_UNDEFINED_ADAPTER_OUTPUTS_20260807.csv</code>; referenced bytes not established here)</li>
+<li>G3 hash-semantic mismatch (historical reference: <code>sandbox:[session]/M2_12_WP1_R1_HASH_SEMANTIC_MISMATCHES_20260807.csv</code>; referenced bytes not established here)</li>
+<li>Thirteen-component reproduction audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R1_REPRODUCTION_METHOD_AUDIT_20260807.csv</code>; referenced bytes not established here)</li>
+<li>Current source-authority path mismatches (historical reference: <code>sandbox:[session]/M2_12_WP1_R1_SOURCE_AUTHORITY_PATH_MISMATCHES_20260807.csv</code>; referenced bytes not established here)</li>
+<li>Prior-finding closure matrix (historical reference: <code>sandbox:[session]/M2_12_WP1_R1_PRIOR_FINDING_CLOSURE_20260807.csv</code>; referenced bytes not established here)</li>
+<li>Complete independent audit package (historical reference: <code>sandbox:[session]/M2_12_WP1_R1_INDEPENDENT_AUDIT_PACKAGE_20260807.zip</code>; referenced bytes not established here)</li>
+<li>Audit-package SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_WP1_R1_INDEPENDENT_AUDIT_PACKAGE_20260807.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<pre><code class="language-text">Audit package SHA-256
+14567cfd4c4b64ee728ddad2821545b2303dfd0a68bfeda6da959ece871ed6fc
+
+ZIP CRC
+PASS
+</code></pre>
+</div></article><article id="m-a82dad4f-88f2-44cd-bda7-3db12d2cf0cf" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00267 · 2026-08-07T18:35:16.343000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260807-223444).md; M2_12_Build_WP1_R2.zip</p><div class="bubble"><p>Audit M2_12_Build_WP1_R2. Sign off or escalate blockers/issues:     </p>
+</div></article><article id="m-ffa13b89-911c-469f-85fb-b2bdb5882626" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00268 · 2026-08-07T19:17:34.861771-04:00 · active path</p><div class="bubble"><h1>M2.12 WP1 R2 audit determination</h1>
+<p><strong>HOLD — Work Package 1 R2 is not approved, and Work Package 2 is not authorized.</strong></p>
+<p>I audited the actual submitted archive:</p>
+<pre><code class="language-text">M2_12_Build_WP1_R2.zip
+
+Bytes
+270,724
+
+SHA-256
+b32d65b634fa01fa990a4acf78b39e201d2d6d864fa1bf8c2ffb610ec51fc681
+
+ZIP entries
+33
+
+ZIP CRC
+PASS
+</code></pre>
+<p>The R2 package correctly remains within the WP1 boundary: 151/151 submitted static controls are reported as passing, no SQL was generated, PostgreSQL was not executed, and WP2 remains held for this review. [export reference: filecite | turn168file0 | L13-L30]</p>
+<p>Several R1 findings are substantively resolved. However, an independent cross-field review found <strong>four remaining implementation blockers and one physical-authority governance blocker</strong> that the 151-control audit did not test.</p>
+<pre><code class="language-text">Accepted M2.11 baseline                    PASS / LOCKED
+Frozen M2.12 business design               RETAINED
+
+M2.3/M2.4 physical field corrections       PASS
+G3 copied-contract hash correction         PASS
+Component reproduction methods             PASS
+R1 type/domain authority                    PASS
+R1 hash dependency order                    PASS
+R1 owned-sequence recovery                  PASS
+R1 Program 221 transaction model            PASS
+R1 constraint/index authority               PASS
+R1 consumption-view join plan               PASS
+
+Adapter schema and dependency closure       BLOCKER
+Source-edge certification adapter           BLOCKER
+Stage-boundary evidence adapter              BLOCKER
+Helper temporary-relation authority          BLOCKER
+Physical source-authority paths              GOVERNANCE BLOCKER
+
+WP1 R2 approval                              HOLD
+WP2 authorization                            NO
+Program 220                                  NOT AUTHORIZED
+PostgreSQL execution                         NOT AUTHORIZED
+</code></pre>
+<h2>What R2 successfully corrected</h2>
+<h3>Accepted physical registry fields — PASS</h3>
+<p>The four M2.3/M2.4 fields are now correct:</p>
+<pre><code class="language-text">M2.3
+decision_latest_set_hash
+decision_archive_set_hash
+
+M2.4
+activation_latest_set_hash
+activation_archive_set_hash
+</code></pre>
+<p>The package reports 648/648 accepted relation-qualified field references passing. I independently reconciled those references against the accepted physical DDL and found no missing accepted field. [export reference: filecite | turn168file0 | L34-L62]</p>
+<h3>G3 copied-contract identity — PASS</h3>
+<p>The registry mapping now correctly uses:</p>
+<pre><code class="language-text">archive_contract_row_hash
+=
+m2_12_g3_bundle_archive.contract_row_hash
+</code></pre>
+<p>while preserving <code>archive_row_hash</code> as the separate physical archive-row identity. That matches the approved contract-set semantics. [export reference: filecite | turn168file0 | L109-L151]</p>
+<h3>Thirteen component-reproduction methods — PASS</h3>
+<p>The R2 methods now include payload parity, copied-contract identity, source-latest identity where physically applicable, row-hash reconstruction, set-hash reconstruction, missing and duplicate controls, and exact trigger/function verification. The prior reproduction blocker is closed. [export reference: filecite | turn168file0 | L153-L245]</p>
+<h1>Blocker 1 — canonical adapter schemas remain incomplete</h1>
+<p>R2 reports:</p>
+<pre><code class="language-text">Canonical mappings                         327
+Canonical mappings resolved            327 / 327
+Undefined adapter-output references             0
+</code></pre>
+<p>[export reference: filecite | turn168file0 | L66-L105]</p>
+<p>That audit checked the primary <code>source_field_or_expression</code> for each mapping. It did <strong>not</strong> resolve all adapter fields referenced in the mapping’s <code>row_selector</code> and <code>physical_join_predicate</code>.</p>
+<p>My independent parse found:</p>
+<pre><code class="language-text">Undeclared adapter-field pairs                 11
+Unresolved mapping references                 161
+Affected canonical mapping rows               127 / 327
+</code></pre>
+<p>The unresolved fields are:</p>
+<pre><code class="language-text">tmp_src_m2_12_node_design
+    nd.module1_run_id
+
+tmp_src_m2_12_component_design
+    cd.module1_run_id
+
+tmp_src_m2_12_evidence_design
+    ed.module1_run_id
+
+tmp_src_m2_12_capability_design
+    cap.module1_run_id
+
+tmp_cert_m2_12_node_observation
+    no.module1_run_id
+    no.certification_node_sequence
+
+tmp_src_m2_12_component_observation
+    co.component_sequence
+
+tmp_cert_m2_12_evidence_observation
+    eo.module1_run_id
+    eo.matrix_sequence
+
+tmp_cert_m2_12_reproduction_observation
+    ro.module1_run_id
+    ro.component_sequence
+</code></pre>
+<p>For example, the stage-certification mappings repeatedly require:</p>
+<pre><code class="language-text">no.certification_node_sequence
+no.module1_run_id
+nd.module1_run_id
+</code></pre>
+<p>but those columns are not outputs of the corresponding governed adapters.</p>
+<p>The same issue affects:</p>
+<ul>
+<li>all 12 stage-certification rows;</li>
+<li>all 13 component rows;</li>
+<li>all 72 evidence rows;</li>
+<li>all 13 reproduction rows;</li>
+<li>all 20 capability rows.</li>
+</ul>
+<p>The implementation cannot construct the specified joins without either inventing columns during WP2 or silently changing the mapping predicates.</p>
+<h3>Required correction</h3>
+<p>The R3 authority must choose one exact model.</p>
+<p>For static design adapters, the preferred model is:</p>
+<pre><code class="language-text">CROSS JOIN the single governed run-context row
+do not pretend static VALUES relations already contain module1_run_id
+</code></pre>
+<p>Observation adapters should explicitly carry their physical grain keys:</p>
+<pre><code class="language-text">Component observation
+module1_run_id
+certification_node_sequence
+component_sequence
+component_contract_code
+contract_version
+
+Node observation
+module1_run_id
+certification_node_sequence
+stage_code
+
+Evidence observation
+module1_run_id
+matrix_sequence
+node_sequence
+evidence_family_code
+
+Reproduction observation
+module1_run_id
+certification_node_sequence
+component_sequence
+component_contract_code
+contract_version
+</code></pre>
+<p>Every <code>alias.field</code> reference must be audited across:</p>
+<pre><code class="language-text">source_field_or_expression
+row_selector
+physical_join_predicate
+adapter expression
+adapter selector
+adapter filter
+adapter join predicate
+</code></pre>
+<p>—not only the main source expression.</p>
+<h1>Blocker 2 — the internal adapter dependency graph is incomplete</h1>
+<p>The adapter expressions themselves reference undeclared fields:</p>
+<pre><code class="language-text">co.certification_node_sequence
+ro.certification_node_sequence
+eo.node_sequence
+eo.evidence_family_code
+</code></pre>
+<p>Those fields are used to build the 72 evidence observations and 12 node observations but do not exist in the declared adapter schemas.</p>
+<p>The authority also references four helper temporary relations with no governed schema, output inventory, grain, or construction specification:</p>
+<pre><code class="language-text">tmp_src_m2_12_component_observation_base
+tmp_cert_m2_12_reproduction_observation_base
+tmp_latest_m2_12_g3_seed
+tmp_hash_m2_12_canonical_entity_source
+</code></pre>
+<p>Additional expressions use undeclared aliases such as:</p>
+<pre><code class="language-text">pos
+neg
+edge_src
+</code></pre>
+<p>For example, the final <code>certification_status</code> field of the component observation reads from <code>tmp_src_m2_12_component_observation_base</code>, but that base relation is not defined as an adapter, planned object, hash-phase relation, or exact supporting schema.</p>
+<p>The final 134-entity combined hash similarly reads from <code>tmp_hash_m2_12_canonical_entity_source</code>, but WP1 does not define the exact nine-family union relation that supplies:</p>
+<pre><code class="language-text">entity_type
+entity_key
+row_hash
+</code></pre>
+<h3>Required correction</h3>
+<p>Every helper must either:</p>
+<ul>
+<li>receive an exact governed schema, grain, key, source, row count, construction expression, target types, and lifecycle; or</li>
+<li>be eliminated and replaced by an explicit governed expression in an existing relation.</li>
+</ul>
+<p>WP2 must not invent these relations while writing Program 222.</p>
+<h1>Blocker 3 — the source-edge certification adapter is not executable</h1>
+<p>The frozen design contains 19 distinct physical source edges, and Programs 221–223 must certify those exact edges. [export reference: filecite | turn159file5 | L402-L477]</p>
+<p>The R2 source-edge observation nevertheless contains several incompatible references.</p>
+<h2>Undefined or incorrect fields</h2>
+<p>It uses:</p>
+<pre><code class="language-text">edge_design.expected_accepted_source_hash
+</code></pre>
+<p>but the design adapter exposes:</p>
+<pre><code class="language-text">expected_source_hash
+</code></pre>
+<p>It also uses:</p>
+<pre><code class="language-text">edge_design.target_component_sequence
+</code></pre>
+<p>but neither the 19-edge catalog nor the design adapter contains that field.</p>
+<p>The physical expression references:</p>
+<pre><code class="language-text">edge_src.observed_source_hash
+edge_src.gate_status
+</code></pre>
+<p>but no <code>edge_src</code> relation or output schema is defined.</p>
+<p>The node-observation logic then requests:</p>
+<pre><code class="language-text">x.target_node_code
+x.certification_status
+</code></pre>
+<p>while the source-edge observation exposes neither <code>target_node_code</code> nor <code>certification_status</code>; it exposes <code>edge_status</code>.</p>
+<h2>Target-side hash is not separately certified</h2>
+<p>A valid edge must prove:</p>
+<pre><code class="language-text">accepted source hash
+=
+expected frozen hash
+=
+target registry’s recorded source hash
+</code></pre>
+<p>and must also prove the source gate passed.</p>
+<p>The current adapter exposes only one <code>observed_source_hash</code>. It does not separately retain or compare the target registry’s recorded source-field value.</p>
+<h2>Nineteen edges do not equal the component-edge requirement grain</h2>
+<p>The 13 component contracts require <strong>21 component-edge associations</strong>:</p>
+<pre><code class="language-text">Distinct physical edges                   19
+Component-edge requirements               21
+</code></pre>
+<p>The difference occurs because these two M2.2 edges apply to both the request and pricing components:</p>
+<pre><code class="language-text">M2_1_TO_M2_2
+M1_3_TO_M2_2_REQUEST_AUTHORITY
+</code></pre>
+<p>A single <code>required_by_component_sequence</code> value on each of 19 edge rows cannot represent both component 3 and component 4.</p>
+<h3>Required correction</h3>
+<p>Preserve 19 distinct physical edge observations, but separately govern the 21 component-edge requirements.</p>
+<p>A clean implementation is:</p>
+<pre><code class="language-text">tmp_cert_m2_12_source_edge_observation
+19 rows
+one row per distinct edge
+
+tmp_src_m2_12_component_edge_requirement
+21 rows
+one row per component_sequence × required edge_code
+</code></pre>
+<p>The 19-row observation should include:</p>
+<pre><code class="language-text">module1_run_id
+edge_sequence
+edge_code
+target_node_code
+expected_source_hash
+observed_accepted_source_hash
+observed_target_recorded_source_hash
+source_gate_status
+source_hash_mismatch_flag
+target_hash_mismatch_flag
+edge_status
+</code></pre>
+<p>Component certification should join through the 21-row bridge; node certification should use <code>target_node_code</code> and <code>edge_status</code>.</p>
+<h1>Blocker 4 — the twelve stage-boundary evidence cells are not node-specific</h1>
+<p>All 72 evidence cells are mandatory PASS and implementation may not select <code>PASS_NOT_APPLICABLE</code>. [export reference: filecite | turn159file5 | L527-L557]</p>
+<p>The current twelve <code>STAGE_BOUNDARY</code> observations all use the same global condition:</p>
+<pre><code class="language-sql">NOT EXISTS
+(
+    SELECT 1
+    FROM msbf_ctl.run_evidence e
+    WHERE e.run_id = ctx.module1_run_id
+      AND
+      (
+          e.evidence_code LIKE &#39;%BOUNDARY%&#39;
+          OR e.evidence_code LIKE &#39;%BLOCKING%&#39;
+      )
+      AND e.status &lt;&gt; &#39;PASS&#39;
+)
+</code></pre>
+<p>This does not prove a boundary result for the specific node.</p>
+<p>The node-specific observed-count expressions also use constructs such as:</p>
+<pre><code class="language-sql">replace(
+    &#39;M1_17_%BOUNDARY%|M1_17_%BLOCKING%&#39;,
+    &#39;|&#39;,
+    &#39;&#39;
+)
+</code></pre>
+<p>which produces one concatenated, unusable pattern. The expression then falls back to the same global wildcard predicates.</p>
+<p>Consequences:</p>
+<ul>
+<li>all 12 node cells use effectively identical status logic;</li>
+<li>the method can pass when the node-specific boundary evidence is absent;</li>
+<li>it does not prove the accepted detail-boundary result referenced by the applicability matrix;</li>
+<li>the source-evidence fingerprint is global rather than node-specific.</li>
+</ul>
+<h3>Required correction</h3>
+<p>Create twelve exact, non-vacuous methods. Each must:</p>
+<pre><code class="language-text">use the exact stage-specific evidence patterns separately
+require the governing source to exist
+evaluate only that certification node
+reconstruct the accepted physical boundary/detail outcome
+require zero findings
+produce a node-specific deterministic evidence fingerprint
+fail when required evidence is absent
+</code></pre>
+<p>A global absence of non-PASS rows cannot certify twelve distinct mandatory cells.</p>
+<h1>Governance blocker — the actual ZIP contradicts its path authority</h1>
+<p>R2 states:</p>
+<pre><code class="language-text">Current physical paths audited              32
+Path existence PASS                     32 / 32
+Current source-authority path mismatches      0
+Current (1) aliases used as authority         0
+</code></pre>
+<p>[export reference: filecite | turn168file0 | L249-L274]</p>
+<p>The actual uploaded ZIP contains:</p>
+<pre><code class="language-text">Exact declared canonical paths present       12
+Declared files present only as aliases        20
+Declared authority files absent                1
+</code></pre>
+<p>Examples include:</p>
+<pre><code class="language-text">Declared
+M2_12_SOURCE_TO_TARGET_MAPPING.csv
+
+Actual ZIP entry
+M2_12_SOURCE_TO_TARGET_MAPPING(2).csv
+</code></pre>
+<p>and:</p>
+<pre><code class="language-text">Declared
+M2_12_CONSOLIDATED_IMPLEMENTATION_SPECIFICATION.md
+
+Actual ZIP entry
+M2_12_CONSOLIDATED_IMPLEMENTATION_SPECIFICATION(2).md
+</code></pre>
+<p>The 20 aliased files are byte-for-byte identical to their declared authorities, so this is not a content corruption. However:</p>
+<pre><code class="language-text">M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R1.md
+</code></pre>
+<p>is entirely absent even though the R2 source authority and path audit say it is physically present.</p>
+<p>The current path audit therefore reflects a different workspace than the actual handoff ZIP.</p>
+<h1>Why 151/151 PASS did not detect these findings</h1>
+<p>The submitted R2 audit correctly checks the five findings carried from R1:</p>
+<pre><code class="language-text">accepted physical field existence
+main canonical source output
+G3 copied-contract identity
+reproduction-method fields
+workspace path inventory
+</code></pre>
+<p>and reports those controls as passing. [export reference: filecite | turn168file0 | L294-L322]</p>
+<p>It does not check:</p>
+<pre><code class="language-text">adapter fields used in row selectors
+adapter fields used in join predicates
+internal adapter-to-adapter dependencies
+undeclared intermediate temporary relations
+source accepted hash versus target-recorded hash
+19-edge versus 21 component-edge cardinality
+node-specific stage-boundary evidence
+actual ZIP-entry paths versus workspace paths
+</code></pre>
+<p>The 151/151 result remains valid for its defined checks, but it is not sufficient for WP1 signoff.</p>
+<h1>Required R3 correction</h1>
+<p>Return the following direction to the build chat:</p>
+<pre><code class="language-text">Do not begin Work Package 2 and do not generate Program 220 or any SQL.
+
+Produce one bounded correction:
+
+M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R3
+
+Preserve:
+
+- accepted M2.11 baseline;
+- all approved M2.12 business semantics and counts;
+- R1 nine-phase hash dependency order;
+- R1 owned-sequence recovery architecture;
+- R1 Program 221 transaction model;
+- R1 physical constraint/index catalog;
+- R1 consumption-view join plan;
+- R2 M2.3/M2.4 physical field corrections;
+- R2 G3 copied-contract hash correction;
+- R2 thirteen-component reproduction methods.
+
+Required R3 corrections:
+
+1. Complete every adapter schema at its exact grain and resolve every
+   alias.field reference appearing in source expressions, row selectors,
+   physical join predicates, adapter expressions, filters, and joins.
+
+2. Define or eliminate:
+   tmp_src_m2_12_component_observation_base
+   tmp_cert_m2_12_reproduction_observation_base
+   tmp_latest_m2_12_g3_seed
+   tmp_hash_m2_12_canonical_entity_source
+   pos
+   neg
+   edge_src
+
+3. Replace the current source-edge implementation with:
+   - one exact 19-row physical edge observation; and
+   - one exact 21-row component-edge requirement bridge or an equivalent
+     explicitly governed membership model.
+
+   Each edge must reconcile:
+   accepted source hash
+   target-recorded source hash
+   expected frozen hash
+   source gate status
+   final edge status
+
+4. Replace all twelve global/vacuous STAGE_BOUNDARY methods with exact
+   node-specific, source-present, non-vacuous physical methods.
+
+5. Reissue the actual package under clean canonical filenames.
+   Include the retained R1 correction record or formally remove it from
+   the current physical-path inventory and reference its prior location.
+
+Add fail-closed controls requiring:
+
+canonical mappings with unresolved selector/join fields        0
+internal adapter references to undeclared outputs               0
+undeclared helper temporary relations                           0
+source edges lacking source/target/gate reconciliation          0
+component-edge requirements unresolved                          0
+stage-boundary cells using global or vacuous logic              0
+actual package-entry path mismatches                            0
+frozen business semantic changes                               0
+SQL files generated                                             0
+PostgreSQL executions                                           0
+
+Stop after R3 and wait for narrow re-review.
+
+WP2 remains unauthorized.
+</code></pre>
+<h1>Governing disposition</h1>
+<pre><code class="language-text">M2.12 WP1 R2                               HOLD
+M2.12 WP2                                  NOT AUTHORIZED
+Program 220                                NOT AUTHORIZED
+Programs 221–227                           NOT AUTHORIZED
+Recovery SQL                               NOT AUTHORIZED
+PostgreSQL                                 NOT AUTHORIZED
+Implementation packaging                   NOT AUTHORIZED
+Module 3                                   NOT AUTHORIZED
+Production                                 NOT AUTHORIZED
+</code></pre>
+<h2>Audit artifacts</h2>
+<ul>
+<li>Full independent R2 audit report (historical reference: <code>sandbox:[session]/M2_12_WP1_R2_INDEPENDENT_AUDIT_REPORT_20260807.md</code>; referenced bytes not established here)</li>
+<li>Finding register (historical reference: <code>sandbox:[session]/M2_12_WP1_R2_INDEPENDENT_AUDIT_FINDINGS_20260807.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable audit summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R2_INDEPENDENT_AUDIT_SUMMARY_20260807.json</code>; referenced bytes not established here)</li>
+<li>Ready-to-paste R3 correction prompt (historical reference: <code>sandbox:[session]/M2_12_WP1_R2_IMPLEMENTATION_CONTROL_CORRECTION_R3_PROMPT_20260807.md</code>; referenced bytes not established here)</li>
+<li>161 unresolved adapter-key references (historical reference: <code>sandbox:[session]/M2_12_WP1_R2_UNRESOLVED_ADAPTER_KEY_REFERENCES_20260807.csv</code>; referenced bytes not established here)</li>
+<li>Undeclared adapter-field summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R2_UNDECLARED_ADAPTER_FIELD_SUMMARY_20260807.csv</code>; referenced bytes not established here)</li>
+<li>Internal adapter dependency audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R2_INTERNAL_ADAPTER_DEPENDENCY_AUDIT_20260807.csv</code>; referenced bytes not established here)</li>
+<li>Source-edge adapter audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R2_SOURCE_EDGE_ADAPTER_AUDIT_20260807.csv</code>; referenced bytes not established here)</li>
+<li>Twenty-one component-edge requirements (historical reference: <code>sandbox:[session]/M2_12_WP1_R2_COMPONENT_EDGE_REQUIREMENTS_20260807.csv</code>; referenced bytes not established here)</li>
+<li>Stage-boundary evidence audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R2_STAGE_BOUNDARY_EVIDENCE_AUDIT_20260807.csv</code>; referenced bytes not established here)</li>
+<li>Actual physical-authority path audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R2_PHYSICAL_AUTHORITY_PATH_AUDIT_20260807.csv</code>; referenced bytes not established here)</li>
+<li>Complete independent audit package (historical reference: <code>sandbox:[session]/M2_12_WP1_R2_INDEPENDENT_AUDIT_PACKAGE_20260807.zip</code>; referenced bytes not established here)</li>
+<li>Audit-package SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_WP1_R2_INDEPENDENT_AUDIT_PACKAGE_20260807.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<pre><code class="language-text">Independent audit package SHA-256
+135a0f28767a23a4fec30c4c03f08a02ebb7edb80b3ba7532215217dc1df5c45
+</code></pre>
+</div></article><article id="m-55b47c95-9a6c-4fdc-99ca-d9424179764e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00269 · 2026-08-07T20:38:05.645000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260808-003745).md; M2_12_Build_WP1_R3(1).zip</p><div class="bubble"><p>Audit M2_12_Build_WP1_R3. Sign off or escalate blockers/issues:    </p>
+</div></article><article id="m-73d8bf26-367b-4bda-a6e5-970af2b48e56" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00270 · 2026-08-07T21:13:35.590665-04:00 · active path</p><div class="bubble"><h1>M2.12 WP1 R3 audit determination</h1>
+<p><strong>HOLD — Work Package 1 R3 is not approved, and Work Package 2 is not authorized.</strong></p>
+<p>R3 materially improves the implementation-control authority and successfully closes the R2 findings concerning the source-edge model, component-edge bridge, node-specific stage boundaries, helper registration, and physical package paths. The submission correctly retained the review hold, generated no SQL, performed no PostgreSQL execution, and did not begin WP2. [export reference: filecite | turn168file0 | L13-L30]</p>
+<p>Independent cross-expression and hash-construction review nevertheless found <strong>four remaining implementation blockers</strong>.</p>
+<pre><code class="language-text">Accepted M2.11 baseline                    PASS / LOCKED
+Frozen M2.12 business design               RETAINED
+
+R3 source-edge architecture                PASS
+R3 component-edge bridge                   PASS
+R3 stage-boundary methods                  PASS
+R3 physical package paths                  PASS
+Prior R1/R2 controls                       PASS / RETAINED
+
+Helper and adapter schema closure           BLOCKER
+Component expression and join correctness   BLOCKER
+Actual internal dependency closure          BLOCKER
+Registry hash persistence sequence          BLOCKER
+
+WP1 R3 approval                             HOLD
+WP2 authorization                           NO
+Program 220                                 NOT AUTHORIZED
+PostgreSQL execution                        NOT AUTHORIZED
+</code></pre>
+<h2>Package validation</h2>
+<p>The uploaded file is a transport wrapper containing the canonical review package. The inner authority independently reconciles as:</p>
+<pre><code class="language-text">M2_12_Build_WP1_R3.zip
+
+Bytes
+363,246
+
+SHA-256
+936118b6d39f67ff0b68d4c5599de482148b85cc0763a0733482f89320a8e7bf
+
+External sidecar
+PASS
+
+ZIP entries
+54
+
+ZIP CRC
+PASS
+</code></pre>
+<p>This matches the submitted R3 package identity. [export reference: filecite | turn168file0 | L238-L260] The outer wrapper does not create an authority problem.</p>
+<h1>What passed</h1>
+<h2>Source-edge and component-edge architecture — PASS</h2>
+<p>R3 now correctly separates:</p>
+<pre><code class="language-text">Distinct physical source edges             19
+Component-edge requirements                 21
+</code></pre>
+<p>and records the expected source hash, accepted source hash, target-recorded source hash, gate status, mismatch flags, and final edge status. The two M2.2 edges can now apply to both M2.2 component contracts. [export reference: filecite | turn168file0 | L100-L151]</p>
+<p>This finding is closed and should not be reopened.</p>
+<h2>Node-specific stage-boundary architecture — PASS</h2>
+<p>R3 replaces the former global wildcard approach with 12 node-specific methods, accepted report identities, explicit required evidence codes, source-presence requirements, zero-row detail-report authority, deterministic fingerprints, and fail-closed behavior. [export reference: filecite | turn168file0 | L155-L195]</p>
+<p>I also independently reconciled the referenced accepted report files, byte sizes, SHA-256 values, zero-row expectations, and retained headers against the accepted M2.11 repository.</p>
+<h2>Physical package paths — PASS</h2>
+<p>The inner canonical ZIP contains 54 clean filenames, no attachment suffixes, no missing declared authority, no case-insensitive collisions, and both the retained R1 and R2 correction records. [export reference: filecite | turn168file0 | L199-L216]</p>
+<p>The prior physical-path blocker is closed.</p>
+<h2>Prior R1/R2 controls — PASS</h2>
+<p>The following remain sound and should be preserved:</p>
+<pre><code class="language-text">Type/domain definitions                   1,172 / 1,172
+Hash dependency plan                      nine phases
+Owned identity sequences                  3 / 3 governed
+Program 221 transaction model             ordinary transaction;
+                                          persistent-state read-only
+Physical constraints/indexes              81
+Consumption-view joins                    23 across seven views
+Accepted physical fields                  648 / 648
+Component reproduction methods            13 / 13
+G3 copied-contract identity               PASS
+</code></pre>
+<p>[export reference: filecite | turn168file0 | L218-L236]</p>
+<h1>Remaining blockers</h1>
+<h2>1. Helper business keys and adapter output schemas still do not close</h2>
+<p>R3 reports:</p>
+<pre><code class="language-text">Canonical mappings                         327 / 327 PASS
+Unique adapter output schemas              612 / 612 PASS
+Unresolved selector/join references                  0
+</code></pre>
+<p>[export reference: filecite | turn168file0 | L34-L60]</p>
+<p>However, the schema audit confirms only that the <strong>declared outputs</strong> exist. It does not prove that each helper’s declared business key is part of its output schema or that every internal expression references a declared output.</p>
+<h3>Six helper keys are absent from their schemas</h3>
+<pre><code class="language-text">tmp_hash_m2_12_base_six
+    missing module1_run_id
+
+tmp_hash_m2_12_pre_registry
+    missing module1_run_id
+
+tmp_hash_m2_12_registry
+    missing module1_run_id
+
+tmp_hash_m2_12_contract
+    missing module1_run_id
+
+tmp_hash_m2_12_combined
+    missing module1_run_id
+
+tmp_registry_m2_12_g3_seed
+    missing module1_run_id
+</code></pre>
+<p>Each helper is described as being keyed by <code>module1_run_id</code>, but that field is not among its declared outputs.</p>
+<p>This is already executable in one place: 55 <code>tmp_latest_m2_12_g3_typed</code> rows require:</p>
+<pre><code class="language-text">ls.module1_run_id = h.module1_run_id
+</code></pre>
+<p>but <code>tmp_hash_m2_12_base_six h</code> does not expose <code>module1_run_id</code>.</p>
+<h3>Eight undeclared fields are referenced 110 times</h3>
+<pre><code class="language-text">h.module1_run_id                         55
+
+rb.expected_latest_rows                 13
+rb.expected_archive_rows                13
+rb.expected_latest_set_hash             13
+rb.expected_archive_set_hash            13
+
+sbm.accepted_detail_actual_rows          1
+sbm.report_exists_status                 1
+sbm.accepted_detail_report_sha256        1
+                                        ---
+Total                                  110
+</code></pre>
+<p>The four <code>rb.expected_*</code> fields are used to determine reproduction PASS/FAIL but are absent from <code>tmp_cert_m2_12_reproduction_observation_base</code>.</p>
+<p>The three <code>sbm</code> report fields physically exist in the 12-row method catalog, but R3 did not include them in the governed <code>tmp_src_m2_12_stage_boundary_method</code> adapter output schema.</p>
+<p>WP2 would have to silently add fields or rewrite expressions. Neither is permitted.</p>
+<h2>2. Twenty-six component expressions remain physically incorrect</h2>
+<h3>Thirteen stale certification joins</h3>
+<p>All 13 component <code>certification_status</code> outputs declare:</p>
+<pre><code class="language-text">physical source
+tmp_src_m2_12_component_observation_base cob
+</code></pre>
+<p>but their join predicates still reference the prior accepted registry aliases:</p>
+<pre><code class="language-text">r01.module1_run_id = ctx.module1_run_id
+...
+r13.module1_run_id = ctx.module1_run_id
+</code></pre>
+<p>Those predicates do not join <code>cob</code> to the component design row.</p>
+<p>The exact join must use the governed helper keys, structurally:</p>
+<pre><code class="language-text">cob.module1_run_id       = ctx.module1_run_id
+cob.component_sequence   = cd.component_sequence
+cob.contract_version     = cd.contract_version
+</code></pre>
+<p>with component code included if retained in the final key.</p>
+<h3>Thirteen invalid source-registry-hash expressions</h3>
+<p>Each component-reproduction base row defines:</p>
+<pre><code class="language-text">physical source alias
+co = accepted physical component registry
+</code></pre>
+<p>but then requests:</p>
+<pre><code class="language-text">co.observed_registry_row_hash
+</code></pre>
+<p>The accepted physical registries expose:</p>
+<pre><code class="language-text">row_hash
+</code></pre>
+<p>not <code>observed_registry_row_hash</code>.</p>
+<p>The governed physical expression should therefore use the exact accepted registry field:</p>
+<pre><code class="language-text">co.row_hash::text
+</code></pre>
+<p>Alternatively, R3 could explicitly add the component-observation helper as another source, but the present source declaration does not do that.</p>
+<h1>3. The 89-row dependency authority does not reflect actual expression use</h1>
+<p>R3 reports 89/89 dependency rows passing because every <strong>manually declared</strong> dependency references declared outputs. [export reference: filecite | turn168file0 | L62-L96]</p>
+<p>It does not derive dependencies from the actual adapter expressions and predicates.</p>
+<p>At least seven helpers use <code>ctx.module1_run_id</code> while omitting <code>tmp_src_m2_12_run_context</code> from their dependency authority:</p>
+<pre><code class="language-text">tmp_hash_m2_12_base_six
+tmp_hash_m2_12_pre_registry
+tmp_hash_m2_12_registry
+tmp_hash_m2_12_contract
+tmp_hash_m2_12_combined
+tmp_hash_m2_12_canonical_entity_source
+tmp_registry_m2_12_g3_seed
+</code></pre>
+<p>This matters because WP2 is explicitly prohibited from creating undeclared helper dependencies.</p>
+<p>The dependency compiler must parse all of:</p>
+<pre><code class="language-text">physical_expression
+row_selector_or_filter
+join_predicate
+adapter_row_selector
+physical_filter
+helper construction expression
+canonical UNION projection
+</code></pre>
+<p>and prove that every referenced temporary relation and field has an exact upstream authority.</p>
+<h1>4. Registry, contract, and combined hashes cannot be persisted under the current model</h1>
+<p>This is the most material remaining blocker.</p>
+<p>The R3 nine-phase plan is directionally correct:</p>
+<pre><code class="language-text">Phase 6    registry row hash and registry set hash
+Phase 7    contract set hash
+Phase 8    combined set hash
+Phase 9    persistent reconstruction
+</code></pre>
+<p>The issue is the physical implementation boundary.</p>
+<h2>The registry requires phase-7 and phase-8 values at insert</h2>
+<p>The registry fields:</p>
+<pre><code class="language-text">registry_set_hash
+contract_set_hash
+combined_set_hash
+row_hash
+</code></pre>
+<p>are all declared <code>NOT NULL</code>.</p>
+<p>But:</p>
+<pre><code class="language-text">contract_set_hash    is created in Phase 7
+combined_set_hash    is created in Phase 8
+</code></pre>
+<p>while Phase 6 is described as producing the registry row.</p>
+<h2>Construction helpers read the persistent registry too early</h2>
+<p>The current authorities state:</p>
+<pre><code class="language-text">tmp_hash_m2_12_registry
+reads msbf_ctl.m2_12_g3_bundle_registry
+
+tmp_hash_m2_12_contract
+reads msbf_ctl.m2_12_g3_bundle_registry
+
+REGISTRY family in the 134-row canonical source
+reads msbf_ctl.m2_12_g3_bundle_registry
+</code></pre>
+<p>This means the persistent registry must exist before the contract and combined hashes can be calculated.</p>
+<p>However, Program 222 permits:</p>
+<pre><code class="language-text">persistent inserts
+lifecycle update
+</code></pre>
+<p>and explicitly prohibits:</p>
+<pre><code class="language-text">persistent updates to canonical business/hash fields
+</code></pre>
+<p>Therefore, the current authority offers no valid sequence:</p>
+<ul>
+<li>the registry cannot be inserted in Phase 6 because its Phase-7 and Phase-8 fields are <code>NOT NULL</code>;</li>
+<li>it cannot be inserted with placeholders and updated later because canonical hash updates are prohibited;</li>
+<li>it cannot be delayed until Phase 8 because the current Phase-6/7/8 helpers read the persistent registry.</li>
+</ul>
+<h3>Required model</h3>
+<p>The high-level nine-phase design can remain intact, but WP1 must define a staged construction:</p>
+<pre><code class="language-text">staged registry stable/pre-hash row
+→ stable registry row_hash
+→ staged registry_set_hash
+→ staged contract_set_hash
+→ staged 134-entity union using registry row_hash
+→ staged combined_set_hash
+→ finalized target-typed registry row
+→ one persistent registry INSERT
+→ phase-9 reconstruction from persistent state
+</code></pre>
+<p>No persistent canonical hash update is needed or authorized.</p>
+<h1>Why 3,393/3,393 PASS did not identify these issues</h1>
+<p>The R3 static audit correctly checks:</p>
+<pre><code class="language-text">declared adapter output rows
+declared dependency rows
+helper relation registration
+catalog counts
+R3 source-edge records
+R3 stage-boundary records
+package paths
+no-SQL boundary
+</code></pre>
+<p>It does not test:</p>
+<pre><code class="language-text">helper business key contained in helper schema
+every internal alias.field reference
+join predicate consistent with declared physical source
+persistent registry field existence for every adapter expression
+actual dependencies inferred from expressions
+hash phase versus NOT NULL insert timing
+construction helper use of staged versus persistent registry
+</code></pre>
+<p>The 3,393/3,393 result is valid for its defined controls, but it does not support WP1 approval. The package correctly kept WP1 on hold pending this independent review. [export reference: filecite | turn168file0 | L339-L360]</p>
+<h1>Direction to return to the build chat</h1>
+<pre><code class="language-text">Do not begin Work Package 2 and do not generate Program 220 or any SQL.
+
+Produce one bounded correction:
+
+M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R4
+
+Preserve:
+
+- accepted M2.11 baseline;
+- every frozen M2.12 business semantic and count;
+- R1 nine-phase business hash order and all approved hash preimages;
+- R1 owned-sequence recovery architecture;
+- R1 Program 221 transaction model;
+- R1 constraint/index and consumption-view join authorities;
+- R2 physical-field, copied-contract, and reproduction corrections;
+- R3 19-edge physical observation;
+- R3 21-row component-edge bridge;
+- R3 twelve node-specific stage-boundary methods;
+- R3 clean canonical package paths and source identities.
+
+Required corrections:
+
+1. Resolve all six helper business-key/schema discrepancies.
+
+   Every run-scoped helper must expose module1_run_id, or it must be
+   explicitly governed as a keyless scalar and consumed only through an
+   explicit CROSS JOIN. Do not mix the two models.
+
+2. Resolve all 110 references to undeclared helper fields:
+
+   h.module1_run_id
+   rb.expected_latest_rows
+   rb.expected_archive_rows
+   rb.expected_latest_set_hash
+   rb.expected_archive_set_hash
+   sbm.accepted_detail_actual_rows
+   sbm.report_exists_status
+   sbm.accepted_detail_report_sha256
+
+3. Correct all thirteen component certification join predicates to use
+   the exact cob/cd/ctx business keys.
+
+4. Correct all thirteen source_registry_row_hash expressions to use the
+   accepted physical registry row_hash or an explicitly governed helper
+   dependency.
+
+5. Rebuild the internal dependency authority from every actual
+   alias.field and temporary-relation reference in all expressions,
+   selectors, filters, joins, helper constructions, and canonical UNION
+   projections.
+
+6. Replace the persistent-registry-dependent hash construction with an
+   exact staged registry model:
+
+   registry pre-hash row
+   → registry row_hash
+   → registry_set_hash
+   → contract_set_hash
+   → staged 134-row canonical source
+   → combined_set_hash
+   → final target-typed registry row
+   → one persistent registry insert
+   → persistent phase-9 reconstruction
+
+   Persistent registry/latest/archive tables may be used for the final
+   reconstruction, but the contract and combined hashes may not depend
+   on a persistent registry row that does not yet contain those hashes.
+
+7. Update every affected mapping, helper schema, dependency record,
+   hash specification, phase plan, program responsibility, transaction
+   boundary, invariant, audit, review, and source-authority record.
+
+Add fail-closed controls requiring:
+
+helper business-key fields absent from schemas                0
+adapter expressions referencing undeclared helper fields      0
+stale component certification join predicates                 0
+invalid accepted-registry row-hash expressions                0
+actual expression dependencies absent                         0
+hash helpers reading persistent registry before final insert  0
+registry NOT NULL hashes unavailable at insertion             0
+persistent canonical business/hash updates authorized         0
+frozen business semantic changes                              0
+SQL files generated                                            0
+PostgreSQL executions                                          0
+
+Stop after R4 and wait for narrow re-review.
+
+WP2 remains unauthorized.
+</code></pre>
+<h1>Governing disposition</h1>
+<pre><code class="language-text">M2.12 WP1 R3                               HOLD
+M2.12 WP2                                  NOT AUTHORIZED
+Program 220                                NOT AUTHORIZED
+Programs 221–227                           NOT AUTHORIZED
+Recovery SQL                               NOT AUTHORIZED
+PostgreSQL                                 NOT AUTHORIZED
+Implementation packaging                   NOT AUTHORIZED
+Module 3                                   NOT AUTHORIZED
+Production                                 NOT AUTHORIZED
+</code></pre>
+<h2>Independent audit artifacts</h2>
+<ul>
+<li>Full R3 independent audit report (historical reference: <code>sandbox:[session]/M2_12_WP1_R3_INDEPENDENT_AUDIT_REPORT_20260808.md</code>; referenced bytes not established here)</li>
+<li>Finding register (historical reference: <code>sandbox:[session]/M2_12_WP1_R3_INDEPENDENT_AUDIT_FINDINGS_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable audit summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R3_INDEPENDENT_AUDIT_SUMMARY_20260808.json</code>; referenced bytes not established here)</li>
+<li>Ready-to-paste R4 correction prompt (historical reference: <code>sandbox:[session]/M2_12_WP1_R3_IMPLEMENTATION_CONTROL_CORRECTION_R4_PROMPT_20260808.md</code>; referenced bytes not established here)</li>
+<li>Six helper-key/schema failures (historical reference: <code>sandbox:[session]/M2_12_WP1_R3_HELPER_KEY_SCHEMA_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>All 110 undeclared adapter references (historical reference: <code>sandbox:[session]/M2_12_WP1_R3_UNDECLARED_ADAPTER_FIELD_REFERENCES_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Eight-field reference summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R3_UNDECLARED_ADAPTER_FIELD_SUMMARY_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Thirteen stale component joins (historical reference: <code>sandbox:[session]/M2_12_WP1_R3_COMPONENT_CERTIFICATION_JOIN_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Thirteen invalid registry-row-hash expressions (historical reference: <code>sandbox:[session]/M2_12_WP1_R3_SOURCE_REGISTRY_ROW_HASH_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Actual dependency-gap audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R3_ACTUAL_DEPENDENCY_GAP_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Hash persistence-boundary audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R3_HASH_PERSISTENCE_BOUNDARY_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Complete independent audit package (historical reference: <code>sandbox:[session]/M2_12_WP1_R3_INDEPENDENT_AUDIT_PACKAGE_20260808.zip</code>; referenced bytes not established here)</li>
+<li>Audit-package SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_WP1_R3_INDEPENDENT_AUDIT_PACKAGE_20260808.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<pre><code class="language-text">Independent audit package SHA-256
+6564adff80a7e3c3062015738bc818d166a3033baa64541e2bec40e0d146d836
+</code></pre>
+</div></article><article id="m-267d54e2-43cb-4dac-ac7e-560fb557a237" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00271 · 2026-08-07T22:16:37.323000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260808-021616).md; M2_12_Build_WP1_R4(1).zip</p><div class="bubble"><p>Audit M2_12_Build_WP1_R4. Sign off or escalate blockers/issues:      </p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

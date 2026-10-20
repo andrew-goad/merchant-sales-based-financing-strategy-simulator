@@ -1,0 +1,1403 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 34 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 34</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-33.html">Previous part</a><a href="part-35.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-5756448f-56e6-49c3-8c05-12cc94d98677" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00747 · 2026-09-02T15:54:20.444480-04:00 · active path</p><div class="bubble"><p>[export reference: message_reaction | 👍]Yes. With the authority boundary now clear, I would make <strong>two targeted P03 corrections</strong>.</p>
+<p>First, the <strong>Funding date</strong> column should no longer depend on <code>DimAccountAdvance</code> or any predecessor booking object. Merchant 738 proves why: the predecessor path has no account record, but the corrected R1 successor decision authorizes the requested structure. [export reference: filecite | turn135file0 | L3-L3] The definition should instead be:</p>
+<blockquote>
+<p><strong>Funding date = the successor R1 funding/activation date for the selected application-scenario, when that application-scenario has an R1 authorized/funded lifecycle.</strong></p>
+</blockquote>
+<p>In other words, the date needs to come from the <strong>R1 successor operational/activation chain</strong>, not from the pre-remediation <code>DimAccountAdvance</code>.</p>
+<p>Given the R1 objects in this model, I would look first at:</p>
+<p><code>R1FactOperationalSetup</code><br>then <code>R1FactServicingExecution</code></p>
+<p>for the actual successor funding/activation date field. I would <strong>not manufacture the date from the decision date</strong> and I would not use the legacy booking date as a fallback.</p>
+<p>So before I give you the final Funding Date DAX, click through those R1 tables in the Data pane and tell me the date-related field names available in <code>R1FactOperationalSetup</code>—or send a screenshot of its fields. I expect there is an activation/funding/setup-effective date we can bind to <code>ApplicationScenarioKey</code>.</p>
+<p>The eventual measure should be structurally like this:</p>
+<pre><code class="language-DAX">R26 P03 Funding Date =
+VAR _Authorized =
+    [R26 P03 Decision Class] = &quot;AUTHORIZED&quot;
+
+VAR _FundingDate =
+    CALCULATE (
+        SELECTEDVALUE (
+            &#39;R1FactOperationalSetup&#39;[&lt;successor funding/activation date&gt;]
+        )
+    )
+
+RETURN
+    IF (
+        _Authorized,
+        _FundingDate,
+        BLANK ()
+    )
+</code></pre>
+<p>The important change is <strong>where <code>_FundingDate</code> comes from</strong>.</p>
+<p>That preserves your desired business rule:</p>
+<p><strong>AUTHORIZED → eligible to display funding date</strong><br><strong>REVIEW / DECLINED → blank</strong></p>
+<p>while making the physical date itself successor-owned.</p>
+<p>Second, the <strong>decision-card color should be completely detached from the old M1/manual-review logic</strong>. Merchant 738 is the perfect proof case. Its corrected R1 outcome is <code>APPROVE_AS_REQUESTED_AUTHORIZED</code>, no human review, <code>ALL_MANDATORY_GATES_PASS</code>, and <code>SUPPORTED_STRUCTURE</code>. [export reference: filecite | turn135file0 | L3-L3] Therefore its card must be green regardless of the predecessor <code>manual_review_recommended_flag</code>.</p>
+<p>Use the corrected final decision class as the sole color authority:</p>
+<pre><code class="language-DAX">R26 P03 Decision Tile Background =
+SWITCH (
+    [R26 P03 Decision Class],
+    &quot;AUTHORIZED&quot;, &quot;#E8F5E9&quot;,
+    &quot;REVIEW&quot;,     &quot;#FFF4D6&quot;,
+    &quot;DECLINED&quot;,   &quot;#FDECEC&quot;,
+    &quot;#F3F4F6&quot;
+)
+</code></pre>
+<p>And for the decision text:</p>
+<pre><code class="language-DAX">R26 P03 Decision Tile Value Color =
+SWITCH (
+    [R26 P03 Decision Class],
+    &quot;AUTHORIZED&quot;, &quot;#1B5E20&quot;,
+    &quot;REVIEW&quot;,     &quot;#8A5A00&quot;,
+    &quot;DECLINED&quot;,   &quot;#B71C1C&quot;,
+    &quot;#374151&quot;
+)
+</code></pre>
+<p>If you already have established green/amber/red shades elsewhere on P03/P04, use those exact colors instead; the semantic rule is what matters.</p>
+<p>Then bind <strong>both</strong> the upper Decision Class card and lower Decision Label card to those same two measures:</p>
+<p><strong>Background → fx → Field value → <code>R26 P03 Decision Tile Background</code></strong></p>
+<p><strong>Callout/value color → fx → Field value → <code>R26 P03 Decision Tile Value Color</code></strong></p>
+<p>Do not let either visual use <code>manual_review_recommended_flag</code>, <code>verification_disposition</code>, old <code>FactFinalDecision</code>, or funding presence to determine color.</p>
+<p>That produces the correct version-aware behavior:</p>
+<p><strong>738 / Baseline:</strong> green → <code>AUTHORIZED / Approved as requested</code><br><strong>738 / Recession Energy:</strong> red → <code>DECLINED / Evidence decline</code> because R1 explicitly gives <code>DECLINE_INSUFFICIENT_EVIDENCE</code>. [export reference: filecite | turn135file0 | L4-L4]</p>
+<p>So I would fix the <strong>color logic now</strong>, and then identify the exact successor date field in <code>R1FactOperationalSetup</code> before touching Funding Date. That avoids another legacy-source fallback.</p>
+</div></article><article id="m-3d7f6aa5-b3f1-4cf4-9088-8f73f82d400a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00748 · 2026-09-02T15:58:16.435000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 83f29a44-cce7-4e47-adc9-fc39175e5017.png; 8e55808d-1430-4d01-baa9-e7c4c4faea9e.png</p><div class="bubble"><p>as requested, but didn&#39;t the handoff provide a complete mapping...</p>
+</div></article><article id="m-e632268b-0524-4989-8738-f32b072cf7b3" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00749 · 2026-09-02T15:59:36.032479-04:00 · active path</p><div class="bubble"><p>Yes. The handoff/repository material did provide much more of this mapping than I was using a moment ago.</p>
+<p>The important pieces we can now ground are:</p>
+<ul>
+<li><code>R1FactOperationalSetup</code> is a successor R17-derived object with <strong>130 rows / 33 fields</strong>, keyed to <code>R1DimApplicationScenario</code> by <code>ApplicationScenarioKey</code>. Its mapped fields explicitly include <code>setup_authorized_flag</code>, <code>setup_review_required_flag</code>, <code>no_setup_required_flag</code>, <strong><code>operational_activation_date</code></strong>, and <code>next_reassessment_date</code>. [export reference: filecite | turn136file2 | L51-L52]</li>
+<li><code>R1FactServicingExecution</code> is likewise part of the same successor operational chain and relates many-to-one to <code>R1DimApplicationScenario</code> through <code>ApplicationScenarioKey</code>. [export reference: filecite | turn136file7 | L228-L247]</li>
+<li>The R26 handoff specifically instructed us to preserve the unchanged R1 operational facts from <code>R1FactIntervention</code> through <code>R1FactPortfolioPerformance</code>; the R26 changes were concentrated elsewhere, especially monitoring/M2.11–M2.12. [export reference: filecite | turn136file0 | L11-L15]</li>
+</ul>
+<p>So for <strong>P03 Funding date</strong>, we do not need to improvise. The mapped successor field that most naturally corresponds to the date the authorized structure entered the operational lifecycle is:</p>
+<p><code>R1FactOperationalSetup[operational_activation_date]</code></p>
+<p>That is materially better than using predecessor <code>DimAccountAdvance</code>.</p>
+<p>And because <code>R1FactOperationalSetup</code> has only <strong>130 rows</strong>, it is clearly not a generic 1,500-row decision table; it is a downstream population representing paths that reached operational setup. [export reference: filecite | turn136file5 | L100-L126] That lines up with what we need for a funding/activation date.</p>
+<p>So I would now define the P03 field semantically as:</p>
+<blockquote>
+<p><strong>Funding date = <code>operational_activation_date</code> from the R1 operational-setup record for the selected ApplicationScenarioKey, displayed only when the R1 final decision class is AUTHORIZED.</strong></p>
+</blockquote>
+<p>That gives us the corrected version-2 chain:</p>
+<p><code>R1FactFinalDecision</code> → whether the path is AUTHORIZED<br><code>R1FactOperationalSetup</code> → when that authorized path actually activated</p>
+<p>For 738 / Baseline, if an R1 operational-setup row exists, we should expect that activation date to populate even though predecessor <code>DimAccountAdvance</code> has no record.</p>
+<p>And on the color side, the same mapping principle applies: <strong>decision-card color should follow the R1 final-decision class, not predecessor review/funding state</strong>. The R1 row for 738 / Baseline explicitly says <code>APPROVE_AS_REQUESTED_AUTHORIZED</code>, <code>human_review_required_flag = false</code>, and all mandatory gates pass. [export reference: filecite | turn135file0 | L3-L3]</p>
+<p>So yes: the handoff already gave us enough structure to stop hunting ad hoc across the model. From here I would treat the successor mapping as the authority map and update P03 against that systematically.</p>
+</div></article><article id="m-2f2f0fa7-ce18-4938-84f6-866c5830eb5a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00750 · 2026-09-02T16:02:58.058000-04:00 · alternate branch</p><div class="bubble"><p>thank you.  please re-provide complete P03 instructions using the successor mapping as the authority. please instruct any DAX updates as necessary vs what you previously provided for P03. This has been an entirely inefficient P03 update so far. This is also the second time you&#39;ve failed to utilize the successor mapping. This also happened after the first handoff from the remediation/correction chat. The handoffs were provided so that you would have everything needed for a successful build and you have repeatedly ignored that and caused expensive circling. Let&#39;s make sure we do this right and do not make mistakes or choose inefficient paths.</p>
+</div></article><article id="m-9579c3e8-c0ba-4025-8a15-e3aeb148c040" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00751 · 2026-09-02T16:09:12.784920-04:00 · alternate branch</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-301bff71-1287-4822-9e4e-e75680cba887" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00752 · 2026-09-02T16:34:30.074000-04:00 · active path</p><div class="bubble"><p>thank you.  please re-provide complete P03 instructions using the successor mapping as the authority. please instruct any DAX updates as necessary vs what you previously provided for P03. This has been an entirely inefficient P03 update so far. This is also the second time you&#39;ve failed to utilize the successor mapping. This also happened after the first handoff from the remediation/correction chat. The handoffs were provided so that you would have everything needed for a successful build and you have repeatedly ignored that and caused expensive circling. Let&#39;s make sure we do this right and do not make mistakes or choose inefficient paths.</p>
+</div></article><article id="m-5551d59b-7f23-448a-b2b5-91b709e7cdf2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00753 · 2026-09-02T16:35:38.154196-04:00 · active path</p><div class="bubble"><p>You are right to call out the inefficiency. The successor handoff explicitly told us to use the supplied inventories and source-owned chain rather than rediscovering or mixing predecessor objects, and I failed to enforce that boundary consistently on P03. The corrected approach below starts from the successor mapping and treats the old objects only as immutable request/profile context where the R1 successor does not replace them. The governing chain is explicitly <strong>request → candidate search → selected structure → final decision → funding/activation → monitoring/intervention → operational setup/servicing → account certification</strong>, and DAX is allowed to present/aggregate those governed facts but not reconstruct the strategy. [export reference: filecite | turn137file0 | L82-L103]</p>
+<p>The most important authority rule for P03 is now:</p>
+<p><strong>R1DimApplicationScenario = decision-time request/profile context; R1FactFinalDecision = corrected final decision + proposed structure + final explanations; R1FactOperationalSetup = successor activation; R1FactDailyMonitoring = lifecycle; R1FactIntervention/R1FactServicingExecution = servicing.</strong> The successor data dictionary explicitly assigns those purposes and grains. [export reference: filecite | turn137file8 | L444-L468]</p>
+<h2>Complete P03 successor-authority implementation</h2>
+<ol>
+<li><p><strong>First, freeze the authority map before touching visuals.</strong></p>
+<p>Use these sources and <strong>do not fall back to their predecessor equivalents</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>P03 content</th>
+<th>Authority</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Merchant/application identity</td>
+<td>existing immutable core identity where needed</td>
+</tr>
+<tr>
+<td>Scenario, industry, size, relationship, channel</td>
+<td><code>R1DimApplicationScenario</code></td>
+</tr>
+<tr>
+<td>Requested economics</td>
+<td><code>R1DimApplicationScenario</code></td>
+</tr>
+<tr>
+<td>Decision class/label</td>
+<td><code>R1FactFinalDecision[governed_final_outcome_code]</code></td>
+</tr>
+<tr>
+<td>Proposed structure</td>
+<td><code>R1FactFinalDecision[governed_selected_*]</code></td>
+</tr>
+<tr>
+<td>Evidence/assessment context</td>
+<td>R1 successor measures / R1 objects only</td>
+</tr>
+<tr>
+<td>Final recommendation</td>
+<td><code>R1FactFinalDecision[decision_why_text]</code> plus source-owned search summary</td>
+</tr>
+<tr>
+<td>Funding date</td>
+<td><code>R1FactOperationalSetup[operational_activation_date]</code></td>
+</tr>
+<tr>
+<td>Account performance</td>
+<td><code>R1FactDailyMonitoring</code></td>
+</tr>
+<tr>
+<td>Monitoring journey</td>
+<td><code>R1FactDailyMonitoring</code></td>
+</tr>
+<tr>
+<td>Servicing recommendation</td>
+<td><code>R1FactIntervention</code></td>
+</tr>
+<tr>
+<td>Operational setup</td>
+<td><code>R1FactOperationalSetup</code></td>
+</tr>
+<tr>
+<td>Servicing execution</td>
+<td><code>R1FactServicingExecution</code></td>
+</tr>
+</tbody></table>
+<p><code>R1FactFinalDecision</code> is one row per <code>ApplicationScenarioKey</code>; <code>R1FactOperationalSetup</code>, <code>R1FactIntervention</code>, and <code>R1FactServicingExecution</code> are also successor objects at that grain, while monitoring is <code>ApplicationScenarioKey × monitoring_day_index</code>. [export reference: filecite | turn137file6 | L294-L353]</p>
+<p><strong>Do not use on P03 for successor-state displays:</strong></p>
+<ul>
+<li><code>FactApplicationScenario</code></li>
+<li><code>FactFinalDecision</code></li>
+<li><code>DimAccountAdvance</code></li>
+<li><code>FactBookingActivation</code></li>
+<li>other predecessor M2 facts</li>
+</ul>
+<p>Merchant 000738 is now our regression case demonstrating why.</p>
+</li>
+<li><p><strong>Merchant request — finish the clean request row.</strong></p>
+<p>Final visible order:</p>
+<p><strong>Applied | Requested | Use | Channel | Remittance | Payback multiple | Payoff days | Repayment</strong></p>
+<p>Remove <code>Application</code>; one application per merchant makes it redundant in this portfolio.</p>
+<p>Bind the economic fields to:</p>
+<ul>
+<li>Requested → <code>R1DimApplicationScenario[requested_amount]</code></li>
+<li>Channel → <code>R1DimApplicationScenario[channel_type]</code></li>
+<li>Remittance → <code>R1DimApplicationScenario[requested_remittance_rate]</code></li>
+<li>Payback multiple → <code>R1DimApplicationScenario[requested_payback_multiple]</code></li>
+<li>Payoff days → <code>R1DimApplicationScenario[requested_horizon_days]</code></li>
+<li>Repayment → <code>R1DimApplicationScenario[requested_total_repayment_amount]</code></li>
+</ul>
+<p>These are explicitly source-owned Request fields in the successor metadata. [export reference: filecite | turn138file0 | L39-L52]</p>
+<p>Keep <strong>Applied</strong> and <strong>Use</strong> from the immutable application source already used on P03 if R1 does not supply them. Those facts were not changed by the Module 2 remediation.</p>
+<p>Format:</p>
+<ul>
+<li>Requested <code>$#,0.00</code></li>
+<li>Remittance <code>0.00%</code></li>
+<li>Payback multiple <code>0.00</code></li>
+<li>Payoff days <code>0</code></li>
+<li>Repayment <code>$#,0.00</code></li>
+</ul>
+<p>Keep the existing Merchant-request alt text, updated to:</p>
+<blockquote>
+<p>Application request details for the selected merchant and scenario, including application date, requested amount, use, channel, remittance rate, requested payback multiple, requested payoff period, and requested repayment.</p>
+</blockquote>
+</li>
+<li><p><strong>Replace Decision Class and Decision Label with exact-key R1 measures.</strong></p>
+<p>We already removed the predecessor fallback, but I want to make these <strong>ApplicationScenarioKey-explicit</strong> so there is no ambiguity from relationship context.</p>
+<p>Full replacement for Decision Class:</p>
+</li>
+</ol>
+<pre><code class="language-DAX">R26 P03 Decision Class =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+VAR _Outcome =
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            SELECTEDVALUE (
+                &#39;R1FactFinalDecision&#39;[governed_final_outcome_code]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+RETURN
+    SWITCH (
+        TRUE (),
+        _Outcome
+            IN {
+                &quot;APPROVE_AS_REQUESTED_AUTHORIZED&quot;,
+                &quot;COUNTEROFFER_AUTHORIZED&quot;
+            }, &quot;AUTHORIZED&quot;,
+        _Outcome
+            IN {
+                &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;,
+                &quot;MANUAL_UNDERWRITING_REVIEW_REQUIRED&quot;
+            }, &quot;REVIEW&quot;,
+        _Outcome
+            IN {
+                &quot;DECLINE_INSUFFICIENT_EVIDENCE&quot;,
+                &quot;DECLINE_NO_FEASIBLE_STRUCTURE&quot;,
+                &quot;DECLINE_POLICY_HARD_STOP&quot;
+            }, &quot;DECLINED&quot;,
+        BLANK ()
+    )
+</code></pre>
+<p>   Full replacement for Decision Label:</p>
+<pre><code class="language-DAX">R26 P03 Decision Label =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+VAR _Outcome =
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            SELECTEDVALUE (
+                &#39;R1FactFinalDecision&#39;[governed_final_outcome_code]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+RETURN
+    SWITCH (
+        _Outcome,
+        &quot;APPROVE_AS_REQUESTED_AUTHORIZED&quot;, &quot;Approved as requested&quot;,
+        &quot;COUNTEROFFER_AUTHORIZED&quot;, &quot;Counteroffer authorized&quot;,
+        &quot;COUNTEROFFER_REVIEW_REQUIRED&quot;, &quot;Counteroffer review&quot;,
+        &quot;MANUAL_UNDERWRITING_REVIEW_REQUIRED&quot;, &quot;Underwriting review&quot;,
+        &quot;DECLINE_INSUFFICIENT_EVIDENCE&quot;, &quot;Evidence decline&quot;,
+        &quot;DECLINE_NO_FEASIBLE_STRUCTURE&quot;, &quot;No feasible structure&quot;,
+        &quot;DECLINE_POLICY_HARD_STOP&quot;, &quot;Policy hard stop&quot;,
+        BLANK ()
+    )
+</code></pre>
+<p>   Do <strong>not</strong> put any <code>COALESCE</code> fallback to <code>FactFinalDecision</code>, <code>FactApplicationScenario</code>, or <code>R1DimApplicationScenario[governed_final_outcome_code]</code> back into these measures.</p>
+<ol start="4">
+<li><p><strong>Replace the decision-card colors so they follow the same R1 final decision.</strong></p>
+<p>This fixes the 000738 yellow/green inconsistency.</p>
+</li>
+</ol>
+<pre><code class="language-DAX">R26 P03 Decision Tile Background =
+SWITCH (
+    [R26 P03 Decision Class],
+    &quot;AUTHORIZED&quot;, &quot;#2E7D32&quot;,
+    &quot;REVIEW&quot;,     &quot;#C58A00&quot;,
+    &quot;DECLINED&quot;,   &quot;#C62828&quot;,
+    &quot;#D9D9D9&quot;
+)
+</code></pre>
+<pre><code class="language-DAX">R26 P03 Decision Tile Value Color =
+SWITCH (
+    [R26 P03 Decision Class],
+    &quot;AUTHORIZED&quot;, &quot;#FFFFFF&quot;,
+    &quot;REVIEW&quot;,     &quot;#FFFFFF&quot;,
+    &quot;DECLINED&quot;,   &quot;#FFFFFF&quot;,
+    &quot;#374151&quot;
+)
+</code></pre>
+<p>   Apply both the upper Class card and lower Label card to these measures:</p>
+<p>   <strong>Format visual → Background → fx → Field value → <code>R26 P03 Decision Tile Background</code></strong></p>
+<p>   and, if value color is conditional:</p>
+<p>   <strong>Value/Callout value → Color → fx → Field value → <code>R26 P03 Decision Tile Value Color</code></strong></p>
+<p>   Keep <strong>Uniform padding = 0</strong>, which solved your label truncation.</p>
+<ol start="5">
+<li><p><strong>Proposed structure — rebuild entirely from R1FactFinalDecision.</strong></p>
+<p>Keep the heading:</p>
+<p><strong>Proposed structure</strong></p>
+<p>Final visible columns:</p>
+<p><strong>Amount | Remittance | Payback multiple | Horizon days | Repayment | Funding date</strong></p>
+<p>Replace any current proposed-structure measures that use R1Dim or legacy fields with these full replacements:</p>
+</li>
+</ol>
+<pre><code class="language-DAX">R26 P03 Selected Structure Amount =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+RETURN
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            SELECTEDVALUE (
+                &#39;R1FactFinalDecision&#39;[governed_selected_funding_amount]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+</code></pre>
+<pre><code class="language-DAX">R26 P03 Selected Remittance Rate =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+RETURN
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            SELECTEDVALUE (
+                &#39;R1FactFinalDecision&#39;[governed_selected_remittance_rate]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+</code></pre>
+<pre><code class="language-DAX">R26 P03 Selected Payback Multiple =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+RETURN
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            SELECTEDVALUE (
+                &#39;R1FactFinalDecision&#39;[governed_selected_payback_multiple]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+</code></pre>
+<pre><code class="language-DAX">R26 P03 Selected Horizon Days =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+RETURN
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            SELECTEDVALUE (
+                &#39;R1FactFinalDecision&#39;[governed_selected_horizon_days]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+</code></pre>
+<pre><code class="language-DAX">R26 P03 Selected Total Repayment =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+RETURN
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            SELECTEDVALUE (
+                &#39;R1FactFinalDecision&#39;[governed_selected_total_repayment_amount]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+</code></pre>
+<p>   This is aligned directly with the handoff definition that <code>R1FactFinalDecision</code> owns the <strong>governed final decision and selected structure</strong>. [export reference: filecite | turn137file8 | L448-L457]</p>
+<p>   Format:</p>
+<ul>
+<li>Amount <code>$#,0.00</code></li>
+<li>Remittance <code>0.00%</code></li>
+<li>Payback <code>0.00</code></li>
+<li>Horizon <code>0</code></li>
+<li>Repayment <code>$#,0.00</code></li>
+</ul>
+<ol start="6">
+<li><p><strong>Replace Funding date with R1 operational activation.</strong></p>
+<p>This is the key correction from the 000738 investigation.</p>
+<p><code>R1FactOperationalSetup</code> explicitly contains <code>operational_activation_date</code>, is successor R17 evidence, is keyed by <code>ApplicationScenarioKey</code>, and has 130 rows—the funded/operational population. [export reference: filecite | turn136file2 | L51-L52]</p>
+<p>Full replacement:</p>
+</li>
+</ol>
+<pre><code class="language-DAX">R26 P03 Funding Date =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+VAR _Authorized =
+    [R26 P03 Decision Class] = &quot;AUTHORIZED&quot;
+VAR _ActivationDate =
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            SELECTEDVALUE (
+                &#39;R1FactOperationalSetup&#39;[operational_activation_date]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactOperationalSetup&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+RETURN
+    IF (
+        _Authorized,
+        _ActivationDate,
+        BLANK ()
+    )
+</code></pre>
+<p>   Use this measure in the sixth column.</p>
+<p>   Do <strong>not</strong> use:</p>
+<ul>
+<li><code>DimAccountAdvance</code></li>
+<li>predecessor booking activation</li>
+<li>a calculated date based on decision date</li>
+<li>fallback dates</li>
+</ul>
+<p>   Executive label can remain <strong>Funding date</strong> even though the physical source is operational activation.</p>
+<ol start="7">
+<li><p><strong>Replace Funded Lifecycle Available with the successor operational population.</strong></p>
+<p>This should not be inferred from the old account table.</p>
+</li>
+</ol>
+<pre><code class="language-DAX">R26 P03 Funded Lifecycle Available =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+VAR _OperationalRows =
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            COUNTROWS (
+                &#39;R1FactOperationalSetup&#39;
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactOperationalSetup&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+RETURN
+    IF (
+        COALESCE ( _OperationalRows, 0 ) &gt; 0,
+        1,
+        0
+    )
+</code></pre>
+<p>   That becomes the single control for whether P03 should expose downstream funded-account lifecycle content.</p>
+<ol start="8">
+<li><p><strong>Finish Proposed structure alt text.</strong></p>
+<p>Full replacement:</p>
+</li>
+</ol>
+<pre><code class="language-DAX">R26 P03 Proposed Structure Alt Text =
+VAR _Amount =
+    [R26 P03 Selected Structure Amount]
+VAR _FundingDate =
+    [R26 P03 Funding Date]
+RETURN
+    IF (
+        ISBLANK ( _Amount ),
+        &quot;No proposed structure is available for the selected merchant and scenario.&quot;,
+        &quot;Proposed structure for the selected merchant and scenario: amount &quot;
+            &amp; FORMAT ( _Amount, &quot;$#,0.00&quot; )
+            &amp; &quot;, remittance rate &quot;
+            &amp; FORMAT (
+                [R26 P03 Selected Remittance Rate],
+                &quot;0.00%&quot;
+            )
+            &amp; &quot;, payback multiple &quot;
+            &amp; FORMAT (
+                [R26 P03 Selected Payback Multiple],
+                &quot;0.00&quot;
+            )
+            &amp; &quot;, horizon &quot;
+            &amp; FORMAT (
+                [R26 P03 Selected Horizon Days],
+                &quot;0&quot;
+            )
+            &amp; &quot; days, and repayment &quot;
+            &amp; FORMAT (
+                [R26 P03 Selected Total Repayment],
+                &quot;$#,0.00&quot;
+            )
+            &amp; IF (
+                NOT ISBLANK ( _FundingDate ),
+                &quot;. Funding date &quot;
+                    &amp; FORMAT ( _FundingDate, &quot;mmmm d, yyyy&quot; )
+                    &amp; &quot;.&quot;,
+                &quot;. No funding date is present for this decision.&quot;
+            )
+    )
+</code></pre>
+<p>   Bind through:</p>
+<p>   <strong>Format visual → General → Alt text → fx → Field value → <code>R26 P03 Proposed Structure Alt Text</code></strong></p>
+<ol start="9">
+<li><p><strong>Narrative section — freeze the three-block architecture but clean its authority.</strong></p>
+<p>Final headings:</p>
+<p><strong>Merchant operating evidence</strong><br><strong>Risk &amp; economics assessment</strong><br><strong>Recommendation</strong></p>
+<p>Do not add a fourth Structure Search block.</p>
+<p>For the first two blocks, keep your existing detailed <code>R26 P03 Evidence Narrative</code> and <code>R26 P03 Underwriting Narrative</code> <strong>only because they were designed from R1 successor decision-time facts</strong>. They must not contain references to <code>FactApplicationScenario</code> or old <code>FactFinalDecision</code>.</p>
+<p>For <strong>Recommendation</strong>, replace any legacy narrative measure with an exact R1 final-decision version:</p>
+</li>
+</ol>
+<pre><code class="language-DAX">R26 P03 Decision Narrative =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+RETURN
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            SELECTEDVALUE (
+                &#39;R1FactFinalDecision&#39;[decision_why_text]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+</code></pre>
+<p>   Then use <code>R26 P03 Decision Narrative</code> in the visible <strong>Recommendation</strong> block.</p>
+<p>   This is the specific correction that prevents the predecessor 000738 “manual authorization” story from surviving after R1 changed the final outcome.</p>
+<p>   For candidate-search context, use it as a <strong>tooltip on Recommendation</strong>, not as another visible block. Keep your existing <code>R26 P03 Candidate Search Summary</code> there. This keeps the page architecture clean:</p>
+<p>   <strong>Evidence → Assessment → Recommendation</strong></p>
+<p>   while still making governed search depth available to an analyst.</p>
+<ol start="10">
+<li><strong>Account performance — keep the R26 successor implementation; remove all legacy fields.</strong></li>
+</ol>
+<p>   Use:</p>
+<ul>
+<li>X-axis → <code>R1FactDailyMonitoring[monitoring_date]</code></li>
+<li>Primary Y → <code>R26 P03 Remaining Receivable</code></li>
+<li>Secondary Y → <code>R26 P03 Remittance Pace</code></li>
+</ul>
+<p>   Tooltip:</p>
+<ul>
+<li><code>R26 P03 Monitoring Status Display</code></li>
+<li><code>R26 P03 Remitted To Date</code></li>
+<li><code>R26 P03 Cumulative Shortfall</code></li>
+<li><code>R26 P03 Operational Alert Families</code></li>
+<li><code>R26 P03 Raw Alert Conditions</code></li>
+</ul>
+<p>   Keep the subtitle:</p>
+<ul>
+<li>funded lifecycle → <strong>Funded synthetic account • deterministic synthetic-forward</strong></li>
+<li>no lifecycle → <strong>No funded-account lifecycle for this application-scenario</strong></li>
+</ul>
+<p>   <code>R1FactDailyMonitoring</code> is the successor daily lifecycle fact; R26 expanded it to 47 columns but preserved its role and grain. [export reference: filecite | turn137file6 | L316-L334]</p>
+<p>   Do not use any fields from old <code>FactAccountDaily</code> or <code>FactMonitoringEndpoint</code>.</p>
+<ol start="11">
+<li><strong>Monitoring journey — keep the successor-only version.</strong></li>
+</ol>
+<p>   X-axis:</p>
+<p>   <code>R1FactDailyMonitoring[monitoring_date]</code></p>
+<p>   Y-axis:</p>
+<p>   <code>R26 P03 Monitoring Status Rank</code></p>
+<p>   Y-axis range:</p>
+<p>   <code>0</code> to <code>5</code></p>
+<p>   Visible hierarchy:</p>
+<ul>
+<li>5 Dormant / no remittance</li>
+<li>4 Severe shortfall</li>
+<li>3 Underperforming</li>
+<li>2 Watch</li>
+<li>1 Current</li>
+<li>0 Paid off</li>
+</ul>
+<p>   Tooltip:</p>
+<ul>
+<li>Monitoring status</li>
+<li>Remaining receivable</li>
+<li>Remittance pace</li>
+<li>Operational alert families</li>
+<li>Raw alert conditions</li>
+</ul>
+<p>   Keep <code>R26 P03 Monitoring Journey Subtitle</code> and its alt-text measure.</p>
+<p>   Do not use the deprecated pre-R26 diagnostic/watch measures on the production P03 page.</p>
+<ol start="12">
+<li><strong>Servicing &amp; intervention — use the R1 successor operational chain only.</strong></li>
+</ol>
+<p>   Final visible columns:</p>
+<p>   <strong>Intervention | Action | Queue | Exposure | Reason</strong></p>
+<p>   Use the measures already created:</p>
+<ul>
+<li><code>R26 P03 Intervention Display</code></li>
+<li><code>R26 P03 Servicing Action Display</code></li>
+<li><code>R26 P03 Servicing Queue Display</code></li>
+<li><code>R26 P03 Intervention Exposure</code></li>
+<li><code>R26 P03 Intervention Reason Display</code></li>
+</ul>
+<p>   These should resolve respectively from:</p>
+<ul>
+<li>recommendation → <code>R1FactIntervention</code></li>
+<li>operational setup → <code>R1FactOperationalSetup</code></li>
+<li>execution → <code>R1FactServicingExecution</code></li>
+</ul>
+<p>   Do not rebind this block to old <code>FactIntervention</code> or <code>FactServicingExecution</code>.</p>
+<p>   <code>R1FactOperationalSetup</code> and <code>R1FactServicingExecution</code> both have explicit <code>ApplicationScenarioKey</code> relationships to <code>R1DimApplicationScenario</code>, so these are the intended successor joins. [export reference: filecite | turn136file7 | L228-L247]</p>
+<p>   Correct behavior:</p>
+<ul>
+<li>funded/active path → servicing state as applicable</li>
+<li>funded/closed path → e.g. <code>No further action / No action — closed / Closed / $0.00 / Paid off</code></li>
+<li>non-funded path → <strong>blank</strong>, not a fabricated “No action”</li>
+</ul>
+<ol start="13">
+<li><strong>Update the footer identity completely.</strong></li>
+</ol>
+<p>   Replace the stale P03 footer with the same identity pattern already frozen on P01/P02:</p>
+<p>   <strong>Run:</strong> <code>M1_V0_2_BASELINE_BUILD</code><br>   <strong>Source release:</strong> <code>Module 2 / G3 v2.1.0-rc2</code><br>   <strong>Model version:</strong> <code>PBI_R26_PARALLEL_REFINEMENT_C1_20260902</code><br>   <strong>Observed-source cutoff:</strong> <code>2026-07-23</code></p>
+<p>   Temporal boundary:</p>
+<blockquote>
+<p><strong>Temporal boundary:</strong> Decision and proposed-structure evidence is fixed at the 2026-07-23 source snapshot. Funded-account lifecycle evidence is deterministic synthetic-forward through 2026-11-22.</p>
+</blockquote>
+<p>   Interpretation boundary:</p>
+<blockquote>
+<p><strong>Interpretation boundary:</strong> Synthetic decision and lifecycle evidence; review or decline paths do not imply funding or account creation.</p>
+</blockquote>
+<ol start="14">
+<li><strong>Interactions — make them deterministic and simple.</strong></li>
+</ol>
+<p>   Merchant and Scenario slicers should <strong>Filter</strong> every dynamic P03 component:</p>
+<ul>
+<li>merchant profile</li>
+<li>Merchant request</li>
+<li>decision tile</li>
+<li>Proposed structure</li>
+<li>all three narrative blocks</li>
+<li>Account performance</li>
+<li>Monitoring journey</li>
+<li>Servicing &amp; intervention</li>
+</ul>
+<p>   Do not let charts cross-filter or cross-highlight other P03 visuals. Slicers establish the application-scenario context; visuals should present that context rather than create new one.</p>
+<ol start="15">
+<li><strong>Final physical regression set before freezing P03.</strong></li>
+</ol>
+<p>   Do not randomly click merchants. Use deliberately selected outcome cases.</p>
+<p>   At minimum, validate:</p>
+<ul>
+<li><p><code>000738 / Baseline</code></p>
+<ul>
+<li><strong>AUTHORIZED</strong></li>
+<li><strong>Approved as requested</strong></li>
+<li>green tile</li>
+<li>requested economics = proposed economics</li>
+<li>Recommendation = R1 authorization narrative</li>
+<li>Funding date from <code>R1FactOperationalSetup[operational_activation_date]</code></li>
+<li>funded lifecycle populated</li>
+</ul>
+</li>
+<li><p><code>000738 / Recession Energy</code></p>
+<ul>
+<li><strong>DECLINED</strong></li>
+<li><strong>Evidence decline</strong></li>
+<li>red tile</li>
+<li>no proposed structure</li>
+<li>no funding date</li>
+<li>evidence-availability narrative</li>
+<li>no funded lifecycle</li>
+</ul>
+</li>
+<li><p>one clean <code>COUNTEROFFER_AUTHORIZED</code></p>
+</li>
+<li><p>one <code>COUNTEROFFER_REVIEW_REQUIRED</code></p>
+</li>
+<li><p>one <code>MANUAL_UNDERWRITING_REVIEW_REQUIRED</code></p>
+</li>
+<li><p>one <code>DECLINE_NO_FEASIBLE_STRUCTURE</code></p>
+</li>
+<li><p>one <code>DECLINE_POLICY_HARD_STOP</code></p>
+</li>
+</ul>
+<p>   We already have the full 1,500-row outcome extract, so <strong>I will select those canonical evidence merchants from that file rather than making you run another broad query</strong>.</p>
+<p>The important non-regression rule from this point forward is: <strong>P03 successor-state visuals may not use predecessor Module 2 facts merely because those tables remain present in the semantic model.</strong> The handoff intentionally preserved both the old report-facing model and the R1 successor objects; the successor mapping exists precisely to prevent version mixing. The handoff even states that the inventories are supplied and should be used instead of manually rediscovering objects. [export reference: filecite | turn137file0 | L31-L55]</p>
+<p>If you follow the sequence above, the next physical checkpoint should be <strong>000738 / Baseline first</strong>. That one case will simultaneously validate the corrected decision authority, color authority, narrative authority, proposed-structure authority, activation date, and downstream lifecycle boundary.</p>
+</div></article><article id="m-59ab4286-899c-4609-adbf-869c6e0972f0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00754 · 2026-09-02T18:47:49.243000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 6909c76a-813f-4666-9485-f171cdb395f3.png</p><div class="bubble"><p>funding date is flawed, and I wonder if it&#39;s related to activation date. when i add activation date, two records gets linked. one with a date and one without:</p>
+</div></article><article id="m-eefdfb5e-3b6b-42ba-a2c1-673d3133f038" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00755 · 2026-09-02T18:47:58.581859-04:00 · active path</p><div class="bubble"><p>Yes. The screenshot tells us the current Funding Date measure is failing for a specific reason: <strong><code>R1FactOperationalSetup[operational_activation_date]</code> is not resolving to a single value in the current P03 context.</strong></p>
+<p>That is why the measure is blank. When you add the raw <code>operational_activation_date</code> column to the table, Power BI splits the visual into two contexts—one with a blank date and one with <code>7/24/2026</code>—and suddenly the measure can resolve on the dated row.</p>
+<p>So <strong>do not change the measure again yet</strong>, and do not leave the raw activation-date field in the production visual. We first need to determine whether:</p>
+<ul>
+<li><code>R1FactOperationalSetup</code> physically has two records for 738/Baseline, or</li>
+<li>the P03 slicer/filter context is allowing another application-scenario row into the visual.</li>
+</ul>
+<p>The successor contract says <code>R1FactOperationalSetup</code> is intended at <code>ApplicationScenarioKey</code> grain and relates to <code>R1DimApplicationScenario</code> on that exact key. [export reference: filecite | turn137file6 | L336-L353] That means two values for the selected application-scenario require explanation rather than another DAX workaround.</p>
+<h3>Run this one DAX Studio diagnostic</h3>
+<p>Paste this exactly:</p>
+<pre><code class="language-DAX">EVALUATE
+
+FILTER (
+    SELECTCOLUMNS (
+        &#39;R1FactOperationalSetup&#39;,
+
+        &quot;ApplicationScenarioKey&quot;,
+            &#39;R1FactOperationalSetup&#39;[ApplicationScenarioKey],
+
+        &quot;Merchant Application&quot;,
+            &#39;R1FactOperationalSetup&#39;[merchant_application_id],
+
+        &quot;Merchant&quot;,
+            &#39;R1FactOperationalSetup&#39;[merchant_id],
+
+        &quot;Scenario&quot;,
+            &#39;R1FactOperationalSetup&#39;[scenario_code],
+
+        &quot;Synthetic Account&quot;,
+            &#39;R1FactOperationalSetup&#39;[synthetic_account_id],
+
+        &quot;Synthetic Advance&quot;,
+            &#39;R1FactOperationalSetup&#39;[synthetic_advance_id],
+
+        &quot;Source Strategy Outcome&quot;,
+            &#39;R1FactOperationalSetup&#39;[source_strategy_outcome_code],
+
+        &quot;Source Servicing Action&quot;,
+            &#39;R1FactOperationalSetup&#39;[source_servicing_action_code],
+
+        &quot;Setup Outcome&quot;,
+            &#39;R1FactOperationalSetup&#39;[operational_setup_outcome_code],
+
+        &quot;Setup Action&quot;,
+            &#39;R1FactOperationalSetup&#39;[operational_setup_action_code],
+
+        &quot;Account Setup Status&quot;,
+            &#39;R1FactOperationalSetup&#39;[account_setup_status_code],
+
+        &quot;Setup Authorized&quot;,
+            &#39;R1FactOperationalSetup&#39;[setup_authorized_flag],
+
+        &quot;Setup Review Required&quot;,
+            &#39;R1FactOperationalSetup&#39;[setup_review_required_flag],
+
+        &quot;No Setup Required&quot;,
+            &#39;R1FactOperationalSetup&#39;[no_setup_required_flag],
+
+        &quot;Activation Date&quot;,
+            &#39;R1FactOperationalSetup&#39;[operational_activation_date],
+
+        &quot;Next Reassessment&quot;,
+            &#39;R1FactOperationalSetup&#39;[next_reassessment_date],
+
+        &quot;R1 Source Boundary&quot;,
+            &#39;R1FactOperationalSetup&#39;[R1SourceBoundary]
+    ),
+
+    [Merchant Application]
+        = &quot;MSBF_POP_0001_M000738_A01&quot;
+)
+
+ORDER BY
+    [Scenario],
+    [Activation Date]
+</code></pre>
+<p>Return the result exactly as shown.</p>
+<h3>What I expect this to tell us</h3>
+<p>There are two materially different possibilities.</p>
+<p><strong>A. One Baseline row + one Recession Energy row</strong></p>
+<p>Then the physical successor table is fine. The problem is <strong>P03 scenario isolation</strong>: the old Scenario slicer is not properly filtering <code>R1FactOperationalSetup</code>, which would also explain why adding the raw date produces two rows.</p>
+<p>If that is the result, we will fix the P03 successor measures so every R1 object is explicitly keyed to the exact selected <code>ApplicationScenarioKey</code>. That is a model/display-context issue.</p>
+<p><strong>B. Two Baseline rows for the same <code>ApplicationScenarioKey</code></strong></p>
+<p>Then we have something different: the operational-setup table contains multiple physical states for what the catalog describes as application-scenario grain. We would need to understand their setup statuses before defining “Funding date.” In that case, <code>SELECTEDVALUE</code> is correctly refusing to choose between them.</p>
+<h3>One immediate cleanup</h3>
+<p>For now, remove the raw:</p>
+<p><code>R1FactOperationalSetup[operational_activation_date]</code></p>
+<p>from the <strong>Proposed structure</strong> table again.</p>
+<p>Leave only our <code>R26 P03 Funding Date</code> measure. It will remain blank temporarily for 738, which is preferable to showing two rows.</p>
+<p>Also, I can already see one other item in your screenshot that we should <strong>not fix piecemeal yet</strong>: your Recommendation still says:</p>
+<blockquote>
+<p>“A reduced structure was identified, but governance requires manual authorization…”</p>
+</blockquote>
+<p>That is predecessor/remediation leakage for 738/Baseline, because the R1 final-decision source says the requested structure was authorized without a counteroffer. We will correct Recommendation from the same exact <code>ApplicationScenarioKey</code> authority once this diagnostic establishes whether the shared root cause is scenario/key isolation.</p>
+<p>So the next action is only the diagnostic above. No more visual changes until we see those rows.</p>
+</div></article><article id="m-c6175762-df24-4641-8cfc-8b22d32daafb" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00756 · 2026-09-02T18:49:56.734000-04:00 · active path</p><div class="bubble"><p>[ApplicationScenarioKey]	[Merchant Application]	[Merchant]	[Scenario]	[Synthetic Account]	[Synthetic Advance]	[Source Strategy Outcome]	[Source Servicing Action]	[Setup Outcome]	[Setup Action]	[Account Setup Status]	[Setup Authorized]	[Setup Review Required]	[No Setup Required]	[Activation Date]	[Next Reassessment]	[R1 Source Boundary]
+1|5|MSBF_POP_0001_M000738_A01	MSBF_POP_0001_M000738_A01	MSBF_POP_0001_M000738	BASELINE	MSBF_ACCT_0D774156345F8F6CA079	MSBF_ADV_299BEA5F5E18435185A9	CLOSED_NO_FURTHER_ACTION	NO_ACTION_CLOSED	NO_OPERATIONAL_SETUP_REQUIRED	CLOSE_WITHOUT_SETUP	NOT_REQUIRED	f	f	t			R17</p>
+</div></article><article id="m-5d97106a-bd5c-4d1e-b028-3095f0dfc102" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00757 · 2026-09-02T18:51:00.598354-04:00 · active path</p><div class="bubble"><p>Yes. This diagnostic resolves the ambiguity cleanly:</p>
+<p><strong>738 / Baseline has exactly one <code>R1FactOperationalSetup</code> row, and its <code>operational_activation_date</code> is blank because this row is <code>NO_OPERATIONAL_SETUP_REQUIRED / CLOSE_WITHOUT_SETUP / NOT_REQUIRED</code>.</strong> So my prior mapping of P03 <strong>Funding date → <code>R1FactOperationalSetup[operational_activation_date]</code> was wrong.</strong> That field is a later <strong>M2.7 operational-setup activation date</strong>, not the original funding date. The M2.7 schema itself requires <code>operational_activation_date</code> only when an operational setup blueprint is ready; it must be null when setup is not required. [export reference: filecite | turn139file2 | L41-L49] [export reference: filecite | turn139file2 | L82-L96]</p>
+<p>The proper funding-date source is upstream in the funded lifecycle chain. The accepted M2.5 monitoring source explicitly carries <code>funding_date</code>, <code>portfolio_activation_date</code>, <code>monitoring_start_date</code>, and funded terms from the M2.4 activation source. [export reference: filecite | turn141file0 | L11-L35] The M2.4 contract also defines <code>funding_date</code> separately from booking, portfolio activation, and monitoring start, with validated date ordering. [export reference: filecite | turn141file3 | L337-L344]</p>
+<p>So we should now define P03 Funding date from the <strong>R1 funded-lifecycle evidence</strong>, not M2.7.</p>
+<h3>Next efficient step</h3>
+<p>Check whether <code>R1FactDailyMonitoring</code> in your current model exposes a <code>funding_date</code> column. The raw R17 M2.5 source definitely contains it; the only question is whether the curated Power BI table retained it. [export reference: filecite | turn141file1 | L125-L150]</p>
+<p>In the Data pane:</p>
+<ol>
+<li>Expand <strong>R1FactDailyMonitoring</strong>.</li>
+<li>Search within its fields for:<ul>
+<li><code>funding_date</code></li>
+<li><code>portfolio_activation_date</code></li>
+<li><code>monitoring_start_date</code></li>
+</ul>
+</li>
+<li>Tell me whether <code>funding_date</code> is present.</li>
+</ol>
+<p>If it <strong>is present</strong>, the final measure should be:</p>
+<pre><code class="language-DAX">R26 P03 Funding Date =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+RETURN
+    IF (
+        [R26 P03 Decision Class] = &quot;AUTHORIZED&quot;
+            &amp;&amp; NOT ISBLANK ( _Key ),
+        CALCULATE (
+            MIN (
+                &#39;R1FactDailyMonitoring&#39;[funding_date]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactDailyMonitoring&#39;[ApplicationScenarioKey]
+            ),
+            REMOVEFILTERS (
+                &#39;R1FactDailyMonitoring&#39;[monitoring_date]
+            )
+        )
+    )
+</code></pre>
+<p>That is semantically correct because the funded monitoring population is already the successor-funded cohort; P01 itself uses the presence of an <code>ApplicationScenarioKey</code> in <code>R1FactDailyMonitoring</code> as the funded-path definition. [export reference: filecite | turn140file1 | L136-L180]</p>
+<p>If <code>funding_date</code> is <strong>not exposed</strong> in the curated table, we should not infer it from <code>monitoring_date</code> or M2.7 activation. We would instead add that already-source-owned field from the exact R17 M2.5 source into <code>R1FactDailyMonitoring</code> Power Query. That would be a bounded semantic exposure change, not reconstructed logic.</p>
+<p>Also: your result proves there was <strong>not</strong> a duplicate-row problem in <code>R1FactOperationalSetup</code>. The two rows you saw in the visual occurred because adding the raw activation-date field changed the visual grain/context, not because 738 physically has two setup records.</p>
+<p>So the correction is now precise:</p>
+<p><strong>Funding date authority = M2.4 funding date carried into the R1 funded lifecycle / M2.5 source.</strong><br><strong>Operational activation date = M2.7 servicing/setup activation and must not be used as funding date.</strong></p>
+<p>That distinction should now stay fixed.</p>
+</div></article><article id="m-1fb17a48-1cb3-4d34-bedb-d0ca9b17449c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00758 · 2026-09-02T18:53:38.158000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 0a841554-bab4-40d3-b1d5-1c78557cdd23.png; d2272181-7517-4276-80c5-a2254c81d544.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-1fdf120e-22a4-4cc4-88be-b795eced4608" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00759 · 2026-09-02T18:54:17.125513-04:00 · active path</p><div class="bubble"><p>Correct — your screenshots confirm <code>R1FactDailyMonitoring</code> does <strong>not</strong> expose <code>funding_date</code>. The successor catalog confirms that the curated R1 monitoring table intentionally retained 36 fields, and <code>funding_date</code> is not among them. [export reference: filecite | turn143file3 | L109-L110]</p>
+<p>So we should <strong>not</strong> try to solve Funding date with DAX against the current semantic model, and we should <strong>not</strong> use <code>operational_activation_date</code> as a substitute.</p>
+<p>The source hierarchy is now clear:</p>
+<ul>
+<li>M2.4 owns the actual <strong>booking / funding / portfolio activation dates</strong>. <code>funding_date</code> is a distinct physical field. [export reference: filecite | turn141file2 | L211-L259]</li>
+<li>M2.5 consumes that funded population and also physically carries <code>funding_date</code>. [export reference: filecite | turn141file0 | L11-L35]</li>
+<li>But the curated <code>R1FactDailyMonitoring</code> projection omitted it.</li>
+<li>M2.7 <code>operational_activation_date</code> is a later servicing/setup concept and can legitimately be null for a funded account when no operational setup is required. [export reference: filecite | turn139file2 | L82-L96]</li>
+</ul>
+<h3>What I recommend for P03 now</h3>
+<p><strong>Do not add another DAX workaround.</strong></p>
+<p>For the current P03 refinement, I would temporarily remove the <strong>Funding date</strong> column from <code>Proposed structure</code>.</p>
+<p>Why? Because the correct successor funding date exists physically upstream, but it is <strong>not currently exposed through any of the approved R1 semantic objects we have identified</strong>. Creating an inferred value would violate the source-owned-chain rule.</p>
+<p>Also, I do <strong>not</strong> recommend adding <code>funding_date</code> directly into <code>R1FactDailyMonitoring</code> right now. R26&#39;s physical checkpoint is explicitly <strong>47 columns</strong> after adding the 11 monitoring-calibration fields to the original 36. Adding a 48th column would alter that audited model/source identity and unnecessarily reopen the R26 monitoring rebase.</p>
+<p>So the efficient, governed treatment is:</p>
+<blockquote>
+<p><strong>Remove Funding date from the visible P03 Proposed structure table for this candidate.</strong></p>
+</blockquote>
+<p>The table becomes:</p>
+<p><strong>Amount | Remittance | Payback multiple | Horizon days | Repayment</strong></p>
+<p>That is still complete for the purpose of explaining the proposed/authorized economics.</p>
+<h3>Why this is preferable to creating a new lookup table</h3>
+<p>We could technically add another hidden Power Query lookup against the M2.4/M2.5 raw source, but that would:</p>
+<ul>
+<li>add another semantic object,</li>
+<li>change model inventory,</li>
+<li>require relationship and refresh validation,</li>
+<li>create an additional R22/R26 candidate delta,</li>
+<li>and solve only one presentation field.</li>
+</ul>
+<p>That is disproportionate to the executive value of displaying a funding date on P03.</p>
+<p>If later we decide Funding date is materially important, the right future implementation is a <strong>controlled successor-semantic exposure of the M2.4 funding/activation facts</strong>, not a P03-specific workaround.</p>
+<h3>One correction to the earlier P03 instructions</h3>
+<p>Please supersede these prior instructions:</p>
+<ul>
+<li><strong>delete <code>R26 P03 Funding Date</code> from the model</strong> once no other visual/measure depends on it;</li>
+<li>remove Funding date from <code>R26 P03 Proposed Structure Alt Text</code>;</li>
+<li>Proposed structure should have <strong>five columns</strong>, not six;</li>
+<li>do not use <code>R1FactOperationalSetup[operational_activation_date]</code> anywhere as a funding-date proxy.</li>
+</ul>
+<p>Use this alt text instead:</p>
+<pre><code class="language-DAX">R26 P03 Proposed Structure Alt Text =
+VAR _Amount =
+    [R26 P03 Selected Structure Amount]
+RETURN
+    IF (
+        ISBLANK ( _Amount ),
+        &quot;No proposed structure is available for the selected merchant and scenario.&quot;,
+        &quot;Proposed structure for the selected merchant and scenario: amount &quot;
+            &amp; FORMAT ( _Amount, &quot;$#,0.00&quot; )
+            &amp; &quot;, remittance rate &quot;
+            &amp; FORMAT (
+                [R26 P03 Selected Remittance Rate],
+                &quot;0.00%&quot;
+            )
+            &amp; &quot;, payback multiple &quot;
+            &amp; FORMAT (
+                [R26 P03 Selected Payback Multiple],
+                &quot;0.00&quot;
+            )
+            &amp; &quot;, horizon &quot;
+            &amp; FORMAT (
+                [R26 P03 Selected Horizon Days],
+                &quot;0&quot;
+            )
+            &amp; &quot; days, and repayment &quot;
+            &amp; FORMAT (
+                [R26 P03 Selected Total Repayment],
+                &quot;$#,0.00&quot;
+            )
+            &amp; &quot;.&quot;
+    )
+</code></pre>
+<p>One additional point from this investigation: <strong>funded lifecycle availability should continue to come from membership in the R1 monitoring/funded population</strong>, not from M2.7 operational setup status. P01 already uses <code>R1FactDailyMonitoring[ApplicationScenarioKey]</code> as the funded-path population. [export reference: filecite | turn140file1 | L136-L180]</p>
+<p>So I would also revise the earlier <code>R26 P03 Funded Lifecycle Available</code> measure to use <code>R1FactDailyMonitoring</code>, not <code>R1FactOperationalSetup</code>:</p>
+<pre><code class="language-DAX">R26 P03 Funded Lifecycle Available =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+VAR _MonitoringRows =
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            COUNTROWS (
+                &#39;R1FactDailyMonitoring&#39;
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactDailyMonitoring&#39;[ApplicationScenarioKey]
+            ),
+            REMOVEFILTERS (
+                &#39;R1FactDailyMonitoring&#39;[monitoring_date]
+            )
+        )
+    )
+RETURN
+    IF (
+        COALESCE ( _MonitoringRows, 0 ) &gt; 0,
+        1,
+        0
+    )
+</code></pre>
+<p>That is the important correction from this discovery:</p>
+<p><strong>Decision authority → <code>R1FactFinalDecision</code></strong><br><strong>Funded lifecycle membership → <code>R1FactDailyMonitoring</code></strong><br><strong>Operational servicing/setup → <code>R1FactOperationalSetup</code></strong><br><strong>Funding date → physically exists upstream but is not exposed in the current curated R1 semantic model; therefore do not fabricate it.</strong></p>
+<p>I would make those two corrections—remove Funding date and replace Funded Lifecycle Available—before proceeding with the rest of P03.</p>
+</div></article><article id="m-d9d96724-20ec-4750-b25b-217fd6a6b452" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00760 · 2026-09-02T19:14:12.289000-04:00 · active path</p><div class="bubble"><p>from our remediation/correction chat: Yes. I found the issue, and it is a <strong>carrier/source-layer omission, not a missing funding date</strong>.</p>
+<p>For newly authorized R1 paths such as application <strong>738</strong>, the Power BI chat should <strong>not look to the old/pre-R1 M2.4/public activation population</strong>. In the predecessor strategy, Baseline 738 was only <code>COUNTEROFFER_REVIEW_REQUIRED</code>, so it correctly had no booking/funding record there.  After the R1 corrections, that same Baseline application became <code>APPROVE_AS_REQUESTED_AUTHORIZED</code> for the requested <strong>$25,000 / 60-day</strong> structure. </p>
+<h3>Exact answer for application 738</h3>
+<p>For:</p>
+<pre><code>
+</code></pre>
+<pre><code>ApplicationScenarioKey
+1|5|MSBF_POP_0001_M000738_A01
+
+Scenario
+BASELINE
+</code></pre>
+<p>the lifecycle dates are:</p>
+<pre><code>
+</code></pre>
+<pre><code>Application as-of date          2026-07-23
+Booking date                    2026-07-24
+Funding date                    2026-07-25
+Portfolio activation date       2026-07-25
+Monitoring start date           2026-07-25
+First expected remittance       2026-07-26
+</code></pre>
+<p>This follows the governed R1 M2.4 timing:</p>
+<pre><code>
+</code></pre>
+<pre><code>booking lag             +1 day
+funding lag             +2 days
+first remittance lag    +3 days
+monitoring start lag    +2 days
+</code></pre>
+<p>Those exact lag values are physically governed in M2.4.  And the generation SQL explicitly calculates funding as <code>as_of_date + funding_lag_days</code>, first expected remittance as <code>as_of_date + first_remittance_lag_days</code>, etc. </p>
+<p>So <strong>738 Baseline funded on July 25, 2026</strong>.</p>
+<p>For the same merchant application under:</p>
+<pre><code>
+</code></pre>
+<pre><code>1|6|MSBF_POP_0001_M000738_A01
+RECESSION_ENERGY
+</code></pre>
+<p>there is <strong>no funding date</strong>, because that R1 scenario remains a decline. Do not let a merchant-level lookup propagate the Baseline funding date into the Recession Energy row.</p>
+<h2>Why Power BI is having difficulty</h2>
+<p>The current successor carrier is rich in R4 decision facts and R26 monitoring facts, but the curated Power BI monitoring table does <strong>not carry</strong> <strong><code>funding_date</code></strong>.</p>
+<p>That date exists upstream in the R1 activation layer. In fact, the R17/R26 M2.5 source construction explicitly consumes:</p>
+<pre><code>
+</code></pre>
+<pre><code>funding_date
+portfolio_activation_date
+monitoring_start_date
+first_expected_remittance_date
+</code></pre>
+<p>from the R1 M2.4 activated advance/portfolio objects. </p>
+<p>So the date wasn&#39;t lost in the strategy. <strong>We omitted the lifecycle-date fields from the Power BI carrier projection.</strong></p>
+<h2>What I recommend the Power BI chat do</h2>
+<p>Do <strong>not</strong> solve this with a one-off DAX inference such as:</p>
+<pre><code>
+</code></pre>
+<pre><code>Funding Date = First Monitoring Date - 1
+</code></pre>
+<p>Although that gives the right answer under the current M2.4 policy, it makes Power BI reconstruct source-owned lifecycle semantics.</p>
+<p>Instead, the R26 integration candidate should add a small <strong>source-owned funded-lifecycle object at</strong> <strong><code>ApplicationScenarioKey</code></strong> <strong>grain</strong>, something like:</p>
+<pre><code>
+</code></pre>
+<pre><code>R1FactFundedLifecycle
+</code></pre>
+<p>with:</p>
+<pre><code>
+</code></pre>
+<pre><code>ApplicationScenarioKey
+scenario_id
+scenario_code
+merchant_application_id
+
+synthetic_account_id
+synthetic_advance_id
+
+booking_date
+funding_date
+portfolio_activation_date
+monitoring_start_date
+first_expected_remittance_date
+
+funded_amount
+collection_horizon_days
+
+R1SourceBoundary
+R1SourceArtifactSha256
+R1AuthorityState
+</code></pre>
+<p>Its authoritative source should be the exact R1 M2.4 objects retained in the immutable R6 lineage:</p>
+<pre><code>
+</code></pre>
+<pre><code>msbf_m2.application_booking_funding_activation_latest
+msbf_m2.synthetic_advance_funding
+msbf_m2.initial_portfolio_activation
+</code></pre>
+<p>M2.5 itself already selects the accepted M2.4 activated population and carries the advance funding date forward.  </p>
+<h3>Important grain rule</h3>
+<p>The lifecycle table must be keyed by:</p>
+<pre><code>
+</code></pre>
+<pre><code>ApplicationScenarioKey
+</code></pre>
+<p><strong>not</strong> by merchant/application alone.</p>
+<p>That matters precisely for 738:</p>
+<pre><code>
+</code></pre>
+<pre><code>738 + BASELINE           funded 2026-07-25
+738 + RECESSION_ENERGY   not funded / BLANK
+</code></pre>
+<h2>Paste this to the Power BI chat</h2>
+<blockquote>
+<p><strong>Funding-date source correction:</strong> Do not use the predecessor M2.4/public activation population to obtain lifecycle dates for newly authorized R1 paths. Those paths did not have predecessor funding records. The accepted R1 M2.4 R6 activation layer is the lifecycle-date authority consumed by R17/R26 M2.5.</p>
+<p>For <code>1|5|MSBF_POP_0001_M000738_A01</code> (Baseline), R4 now has <code>APPROVE_AS_REQUESTED_AUTHORIZED</code>, selected funding <code>$25,000</code>, horizon <code>60</code>. Its application as-of date is <code>2026-07-23</code>. Governed M2.4 lags are booking +1, funding +2, first expected remittance +3, monitoring start +2; therefore exact lifecycle dates are booking <code>2026-07-24</code>, funding/activation/monitoring start <code>2026-07-25</code>, first expected remittance <code>2026-07-26</code>. The Recession Energy 738 path is not funded and must remain blank.</p>
+<p>Treat the absence of <code>funding_date</code> from the current R26 Power BI carrier as an <strong>integration-carrier omission</strong>, not as missing source authority. Add a source-owned <code>ApplicationScenarioKey</code>-grain funded-lifecycle table/fields from the exact R1 M2.4 activation objects. Do not reconstruct funding dates in report DAX and do not join at merchant-only grain. Preserve this addition in the R26 Power BI integration delta for the bounded integration audit.</p>
+</blockquote>
+<p>I would have the Power BI chat make this correction <strong>across all 130 funded scenario paths</strong>, not just patch 738. That gives P02/P04/P06 a proper lifecycle-date authority and prevents the same problem from resurfacing on every path newly funded under R1.</p>
+</div></article><article id="m-c47b9a9b-892f-4b92-82f1-973e76da448d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00761 · 2026-09-02T19:14:38.208745-04:00 · active path</p><div class="bubble"><p>Yes. This materially supersedes my prior recommendation to remove Funding date. The remediation/correction chat has now given us the missing authority boundary and the correct integration design.</p>
+<p>The right conclusion is:</p>
+<p><strong>Funding date is valid and should remain on P03. The defect is that the R26 Power BI carrier omitted the corrected R1 funded-lifecycle projection.</strong> We should repair the carrier/model once for all 130 funded application-scenario paths, not patch merchant 738 and not alter the audited 47-column R26 monitoring table.</p>
+<p>That is also consistent with the original handoff’s source-owned chain: final decision → funding/activation → monitoring/intervention. [export reference: filecite | turn140file0 | L82-L103]</p>
+<h2>Corrected implementation plan</h2>
+<h3>1. Do not modify <code>R1FactDailyMonitoring</code></h3>
+<p>Leave it at the R26-certified:</p>
+<p><strong>15,600 rows / 47 columns</strong></p>
+<p>Do not add <code>funding_date</code> as a 48th column. R26 explicitly changed that table from 36 to 47 columns through the eleven monitoring fields. [export reference: filecite | turn145file7 | L184-L205]</p>
+<p>Instead, add the missing bounded lifecycle object:</p>
+<p><strong><code>R1FactFundedLifecycle</code></strong></p>
+<p>at exactly:</p>
+<p><strong>one row per funded <code>ApplicationScenarioKey</code></strong></p>
+<p>Expected population:</p>
+<p><strong>130 rows</strong></p>
+<p>This is the cleanest architecture.</p>
+<hr>
+<h3>2. Source it from the R1 M2.4 lifecycle authority, not predecessor M2.4</h3>
+<p>This distinction is critical.</p>
+<p>Do <strong>not</strong> use the old core:</p>
+<ul>
+<li><code>FactBookingActivation</code></li>
+<li><code>DimAccountAdvance</code></li>
+<li>predecessor <code>application_booking_funding_activation_latest</code></li>
+</ul>
+<p>because newly authorized R1 paths such as 738 did not exist as funded paths in that predecessor state.</p>
+<p>The lifecycle source must correspond to the <strong>R1-remediated M2.4 population feeding R17 M2.5</strong>.</p>
+<p>The underlying M2.4 contract contains the exact source-owned fields we need:</p>
+<ul>
+<li><code>booking_date</code></li>
+<li><code>funding_date</code></li>
+<li><code>portfolio_activation_date</code></li>
+<li><code>monitoring_start_date</code></li>
+<li><code>first_expected_remittance_date</code></li>
+<li><code>funded_amount</code></li>
+<li>synthetic account/advance identity</li>
+</ul>
+<p>and explicitly distinguishes all of these dates. [export reference: filecite | turn141file2 | L211-L259]</p>
+<p>The downstream M2.5 construction already consumes and preserves <code>funding_date</code> and the other activation dates from that accepted M2.4 population, so we are exposing existing source truth—not calculating new lifecycle semantics. [export reference: filecite | turn141file0 | L11-L35]</p>
+<hr>
+<h3>3. Physical shape of <code>R1FactFundedLifecycle</code></h3>
+<p>I would use exactly this compact schema:</p>
+<pre><code class="language-text">module1_run_id
+scenario_id
+scenario_code
+merchant_application_id
+merchant_id
+population_id
+
+synthetic_account_id
+synthetic_advance_id
+
+booking_date
+funding_date
+portfolio_activation_date
+monitoring_start_date
+first_expected_remittance_date
+
+funded_amount
+collection_horizon_days
+
+ApplicationKey
+RunScenarioKey
+ApplicationScenarioKey
+AccountKey
+AdvanceKey
+
+R1SourceBoundary
+R1SourceArtifactSha256
+R1AuthorityState
+</code></pre>
+<p>No monitoring metrics. No decision reconstruction. No policy logic.</p>
+<p>This object answers one narrow question:</p>
+<blockquote>
+<p><strong>What funded lifecycle was physically established for this R1 application-scenario?</strong></p>
+</blockquote>
+<hr>
+<h3>4. Do not derive the 130 rows from report DAX</h3>
+<p>We can use source data that already carries these values, but the transformation should occur <strong>once in the carrier/integration layer</strong>, not independently in each measure.</p>
+<p>Since the existing raw R17 M2.5 source physically contains <code>funding_date</code> and related lifecycle fields but the curated projection omitted them, there are two defensible ways to construct the new carrier object:</p>
+<p><strong>Preferred:</strong> export the exact funded lifecycle from the retained R1 M2.4 authority.</p>
+<p><strong>Acceptable if it is the exact R17 source copy of those M2.4 values:</strong> produce a one-row-per-<code>ApplicationScenarioKey</code> lifecycle projection from the R17 source that already carries the M2.4 dates.</p>
+<p>Either way, the resulting 130-row table must reconcile exactly to the 130 funded keys already represented by <code>R1FactDailyMonitoring</code>.</p>
+<p>We should <strong>not manually calculate</strong>:</p>
+<p><code>funding_date = as_of_date + 2</code></p>
+<p>even though that happens to be the current governed lag.</p>
+<hr>
+<h2>5. Relationship in Power BI</h2>
+<p>After <code>R1FactFundedLifecycle</code> is loaded, create:</p>
+<pre><code class="language-text">R1DimApplicationScenario[ApplicationScenarioKey]
+        1
+        ↓
+        *
+R1FactFundedLifecycle[ApplicationScenarioKey]
+</code></pre>
+<p>Settings:</p>
+<ul>
+<li>Cardinality: <strong>One to many</strong></li>
+<li>Cross-filter direction: <strong>Single</strong></li>
+<li>Active: <strong>Yes</strong></li>
+</ul>
+<p>Do not relate it by merchant ID.</p>
+<p>Do not relate it by application ID alone.</p>
+<p>Merchant 738 proves why scenario identity is indispensable:</p>
+<pre><code class="language-text">1|5|...738...   Baseline          funded
+1|6|...738...   Recession Energy  not funded
+</code></pre>
+<hr>
+<h2>6. Replace <code>R26 P03 Funded Lifecycle Available</code></h2>
+<p>My most recent monitoring-population version is still usable conceptually, but once we deliberately add the lifecycle authority, the cleaner definition should use that table directly.</p>
+<p>Full replacement:</p>
+<pre><code class="language-DAX">R26 P03 Funded Lifecycle Available =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+VAR _LifecycleRows =
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            COUNTROWS (
+                &#39;R1FactFundedLifecycle&#39;
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactFundedLifecycle&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+RETURN
+    IF (
+        COALESCE ( _LifecycleRows, 0 ) = 1,
+        1,
+        0
+    )
+</code></pre>
+<p>Because the lifecycle table is supposed to be unique at application-scenario grain, I prefer <code>= 1</code> rather than <code>&gt; 0</code>. A duplicate should not silently pass.</p>
+<hr>
+<h2>7. Replace Funding Date with the actual lifecycle field</h2>
+<p>Full replacement:</p>
+<pre><code class="language-DAX">R26 P03 Funding Date =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+RETURN
+    IF (
+        [R26 P03 Funded Lifecycle Available] = 1
+            &amp;&amp; NOT ISBLANK ( _Key ),
+        CALCULATE (
+            SELECTEDVALUE (
+                &#39;R1FactFundedLifecycle&#39;[funding_date]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactFundedLifecycle&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+</code></pre>
+<p>Notice the improvement from our earlier rule.</p>
+<p>We no longer say merely:</p>
+<blockquote>
+<p>AUTHORIZED → date.</p>
+</blockquote>
+<p>We say:</p>
+<blockquote>
+<p><strong>A physical R1 funded-lifecycle row exists → display its source-owned funding date.</strong></p>
+</blockquote>
+<p>That is stronger because it distinguishes final decision from actual funded lifecycle using their proper source layers.</p>
+<hr>
+<h2>8. Keep Funding date in Proposed structure</h2>
+<p>Final P03 table:</p>
+<p><strong>Amount | Remittance | Payback multiple | Horizon days | Repayment | Funding date</strong></p>
+<p>Expected 738 behavior:</p>
+<p><strong>738 / Baseline</strong></p>
+<pre><code class="language-text">AUTHORIZED
+Approved as requested
+
+Amount               $25,000.00
+Remittance                13.40%
+Payback multiple             1.21
+Horizon days                  60
+Repayment              $30,209.08
+Funding date           7/25/2026
+</code></pre>
+<p><strong>738 / Recession Energy</strong></p>
+<pre><code class="language-text">DECLINED
+Evidence decline
+
+Proposed structure      blank
+Funding date            blank
+</code></pre>
+<p>There must be no merchant-level leakage from Baseline into Recession Energy.</p>
+<hr>
+<h2>9. Restore Funding date to Proposed-structure alt text</h2>
+<p>Use:</p>
+<pre><code class="language-DAX">R26 P03 Proposed Structure Alt Text =
+VAR _Amount =
+    [R26 P03 Selected Structure Amount]
+VAR _FundingDate =
+    [R26 P03 Funding Date]
+RETURN
+    IF (
+        ISBLANK ( _Amount ),
+        &quot;No proposed structure is available for the selected merchant and scenario.&quot;,
+        &quot;Proposed structure for the selected merchant and scenario: amount &quot;
+            &amp; FORMAT ( _Amount, &quot;$#,0.00&quot; )
+            &amp; &quot;, remittance rate &quot;
+            &amp; FORMAT (
+                [R26 P03 Selected Remittance Rate],
+                &quot;0.00%&quot;
+            )
+            &amp; &quot;, payback multiple &quot;
+            &amp; FORMAT (
+                [R26 P03 Selected Payback Multiple],
+                &quot;0.00&quot;
+            )
+            &amp; &quot;, horizon &quot;
+            &amp; FORMAT (
+                [R26 P03 Selected Horizon Days],
+                &quot;0&quot;
+            )
+            &amp; &quot; days, and repayment &quot;
+            &amp; FORMAT (
+                [R26 P03 Selected Total Repayment],
+                &quot;$#,0.00&quot;
+            )
+            &amp; IF (
+                NOT ISBLANK ( _FundingDate ),
+                &quot;. Funding date &quot;
+                    &amp; FORMAT ( _FundingDate, &quot;mmmm d, yyyy&quot; )
+                    &amp; &quot;.&quot;,
+                &quot;. This proposed structure does not have a funded lifecycle.&quot;
+            )
+    )
+</code></pre>
+<hr>
+<h2>10. Keep the decision-card correction</h2>
+<p>Nothing in the remediation answer changes our decision-tile conclusion.</p>
+<p>Final decision authority remains:</p>
+<p><strong><code>R1FactFinalDecision[governed_final_outcome_code]</code></strong></p>
+<p>For 738 / Baseline that successor row is <code>APPROVE_AS_REQUESTED_AUTHORIZED</code>; the R1 decision row explicitly says no human review and that all mandatory gates pass. [export reference: filecite | turn135file0 | L3-L3]</p>
+<p>So the decision card must use:</p>
+<pre><code class="language-DAX">R26 P03 Decision Tile Background =
+SWITCH (
+    [R26 P03 Decision Class],
+    &quot;AUTHORIZED&quot;, &quot;#2E7D32&quot;,
+    &quot;REVIEW&quot;,     &quot;#C58A00&quot;,
+    &quot;DECLINED&quot;,   &quot;#C62828&quot;,
+    &quot;#D9D9D9&quot;
+)
+</code></pre>
+<p>The old M1/manual-review recommendation cannot control the final decision tile.</p>
+<hr>
+<h2>11. Recommendation remains an R1 final-decision narrative</h2>
+<p>This correction also confirms that the current visible 738 Recommendation:</p>
+<blockquote>
+<p>“A reduced structure was identified, but governance requires manual authorization…”</p>
+</blockquote>
+<p>is wrong for the R1 successor page.</p>
+<p>Use only:</p>
+<pre><code class="language-DAX">R26 P03 Decision Narrative =
+VAR _Key =
+    SELECTEDVALUE (
+        &#39;R1DimApplicationScenario&#39;[ApplicationScenarioKey]
+    )
+RETURN
+    IF (
+        NOT ISBLANK ( _Key ),
+        CALCULATE (
+            SELECTEDVALUE (
+                &#39;R1FactFinalDecision&#39;[decision_why_text]
+            ),
+            TREATAS (
+                { _Key },
+                &#39;R1FactFinalDecision&#39;[ApplicationScenarioKey]
+            )
+        )
+    )
+</code></pre>
+<p>For 738 / Baseline the R1 source narrative is the authorization-as-requested story, not the predecessor manual-review story. [export reference: filecite | turn135file0 | L3-L3]</p>
+<hr>
+<h2>12. What changes in the R26 integration inventory</h2>
+<p>This is not an R26 monitoring-source mutation.</p>
+<p>Record it as a bounded additive integration delta:</p>
+<pre><code class="language-text">New semantic object:
+R1FactFundedLifecycle
+
+Rows:
+130
+
+Grain:
+ApplicationScenarioKey
+
+Authority:
+Exact R1 M2.4 lifecycle facts consumed by R17/R26 downstream chain
+
+Purpose:
+Expose omitted source-owned funded lifecycle identity and dates
+
+R1FactDailyMonitoring:
+UNCHANGED — 15,600 rows / 47 columns
+
+Decision logic:
+UNCHANGED
+
+Monitoring policy:
+UNCHANGED
+
+R26 certification:
+UNCHANGED
+
+Publication:
+NOT AUTHORIZED
+</code></pre>
+<p>This is precisely the kind of <strong>version-separated Power BI integration delta</strong> contemplated by the R26 acceptance boundary: R26 technical acceptance does not itself update Power BI; the integration candidate must be built separately and reviewed. [export reference: filecite | turn136file12 | L417-L426]</p>
+<h3>The next efficient move</h3>
+<p>I would <strong>not continue formatting P03 yet</strong>. The next action should be to construct and load <code>R1FactFundedLifecycle</code> for all 130 funded application-scenario paths, validate its uniqueness and 738 dates, and only then return to the P03 visual.</p>
+<p>Once that table physically exists, the rest of the P03 corrections become straightforward instead of continuing to work around an incomplete carrier.</p>
+</div></article><article id="m-b3123996-5855-4301-9422-adadde1f55a7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00762 · 2026-09-02T19:19:00.186000-04:00 · active path</p><div class="bubble"><p>your instructions are appreciated, but I need a bit more detail on how to do some of the steps. please be explicit.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

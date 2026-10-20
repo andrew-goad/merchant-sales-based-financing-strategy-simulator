@@ -1,0 +1,1032 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Campaign Scale 750 - 2,500 - 25,000 Part 2 — part 12 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Campaign Scale 750 - 2,500 - 25,000 Part 2 — part 12</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-11.html">Previous part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-cd6f7087-bcaf-49c3-a3b3-69dba84827c2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00269 · 2026-09-13T19:24:35.626000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 0caac974-abb7-4df9-82d5-a18ba6a4b747.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-af68c154-a4e7-4c37-9aaf-d23a5940307d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00270 · 2026-09-13T19:24:37.253564-04:00 · active path</p><div class="bubble"><p>Excellent. That gives us the clean benchmark opportunity we wanted.</p>
+<p>The original SSD-resident <code>msbf_strategy</code> has:</p>
+<pre><code class="language-text">run_id             1
+population_id      MSBF_POP_0001
+merchants          750
+POS rows           135,000
+expected function  present
+actual function    present
+</code></pre>
+<p>So <strong>do not install or change anything</strong> there.</p>
+<p>In DBeaver, still connected to the original <strong><code>msbf_strategy</code> on port 5432</strong>, run exactly this:</p>
+<pre><code class="language-sql">SET statement_timeout = &#39;10min&#39;;
+SET lock_timeout = &#39;10s&#39;;
+
+SELECT
+    &#39;SSD_POS31_BEGIN&#39; AS marker,
+    clock_timestamp() AS observed_at;
+
+EXPLAIN (ANALYZE, BUFFERS, WAL, SETTINGS, SUMMARY, TIMING OFF)
+SELECT COUNT(*) AS mismatches
+FROM msbf_m1.m1_4_expected_pos_snapshot(
+       (
+           SELECT run_id
+           FROM msbf_ctl.run_registry
+           WHERE run_code = &#39;M1_V0_2_BASELINE_BUILD&#39;
+             AND run_version = 1
+       )
+     ) e
+FULL JOIN msbf_m1.m1_4_actual_pos_snapshot(
+       (
+           SELECT run_id
+           FROM msbf_ctl.run_registry
+           WHERE run_code = &#39;M1_V0_2_BASELINE_BUILD&#39;
+             AND run_version = 1
+       )
+     ) a
+USING (entity_key)
+WHERE e.row_hash IS DISTINCT FROM a.row_hash;
+
+SELECT
+    &#39;SSD_POS31_END&#39; AS marker,
+    clock_timestamp() AS observed_at;
+</code></pre>
+<p>This is now an unusually strong A/B experiment:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Original</th>
+<th>Campaign benchmark</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Population</td>
+<td>750</td>
+<td>750</td>
+</tr>
+<tr>
+<td>POS rows</td>
+<td>135,000</td>
+<td>135,000</td>
+</tr>
+<tr>
+<td>PostgreSQL</td>
+<td>17.9</td>
+<td>17.9</td>
+</tr>
+<tr>
+<td>Client</td>
+<td>DBeaver</td>
+<td>DBeaver</td>
+</tr>
+<tr>
+<td><code>work_mem</code></td>
+<td>4 MB</td>
+<td>4 MB</td>
+</tr>
+<tr>
+<td>JIT</td>
+<td>on</td>
+<td>on</td>
+</tr>
+<tr>
+<td>parallel/gather</td>
+<td>2</td>
+<td>2</td>
+</tr>
+<tr>
+<td>M1.4 functions</td>
+<td>present</td>
+<td>same published definitions</td>
+</tr>
+<tr>
+<td><strong>Storage</strong></td>
+<td><strong>C: SSD</strong></td>
+<td><strong>D: HDD</strong></td>
+</tr>
+</tbody></table>
+<p>Our D:-HDD DBeaver target is:</p>
+<p><strong>6m 18.4s</strong>.</p>
+<p>If this C:-SSD execution is dramatically faster, we&#39;ve isolated storage as a major contributor. If it is also around six minutes, SSD/HDD is largely exonerated and we know your historical fast experience must involve another difference in <strong>how the original scripts were actually executed versus the standalone function-reproduction workload we&#39;re benchmarking</strong>.</p>
+<p>That latter outcome would be especially important, because it would make me question whether <strong>POS31 itself was ever the fast part you remember from the original DBeaver execution</strong>, rather than assuming it was.</p>
+<p>Run this one test and send me the execution time/plan.</p>
+</div></article><article id="m-b86e48f5-aa9e-40cc-88fe-4f011c78cbf6" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00271 · 2026-09-13T19:39:12.644000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: bbea8fd9-ec61-4c23-8dba-2d18f6da2382.png; b1ce7407-c43d-4384-8b08-ee82a3ee9e7d.png</p><div class="bubble"><p>that original server execution only produced one result set and a statistics: </p>
+</div></article><article id="m-68633b50-0d56-43c7-87f8-2d0dd65dac21" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00272 · 2026-09-13T19:39:19.455558-04:00 · active path</p><div class="bubble"><p>That did <strong>not</strong> run the benchmark. It only executed the first statement:</p>
+<pre><code class="language-sql">SELECT
+    &#39;SSD_POS31_BEGIN&#39; AS marker,
+    clock_timestamp() AS observed_at;
+</code></pre>
+<p>That is why you got:</p>
+<ul>
+<li>one result set;</li>
+<li>no execution plan;</li>
+<li>no <code>SSD_POS31_END</code>;</li>
+<li>only <strong>0.008 sec</strong> total time.</li>
+</ul>
+<p>So this is <strong>not evidence that the SSD server completed POS31 in 8 ms</strong>.</p>
+<p>In DBeaver, make sure you run the whole block as a <strong>script</strong>, not just the statement where the cursor happens to be. Easiest approach: highlight the entire block I gave you, then use <strong>Execute SQL Script</strong> rather than <strong>Execute SQL Statement</strong>.</p>
+<p>You should know it ran correctly when you see three outputs in sequence:</p>
+<pre><code class="language-text">1. SSD_POS31_BEGIN
+2. QUERY PLAN
+3. SSD_POS31_END
+</code></pre>
+<p>and the Statistics tab should then show several minutes if it behaves anything like the D:-drive benchmark.</p>
+<p>Use the exact same SQL again; no changes needed. The only issue was DBeaver execution mode.</p>
+</div></article><article id="m-90df034b-40e5-4887-a43c-db3f0aa8ff02" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00273 · 2026-09-13T19:40:11.387000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 25471d72-7727-487a-bb2c-6c323d0573b3.png</p><div class="bubble"><p>i ran the entire block. maybe the 10 minute was hit? </p>
+</div></article><article id="m-2736e07c-5852-4244-8024-e77e5c3c3688" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00274 · 2026-09-13T19:40:16.361900-04:00 · active path</p><div class="bubble"><p>Yes. The screenshot strongly indicates the <strong>10-minute <code>statement_timeout</code> was hit</strong>.</p>
+<p>The decisive row is the <code>EXPLAIN (ANALYZE...)</code> statement showing:</p>
+<pre><code class="language-text">Duration: 10m 0s
+</code></pre>
+<p>So the sequence was:</p>
+<pre><code class="language-text">SET statement_timeout = &#39;10min&#39;   → completed
+SSD_POS31_BEGIN                  → completed
+EXPLAIN ANALYZE POS31            → ran for 10 minutes
+                                  → PostgreSQL canceled it at timeout
+SSD_POS31_END                    → never executed
+</code></pre>
+<p>That is actually a very important result.</p>
+<p>On the original <strong>C: SSD / port 5432 / <code>msbf_strategy</code></strong> environment, the exact POS31 workload did <strong>not</strong> finish within 10 minutes. Meanwhile, on the D:-HDD benchmark clone it finished in about <strong>6m 18s in DBeaver</strong>.</p>
+<p>So SSD vs HDD is now largely exonerated as the main explanation. In fact, this exact test was slower on the original SSD server.</p>
+<p>That means we need to revise the historical-memory hypothesis:</p>
+<blockquote>
+<p>The original scripts may indeed have felt fast overall, but this exact POS31 deterministic-reproduction control was apparently <strong>not fast in the current <code>msbf_strategy</code> state</strong>.</p>
+</blockquote>
+<p>The next question is therefore no longer “why is Campaign Scale slower than DBeaver?” We have now shown DBeaver itself and SSD storage do not explain it.</p>
+<p>The more important question is:</p>
+<blockquote>
+<p><strong>Why did the original Module 1 development process seem fast, while this specific published M1.4 control now takes many minutes even at 750?</strong></p>
+</blockquote>
+<p>That points us toward the physical implementation of the published M1.4 helper/control itself—especially repeated blueprint regeneration, function cardinality opacity, and temp materialization—not Campaign Scale orchestration.</p>
+<p>I would not rerun that SSD test longer yet. The 10-minute timeout already gave us the information we needed.</p>
+</div></article><article id="m-12ab8e6b-68f0-40dc-a5ce-cb402e18be66" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00275 · 2026-09-13T19:41:15.104000-04:00 · active path</p><div class="bubble"><p>i think the important question is why 6 minutes for 750 while hours for 2.5k.</p>
+</div></article><article id="m-39eee3b7-efc3-4cc0-a9fa-8548322341b4" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00276 · 2026-09-13T19:41:19.184598-04:00 · active path</p><div class="bubble"><p>Exactly. That is now the important question.</p>
+<p>The key numbers are:</p>
+<pre><code class="language-text">Population:   750 → 2,500 = 3.33× larger
+
+M1.4 blueprint:
+750   = ~6.6 min
+2,500 = ~69.7 min
+        = ~10.6× slower
+
+POS31:
+750   = ~6.3–7.1 min
+2,500 = &gt;110 min before we interrupted
+        = &gt;15–17× slower
+</code></pre>
+<p>That is <strong>not normal linear scaling</strong>.</p>
+<p>What jumps out is that <strong>10.6× is extremely close to quadratic scaling</strong>:</p>
+<pre><code class="language-text">3.33 × 3.33 ≈ 11.1
+</code></pre>
+<p>So the blueprint is behaving almost like an <strong>O(N²)</strong> process over this range rather than an O(N) process.</p>
+<p>That gives us a much sharper engineering hypothesis.</p>
+<p>The published M1.4 blueprint contains a self-join over the generated daily-history set:</p>
+<pre><code class="language-text">eligible curr
+LEFT JOIN eligible prior
+  ON merchant_id
+ AND processor_account_id
+ AND prior.observation_date =
+       curr.observation_date - settlement_delay_days
+</code></pre>
+<p>At 750 merchants:</p>
+<pre><code class="language-text">135,000 daily rows
+</code></pre>
+<p>At 2,500:</p>
+<pre><code class="language-text">450,000 daily rows
+</code></pre>
+<p>If PostgreSQL handles that join efficiently with appropriate materialization/indexing/hash behavior, it should scale tolerably.</p>
+<p>If instead the SQL-function/CTE structure causes repeated scans or an inefficient join algorithm, the cost can approach:</p>
+<pre><code class="language-text">rows × rows
+</code></pre>
+<p>or at least something much closer to quadratic than linear.</p>
+<p>That matches the observed blueprint timings disturbingly well:</p>
+<pre><code class="language-text">Expected if linear:
+6.6 min × 3.33 ≈ 22 min
+
+Observed:
+~69.7 min
+
+Expected if quadratic:
+6.6 min × 11.1 ≈ 73 min
+</code></pre>
+<p><strong>That is almost exactly what happened.</strong></p>
+<p>So I now think this is our strongest lead.</p>
+<h3>POS31 compounds the same problem</h3>
+<p>POS31 is worse because it does not merely read the stored 450k rows.</p>
+<p>It calls:</p>
+<pre><code class="language-text">m1_4_expected_pos_snapshot()
+</code></pre>
+<p>which invokes the expensive blueprint again, then calls:</p>
+<pre><code class="language-text">m1_4_actual_pos_snapshot()
+</code></pre>
+<p>and finally sorts/joins those result sets for the deterministic comparison.</p>
+<p>At 750, the function scan estimates:</p>
+<pre><code class="language-text">estimated rows = 1,000
+actual rows    = 135,000
+</code></pre>
+<p>At 2,500, the actual output is approximately:</p>
+<pre><code class="language-text">450,000
+</code></pre>
+<p>while PostgreSQL can still treat the function as roughly a generic 1,000-row set during planning.</p>
+<p>So POS31 combines:</p>
+<pre><code class="language-text">expensive blueprint reconstruction
+        +
+poor function cardinality visibility
+        +
+sorts
+        +
+FULL JOIN
+        +
+temp spill
+</code></pre>
+<p>That explains why POS31 degrades even worse than the generation stage.</p>
+<h3>This changes what we should investigate next</h3>
+<p>I don&#39;t think the next question should be DBeaver, SSD/HDD, or PostgreSQL settings anymore. Those can amplify the problem, but they do not explain this remarkably quadratic scaling pattern.</p>
+<p>The next investigation should target <strong>the internal M1.4 execution plan</strong>.</p>
+<p>We need to determine whether the settlement self-join—or another internal CTE—is doing something equivalent to repeated scanning.</p>
+<p>Specifically, I want to measure:</p>
+<pre><code class="language-text">750 internal blueprint:
+  join type
+  actual loops
+  rows per loop
+  temp spill
+  hash batches
+  sort behavior
+
+versus
+
+2,500 internal blueprint:
+  same metrics
+</code></pre>
+<p>Right now our <code>EXPLAIN</code> sees only:</p>
+<pre><code class="language-text">Function Scan on m1_4_daily_pos_blueprint
+</code></pre>
+<p>which hides the expensive internals.</p>
+<p>We need to take the <strong>SQL body of the blueprint function</strong> and run its underlying <code>WITH ... SELECT ...</code> directly under:</p>
+<pre><code class="language-sql">EXPLAIN (ANALYZE, BUFFERS, SETTINGS, SUMMARY)
+</code></pre>
+<p>on the 750 benchmark.</p>
+<p>Then we can identify exactly which internal node consumed the six minutes.</p>
+<h3>Why this matters for the product</h3>
+<p>This looks increasingly like a <strong>physical implementation inefficiency</strong>, not a business-logic problem.</p>
+<p>That is good news.</p>
+<p>We potentially can preserve completely:</p>
+<pre><code class="language-text">deterministic generation
+settlement semantics
+row-level hashes
+POS31 reproduction control
+evidence
+validation
+</code></pre>
+<p>while changing how PostgreSQL executes the same mathematics.</p>
+<p>For example, if the culprit is the self-join, a future implementation might:</p>
+<pre><code class="language-text">materialize eligible rows once
+index (merchant_id, processor_account_id, observation_date)
+perform settlement lookup against that indexed materialization
+</code></pre>
+<p>rather than forcing PostgreSQL to repeatedly evaluate an opaque SQL-function/CTE tree.</p>
+<p>Likewise, POS31 could compare governed materialized expected/actual snapshots rather than rebuilding the expected 450k-row blueprint repeatedly.</p>
+<p>Those would be <strong>performance engineering changes</strong>, not weakening controls.</p>
+<p>So yes: <strong>the central finding is now the scaling curve itself.</strong> A 3.33× population increase is producing approximately <strong>quadratic runtime growth in M1.4</strong>, and POS31 is even worse. That is the problem I would attack next before we resume the 2,500 campaign.</p>
+</div></article><article id="m-a9984f67-5e46-433c-85f3-97c194e92e9b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00277 · 2026-09-13T20:01:16.610000-04:00 · active path</p><div class="bubble"><p>What is the best way to take a leap here versus spending another 30 prompts?</p>
+</div></article><article id="m-46ab8149-c325-402f-93dc-778234064cfc" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00278 · 2026-09-13T20:01:18.554945-04:00 · active path</p><div class="bubble"><p>The best move now is <strong>one governed performance-remediation leap</strong>, not more ad-hoc diagnostics.</p>
+<p>We already know enough to stop asking “what might it be?” The leap should answer, in one automated run:</p>
+<blockquote>
+<p><strong>Where is the nonlinear cost, can we eliminate it without changing any business/control result, and does the optimized path scale acceptably at 2,500?</strong></p>
+</blockquote>
+<p>I would structure it as a single package with four phases.</p>
+<ol>
+<li><p><strong>Internal attribution.</strong> Take the SQL body behind <code>m1_4_daily_pos_blueprint()</code> out of the opaque function boundary and run <code>EXPLAIN (ANALYZE, BUFFERS, SETTINGS)</code> against both the genuine 750 clone and the stopped 2,500 R4 subject. The harness should identify the top-cost nodes, loops, join algorithms, temp spill, and whether the settlement self-join is producing the near-quadratic curve. No manual reading during execution; generate a comparison report automatically.</p>
+</li>
+<li><p><strong>Configuration challenge.</strong> On disposable clones, automatically benchmark a small controlled matrix rather than discussing settings one at a time:</p>
+<ul>
+<li>current baseline: 4 MB / JIT on;</li>
+<li>64 MB / JIT off;</li>
+<li>perhaps 128 MB / JIT off if 64 MB materially helps.</li>
+</ul>
+<p>Do this for both blueprint generation and POS31. This tells us how much is environment versus SQL architecture in one shot.</p>
+</li>
+<li><p><strong>Physical-execution remediation proof.</strong> Build one optimized candidate that preserves the <strong>exact published mathematics and controls</strong> but changes how PostgreSQL performs the work. The likely candidate is:</p>
+<ul>
+<li>compute deterministic intermediate/eligible history once;</li>
+<li>materialize it;</li>
+<li>index <code>(merchant_id, processor_account_id, observation_date)</code>;</li>
+<li>perform settlement lookup against that indexed materialization;</li>
+<li>materialize expected snapshot once;</li>
+<li>reuse it for the reproduction/hash controls rather than regenerating the blueprint repeatedly.</li>
+</ul>
+<p>Then compare every output row/hash against the published implementation. Acceptance should require <strong>0 differences</strong>, not “close enough.”</p>
+</li>
+<li><p><strong>750 → 2,500 qualification.</strong> If the candidate is exact at 750, run the same candidate at 2,500 and calculate the actual scaling ratio. We should be looking for something much closer to the 3.33× population increase—not the current ~10.6× generation and &gt;15× POS31 degradation.</p>
+</li>
+</ol>
+<p>The package should finish with one concise decision table such as:</p>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th align="right">Published 750</th>
+<th align="right">Published 2,500</th>
+<th align="right">Candidate 750</th>
+<th align="right">Candidate 2,500</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Blueprint</td>
+<td align="right">6.6m</td>
+<td align="right">69.7m</td>
+<td align="right">?</td>
+<td align="right">?</td>
+</tr>
+<tr>
+<td>POS31</td>
+<td align="right">6–8m</td>
+<td align="right">&gt;110m</td>
+<td align="right">?</td>
+<td align="right">?</td>
+</tr>
+<tr>
+<td>Row differences</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right"><strong>0 required</strong></td>
+<td align="right"><strong>0 required</strong></td>
+</tr>
+<tr>
+<td>Hash differences</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right"><strong>0 required</strong></td>
+<td align="right"><strong>0 required</strong></td>
+</tr>
+<tr>
+<td>Scaling factor</td>
+<td align="right">—</td>
+<td align="right">~10.6× / &gt;15×</td>
+<td align="right">—</td>
+<td align="right">target near 3.33×</td>
+</tr>
+</tbody></table>
+<p>And I would impose a clear gate:</p>
+<blockquote>
+<p><strong>Do not resume the 68-stage 2,500 campaign until this leap either produces an exact, materially faster execution path or proves that the published M1.4 design itself requires a governed revision.</strong></p>
+</blockquote>
+<p>That protects your “no cold handoffs” principle: we do not remove deterministic controls; we make their <strong>physical implementation efficient while proving identical assurance</strong>.</p>
+<p>We also have a major advantage now: we already possess both benchmark subjects needed for the leap. The 750 disposable clone is complete, and the stopped 2,500 R4 subject completed M1.4 generation before validation was interrupted. So we should <strong>reuse those</strong>, not regenerate populations again.</p>
+<p>I would call this something like:</p>
+<p><strong>Leap 4 — M1.4 Performance Attribution, Exact-Equivalence Remediation &amp; 2,500 Scaling Qualification</strong></p>
+<p>And make it one package, one PowerShell launch, one generated evidence bundle. That is the fastest route from where we are to an engineering decision.</p>
+</div></article><article id="m-9f241c09-d920-4f61-b19f-2d9efeb2a5c0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00279 · 2026-09-13T20:03:34.968000-04:00 · active path</p><div class="bubble"><p>Proceed with The best move now is <strong>one governed performance-remediation leap</strong>, not more ad-hoc diagnostics.</p>
+<p>We already know enough to stop asking “what might it be?” The leap should answer, in one automated run:</p>
+<blockquote>
+<p><strong>Where is the nonlinear cost, can we eliminate it without changing any business/control result, and does the optimized path scale acceptably at 2,500?</strong></p>
+</blockquote>
+<p>I would structure it as a single package with four phases.</p>
+<ol>
+<li><p><strong>Internal attribution.</strong> Take the SQL body behind <code>m1_4_daily_pos_blueprint()</code> out of the opaque function boundary and run <code>EXPLAIN (ANALYZE, BUFFERS, SETTINGS)</code> against both the genuine 750 clone and the stopped 2,500 R4 subject. The harness should identify the top-cost nodes, loops, join algorithms, temp spill, and whether the settlement self-join is producing the near-quadratic curve. No manual reading during execution; generate a comparison report automatically.</p>
+</li>
+<li><p><strong>Configuration challenge.</strong> On disposable clones, automatically benchmark a small controlled matrix rather than discussing settings one at a time:</p>
+<ul>
+<li>current baseline: 4 MB / JIT on;</li>
+<li>64 MB / JIT off;</li>
+<li>perhaps 128 MB / JIT off if 64 MB materially helps.</li>
+</ul>
+<p>Do this for both blueprint generation and POS31. This tells us how much is environment versus SQL architecture in one shot.</p>
+</li>
+<li><p><strong>Physical-execution remediation proof.</strong> Build one optimized candidate that preserves the <strong>exact published mathematics and controls</strong> but changes how PostgreSQL performs the work. The likely candidate is:</p>
+<ul>
+<li>compute deterministic intermediate/eligible history once;</li>
+<li>materialize it;</li>
+<li>index <code>(merchant_id, processor_account_id, observation_date)</code>;</li>
+<li>perform settlement lookup against that indexed materialization;</li>
+<li>materialize expected snapshot once;</li>
+<li>reuse it for the reproduction/hash controls rather than regenerating the blueprint repeatedly.</li>
+</ul>
+<p>Then compare every output row/hash against the published implementation. Acceptance should require <strong>0 differences</strong>, not “close enough.”</p>
+</li>
+<li><p><strong>750 → 2,500 qualification.</strong> If the candidate is exact at 750, run the same candidate at 2,500 and calculate the actual scaling ratio. We should be looking for something much closer to the 3.33× population increase—not the current ~10.6× generation and &gt;15× POS31 degradation.</p>
+</li>
+</ol>
+<p>The package should finish with one concise decision table such as:</p>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th align="right">Published 750</th>
+<th align="right">Published 2,500</th>
+<th align="right">Candidate 750</th>
+<th align="right">Candidate 2,500</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Blueprint</td>
+<td align="right">6.6m</td>
+<td align="right">69.7m</td>
+<td align="right">?</td>
+<td align="right">?</td>
+</tr>
+<tr>
+<td>POS31</td>
+<td align="right">6–8m</td>
+<td align="right">&gt;110m</td>
+<td align="right">?</td>
+<td align="right">?</td>
+</tr>
+<tr>
+<td>Row differences</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right"><strong>0 required</strong></td>
+<td align="right"><strong>0 required</strong></td>
+</tr>
+<tr>
+<td>Hash differences</td>
+<td align="right">—</td>
+<td align="right">—</td>
+<td align="right"><strong>0 required</strong></td>
+<td align="right"><strong>0 required</strong></td>
+</tr>
+<tr>
+<td>Scaling factor</td>
+<td align="right">—</td>
+<td align="right">~10.6× / &gt;15×</td>
+<td align="right">—</td>
+<td align="right">target near 3.33×</td>
+</tr>
+</tbody></table>
+<p>And I would impose a clear gate:</p>
+<blockquote>
+<p><strong>Do not resume the 68-stage 2,500 campaign until this leap either produces an exact, materially faster execution path or proves that the published M1.4 design itself requires a governed revision.</strong></p>
+</blockquote>
+<p>That protects your “no cold handoffs” principle: we do not remove deterministic controls; we make their <strong>physical implementation efficient while proving identical assurance</strong>.</p>
+<p>We also have a major advantage now: we already possess both benchmark subjects needed for the leap. The 750 disposable clone is complete, and the stopped 2,500 R4 subject completed M1.4 generation before validation was interrupted. So we should <strong>reuse those</strong>, not regenerate populations again.</p>
+<p>I would call this something like:</p>
+<p><strong>Leap 4 — M1.4 Performance Attribution, Exact-Equivalence Remediation &amp; 2,500 Scaling Qualification</strong></p>
+<p>And make it one package, one PowerShell launch, one generated evidence bundle. That is the fastest route from where we are to an engineering decision.</p>
+</div></article><article id="m-6157f781-c3f4-4b15-987b-a88b90f0ff76" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00280 · 2026-09-13T20:04:08.756224-04:00 · active path</p><div class="bubble"><p>I’ll build a separate bounded performance-qualification package using read-only 750/2,500 sources and disposable clones, preserving published logic while clearly separating measured results, hypotheses, and timeouts.</p>
+</div></article><article id="m-8a87dd43-597c-4776-a120-7519ff415160" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00281 · 2026-09-13T20:07:17.059310-04:00 · active path</p><div class="bubble"><p>I’ll also correct the timing comparison: the 69.7- and 109.9-minute figures covered whole source programs, so isolated workload timings will underpin scaling conclusions.</p>
+</div></article><article id="m-2926632f-67e7-4ef5-8fde-94948e1689ab" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00282 · 2026-09-13T20:43:24.206927-04:00 · active path</p><div class="bubble"><h2>Leap 4 is built: one bounded performance-and-equivalence experiment</h2>
+<p><strong>The package now implements the attribution probes, resource-setting comparison, materialized candidate, exact-output checks, and 750-before-2,500 gate.</strong> It is ready for its first owner-run native experiment.</p>
+<p><strong>No performance improvement or native candidate equivalence is claimed yet.</strong> Those conclusions must come from the return package.</p>
+<h3>Deliverables</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Leap 4 experiment package (historical reference: <code>sandbox:[session]/MSBF_LEAP4_M14_PERFORMANCE_R1_20260913.zip</code>; referenced bytes not established here)</strong></td>
+<td><strong>696 KB.</strong> Executable experiment, source-locked SQL, candidate compiler, sealed comparison contract, tests, and retained evidence.</td>
+</tr>
+<tr>
+<td><strong>Engineering report (historical reference: <code>sandbox:[session]/MSBF_LEAP4_M14_PERFORMANCE_R1_20260913_ENGINEERING_REPORT.md</code>; referenced bytes not established here)</strong></td>
+<td>Design, source fidelity, measurement boundaries, controls, and qualification limits.</td>
+</tr>
+<tr>
+<td><strong>Complete PowerShell run block (historical reference: <code>sandbox:[session]/MSBF_LEAP4_M14_PERFORMANCE_R1_20260913_RUN_BLOCK.txt</code>; referenced bytes not established here)</strong></td>
+<td>The complete launch block, also reproduced below.</td>
+</tr>
+<tr>
+<td><strong>Delivery validation (historical reference: <code>sandbox:[session]/MSBF_LEAP4_M14_PERFORMANCE_R1_20260913_VALIDATION.json</code>; referenced bytes not established here)</strong></td>
+<td>Actual package checks and test results.</td>
+</tr>
+</tbody></table>
+<p>SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_LEAP4_M14_PERFORMANCE_R1_20260913.zip.sha256</code>; referenced bytes not established here) · Build and clean-extraction verification logs (historical reference: <code>sandbox:[session]/MSBF_LEAP4_M14_PERFORMANCE_R1_20260913_VERIFICATION.zip</code>; referenced bytes not established here)</p>
+<h2>What the experiment does automatically</h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Implemented behavior</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Attribution</strong></td>
+<td>Exposes the source blueprint body, collects JSON execution plans where the bounded probe completes, and reports available node times, loops, joins, sorts, and temporary-file activity.</td>
+</tr>
+<tr>
+<td><strong>Configuration challenge</strong></td>
+<td>Tests the original blueprint and original <strong>INSERT-form POS31</strong> under <strong>4 MB/JIT on</strong> and <strong>64 MB/JIT off</strong>, with a predeclared optional 128 MB follow-on.</td>
+</tr>
+<tr>
+<td><strong>Candidate equivalence</strong></td>
+<td>Materializes the source-defined profile and eligible history, indexes the original merchant/account/date key, and applies the unchanged settlement expressions.</td>
+</tr>
+<tr>
+<td><strong>Scaling qualification</strong></td>
+<td>Requires repeated exact equivalence at <strong>750 before executing the 2,500 candidate</strong>, then evaluates comparable timings and the observed scaling ratio.</td>
+</tr>
+</tbody></table>
+<p>The candidate’s producing path <strong>does not read retained POS outcomes or the published expected output to manufacture equality</strong>. Those are used only by the comparison side.</p>
+<p>The exact comparison covers <strong>43 merchant-profile fields, all 36 blueprint fields, all 21 persisted history fields, keys, cardinalities, row/set hashes, and the complete POS31/POS32 result records</strong>. No business field, lineage value, rounding rule, or tolerance is excluded.</p>
+<p><strong>The remaining published controls are neither removed nor waived.</strong> This experiment qualifies a physical-execution candidate for integration review; it does not issue M1.4 acceptance or resume the campaign.</p>
+<h2>An important correction to my earlier analysis</h2>
+<p>I incorrectly compared the <strong>whole-program</strong> 2,500 timings with <strong>individual-call</strong> 750 timings.</p>
+<table>
+<thead>
+<tr>
+<th>Recorded measurement</th>
+<th>Correct interpretation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>4,184.391 seconds</strong></td>
+<td>Entire <code>source_028</code> generation program—not one blueprint evaluation.</td>
+</tr>
+<tr>
+<td><strong>6,597.014 seconds, interrupted</strong></td>
+<td>Entire <code>source_029</code> positive-validation program up to interruption—not isolated POS31.</td>
+</tr>
+<tr>
+<td><strong>Approximately 395–396 seconds at 750</strong></td>
+<td>One blueprint materialization.</td>
+</tr>
+<tr>
+<td><strong>Approximately 426–503 seconds at 750</strong></td>
+<td>One SELECT-form reproduction benchmark.</td>
+</tr>
+</tbody></table>
+<p>Therefore, the earlier <strong>10.6× / &gt;15× ratios and near-quadratic conclusion were not established</strong>. The performance problem remains worth investigating, but those comparisons overstated what we had proved.</p>
+<p>This package corrects that in its report and measures the same workload categories at both sizes. It also labels the extracted-body plan as an <strong>instrumentation variant</strong>: moving SQL out of a function can change planning, so that plan is not automatically the function’s actual internal plan. Node-level timing is also separated from ordinary timing because PostgreSQL documents that it can add measurement overhead. [export reference: cite | turn345396view0]</p>
+<h2>Verification completed</h2>
+<p><strong>113 offline tests passed, and the same 113 tests passed again from a clean extraction of the final ZIP.</strong> The package manifest, checksums, seal, archive integrity, and path checks passed.</p>
+<p>The tests cover source changes, transformation boundaries, positional SQL output-column names, incomplete comparisons, failed controls, missing plans, mixed timing grains, partial clone failures, cancellation boundaries, and enforcement of the 750-before-2,500 gate.</p>
+<p><strong>PostgreSQL and Windows/PowerShell execution of this new experiment were not available in the build environment.</strong> The tests establish offline readiness—not native performance or equivalence.</p>
+<h2>Bounded execution—not another indefinite wait</h2>
+<p>The run has a <strong>10-minute maximum per heavy statement</strong>, a <strong>3-minute attribution-probe cap</strong>, and a <strong>90-minute benchmark-work budget</strong>. Setup, bounded postflight observations, and packaging add time. These are ceilings, not an estimated completion time.</p>
+<p>The controller reserves time for comparison work and records lower-priority probes as not run when necessary. <strong>A timeout is not PASS.</strong> If it cannot obtain a complete original-function output for the required comparison, equivalence remains unresolved.</p>
+<p>The predeclared engineering performance screen requires at least <strong>1.5× improvement</strong>, a candidate <strong>2,500/750 blueprint-time ratio no greater than 5</strong>, and candidate <strong>2,500 blueprint construction within 10 minutes</strong>. These are review thresholds—not changes to MSBF business policy.</p>
+<h2>Before running</h2>
+<p>Save the ZIP under <strong><code>D:\MSBF_ARCHIVE</code></strong>.</p>
+<p>In DBeaver, <strong>disconnect</strong> any connection to these two source databases on port <strong>55432</strong>:</p>
+<pre><code class="language-text">msbf_bench750_r4_20260913t215311z
+msbf_m1core_l3r4_20260913t182750z_b28da63f
+</code></pre>
+<p>Leave PostgreSQL running. The experiment makes new copies; it does not modify those source databases, access Reference R1, or use the original 5432 server.</p>
+<h2>Run this complete block once</h2>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$ErrorActionPreference = &#39;Stop&#39;
+
+$Zip = &#39;D:\MSBF_ARCHIVE\MSBF_LEAP4_M14_PERFORMANCE_R1_20260913.zip&#39;
+$ExpectedSHA256 = &#39;e4b6cae0ba0009937c789d1d20321e473de34f64491753e42c426f17582e679b&#39;
+$Python = &#39;C:\Python314\python.exe&#39;
+$PgBin = &#39;C:\Program Files\PostgreSQL\17\bin&#39;
+
+if (-not (Test-Path -LiteralPath $Zip -PathType Leaf)) {
+    throw &quot;Package not found: $Zip&quot;
+}
+if ((Get-FileHash -LiteralPath $Zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $ExpectedSHA256) {
+    throw &#39;Package SHA-256 mismatch. No experiment has started.&#39;
+}
+if (-not (Test-Path -LiteralPath $Python -PathType Leaf)) {
+    throw &quot;Python not found: $Python&quot;
+}
+foreach ($Binary in @(&#39;psql.exe&#39;, &#39;createdb.exe&#39;, &#39;pg_isready.exe&#39;, &#39;pg_ctl.exe&#39;, &#39;postgres.exe&#39;)) {
+    if (-not (Test-Path -LiteralPath (Join-Path $PgBin $Binary) -PathType Leaf)) {
+        throw &quot;Required PostgreSQL binary missing: $Binary&quot;
+    }
+}
+
+# Do not run two campaign/experiment controllers at once.
+$OtherRun = Get-CimInstance Win32_Process |
+    Where-Object {
+        $_.Name -match &#39;^python.*\.exe$&#39; -and
+        $_.CommandLine -match &#39;(qualify_m1_continuation\.py|run_perf\.py)&#39;
+    } | Select-Object -First 1
+if ($OtherRun) {
+    throw &quot;Another qualification/experiment is running (PID $($OtherRun.ProcessId)). No second run started.&quot;
+}
+
+$Stamp = [DateTime]::UtcNow.ToString(&quot;yyyyMMdd&#39;T&#39;HHmmss&#39;Z&#39;&quot;) + &#39;_&#39; + [guid]::NewGuid().ToString(&#39;N&#39;).Substring(0, 8)
+$ToolRoot = &#39;D:\MSBF_CAMPAIGNS\tools\LEAP4_M14_&#39; + $Stamp
+$Workspace = &#39;D:\MSBF_CAMPAIGNS\BENCHMARKS\LEAP4_M14_&#39; + $Stamp
+$Scratch = &#39;D:\MSBF_CAMPAIGNS\temp\LEAP4_M14_&#39; + $Stamp
+foreach ($Path in @($ToolRoot, $Workspace, $Scratch)) {
+    if (Test-Path -LiteralPath $Path) {
+        throw &quot;Destination exists; no overwrite or resume: $Path&quot;
+    }
+}
+New-Item -ItemType Directory -Path $Scratch -Force | Out-Null
+$OldTemps = @{}
+foreach ($Name in @(&#39;TEMP&#39;, &#39;TMP&#39;, &#39;TMPDIR&#39;)) {
+    $OldTemps[$Name] = [Environment]::GetEnvironmentVariable($Name, &#39;Process&#39;)
+}
+$RunExitCode = $null
+try {
+    foreach ($Name in @(&#39;TEMP&#39;, &#39;TMP&#39;, &#39;TMPDIR&#39;)) {
+        [Environment]::SetEnvironmentVariable($Name, $Scratch, &#39;Process&#39;)
+    }
+    Expand-Archive -LiteralPath $Zip -DestinationPath $ToolRoot
+    $Entry = Join-Path $ToolRoot &#39;run_perf.py&#39;
+    if (-not (Test-Path -LiteralPath $Entry -PathType Leaf)) {
+        throw &quot;Entrypoint missing: $Entry&quot;
+    }
+    Write-Host &quot;`nLEAP 4 - M1.4 PERFORMANCE AND EXACT-EQUIVALENCE EXPERIMENT&quot;
+    Write-Host &#39;Source clients must be disconnected; no force-disconnection is performed.&#39;
+    Write-Host &#39;Existing 750 benchmark and stopped 2,500 source are copied, not modified.&#39;
+    Write-Host &#39;Reference R1, original 5432 server, publication and campaign progression are excluded.&#39;
+    Write-Host &#39;Heavy statement cap: 10 minutes. Benchmark-work budget: 90 minutes.&#39;
+    Write-Host &quot;Workspace: $Workspace`n&quot;
+    &amp; $Python -u -B $Entry `
+        --acknowledge-isolated-performance-experiment `
+        --workspace $Workspace
+    $RunExitCode = $LASTEXITCODE
+}
+finally {
+    foreach ($Name in @(&#39;TEMP&#39;, &#39;TMP&#39;, &#39;TMPDIR&#39;)) {
+        [Environment]::SetEnvironmentVariable($Name, $OldTemps[$Name], &#39;Process&#39;)
+    }
+}
+
+$ReturnZip = $Workspace + &#39;_RETURN.zip&#39;
+if (Test-Path -LiteralPath $ReturnZip -PathType Leaf) {
+    Write-Host &quot;`nRETURN ZIP: $ReturnZip&quot;
+    Write-Host &quot;Validation: $ReturnZip.validation.json&quot;
+    Write-Host &#39;Upload the RETURN ZIP. Preserve all source databases, clones and workspaces.&#39;
+} else {
+    Write-Host &quot;`nNo completed return found. Preserve the terminal error and workspace: $Workspace&quot;
+}
+if ($null -ne $RunExitCode -and $RunExitCode -ne 0) {
+    Write-Warning &#39;Experiment stopped or did not earn the full performance disposition. Do not resume the campaign, patch SQL, or retry automatically.&#39;
+}
+</code></pre>
+<p>The run supplies its own progress messages and activity evidence. <strong>No second-window diagnostic or manual SQL sequence is required.</strong></p>
+<p>The strongest possible successful disposition is:</p>
+<pre><code class="language-text">EXACT_FASTER_CANDIDATE_QUALIFIED_FOR_INTEGRATION_REVIEW
+</code></pre>
+<p>That means exact results and the performance screen passed—not that the broader campaign has been resumed or accepted.</p>
+<p><strong>Upload the emitted <code>RETURN.zip</code> when it finishes or stops.</strong> It will contain the decision table, interpretation, exact SQL, plans, timings, comparison results, source observations, and failure evidence needed for the next engineering decision.</p>
+</div></article><article id="m-b048db1c-989b-49f3-bb5f-b14fa923a537" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00283 · 2026-09-13T20:43:28.911206-04:00 · alternate branch</p><div class="bubble"><p>The candidate now materializes and indexes source-defined eligible history while preserving settlement expressions; equivalence spans blueprint/persisted fields, profiles, hashes, and POS31/POS32. Timeouts remain incomplete, fail-closed evidence.</p>
+</div></article><article id="m-0a086235-0fd9-4d91-af64-7be9ceb19da8" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00284 · 2026-09-14T06:39:23.422000-04:00 · active path</p><p class="note">Attachment references: LEAP4_M14_20260914T004859Z_c8f54c69_RETURN.zip; LEAP4_M14_20260914T004859Z_c8f54c69_RETURN.zip.sha256; LEAP4_M14_20260914T004859Z_c8f54c69_RETURN.zip.validation.json</p><div class="bubble"><p>LEAP 4 - M1.4 PERFORMANCE AND EXACT-EQUIVALENCE EXPERIMENT
+Source clients must be disconnected; no force-disconnection is performed.
+Existing 750 benchmark and stopped 2,500 source are copied, not modified.
+Reference R1, original 5432 server, publication and campaign progression are excluded.
+Heavy statement cap: 10 minutes. Benchmark-work budget: 90 minutes.
+Workspace: D:\MSBF_CAMPAIGNS\BENCHMARKS\LEAP4_M14_20260914T004859Z_c8f54c69</p>
+<p>PostgreSQL password (hidden; Enter uses trust/pgpass):
+  [1] source_binding_750 | cap 180s
+  [2] source_binding_2500 | cap 180s
+    source_binding_2500: 30s elapsed; 5359s experiment budget remains
+  [3] create_private_schema_1 | cap 30s
+  [4] clone_binding_750 | cap 180s
+  [5] comparator_self_test_750 | cap 30s
+  [6] attribution_estimate_750 | cap 30s
+  [7] attribution_actual_750 | cap 180s
+    attribution_actual_750: 30s elapsed; 5238s experiment budget remains
+    attribution_actual_750: 60s elapsed; 5208s experiment budget remains
+    attribution_actual_750: 90s elapsed; 5178s experiment budget remains
+    attribution_actual_750: 120s elapsed; 5148s experiment budget remains
+    attribution_actual_750: 151s elapsed; 5118s experiment budget remains
+  [8] 750_base_blueprint | cap 600s
+    750_base_blueprint: 30s elapsed; 5058s experiment budget remains
+    750_base_blueprint: 60s elapsed; 5028s experiment budget remains
+    750_base_blueprint: 90s elapsed; 4998s experiment budget remains
+    750_base_blueprint: 120s elapsed; 4967s experiment budget remains
+    750_base_blueprint: 150s elapsed; 4937s experiment budget remains
+    750_base_blueprint: 180s elapsed; 4907s experiment budget remains
+    750_base_blueprint: 211s elapsed; 4877s experiment budget remains
+    750_base_blueprint: 241s elapsed; 4847s experiment budget remains
+    750_base_blueprint: 271s elapsed; 4817s experiment budget remains
+    750_base_blueprint: 301s elapsed; 4786s experiment budget remains
+    750_base_blueprint: 331s elapsed; 4756s experiment budget remains
+    750_base_blueprint: 361s elapsed; 4726s experiment budget remains
+  [9] 750_base_pos31 | cap 600s
+    750_base_pos31: 30s elapsed; 4682s experiment budget remains
+    750_base_pos31: 60s elapsed; 4652s experiment budget remains
+    750_base_pos31: 90s elapsed; 4621s experiment budget remains
+    750_base_pos31: 120s elapsed; 4591s experiment budget remains
+    750_base_pos31: 151s elapsed; 4561s experiment budget remains
+    750_base_pos31: 181s elapsed; 4531s experiment budget remains
+    750_base_pos31: 211s elapsed; 4500s experiment budget remains
+    750_base_pos31: 241s elapsed; 4470s experiment budget remains
+    750_base_pos31: 271s elapsed; 4440s experiment budget remains
+    750_base_pos31: 302s elapsed; 4410s experiment budget remains
+    750_base_pos31: 332s elapsed; 4380s experiment budget remains
+    750_base_pos31: 362s elapsed; 4349s experiment budget remains
+    750_base_pos31: 392s elapsed; 4319s experiment budget remains
+  [10] 750_m64_blueprint | cap 600s
+    750_m64_blueprint: 30s elapsed; 4287s experiment budget remains
+    750_m64_blueprint: 60s elapsed; 4257s experiment budget remains
+    750_m64_blueprint: 90s elapsed; 4227s experiment budget remains
+    750_m64_blueprint: 120s elapsed; 4197s experiment budget remains
+    750_m64_blueprint: 151s elapsed; 4166s experiment budget remains
+    750_m64_blueprint: 181s elapsed; 4136s experiment budget remains
+    750_m64_blueprint: 211s elapsed; 4106s experiment budget remains
+    750_m64_blueprint: 241s elapsed; 4076s experiment budget remains
+    750_m64_blueprint: 271s elapsed; 4046s experiment budget remains
+    750_m64_blueprint: 301s elapsed; 4015s experiment budget remains
+    750_m64_blueprint: 332s elapsed; 3985s experiment budget remains
+    750_m64_blueprint: 362s elapsed; 3955s experiment budget remains
+  [11] published_configuration_equality_750_m64 | cap 180s
+  [12] 750_m64_pos31 | cap 600s
+    750_m64_pos31: 30s elapsed; 3893s experiment budget remains
+    750_m64_pos31: 60s elapsed; 3863s experiment budget remains
+    750_m64_pos31: 90s elapsed; 3832s experiment budget remains
+EXPERIMENT STOP: BudgetExceeded: Experiment wall budget exhausted; no new work started
+  [13] source_postflight_750 | cap 120s
+  [14] source_postflight_2500 | cap 120s
+  [15] clone_postflight_750 | cap 120s</p>
+<p>INCONCLUSIVE_BUDGET_REACHED
+RETURN PACKAGE: D:\MSBF_CAMPAIGNS\BENCHMARKS\LEAP4_M14_20260914T004859Z_c8f54c69_RETURN.zip
+SHA256: f5a149a1fb4ef78cae2109ce63fbf17b70a5685f25c3b02eb0485a71ad4dd119
+No campaign resumption, 750 recertification, publication or G2 acceptance occurred.</p>
+<p>RETURN ZIP: D:\MSBF_CAMPAIGNS\BENCHMARKS\LEAP4_M14_20260914T004859Z_c8f54c69_RETURN.zip
+Validation: D:\MSBF_CAMPAIGNS\BENCHMARKS\LEAP4_M14_20260914T004859Z_c8f54c69_RETURN.zip.validation.json
+Upload the RETURN ZIP. Preserve all source databases, clones and workspaces.
+WARNING: Experiment stopped or did not earn the full performance disposition. Do not resume the campaign, patch SQL, or retry automatically.</p>
+</div></article><article id="m-faa895f9-ebe5-479a-bf26-6600011f1890" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00285 · 2026-09-14T06:40:01.830613-04:00 · active path</p><div class="bubble"><p>I’ll inspect the return to reconcile the apparent budget discrepancy and determine exactly which performance measurements completed before the experiment stopped.</p>
+</div></article><article id="m-706d2a54-3746-4ba7-bed5-fc2978533689" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00286 · 2026-09-14T06:43:11.281710-04:00 · active path</p><div class="bubble"><p>I’ll also verify whether the optimized candidate executed at all, so we don’t repeat completed work or rerun prematurely.</p>
+</div></article><article id="m-333e0439-9760-4dda-8a68-deaab6534460" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00287 · 2026-09-14T06:52:26.108654-04:00 · active path</p><div class="bubble"><p>PostgreSQL completed the last query in 407.4 seconds, despite a 33,840-second controller receipt; 64 MB/JIT-off did not improve the blueprint, and candidate testing never ran.</p>
+</div></article><article id="m-b358df9e-6a80-4cb0-a50d-dee8076bfdfe" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00288 · 2026-09-14T07:05:38.669815-04:00 · active path</p><div class="bubble"><h2>The return exposes a controller problem—not a nine-hour SQL calculation</h2>
+<p><strong>The final PostgreSQL query completed in 6 minutes 47 seconds. The controller did not collect its completion until roughly nine hours later.</strong> That gap exhausted the experiment budget before the optimized candidate could run.</p>
+<p>The original return is intact and correctly retains <code>INCONCLUSIVE_BUDGET_REACHED</code>. I verified its archive, all <strong>115 manifest entries</strong>, and checksums; I have not rewritten its results. [export reference: filecite | turn69file0 | L2-L6]</p>
+<p>I corrected the supervision problem and reordered the experiment so the next run reaches candidate-equivalence testing before spending time on additional diagnostic probes.</p>
+<h2>1. What actually completed</h2>
+<p>These are <strong>PostgreSQL executor times from the returned plans</strong>, not whole-program durations or Python wall-clock measurements:</p>
+<table>
+<thead>
+<tr>
+<th>Completed 750 workload</th>
+<th>Settings</th>
+<th align="right">PostgreSQL execution</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Published blueprint</td>
+<td>4 MB, JIT on</td>
+<td align="right"><strong>6:12.9</strong></td>
+<td>135,000 rows; correct population/history grain</td>
+</tr>
+<tr>
+<td>Published INSERT-form POS31</td>
+<td>4 MB, JIT on</td>
+<td align="right"><strong>6:34.2</strong></td>
+<td><strong>PASS — zero mismatches</strong></td>
+</tr>
+<tr>
+<td>Published blueprint</td>
+<td>64 MB, JIT off</td>
+<td align="right"><strong>6:30.3</strong></td>
+<td>Same required output grain</td>
+</tr>
+<tr>
+<td>Published INSERT-form POS31</td>
+<td>64 MB, JIT off</td>
+<td align="right"><strong>6:47.4</strong></td>
+<td><strong>PASS — zero mismatches</strong></td>
+</tr>
+</tbody></table>
+<p>The full-column comparison between the two published blueprint outputs also found <strong>zero differences</strong>.</p>
+<p><strong>The 64 MB/JIT-off combination did not improve performance in these trials.</strong> That is useful evidence against treating those settings as the immediate solution. Because both settings changed together and these were single trials, this does not isolate their individual effects.</p>
+<p>The optimized candidate <strong>never executed</strong>, and no 2,500 experiment clone was created. Consequently, this return establishes neither candidate equivalence nor candidate scaling.</p>
+<p>The exact measurements and source locations are documented in the <strong>R1 return review (historical reference: <code>sandbox:[session]/MSBF_LEAP4_R1_RETURN_REVIEW_20260914.md</code>; referenced bytes not established here)</strong>.</p>
+<h2>2. Why the budget appeared to vanish</h2>
+<p>The archived evidence shows this sequence, using your local UTC−04:00 time:</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Recorded evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Final query session started</td>
+<td>About <strong>9:13:47 p.m.</strong></td>
+</tr>
+<tr>
+<td>Last controller heartbeat</td>
+<td>About <strong>9:15:16 p.m.</strong>, reporting 90.6 seconds elapsed</td>
+</tr>
+<tr>
+<td>PostgreSQL output file last written</td>
+<td>About <strong>9:20:34 p.m.</strong></td>
+</tr>
+<tr>
+<td>Controller completion receipt written</td>
+<td>About <strong>6:37:46 a.m. the following morning</strong></td>
+</tr>
+</tbody></table>
+<p>PostgreSQL recorded <strong>407.388 seconds</strong> of execution. The controller attributed <strong>33,840.195 seconds</strong> to the step. <strong>That controller value must not be used as SQL-performance evidence.</strong></p>
+<p>The R1 code performs synchronous console printing in the same thread that checks process completion and deadlines. That creates a concrete vulnerability: <strong>if terminal output blocks, supervision can stop while PostgreSQL continues independently and finishes.</strong></p>
+<p>The return does <strong>not</strong> prove whether this particular gap was caused by blocked console output, an externally paused process, or a host/power event. It contains no console-selection history, process stack, or Windows power-event record. I am not attributing it to anything you did.</p>
+<p><strong>The harness I supplied should not allow its display path to block supervision.</strong> That is the engineering defect addressed here. The original final status also left a stale “RUNNING” heartbeat file, which is corrected prospectively.</p>
+<h2>3. The new evidence also narrows the underlying performance question</h2>
+<p>This experiment captured <strong>I/O timing</strong>, not just temporary-block counts. PostgreSQL distinguishes those measurements: block traffic tells us how much was accessed, while enabled I/O timing reports time spent in the corresponding read/write operations. [export reference: cite | turn902996view0]</p>
+<p>For the completed 750 queries:</p>
+<table>
+<thead>
+<tr>
+<th>Query</th>
+<th align="right">Measured temporary-file read/write time</th>
+<th align="right">Total executor time</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Baseline blueprint</td>
+<td align="right"><strong>1.15 seconds</strong></td>
+<td align="right">372.89 seconds</td>
+</tr>
+<tr>
+<td>Baseline POS31</td>
+<td align="right"><strong>1.40 seconds</strong></td>
+<td align="right">394.23 seconds</td>
+</tr>
+<tr>
+<td>64 MB blueprint</td>
+<td align="right"><strong>0.48 seconds</strong></td>
+<td align="right">390.32 seconds</td>
+</tr>
+<tr>
+<td>64 MB POS31</td>
+<td align="right"><strong>0.55 seconds</strong></td>
+<td align="right">407.39 seconds</td>
+</tr>
+</tbody></table>
+<p>These measurements weaken my earlier suggestion that <strong>HDD temporary-file waiting dominates the observed 750 runtime</strong>. Increasing memory reduced temporary-file traffic without materially reducing execution time.</p>
+<p>The returned 750 blueprint plan also shows a <strong>hash join for the settlement lookup</strong>, not the all-to-all nested-loop behavior we had hypothesized. It does not yet identify the expensive internal expression or establish what happens at 2,500.</p>
+<p><strong>The investigation remains valid, but the completed evidence is narrowing it—not confirming the earlier guesses.</strong> Details are preserved in the review rather than used to justify changing any control.</p>
+<h2>4. Leap 4 R2 is ready for a controlled retry</h2>
+<h3>Deliverables</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Corrected Leap 4 R2 package (historical reference: <code>sandbox:[session]/MSBF_LEAP4_M14_PERFORMANCE_R2_20260914.zip</code>; referenced bytes not established here)</strong></td>
+<td><strong>1.09 MB.</strong> Corrected supervision, timing integrity, candidate-first orchestration, tests, and retained R1 evidence.</td>
+</tr>
+<tr>
+<td><strong>Complete R2 PowerShell run block (historical reference: <code>sandbox:[session]/MSBF_LEAP4_M14_PERFORMANCE_R2_20260914_RUN_BLOCK.txt</code>; referenced bytes not established here)</strong></td>
+<td>Full launch block—no manual edits or individual SQL execution required.</td>
+</tr>
+<tr>
+<td><strong>R1 return review (historical reference: <code>sandbox:[session]/MSBF_LEAP4_R1_RETURN_REVIEW_20260914.md</code>; referenced bytes not established here)</strong></td>
+<td>Findings, exact timings, observation gap, source checks, and interpretation limits.</td>
+</tr>
+<tr>
+<td><strong>R2 engineering report (historical reference: <code>sandbox:[session]/MSBF_LEAP4_M14_PERFORMANCE_R2_20260914_ENGINEERING_REPORT.md</code>; referenced bytes not established here)</strong></td>
+<td>Implemented corrections, preserved semantics, and qualification boundaries.</td>
+</tr>
+</tbody></table>
+<p>Validation record (historical reference: <code>sandbox:[session]/MSBF_LEAP4_M14_PERFORMANCE_R2_20260914_VALIDATION.json</code>; referenced bytes not established here) · Verification logs (historical reference: <code>sandbox:[session]/MSBF_LEAP4_M14_PERFORMANCE_R2_20260914_VERIFICATION.zip</code>; referenced bytes not established here) · SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_LEAP4_M14_PERFORMANCE_R2_20260914.zip.sha256</code>; referenced bytes not established here)</p>
+<h3>What changed</h3>
+<p><strong>Console output no longer runs on the supervision thread.</strong> Progress is recorded to a file first, then offered to a separate, bounded display queue. A blocked terminal must not stop process polling or deadline checks.</p>
+<p><strong>Timing is checked rather than assumed.</strong> R2 records database-side start/end markers, PostgreSQL executor time, controller elapsed time, and monitoring gaps separately. A material observation gap prevents a performance PASS; it is not silently subtracted from elapsed time.</p>
+<p><strong>The process requests protection against automatic idle sleep while running</strong>, then releases that request. It does not change your power plan or prevent explicit user-initiated sleep. This is a reliability measure—not a claim that sleep caused R1’s gap. [export reference: cite | turn902996view1]</p>
+<p><strong>Candidate testing now comes first:</strong></p>
+<pre><code class="language-text">Bind and clone the 750 source
+    → obtain one complete published blueprint for comparison
+    → execute both candidate trials and exact comparisons
+    → only after 750 passes, perform corresponding 2,500 work
+    → then complete the remaining configuration and attribution probes
+</code></pre>
+<p>The <strong>10-minute statement cap and 90-minute experiment budget remain unchanged</strong>. Required comparisons or measurements that cannot complete remain unresolved—not waived.</p>
+<h2>5. What was preserved and tested</h2>
+<p><strong>No MSBF calculation, selected SQL source, candidate transformation, comparison predicate, tolerance, or performance threshold changed.</strong> The existing environment state machine and source-isolation boundaries are also preserved.</p>
+<table>
+<thead>
+<tr>
+<th>Verification</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Unmodified R1 tests</td>
+<td><strong>113 PASS</strong></td>
+</tr>
+<tr>
+<td>Corrected R2 tests</td>
+<td><strong>140 PASS</strong>, including 27 new tests</td>
+</tr>
+<tr>
+<td>Tests repeated from the delivered ZIP’s clean extraction</td>
+<td><strong>140 PASS again</strong></td>
+</tr>
+<tr>
+<td>Failures / errors / skips</td>
+<td><strong>0 / 0 / 0</strong></td>
+</tr>
+<tr>
+<td>Protected existing files checked</td>
+<td><strong>20/20 unchanged</strong></td>
+</tr>
+<tr>
+<td>Selected SQL source files</td>
+<td><strong>5/5 unchanged</strong></td>
+</tr>
+<tr>
+<td>Manifest, seal, checksums, archive integrity</td>
+<td><strong>PASS</strong></td>
+</tr>
+</tbody></table>
+<p>The added tests include an <strong>actual local subprocess completing while the console sink is deliberately blocked</strong>. That tests the transport correction. Native Windows and PostgreSQL execution of R2 remain pending; these are not presented as native qualification results.</p>
+<h2>Next action</h2>
+<p>Save the corrected ZIP to <strong><code>D:\MSBF_ARCHIVE</code></strong> and use the <strong>complete R2 run block linked above</strong>. Disconnect DBeaver sessions from the same two source databases before launching, but leave PostgreSQL running. R2 creates new experiment clones; <strong>do not resume or modify the stopped R1 workspace</strong>.</p>
+<p>The accepted 750 validation, Reference R1, and the broader campaign remain unchanged. <strong>Upload the new <code>RETURN.zip</code> when R2 finishes or stops; the next run is directed toward the candidate proof, not another round of manual diagnostics.</strong></p>
+</div></article><article id="m-0d0fb96f-5f83-4637-81bd-63ff905b1b40" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00289 · 2026-09-14T07:07:53.965000-04:00 · active path</p><div class="bubble"><p>i fell asleep, so maybe a host power event is possible. it felt like it needed to power up from a sleep mode when i woke up.</p>
+</div></article><article id="m-c3377079-2059-4933-a1e3-7fda4a954a02" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00290 · 2026-09-14T07:10:04.634792-04:00 · active path</p><div class="bubble"><p><strong>That makes host sleep a plausible—and now stronger—explanation for the overnight gap.</strong> It is not confirmed without Windows power-event records, but your observation fits an interruption much better than a nine-hour SQL calculation.</p>
+<p>I should also distinguish two things clearly: <strong>we identified a real supervision vulnerability, but we did not prove that blocked console output caused this incident.</strong> The return review leaves the cause unresolved; your new context adds support for a power-related interruption. [export reference: filecite | turn73file0 | L16-L22]</p>
+<h3>What remains established</h3>
+<p>PostgreSQL completed the final POS31 query in <strong>6 minutes 47 seconds</strong>, with zero mismatches. The roughly nine-hour discrepancy belongs to the controller’s elapsed/collection record—not the database calculation. The experiment remains <strong>inconclusive because it stopped before testing the optimized candidate</strong>, not because the completed MSBF calculations failed. [export reference: filecite | turn73file0 | L36-L45] [export reference: filecite | turn73file0 | L91-L95]</p>
+<h3>R2 already addresses this possibility</h3>
+<p>The corrected runtime requests that Windows <strong>keep the system awake during the experiment</strong>, then releases that request afterward. It does not permanently change your power plan. This matters because Windows does not necessarily treat CPU or disk activity alone as a reason to prevent automatic sleep. [export reference: filecite | turn73file1 | L143-L145] [export reference: cite | turn684373search0]</p>
+<p><strong>The monitor can still turn off; that is separate from the computer entering sleep.</strong> You do not need to keep moving the mouse or watching the screen. Leave the execution window open and avoid deliberately selecting Sleep or shutting down while it runs—the awake request does not override an explicit user sleep action. [export reference: cite | turn684373search0 | turn684373search1]</p>
+<p>R2 also records monitoring gaps and separates database execution time from controller time, so an interruption cannot silently become valid performance evidence. Its Windows-specific behavior still needs the native run to verify it. [export reference: filecite | turn73file1 | L137-L145] [export reference: filecite | turn73file1 | L159-L169]</p>
+<p><strong>No additional diagnostic round is needed before proceeding with the already-delivered R2 package.</strong> Your experience reinforces the product requirement: a long-running campaign should manage ordinary idle-sleep prevention itself, rather than require its user to stay awake alongside it.</p>
+</div></article><article id="m-103587ea-2d45-448b-95b9-6946932388ed" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00291 · 2026-09-14T07:11:55.535000-04:00 · active path</p><div class="bubble"><p>I did not select Sleep or shutting down. The monitors went into power save mode after I fell asleep and eventually the pc may have done the same given how the powershell window reacted. I found it unusual that the powershell activity wouldn&#39;t keep it going.</p>
+</div></article><article id="m-15274b7c-11d3-4bfe-bbe3-cb93e517af2f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00292 · 2026-09-14T07:14:14.648554-04:00 · active path</p><div class="bubble"><p>Understood—you <strong>left the job running normally</strong>, without choosing Sleep or shutting down. That is exactly the unattended-use case the runtime should support.</p>
+<p><strong>It is counterintuitive, but a busy PowerShell window does not guarantee that Windows will keep the PC awake.</strong> Windows distinguishes <em>computational activity</em> from the activity that resets its power-management timers. Microsoft explicitly documents that CPU and disk activity are <strong>not automatically detected for this purpose</strong>. An application that needs uninterrupted background processing should explicitly request that the system remain awake. [export reference: cite | turn687769search0]</p>
+<p>Consequently, PostgreSQL can be calculating, Python can be supervising it, and PowerShell can be printing progress—yet that work is not a dependable substitute for a stay-awake request. [export reference: cite | turn687769search0 | turn687769search2]</p>
+<h3>The monitor and the PC have separate power states</h3>
+<p><strong>The displays switching off is not itself a problem.</strong> Windows can turn off the monitors while applications continue normally. A separate system-idle timeout can subsequently put the PC into sleep; in traditional sleep, application execution stops. No explicit selection of Sleep is necessary for that sequence. [export reference: cite | turn687769search1]</p>
+<p>Your description is therefore consistent with automatic sleep, but the monitors entering power-save mode alone does not establish that the PC slept or explain the precise timing of the overnight interruption.</p>
+<h3>This belongs in the runtime—not in instructions to keep moving the mouse</h3>
+<p>R2 already requests <strong>system wakefulness without requiring the displays to remain on</strong>, and releases that request after the experiment. Its intended behavior is:</p>
+<pre><code class="language-text">Experiment running:
+    Monitors may turn off.
+    Automatic idle sleep is prevented.
+
+Experiment finishes or stops:
+    Stay-awake request is released.
+    Normal power-management behavior resumes.
+</code></pre>
+<p>That mechanism is implemented; its native Windows behavior still needs verification in your next run. [export reference: filecite | turn73file1 | L143-L145] [export reference: filecite | turn73file1 | L159-L163]</p>
+<p><strong>Your expectation was reasonable. An unattended campaign should not depend on its owner staying awake or periodically interacting with the computer.</strong></p>
+</div></article><article id="m-bedea55c-ab0c-4ca9-aded-278c5614d8c1" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00293 · 2026-09-16T19:36:11.560000-04:00 · active path</p><p class="note">Attachment references: clock_72_minute_speed.pdf; cake_slice.pdf; pipe_filling.pdf</p><div class="bubble"><p>come up with an original math problem using a sales based merchant financing example that was accepted. the problem should focus on expected days to resolution, assuming consistent expected remittance, and how much will the final days payment be. starting data points should be the funding amount and multiple and anything else you find that is relevant. here are example math problems for what i am looking for. the math problem should be easy to say in a paragraph.</p>
+</div></article><article id="m-cbc23368-0877-4c89-b139-cbb938d0c531" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00294 · 2026-09-16T19:41:30.134519-04:00 · active path</p><div class="bubble"><h3>Math problem — The Final Payment</h3>
+<blockquote>
+<p>A merchant receives <strong>$9,300 in sales-based financing</strong> at a <strong>payback multiple of 1.26432</strong>, meaning the total repayment equals the funding amount multiplied by that multiple, rounded to the nearest cent. The merchant’s sales are expected to produce a <strong>daily remittance of $274</strong>. Assume that amount is paid at the end of every calendar day, beginning the day after funding, with no interruptions or additional charges. On the final day, the merchant pays only the remaining balance. <strong>How many days after funding will the financing be fully repaid, and how much will the final day’s payment be?</strong></p>
+</blockquote>
+<p>These terms come from <strong>Merchant 000039, Baseline</strong>, a funded case in your accepted <strong>synthetic</strong> MSBF reference. The constant daily payments are an assumption for this exercise—not a claim about that merchant’s realized payment history. Source record and calculation verification (historical reference: <code>sandbox:[session]/MSBF_Merchant_000039_Math_Problem_Source.txt</code>; referenced bytes not established here)</p>
+<h3>Answer key</h3>
+<p>The total repayment is:</p>
+<p>[
+$9{,}300 \times 1.26432 = $11{,}758.176
+\quad\longrightarrow\quad $11{,}758.18
+]</p>
+<p>At $274 per day:</p>
+<p>[
+\frac{$11{,}758.18}{$274}\approx 42.9131
+]</p>
+<p>Because payments occur once at the end of each day, <strong>42 payments are insufficient; repayment finishes on day 43</strong>.</p>
+<p>After 42 full payments, the remaining balance is:</p>
+<p>[
+$11{,}758.18-(42\times $274)
+=\boxed{$250.18}
+]</p>
+<p><strong>Answer: 43 days, consisting of 42 payments of $274 and a final payment of $250.18.</strong></p>
+</div></article><article id="m-bbb2156c-f9cb-4ce0-9ed6-42018ca86dfe" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00295 · 2026-09-24T07:15:05.991837-04:00 · active path</p><div class="bubble"><p>Summarize the AI lessons we encountered, what was going off track and how did we notice /resolve. I want to make a LinkedIn post that showcases what I learned across my 35k YTD AI interactions.</p>
+</div></article><article id="m-a5b6fa81-0002-4168-af7e-b7bb79ba7d35" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00296 · 2026-09-24T07:22:22.079638-04:00 · active path</p><div class="bubble"><p>The central lesson is: <strong>AI expanded what you could build, but reliable progress depended on your ownership of the question, the assumptions, the evidence, and the acceptance decision.</strong></p>
+<p>Your 35,000 year-to-date interactions provide the context. The story is what you learned to do differently—not simply how often you used AI.</p>
+<h2>What went off track—and what changed</h2>
+<h3>1. We started solving a harder problem than the business question required</h3>
+<p>The original objective was to demonstrate that the campaign process faithfully reproduced the accepted MSBF logic. The work drifted toward reconstructing an entire platform from an empty database.</p>
+<p>You caught that by asking what “fresh” actually needed to prove. The revised approach allowed certified inputs and non-outcome infrastructure to be reused, while requiring the outputs under examination to be independently generated. You also insisted that certification qualify a reusable campaign runtime—not become a one-off apparatus that future users could not operate. [export reference: filecite | turn83file2 | L307-L349] [export reference: filecite | turn83file2 | L390-L413]</p>
+<p><strong>Lesson:</strong> Keep asking, “What decision is this work supposed to support?” More engineering is not automatically more relevant assurance.</p>
+<h3>2. Correct results at one configuration concealed an incorrect generalization</h3>
+<p>The verification-count helper used:</p>
+<pre><code class="language-text">population × scenarios × 3
+</code></pre>
+<p>The source required six checks per original application, independent of scenario count. With two scenarios, both expressions produced the same total. Testing one or three scenarios exposed the error.</p>
+<p>Your concern prompted a broader source-to-adapter review. An existing <strong>189-test suite passed</strong>, yet new counterexamples exposed three additional weaknesses: incorrect application ownership, insufficient candidate-ID uniqueness checks, and missing matched-baseline enforcement. Those cases were corrected and tested; direct examination found no impact on the accepted 750 result. [export reference: filecite | turn82file0 | L12-L37] [export reference: filecite | turn82file1 | L49-L73]</p>
+<p><strong>Lesson:</strong> A passing example proves something about that example. Test the assumptions that could make it pass for the wrong reason.</p>
+<h3>3. The validation machinery itself needed validation</h3>
+<p>An inherited comparator could report PASS when both folders were empty—or when both contained the same incomplete 19-file set. It checked whether the files it found matched, not whether all required evidence existed.</p>
+<p>Negative testing exposed the defect. The correction required exactly the 20 locked filenames and rejected missing, extra, or changed files. [export reference: filecite | turn83file6 | L841-L845]</p>
+<p><strong>Lesson:</strong> “Everything checked passed” is different from “everything required was checked.” Test missing evidence, not just incorrect evidence.</p>
+<h3>4. Plausible explanations were repeatedly promoted into conclusions</h3>
+<p>Some of my responses were too confident. Population size, storage, memory, parallelism, and query structure became successive leading explanations before the evidence supported a firm diagnosis.</p>
+<p>You pushed back and demanded controlled comparisons. Those experiments narrowed the possibilities. Later measurements showed that temporary-file I/O accounted for only a small fraction of the completed 750 queries’ runtime, and the tested memory/JIT change did not materially improve execution. The observed settlement lookup used a hash join—not the hypothesized all-to-all nested-loop behavior. None of that established the final performance cause. [export reference: filecite | turn73file0 | L68-L89]</p>
+<p><strong>Lesson:</strong> Do not replace one confident story with another. Ask what experiment would distinguish competing explanations—including your own.</p>
+<h3>5. Real numbers were used in an invalid comparison</h3>
+<p>I compared whole-program durations at 2,500 with individual-query durations at 750, then inferred nearly quadratic scaling. That conclusion was unsupported because the measurements represented different amounts of work.</p>
+<p>A later review corrected the comparison. It also separated a query that completed in approximately <strong>6 minutes 47 seconds</strong> from a controller record containing an overnight observation gap. Possible host sleep became relevant context, but the precise cause remained unproven. [export reference: filecite | turn73file0 | L34-L66] [export reference: filecite | turn73file0 | L83-L89]</p>
+<p>The simple math examples showed a related problem: the pipe-filling response opened with <strong>5.5 hours</strong>, while its own worked calculation reached approximately <strong>3.54 hours</strong>. You noticed that the conclusion and supporting work disagreed. [export reference: filecite | turn81file2 | L2-L3]</p>
+<p><strong>Lesson:</strong> Validate the interpretation as carefully as the calculation. Correct-looking numbers can still answer the wrong question.</p>
+<h3>6. A tested component was not necessarily a usable process</h3>
+<p>The workflow exposed missing dependencies, Windows text-decoding problems, process-output handling defects, and a PowerShell function that mixed normal output with its exit code. These were not changes to financing mathematics, but they still prevented the user from reaching the calculation.</p>
+<p>The later supervision correction separated console display from process monitoring, distinguished database time from controller time, and added an unattended-run awake request. Those changes were implemented and tested within stated limits; native Windows qualification remained separate. [export reference: filecite | turn73file1 | L131-L163]</p>
+<p>You also stopped the pattern of another diagnostic, another prompt, another wrapper. The direction became one bounded experiment with automatic controls, explicit stopping conditions, and one evidence return.</p>
+<p><strong>Lesson:</strong> “Code written,” “offline tests passed,” “executed successfully,” and “usable by another person” are different milestones.</p>
+<h3>7. Efficiency did not justify quietly weakening the standard</h3>
+<p>When slow controls became a potential optimization target, you reaffirmed your principle:</p>
+<blockquote>
+<p><strong>No cold handoffs: logic, controls, validation, evidence, and interpretation travel together.</strong></p>
+</blockquote>
+<p>That redirected the work toward equivalent physical execution rather than silently removing assurance. Likewise, the accepted 750 documentation preserved the original stopped receipt and explicitly documented the owner-approved metadata exception instead of rewriting history as an unqualified original-contract PASS. [export reference: filecite | turn82file5 | L235-L247]</p>
+<p><strong>Lesson:</strong> Keep acceptance criteria human-owned. A correction should strengthen the evidence chain, not make an inconvenient result disappear.</p>
+<hr>
+<h2>LinkedIn draft</h2>
+<p>Copy-ready plain-text version (historical reference: <code>sandbox:[session]/LinkedIn_AI_Lessons_35000_Interactions_Draft.txt</code>; referenced bytes not established here)</p>
+<p>After roughly 35,000 AI interactions this year, my biggest lesson is not how to get a more confident answer.</p>
+<p><strong>It is how to decide what deserves confidence.</strong></p>
+<p>Building my independent, synthetic merchant-financing simulator made that distinction tangible. AI helped develop code, tests, documentation and evidence. But I still had to own the question, challenge the assumptions and decide what the evidence supported.</p>
+<p>Several lessons stand out.</p>
+<p><strong>A correct answer can hide an incorrect rule.</strong><br>One expected-count formula matched our reference population because two scenarios happened to mask the mistake. Changing the scenario count exposed it. We traced the rule to the approved source and strengthened the tests. Matching one example was valuable—not proof of every generalization. [export reference: filecite | turn82file0 | L12-L27]</p>
+<p><strong>Test the tests.</strong><br>An inherited comparator could report PASS when both output folders were empty. We replaced “everything found matches” with “every required output exists and matches.” A green status is only as meaningful as the conditions behind it. [export reference: filecite | turn83file6 | L841-L845]</p>
+<p><strong>A plausible explanation is still a hypothesis.</strong><br>When runtime increased sharply, explanations included population size, storage, memory and the database client. I pushed for controlled comparisons instead of accepting increasingly confident narratives. The tests narrowed the possibilities; they did not justify declaring a root cause.</p>
+<p><strong>Check what the numbers actually measure.</strong><br>One apparent scaling comparison mixed a whole program’s duration with one query’s duration. Another overnight delay was not nine hours of database calculation. We separated SQL execution, orchestration and observation gaps before interpreting performance. [export reference: filecite | turn73file0 | L34-L66] [export reference: filecite | turn73file0 | L83-L89]</p>
+<p><strong>Keep the product goal in view.</strong><br>The work drifted toward reconstructing an entire platform to answer a narrower question about logical equivalence. I reset the boundary: preserve the accepted logic, independently generate the outputs being tested, and build a reusable process—not a one-off certification machine. [export reference: filecite | turn83file2 | L307-L349]</p>
+<p><strong>Do not solve performance by quietly lowering the standard.</strong><br>My requirement remained: logic, controls, validation, evidence and interpretation travel together. Any optimization must demonstrate equivalent results. Corrected code is not the same as a successfully executed correction.</p>
+<p>Some findings are closed. Others still require runtime proof. That distinction is part of the work—not a footnote.</p>
+<p>AI has expanded what I can build. It has also made disciplined acceptance more important.</p>
+<p><strong>The lesson is not to argue with AI until it agrees with me. It is to design a test that could prove either of us wrong.</strong></p>
+<p>That is what “No Cold Handoffs” means in practice: the reasoning and evidence travel with the result, and accountability stays with the owner.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

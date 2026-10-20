@@ -1,0 +1,1294 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>M2.11 Plan Review — part 07 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>M2.11 Plan Review — part 07</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-06.html">Previous part</a><a href="part-08.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-950aed89-8c67-4f46-88c9-7eda251e934b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00111 · 2026-08-06T17:10:20.094687-04:00 · active path</p><div class="bubble"><h1>M2.11 R12 correction complete</h1>
+<p>The live Program 217 result confirms that M2.11 is already formally accepted:</p>
+<pre><code class="language-text">Run status                    M2_11_ACCEPTED
+Contract status               ACCEPTED
+Acceptance gate               PASS
+Acceptance requirements       45 / 45
+Positive controls             120 / 120
+Negative controls             20 / 20
+Canonical entities            19,298
+Combined set hash             a67d375b9f9248b3eec8160cf3dc656d
+Deployment authorization      NOT_AUTHORIZED
+Module 2 closure              M2_12_REQUIRED
+Module 3 authorization        NOT_AUTHORIZED
+</code></pre>
+<p>[export reference: filecite | turn19file0 | L9-L11]</p>
+<p>Programs 218 and 219 are the governed read-only reporting stages, and Program 219 must retain exactly 24 detailed result sets. [export reference: filecite | turn18file8 | L840-L891]</p>
+<h2>What caused the Program 218 export error</h2>
+<p>Program 218’s final displayed query reads transaction-local relations such as:</p>
+<pre><code class="language-text">tmp_report_m2_11_master_context
+</code></pre>
+<p>Those relations are declared:</p>
+<pre><code class="language-sql">ON COMMIT DROP
+</code></pre>
+<p>The normal script can display its result while the transaction is active. DBeaver’s export task then attempts to re-execute the displayed query after <code>COMMIT</code>; the temporary relation has already been dropped, producing:</p>
+<pre><code class="language-text">42P01
+relation &quot;tmp_report_m2_11_master_context&quot; does not exist
+</code></pre>
+<p>This is a <strong>report-grid export operability defect</strong>, not an M2.11 acceptance or database-state defect. No recovery program is required, and Program 218 does not need to be rerun.</p>
+<h2>R12 correction</h2>
+<p>R12 adds a standalone, persistent-state, SELECT-only reproduction of the Program 218 master report:</p>
+<pre><code class="language-text">M2_11_218_MASTER_REPORT_EXPORT_QUERY.sql
+</code></pre>
+<p>Because it contains no <code>tmp_report_</code> dependency, DBeaver may re-execute it during export without losing its source relations.</p>
+<p>During the R12 review, I also found and corrected two Program 219 reporting defects before you execute it:</p>
+<ol>
+<li><p>Program 219 projected <code>g.reviewed_at</code> but Result Set 01 referenced the nonexistent column <code>gate_reviewed_at</code>. It now projects:</p>
+<pre><code class="language-sql">g.reviewed_at AS gate_reviewed_at
+</code></pre>
+</li>
+<li><p>Program 219 reconstructed five canonical set hashes using display-oriented <code>business_key</code> order, recreating the same false five-family hash mismatch encountered in the superseded Program 217. It now uses the governed order for:</p>
+<pre><code class="language-text">strategy summary
+strategy frontier
+strategy comparison
+latest contract
+archive contract
+</code></pre>
+</li>
+</ol>
+<p>The other fourteen canonical families retain their existing governed <code>business_key</code> order.</p>
+<p>No business, scoring, selection, stress, Pareto, frontier, contract, archive, acceptance, or canonical-count semantic changed.</p>
+<h1>R12 package identity</h1>
+<pre><code class="language-text">Package
+M2_11_STANDALONE_EXECUTION_PACKAGE_20260806_R12.zip
+
+ZIP bytes
+746,368
+
+ZIP SHA-256
+aa46f09cb965c48f4a1a1bbe7abe402500faa6ce816b184ea0a533ffd3f9f4c5
+
+Package files
+209
+
+Manifested files
+206
+
+ZIP entries
+209
+
+Maximum ZIP path length
+169
+</code></pre>
+<p>Validation results:</p>
+<pre><code class="language-text">R12 correction controls                 58 / 58 PASS
+Package and ZIP controls                50 / 50 PASS
+Independent controls                    15 / 15 PASS
+
+Normal SQL current identities            8 / 8 PASS
+  Unchanged normal programs               7 / 7 PASS
+  Corrected Program 219                   1 / 1 PASS
+
+Recovery SQL identities                  4 / 4 PASS
+Master export utility                    1 / 1 PASS
+Detailed export queries                 24 / 24 PASS
+Governed evidence exports               38 / 38
+
+ZIP CRC                                  PASS
+Complete extraction                      PASS
+Manifest CSV/JSON/SHA256SUMS parity      PASS
+Source-versus-extracted hashes           PASS
+Duplicate paths                             0
+Case-insensitive duplicate paths            0
+Unsafe paths                                0
+External sidecar pairing                 PASS
+Accepted M2.10 preservation              PASS
+</code></pre>
+<h2>Primary delivery</h2>
+<ul>
+<li>Download the M2.11 R12 live-resume ZIP (historical reference: <code>sandbox:[session]/M2_11_STANDALONE_EXECUTION_PACKAGE_20260806_R12.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching R12 SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_11_STANDALONE_EXECUTION_PACKAGE_20260806_R12.zip.sha256</code>; referenced bytes not established here)</li>
+<li>Read the R12 package-validation report (historical reference: <code>sandbox:[session]/M2_11_STANDALONE_EXECUTION_PACKAGE_20260806_R12_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Read the independent R12 validation report (historical reference: <code>sandbox:[session]/M2_11_STANDALONE_EXECUTION_PACKAGE_20260806_R12_INDEPENDENT_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Current executable and export authorities</h2>
+<pre><code class="language-text">Corrected Program 219 SHA-256
+2c19b968286277e179e0f2d8506102e20a1f51fb3e810ecc260b22a05b532e07
+
+Program 218 export utility SHA-256
+5937e51a4f97086b025cf28c6391750bfbda18c3cc71c107dab16bbab78d9644
+
+Program 219 export utility SHA-256
+42525f9442e05fc284fae9aec8158b8c0c4002c6afb191cabdd5fb956a32676c
+</code></pre>
+<ul>
+<li>Program 218 persistent-state export query (historical reference: <code>sandbox:[session]/M2_11_STANDALONE_EXECUTION_PACKAGE_20260806_R12/09_post_chain_evidence/M2_11_218_MASTER_REPORT_EXPORT_QUERY.sql</code>; referenced bytes not established here)</li>
+<li>Corrected Program 219 (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_4_REVISION_6/sql/219_msbf_m2_11_detailed_report_v1.sql</code>; referenced bytes not established here)</li>
+<li>Program 219 persistent-state export queries — 24 result sets (historical reference: <code>sandbox:[session]/M2_11_STANDALONE_EXECUTION_PACKAGE_20260806_R12/09_post_chain_evidence/M2_11_219_DETAIL_REPORT_EXPORT_QUERIES.sql</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Governance records</h2>
+<ul>
+<li>WP4 Source Authority R6 (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_4_REVISION_6/M2_11_WP4_SOURCE_AUTHORITY_R6.md</code>; referenced bytes not established here)</li>
+<li>Live-Execution Resume Source Authority R6 (historical reference: <code>sandbox:[session]/M2_11_LIVE_EXECUTION_REPORT_EXPORT_CORRECTION_R1/M2_11_LIVE_EXECUTION_RESUME_SOURCE_AUTHORITY_R6.md</code>; referenced bytes not established here)</li>
+<li>R12 Bounded Correction Record (historical reference: <code>sandbox:[session]/M2_11_LIVE_EXECUTION_REPORT_EXPORT_CORRECTION_R1/M2_11_LIVE_EXECUTION_REPORT_EXPORT_CORRECTION_R1.md</code>; referenced bytes not established here)</li>
+<li>Program 219 Correction Diff Inventory (historical reference: <code>sandbox:[session]/M2_11_LIVE_EXECUTION_REPORT_EXPORT_CORRECTION_R1/catalogs/M2_11_PROGRAM_219_REPORTING_CORRECTION_DIFF_INVENTORY.csv</code>; referenced bytes not established here)</li>
+<li>R12 Correction Static Audit (historical reference: <code>sandbox:[session]/M2_11_LIVE_EXECUTION_REPORT_EXPORT_CORRECTION_R1/reports/M2_11_LIVE_EXECUTION_REPORT_EXPORT_CORRECTION_STATIC_AUDIT.md</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Resume execution</h1>
+<h2>Step 1 — Export the Program 218 result</h2>
+<p>Do <strong>not</strong> rerun Programs 212–218.</p>
+<p>Extract the R12 ZIP to a clean, short path such as:</p>
+<pre><code class="language-text">C:\MSBF\M2_11_R12\
+</code></pre>
+<p>Execute this complete query:</p>
+<pre><code class="language-text">09_post_chain_evidence\
+M2_11_218_MASTER_REPORT_EXPORT_QUERY.sql
+</code></pre>
+<p>It should return exactly one row. Important expected values include:</p>
+<pre><code class="language-text">run_status                         M2_11_ACCEPTED
+contract_status                    ACCEPTED
+gate_status                        PASS
+positive_pass_rows                 120
+negative_pass_rows                 20
+canonical_families                 19
+canonical_entities                 19,298
+latest_archive_mismatches          0
+stress_improvement_violations      0
+deployment_authorization_status    NOT_AUTHORIZED
+module2_closure_status             M2_12_ENTERPRISE_PORTFOLIO_CERTIFICATION_REQUIRED
+module3_authorization_status       NOT_AUTHORIZED
+overall_m2_11_status               PASS
+</code></pre>
+<p>Export the one-row grid with headers as:</p>
+<pre><code class="language-text">218_primary_result.csv
+</code></pre>
+<h2>Step 2 — Execute corrected Program 219</h2>
+<p>Execute only the R12 Program 219 as a complete script:</p>
+<pre><code class="language-text">01_sql_normal\
+219_msbf_m2_11_detailed_report_v1.sql
+</code></pre>
+<p>Do not use the R11 Program 219.</p>
+<p>Expected behavior:</p>
+<pre><code class="language-text">Persistent state changes          0
+Detailed result sets             24
+Result-set order                 1–24
+</code></pre>
+<p>In particular:</p>
+<pre><code class="language-text">Result Set 19
+All row_count_match_flag values   TRUE
+All set_hash_match_flag values    TRUE
+
+Result Set 23
+Deterministic mismatch rows       0
+Headers retained                  YES
+
+Result Set 24
+Blocking/boundary rows            0
+Headers retained                  YES
+</code></pre>
+<p>Stop immediately on any SQL error.</p>
+<h2>Step 3 — Export the 24 detailed results</h2>
+<p>After corrected Program 219 completes, execute:</p>
+<pre><code class="language-text">09_post_chain_evidence\
+M2_11_219_DETAIL_REPORT_EXPORT_QUERIES.sql
+</code></pre>
+<p>This contains 24 independent, persistent-state SELECT queries. Export each result grid under the filename specified in:</p>
+<pre><code class="language-text">04_catalogs\reporting\
+M2_11_EVIDENCE_EXPORT_CATALOG.csv
+</code></pre>
+<p>These queries deliberately avoid all <code>tmp_report_</code> dependencies, so DBeaver’s export re-execution should remain valid after Program 219 commits.</p>
+<h2>Step 4 — Export the seven final state datasets</h2>
+<p>After all 24 detailed exports are complete, execute:</p>
+<pre><code class="language-text">09_post_chain_evidence\
+M2_11_POST_CHAIN_EVIDENCE_EXPORT_QUERIES.sql
+</code></pre>
+<p>Expected counts remain:</p>
+<pre><code class="language-text">Run registry                         1
+M2.11 contract registry             1
+M2.11 run evidence                165
+Acceptance-gate result               1
+Canonical hash-source rows      19,298
+Latest contract rows                24
+Archive rows                        24
+</code></pre>
+<h1>Current governed state</h1>
+<pre><code class="language-text">Program 212                         PASS / COMMITTED / DO NOT RERUN
+Program 213                         PASS / DO NOT RERUN
+Program 214                         PASS / M2_11_GENERATED / DO NOT RERUN
+Program 215                         PASS / 120 OF 120 / DO NOT RERUN
+Program 216                         PASS / 20 OF 20 / DO NOT RERUN
+Program 217                         PASS / 45 OF 45 / M2_11_ACCEPTED / DO NOT RERUN
+
+Program 218 normal report           RESULT REACHED / EXPORT INCOMPLETE
+R12 Program 218 export utility      NEXT ACTION
+Corrected R12 Program 219           AUTHORIZED AFTER 218 EXPORT
+R12 Program 219 export utility      CONDITIONAL AFTER PROGRAM 219 PASS
+
+M2.11 generated                     YES
+M2.11 validated                     YES
+M2.11 accepted                      YES
+
+Recovery programs                   NOT AUTHORIZED
+Deployment                          NOT AUTHORIZED
+M2.12                               NOT AUTHORIZED
+Module 3                            NOT AUTHORIZED
+</code></pre>
+</div></article><article id="m-047a5470-eb4c-4f02-ba95-c5db0a659944" class="message user"><p class="meta"><strong>Andrew / user</strong> · C081-M00112 · 2026-08-06T18:28:59.977000-04:00 · active path</p><p class="note">Attachment references: MSBF_M2_11_Portfolio_Optimization_&amp;_Strategy_Simulation_Master_Report_v1_20260806.csv</p><div class="bubble"><p>error in program 219: SQL Error [42701]: ERROR: column &quot;strategy_profile_rows&quot; specified more than once
+  ERROR: column &quot;strategy_profile_rows&quot; specified more than once      please build R13 to correct and do not wait for my approval.</p>
+</div></article><article id="m-9dc1c0de-db34-40bc-8c16-e6e5df956837" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00113 · 2026-08-06T18:48:19.017268-04:00 · active path</p><div class="bubble"><h1>M2.11 R13 correction complete</h1>
+<p>The Program 219 error was caused by the construction of:</p>
+<pre><code class="language-text">tmp_report_m2_11_detail_context
+</code></pre>
+<p>The R12 projection selected:</p>
+<pre><code class="language-sql">p.*
+</code></pre>
+<p>from <code>msbf_ctl.m2_11_policy_profile</code>, then explicitly selected the contract-registry count columns from <code>c</code>. The policy and registry objects share <strong>19 count-column names</strong>, including:</p>
+<pre><code class="language-text">strategy_profile_rows
+objective_definition_rows
+constraint_definition_rows
+reason_definition_rows
+application_source_rows
+...
+canonical_entities
+</code></pre>
+<p>PostgreSQL requires unique column names in a <code>CREATE TABLE AS</code> result, so it stopped at the first duplicate:</p>
+<pre><code class="language-text">SQLSTATE 42701
+column &quot;strategy_profile_rows&quot; specified more than once
+</code></pre>
+<p>This occurred before Program 219 emitted Result Set 01. Program 219 is persistently read-only, so the failed transaction did not alter the accepted M2.11 state. The frozen program architecture likewise defines Programs 218 and 219 as read-only reporting stages. [export reference: filecite | turn20file8 | L840-L891]</p>
+<h2>Correction applied</h2>
+<p>R13 replaces the wildcard policy projection with an explicit 50-field projection.</p>
+<p>The 19 policy-side expected-count fields are now uniquely named:</p>
+<pre><code class="language-text">policy_expected_strategy_profile_rows
+policy_expected_objective_definition_rows
+policy_expected_constraint_definition_rows
+policy_expected_reason_definition_rows
+policy_expected_application_source_rows
+policy_expected_candidate_source_rows
+policy_expected_account_source_rows
+policy_expected_kpi_source_rows
+policy_expected_queue_source_rows
+policy_expected_candidate_evaluation_rows
+policy_expected_application_simulation_rows
+policy_expected_account_simulation_rows
+policy_expected_strategy_summary_rows
+policy_expected_frontier_rows
+policy_expected_comparison_rows
+policy_expected_latest_rows
+policy_expected_archive_rows
+policy_expected_registry_rows
+policy_expected_canonical_entities
+</code></pre>
+<p>The contract-registry actual-count fields retain their existing governed names:</p>
+<pre><code class="language-text">strategy_profile_rows
+objective_definition_rows
+...
+canonical_entities
+</code></pre>
+<p>The identical correction was applied to both accepted-state contexts in:</p>
+<pre><code class="language-text">M2_11_219_DETAIL_REPORT_EXPORT_QUERIES.sql
+</code></pre>
+<p>so the later DBeaver export process will not encounter the same ambiguity.</p>
+<h2>Preserved live state</h2>
+<p>Your successfully exported Program 218 master report confirms:</p>
+<pre><code class="language-text">Run status                   M2_11_ACCEPTED
+Contract status              ACCEPTED
+Acceptance gate              PASS
+Positive controls            120 / 120
+Negative controls            20 / 20
+Canonical families           19
+Canonical entities           19,298
+Latest/archive mismatches    0
+Stress violations            0
+Overall M2.11 status         PASS
+Deployment                   NOT_AUTHORIZED
+Module 2 closure             M2_12 required
+Module 3                     NOT_AUTHORIZED
+</code></pre>
+<p>[export reference: filecite | turn21file0 | L9-L11]</p>
+<p>The approved evidence architecture remains exactly 24 Program 219 detail exports and 38 total governed exports. [export reference: filecite | turn20file0 | L11-L24]</p>
+<pre><code class="language-text">Programs 212–218                    BYTE-IDENTICAL / DO NOT RERUN
+Program 219 R12                     FAILED / SUPERSEDED
+Program 219 R13                     CORRECTED / AUTHORIZED
+Recoveries 212A/214A/214B/215A     BYTE-IDENTICAL / NOT AUTHORIZED
+
+M2.11 generated                     YES
+M2.11 validated                     YES
+M2.11 accepted                      YES
+Deployment authorization            NO
+M2.12 authorization                 NO
+Module 3 authorization              NO
+</code></pre>
+<h1>R13 identities</h1>
+<pre><code class="language-text">Package
+M2_11_STANDALONE_EXECUTION_PACKAGE_20260806_R13.zip
+
+ZIP bytes
+757,292
+
+ZIP SHA-256
+8b3957d58e8e723d5a7892c49c37647776777d9214bd73ff43e14d01d50d971c
+
+Package files
+218
+
+Manifested files
+215
+
+ZIP entries
+218
+
+Maximum ZIP path length
+169
+</code></pre>
+<p>Current reporting authorities:</p>
+<pre><code class="language-text">Program 219 R13
+748aeddff67f7c87c77a3b92ccd70730729cf382176b29f1d9e7812fe03b0b63
+
+R13 Program 219 export utility
+1321f5a29d6313a1a465b39111c867e77cdd1be5816d42342e5d45a0d14d2ef9
+
+Detailed result-set catalog
+6302bcfb6ccabc96b71302e3a2fd5fd8cf34e5c52abddc5387a244c74284f1d1
+</code></pre>
+<h2>Validation</h2>
+<pre><code class="language-text">R13 correction controls                 50 / 50 PASS
+Package and ZIP controls                27 / 27 PASS
+Independent controls                    15 / 15 PASS
+Failures                                 0
+
+Program 219 result sets                 24
+Detail export queries                   24
+Policy fields explicitly projected      50
+Namespaced policy expected counts       19
+Duplicate context output names           0
+Remaining p.* policy wildcards           0
+
+Unchanged normal SQL                     7 / 7 PASS
+Recovery SQL                             4 / 4 PASS
+Source-inventory discrepancies            0
+
+ZIP CRC                                 PASS
+Complete extraction                     PASS
+Manifest CSV/JSON/SHA256SUMS parity     PASS
+Source-versus-extracted hashes          PASS
+Duplicate paths                            0
+Case-insensitive duplicate paths           0
+Unsafe paths                               0
+External sidecar pairing                PASS
+Accepted M2.10 preservation             PASS
+</code></pre>
+<p>No PostgreSQL statement was executed while constructing R13. The corrected Program 219 has not yet produced a live result.</p>
+<h1>Primary delivery</h1>
+<ul>
+<li>Download the R13 live-resume ZIP (historical reference: <code>sandbox:[session]/M2_11_STANDALONE_EXECUTION_PACKAGE_20260806_R13.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching R13 SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_11_STANDALONE_EXECUTION_PACKAGE_20260806_R13.zip.sha256</code>; referenced bytes not established here)</li>
+<li>Read the R13 package-validation report (historical reference: <code>sandbox:[session]/M2_11_STANDALONE_EXECUTION_PACKAGE_20260806_R13_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Read the independent R13 validation report (historical reference: <code>sandbox:[session]/M2_11_STANDALONE_EXECUTION_PACKAGE_20260806_R13_INDEPENDENT_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Corrected source and governance</h2>
+<ul>
+<li>Corrected Program 219 R13 (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_4_REVISION_7/sql/219_msbf_m2_11_detailed_report_v1.sql</code>; referenced bytes not established here)</li>
+<li>R13 Program 219 export utility (historical reference: <code>sandbox:[session]/M2_11_LIVE_EXECUTION_PROGRAM_219_CONTEXT_PROJECTION_CORRECTION_R1/M2_11_219_DETAIL_REPORT_EXPORT_QUERIES.sql</code>; referenced bytes not established here)</li>
+<li>WP4 Source Authority R7 (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_4_REVISION_7/M2_11_WP4_SOURCE_AUTHORITY_R7.md</code>; referenced bytes not established here)</li>
+<li>Live-Execution Resume Source Authority R7 (historical reference: <code>sandbox:[session]/M2_11_LIVE_EXECUTION_PROGRAM_219_CONTEXT_PROJECTION_CORRECTION_R1/M2_11_LIVE_EXECUTION_RESUME_SOURCE_AUTHORITY_R7.md</code>; referenced bytes not established here)</li>
+<li>R13 bounded correction record (historical reference: <code>sandbox:[session]/M2_11_LIVE_EXECUTION_PROGRAM_219_CONTEXT_PROJECTION_CORRECTION_R1/M2_11_LIVE_EXECUTION_PROGRAM_219_CONTEXT_PROJECTION_CORRECTION_R1.md</code>; referenced bytes not established here)</li>
+<li>R13 static audit (historical reference: <code>sandbox:[session]/M2_11_LIVE_EXECUTION_PROGRAM_219_CONTEXT_PROJECTION_CORRECTION_R1/reports/M2_11_LIVE_EXECUTION_PROGRAM_219_CONTEXT_PROJECTION_CORRECTION_STATIC_AUDIT.md</code>; referenced bytes not established here)</li>
+<li>Correction diff inventory (historical reference: <code>sandbox:[session]/M2_11_LIVE_EXECUTION_PROGRAM_219_CONTEXT_PROJECTION_CORRECTION_R1/catalogs/M2_11_PROGRAM_219_CONTEXT_PROJECTION_CORRECTION_DIFF_INVENTORY.csv</code>; referenced bytes not established here)</li>
+<li>Preserved Program 218 master report (historical reference: <code>sandbox:[session]/M2_11_STANDALONE_EXECUTION_PACKAGE_20260806_R13/10_live_execution_checkpoint/evidence/218_primary_result.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Resume execution now</h1>
+<p>In DBeaver, stop the failed R12 script. Then reconnect cleanly or execute:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>A notice that no transaction is in progress is harmless.</p>
+<p>Do <strong>not</strong> rerun:</p>
+<pre><code class="language-text">212
+213
+214
+215
+216
+217
+218
+</code></pre>
+<p>Verify the R13 ZIP:</p>
+<pre><code class="language-text">8b3957d58e8e723d5a7892c49c37647776777d9214bd73ff43e14d01d50d971c
+</code></pre>
+<p>After extracting it to a clean short path, verify Program 219:</p>
+<pre><code class="language-text">748aeddff67f7c87c77a3b92ccd70730729cf382176b29f1d9e7812fe03b0b63
+</code></pre>
+<p>Execute only:</p>
+<pre><code class="language-text">01_sql_normal\
+219_msbf_m2_11_detailed_report_v1.sql
+</code></pre>
+<p>Use <strong>Execute SQL Script</strong> for the complete file.</p>
+<h2>Expected Program 219 outcome</h2>
+<pre><code class="language-text">SQL errors                         0
+Persistent state changes           0
+Detailed result sets              24
+Result-set sequence              01–24
+</code></pre>
+<p>Critical expectations:</p>
+<pre><code class="language-text">Result Set 19
+physical row counts match          TRUE for all 19 families
+ordered set hashes match           TRUE for all 19 families
+combined identity                  a67d375b9f9248b3eec8160cf3dc656d
+
+Result Set 23
+deterministic mismatches            0 rows
+headers retained                    YES
+
+Result Set 24
+blocking/stage-boundary findings    0 rows
+headers retained                    YES
+</code></pre>
+<p>After Program 219 completes successfully, execute:</p>
+<pre><code class="language-text">09_post_chain_evidence\
+M2_11_219_DETAIL_REPORT_EXPORT_QUERIES.sql
+</code></pre>
+<p>Export all 24 grids under the cataloged filenames. Then execute the seven-query post-chain evidence utility.</p>
+<p>At any new error, stop immediately and preserve the full SQLSTATE, message, <code>DETAIL</code>, <code>HINT</code>, failed result-set position, and DBeaver execution log.</p>
+</div></article><article id="m-790d654d-b74a-4ee4-8ce1-5e1cf5062370" class="message user"><p class="meta"><strong>Andrew / user</strong> · C081-M00114 · 2026-08-06T19:17:41.489000-04:00 · active path</p><p class="note">Attachment references: module_M2_11_evidence.zip</p><div class="bubble"><p>Full M2_11 evidence is attached.  Please review and then prepare documentation to pass to our second chat for an audit review.  Please summarize each hotfix that was required as well as the reasons behind those hotfixes. Ensure documentation is prepared for this audit review. Give me everything I need to pass to the audit review (full M2_11 documentation including evidence).</p>
+</div></article><article id="m-82c7f392-9418-4d09-ac54-c15310ec7372" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00115 · 2026-08-06T19:51:23.923348-04:00 · active path</p><div class="bubble"><h1>M2.11 audit-review handoff prepared</h1>
+<p>I reviewed the submitted live-execution archive against the final R13 source package, its catalogs and source-authority records, the accepted M2.10 baseline, and the governed M2.11 design.</p>
+<h2>Review conclusion</h2>
+<p>The supplied evidence is internally consistent with a successful M2.11 execution and formal acceptance for <strong>synthetic governance consumption</strong>:</p>
+<pre><code class="language-text">Run status                       M2_11_ACCEPTED
+Contract status                  ACCEPTED
+Acceptance gate                  PASS
+Generation evidence              24 / 24 PASS
+Positive controls               120 / 120 PASS
+Negative controls                20 / 20 PASS
+Acceptance prerequisites         45 / 45 PASS
+Canonical families               19
+Canonical entities           19,298
+Contract set hash                19f1a9d842c9cb35617ca03e49445aad
+Combined set hash                a67d375b9f9248b3eec8160cf3dc656d
+Registry row hash                61c22f4f3f2e99905d05958fddf80671
+Deterministic mismatches          0
+Blocking/boundary findings        0
+Stress-improvement violations     0
+Latest/archive mismatches         0
+</code></pre>
+<p>Program 215 records all 120 positive controls as PASS, including full source-snapshot, scoring, application, account, scope, frontier, latest/archive, and canonical-hash reconstruction. [export reference: filecite | turn15file0 | L10-L130] Program 216 records all 20 negative controls as PASS after the corrected Control 011. [export reference: filecite | turn17file0 | L10-L30] Program 217 records 45/45 prerequisites, 120 positive controls, 20 negative controls, 19,298 entities, and formal <code>M2_11_ACCEPTED</code> status. [export reference: filecite | turn19file0 | L9-L11] The master report independently reflects the accepted lifecycle, source hashes, canonical identities, zero stress violations, zero latest/archive mismatches, and non-production boundaries. [export reference: filecite | turn21file0 | L9-L11]</p>
+<p>The evidence also contains all <strong>24 Program 219 detailed result sets</strong> with the governed expected row counts, including zero-row deterministic-mismatch and blocking/boundary outputs with headers retained. The final design freezes 19 canonical families, 19,298 entities, 120 positive controls, 20 negative controls, and 24 detailed result sets. [export reference: filecite | turn22file8 | L759-L773] [export reference: filecite | turn22file8 | L792-L834]</p>
+<h2>One disclosed evidence-package gap</h2>
+<p>The live evidence ZIP contains:</p>
+<pre><code class="language-text">Programs 212–218 primary outputs       7 / 7
+Program 219 detailed outputs          24 / 24
+Supporting Program 213 diagnostics     2
+Direct post-chain state exports        0 / 7
+</code></pre>
+<p>Therefore, the governed export inventory is <strong>31/38</strong>, not 38/38. The missing direct exports are:</p>
+<pre><code class="language-text">state_run_registry.csv
+state_m2_11_contract_registry.csv
+state_run_evidence.csv
+state_acceptance_gate.csv
+state_canonical_hash_source.csv
+state_latest.csv
+state_archive.csv
+</code></pre>
+<p>The final evidence architecture intentionally requires seven primary outputs, 24 Program 219 outputs, and seven post-chain state exports, with exact direct queries and counts for the latter. [export reference: filecite | turn22file1 | L53-L105] [export reference: filecite | turn22file1 | L113-L166]</p>
+<p>This is an <strong>evidence-packaging/catalog-completeness gap</strong>, not a demonstrated database or M2.11 defect. The detailed reports provide strong substantive coverage for most of the missing state exports, but no single supplied file reproduces the required 19,298-row canonical hash-source export. I did not synthesize or infer those seven files. The handoff includes the exact SELECT-only export utility and a checklist for producing them directly from the accepted database.</p>
+<p>The second audit chat should explicitly decide between:</p>
+<pre><code class="language-text">APPROVE M2.11 WITH A NARROW EVIDENCE FOLLOW-UP
+</code></pre>
+<p>and:</p>
+<pre><code class="language-text">HOLD FINAL EVIDENCE-PACKAGE COMPLETENESS
+ONLY FOR THE SEVEN DIRECT STATE EXPORTS
+</code></pre>
+<h2>Hotfix and correction summary</h2>
+<p>The handoff documents fifteen bounded correction releases.</p>
+<table>
+<thead>
+<tr>
+<th align="right">#</th>
+<th>Phase</th>
+<th>Correction</th>
+<th>Why it was required</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td>Pre-execution</td>
+<td>WP1/WP2 Implementation Correction R2</td>
+<td>Fixed invalid PL/pgSQL declarations, pre-typmod hashing, missing physical reconstruction, incomplete hash metadata, staging and structural-certification gaps, and ungoverned M2.2 bounds.</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td>Pre-execution</td>
+<td>WP2 Implementation Correction R3</td>
+<td>Removed 48 downstream reads of newly persisted targets so the Program 214 business graph remained temporary-only until physical reconciliation.</td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td>Pre-execution</td>
+<td>WP3 Validation Correction R1</td>
+<td>Made Negative Control 008 reachable, expanded source validation to all 338 immutable snapshot fields, and added full canonical before/after negative-suite fingerprinting.</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td>Pre-execution</td>
+<td>WP3 Validation Correction R2</td>
+<td>Prevented Negative Control 016 from advancing a nontransactional identity sequence and aligned catalogs, traceability, and audit templates.</td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td>Pre-execution</td>
+<td>WP2 R4 / WP4 R1</td>
+<td>Replaced physically invalid acceptance-gate severity <code>HIGH</code> with accepted-domain value <code>BLOCKING</code>; aligned Program 213 and Requirement 006.</td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td>Pre-execution</td>
+<td>Governance Alignment R1</td>
+<td>Corrected temporary-prefix authorities, report transaction classification, invariant count, and stale authorization wording.</td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td>Pre-execution</td>
+<td>WP2 Source Authority R6</td>
+<td>Corrected one nonexistent authority path without changing its governed SHA-256 or any SQL.</td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td>Pre-execution</td>
+<td>WP5 Evidence and Lineage R1</td>
+<td>Removed a fictitious Program 219 primary output, defined seven exact post-chain queries, and corrected M1.17 and M2.7 lineage identities.</td>
+</tr>
+<tr>
+<td align="right">9</td>
+<td>Live</td>
+<td>Source Count Correction R1 / R2</td>
+<td>Corrected M2.10 total account rows from 44 to 59 while retaining 44 baseline, 15 stress, and 44 distinct PORTFOLIO accounts.</td>
+</tr>
+<tr>
+<td align="right">10</td>
+<td>Live</td>
+<td>KPI Scope Correction R1 / R3</td>
+<td>Preserved accepted M2.10 source key <code>PORTFOLIO_ALL</code> rather than substituting downstream M2.11 scope <code>PORTFOLIO</code>.</td>
+</tr>
+<tr>
+<td align="right">11</td>
+<td>Live</td>
+<td>Index Structure Correction R1 / R4</td>
+<td>Replaced a brittle deparsed-text index comparison with exact catalog-native structural certification.</td>
+</tr>
+<tr>
+<td align="right">12</td>
+<td>Live</td>
+<td>Negative Control 011 Correction / R10</td>
+<td>Eliminated NULL arithmetic that prevented the test from creating the intended favorable stress condition.</td>
+</tr>
+<tr>
+<td align="right">13</td>
+<td>Live</td>
+<td>Acceptance Hash Reconstruction / R11</td>
+<td>Corrected five canonical-family orderings used by Program 217 and restored exact 19-family and combined-hash reconstruction.</td>
+</tr>
+<tr>
+<td align="right">14</td>
+<td>Live</td>
+<td>Report Export Correction / R12</td>
+<td>Added persistent-state export utilities after DBeaver lost <code>ON COMMIT DROP</code> report contexts; also corrected Program 219 alias and hash-order issues.</td>
+</tr>
+<tr>
+<td align="right">15</td>
+<td>Live</td>
+<td>Program 219 Context Projection / R13</td>
+<td>Replaced <code>p.*</code> with an explicit policy projection and namespaced 19 duplicate expected-count columns.</td>
+</tr>
+</tbody></table>
+<p>The major early implementation issues were documented as real approval blockers—including invalid PL/pgSQL declaration syntax, target typing before hashing, and absent persisted-physical reconstruction—not merely advisory refinements. [export reference: filecite | turn22file7 | L9-L188] The later staging-only correction was similarly required because Program 214 still used persisted generated tables during downstream business construction. [export reference: filecite | turn22file6 | L34-L103] The validation corrections addressed unreachable negative tests and incomplete field-level source reconstruction. [export reference: filecite | turn22file5 | L19-L167] The gate correction was required because <code>HIGH</code> was outside the accepted physical severity domain. [export reference: filecite | turn22file3 | L20-L99]</p>
+<p>Every correction is documented in the package with:</p>
+<pre><code class="language-text">trigger
+root cause
+affected programs and catalogs
+bounded resolution
+reason the correction was mandatory
+preserved semantics
+verification evidence
+supersession status
+final disposition
+</code></pre>
+<h1>Complete audit-review package</h1>
+<h2>Primary handoff</h2>
+<p>Download the complete M2.11 audit-review handoff ZIP (historical reference: <code>sandbox:[session]/M2_11_AUDIT_REVIEW_HANDOFF_20260806_R1.zip</code>; referenced bytes not established here)</p>
+<p>Download the matching SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_11_AUDIT_REVIEW_HANDOFF_20260806_R1.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Read the final handoff package-validation report (historical reference: <code>sandbox:[session]/M2_11_AUDIT_REVIEW_HANDOFF_20260806_R1_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package
+M2_11_AUDIT_REVIEW_HANDOFF_20260806_R1.zip
+
+Bytes
+23,179,966
+
+SHA-256
+ccb4b7b281444661430963aeaec6aa4d9bdc6a7a91821ac53ef0795c1564ca53
+
+ZIP entries
+289
+
+Manifested files
+285
+
+ZIP CRC
+PASS
+
+Complete extraction
+PASS
+
+Source-versus-extracted mismatches
+0
+
+Duplicate paths
+0
+
+Unsafe paths
+0
+
+Evidence validation
+118 PASS
+1 WARN
+1 OPEN
+0 FAIL
+</code></pre>
+<p>The WARN and OPEN controls describe the same seven-export completeness issue. No supplied SQL, evidence file, row count, hash, validation result, acceptance result, detailed report, or package-integrity control failed.</p>
+<h2>Ready-to-paste second-chat prompt</h2>
+<p>Download the independent audit-review prompt (historical reference: <code>sandbox:[session]/M2_11_AUDIT_REVIEW_PROMPT_20260806.md</code>; referenced bytes not established here)</p>
+<p>The second chat should receive the handoff ZIP and sidecar, followed by this prompt. It directs the auditor to independently verify source authority, hotfix isolation, execution results, canonical hashes, acceptance, reporting, boundaries, and the seven-export open item.</p>
+<h2>Core review documents</h2>
+<p>Audit review report (historical reference: <code>sandbox:[session]/M2_11_AUDIT_REVIEW_REPORT_20260806.md</code>; referenced bytes not established here)</p>
+<p>Complete correction and hotfix register (historical reference: <code>sandbox:[session]/M2_11_HOTFIX_REGISTER_20260806.md</code>; referenced bytes not established here)</p>
+<p>Evidence completeness and gap analysis (historical reference: <code>sandbox:[session]/M2_11_EVIDENCE_COMPLETENESS_AND_GAPS_20260806.md</code>; referenced bytes not established here)</p>
+<h2>Package contents</h2>
+<p>The handoff contains:</p>
+<pre><code class="language-text">00_audit_documentation/
+  Full audit report
+  15-release hotfix register in Markdown and CSV
+  Live execution chronology in Markdown and CSV
+  38-export evidence inventory
+  Missing-export equivalency matrix
+  118-control validation record and JSON summary
+  Key analytical results
+  Final SQL and authority SHA-256 inventories
+  Audit decision checklist
+  Status-supersession note
+  Complete file map
+
+01_final_m2_11_source_and_documentation/
+  Complete extracted R13 package
+  Programs 212–219
+  Recoveries 212A, 214A, 214B, and 215A
+  Full M2.11 documentation set
+  All governance catalogs
+  Original freeze and Amendments A and B
+  Current and superseded source-authority records
+  All correction records
+  Static audits
+  Export utilities
+  Live-execution checkpoint and error evidence
+
+02_live_execution_evidence/
+  Original module_M2_11_evidence.zip
+  All 33 extracted evidence CSVs
+
+03_predecessor_baseline/
+  Accepted M2.10 full-project ZIP
+  Matching sidecar
+  Baseline identity record
+
+04_missing_post_chain_exports/
+  Exact seven-query SELECT-only export utility
+  Missing-export checklist
+  Export instructions
+
+05_package_validation/
+  Final R13 source ZIP and sidecar
+  R13 package-validation reports
+  Audit-handoff validation reports
+
+MANIFEST.csv
+manifest.json
+SHA256SUMS.txt
+PACKAGE_INVENTORY.csv
+</code></pre>
+<h2>Analytical boundary retained</h2>
+<p>The evidence identifies three <code>PRIMARY_GOVERNANCE_REVIEW</code> assignments:</p>
+<pre><code class="language-text">BASELINE             BALANCED_FRONTIER
+RECESSION_ENERGY     PRICE_FOR_RISK
+PORTFOLIO            PRICE_FOR_RISK
+</code></pre>
+<p>These are governance-review priorities only. They are not champions, production-optimal strategies, or deployment authorizations. The final design expressly separates frontier evidence, governance priority, formal acceptance, and deployment authority, and retains M2.12 as the final Module 2 certification stage. [export reference: filecite | turn22file8 | L840-L891]</p>
+<p>The current boundary remains:</p>
+<pre><code class="language-text">M2.11                           ACCEPTED
+Production deployment           NOT AUTHORIZED
+M2.12                           NOT AUTHORIZED
+Module 3                        NOT AUTHORIZED
+Causal or empirical claims      NOT SUPPORTED
+</code></pre>
+</div></article><article id="m-8630efbe-301b-4e0c-88e0-dbb133c30810" class="message user"><p class="meta"><strong>Andrew / user</strong> · C081-M00116 · 2026-08-06T20:14:48.204000-04:00 · active path</p><p class="note">Attachment references: module_M2_11_evidence(1).zip</p><div class="bubble"><p>The Post Chain State Exports are included.  Finalize what we&#39;ll be sending over to our audit review.</p>
+</div></article><article id="m-f155cfd7-852b-4b83-a263-7c942b21c39b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00117 · 2026-08-06T20:41:42.322434-04:00 · active path</p><div class="bubble"><h1>Final M2.11 audit-review handoff</h1>
+<p>The seven direct post-chain state exports are present in the revised evidence archive and the prior evidence-completeness exception is closed.</p>
+<p>The final evidence inventory now reconciles exactly to the governed architecture:</p>
+<pre><code class="language-text">Programs 212–218 primary outputs       7 / 7
+Program 219 detailed outputs          24 / 24
+Direct post-chain state exports        7 / 7
+                                      ------
+Governed evidence exports             38 / 38 PASS
+
+Supporting Program 213 diagnostics     2
+Total evidence files                  40
+Missing governed exports               0
+</code></pre>
+<p>This matches the approved WP5 evidence architecture of seven primary outputs, 24 Program 219 outputs, and seven post-chain state exports. [export reference: filecite | turn22file0 | L11-L24]</p>
+<h2>Final package to send to the audit chat</h2>
+<h3>1. Complete audit handoff ZIP</h3>
+<p>Download the final M2.11 audit handoff (historical reference: <code>sandbox:[session]/M2_11_AUDIT_HANDOFF_20260806_FINAL.zip</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package
+M2_11_AUDIT_HANDOFF_20260806_FINAL.zip
+
+Bytes
+24,215,921
+
+SHA-256
+2a8a489193c7792b4f705ebf93a4df9ba2f590039f1e8a87c138987b21f5753d
+
+ZIP entries
+297
+
+Manifested files
+293
+
+Maximum ZIP path length
+244
+</code></pre>
+<h3>2. Matching checksum sidecar</h3>
+<p>Download the final SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_11_AUDIT_HANDOFF_20260806_FINAL.zip.sha256</code>; referenced bytes not established here)</p>
+<h3>3. Audit prompt</h3>
+<p>Paste the contents of this document into the second chat after attaching the ZIP and sidecar:</p>
+<p>Download the final independent-audit prompt (historical reference: <code>sandbox:[session]/M2_11_AUDIT_REVIEW_PROMPT_20260806_FINAL.md</code>; referenced bytes not established here)</p>
+<p>Only those three items need to be passed to the second chat. The source package, predecessor baseline, live evidence, post-chain exports, hotfix records, audit documentation, manifests, and validation materials are all inside the handoff ZIP.</p>
+<h1>What is included</h1>
+<p>The handoff contains:</p>
+<pre><code class="language-text">00_audit_documentation/
+    Executive audit handoff report
+    Fifteen-release hotfix register
+    Complete execution chronology
+    38-export reconciliation
+    Seven-export post-chain reconciliation
+    Forty-file evidence inventory
+    146 machine-readable evidence controls
+    Current source and SQL hashes
+    Audit decision checklist
+    Analytical-results summary
+    Status-supersession record
+
+01_final_m2_11_source_and_documentation/
+    Complete final R13 source tree
+    Programs 212–219
+    Recoveries 212A, 214A, 214B, and 215A
+    Original source and design freeze
+    Amendments A and B
+    Consolidated implementation specification
+    All technical and governance catalogs
+    All current source-authority records
+    All correction and supersession records
+    Full module documentation
+    Execution and evidence-export utilities
+
+02_live_execution_evidence/
+    Complete user-supplied evidence ZIP
+    All 40 extracted CSV evidence files
+    Seven primary outputs
+    Twenty-four detailed outputs
+    Seven direct post-chain outputs
+    Two Program 213 diagnostics
+
+03_predecessor_baseline/
+    Accepted M2.10 full-project ZIP
+    Matching M2.10 sidecar
+    Baseline identity record
+
+04_post_chain_state_evidence/
+    Exact SELECT-only query authority
+    Seven-export reconciliation
+    Completion record
+
+05_package_validation/
+    Final R13 source ZIP and sidecar
+    R13 validation reports
+    Final evidence-validation report
+    Final audit-package validation report
+
+MANIFEST.csv
+manifest.json
+SHA256SUMS.txt
+PACKAGE_INVENTORY.csv
+</code></pre>
+<h1>Post-chain evidence reconciliation</h1>
+<p>The newly supplied exports passed the following checks:</p>
+<table>
+<thead>
+<tr>
+<th>State export</th>
+<th align="right">Rows</th>
+<th>Reconciliation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Run registry</td>
+<td align="right">1</td>
+<td><code>M2_11_ACCEPTED</code>; 19,298 entities; combined identity exact</td>
+</tr>
+<tr>
+<td>M2.11 contract registry</td>
+<td align="right">1</td>
+<td><code>ACCEPTED</code>; contract, combined, and registry hashes exact</td>
+</tr>
+<tr>
+<td>Run evidence</td>
+<td align="right">165</td>
+<td>All PASS: 120 positive + 24 generation + 20 negative + 1 acceptance</td>
+</tr>
+<tr>
+<td>Acceptance gate</td>
+<td align="right">1</td>
+<td>PASS; observed value equals the accepted combined set hash</td>
+</tr>
+<tr>
+<td>Canonical hash source</td>
+<td align="right">19,298</td>
+<td>19 families; unique business keys; valid row hashes; counts match Detail 07</td>
+</tr>
+<tr>
+<td>Latest contract</td>
+<td align="right">24</td>
+<td>Exact 87-field parity with Program 219 Detail 17</td>
+</tr>
+<tr>
+<td>Archive contract</td>
+<td align="right">24</td>
+<td>Contract and archive hashes match Detail 18; 24/24 reproduction MATCH</td>
+</tr>
+</tbody></table>
+<p>The expected direct-state counts were previously frozen as 1, 1, 165, 1, 19,298, 24, and 24, respectively. [export reference: filecite | turn22file1 | L138-L163]</p>
+<p>No evidence row was inferred, reconstructed, or fabricated. The seven CSVs were validated directly from the newly supplied evidence ZIP.</p>
+<h1>Final execution and acceptance state</h1>
+<p>The completed evidence supports:</p>
+<pre><code class="language-text">Run status                       M2_11_ACCEPTED
+Contract status                  ACCEPTED
+Acceptance gate                  PASS
+Acceptance prerequisites         45 / 45 PASS
+Positive controls               120 / 120 PASS
+Negative controls                20 / 20 PASS
+Canonical families               19
+Canonical entities           19,298
+Contract set hash                19f1a9d842c9cb35617ca03e49445aad
+Combined set hash                a67d375b9f9248b3eec8160cf3dc656d
+Registry row hash                61c22f4f3f2e99905d05958fddf80671
+Deterministic mismatches          0
+Blocking/boundary findings        0
+Stress-improvement violations     0
+Latest/archive mismatches         0
+Governed exports                 38 / 38 PASS
+</code></pre>
+<p>The final Program 217 evidence records <code>M2_11_ACCEPTED</code>, 45/45 acceptance prerequisites, 120 positive controls, 20 negative controls, and 19,298 canonical entities. [export reference: filecite | turn19file0 | L9-L11] The master report independently records the accepted lifecycle, canonical identities, zero stress violations, zero latest/archive mismatches, and the continuing non-production boundaries. [export reference: filecite | turn21file0 | L9-L11]</p>
+<h1>Hotfix documentation</h1>
+<p>The package retains the complete explanation of all fifteen bounded correction releases:</p>
+<pre><code class="language-text">Pre-execution corrections                         8
+Live-execution and reporting corrections          7
+Total documented corrections                     15
+</code></pre>
+<p>Each register entry identifies:</p>
+<pre><code class="language-text">trigger
+root cause
+affected source and catalogs
+bounded correction
+why the correction was mandatory
+semantics preserved
+verification evidence
+superseded authority
+final live disposition
+</code></pre>
+<p>The major pre-execution defects included invalid PL/pgSQL declaration syntax, hashing before physical target coercion, missing physical reconstruction, incomplete staging isolation, unreachable validation controls, and invalid acceptance-gate domain usage. Those were genuine approval blockers rather than cosmetic refinements. [export reference: filecite | turn22file7 | L5-L188] [export reference: filecite | turn22file6 | L34-L103] [export reference: filecite | turn22file5 | L19-L167] [export reference: filecite | turn22file3 | L20-L99]</p>
+<p>Convenience copies outside the ZIP:</p>
+<ul>
+<li>Final audit review report (historical reference: <code>sandbox:[session]/M2_11_AUDIT_REVIEW_REPORT_20260806_FINAL.md</code>; referenced bytes not established here)</li>
+<li>Complete hotfix register (historical reference: <code>sandbox:[session]/M2_11_HOTFIX_REGISTER_20260806_FINAL.md</code>; referenced bytes not established here)</li>
+<li>Evidence completeness and reconciliation (historical reference: <code>sandbox:[session]/M2_11_EVIDENCE_COMPLETENESS_AND_RECONCILIATION_20260806.md</code>; referenced bytes not established here)</li>
+<li>Governed 38-export reconciliation (historical reference: <code>sandbox:[session]/M2_11_GOVERNED_EXPORT_RECONCILIATION_20260806.csv</code>; referenced bytes not established here)</li>
+<li>Final package-validation report (historical reference: <code>sandbox:[session]/M2_11_AUDIT_HANDOFF_20260806_FINAL_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Final package validation</h1>
+<pre><code class="language-text">Evidence validation controls        146 / 146 PASS
+Evidence validation failures          0
+
+Governed exports                      38 / 38 PASS
+Primary outputs                        7 / 7 PASS
+Program 219 details                   24 / 24 PASS
+Post-chain state exports               7 / 7 PASS
+
+ZIP CRC                              PASS
+Complete extraction                  PASS
+Source-versus-extracted mismatches      0
+Manifest discrepancies                 0
+Checksum discrepancies                 0
+Duplicate paths                        0
+Case-insensitive duplicate paths       0
+Unsafe paths                           0
+External sidecar pairing             PASS
+Accepted M2.10 preservation          PASS
+Known evidence gaps                    0
+</code></pre>
+<p>The frozen M2.11 model remains nineteen canonical families and 19,298 entities, with 120 positive controls, 20 negative controls, 24 detailed result sets, and the Programs 212–219 architecture unchanged. [export reference: filecite | turn22file8 | L759-L773] [export reference: filecite | turn22file8 | L792-L891]</p>
+<h2>Boundary retained</h2>
+<pre><code class="language-text">M2.11 formal status                ACCEPTED
+Governance-review priorities       ANALYTICAL REVIEW ONLY
+Production deployment              NOT AUTHORIZED
+M2.12 execution                    NOT AUTHORIZED
+Module 3                           NOT AUTHORIZED
+Causal or empirical claims         NOT SUPPORTED
+</code></pre>
+<p>The final ZIP and sidecar supersede the earlier R1 audit-handoff package. Do not send the earlier package or the earlier evidence ZIP to the second chat.</p>
+</div></article><article id="m-712787e4-138b-4e02-8617-798c28eb1c12" class="message user"><p class="meta"><strong>Andrew / user</strong> · C081-M00118 · 2026-08-06T22:13:04.452000-04:00 · active path</p><p class="note">Attachment references: M2_11_INDEPENDENT_AUDIT_SUMMARY_20260806(1).json; M2_11_INDEPENDENT_AUDIT_REVIEW_20260806(1).md; M2_11_INDEPENDENT_AUDIT_CHECKS_20260806(1).csv; Pasted markdown(20260807-020910).md; M2_10_FULL_PROJECT_ACCEPTED_20260804(7)(1).zip</p><div class="bubble"><p>Audit was a success! Please review audit documentation and add to the final M2.11 packaging. Address the few packaging minor issues identified in the audit. Finalize M2.11 package and update the full project .zip (see M2.10 baseline attached again).</p>
+</div></article><article id="m-c615a5bc-426e-45bf-b2a1-e5cb499ba7e7" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00119 · 2026-08-06T22:39:04.502056-04:00 · active path</p><div class="bubble"><h1>M2.11 final accepted packaging complete</h1>
+<p>The independent audit concluded <strong>PASS</strong> and found no source, runtime, canonical-identity, validation, acceptance, archive, stress, or evidence-completeness blocker. It confirmed <code>M2_11_ACCEPTED</code>, 45/45 acceptance prerequisites, 120/120 positive controls, 20/20 negative controls, 19 canonical families, 19,298 canonical entities, and 38/38 governed exports. [export reference: filecite | turn22file1 | L5-L17]</p>
+<p>I incorporated the full audit documentation, all 40 live-evidence files, the complete fifteen-release hotfix history, and the final R13 source tree into the accepted M2.11 package. The audit confirmed that all fifteen corrections were bounded, preserved the frozen business design, and were supported by later successful live checkpoints. [export reference: filecite | turn22file2 | L105-L127]</p>
+<h2>Audit packaging advisories resolved</h2>
+<p>The audit identified only two nonblocking advisories, covering three metadata classifications. It required:</p>
+<ol>
+<li>changing two superseded R6 history records from <code>current_authority_flag=YES</code> to <code>NO</code>;</li>
+<li>moving or explicitly classifying the pre-live WP2/WP4/WP5 authorization as historical/noncurrent; and</li>
+<li>regenerating the accepted-package inventories, manifests, and checksums. [export reference: filecite | turn22file1 | L67-L77]</li>
+</ol>
+<p>All three actions are complete:</p>
+<pre><code class="language-text">M2_11_LIVE_EXECUTION_RESUME_SOURCE_AUTHORITY_R6_SUPERSEDED_BY_R13.md
+current_authority_flag = NO
+
+M2_11_WP4_SOURCE_AUTHORITY_R6_SUPERSEDED_BY_R13.md
+current_authority_flag = NO
+
+M2_11_WP2_WP4_FINAL_SIGNOFF_AND_WP5_AUTHORIZATION.md
+moved to 99_history_non_executable
+renamed as PRE_LIVE_NONCURRENT
+
+Current independent-audit authorization
+added under 05_governance/02_authorization
+
+SQL changed during accepted packaging          0
+PostgreSQL reruns during accepted packaging    0
+</code></pre>
+<p>The final inventories, <code>MANIFEST.csv</code>, <code>manifest.json</code>, <code>SHA256SUMS.txt</code>, source inventory, and package validation records were rebuilt after those corrections.</p>
+<h1>1. Final accepted standalone M2.11 package</h1>
+<p>Download the M2.11 accepted standalone package (historical reference: <code>sandbox:[session]/M2_11_STANDALONE_ACCEPTED_20260806.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_11_STANDALONE_ACCEPTED_20260806.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Read the standalone validation report (historical reference: <code>sandbox:[session]/M2_11_STANDALONE_ACCEPTED_20260806_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package
+M2_11_STANDALONE_ACCEPTED_20260806.zip
+
+ZIP bytes
+4,512,493
+
+SHA-256
+7fec978d1675af4fe415f31a7560dda605f6f48fe055fe8c671b07c59156c6b6
+
+Package files                         308
+Manifested files                      305
+ZIP entries                           308
+Maximum ZIP path length               169
+
+ZIP CRC                              PASS
+Complete extraction                  PASS
+Source-versus-extracted hashes       PASS
+MANIFEST.csv                         PASS
+manifest.json                        PASS
+SHA256SUMS.txt                       PASS
+Exact duplicate paths                  0
+Case-insensitive duplicate paths       0
+Unsafe paths                            0
+Windows-reserved violations             0
+
+Normal SQL identities                 8 / 8 PASS
+Recovery SQL identities               4 / 4 PASS
+Governed evidence exports            38 / 38 PASS
+Independent audit blockers             0
+Audit advisories resolved             2 / 2
+</code></pre>
+<p>The standalone package contains:</p>
+<pre><code class="language-text">Final Programs 212–219
+Final Recoveries 212A, 214A, 214B and 215A
+Complete source/design freeze and Amendments A/B
+Consolidated specification and 84 invariants
+All current source-authority records
+All fifteen correction records
+Complete technical documentation and catalogs
+All 40 submitted live-evidence CSVs
+Original live-evidence ZIP
+All 38 governed evidence exports
+Independent audit review
+All 105 independent audit checks
+Machine-readable audit summary
+Hotfix register
+Accepted execution provenance
+M2.12 handoff documentation
+Accepted-package metadata remediation record
+Regenerated inventories, manifests and checksums
+</code></pre>
+<h1>2. Updated full-project accepted repository</h1>
+<p>Download the M2.11 accepted full-project ZIP (historical reference: <code>sandbox:[session]/M2_11_FULL_PROJECT_ACCEPTED_20260806.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_11_FULL_PROJECT_ACCEPTED_20260806.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Read the full-project validation report (historical reference: <code>sandbox:[session]/M2_11_FULL_PROJECT_ACCEPTED_20260806_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package
+M2_11_FULL_PROJECT_ACCEPTED_20260806.zip
+
+ZIP bytes
+24,927,028
+
+SHA-256
+92f0491eea26b0d546c85992e27433cd006a0b2f126c32a139d795b7749904fc
+
+Project files                         4,819
+Manifested files                      4,669
+ZIP entries                           4,819
+Numbered stages                          30
+Final stage                         30_M2_11
+Maximum ZIP path length                 219
+
+ZIP CRC                               PASS
+Complete extraction                   PASS
+Source-versus-extracted hashes        PASS
+Root MANIFEST.csv                     PASS
+Root manifest.json                    PASS
+Root SHA256SUMS.txt                   PASS
+Exact duplicate paths                   0
+Case-insensitive duplicate paths        0
+Unsafe paths                             0
+Windows-reserved violations              0
+</code></pre>
+<h2>Repository integration controls</h2>
+<pre><code class="language-text">Accepted M2.10 baseline SHA-256
+ca6aac62b1bb9442f3f3c5749930a13965a96c5141a18cf49fd8a37c765cf02c
+
+Accepted predecessor stages
+29 / 29 byte-identical
+
+Embedded M2.11 stage
+30_M2_11
+
+Standalone versus embedded M2.11 stage
+BYTE-IDENTICAL
+
+Accepted M2.11 standalone SHA-256
+7fec978d1675af4fe415f31a7560dda605f6f48fe055fe8c671b07c59156c6b6
+</code></pre>
+<p>The updated repository now reflects:</p>
+<pre><code class="language-text">G0                                  PASS
+G1                                  PASS
+M1.2–M1.17                          PASS
+G2 M1 Consumption Contract          PASS
+M2.1–M2.10                          PASS
+M2.11                               ACCEPTED
+</code></pre>
+<p>The former M2.11 next-step records were retained as superseded records, while the current repository next step is now:</p>
+<pre><code class="language-text">M2.12 — Enterprise Portfolio Certification
+        &amp; Consumption Contract
+</code></pre>
+<h1>3. Final accepted identity</h1>
+<pre><code class="language-text">Run code
+M1_V0_2_BASELINE_BUILD
+
+Run version
+1
+
+Run status
+M2_11_ACCEPTED
+
+Contract status
+ACCEPTED
+
+Acceptance gate
+PASS
+
+Generation evidence
+24 / 24 PASS
+
+Positive controls
+120 / 120 PASS
+
+Negative controls
+20 / 20 PASS
+
+Acceptance prerequisites
+45 / 45 PASS
+
+Canonical families
+19
+
+Canonical entities
+19,298
+
+Contract set hash
+19f1a9d842c9cb35617ca03e49445aad
+
+Combined set hash
+a67d375b9f9248b3eec8160cf3dc656d
+
+Registry row hash
+61c22f4f3f2e99905d05958fddf80671
+
+Deterministic mismatches
+0
+
+Blocking or stage-boundary findings
+0
+
+Stress-improvement violations
+0
+
+Latest/archive mismatches
+0
+
+Governed evidence exports
+38 / 38 PASS
+</code></pre>
+<p>These identities reconcile across the acceptance finalizer, master report, twenty-four detailed reports, direct post-chain state, and independent audit. [export reference: filecite | turn22file2 | L18-L40]</p>
+<h1>4. Consolidated delivery validation</h1>
+<p>Download the machine-readable delivery validation (historical reference: <code>sandbox:[session]/M2_11_COMPLETE_DELIVERY_VALIDATION.json</code>; referenced bytes not established here)</p>
+<p>It records:</p>
+<pre><code class="language-text">Input M2.10 baseline verification          PASS
+Final R13 source verification              PASS
+Live-evidence ZIP verification             PASS
+Independent audit-handoff verification     PASS
+
+Standalone accepted package validation     PASS
+Full-project accepted package validation   PASS
+Accepted predecessor-stage preservation    PASS
+Embedded-stage identity                    PASS
+
+SQL changed during final packaging         NO
+PostgreSQL rerun during final packaging    NO
+Production deployment authorized           NO
+M2.12 execution authorized                 NO
+Module 3 authorized                        NO
+</code></pre>
+<h1>Final governing disposition</h1>
+<pre><code class="language-text">M2.11 standalone accepted package       COMPLETE
+M2.11 full-project accepted package     COMPLETE
+Independent audit                       PASS
+Audit packaging advisories              RESOLVED
+Accepted M2.10 baseline                 PRESERVED
+M2.11 database state                    UNCHANGED
+M2.11                                   ACCEPTED
+
+Production deployment                   NOT_AUTHORIZED
+Module 3                                NOT_AUTHORIZED
+M2.12 source/design planning            AUTHORIZED
+M2.12 SQL construction/execution        NOT AUTHORIZED
+</code></pre>
+<p>The audit expressly authorized accepted M2.11 packaging and M2.12 source/design planning while retaining separate approval requirements for M2.12 SQL construction or execution. [export reference: filecite | turn22file1 | L79-L84]</p>
+</div></article><article id="m-aa537202-b8b4-47b1-b904-71a3dfb366c1" class="message user"><p class="meta"><strong>Andrew / user</strong> · C081-M00120 · 2026-08-07T13:09:07.808000-04:00 · active path</p><p class="note">Attachment references: M2_12_Build(1).zip</p><div class="bubble"><h1>M2.12 Build Chat — Audit-Approved Opening Prompt</h1>
+<p>You are beginning the controlled implementation build for <strong>M2.12 — Enterprise Portfolio Certification &amp; Consumption Contract</strong>.</p>
+<p>The independent narrow re-audit has <strong>APPROVED the M2.12 Source &amp; Business Design Freeze, Amendment A, and Amendment A Correction R1</strong>. <strong>Work Package 1 only is authorized.</strong></p>
+<h2>Governing baseline and authority</h2>
+<p>Use the attached accepted M2.11 full-project repository as the sole technical baseline.</p>
+<p>Required baseline SHA-256:</p>
+<p><code>92f0491eea26b0d546c85992e27433cd006a0b2f126c32a139d795b7749904fc</code></p>
+<p>Before doing any WP1 work:</p>
+<ol>
+<li>Recalculate the accepted M2.11 ZIP SHA-256 and reconcile it to the external sidecar.</li>
+<li>Verify ZIP CRC and confirm the repository contains 4,819 entries, 30 numbered stages, and final accepted stage <code>30_M2_11</code>.</li>
+<li>Verify the independent-audit signoff in <code>00_AUDIT_APPROVAL</code>.</li>
+<li>Read the revised M2.12 integrated freeze, Amendment A, Correction R1, final design delivery index, expected-results authority, and all supplied machine-readable catalogs.</li>
+<li>Recalculate the SHA-256 of every M2.12 design artifact supplied in the handoff and reconcile it to the final design index. Do not substitute a superseded version.</li>
+<li>Treat the final expected-results identity as:
+<code>83c8fa0b18dee83bea40f8d86d0117a36da2fe6c1acd138e2b475723734dc1ea</code></li>
+<li>Treat the corrected 19-edge source-graph identity as:
+<code>c3409c671e581648c946a083fe532722cd7856bc4f887e69d67ce5158665981a</code></li>
+<li>Treat earlier 2,926-byte, 12,978-byte, 32,958-byte, or 236,963-byte expected-results identities as superseded delivery history, not current implementation authority.</li>
+</ol>
+<p>The frozen M2.12 architecture includes:</p>
+<ul>
+<li>stage <code>31_M2_12</code>;</li>
+<li><code>M2_12_METHOD_V1</code>;</li>
+<li><code>M2_12_ENTERPRISE_PORTFOLIO_CERTIFICATION_POLICY_V1</code>;</li>
+<li><code>M2_G3_CONSUMPTION_BUNDLE</code> v1;</li>
+<li><code>M2_G3_BUNDLE_SCHEMA_V1</code>;</li>
+<li>gate <code>G3_M2_CONTRACT</code>;</li>
+<li>12 certification nodes;</li>
+<li>13 component contracts;</li>
+<li>19 physical source edges;</li>
+<li>72 mandatory-PASS evidence-certification cells;</li>
+<li>20 capability rows;</li>
+<li>9 canonical families / 134 canonical entities;</li>
+<li>Program 220 policy canonical rows = 1;</li>
+<li>Program 222 non-policy canonical rows = 133;</li>
+<li>1,500 application-consumption rows;</li>
+<li>59 operational-account rows;</li>
+<li>24 strategy/scope rows;</li>
+<li>24 generation-evidence rows;</li>
+<li>128 positive controls;</li>
+<li>20 negative controls;</li>
+<li>47 PRE_WRITE + 1 POST_WRITE_ATOMICITY acceptance requirements;</li>
+<li>24 fixed-cardinality detailed report result sets;</li>
+<li>Programs 220–227;</li>
+<li>Recoveries 220A, 222A, 222B, 223A;</li>
+<li>no production, legal/regulatory-certification, empirical/causal-optimization, autonomous champion, Module 3 execution, or deployment authority.</li>
+</ul>
+<p>Do not redesign, reinterpret, simplify, substitute, or optimize away any frozen source node, contract, edge, evidence cell, capability status, object grain, count, writer boundary, view grain, hash preimage, sequence treatment, negative-control injection, acceptance phase, report cardinality, program boundary, recovery boundary, or Module 3 boundary.</p>
+<h1>WORK PACKAGE 1 ONLY</h1>
+<h2>Freeze Consolidation, Accepted-Source Inspection, and Implementation Specification</h2>
+<p>Do <strong>not</strong> generate SQL, recovery SQL, manifests, SHA-256 inventories for an implementation package, ZIPs, live evidence, or acceptance materials.</p>
+<p>Using the accepted M2.11 repository and frozen M2.12 design:</p>
+<ol>
+<li>Verify accepted full-project archive integrity and current accepted status.</li>
+<li>Inspect current physical schema definitions and accepted metadata for M1.17 G2 and M2.1–M2.11.</li>
+<li>Reconcile the 12 certification nodes and 13 component contracts to exact registries, gates, latest/archive objects, keys, counts, methods, schemas, contract hashes, combined hashes, registry hashes, and current source authorities.</li>
+<li>Reconcile all 19 frozen source edges—including the two M1.17 component edges, ten linear Module 2 edges, two auxiliary M1 edges, and five M2.11 direct-source edges—to exact physical fields and accepted hashes.</li>
+<li>Produce exact source-to-target field mappings for:<ul>
+<li>stage certification;</li>
+<li>component contract inventory;</li>
+<li>six-family evidence certification;</li>
+<li>contract reproduction;</li>
+<li>capability coverage;</li>
+<li>G3 latest/archive/registry;</li>
+<li>application-origination consumption;</li>
+<li>operational-account consumption;</li>
+<li>strategy-scope consumption;</li>
+<li>lineage and Power BI views.</li>
+</ul>
+</li>
+<li>Confirm every business key and join key physically exists and identify every required cast.</li>
+<li>Confirm 1,500 application rows, 59 account rows, 24 strategy rows, 7,129 component latest rows, 7,129 component archive rows, and the 134-entity canonical arithmetic.</li>
+<li>Convert the 27-row hash/preimage/sequence specification into exact physical implementation mappings without changing any preimage, exclusion, ordering rule, family hash, construction phase, or sequence-state requirement.</li>
+<li>Reconcile the 72-row evidence applicability matrix to exact physical sources and prove all 72 remain mandatory PASS.</li>
+<li>Reconcile all 20 negative controls to reachable physical constraints/assertions, exact SQLSTATE/message expectations, isolation boundaries, owned-sequence handling, and before/after fingerprints.</li>
+<li>Reconcile all 48 acceptance requirements and the eight acceptance-write phases to exact physical objects and mutation boundaries.</li>
+<li>Reconcile all 24 detailed report result sets to exact source columns, fixed cardinalities, projections, deterministic ordering, and zero-row header behavior.</li>
+<li>Create the exact type/precision plan, temporary-object naming standard, program responsibility matrix, and transaction/mutation matrix.</li>
+<li>Create implementation invariants preserving every frozen boundary.</li>
+<li>Identify any physical blocker that cannot be resolved without changing the approved freeze.</li>
+</ol>
+<h2>Required WP1 deliverables</h2>
+<ul>
+<li><code>M2_12_CONSOLIDATED_IMPLEMENTATION_SPECIFICATION.md</code></li>
+<li><code>M2_12_PHYSICAL_OBJECT_CATALOG.csv</code></li>
+<li><code>M2_12_SOURCE_TO_TARGET_MAPPING.csv</code></li>
+<li><code>M2_12_STAGE_AND_CONTRACT_SOURCE_AUTHORITY.csv</code></li>
+<li><code>M2_12_CONSUMPTION_VIEW_MAPPING.csv</code></li>
+<li><code>M2_12_ORDERED_HASH_SPECIFICATION.md</code></li>
+<li><code>M2_12_PROGRAM_RESPONSIBILITY_MATRIX.csv</code></li>
+<li><code>M2_12_TRANSACTION_AND_MUTATION_MATRIX.csv</code></li>
+<li><code>M2_12_TYPE_PRECISION_DICTIONARY.csv</code></li>
+<li><code>M2_12_IMPLEMENTATION_INVARIANTS.md</code></li>
+<li><code>M2_12_WORK_PACKAGE_1_REVIEW.md</code></li>
+</ul>
+<h2>WP1 approval standard</h2>
+<pre><code class="language-text">Accepted ZIP/sidecar mismatch                 0
+Frozen business semantics changed             0
+Unresolved source objects                     0
+Unmapped required source fields               0
+Unresolved latest/archive keys                0
+Source graph edges not mapped                 0
+Evidence applicability ambiguity              0
+Hash preimage/order ambiguity                 0
+Acceptance write-phase ambiguity              0
+Negative-control reachability ambiguity       0
+Reporting cardinality/projection ambiguity    0
+Canonical-count discrepancy                   0
+Program-boundary ambiguity                    0
+Capability-coverage ambiguity                 0
+</code></pre>
+<p>At the end of WP1, report the files produced, static reconciliation results, any blocker, and whether WP2 is recommended.</p>
+<p><strong>STOP after Work Package 1.</strong></p>
+<p>Do not begin Program 220. Do not generate Programs 220–227. Do not execute PostgreSQL. Do not create implementation packaging. Do not authorize Module 3 or production use.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

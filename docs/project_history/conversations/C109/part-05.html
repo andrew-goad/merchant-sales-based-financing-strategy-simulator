@@ -1,0 +1,1217 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 05 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 05</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-04.html">Previous part</a><a href="part-06.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-8c749b6e-2ce0-4253-aaf9-af4cea7411b9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00119 · 2026-08-25T17:14:05.234380-04:00 · active path</p><div class="bubble"><p>Confirmed exactly:</p>
+<p><strong>524 + 139 + 44 + 43 = 750.</strong></p>
+<p>That is an important P01 UAT checkpoint.</p>
+<h2>1. <strong>Controlling state</strong></h2>
+<p>OBJ-008 now passes its core denominator reconciliation:</p>
+<pre><code class="language-text">P01-OBJ-008 — Decision-path distribution
+
+Outcome 1     524
+Outcome 2     139
+Outcome 3      44
+Outcome 4      43
+             ───
+Total         750
+
+[Decisioned Applications] = 750
+
+Variance = 0
+Status   = PASS
+</code></pre>
+<p>So the chart is correctly representing the full population of <strong>750 application-scenario decision paths</strong> under the governed default state.</p>
+<h2>2. <strong>Action or decision</strong></h2>
+<p>Keep the integer data labels exactly as shown. They materially improve the chart.</p>
+<p>The next issue is the <strong>Y-axis descriptions</strong>. The current chart is analytically correct but not executive-ready because every category is being truncated.</p>
+<p>I do <strong>not</strong> recommend simply making OBJ-008 wider. These are sentence-length descriptions; consuming another 200–300 px would still be inefficient and would compromise the rest of the analytical layout.</p>
+<p>Instead, we should inspect <code>DimDecisionOutcome</code> for an existing concise label.</p>
+<p>In the Data pane:</p>
+<ol>
+<li>Clear the search.</li>
+<li>Search:<pre><code class="language-text">DimDecisionOutcome
+</code></pre>
+</li>
+<li>Expand that table.</li>
+<li>Look for all available columns.</li>
+</ol>
+<p>I particularly want to know whether it contains something like:</p>
+<pre><code class="language-text">decision_outcome_code
+decision_outcome_name
+label
+short_label
+description
+final_decision_outcome_rank
+</code></pre>
+<p>If there is an existing concise semantic label, we&#39;ll use that on the Y-axis while preserving <code>description</code> for tooltip/alt-text context.</p>
+<h2>3. <strong>Evidence</strong></h2>
+<p>We can now record:</p>
+<pre><code class="language-text">P01-UAT-009
+Decision-chart total equals [Decisioned Applications]
+
+Expected    750
+Observed    750
+Difference    0
+Result      PASS
+</code></pre>
+<p>This also confirms the earlier three-bar concern was purely a visual-height/scrolling issue, not an observation-date or scenario-filter defect.</p>
+<h2>4. <strong>Holds and non-regression</strong></h2>
+<p>Do not change:</p>
+<ul>
+<li><code>[Decisioned Applications]</code>;</li>
+<li>the four outcome population;</li>
+<li>data-label values;</li>
+<li>Scenario or Observation date;</li>
+<li>sort order yet.</li>
+</ul>
+<p>And don&#39;t manually type shortened outcome descriptions. If concise labels already exist in the model, we should use the governed semantic field rather than invent report-local replacements.</p>
+<h2>5. <strong>Exact next action</strong></h2>
+<p>Expand <strong><code>DimDecisionOutcome</code></strong> in the Data pane and send me its column names or a screenshot.</p>
+<p>Then we&#39;ll resolve the Y-axis labeling and governed sort, finish OBJ-008 formatting/alt text, and move directly to OBJ-009.</p>
+</div></article><article id="m-1acfdb66-2e29-44a5-94c1-774bdc694672" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00120 · 2026-08-25T17:16:48.964000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: c2e3fcb0-daae-44fa-8a60-d14488784668.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-7dbe7f5a-9e75-46dc-a012-2f2a2ce08905" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00121 · 2026-08-25T17:16:49.194614-04:00 · active path</p><div class="bubble"><p>Good. This gives us a better field for the executive-facing axis:</p>
+<p><strong><code>DimDecisionOutcome[final_decision_outcome_code]</code></strong></p>
+<p>The table does <strong>not</strong> contain a dedicated short-label/name field. The relevant choices are therefore <code>description</code> and <code>final_decision_outcome_code</code>; the latter is the better candidate for a compact categorical axis.</p>
+<h2>1. <strong>Controlling state</strong></h2>
+<p><code>DimDecisionOutcome</code> physically contains:</p>
+<pre><code class="language-text">booking_funding_flag
+created_at
+customer_offer_flag
+decline_flag
+description
+final_decision_outcome_code
+final_decision_outcome_rank
+manual_review_flag
+module1_run_id
+outcome_status
+production_adverse_action_notice_flag
+row_hash
+</code></pre>
+<p>We have already proven the existing <code>description</code> chart reconciles exactly:</p>
+<pre><code class="language-text">524 + 139 + 44 + 43 = 750
+</code></pre>
+<p>So this next change is about <strong>presentation</strong>, not population or calculation.</p>
+<h2>2. <strong>Action or decision</strong></h2>
+<p>I recommend testing <code>final_decision_outcome_code</code> as the Y-axis.</p>
+<h3>Replace the axis field</h3>
+<p>With OBJ-008 selected:</p>
+<ol>
+<li>Remove <code>description</code> from <strong>Y-axis</strong>.</li>
+<li>Drag:
+<code>DimDecisionOutcome[final_decision_outcome_code]</code>
+into <strong>Y-axis</strong>.</li>
+<li>Leave <code>[Decisioned Applications]</code> unchanged on X-axis.</li>
+<li>Leave the integer data labels on.</li>
+</ol>
+<p>Do <strong>not</strong> remove <code>description</code> permanently from our design thinking; if useful, we can add it to <strong>Tooltips</strong> so hovering over a concise outcome code exposes the full governed description.</p>
+<h3>Why this is preferable</h3>
+<p>A bar-chart category axis should generally contain compact categorical identifiers. The current <code>description</code> values are full explanatory sentences, which Power BI necessarily truncates.</p>
+<p>If <code>final_decision_outcome_code</code> contains values along the lines of concise outcome names/codes, the chart should become dramatically easier to scan.</p>
+<h2>3. <strong>Sort order</strong></h2>
+<p>We also now physically confirm the rank field exists:</p>
+<p><code>DimDecisionOutcome[final_decision_outcome_rank]</code></p>
+<p>But <strong>don&#39;t put it on the visual yet</strong>.</p>
+<p>First test <code>final_decision_outcome_code</code>. There is a good chance that column already has <strong>Sort by column → final_decision_outcome_rank</strong> configured in the semantic model.</p>
+<p>After replacing the axis, look at the order of the four bars.</p>
+<p>We want the governed rank order—not alphabetical order and not descending by count.</p>
+<h3>Useful tooltip enhancement</h3>
+<p>If the concise codes look good, add:</p>
+<p><code>DimDecisionOutcome[description]</code></p>
+<p>to <strong>Tooltips</strong>.</p>
+<p>That gives us the best combination:</p>
+<ul>
+<li>axis → concise outcome;</li>
+<li>data label → exact path count;</li>
+<li>tooltip → complete governed description.</li>
+</ul>
+<p>No new measure or column is required.</p>
+<h2>4. <strong>Holds and non-regression</strong></h2>
+<p>Do not create a calculated short-label column yet.</p>
+<p>Also don&#39;t use <code>outcome_status</code> merely because its name sounds presentation-friendly; we have no evidence yet that it carries the four distinct decision outcomes we need.</p>
+<p>The proven population remains the control:</p>
+<p><strong>four categories totaling exactly 750.</strong></p>
+<h3>5. <strong>Exact next action</strong></h3>
+<p>Replace the Y-axis <code>description</code> with <strong><code>DimDecisionOutcome[final_decision_outcome_code]</code></strong>, leave <code>[Decisioned Applications]</code> and data labels unchanged, and send me the resulting chart.</p>
+<p>We&#39;ll inspect the actual four code values before deciding whether that becomes the final executive axis and then lock its governed rank order.</p>
+</div></article><article id="m-ad99f4a8-2a7f-4d56-8136-e2a5e89d3751" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00122 · 2026-08-25T17:18:30.139000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 77272285-8e8e-46a7-b136-677f0b371217.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-404cfbce-25b9-4ca3-b075-416e141e0551" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00123 · 2026-08-25T17:18:30.262862-04:00 · active path</p><div class="bubble"><p>This is much better. <code>final_decision_outcome_code</code> is the right executive-facing field for this chart.</p>
+<p>The four categories are now immediately interpretable:</p>
+<ul>
+<li><code>DECLINE_POLICY_AUTHORIZED</code> — 524</li>
+<li><code>COUNTEROFFER_REVIEW_REQUIRED</code> — 139</li>
+<li><code>FINAL_OFFER_AUTHORIZED</code> — 44</li>
+<li><code>DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED</code> — 43</li>
+</ul>
+<p>They still reconcile exactly to <strong>750 decision paths</strong>.</p>
+<p>One thing is not right yet: <strong>the current ordering is not the governed rank order</strong>. The screenshot appears alphabetic rather than rank-based.</p>
+<h2>1. <strong>Controlling state</strong></h2>
+<p>OBJ-008 currently has the correct population and a substantially better axis field:</p>
+<pre><code class="language-text">Y-axis    DimDecisionOutcome[final_decision_outcome_code]
+X-axis    [Decisioned Applications]
+
+Counts
+524 + 139 + 44 + 43 = 750
+
+Population reconciliation    PASS
+</code></pre>
+<p>I recommend retaining <code>description</code> as a tooltip later so users can obtain the full explanatory definition without forcing sentence-length labels onto the axis.</p>
+<h2>2. <strong>Action or decision — fix the governed sort</strong></h2>
+<p>The physical catalog specifies:</p>
+<pre><code class="language-text">DimDecisionOutcome[final_decision_outcome_rank]
+Ascending
+</code></pre>
+<p>We need the <strong>code displayed</strong>, but ordered by its rank.</p>
+<h3>First try the visual sort menu</h3>
+<p>With OBJ-008 selected:</p>
+<ol>
+<li>Click the visual&#39;s <strong><code>...</code></strong> in the upper-right.</li>
+<li>Choose <strong>Sort axis</strong> or <strong>Sort by</strong>.</li>
+<li>See whether <code>final_decision_outcome_rank</code> is available.</li>
+</ol>
+<p>If it is, select:</p>
+<p><strong>final_decision_outcome_rank → Ascending</strong></p>
+<p>Do not choose:</p>
+<ul>
+<li>Application-scenario decision paths;</li>
+<li>final_decision_outcome_code;</li>
+<li>descending count.</li>
+</ul>
+<h3>If rank is NOT available there</h3>
+<p>That&#39;s likely, because rank isn&#39;t itself in a visible field well.</p>
+<p>In that case, the proper solution is a <strong>model-level Sort by column</strong> relationship:</p>
+<ol>
+<li>Go to <strong>Data view</strong>.</li>
+<li>Select:
+<code>DimDecisionOutcome[final_decision_outcome_code]</code></li>
+<li>On the ribbon, find <strong>Column tools</strong>.</li>
+<li>Choose:
+<strong>Sort by column → final_decision_outcome_rank</strong></li>
+<li>Return to Report view.</li>
+</ol>
+<p>This is a semantic metadata change, but under your current source-owner authorization I would approve it if necessary. It does not alter values, calculations, relationships, or data; it establishes the intended categorical ordering that R12 already specified.</p>
+<p>Do <strong>not</strong> add <code>final_decision_outcome_rank</code> to the chart as a second visible series merely to force sorting.</p>
+<h2>3. <strong>Formatting recommendation</strong></h2>
+<p>Once sorted, I recommend changing the visual title from Power BI&#39;s generated:</p>
+<blockquote>
+<p>Application-scenario decision paths by final_decision_outcome_code</p>
+</blockquote>
+<p>to the approved executive title:</p>
+<p><strong>Decision-path distribution</strong></p>
+<p>For the axis codes, Power BI currently shows raw uppercase/underscore values. Those are readable enough, but we can improve them without changing the underlying data if the visual supports <strong>Rename for this visual</strong> only at the field level—not individual values. Unfortunately that cannot recase individual category members.</p>
+<p>I would <strong>keep the exact codes rather than invent a calculated label column</strong> at this point. They are much better than the truncated descriptions.</p>
+<p>Add:</p>
+<p><code>DimDecisionOutcome[description]</code></p>
+<p>to <strong>Tooltips</strong>.</p>
+<p>Then hovering over <code>DECLINE_POLICY_AUTHORIZED</code> will expose its fuller governed explanation.</p>
+<h3>Alt text</h3>
+<p>Set exactly:</p>
+<blockquote>
+<p>Decision-path distribution by accepted final decision outcome at application-scenario grain.</p>
+</blockquote>
+<h3>Subtitle</h3>
+<p>I would use:</p>
+<blockquote>
+<p>Four accepted decision outcomes at application-scenario grain.</p>
+</blockquote>
+<p>That makes the grain explicit without overloading the chart title.</p>
+<h2>4. <strong>Evidence</strong></h2>
+<p>We can already record:</p>
+<pre><code class="language-text">P01-UAT-009
+
+Decision chart total        750
+Decisioned Applications     750
+Variance                      0
+Result                     PASS
+</code></pre>
+<p>The switch from <code>description</code> to <code>final_decision_outcome_code</code> did not change any counts, so it is purely a presentation improvement.</p>
+<p>The absent <code>__Scenario Context Pass</code> remains an open catalog/model discrepancy to document later; it is <strong>not blocking construction</strong>.</p>
+<h2>5. <strong>Exact next action</strong></h2>
+<p>Open OBJ-008&#39;s <strong><code>...</code> → Sort by</strong> menu first and see whether <code>final_decision_outcome_rank</code> is offered.</p>
+<p>If it is, choose <strong>rank ascending</strong>.</p>
+<p>If it is not, tell me that before changing the model-level Sort by column. Then we&#39;ll make that metadata change deliberately and document it as another bounded source-owner construction decision.</p>
+</div></article><article id="m-b6ca86f8-9d80-4f3c-a467-059a5faa27f7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00124 · 2026-08-25T17:33:37.639000-04:00 · active path</p><div class="bubble"><p>doing this did not change anything: In that case, the proper solution is a <strong>model-level Sort by column</strong> relationship:</p>
+<ol>
+<li>Go to <strong>Data view</strong>. </li>
+<li>Select:
+<code>DimDecisionOutcome[final_decision_outcome_code]</code> </li>
+<li>On the ribbon, find <strong>Column tools</strong>. </li>
+<li>Choose:
+<strong>Sort by column → final_decision_outcome_rank</strong> </li>
+<li>Return to Report view.</li>
+</ol>
+</div></article><article id="m-03ed9f29-a169-4070-9fa7-4bfb5c4ddb40" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00125 · 2026-08-25T17:33:37.786509-04:00 · active path</p><div class="bubble"><p>That makes sense. <strong>Setting the model-level <code>Sort by column</code> does not automatically force an already-created visual to switch away from its current explicit visual sort.</strong> Your chart is almost certainly still explicitly sorted by the outcome code or by the measure.</p>
+<p>We should check the visual-level sort before doing anything else.</p>
+<h2>1. <strong>Controlling state</strong></h2>
+<p>You have now set:</p>
+<pre><code class="language-text">DimDecisionOutcome[final_decision_outcome_code]
+Sort by column
+→ DimDecisionOutcome[final_decision_outcome_rank]
+</code></pre>
+<p>Keep that setting. It is logically correct and matches the intended governed ordering.</p>
+<p>The chart not visibly moving does <strong>not</strong> establish that the model setting failed.</p>
+<h2>2. <strong>Action or decision</strong></h2>
+<h3>Reset OBJ-008&#39;s explicit visual sort</h3>
+<p>Select OBJ-008 and click its upper-right:</p>
+<p><strong><code>...</code> → Sort axis</strong></p>
+<p>You will probably see something like:</p>
+<pre><code class="language-text">Sort axis
+────────────────────────
+final_decision_outcome_code    ✓
+Application-scenario ...
+────────────────────────
+Sort ascending
+Sort descending
+</code></pre>
+<p>Choose:</p>
+<pre><code class="language-text">final_decision_outcome_code
+</code></pre>
+<p>and then:</p>
+<pre><code class="language-text">Sort ascending
+</code></pre>
+<p>This sounds counterintuitive, but it is important: because <code>final_decision_outcome_code</code> is now model-sorted by <code>final_decision_outcome_rank</code>, <strong>ascending on the displayed code should mean ascending according to its Sort-by-column metadata</strong>, not alphabetically by the literal text.</p>
+<p>If the chart is currently sorted by the measure, switch it back to the category first.</p>
+<h3>What should happen?</h3>
+<p>The order should follow the actual values in:</p>
+<pre><code class="language-text">final_decision_outcome_rank
+</code></pre>
+<p>We should <strong>not guess what that order is</strong>.</p>
+<p>If nothing changes again, then we need to inspect those four rank values directly.</p>
+<h2>3. <strong>Evidence — let&#39;s verify the ranks instead of assuming</strong></h2>
+<p>If the visual still doesn&#39;t change, create a <strong>temporary Table visual</strong> in unused canvas space.</p>
+<p>Put exactly these two columns into it:</p>
+<pre><code class="language-text">DimDecisionOutcome[final_decision_outcome_code]
+DimDecisionOutcome[final_decision_outcome_rank]
+</code></pre>
+<p>Do not aggregate either one.</p>
+<p>That should give us four rows resembling:</p>
+<pre><code class="language-text">Outcome code                                  Rank
+──────────────────────────────────────────    ────
+COUNTEROFFER_REVIEW_REQUIRED                    ?
+DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED        ?
+DECLINE_POLICY_AUTHORIZED                       ?
+FINAL_OFFER_AUTHORIZED                          ?
+</code></pre>
+<p>Then we will know the physical governed order rather than inferring it.</p>
+<p>This is preferable because there are several possibilities:</p>
+<ul>
+<li>the current chart actually <strong>already is</strong> rank-ascending;</li>
+<li>rank values aren&#39;t what we assumed;</li>
+<li>the rank column contains duplicates;</li>
+<li>the visual retains an explicit sort that overrides the model metadata;</li>
+<li>or Power BI hasn&#39;t refreshed the category ordering after the metadata change.</li>
+</ul>
+<h2>4. <strong>Holds and non-regression</strong></h2>
+<p>Do <strong>not</strong> change the rank values themselves.</p>
+<p>Do not create a new rank column.</p>
+<p>Do not manually drag/reorder categories or invent a desired business sequence.</p>
+<p>Also, since we have already changed <code>final_decision_outcome_code → Sort by final_decision_outcome_rank</code>, <strong>do not undo that setting</strong>. We&#39;ll document it as a bounded semantic-metadata change because it implements the already-specified R12 ordering.</p>
+<h2>5. <strong>Exact next action</strong></h2>
+<p>First try:</p>
+<p><strong>OBJ-008 → <code>...</code> → Sort axis → <code>final_decision_outcome_code</code> → Sort ascending.</strong></p>
+<p>If the bars still don&#39;t move, create the temporary two-column Table with:</p>
+<pre><code class="language-text">final_decision_outcome_code
+final_decision_outcome_rank
+</code></pre>
+<p>and send me those four code/rank pairs.</p>
+<p>That will tell us definitively whether the chart is wrong or whether its current order is already the intended rank order.</p>
+</div></article><article id="m-08759400-dd45-4ce4-883f-2af7552b6fcc" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00126 · 2026-08-25T17:35:29.379000-04:00 · active path</p><div class="bubble"><p>still sorting alphabetically and not by outcome_rank</p>
+</div></article><article id="m-5b4fce84-6ec0-4d2c-844e-345da66a32a1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00127 · 2026-08-25T17:35:29.561093-04:00 · active path</p><div class="bubble"><p>Then we should stop fighting Power BI&#39;s categorical sort behavior. The model-level <strong>Sort by column</strong> metadata is not being honored by this bar visual in the way we expected.</p>
+<p>There is a reliable report-level solution that does <strong>not</strong> require changing the displayed outcome field: add the rank to the visual as a tooltip, then sort the visual by rank.</p>
+<h2>1. <strong>Controlling state</strong></h2>
+<p>OBJ-008 is otherwise correct:</p>
+<pre><code class="language-text">4 outcomes
+524 + 139 + 44 + 43 = 750
+Population reconciliation = PASS
+</code></pre>
+<p>Only the prescribed <strong>rank ordering</strong> remains unresolved.</p>
+<h2>2. <strong>Action or decision</strong></h2>
+<p>Try this bounded method.</p>
+<h3>A. Add rank to Tooltips</h3>
+<p>With OBJ-008 selected, drag:</p>
+<pre><code class="language-text">DimDecisionOutcome[final_decision_outcome_rank]
+</code></pre>
+<p>into the <strong>Tooltips</strong> well.</p>
+<p>If Power BI automatically summarizes it, open its dropdown and choose:</p>
+<pre><code class="language-text">Don&#39;t summarize
+</code></pre>
+<p>if available.</p>
+<p>Also add:</p>
+<pre><code class="language-text">DimDecisionOutcome[description]
+</code></pre>
+<p>to Tooltips while you&#39;re there. That is useful for the finished chart.</p>
+<p>Your wells should then be:</p>
+<pre><code class="language-text">Y-axis
+final_decision_outcome_code
+
+X-axis
+[Decisioned Applications]
+
+Tooltips
+final_decision_outcome_rank
+description
+</code></pre>
+<h3>B. Reopen the visual sort menu</h3>
+<p>Now select:</p>
+<p><strong>OBJ-008 → <code>...</code> → Sort axis / Sort by</strong></p>
+<p>Because <code>final_decision_outcome_rank</code> is now physically part of the visual query, Power BI may expose it as a sortable field.</p>
+<p>If it does, select:</p>
+<pre><code class="language-text">final_decision_outcome_rank
+Ascending
+</code></pre>
+<p>That should directly implement the catalog requirement.</p>
+<h3>C. If rank still isn&#39;t offered</h3>
+<p>Don&#39;t make another semantic change.</p>
+<p>Instead, create the temporary two-column Table I mentioned previously:</p>
+<pre><code class="language-text">final_decision_outcome_code
+final_decision_outcome_rank
+</code></pre>
+<p>We need the actual four code/rank pairs before choosing the next implementation. At that point we can determine whether a tiny report-specific sort measure is justified or whether another native configuration will work.</p>
+<h2>3. <strong>Evidence</strong></h2>
+<p>We already know the current order is alphabetical:</p>
+<pre><code class="language-text">COUNTEROFFER...
+DECLINE_INSUFFICIENT...
+DECLINE_POLICY...
+FINAL_OFFER...
+</code></pre>
+<p>So the current visual does <strong>not</strong> satisfy the catalog&#39;s <code>final_decision_outcome_rank ascending</code> requirement merely because the model&#39;s Sort-by-column property was set.</p>
+<p>That&#39;s a useful physical finding, not something we should obscure.</p>
+<h2>4. <strong>Holds and non-regression</strong></h2>
+<p>Do not:</p>
+<ul>
+<li>change the actual rank values;</li>
+<li>prefix the visible codes with <code>1 -</code>, <code>2 -</code>, etc.;</li>
+<li>create duplicate outcome labels yet;</li>
+<li>manually invent the intended order;</li>
+<li>sort by bar magnitude.</li>
+</ul>
+<p>We should preserve the clean executive-facing codes.</p>
+<h2>5. <strong>Exact next action</strong></h2>
+<p>Add <strong><code>final_decision_outcome_rank</code> to Tooltips</strong>, then check OBJ-008&#39;s <strong>Sort axis</strong> menu again.</p>
+<p>If rank appears, select <strong>rank → ascending</strong>.</p>
+<p>If it still doesn&#39;t appear, create the temporary two-column <strong>code + rank</strong> table and send me the four rows. We&#39;ll resolve the physical sort from those exact values rather than keep experimenting.</p>
+</div></article><article id="m-09918efe-b5dd-4d29-9646-6860e56651d5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00128 · 2026-08-25T17:39:13.114000-04:00 · active path</p><div class="bubble"><p>why not create a new measure</p>
+</div></article><article id="m-1bb8a419-5545-4ed1-a417-f1cfc848cd36" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00129 · 2026-08-25T17:39:17.090596-04:00 · active path</p><div class="bubble"><p>We can, and at this point I think <strong>a new explicit sort measure is the cleanest path</strong>.</p>
+<p>The reason I initially avoided it was governance discipline: OBJ-008 was supposed to be a report-only implementation, and we already crossed the semantic boundary once for the Card compatibility issue. But you have explicitly authorized pragmatic source-owner changes where they improve the build, and this is exactly that kind of case.</p>
+<p>The important distinction is that we should add a measure that <strong>expresses the existing governed rank</strong>, not invent a new business ordering.</p>
+<p>A good measure would be:</p>
+<pre><code class="language-DAX">P01 Decision Outcome Sort Rank =
+SELECTEDVALUE ( &#39;DimDecisionOutcome&#39;[final_decision_outcome_rank] )
+</code></pre>
+<p>Then:</p>
+<ol>
+<li>Create that measure in <code>ModelParameters</code>.</li>
+<li>Add it to OBJ-008 under <strong>Tooltips</strong>.</li>
+<li>Open the visual <code>...</code> menu.</li>
+<li>Choose <strong>Sort by → P01 Decision Outcome Sort Rank → Ascending</strong>.</li>
+</ol>
+<p>Because each bar represents one <code>final_decision_outcome_code</code>, the filter context for each bar should resolve to exactly one rank, so <code>SELECTEDVALUE()</code> is appropriate and deterministic.</p>
+<p>That is better than <code>MIN()</code> or <code>MAX()</code> because if something is structurally wrong and an outcome code maps to multiple ranks, <code>SELECTEDVALUE()</code> returns BLANK instead of silently choosing one.</p>
+<p>This would take us from <strong>67 to 68 explicit measures</strong> for now. That is a very small, auditable semantic addition:</p>
+<pre><code class="language-text">P01-DEV-003
+Reason: Power BI bar visual does not honor model Sort-by-column metadata for the displayed outcome code.
+Measure: [P01 Decision Outcome Sort Rank]
+Logic: SELECTEDVALUE(DimDecisionOutcome[final_decision_outcome_rank])
+Purpose: report-level governed sort only
+Data/calculation impact: none
+</code></pre>
+<h3>Controlling state</h3>
+<p>OBJ-008 population is already reconciled at 750/750. Only governed ordering remains unresolved.</p>
+<h3>Action or decision</h3>
+<p>Create the explicit sort measure above and use it solely to sort OBJ-008 ascending.</p>
+<h3>Evidence</h3>
+<p>The current visual demonstrably continues to sort alphabetically despite the model-level <code>Sort by column</code> metadata.</p>
+<h3>Holds and non-regression</h3>
+<p>Do not change the rank values or invent a manual order. The new measure must only surface the existing <code>final_decision_outcome_rank</code>.</p>
+<h3>Exact next action</h3>
+<p>Create:</p>
+<pre><code class="language-DAX">P01 Decision Outcome Sort Rank =
+SELECTEDVALUE ( &#39;DimDecisionOutcome&#39;[final_decision_outcome_rank] )
+</code></pre>
+<p>Add it to OBJ-008 <strong>Tooltips</strong>, then check the visual&#39;s <strong>Sort by</strong> menu. If it appears, choose it <strong>Ascending</strong> and send me the resulting chart.</p>
+</div></article><article id="m-ecbfab60-a112-457e-8d99-f5273fc2e92f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00130 · 2026-08-25T17:45:06.127000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 2b1acfdf-c2fc-406f-b1b4-374f2abf7eff.png</p><div class="bubble"><p>I don&#39;t think that&#39;s what we wanted...</p>
+</div></article><article id="m-f3aa71ce-9f78-43e7-9468-35f6b77f563c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00131 · 2026-08-25T17:45:08.857585-04:00 · active path</p><div class="bubble"><p>Correct — <strong>the sort itself worked, but the helper measure changed the visual population</strong>, which we do not want.</p>
+<p>Your screenshot tells us exactly what happened:</p>
+<ul>
+<li>The first four populated outcomes are now in a non-alphabetic order, so <code>P01 Decision Outcome Sort Rank</code> is driving the sort.</li>
+<li>But Power BI also introduced a fifth category, <code>NO_DECISION_SOURCE_BOUNDARY</code>, with <strong>no decision-path bar</strong>.</li>
+<li>That happened because the tooltip sort measure has a rank for that category even though <code>[Decisioned Applications]</code> is blank/zero there. By adding the rank measure to the visual query, we made that otherwise-empty category eligible to appear.</li>
+</ul>
+<p>So the concept is right; the helper measure needs to be <strong>population-aware</strong>.</p>
+<h2>1. <strong>Controlling state</strong></h2>
+<p>Before the sort helper, OBJ-008 correctly contained exactly four populated accepted outcomes:</p>
+<pre><code class="language-text">DECLINE_POLICY_AUTHORIZED                   524
+COUNTEROFFER_REVIEW_REQUIRED               139
+FINAL_OFFER_AUTHORIZED                      44
+DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED    43
+                                            ---
+                                            750
+</code></pre>
+<p>After adding the helper measure, Power BI also exposed:</p>
+<pre><code class="language-text">NO_DECISION_SOURCE_BOUNDARY
+</code></pre>
+<p>with no <code>[Decisioned Applications]</code> value.</p>
+<p>That fifth category must not remain in OBJ-008.</p>
+<h2>2. <strong>Action or decision</strong></h2>
+<p>Edit the measure you just created so that it returns a sort rank <strong>only for outcomes that actually have decision paths in the current context</strong>.</p>
+<p>Replace its formula with:</p>
+<pre><code class="language-DAX">P01 Decision Outcome Sort Rank =
+VAR DecisionPaths = [Decisioned Applications]
+RETURN
+    IF (
+        NOT ISBLANK ( DecisionPaths ) &amp;&amp; DecisionPaths &gt; 0,
+        SELECTEDVALUE ( &#39;DimDecisionOutcome&#39;[final_decision_outcome_rank] )
+    )
+</code></pre>
+<p>This is preferable to a visual filter workaround because the helper measure itself then expresses the correct visual population:</p>
+<blockquote>
+<p>Give me a rank only when this outcome actually participates in the decision-path distribution.</p>
+</blockquote>
+<p>For <code>NO_DECISION_SOURCE_BOUNDARY</code>, both the X-axis measure and the sort helper should then be blank, allowing Power BI to drop that category again.</p>
+<h3>Keep the measure in Tooltips</h3>
+<p>After updating the formula, leave:</p>
+<pre><code class="language-text">P01 Decision Outcome Sort Rank
+</code></pre>
+<p>in the <strong>Tooltips</strong> well for the moment.</p>
+<p>Then use:</p>
+<p><strong>OBJ-008 → <code>...</code> → Sort axis / Sort by → P01 Decision Outcome Sort Rank → Ascending</strong></p>
+<p>If that sort is already selected, simply let the visual refresh after the measure change.</p>
+<h2>3. <strong>What the result should look like</strong></h2>
+<p>The fifth blank category should disappear, leaving exactly four bars.</p>
+<p>From your current screenshot, the rank-driven order appears to be:</p>
+<pre><code class="language-text">FINAL_OFFER_AUTHORIZED
+COUNTEROFFER_REVIEW_REQUIRED
+DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED
+DECLINE_POLICY_AUTHORIZED
+</code></pre>
+<p>If that remains after the measure correction, <strong>do not manually rearrange it</strong>. That would indicate those are the actual ascending values of <code>final_decision_outcome_rank</code>, which is precisely what we were trying to implement.</p>
+<p>The four data labels must still be:</p>
+<pre><code class="language-text">44
+139
+43
+524
+</code></pre>
+<p>and still total:</p>
+<pre><code class="language-text">750
+</code></pre>
+<h3>One cosmetic artifact</h3>
+<p>Your auto-generated visual title now says something like:</p>
+<blockquote>
+<p>Application-scenario decision paths and P01 Decision Outcome Sort Rank by final_decision_outcome_code</p>
+</blockquote>
+<p>That&#39;s because Power BI incorporates the tooltip measure into its automatic title.</p>
+<p>Ignore that for the moment. Once the population and sort are correct, we will explicitly set:</p>
+<p><strong>Decision-path distribution</strong></p>
+<p>and the helper measure will not be exposed to the executive reader.</p>
+<h2>4. <strong>Holds and non-regression</strong></h2>
+<p>Do <strong>not</strong> solve this by filtering <code>NO_DECISION_SOURCE_BOUNDARY</code> by name. That would hard-code a category exclusion rather than expressing the intended populated decision-path logic.</p>
+<p>Also do not change <code>final_decision_outcome_rank</code>, the four counts, or <code>[Decisioned Applications]</code>.</p>
+<p>The helper measure is allowed to be report-specific infrastructure, but it must not change the 750-path analytical population.</p>
+<h2>5. <strong>Exact next action</strong></h2>
+<p>Replace the measure with:</p>
+<pre><code class="language-DAX">P01 Decision Outcome Sort Rank =
+VAR DecisionPaths = [Decisioned Applications]
+RETURN
+    IF (
+        NOT ISBLANK ( DecisionPaths ) &amp;&amp; DecisionPaths &gt; 0,
+        SELECTEDVALUE ( &#39;DimDecisionOutcome&#39;[final_decision_outcome_rank] )
+    )
+</code></pre>
+<p>Let OBJ-008 refresh while retaining <strong>Sort by → P01 Decision Outcome Sort Rank → Ascending</strong>.</p>
+<p>Then send me the resulting chart. We want to see <strong>exactly four bars, rank ordered, still totaling 750</strong>.</p>
+</div></article><article id="m-2d1818b3-2c17-481d-9b99-8bb772e9d8c0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00132 · 2026-08-25T17:47:07.660000-04:00 · active path</p><div class="bubble"><p>did the sort work? I thought we wanted the numbers to climb 43-&gt;44-&gt;139-&gt;524 or is that not the case?</p>
+</div></article><article id="m-94e6ad93-1142-400d-b301-aedc2d3b1f41" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00133 · 2026-08-25T17:47:10.279714-04:00 · active path</p><div class="bubble"><p>No—the intended sort is <strong>not by the bar values</strong> unless the catalog explicitly says to sort by <code>[Decisioned Applications]</code>.</p>
+<p>What we were trying to implement was the <strong>governed categorical order</strong> from:</p>
+<p><code>DimDecisionOutcome[final_decision_outcome_rank]</code> ascending</p>
+<p>That is different from sorting by count.</p>
+<p>If we sorted by the numbers ascending, the order would indeed be:</p>
+<p><code>43 → 44 → 139 → 524</code></p>
+<p>But that would be <strong>value sort</strong>, not <strong>outcome-rank sort</strong>.</p>
+<p>So the key question now is: <strong>what are the actual rank values for those four outcome codes?</strong> We should stop inferring. Create a temporary two-column table with:</p>
+<ul>
+<li><code>DimDecisionOutcome[final_decision_outcome_code]</code></li>
+<li><code>DimDecisionOutcome[final_decision_outcome_rank]</code></li>
+</ul>
+<p>Then we can see the exact governed sequence. If the ranks are, for example, <code>1,2,3,4</code> corresponding to <code>FINAL_OFFER</code>, <code>COUNTEROFFER</code>, <code>DECLINE_INSUFFICIENT_EVIDENCE</code>, <code>DECLINE_POLICY</code>, then the current non-numeric bar order is correct. If the rank values correspond to 43/44/139/524 ordering, then we need to adjust.</p>
+<h3>Controlling state</h3>
+<p>OBJ-008 totals correctly to 750. Only the categorical ordering remains unresolved.</p>
+<h3>Action or decision</h3>
+<p>Do <strong>not</strong> sort by the bar values yet. Verify the actual <code>final_decision_outcome_rank</code> values first.</p>
+<h3>Evidence</h3>
+<p>The catalog specifies rank ascending, not <code>[Decisioned Applications]</code> ascending.</p>
+<h3>Holds and non-regression</h3>
+<p>Do not manually force <code>43 → 44 → 139 → 524</code> unless the physical rank table supports that order.</p>
+<h3>Exact next action</h3>
+<p>Create the temporary two-column code/rank table and send me the four rows. Then I can tell you definitively whether the sort is correct.</p>
+</div></article><article id="m-bfb27f63-1cab-49d8-b4ad-3ba74135d21b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00134 · 2026-08-25T17:47:44.766000-04:00 · active path</p><div class="bubble"><p>i see. that makes sense now.</p>
+</div></article><article id="m-f8323fa9-2396-425e-94ee-7a694310d0bf" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00135 · 2026-08-25T17:47:44.889838-04:00 · active path</p><div class="bubble"><p>Exactly. <strong>Outcome rank is a business/semantic sequence; bar magnitude is a quantitative sequence.</strong> For OBJ-008, the catalog intentionally chose the former.</p>
+<p>So we should preserve:</p>
+<p><code>final_decision_outcome_rank → Ascending</code></p>
+<p>even though the counts themselves do not increase monotonically. The data labels already let the executive compare magnitude.</p>
+<h3>Controlling state</h3>
+<p>OBJ-008 population reconciliation remains <strong>750 / 750 PASS</strong>. Governed rank—not count—is the intended sort.</p>
+<h3>Action or decision</h3>
+<p>Continue with rank-ascending ordering. The population-aware sort helper should be retained if it successfully removes the empty fifth category while preserving that order.</p>
+<h3>Evidence</h3>
+<p>Four accepted outcomes and counts remain <code>524 + 139 + 44 + 43 = 750</code>.</p>
+<h3>Holds and non-regression</h3>
+<p>Do not substitute count-based sorting merely for visual neatness.</p>
+<h3>Exact next action</h3>
+<p>Apply the revised population-aware sort measure from my prior message. Once the chart returns to <strong>exactly four rank-ordered bars totaling 750</strong>, send me the result and we&#39;ll finish OBJ-008&#39;s title/tooltips/formatting and move to OBJ-009.</p>
+</div></article><article id="m-388c0c94-8275-4dac-afe0-a02ddcae4c61" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00136 · 2026-08-25T17:53:17.505000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 82f46642-a190-4866-9125-0a8b08d6e9e9.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-70677262-2431-4555-ab16-3a32fdd8f11c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00137 · 2026-08-25T17:53:17.783780-04:00 · active path</p><div class="bubble"><p>Yes. <strong>This is now the behavior we wanted.</strong> The population-aware helper removed the unwanted <code>NO_DECISION_SOURCE_BOUNDARY</code> category while preserving the governed rank ordering.</p>
+<p>The four accepted outcomes remain:</p>
+<pre><code class="language-text">FINAL_OFFER_AUTHORIZED                    44
+COUNTEROFFER_REVIEW_REQUIRED             139
+DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED  43
+DECLINE_POLICY_AUTHORIZED                524
+                                         ───
+Total                                    750
+</code></pre>
+<p>So OBJ-008 now has both <strong>correct population</strong> and <strong>governed ordering</strong>.</p>
+<h2>1. <strong>Controlling state</strong></h2>
+<p>OBJ-008 has passed its important functional controls:</p>
+<pre><code class="language-text">Accepted outcome categories        4
+Decision-path total              750
+[Decisioned Applications]         750
+Variance                            0
+Population                       PASS
+Rank-driven sort                 PASS
+Empty boundary category excluded PASS
+</code></pre>
+<p>The new helper measure is functioning as intended.</p>
+<h2>2. <strong>Action or decision — finish OBJ-008</strong></h2>
+<p>Now clean up the presentation.</p>
+<h3>Title</h3>
+<p>Power BI&#39;s automatic title currently exposes the helper measure:</p>
+<blockquote>
+<p>Application-scenario decision paths and P01 Decision Outcome Sort Rank by final_decision_outcome_code</p>
+</blockquote>
+<p>Turn the automatic title off/set a custom title:</p>
+<p><strong>Decision-path distribution</strong></p>
+<p>Recommended title formatting:</p>
+<pre><code class="language-text">Segoe UI Semibold
+11–12 pt
+Left aligned
+</code></pre>
+<h3>Subtitle</h3>
+<p>If the visual supports Subtitle, use:</p>
+<p><strong>Four accepted decision outcomes at application-scenario grain.</strong></p>
+<p>Approximately 8–9 pt regular.</p>
+<h3>Tooltip</h3>
+<p>Keep <code>P01 Decision Outcome Sort Rank</code> in Tooltips because it is currently providing the sortable visual-query field.</p>
+<p>Also add:</p>
+<pre><code class="language-text">DimDecisionOutcome[description]
+</code></pre>
+<p>to Tooltips.</p>
+<p>The rank may consequently appear in the user tooltip. That&#39;s not ideal, but don&#39;t remove it yet because doing so could remove our sort capability. We&#39;ll test whether the established sort survives its removal during final polish.</p>
+<h3>Axis</h3>
+<p>Keep:</p>
+<pre><code class="language-text">DimDecisionOutcome[final_decision_outcome_code]
+</code></pre>
+<p>The codes are much better than the sentence-length descriptions.</p>
+<p>I would <strong>not</strong> show a Y-axis title. The chart title already explains what the categories represent.</p>
+<p>Likewise, the X-axis title is unnecessary; the data labels communicate the counts and the subtitle establishes the grain.</p>
+<p>So:</p>
+<pre><code class="language-text">Y-axis title    Off
+X-axis title    Off
+</code></pre>
+<p>Keep the X-axis itself/gridlines for scale.</p>
+<h3>Data labels</h3>
+<p>Your current labels are good:</p>
+<pre><code class="language-text">44
+139
+43
+524
+</code></pre>
+<p>Keep:</p>
+<pre><code class="language-text">Display units     None
+Decimal places    0
+Position          Outside end
+</code></pre>
+<h3>Visual chrome</h3>
+<p>Use the same restrained design language as the upper page:</p>
+<pre><code class="language-text">Background        Off
+Border            Off
+Shadow            Off
+</code></pre>
+<p>Don&#39;t add legend—the four bars are already categorically labeled.</p>
+<h3>Alt text</h3>
+<p>Use exactly:</p>
+<blockquote>
+<p>Decision-path distribution by accepted final decision outcome at application-scenario grain.</p>
+</blockquote>
+<h2>3. <strong>Evidence</strong></h2>
+<p>We can now formally retain this construction evidence:</p>
+<pre><code class="language-text">P01-UAT-009
+Expected decision paths    750
+Observed chart total       750
+Difference                   0
+Result                     PASS
+</code></pre>
+<p>And record the sort remediation:</p>
+<pre><code class="language-text">P01-DEV-003
+Power BI did not reliably honor the cataloged
+final_decision_outcome_rank ordering through the
+displayed category.
+
+Resolution:
+Population-aware explicit sort measure.
+
+Result:
+4 accepted populated outcomes retained;
+governed rank ordering achieved;
+750-path denominator unchanged.
+</code></pre>
+<h2>4. <strong>Holds and non-regression</strong></h2>
+<p>Don&#39;t sort by count. The visual may look more conventionally ranked if sorted <code>524 → 139 → 44 → 43</code>, but that would discard the governed outcome sequence we just implemented.</p>
+<p>Don&#39;t expose the helper measure in the title.</p>
+<p>We can also leave the missing <code>__Scenario Context Pass</code> issue in the deviation register rather than interrupting construction again.</p>
+<h2>5. <strong>Exact next action</strong></h2>
+<p>Finish OBJ-008 with:</p>
+<p><strong>Title:</strong> <code>Decision-path distribution</code><br><strong>Subtitle:</strong> <code>Four accepted decision outcomes at application-scenario grain.</code><br><strong>Description in Tooltips</strong>, integer data labels, no axis titles, and the exact alt text above.</p>
+<p>Then <strong>save and freeze OBJ-008</strong>.</p>
+<p>After that, we&#39;ll build <strong><code>P01-OBJ-009 — Funded amount by acquisition source</code></strong> from its physical catalog: exact visual type, fields, sort, geometry, title, alt text, and interaction behavior.</p>
+</div></article><article id="m-32041765-6547-4095-972d-dbde9b957545" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00138 · 2026-08-25T17:56:00.976000-04:00 · active path</p><div class="bubble"><p>why should we have final_decision_outcome_code in the title?</p>
+</div></article><article id="m-896cde8b-f89b-48a7-932a-9e875d61c28a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00139 · 2026-08-25T17:56:01.046692-04:00 · active path</p><div class="bubble"><p>We <strong>shouldn&#39;t</strong>. <code>final_decision_outcome_code</code> is a technical model field name and has no place in an executive-facing title.</p>
+<p>What you&#39;re seeing now is Power BI&#39;s <strong>automatically generated title</strong>, based on the fields participating in the visual:</p>
+<blockquote>
+<p>Application-scenario decision paths and P01 Decision Outcome Sort Rank by final_decision_outcome_code</p>
+</blockquote>
+<p>That&#39;s precisely why I recommended replacing the automatic title.</p>
+<p>The finished visual should simply say:</p>
+<p><strong>Decision-path distribution</strong></p>
+<p>And, if we use the subtitle:</p>
+<p><strong>Four accepted decision outcomes at application-scenario grain.</strong></p>
+<p>The field <code>final_decision_outcome_code</code> should appear <strong>only as the categorical Y-axis values</strong>, such as:</p>
+<pre><code class="language-text">FINAL_OFFER_AUTHORIZED
+COUNTEROFFER_REVIEW_REQUIRED
+DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED
+DECLINE_POLICY_AUTHORIZED
+</code></pre>
+<p>It should <strong>not</strong> appear as a field name anywhere the executive sees.</p>
+<h3>Controlling state</h3>
+<p>The automatic Power BI title is temporary construction output, not approved presentation wording.</p>
+<h3>Action or decision</h3>
+<p>Replace it with the custom title <strong>Decision-path distribution</strong>. Do not mention <code>final_decision_outcome_code</code> in the title.</p>
+<h3>Evidence</h3>
+<p>The underlying category field remains <code>DimDecisionOutcome[final_decision_outcome_code]</code>; only its technical field name is hidden from presentation.</p>
+<h3>Holds and non-regression</h3>
+<p>No semantic or analytical change. The four outcome codes, governed sort, and 750-path reconciliation remain intact.</p>
+<h3>Exact next action</h3>
+<p>Turn on/customize <strong>Title → <code>Decision-path distribution</code></strong> and, if using a subtitle, set <strong><code>Four accepted decision outcomes at application-scenario grain.</code></strong> Then we can finish OBJ-008 and move to OBJ-009.</p>
+</div></article><article id="m-2a2e5689-6fdb-4555-9838-0e7143461057" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00140 · 2026-08-25T18:01:41.203000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: f821e121-9c31-4958-adc1-1884985ca8af.png</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-6fea5e1d-e1ba-4b39-9c03-a929ff44bd40" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00141 · 2026-08-25T18:01:41.394171-04:00 · active path</p><div class="bubble"><p>Yes. <strong>This is a strong finished state for OBJ-008.</strong> The title/subtitle hierarchy works, all four outcomes are visible simultaneously, the governed rank order is preserved, and the data labels reconcile to 750.</p>
+<p>I would freeze it with one minor geometry normalization: your screenshot shows <code>X=23</code>, presumably from manual movement. Set it back to <strong>X=24</strong> for alignment with the page&#39;s left margin. Keep the physically successful <code>Y=337 / W=1232 / H=214</code> rather than forcing the obsolete original dimensions.</p>
+<h2>1. <strong>Controlling state</strong></h2>
+<pre><code class="language-text">P01-OBJ-008
+Title       Decision-path distribution
+Subtitle    Four accepted decision outcomes at application-scenario grain.
+
+Outcomes
+FINAL_OFFER_AUTHORIZED                     44
+COUNTEROFFER_REVIEW_REQUIRED              139
+DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED   43
+DECLINE_POLICY_AUTHORIZED                 524
+
+Total                                     750
+Expected                                  750
+Variance                                    0
+UAT                                       PASS
+</code></pre>
+<p>Current constructed page:</p>
+<pre><code class="language-text">OBJ-001–008     COMPLETE
+Containers      8 / 14
+</code></pre>
+<h2>2. <strong>Action or decision</strong></h2>
+<p>Freeze OBJ-008 after changing only:</p>
+<pre><code class="language-text">Horizontal
+23 → 24
+</code></pre>
+<p>Keep:</p>
+<pre><code class="language-text">Y       337
+W       1232
+H       214
+</code></pre>
+<p>I like the full-width treatment more than the original narrow 380 px catalog geometry. With these relatively long governed outcome codes, the wider chart gives us readable categories, meaningful bar-length comparisons, and clean data labels.</p>
+<p>Also retain the subtitle. It earns its space because <strong>application-scenario grain</strong> is the critical interpretation boundary for this visual.</p>
+<h2>3. <strong>Evidence</strong></h2>
+<p>We now have several useful physical findings for the eventual Audit package:</p>
+<ul>
+<li>original 250 px chart height produced scrolling and hid one accepted outcome;</li>
+<li>increased usable plot area exposed all four outcomes;</li>
+<li><code>description</code> was unsuitable as an executive axis because its sentence-length values truncated;</li>
+<li><code>final_decision_outcome_code</code> preserved the exact population while improving readability;</li>
+<li>explicit population-aware rank measure was needed to achieve the governed outcome order without introducing the empty <code>NO_DECISION_SOURCE_BOUNDARY</code> category;</li>
+<li>final four-bar total is exactly <strong>750/750</strong>.</li>
+</ul>
+<p>That&#39;s a defensible construction trail.</p>
+<h2>4. <strong>Holds and non-regression</strong></h2>
+<p>Don&#39;t sort OBJ-008 by magnitude even though <code>524 → 139 → 44 → 43</code> might look conventional. Its current order represents the governed outcome sequence.</p>
+<p>Do not remove the population-aware sort helper yet. We can test whether it can be hidden from the tooltip during final page polish without losing the established sort.</p>
+<p>The missing cataloged <code>__Scenario Context Pass</code> remains a documented physical discrepancy; it is not preventing the page from advancing.</p>
+<h2>5. <strong>Exact next action</strong></h2>
+<p>Set OBJ-008 <strong>X=24</strong>, save, and freeze it.</p>
+<p>Then proceed to <strong><code>P01-OBJ-009 — Funded amount by acquisition source</code></strong>. I’ll use the physical catalog to give you its exact native chart type, dimension, measure, sort, title, alt text, interaction boundary, and then translate only its geometry as necessary to fit the page we&#39;ve actually constructed.</p>
+</div></article><article id="m-34ad8a42-032b-457d-a65d-bcabc532f323" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00142 · 2026-08-25T18:02:56.096000-04:00 · active path</p><div class="bubble"><p>proceed to <strong><code>P01-OBJ-009 — Funded amount by acquisition source</code></strong>. I’ll use the physical catalog to give you its exact native chart type, dimension, measure, sort, title, alt text, interaction boundary, and then translate only its geometry as necessary to fit the page we&#39;ve actually constructed.  </p>
+</div></article><article id="m-76465268-52b9-4cf1-ad8a-61666ac1c86b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00143 · 2026-08-25T18:04:12.879058-04:00 · active path</p><div class="bubble"><p>I reconciled <code>P01-OBJ-009</code> directly against the physical construction worksheet and catalogs. One important correction up front: <strong>the catalog does not specify an explicit sort for OBJ-009.</strong> So I will not present one as though it were audited authority. I do recommend a practical sort below, clearly identified as our source-owner presentation decision.</p>
+<h2>1. <strong>Controlling state</strong></h2>
+<p>The physical catalog defines <code>P01-OBJ-009</code> as:</p>
+<pre><code class="language-text">Object                     P01-OBJ-009
+Native visual              Clustered bar chart
+Purpose                    Absolute funded amount and account-path
+                           context by accepted source family
+
+Original catalog bounds
+X                          416
+Y                          258
+Width                      380
+Height                     250
+Z-order                    9
+
+Title
+Funded amount by acquisition source
+</code></pre>
+<p>The exact field wells are:</p>
+<pre><code class="language-text">Y-axis
+DimAcquisitionSource[source_family_name]
+Do not summarize
+Display meaning: Source family
+
+X-axis
+[Funded Amount]
+Measure
+Catalog display label: Synthetic funded amount
+
+Tooltips
+[Funded Account Count]          → Funded account paths
+[Current Exposure As Of]        → Current exposure
+[Remittance Fulfillment %]      → Remittance fulfillment
+</code></pre>
+<p>The catalog&#39;s claim boundary is important: <strong>absolute values only; no market-share or causal acquisition claim.</strong></p>
+<h2>2. <strong>Action or decision — build OBJ-009</strong></h2>
+<h3>A. First, we need to correct the analytical-row geometry</h3>
+<p>Our current full-width OBJ-008 is visually good in isolation, but it has consumed the physical space that the original design reserved for <strong>three analytical visuals side-by-side</strong>:</p>
+<pre><code class="language-text">OBJ-008    Decision-path distribution
+OBJ-009    Funded amount by acquisition source
+OBJ-010    Industry risk and economics
+</code></pre>
+<p>If we keep OBJ-008 full-width, there is not enough remaining 720px canvas height to build OBJ-009/010 plus OBJ-011–014 cleanly.</p>
+<p>Now that OBJ-008 uses concise outcome codes, it no longer needs 1232 px of width.</p>
+<p>I recommend establishing the final analytical band as:</p>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th align="right">X</th>
+<th align="right">Y</th>
+<th align="right">W</th>
+<th align="right">H</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OBJ-008</td>
+<td align="right">24</td>
+<td align="right"><strong>320</strong></td>
+<td align="right">380</td>
+<td align="right"><strong>180</strong></td>
+</tr>
+<tr>
+<td>OBJ-009</td>
+<td align="right">416</td>
+<td align="right"><strong>320</strong></td>
+<td align="right">380</td>
+<td align="right"><strong>180</strong></td>
+</tr>
+<tr>
+<td>OBJ-010</td>
+<td align="right">808</td>
+<td align="right"><strong>320</strong></td>
+<td align="right">448</td>
+<td align="right"><strong>180</strong></td>
+</tr>
+</tbody></table>
+<p>This preserves the original horizontal architecture while translating the row downward to accommodate our revised header/filter/KPI treatment.</p>
+<p>For OBJ-008, the immediate test is whether <code>380 × 180</code> still shows all four concise outcome codes without scrolling. I expect it should be much more viable now than when we were using sentence-length <code>description</code> values.</p>
+<h3>B. Insert OBJ-009</h3>
+<p>Insert one native <strong>Clustered bar chart</strong> and set:</p>
+<pre><code class="language-text">X       416
+Y       320
+Width   380
+Height  180
+</code></pre>
+<h3>C. Bind the Y-axis</h3>
+<p>Search for:</p>
+<pre><code class="language-text">source_family_name
+</code></pre>
+<p>Use exactly:</p>
+<pre><code class="language-text">DimAcquisitionSource[source_family_name]
+</code></pre>
+<p>Place it in:</p>
+<p><strong>Y-axis</strong></p>
+<p>Do not summarize.</p>
+<p>For the displayed field name, <strong>Source family</strong> is fine internally, but the category members themselves—<code>RELATIONSHIP</code>, <code>PROCESSOR_EMBEDDED</code>, etc.—are what matter on the chart.</p>
+<h3>D. Bind the X-axis</h3>
+<p>Add the existing explicit measure:</p>
+<pre><code class="language-text">[Funded Amount]
+</code></pre>
+<p>from <code>ModelParameters</code> to:</p>
+<p><strong>X-axis</strong></p>
+<p>For this visual, I recommend the executive-facing meaning simply be:</p>
+<p><strong>Funded amount</strong></p>
+<p>rather than the catalog&#39;s heavier <code>Synthetic funded amount</code>, because our page/footer will carry the synthetic-data boundary globally.</p>
+<p>No calculation changes.</p>
+<h3>E. Add the three built-in tooltip measures</h3>
+<p>Add exactly these to <strong>Tooltips</strong>:</p>
+<pre><code class="language-text">[Funded Account Count]
+[Current Exposure As Of]
+[Remittance Fulfillment %]
+</code></pre>
+<p>Rename for this visual:</p>
+<pre><code class="language-text">Funded Account Count
+→ Funded account paths
+
+Current Exposure As Of
+→ Current exposure
+
+Remittance Fulfillment %
+→ Remittance fulfillment
+</code></pre>
+<p>So hovering a source family gives the executive more context without requiring another visual.</p>
+<h3>F. Sorting</h3>
+<p>Here is the distinction:</p>
+<p><strong>Physical catalog:</strong> no explicit sort row is specified for OBJ-009.</p>
+<p>The expected-value catalog lists the BASELINE source families in descending funded amount:</p>
+<pre><code class="language-text">RELATIONSHIP          $165,900   14 funded paths
+PROCESSOR_EMBEDDED    $111,900   14
+STRATEGIC_PARTNER      $88,300    7
+PAID                   $54,300    4
+ORGANIC                $24,500    2
+OWNED                  $16,900    2
+BROKER_OR_LEAD         $10,200    1
+</code></pre>
+<p>For an executive comparison chart, <strong>Funded Amount → Descending</strong> is the best presentation. It creates an immediate concentration ranking.</p>
+<p>So I recommend:</p>
+<p><strong>Visual <code>...</code> → Sort axis → Funded amount → Descending</strong></p>
+<p>We will document this as a <strong>source-owner presentation choice</strong>, not falsely characterize it as an R12-prescribed sort.</p>
+<h3>G. Title</h3>
+<p>Use:</p>
+<p><strong>Funded amount by acquisition source</strong></p>
+<p>That is the exact catalog title and is already executive-readable.</p>
+<p>I would not add a subtitle unless the chart feels ambiguous after rendering.</p>
+<h3>H. Data labels</h3>
+<p>Turn them on:</p>
+<pre><code class="language-text">Display units      Thousands
+Decimal places     0
+Position           Outside end
+</code></pre>
+<p>Expected presentation should look roughly:</p>
+<pre><code class="language-text">RELATIONSHIP          $166K
+PROCESSOR_EMBEDDED    $112K
+STRATEGIC_PARTNER      $88K
+...
+</code></pre>
+<p>If Power BI&#39;s Thousands formatting produces <code>$165.9K</code>, we can decide from the physical rendering whether one decimal or zero is better.</p>
+<h3>I. Exact authorized alt text</h3>
+<p>The physical R12 catalog says:</p>
+<blockquote>
+<p>Synthetic funded amount by acquisition source family, with funded path, exposure and remittance context in built-in tooltips.</p>
+</blockquote>
+<p>Use that exactly for accessibility even though we simplify the visible KPI/chart wording.</p>
+<h2>3. <strong>Evidence and interaction behavior</strong></h2>
+<p>The expected BASELINE total is:</p>
+<pre><code class="language-text">165,900
+111,900
+ 88,300
+ 54,300
+ 24,500
+ 16,900
+ 10,200
+--------
+471,900
+</code></pre>
+<p>That should reconcile to the underlying <code>[Funded Amount]</code> value displayed as approximately <strong>$472K</strong> in OBJ-007.</p>
+<p>So we get another useful immediate UAT check:</p>
+<pre><code class="language-text">OBJ-009 source-family bars summed    $471,900
+[Funded Amount]                      $471,900
+Variance                                    $0
+</code></pre>
+<p>Interaction behavior is exact:</p>
+<pre><code class="language-text">Scenario slicer            → OBJ-009    FILTER
+Observation-date slicer    → OBJ-009    FILTER
+Industry slicer            → OBJ-009    FILTER
+Acquisition-source slicer  → OBJ-009    FILTER
+</code></pre>
+<p>But:</p>
+<pre><code class="language-text">OBJ-008 → OBJ-009    NONE
+OBJ-009 → OBJ-008    NONE
+OBJ-009 → KPIs       NONE
+OBJ-009 → all other analytical/cards/footer   NONE
+</code></pre>
+<p>In other words, <strong>only slicers drive analytical cross-context</strong>. Clicking a source bar later must not cross-filter the rest of P01.</p>
+<p>The catalog also requests <code>[__Scenario Context Pass] = 1</code>, but we already physically established that this measure is not present in the model. Do <strong>not</strong> stop or invent it now; that discrepancy remains in our construction-deviation register.</p>
+<h2>4. <strong>Holds and non-regression</strong></h2>
+<p>Do not interpret the bars as:</p>
+<ul>
+<li>market share;</li>
+<li>channel effectiveness;</li>
+<li>acquisition performance;</li>
+<li>causal contribution;</li>
+<li>source quality.</li>
+</ul>
+<p>They show only <strong>absolute synthetic funded amount by accepted acquisition-source family</strong> under the current selected context.</p>
+<p>Also, don&#39;t build OBJ-009 full-width. We now need to restore the intended three-visual analytical band so the remaining six objects can fit within the 1280×720 page.</p>
+<h2>5. <strong>Exact next action</strong></h2>
+<p>Before inserting OBJ-009, resize/reposition OBJ-008 to:</p>
+<pre><code class="language-text">X 24
+Y 320
+W 380
+H 180
+</code></pre>
+<p>Confirm all four decision outcomes remain visible without scrolling.</p>
+<p>Then create OBJ-009 at:</p>
+<pre><code class="language-text">X 416
+Y 320
+W 380
+H 180
+</code></pre>
+<p>with:</p>
+<pre><code class="language-text">Y-axis    DimAcquisitionSource[source_family_name]
+X-axis    [Funded Amount]
+
+Tooltips
+[Funded Account Count]
+[Current Exposure As Of]
+[Remittance Fulfillment %]
+
+Sort
+[Funded Amount] descending
+</code></pre>
+<p>Send me the raw populated OBJ-008 + OBJ-009 analytical row before detailed formatting. We will verify all seven source families, the <code>$471,900</code> reconciliation, and whether <code>380 × 180</code> gives sufficient readability before constructing OBJ-010.</p>
+</div></article><article id="m-de8e1e81-7035-418d-9393-dc3cbc9b8241" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00144 · 2026-08-25T18:07:23.736000-04:00 · active path</p><div class="bubble"><p>if we are going to fit another clustered bar chart on this page we will need to reduce the side of P01-OBJ-008</p>
+</div></article><article id="m-50664692-4143-4eac-9da8-4f6c8d83f044" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00145 · 2026-08-25T18:07:26.140717-04:00 · active path</p><div class="bubble"><p>Yes. If we want <strong>OBJ-008, OBJ-009, and OBJ-010 on the same analytical row</strong>, OBJ-008 cannot remain full-width. The full-width version was useful for validating population, sort, and labeling, but it is not the final page geometry.</p>
+<p>I would use an intentionally unequal three-panel layout because OBJ-010—the industry risk/economics scatter—will benefit from more width than either bar chart.</p>
+<h2>1. <strong>Controlling state</strong></h2>
+<p>OBJ-008 is analytically validated:</p>
+<pre><code class="language-text">4 accepted outcomes
+750 / 750 decision paths
+Governed rank order
+Population reconciliation PASS
+</code></pre>
+<p>So we can now optimize its footprint without reopening its analytical logic.</p>
+<h2>2. <strong>Action or decision</strong></h2>
+<p>I recommend this final analytical row:</p>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Purpose</th>
+<th align="right">X</th>
+<th align="right">Y</th>
+<th align="right">W</th>
+<th align="right">H</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OBJ-008</td>
+<td>Decision-path distribution</td>
+<td align="right">24</td>
+<td align="right">320</td>
+<td align="right"><strong>360</strong></td>
+<td align="right">180</td>
+</tr>
+<tr>
+<td>OBJ-009</td>
+<td>Funded amount by acquisition source</td>
+<td align="right">400</td>
+<td align="right">320</td>
+<td align="right"><strong>340</strong></td>
+<td align="right">180</td>
+</tr>
+<tr>
+<td>OBJ-010</td>
+<td>Industry risk/economics scatter</td>
+<td align="right">756</td>
+<td align="right">320</td>
+<td align="right"><strong>500</strong></td>
+<td align="right">180</td>
+</tr>
+</tbody></table>
+<p>This preserves:</p>
+<pre><code class="language-text">Left margin       24
+Gap 008→009       16
+Gap 009→010       16
+Right margin      24
+Total width     1280
+</code></pre>
+<p>I prefer this over three equal ~400 px panels because:</p>
+<ul>
+<li>OBJ-008 has only four bars and already uses concise outcome codes.</li>
+<li>OBJ-009 has seven source families but fairly short category names.</li>
+<li>OBJ-010 will have two quantitative axes, industry labels/points, and likely benefits most from the additional horizontal resolution.</li>
+</ul>
+<h3>Resize OBJ-008 now</h3>
+<p>Change only its geometry to:</p>
+<pre><code class="language-text">X       24
+Y       320
+Width   360
+Height  180
+</code></pre>
+<p>Keep its existing fields, rank sort, data labels, title, subtitle, tooltip logic, and alt text unchanged.</p>
+<p>If <code>360 × 180</code> introduces a scrollbar, first reduce category/data-label font modestly rather than immediately widening it. We know there are only four bars, so this should be workable.</p>
+<h2>3. <strong>Evidence</strong></h2>
+<p>This is not a speculative redesign of OBJ-008&#39;s content. We already used the larger visual to establish the hard evidence:</p>
+<pre><code class="language-text">FINAL_OFFER_AUTHORIZED                     44
+COUNTEROFFER_REVIEW_REQUIRED              139
+DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED   43
+DECLINE_POLICY_AUTHORIZED                 524
+                                         ----
+                                          750
+</code></pre>
+<p>The smaller final footprint therefore only needs to preserve readability of already-validated results.</p>
+<h2>4. <strong>Holds and non-regression</strong></h2>
+<p>Do not drop the subtitle or data labels simply to squeeze OBJ-008 into a tiny box unless the physical test proves that necessary.</p>
+<p>Also, I would <strong>not</strong> make all three analytical panels equal width merely for visual symmetry. Giving the scatter chart more space is better information design.</p>
+<p>OBJ-008&#39;s rank ordering and 750-path population remain frozen.</p>
+<h2>5. <strong>Exact next action</strong></h2>
+<p>Resize OBJ-008 to <strong><code>X24 / Y320 / W360 / H180</code></strong> and confirm all four bars remain visible without scrolling.</p>
+<p>If they do, freeze that geometry and build <strong>OBJ-009 at <code>X400 / Y320 / W340 / H180</code></strong>. After we see the seven acquisition-source bars physically, we can make a small width adjustment before committing OBJ-010 to the remaining <strong>500 px</strong>.</p>
+</div></article><article id="m-01dbad12-d0ae-406b-b0ff-d3f98f74f1e8" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00146 · 2026-08-25T18:30:48.700000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 965a8890-016b-4596-b3a7-f739606cb8b5.png</p><div class="bubble"><p>I think we have too many things on one page possibly. trimming the size of OBJ-008 makes it unreadable. i mean we can reduce size of text and clean it up, but it&#39;ll still be crammed. thoughts on how to best get message across on this page. Whether we re-orient things or decide what is best to show. or maybe we combine some tables to do more in one visual</p>
+</div></article><article id="m-3cc89be5-a428-43fa-95d5-40cd52018395" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00147 · 2026-08-25T18:30:50.832639-04:00 · active path</p><div class="bubble"><p>I agree with your diagnosis. <strong>The problem is no longer formatting; it is information architecture.</strong> Shrinking OBJ-008 further would technically fit the catalog but would make the page worse.</p>
+<p>A 1280×720 executive command center should answer a small number of questions immediately. Right now P01 is trying to answer too many at once.</p>
+<p>My recommendation is to <strong>redesign P01 around executive hierarchy rather than force all originally cataloged analytical content into equally prominent visuals.</strong></p>
+<h2>What P01 should communicate</h2>
+<p>At first glance, an executive should get:</p>
+<p><strong>1. What context am I looking at?</strong><br>Scenario, observation date, industry/source filters, run/evidence context.</p>
+<p><strong>2. What is the portfolio posture?</strong><br>The six KPIs already do this very well.</p>
+<p><strong>3. Where is the portfolio concentrated?</strong><br>Decision outcomes + acquisition-source funding.</p>
+<p><strong>4. Where should I look more closely?</strong><br>Industry risk/economics + review/evidence signals.</p>
+<p>That&#39;s enough. Detailed reconciliation and governance evidence should support those questions without competing with them.</p>
+<p>Your current top ~260 px is already strong. I would preserve it almost exactly.</p>
+<hr>
+<h1>Recommended redesign</h1>
+<p>Instead of three cramped charts across one row, use a <strong>2-column analytical body</strong>.</p>
+<h3>Left — Decision posture</h3>
+<p>Give OBJ-008 enough space to breathe:</p>
+<pre><code class="language-text">OBJ-008
+Decision-path distribution
+
+X       24
+Y       300
+W       500
+H       210
+</code></pre>
+<p>At ~500 px, the four outcome codes should be readable, the bars meaningful, and the subtitle can remain.</p>
+<h3>Right — Funding concentration</h3>
+<p>OBJ-009:</p>
+<pre><code class="language-text">OBJ-009
+Funded amount by acquisition source
+
+X       540
+Y       300
+W       716
+H       210
+</code></pre>
+<p>Seven source families fit well in a 716 px horizontal bar chart.</p>
+<p>This creates a clear executive story:</p>
+<pre><code class="language-text">DECISION POSTURE                  ECONOMIC CONCENTRATION
+──────────────────────            ───────────────────────────
+Final offer      44               Relationship          $166K
+Counteroffer    139               Processor embedded   $112K
+Evidence decline 43               Strategic partner     $88K
+Policy decline  524               ...
+</code></pre>
+<p>Those two visuals together tell a coherent story: <strong>what happened to decision paths, and where funded dollars came from.</strong></p>
+<h2>What about the industry scatter?</h2>
+<p>I would <strong>not squeeze OBJ-010 into that same row</strong>.</p>
+<p>The industry risk/economics scatter is arguably the most analytically sophisticated visual on the page. At 400–500 px wide × 180 px tall, it will be compromised.</p>
+<p>Instead, put it below the two bar charts as a <strong>wide analytical visual</strong>:</p>
+<pre><code class="language-text">OBJ-010
+Industry risk &amp; economics
+
+X       24
+Y       522
+W       ~760
+H       ~150–165
+</code></pre>
+<p>That gives the scatter enough horizontal resolution to communicate the relationship.</p>
+<p>Then use the remaining lower-right area for compact governance/review content.</p>
+<hr>
+<h1>We should also rethink OBJ-011–013</h1>
+<p>This is where I think the original 14-container design became too ambitious.</p>
+<p>We still have:</p>
+<ul>
+<li>OBJ-011 — descriptive review signals</li>
+<li>OBJ-012 — A3 account reconciliation</li>
+<li>OBJ-013 — evidence gate</li>
+<li>OBJ-014 — interpretation footer</li>
+</ul>
+<p>Trying to give all three of 011–013 equal visual prominence is unnecessary.</p>
+<p>I recommend treating them as <strong>one compact executive assurance zone</strong> on the lower right:</p>
+<pre><code class="language-text">EXECUTIVE ASSURANCE
+────────────────────────
+Review signals
+[compact values]
+
+Account reconciliation
+[compact status/value]
+
+Evidence gate
+[compact status]
+</code></pre>
+<p>They can remain three physical containers if we need to preserve the 14-object architecture, but visually they should behave as <strong>one grouped information block</strong>, not three independent dashboard features.</p>
+<p>That gives us:</p>
+<pre><code class="language-text">┌──────────────────────────────────────────────────────────────────┐
+│ TITLE / GOVERNED CONTEXT                                         │
+├──────────────────────────────────────────────────────────────────┤
+│ SCENARIO │ OBS DATE │ INDUSTRY │ ACQUISITION SOURCE              │
+├──────────────────────────────────────────────────────────────────┤
+│ 44       $472K      $980       99.8%       5.9%       16.8%     │
+│ accounts funded     exposure   remittance   offer      loss       │
+├─────────────────────────┬────────────────────────────────────────┤
+│ Decision-path           │ Funded amount by acquisition source    │
+│ distribution            │                                        │
+│                         │                                        │
+├───────────────────────────────────────┬──────────────────────────┤
+│ Industry risk &amp; economics             │ Executive assurance      │
+│                                       │ Review signals           │
+│                                       │ Reconciliation           │
+│                                       │ Evidence gate            │
+├──────────────────────────────────────────────────────────────────┤
+│ Interpretation boundary / synthetic / denominator / non-CECL     │
+└──────────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>That is much closer to what I would expect from a sophisticated executive Power BI landing page.</p>
+<h2>Could we combine visuals?</h2>
+<p><strong>Yes conceptually, but I would not combine the analytical charts themselves.</strong></p>
+<p>I would <em>not</em> combine:</p>
+<ul>
+<li>decision outcomes and acquisition source in one chart;</li>
+<li>acquisition source and industry in one chart;</li>
+<li>decision distribution and risk/economics.</li>
+</ul>
+<p>Those have different grains and answer different questions. Combining them would save space but damage interpretation.</p>
+<p>Where consolidation <strong>does</strong> make sense is the governance layer:</p>
+<p><strong>OBJ-011 + OBJ-012 + OBJ-013 should visually operate as one assurance panel</strong>, even if they remain three physical native containers.</p>
+<p>That is where we gain density without sacrificing analytical meaning.</p>
+<h2>One additional change I recommend</h2>
+<p>OBJ-008&#39;s raw codes are still longer than ideal:</p>
+<p><code>DECLINE_INSUFFICIENT_EVIDENCE_AUTHORIZED</code></p>
+<p>At 500 px they&#39;ll be manageable, but they are still machine-oriented.</p>
+<p>Since we&#39;ve already accepted bounded semantic additions where justified, I think a <strong>small executive display-label measure/column</strong> may eventually be warranted:</p>
+<pre><code class="language-text">Final offer
+Counteroffer review
+Insufficient evidence decline
+Policy decline
+</code></pre>
+<p>That would make OBJ-008 dramatically cleaner.</p>
+<p>But I would <strong>not do that yet</strong>. First put OBJ-008 at ~500 px. If the codes remain visually cumbersome, then we have physical evidence supporting the display-label change.</p>
+<h3>1. <strong>Controlling state</strong></h3>
+<p>OBJ-001–007 are strong. OBJ-008 is analytically validated at 750/750 but its attempted 360×180 compression demonstrates that the original three-equal-panel analytical layout is not presentation-quality.</p>
+<h3>2. <strong>Action or decision</strong></h3>
+<p>Abandon the cramped three-chart row. Use a <strong>500/716 two-column primary analytical row</strong>, put OBJ-010 wide beneath it, and visually consolidate OBJ-011–013 into a compact assurance zone.</p>
+<h3>3. <strong>Evidence</strong></h3>
+<p>Your screenshot is the evidence: OBJ-008 at the compressed geometry requires truncated codes, a truncated subtitle, and scrolling. Further font reduction would trade away readability merely to preserve catalog geometry.</p>
+<h3>4. <strong>Holds and non-regression</strong></h3>
+<p>Do not reduce OBJ-008 typography further. Do not combine metrics of different grains into a single chart merely to save containers. Preserve the analytical calculations and 750-path reconciliation.</p>
+<h3>5. <strong>Exact next action</strong></h3>
+<p>Resize <strong>OBJ-008 to approximately <code>X24 / Y300 / W500 / H210</code></strong> and verify its four bars.</p>
+<p>Then build <strong>OBJ-009 at <code>X540 / Y300 / W716 / H210</code></strong>. Once we see those two together, we can finalize the primary analytical row before committing the lower-page geometry for OBJ-010–014.</p>
+</div></article><article id="m-737f21e9-df6c-4d58-8602-dab5216ca8b8" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00148 · 2026-08-25T19:24:41.694000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 3d77f238-3e22-4bab-9aff-5453a9fb4a61.png</p><div class="bubble"><p>is this worth the space we give it at the top? could be an automated footnote at the bottom.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

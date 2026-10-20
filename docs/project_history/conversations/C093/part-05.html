@@ -1,0 +1,515 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Campaign Scale 750 - 2,500 - 25,000 — part 05 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Campaign Scale 750 - 2,500 - 25,000 — part 05</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-04.html">Previous part</a><a href="part-06.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-765aba24-01c2-4ec7-933e-1812b8ed6d51" class="message user"><p class="meta"><strong>Andrew / user</strong> · C093-M00095 · 2026-08-20T19:59:04.765000-04:00 · active path</p><div class="bubble"><p>PS D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000&gt; $Runner = Join-Path (Get-Location).Path &quot;Run-CRWP5R4NativeEvidence.ps1&quot;</p>
+<blockquote>
+<blockquote>
+<p>$Tokens = $null
+$Errors = $null</p>
+<pre><code>$Runner,
+[ref]$Tokens,
+[ref]$Errors
+</code></pre>
+<p>) | Out-Null</p>
+<p>$Errors |
+    Select-Object `
+        Message,
+        @{N=&quot;StartLine&quot;;E={$<em>.Extent.StartLineNumber}},
+        @{N=&quot;StartColumn&quot;;E={$</em>.Extent.StartColumnNumber}},
+        @{N=&quot;EndLine&quot;;E={$<em>.Extent.EndLineNumber}},
+        @{N=&quot;Text&quot;;E={$</em>.Extent.Text}} |
+    Format-List
+PS D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000&gt; Get-Content -LiteralPath $Runner |</p>
+<blockquote>
+<pre><code>Select-Object -First 80
+</code></pre>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>#requires -Version 7.2
+[CmdletBinding()]
+param(
+    [Parameter()][string]$BasePath = (Get-Location).Path
+)</p>
+<p>Set-StrictMode -Version Latest
+$ErrorActionPreference = &#39;Stop&#39;</p>
+<p>$CarrierName = &#39;MSBF_CR_WP5_R4_STATIC_REMEDIATION_20260820_R1.zip&#39;
+$ExpectedCarrierSha256 = &#39;285af15ed4859f8e1e5ec72192dd427502cc2b62389fe968de5029878c2e25d5&#39;
+$PackageName = &#39;MSBF_CR_WP5_R4_STATIC_REMEDIATION_20260820_R1&#39;
+$EvidenceName = &#39;CR_WP5_R4_NATIVE_EVIDENCE&#39;
+$EvidenceZipName = &#39;CR_WP5_R4_NATIVE_EVIDENCE.zip&#39;</p>
+<p>$BasePath = [IO.Path]::GetFullPath($BasePath)
+$CarrierPath = Join-Path $BasePath $CarrierName
+$PackageRoot = Join-Path $BasePath $PackageName
+$EvidenceRoot = Join-Path $BasePath $EvidenceName
+$EvidenceZip = Join-Path $BasePath $EvidenceZipName
+$EvidenceSidecar = &quot;$EvidenceZip.sha256&quot;
+$PowerShellPath = (Get-Command pwsh -ErrorAction Stop).Source</p>
+<p>if (-not (Test-Path -LiteralPath $CarrierPath -PathType Leaf)) {
+    throw &quot;Carrier not found: $CarrierPath&quot;
+}
+$ActualCarrierSha256 = (Get-FileHash -LiteralPath $CarrierPath -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($ActualCarrierSha256 -ne $ExpectedCarrierSha256) {
+    throw &quot;Carrier SHA-256 mismatch. Expected=$ExpectedCarrierSha256 Actual=$ActualCarrierSha256&quot;
+}
+foreach ($path in @($PackageRoot,$EvidenceRoot,$EvidenceZip,$EvidenceSidecar)) {
+    if (Test-Path -LiteralPath $path) {
+        throw &quot;Clean-run requirement failed; path already exists: $path&quot;
+    }
+}</p>
+<p>Expand-Archive -LiteralPath $CarrierPath -DestinationPath $PackageRoot
+$ManifestRows = @(Import-Csv -LiteralPath (Join-Path $PackageRoot &#39;MANIFEST.csv&#39;))
+$ControlEnvelope = @(
+    &#39;MANIFEST.csv&#39;,
+    &#39;SHA256SUMS.txt&#39;,
+    &#39;13_VALIDATION/R4_FINAL_PACKAGE_VALIDATION.json&#39;,
+    &#39;13_VALIDATION/R4_FINAL_PACKAGE_VALIDATION.md&#39;
+)
+$ExpectedPhysicalCount = $ManifestRows.Count + $ControlEnvelope.Count
+$PhysicalFiles = @(Get-ChildItem -LiteralPath $PackageRoot -Recurse -File)
+if ($PhysicalFiles.Count -ne $ExpectedPhysicalCount) {
+    throw &quot;Unexpected extracted population. Expected=$ExpectedPhysicalCount Actual=$($PhysicalFiles.Count)&quot;
+}</p>
+<p>$Harness = Join-Path $PackageRoot &#39;10_NATIVE_TEST_PREPARATION_R4/Invoke-CRWP5R4NativeOfflineTests.ps1&#39;
+&amp; $Harness <code>    -PackageRoot $PackageRoot</code>
+    -CarrierPath $CarrierPath <code>    -OutputDirectory $EvidenceRoot</code>
+    -PowerShellPath $PowerShellPath</p>
+<p>$SummaryPath = Join-Path $EvidenceRoot &#39;R4_NATIVE_OFFLINE_TEST_SUMMARY.json&#39;
+$Summary = Get-Content -LiteralPath $SummaryPath -Raw | ConvertFrom-Json -Depth 50
+if ([string]$Summary.overall_status -ne &#39;PASS&#39; -or [int]$Summary.fail -ne 0) {
+    throw &#39;R4 native suite did not pass.&#39;
+}
+if (-not [bool]$Summary.production_chain_tested -or
+    -not [bool]$Summary.fake_psql_process_invoked -or
+    [bool]$Summary.real_psql_process_invoked -or
+    [bool]$Summary.postgresql_connection_attempted -or
+    [bool]$Summary.database_action_performed -or
+    [bool]$Summary.checkpoint_report_executed_against_database -or
+    [bool]$Summary.recovery_invoked -or
+    [bool]$Summary.campaign_replay_invoked) {
+    throw &#39;R4 native evidence activity boundary failed.&#39;
+}
+if ([string]$Summary.carrier_sha256 -ne $ExpectedCarrierSha256) {
+    throw &#39;R4 native evidence is not bound to the exact source carrier.&#39;
+}</p>
+<p>Compress-Archive -Path (Join-Path $EvidenceRoot &#39;*&#39;) -DestinationPath $EvidenceZip -CompressionLevel Optimal
+$EvidenceSha256 = (Get-FileHash -LiteralPath $EvidenceZip -Algorithm SHA256).Hash.ToLowerInvariant()
+&quot;$EvidenceSha256  $EvidenceZipName&quot; | Set-Content -LiteralPath $EvidenceSidecar -Encoding utf8NoBOM</p>
+</div></article><article id="m-353a99d0-1017-4a83-b264-8a62674b43b9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C093-M00096 · 2026-08-20T20:00:42.626384-04:00 · active path</p><div class="bubble"><p>The diagnostic confirms the <strong>outer runner is syntactically valid</strong>: <code>$Errors</code> returned nothing. The parse failure is inside the packaged native harness that the runner invokes after extraction.</p>
+<p>I found the exact defect in <code>Invoke-CRWP5R4NativeOfflineTests.ps1</code>. In the authorization preimage array, three command invocations were written as bare comma-delimited elements:</p>
+<pre><code class="language-powershell">$resolvedPreimage = [string]::Join(&#39;|&#39;, @(
+    [string]$selectedBindingRow.binding_row_sha256,
+    [string]$profileRow.profile_binding_row_sha256,
+    Get-Hash -Path $fakePsql,
+    Get-Hash -Path $targetPath,
+    Get-Hash -Path $environmentPath,
+    $attemptId,
+    [IO.Path]::GetFullPath($attemptRoot)
+))
+</code></pre>
+<p>Those three <code>Get-Hash</code> calls need to be expression-grouped when used as comma-separated array elements:</p>
+<pre><code class="language-powershell">$resolvedPreimage = [string]::Join(&#39;|&#39;, @(
+    [string]$selectedBindingRow.binding_row_sha256,
+    [string]$profileRow.profile_binding_row_sha256,
+    (Get-Hash -Path $fakePsql),
+    (Get-Hash -Path $targetPath),
+    (Get-Hash -Path $environmentPath),
+    $attemptId,
+    [IO.Path]::GetFullPath($attemptRoot)
+))
+</code></pre>
+<p>That explains the precise <code>Missing expression after &#39;,&#39;</code> error. I also scanned the remainder of this harness for the same <strong>bare command + trailing comma</strong> pattern; these are the three occurrences I found.</p>
+<p>So, importantly:</p>
+<ul>
+<li>your PowerShell 7.6.5 installation is fine;</li>
+<li><code>Run-CRWP5R4NativeEvidence.ps1</code> itself parses correctly;</li>
+<li>the R4 native harness has a real source defect;</li>
+<li>the production chain did <strong>not</strong> run;</li>
+<li>this attempt cannot be native evidence;</li>
+<li>we should <strong>not manually patch your extracted copy</strong>, because R4 requires regenerated final identities and native evidence from the exact final bytes. The governing R4 requirement explicitly calls for regenerated manifests/source-tree identities/native evidence and testing of the exact production path. [export reference: filecite | turn20file1 | L15-L17]</li>
+</ul>
+<p>The folders created during this failed attempt are therefore only partial diagnostic artifacts. They should not be reused as final evidence.</p>
+<p>I should now produce a bounded <strong>CR-WP5 R4 Correction R1</strong> that fixes these three expressions, re-scans the complete PowerShell population for this syntax class, regenerates the affected manifest/tree/carrier identities, and gives you a fresh runner tied to the corrected bytes. We should preserve the current R4 substantive remediation and change nothing unrelated. PostgreSQL and all campaign execution remain prohibited. [export reference: filecite | turn20file0 | L218-L220]</p>
+</div></article><article id="m-b5eea0d7-940f-45cc-98cf-3512769d2115" class="message user"><p class="meta"><strong>Andrew / user</strong> · C093-M00097 · 2026-08-20T20:02:33.078000-04:00 · active path</p><div class="bubble"><p>produce a bounded <strong>CR-WP5 R4 Correction R1</strong> that fixes these three expressions, re-scans the complete PowerShell population for this syntax class, regenerates the affected manifest/tree/carrier identities, and gives you a fresh runner tied to the corrected bytes. We should preserve the current R4 substantive remediation and change nothing unrelated. PostgreSQL and all campaign execution remain prohibited.   </p>
+</div></article><article id="m-9ad93b5b-6d9b-48b9-b0a6-9a9c0753dc61" class="message assistant"><p class="meta"><strong>Assistant</strong> · C093-M00098 · 2026-08-20T20:02:36.885645-04:00 · active path</p><div class="bubble"><p>I’ll patch only the three bare command expressions in the R4 native harness, scan the full PowerShell population for the same comma-delimited command-expression defect, then rebuild the package-control identities and issue a fresh Correction R1 carrier and runner. No PostgreSQL or campaign execution will occur.</p>
+</div></article><article id="m-6e0feb79-90b2-48f0-876a-463e12fdb79c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C093-M00099 · 2026-08-20T20:06:29.362952-04:00 · active path</p><div class="bubble"><h1>CR-WP5 R4 Correction R1 Complete</h1>
+<p>The bounded correction is complete. I changed only the reproduced native-harness parse defect and the package-control identities necessarily affected by that change; the substantive R4 trust, catalog-binding, same-session transcript, fake-<code>psql</code>, freshness, and authorization design is preserved.</p>
+<p>The governing audit requires R4 to regenerate identities and native evidence from the final physical bytes while remaining entirely offline from PostgreSQL. [export reference: filecite | turn20file1 | L7-L17]</p>
+<h2>Correction result</h2>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th align="right">Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Original malformed expressions</td>
+<td align="right"><strong>3</strong></td>
+</tr>
+<tr>
+<td>Corrected expressions</td>
+<td align="right"><strong>3 / 3</strong></td>
+</tr>
+<tr>
+<td>PowerShell-family files rescanned</td>
+<td align="right"><strong>6</strong></td>
+</tr>
+<tr>
+<td>Residual hits for this exact syntax class</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>PostgreSQL connections</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Real <code>psql</code> invocations</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Database actions</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Checkpoint/report execution</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Recovery/replay</td>
+<td align="right"><strong>0</strong></td>
+</tr>
+<tr>
+<td>Native evidence</td>
+<td align="right"><strong>PENDING FRESH POWERSHELL RUN</strong></td>
+</tr>
+</tbody></table>
+<p>The three corrected expressions are now:</p>
+<pre><code class="language-powershell">(Get-Hash -Path $fakePsql),
+(Get-Hash -Path $targetPath),
+(Get-Hash -Path $environmentPath),
+</code></pre>
+<p>instead of the invalid bare command forms.</p>
+<h2>New controlling source identity</h2>
+<pre><code class="language-text">Artifact
+MSBF_CR_WP5_R4_CORRECTION_R1_STATIC_REMEDIATION_20260820.zip
+
+SHA-256
+d57a90256adfa265c9f1777a01f88158e4499c57d42c1d2571bc56f174a15342
+
+Manifest rows
+1,059
+
+Package payload-tree SHA-256
+b4a13539ee0d43b2c5fb1fe21efc77a80e1021d8214f1f0c97dab6c355571499
+
+Protected-manifest SHA-256
+6fbb80b9a522d5aae87efd07d1db525bffd0f1e1223640de7d8ef6dff847096a
+
+Protected-tree SHA-256
+c8a8961623cc04f797bdbdfad8432a25cd7ac8c3d32dcb31499e650b3fc26948
+</code></pre>
+<p>The protected tree changed because the authorization template is now bound to the exact <strong>Correction R1 carrier filename</strong>. The native harness itself is not in that protected population, but its corrected SHA-256 is propagated through the runtime identity root:</p>
+<pre><code class="language-text">Original R4 harness
+1863c3ac21ca61ec1a4511fb634117dab97466dbc17220f8354566e7aeae5380
+
+Correction R1 harness
+b65f8b69ed713c20b8b6e5b241ade2dc09e159fa2d90c49ad34fdab26176b7dc
+</code></pre>
+<h2>Deliverables</h2>
+<ul>
+<li>Download the R4 Correction R1 source carrier (historical reference: <code>sandbox:[session]/MSBF_CR_WP5_R4_CORRECTION_R1_STATIC_REMEDIATION_20260820.zip</code>; referenced bytes not established here)</li>
+<li>Download its SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_CR_WP5_R4_CORRECTION_R1_STATIC_REMEDIATION_20260820.zip.sha256</code>; referenced bytes not established here)</li>
+<li>Read the external validation report (historical reference: <code>sandbox:[session]/MSBF_CR_WP5_R4_CORRECTION_R1_STATIC_REMEDIATION_20260820_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Download the machine-readable validation (historical reference: <code>sandbox:[session]/MSBF_CR_WP5_R4_CORRECTION_R1_STATIC_REMEDIATION_20260820_VALIDATION_REPORT.json</code>; referenced bytes not established here)</li>
+<li>Read the bounded Correction R1 report (historical reference: <code>sandbox:[session]/_crwp5_r4_correction_r1_build/15_CORRECTION_R1/CR_WP5_R4_CORRECTION_R1_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Download the full PowerShell syntax-class scan (historical reference: <code>sandbox:[session]/_crwp5_r4_correction_r1_build/15_CORRECTION_R1/POWERSHELL_BARE_COMMAND_ARRAY_SCAN_RESULTS.csv</code>; referenced bytes not established here)</li>
+<li>Download the three reproduced original-R4 findings (historical reference: <code>sandbox:[session]/_crwp5_r4_correction_r1_build/15_CORRECTION_R1/ORIGINAL_R4_SYNTAX_CLASS_FINDINGS.csv</code>; referenced bytes not established here)</li>
+<li>Download the R4→Correction R1 diff (historical reference: <code>sandbox:[session]/_crwp5_r4_correction_r1_build/15_CORRECTION_R1/R4_R1_TO_CORRECTION_R1_DIFF.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Fresh native runner</h2>
+<p>The new runner is bound specifically to carrier SHA-256:</p>
+<pre><code class="language-text">d57a90256adfa265c9f1777a01f88158e4499c57d42c1d2571bc56f174a15342
+</code></pre>
+<p>Runner SHA-256:</p>
+<pre><code class="language-text">4997b259a4c2ec59900a98c0350c08f83c1a074f599e0ef9b260877c1edf19fe
+</code></pre>
+<ul>
+<li>Download the Correction R1 native runner (historical reference: <code>sandbox:[session]/Run-CRWP5R4CorrectionR1NativeEvidence.ps1</code>; referenced bytes not established here)</li>
+<li>Download the runner SHA-256 sidecar (historical reference: <code>sandbox:[session]/Run-CRWP5R4CorrectionR1NativeEvidence.ps1.sha256</code>; referenced bytes not established here)</li>
+<li>Read the fresh native-run instructions (historical reference: <code>sandbox:[session]/CR_WP5_R4_CORRECTION_R1_NATIVE_RUN_INSTRUCTIONS.md</code>; referenced bytes not established here)</li>
+</ul>
+<p>In your PowerShell 7.6.5/Core window, place the corrected ZIP and runner together and execute:</p>
+<pre><code class="language-powershell">$PSVersionTable.PSVersion
+$PSVersionTable.PSEdition
+
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+
+&amp; .\Run-CRWP5R4CorrectionR1NativeEvidence.ps1 `
+    -BasePath (Get-Location).Path
+</code></pre>
+<p>It uses new Correction R1 extraction/evidence directory names, so the partial original-R4 folders can remain untouched as diagnostic provenance.</p>
+<p>If successful, upload:</p>
+<pre><code class="language-text">CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE.zip
+CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE.zip.sha256
+</code></pre>
+<p>Only after that fresh exact-byte native run should we assemble the final <code>ER-CAM-004/005/006/007</code> audit wrapper. PostgreSQL, real <code>psql</code>, database activity, accepted checkpoint/report execution, recovery, and all campaign stages remain prohibited. [export reference: filecite | turn20file1 | L19-L30]</p>
+</div></article><article id="m-e0246e0d-d3bb-440b-8409-a10768e22b33" class="message user"><p class="meta"><strong>Andrew / user</strong> · C093-M00100 · 2026-08-20T20:20:30.325000-04:00 · active path</p><div class="bubble"><p>PS D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000&gt; $PSVersionTable.PSVersion</p>
+<blockquote>
+<blockquote>
+<p>$PSVersionTable.PSEdition</p>
+<p>Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force</p>
+<p>&amp; .\Run-CRWP5R4CorrectionR1NativeEvidence.ps1 `
+    -BasePath (Get-Location).Path</p>
+</blockquote>
+</blockquote>
+<p>Major  Minor  Patch  PreReleaseLabel BuildLabel</p>
+<hr>
+<p>7      6      5
+Core
+{
+  &quot;schema_version&quot;: &quot;MSBF_CR_WP5_R4_NATIVE_OFFLINE_TEST_SUMMARY_V1&quot;,
+  &quot;carrier_sha256&quot;: &quot;d57a90256adfa265c9f1777a01f88158e4499c57d42c1d2571bc56f174a15342&quot;,
+  &quot;package_manifest_sha256&quot;: &quot;690c718aa02218c618281308da9be1e72cadd9d29cf1debbba0086035859e260&quot;,
+  &quot;package_payload_tree_sha256&quot;: &quot;b4a13539ee0d43b2c5fb1fe21efc77a80e1021d8214f1f0c97dab6c355571499&quot;,
+  &quot;complete_extracted_tree_sha256&quot;: &quot;c646c1546100842283a3b4c514d48ff11375e7873664278b1d8fd1a4ffad538b&quot;,
+  &quot;protected_tree_manifest_sha256&quot;: &quot;6fbb80b9a522d5aae87efd07d1db525bffd0f1e1223640de7d8ef6dff847096a&quot;,
+  &quot;protected_tree_sha256&quot;: &quot;c8a8961623cc04f797bdbdfad8432a25cd7ac8c3d32dcb31499e650b3fc26948&quot;,
+  &quot;ast_files&quot;: 6,
+  &quot;ast_pass&quot;: 6,
+  &quot;tests&quot;: 53,
+  &quot;pass&quot;: 36,
+  &quot;fail&quot;: 17,
+  &quot;overall_status&quot;: &quot;FAIL&quot;,
+  &quot;production_chain_tested&quot;: true,
+  &quot;fake_psql_process_invoked&quot;: true,
+  &quot;real_psql_process_invoked&quot;: false,
+  &quot;postgresql_connection_attempted&quot;: false,
+  &quot;database_action_performed&quot;: false,
+  &quot;checkpoint_report_executed_against_database&quot;: false,
+  &quot;recovery_invoked&quot;: false,
+  &quot;campaign_replay_invoked&quot;: false,
+  &quot;tested_at_utc&quot;: &quot;2026-08-21T00:19:24.5626725+00:00&quot;
+}
+Exception: D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\Run-CRWP5R4CorrectionR1NativeEvidence.ps1:61
+Line |
+  61 |      throw &#39;R4 native suite did not pass.&#39;
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | R4 native suite did not pass.</p>
+</div></article><article id="m-077671c2-43ba-49f6-90a4-194c583bda48" class="message assistant"><p class="meta"><strong>Assistant</strong> · C093-M00101 · 2026-08-20T20:20:36.902708-04:00 · active path</p><div class="bubble"><p>This is materially different from the earlier parse failure: <strong>Correction R1 successfully executed the complete native R4 harness and the exact fake-<code>psql</code> production path</strong>, but 17 of 53 controls failed. The safety boundary held—real <code>psql</code>, PostgreSQL, database actions, accepted checkpoint/report execution, recovery, and replay all remained false—so we should preserve this run as diagnostic evidence and <strong>not rebuild or rerun anything yet</strong>.</p>
+<p>We need the exact 17 failed controls before deciding whether they represent production-path defects, fake-<code>psql</code> fixture defects, stale test expectations, or a smaller common root cause. In the same PowerShell window, run:</p>
+<pre><code class="language-powershell">$EvidenceRoot = Join-Path (Get-Location).Path `
+    &quot;CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE&quot;
+
+Test-Path -LiteralPath $EvidenceRoot
+</code></pre>
+<p>It should return <code>True</code>. Then run:</p>
+<pre><code class="language-powershell">$Results = Import-Csv `
+    (Join-Path $EvidenceRoot &quot;R4_NATIVE_ADVERSARIAL_TEST_RESULTS.csv&quot;)
+
+$Results |
+    Where-Object status -eq &quot;FAIL&quot; |
+    Format-List *
+</code></pre>
+<p>Also give me a compact view:</p>
+<pre><code class="language-powershell">$Results |
+    Where-Object status -eq &quot;FAIL&quot; |
+    Select-Object test_id, expected, actual, status, detail |
+    Format-Table -Wrap -AutoSize
+</code></pre>
+<p>And the complete test population:</p>
+<pre><code class="language-powershell">$Results |
+    Select-Object test_id, status, expected, actual |
+    Format-Table -AutoSize
+</code></pre>
+<p>Finally, list the evidence files:</p>
+<pre><code class="language-powershell">Get-ChildItem -LiteralPath $EvidenceRoot -Recurse -File |
+    Select-Object FullName, Length |
+    Format-Table -AutoSize
+</code></pre>
+<p>If the results CSV has a different filename, this command will show the available CSVs:</p>
+<pre><code class="language-powershell">Get-ChildItem -LiteralPath $EvidenceRoot -Recurse -File -Filter &quot;*.csv&quot; |
+    Select-Object FullName
+</code></pre>
+<p>Paste those outputs here. <strong>Do not delete the evidence folder, modify the extracted Correction R1 package, manually create an evidence ZIP, or rerun the harness.</strong></p>
+<p>What we already know is useful:</p>
+<pre><code class="language-text">Native AST                         6 / 6 PASS
+Native controls                   36 / 53 PASS
+Production chain exercised        true
+Fake psql process invoked         true
+Real psql process invoked         false
+PostgreSQL connection attempted   false
+Database action                   false
+Checkpoint/report against DB      false
+Recovery                          false
+Campaign replay                   false
+</code></pre>
+<p>So the bounded Correction R1 achieved its immediate purpose: it got us through parsing and into the <strong>actual production trust-receipt → orchestrator → driver → fake-psql path</strong> without touching PostgreSQL. The 17 failed rows are now the evidence needed to diagnose R4 itself rather than another syntax problem.</p>
+</div></article><article id="m-d12bf5ed-96c2-4fe9-8937-cf847e331cd2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C093-M00102 · 2026-08-20T20:24:49.703000-04:00 · active path</p><div class="bubble"><p>PS D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000&gt; $EvidenceRoot = Join-Path (Get-Location).Path `</p>
+<blockquote>
+<blockquote>
+<pre><code>&quot;CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE&quot;
+</code></pre>
+<p>Test-Path -LiteralPath $EvidenceRoot
+True
+PS D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000&gt; $Results = Import-Csv `</p>
+<blockquote>
+<pre><code>(Join-Path $EvidenceRoot &quot;R4_NATIVE_ADVERSARIAL_TEST_RESULTS.csv&quot;)
+</code></pre>
+<p>$Results |
+    Where-Object status -eq &quot;FAIL&quot; |
+    Format-List *
+Import-Csv: Could not find file &#39;D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\R4_NATIVE_ADVERSARIAL_TEST_RESULTS.csv&#39;.
+PS D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000&gt; $Results |</p>
+<blockquote>
+<pre><code>Where-Object status -eq &quot;FAIL&quot; |
+Select-Object test_id, expected, actual, status, detail |
+Format-Table -Wrap -AutoSize
+</code></pre>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>PS D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000&gt; $Results |</p>
+<blockquote>
+<blockquote>
+<pre><code>Select-Object test_id, status, expected, actual |
+Format-Table -AutoSize
+</code></pre>
+</blockquote>
+</blockquote>
+<p>PS D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000&gt; Get-ChildItem -LiteralPath $EvidenceRoot -Recurse -File |</p>
+<blockquote>
+<blockquote>
+<pre><code>Select-Object FullName, Length |
+Format-Table -AutoSize
+</code></pre>
+</blockquote>
+</blockquote>
+<p>FullName                                                                                                                                                                                                      Length</p>
+<hr>
+<p>D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\R4_NATIVE_ADVERSARIAL_AND_PRODUCTION_PATH_RESULTS.csv                                                       20378
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\R4_NATIVE_MODULE_IMPORT.stderr.txt                                                                              0
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\R4_NATIVE_MODULE_IMPORT.stdout.txt                                                                            323
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\R4_NATIVE_OFFLINE_TEST_SUMMARY.json                                                                          1160
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\R4_NATIVE_POWERSHELL_AST_RESULTS.csv                                                                          994
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_ADAPTER_TYPE_MISMATCH\authorization_envelope.json                                      756
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_ADAPTER_TYPE_MISMATCH\authorization_payload.json                                      7369
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_ADAPTER_TYPE_MISMATCH\environment.json                                                 281
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_ADAPTER_TYPE_MISMATCH\target.json                                                      461
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_BACKEND_PID_CHANGE\authorization_envelope.json                                         753
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_BACKEND_PID_CHANGE\authorization_payload.json                                         7375
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_BACKEND_PID_CHANGE\environment.json                                                    278
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_BACKEND_PID_CHANGE\target.json                                                         458
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_BASELINE\authorization_envelope_override_1868c450d7cc4f89833182371be0ea5c.json         747
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_BASELINE\authorization_envelope_override_96e1016faa394684a1b2257dcace76b4.json         738
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_BASELINE\authorization_envelope.json                                                   743
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_BASELINE\authorization_payload.json                                                   7321
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_BASELINE\environment.json                                                              268
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_BASELINE\target.json                                                                   448
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_CATALOG_ROW_MISMATCH\authorization_envelope.json                                       755
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_CATALOG_ROW_MISMATCH\authorization_payload.json                                       7369
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_CATALOG_ROW_MISMATCH\environment.json                                                  280
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_CATALOG_ROW_MISMATCH\target.json                                                       460
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_CONNECTION_SUBSTITUTION\authorization_envelope.json                                    758
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_CONNECTION_SUBSTITUTION\authorization_payload.json                                    7400
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_CONNECTION_SUBSTITUTION\environment.json                                               283
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_CONNECTION_SUBSTITUTION\target.json                                                    463
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_DEFINITION_MISMATCH\authorization_envelope.json                                        754
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_DEFINITION_MISMATCH\authorization_payload.json                                        7365
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_DEFINITION_MISMATCH\environment.json                                                   279
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_DEFINITION_MISMATCH\target.json                                                        459
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_DUPLICATE_MARKER\authorization_envelope.json                                           751
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_DUPLICATE_MARKER\authorization_payload.json                                           7365
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_DUPLICATE_MARKER\environment.json                                                      276
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_DUPLICATE_MARKER\target.json                                                           456
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_MARKER_ONLY_SPOOF\authorization_envelope.json                                          752
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_MARKER_ONLY_SPOOF\authorization_payload.json                                          7370
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_MARKER_ONLY_SPOOF\environment.json                                                     277
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_MARKER_ONLY_SPOOF\target.json                                                          457
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_MISSING_MARKER\authorization_envelope.json                                             749
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_MISSING_MARKER\authorization_payload.json                                             7355
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_MISSING_MARKER\environment.json                                                        274
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_MISSING_MARKER\target.json                                                             454
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PARAMETERIZED_CHECKPOINT_005\authorization_envelope.json                               763
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PARAMETERIZED_CHECKPOINT_005\authorization_payload.json                               7401
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PARAMETERIZED_CHECKPOINT_005\environment.json                                          288
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PARAMETERIZED_CHECKPOINT_005\target.json                                               468
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PRISTINE_STATE_DRIFT\authorization_envelope.json                                       755
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PRISTINE_STATE_DRIFT\authorization_payload.json                                       7385
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PRISTINE_STATE_DRIFT\environment.json                                                  280
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PRISTINE_STATE_DRIFT\target.json                                                       460
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PROCESS_FAILURE_QUARANTINE\authorization_envelope.json                                 761
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PROCESS_FAILURE_QUARANTINE\authorization_payload.json                                 7406
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PROCESS_FAILURE_QUARANTINE\environment.json                                            286
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PROCESS_FAILURE_QUARANTINE\target.json                                                 466
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PROFILE_MISMATCH\authorization_envelope.json                                           751
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PROFILE_MISMATCH\authorization_payload.json                                           7353
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PROFILE_MISMATCH\environment.json                                                      276
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PROFILE_MISMATCH\target.json                                                           456
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PSQL_PROCESS_FAIL\authorization_envelope.json                                          752
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PSQL_PROCESS_FAIL\authorization_payload.json                                          7370
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PSQL_PROCESS_FAIL\environment.json                                                     277
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_PSQL_PROCESS_FAIL\target.json                                                          457
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_QUERY_MISMATCH\authorization_envelope.json                                             749
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_QUERY_MISMATCH\authorization_payload.json                                             7345
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_QUERY_MISMATCH\environment.json                                                        274
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_QUERY_MISMATCH\target.json                                                             454
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_QUERY_PATH_MISMATCH\authorization_envelope.json                                        754
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_QUERY_PATH_MISMATCH\authorization_payload.json                                        7365
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_QUERY_PATH_MISMATCH\environment.json                                                   279
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_QUERY_PATH_MISMATCH\target.json                                                        459
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_REORDERED_MARKER\authorization_envelope.json                                           751
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_REORDERED_MARKER\authorization_payload.json                                           7365
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_REORDERED_MARKER\environment.json                                                      276
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_REORDERED_MARKER\target.json                                                           456
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_ROLE_SUBSTITUTION\authorization_envelope.json                                          752
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_ROLE_SUBSTITUTION\authorization_payload.json                                          7370
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_ROLE_SUBSTITUTION\environment.json                                                     277
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_ROLE_SUBSTITUTION\target.json                                                          457
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_SOURCE_PLAN_MISMATCH\authorization_envelope.json                                       755
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_SOURCE_PLAN_MISMATCH\authorization_payload.json                                       7369
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_SOURCE_PLAN_MISMATCH\environment.json                                                  280
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\case_SOURCE_PLAN_MISMATCH\target.json                                                       460
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\external_authority\Invoke-MSBFIndependentPreImportTrustGate_TAMPERED.ps1                  45838
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\external_authority\Invoke-MSBFIndependentPreImportTrustGate.ps1                           45817
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\external_authority\offline_test_trust_anchor.json                                          1274
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\external_authority\R4_OFFLINE_BOOTSTRAP_CARRIER_TAMPERED.zip                               8343
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\external_authority\R4_OFFLINE_BOOTSTRAP_CARRIER.zip                                        8325
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\offline_test_work\external_authority\bootstrap_carrier_source\Invoke-MSBFIndependentPreImportTrustGate.ps1  45817</p>
+<p>PS D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000&gt; Get-ChildItem -LiteralPath $EvidenceRoot -Recurse -File -Filter &quot;*.csv&quot; |</p>
+<blockquote>
+<blockquote>
+<pre><code>Select-Object FullName
+</code></pre>
+</blockquote>
+</blockquote>
+<h2>FullName</h2>
+<p>D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\R4_NATIVE_ADVERSARIAL_AND_PRODUCTION_PATH_RESULTS.csv
+D:\MSBF_ARCHIVE\MSBF - Campaign Scale 750 - 2,500 - 25,000\CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE\R4_NATIVE_POWERSHELL_AST_RESULTS.csv</p>
+</div></article><article id="m-9ba4e8be-be57-4713-84b6-b25f4629e7ee" class="message assistant"><p class="meta"><strong>Assistant</strong> · C093-M00103 · 2026-08-20T20:24:55.013375-04:00 · active path</p><div class="bubble"><p>You found the issue: I gave you the wrong CSV filename. The native harness wrote:</p>
+<pre><code class="language-text">R4_NATIVE_ADVERSARIAL_AND_PRODUCTION_PATH_RESULTS.csv
+</code></pre>
+<p>—not <code>R4_NATIVE_ADVERSARIAL_TEST_RESULTS.csv</code>.</p>
+<p>Your evidence folder is intact and contains the diagnostic artifacts we need. Do <strong>not</strong> rerun anything yet.</p>
+<p>Run these commands exactly:</p>
+<pre><code class="language-powershell">$Results = Import-Csv `
+    (Join-Path $EvidenceRoot &quot;R4_NATIVE_ADVERSARIAL_AND_PRODUCTION_PATH_RESULTS.csv&quot;)
+</code></pre>
+<p>Then show all 17 failures in full detail:</p>
+<pre><code class="language-powershell">$Results |
+    Where-Object status -eq &quot;FAIL&quot; |
+    Format-List *
+</code></pre>
+<p>Then the compact failure view:</p>
+<pre><code class="language-powershell">$Results |
+    Where-Object status -eq &quot;FAIL&quot; |
+    Select-Object test_id, expected, actual, status, detail |
+    Format-Table -Wrap -AutoSize
+</code></pre>
+<p>And finally the entire 53-control population:</p>
+<pre><code class="language-powershell">$Results |
+    Select-Object test_id, status, expected, actual |
+    Format-Table -AutoSize
+</code></pre>
+<p>Please paste those three outputs here.</p>
+<p>One useful thing is already clear from the file population you showed: the harness created cases for baseline production execution, parameterized checkpoint execution, catalog/definition/query/profile/source-plan mismatches, connection and role substitution, backend-PID changes, pristine-state drift, transcript-marker attacks, and process/quarantine failures. So the 17 failures may cluster around only one or two shared production-path defects rather than representing 17 separate problems.</p>
+<p>Keep the entire <code>CR_WP5_R4_CORRECTION_R1_NATIVE_EVIDENCE</code> directory unchanged. Once I see the failed rows, I’ll trace them to their common root causes before we modify any governed bytes.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

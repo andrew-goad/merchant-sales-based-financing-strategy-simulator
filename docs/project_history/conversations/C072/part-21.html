@@ -1,0 +1,1104 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PostgreSQL M1.14 Execution — part 21 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>PostgreSQL M1.14 Execution — part 21</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-20.html">Previous part</a><a href="part-22.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-0eb7b29f-3cee-403b-b311-5b7e4319b6b8" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00272 · 2026-08-07T23:03:44.906158-04:00 · active path</p><div class="bubble"><h1>M2.12 WP1 R4 audit determination</h1>
+<p><strong>HOLD — Work Package 1 R4 is not approved, and Work Package 2 is not authorized.</strong></p>
+<p>R4 successfully closes the four blockers raised in the R3 audit. In particular, it now reports complete helper-key/output closure, corrected component joins, corrected physical registry hash expressions, expression-derived dependency controls, and a staged registry construction that avoids post-insert canonical hash updates. It also correctly stopped before SQL generation or PostgreSQL execution. [export reference: filecite | turn168file0 | L13-L31]</p>
+<p>Independent review of the underlying implementation authorities nevertheless found <strong>two remaining implementation blockers</strong> and <strong>one cross-artifact governance correction</strong>.</p>
+<pre><code class="language-text">Accepted M2.11 baseline                    PASS / LOCKED
+Frozen M2.12 business design               RETAINED
+
+R4 helper declared-schema closure          PASS
+R4 component certification joins           PASS
+R4 registry row-hash expressions           PASS
+R4 derived dependency authority            PASS
+R4 staged registry construction            PASS
+R1–R3 retained controls                    PASS
+
+Latest/archive hash staging                BLOCKER
+Policy/archive identity insertion model    BLOCKER
+Helper/dependency metadata parity          CORRECTION REQUIRED
+
+WP1 R4 approval                            HOLD
+WP2 authorization                          NO
+Program 220                                NOT AUTHORIZED
+PostgreSQL execution                       NOT AUTHORIZED
+</code></pre>
+<h2>Package verification</h2>
+<p>I audited the canonical inner review package contained in the uploaded transport ZIP:</p>
+<pre><code class="language-text">Package
+M2_12_Build_WP1_R4.zip
+
+Bytes
+462,060
+
+SHA-256
+890bcf4bc2fdd4c9b57e7aeb9d89ddad129213f0825a41193c1b87af145354d6
+
+ZIP entries
+67
+
+ZIP CRC
+PASS
+
+External sidecar
+PASS
+</code></pre>
+<p>Those values reconcile with the submitted delivery record. [export reference: filecite | turn168file0 | L381-L424]</p>
+<p>The package contains no SQL files, no recovery SQL, no PostgreSQL results, and no implementation manifest or ready-for-execution package. It correctly retains the narrow-review hold. [export reference: filecite | turn168file0 | L480-L501]</p>
+<h1>Areas approved and retained</h1>
+<h2>1. Helper keys and declared output schemas — PASS</h2>
+<p>R4 closes the six helper-key failures and all 110 undeclared field references previously identified. It reports:</p>
+<pre><code class="language-text">Governed helper relations                         42
+Helper business-key/schema PASS              42 / 42
+Missing helper business-key fields                  0
+
+Adapter rows                                   2,571
+Unique adapter output schemas                    806
+Adapter schema closure PASS                  806 / 806
+
+Actual expression references                   4,552
+Undeclared expression references                   0
+</code></pre>
+<p>[export reference: filecite | turn168file0 | L37-L95]</p>
+<p>I independently confirmed that the declared helper business keys are now present in their declared output schemas and that the 4,552 recorded expression references pass the supplied output-resolution checks.</p>
+<h2>2. Component joins and registry identities — PASS</h2>
+<p>All thirteen component certification joins now use the correct <code>cob / cd / ctx</code> keys, and the 26 reproduction-layer registry identities use the accepted physical <code>row_hash</code> field rather than treating <code>observed_registry_row_hash</code> as a physical registry column. [export reference: filecite | turn168file0 | L97-L147]</p>
+<p>These corrections are sound and should not be reopened.</p>
+<h2>3. Expression-derived dependency authority — substantively PASS</h2>
+<p>The 126-row dependency authority is now compiled from actual expressions, selectors, filters, joins, helper construction text, mappings, and canonical union projections. The seven run-context dependencies raised in the R3 audit are now present. [export reference: filecite | turn168file0 | L149-L193]</p>
+<p>The remaining issue is not missing entries in that dependency catalog. It is that another current artifact—the helper relation specification—still publishes a different upstream list for eleven helpers.</p>
+<h2>4. Staged registry construction — PASS</h2>
+<p>The most material R3 issue is resolved. R4 now defines:</p>
+<pre><code class="language-text">registry seed
+→ stable target-typed registry row
+→ prehashed registry row
+→ registry set hash
+→ contract set hash
+→ staged 134-row canonical union
+→ combined set hash
+→ finalized 65-field registry row
+→ one persistent registry INSERT
+→ persistent phase-9 reconstruction
+</code></pre>
+<p>All required registry hashes exist before the insert, <code>registry_id</code> is omitted and generated exactly once, the persistent registry is not read prematurely, and canonical business/hash updates remain prohibited. [export reference: filecite | turn168file0 | L197-L300]</p>
+<p>This staged registry architecture is approved.</p>
+<h1>Blocker 1 — G3 latest and archive hash construction is not fully governed</h1>
+<p>This is not introduced by the R4 registry correction. It is an older implementation-layer gap that remains in the retained authorities.</p>
+<h2>Latest row</h2>
+<p>The current latest adapter defines:</p>
+<pre><code class="language-text">contract_row_hash
+=
+md5(
+    (
+        to_jsonb(lt)
+        - &#39;row_hash&#39;
+        - &#39;contract_row_hash&#39;
+        - &#39;created_at&#39;
+    )::text
+)
+
+row_hash
+=
+md5(
+    (
+        to_jsonb(ltc)
+        - &#39;row_hash&#39;
+        - &#39;created_at&#39;
+    )::text
+)
+</code></pre>
+<p>The declared physical source is:</p>
+<pre><code class="language-text">tmp_latest_m2_12_g3_seed
++ tmp_hash_m2_12_base_six
++ target-shaped prehash relations
+</code></pre>
+<p>with aliases:</p>
+<pre><code class="language-text">ls / lt / ltc
+</code></pre>
+<p>However:</p>
+<ul>
+<li><code>lt</code> and <code>ltc</code> are not named governed helper relations;</li>
+<li>their output schemas are not specified;</li>
+<li>their field-addition sequence is not specified in the helper catalog;</li>
+<li>they have no dependency records in the current dependency authority;</li>
+<li>the 4,552-reference inventory does not contain the <code>lt</code> or <code>ltc</code> references.</li>
+</ul>
+<p>An implementation author can infer that <code>lt</code> should be a stable target-shaped latest row and that <code>ltc</code> should add <code>contract_row_hash</code>, but WP1 exists specifically to eliminate that kind of implementation-time inference.</p>
+<h2>Archive row</h2>
+<p>The current archive mapping defines:</p>
+<pre><code class="language-text">archive_row_hash
+=
+md5(
+    (
+        to_jsonb(a)
+        - &#39;archive_id&#39;
+        - &#39;archive_row_hash&#39;
+        - &#39;created_at&#39;
+    )::text
+)
+</code></pre>
+<p>while identifying <code>a</code> as:</p>
+<pre><code class="language-text">tmp_archive_m2_12_g3_typed
+</code></pre>
+<p>That final helper already includes <code>archive_row_hash</code>. Interpreted literally, the mapping is self-referential. A nested stable/prehash row can resolve the problem, but no such row or inline-stage schema is currently governed.</p>
+<h3>Required correction</h3>
+<p>Freeze exact physical stages such as:</p>
+<pre><code class="language-text">tmp_latest_m2_12_g3_stable_typed
+→ tmp_latest_m2_12_g3_contract_hashed
+→ tmp_latest_m2_12_g3_typed
+
+tmp_archive_m2_12_g3_stable_typed
+→ tmp_archive_m2_12_g3_typed
+</code></pre>
+<p>Equivalent explicitly governed inline stages are acceptable, but they must define:</p>
+<pre><code class="language-text">exact output schema
+exact aliases
+exact dependencies
+exact target casts
+exact one-row grain
+exact created_at placement
+exact contract_row_hash preimage
+exact latest row_hash preimage
+exact archive_row_hash preimage
+exact persistent INSERT projection
+</code></pre>
+<p>No approved hash preimage or formula needs to change.</p>
+<h1>Blocker 2 — policy and archive identity insertion semantics are not exact</h1>
+<p>The registry identity model is complete:</p>
+<pre><code class="language-text">registry_id
+GENERATED ALWAYS AS IDENTITY
+
+Final staged helper contains registry_id      NO
+Final INSERT contains registry_id             NO
+OVERRIDING SYSTEM VALUE                       NO
+Expected committed ID                         1
+Expected sequence state                       1 / true
+</code></pre>
+<p>The policy and archive models do not have the same precision.</p>
+<h2>Policy identity</h2>
+<p>The policy mapping says:</p>
+<pre><code class="language-sql">nextval(
+    &#39;msbf_ctl.m2_12_policy_profile_policy_profile_id_seq&#39;::regclass
+)
+</code></pre>
+<p>but its special handling says:</p>
+<pre><code class="language-text">target INSERT normally omits field
+</code></pre>
+<p>The policy typed helper omits <code>policy_profile_id</code>, which points toward a target-generated identity, but the mapping still claims that <code>nextval</code> is the source expression. The exact column generation clause is not frozen.</p>
+<h2>Archive identity</h2>
+<p>The archive mapping also explicitly calls:</p>
+<pre><code class="language-sql">nextval(
+    &#39;msbf_ctl.m2_12_g3_bundle_archive_archive_id_seq&#39;::regclass
+)
+</code></pre>
+<p>and <code>tmp_archive_m2_12_g3_typed</code> includes <code>archive_id</code>.</p>
+<p>But the authority does not say whether the target is:</p>
+<pre><code class="language-text">GENERATED ALWAYS AS IDENTITY
+GENERATED BY DEFAULT AS IDENTITY
+plain bigint with a nextval default
+</code></pre>
+<p>Nor does it define:</p>
+<pre><code class="language-text">whether archive_id appears in the final INSERT
+whether OVERRIDING SYSTEM VALUE is required
+whether the target default is also invoked
+</code></pre>
+<p>The physical constraint/index catalog contains no exact identity-column generation clause for policy or archive.</p>
+<h3>Runtime consequence</h3>
+<p>Depending on the DDL chosen by WP2:</p>
+<ul>
+<li>an explicit value could be rejected by a <code>GENERATED ALWAYS</code> column;</li>
+<li>an <code>OVERRIDING SYSTEM VALUE</code> clause could be required but absent;</li>
+<li>a staged <code>nextval</code> plus target-generated default could consume two sequence values;</li>
+<li>the committed state could become inconsistent with the frozen requirement:</li>
+</ul>
+<pre><code class="language-text">archive_id = 1
+last_value = 1
+is_called = true
+</code></pre>
+<p>WP2 must not decide the identity mode ad hoc.</p>
+<h3>Required correction</h3>
+<p>Freeze one exact model for all three owned identities.</p>
+<p>The cleanest consistent model is:</p>
+<pre><code class="language-text">GENERATED ALWAYS AS IDENTITY
+explicit owned sequence name
+identity omitted from every normal INSERT
+no OVERRIDING SYSTEM VALUE
+one target-generated value
+</code></pre>
+<p>Under that model:</p>
+<ul>
+<li>remove <code>policy_profile_id</code> and <code>archive_id</code> from staged insert projections;</li>
+<li>let the target generate each identity once;</li>
+<li>keep all identities excluded from row hashes;</li>
+<li>retain the existing failed-transaction sequence recovery controls.</li>
+</ul>
+<p>An explicit archive <code>nextval</code> model can also work, but it must instead freeze the compatible identity mode, insert columns, override behavior, and proof that the sequence advances exactly once.</p>
+<h1>Required correction — helper/dependency metadata parity</h1>
+<p>The current expression-derived dependency catalog is substantially sound. The issue is cross-artifact consistency.</p>
+<p>I independently compared it with:</p>
+<pre><code class="language-text">M2_12_HELPER_TEMP_RELATION_SPECIFICATION.csv
+upstream_relations_json
+</code></pre>
+<p>and found:</p>
+<pre><code class="language-text">Helper records with different upstream lists       11
+Dependency relationships absent from helper JSON   27
+</code></pre>
+<p>Examples include:</p>
+<pre><code class="language-text">tmp_latest_m2_12_g3_seed
+Helper JSON:
+    tmp_src_m2_12_run_context
+
+Derived dependency authority:
+    tmp_src_m2_12_run_context
+    tmp_cert_m2_12_stage_typed
+    tmp_cert_m2_12_component_typed
+    tmp_cert_m2_12_evidence_typed
+    tmp_cert_m2_12_reproduction_typed
+    tmp_cert_m2_12_capability_typed
+    tmp_cert_m2_12_source_edge_observation
+</code></pre>
+<p>and:</p>
+<pre><code class="language-text">tmp_hash_m2_12_canonical_entity_source
+Helper JSON omits the five target-typed base-family helpers
+used in the actual nine-family union.
+</code></pre>
+<p>Some zero-field dependency entries may intentionally represent construction-order or transitive dependencies rather than direct <code>FROM</code> relations. The current artifacts do not document that distinction.</p>
+<p>The correction should either:</p>
+<ol>
+<li>align <code>upstream_relations_json</code> with the current direct dependency authority; or</li>
+<li>explicitly define that field as non-authoritative and replace it with separate direct/transitive dependency metadata.</li>
+</ol>
+<h1>Why 5,911/5,911 did not detect these issues</h1>
+<p>The submitted controls validly test the R3 findings they were designed to close:</p>
+<pre><code class="language-text">declared helper key/schema closure
+recorded expression references
+component joins
+physical registry row_hash expressions
+recorded dependency rows
+registry staging
+package paths
+no-SQL boundary
+</code></pre>
+<p>They do not test:</p>
+<pre><code class="language-text">undefined inline prehash aliases
+self-referential final-helper hash expressions
+exact identity DDL mode
+identity field inclusion in final INSERT projections
+sequence double-consumption risk
+helper upstream JSON versus dependency-catalog parity
+</code></pre>
+<p>Therefore, the reported 5,911/5,911 PASS remains valid for its defined controls, but it does not support final WP1 approval. R4 itself correctly retained a narrow-review hold. [export reference: filecite | turn168file0 | L381-L401]</p>
+<h1>Direction to return to the M2.12 build chat</h1>
+<pre><code class="language-text">Do not begin Work Package 2 and do not generate Program 220 or any SQL.
+
+Produce one bounded correction:
+
+M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R5
+
+Preserve:
+
+- accepted M2.11 baseline;
+- every frozen M2.12 business semantic and count;
+- all approved hash preimages and formulas;
+- R1 type/domain, hash-order, sequence-recovery, Program 221,
+  constraint/index, and view-join controls;
+- R2 physical-field, copied-contract, and reproduction controls;
+- R3 source-edge, component-edge, stage-boundary, and path controls;
+- R4 component joins, registry identities, expression-derived dependency
+  authority, and staged registry/contract/combined hash model.
+
+Required corrections:
+
+1. Replace the undefined latest lt/ltc prehash aliases with exact governed
+   latest stable, contract-hashed, and final target-typed stages.
+
+2. Add an exact archive stable/prehash stage. The archive_row_hash may not
+   be defined recursively from the final helper that already contains it.
+
+3. Freeze the exact physical identity-column DDL and normal INSERT
+   projection for policy_profile_id, archive_id, and registry_id.
+
+4. Remove the policy contradiction between nextval and an omitted target
+   identity field.
+
+5. Resolve the archive identity model:
+   - preferably target-generated identity with archive_id omitted from the
+     staged/final insert projection; or
+   - a fully specified explicit nextval/identity-override model proving one
+     and only one sequence advancement.
+
+6. Reconcile the eleven helper upstream_relations_json records with the
+   expression-derived dependency authority, or formally classify that
+   helper field as non-authoritative and remove compiler ambiguity.
+
+Add fail-closed controls requiring:
+
+latest hash aliases lacking governed prehash schema              0
+archive hash expressions referencing the final hashed row        0
+owned identity columns lacking exact DDL mode                     0
+owned identity INSERT projections ambiguous                       0
+owned sequence successful-advancement ambiguities                 0
+helper/dependency metadata mismatches                              0
+frozen hash preimage or formula changes                           0
+frozen business semantic changes                                  0
+SQL files generated                                                0
+PostgreSQL executions                                              0
+
+Reissue every affected mapping, helper, dependency, identity,
+type/constraint, hash-phase, sequence, responsibility, mutation,
+invariant, audit, review, and source-authority record.
+
+Stop after R5 and wait for narrow re-review.
+
+WP2 remains unauthorized.
+</code></pre>
+<h1>Governing disposition</h1>
+<pre><code class="language-text">M2.12 WP1 R4                               HOLD
+M2.12 WP2                                  NOT AUTHORIZED
+Program 220                                NOT AUTHORIZED
+Programs 221–227                           NOT AUTHORIZED
+Recovery SQL                               NOT AUTHORIZED
+PostgreSQL                                 NOT AUTHORIZED
+Implementation packaging                   NOT AUTHORIZED
+Module 3                                   NOT AUTHORIZED
+Production                                 NOT AUTHORIZED
+</code></pre>
+<h2>Independent audit artifacts</h2>
+<ul>
+<li>Full R4 independent audit report (historical reference: <code>sandbox:[session]/M2_12_WP1_R4_INDEPENDENT_AUDIT_REPORT_20260808.md</code>; referenced bytes not established here)</li>
+<li>Finding register (historical reference: <code>sandbox:[session]/M2_12_WP1_R4_INDEPENDENT_AUDIT_FINDINGS_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable audit summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R4_INDEPENDENT_AUDIT_SUMMARY_20260808.json</code>; referenced bytes not established here)</li>
+<li>Ready-to-paste R5 correction prompt (historical reference: <code>sandbox:[session]/M2_12_WP1_R4_IMPLEMENTATION_CONTROL_CORRECTION_R5_PROMPT_20260808.md</code>; referenced bytes not established here)</li>
+<li>Latest/archive staging diagnostic (historical reference: <code>sandbox:[session]/M2_12_WP1_R4_LATEST_ARCHIVE_STAGING_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Owned-identity insertion-model audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R4_IDENTITY_INSERTION_MODEL_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Helper/dependency metadata-parity audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R4_HELPER_DEPENDENCY_METADATA_PARITY_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Complete independent audit package (historical reference: <code>sandbox:[session]/M2_12_WP1_R4_INDEPENDENT_AUDIT_PACKAGE_20260808.zip</code>; referenced bytes not established here)</li>
+<li>Audit-package SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_WP1_R4_INDEPENDENT_AUDIT_PACKAGE_20260808.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<pre><code class="language-text">Independent audit package SHA-256
+2b19bc716704f1cf9b21b77558e50039ca1a05850e6af04a9869b1657173b8dd
+</code></pre>
+</div></article><article id="m-6e269828-f26e-4dd5-9148-8c09d7f89c26" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00273 · 2026-08-07T23:12:36.581000-04:00 · active path</p><div class="bubble"><p>quick aside: why are we having so many incremental findings? it seems like each round you are finding a trickling of issues. why the slow trickle instead of more thorough fixes and clearance?</p>
+</div></article><article id="m-30d69019-2ef2-4456-917d-c90825be2fe2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00274 · 2026-08-07T23:12:41.577301-04:00 · active path</p><div class="bubble"><p>Yes. Your concern is justified.</p>
+<p>What is happening is <strong>not primarily that R1–R4 are poor corrections</strong>. Each correction has generally fixed the specific defects identified in the preceding audit. The problem is that my independent audit has been moving progressively deeper through the implementation-control stack instead of applying the deepest feasible audit model in the first pass.</p>
+<p>You can see the pattern in the build itself: R1 corrected the original mapping/type/hash/sequence/constraint issues; R2 corrected physical fields, adapter outputs, hash semantics, reproduction, and paths; R3 then expanded the authority into explicit helper/dependency layers; and R4 expanded that further into 42 helpers, 2,571 adapter rows, 4,552 expression references, and a staged registry construction. [export reference: filecite | turn168file3 | L44-L71] [export reference: filecite | turn168file2 | L66-L105] [export reference: filecite | turn168file1 | L62-L96] [export reference: filecite | turn168file0 | L37-L95]</p>
+<p>So every correction is exposing a <strong>new, more concrete implementation layer</strong>, and I have then audited that new layer. That naturally creates some sequential discovery. But <strong>four rounds is more than I want</strong>, and I should change the review strategy now.</p>
+<h3>Why this has happened</h3>
+<p>There are three contributing factors.</p>
+<p>First, <strong>WP1 is unusually ambitious</strong>. We are effectively trying to compile an approved business design into an almost SQL-complete formal specification <em>without writing the SQL</em>. That means we&#39;re resolving details that ordinarily would surface during coding or PostgreSQL parsing: exact aliases, intermediate relations, identity behavior, hash evaluation order, join predicates, sequence semantics, and insert projections.</p>
+<p>Second, the build chat&#39;s static controls have largely been <strong>self-referential</strong>. For example, R4&#39;s 5,911 controls prove that its declared helper schemas and its recorded expression references reconcile. [export reference: filecite | turn168file0 | L75-L84] But my audit then asks a different question: <em>Is there an implementation dependency that the control generator itself never modeled?</em> That is how something like the undefined <code>lt</code>/<code>ltc</code> latest-hash stages can survive thousands of green controls.</p>
+<p>Third—and this is the part I should improve—I&#39;ve been doing a <strong>finding-driven audit</strong>:</p>
+<blockquote>
+<p>find defect → request correction → deeply audit the newly changed surface → discover next-order defect.</p>
+</blockquote>
+<p>Instead, at this maturity level I should be doing an <strong>implementation-simulation audit</strong>:</p>
+<blockquote>
+<p>assume I am about to write Programs 220–222 literally from these authorities → walk every object from DDL through construction through hashing through INSERT through rollback/recovery → identify <em>everything</em> that prevents deterministic SQL generation.</p>
+</blockquote>
+<p>That is the better standard.</p>
+<h3>Why the R4 findings are actually encouraging</h3>
+<p>The character of the findings has changed dramatically.</p>
+<p>Early findings were fundamental:</p>
+<ul>
+<li>wrong physical source columns;</li>
+<li>undefined adapter outputs;</li>
+<li>incomplete contract reproduction;</li>
+<li>cyclic hash sequencing;</li>
+<li>incomplete source-edge architecture.</li>
+</ul>
+<p>The R4 findings are now:</p>
+<ul>
+<li>exact shape of two intermediate latest-hash projections;</li>
+<li>exact archive prehash projection;</li>
+<li>exact identity-column DDL/INSERT convention;</li>
+<li>metadata parity between two representations of the same dependency graph.</li>
+</ul>
+<p>Meanwhile, R4 has already solved the genuinely difficult registry problem: it now stages the registry, calculates its row/set/contract/combined identities, inserts it exactly once, prohibits post-insert hash repair, and reserves persistent state for independent reconstruction. [export reference: filecite | turn168file0 | L197-L300]</p>
+<p>So we <strong>are converging</strong>. This isn&#39;t an endless redesign loop. But I don&#39;t want to tell you &quot;R5 should probably be it&quot; and then discover R6 through the same incremental method.</p>
+<h3>What I recommend changing for R5</h3>
+<p>For the next review, I should <strong>not merely check whether R5 fixed the three R4 findings</strong>.</p>
+<p>I should perform a <strong>full prospective Programs 220–222 implementation audit</strong> before giving WP1 signoff. In effect:</p>
+<pre><code class="language-text">Program 220
+DDL
+→ sequences
+→ constraints
+→ policy construction
+→ policy hash
+→ INSERT
+→ failure/recovery
+
+Program 221
+preflight sources
+→ all 19 edges
+→ all accepted contracts
+→ temp construction
+→ persistent-state zero-change
+
+Program 222
+all source adapters
+→ all helper relations
+→ all 133 canonical rows
+→ base row hashes
+→ six base family hashes
+→ latest stable/prehash/final
+→ archive stable/prehash/final
+→ registry stable/prehash/final
+→ registry set hash
+→ contract set hash
+→ 134-row canonical union
+→ combined hash
+→ persistent INSERT sequence
+→ generation evidence
+→ lifecycle mutation
+→ phase-9 reconstruction
+→ sequence state
+→ failure/recovery
+</code></pre>
+<p>And for <strong>every relation in that chain</strong>, I should require:</p>
+<pre><code class="language-text">inputs exist
+all referenced fields exist
+output schema complete
+grain/key complete
+dependency declared
+type/cast exact
+hash preimage executable
+no circular reference
+construction order valid
+INSERT projection valid
+NOT NULL fields available
+identity behavior exact
+mutation authorized
+recovery behavior exact
+downstream consumer resolvable
+</code></pre>
+<p>That is substantially more exhaustive than asking whether the R5 remediation matrix says the R4 findings are closed.</p>
+<h3>I would also add one important R5 instruction</h3>
+<p>The build chat should run a <strong>compiler-style closure audit</strong> after making R5:</p>
+<blockquote>
+<p>Starting only from the WP1 authorities, mechanically simulate generation of Programs 220–222. Flag every point at which an implementation author would have to invent an alias, relation, column, cast, expression, DDL clause, constraint, sequence action, join, ordering rule, hash stage, INSERT field, transaction behavior, or recovery action not explicitly governed.</p>
+</blockquote>
+<p>Required result:</p>
+<pre><code class="language-text">Implementation-time inferred decisions = 0
+</code></pre>
+<p>That is really the criterion we&#39;ve been approaching all along.</p>
+<h3>Should we be worried about M2.12 overall?</h3>
+<p>No. The business architecture has remained remarkably stable through all of this. R4 explicitly reports zero changes to source nodes, contracts, edges, evidence cells, capabilities, counts, hash preimages, ordering keys, acceptance phases, result sets, program/recovery numbers, Module 3 boundaries, or production boundaries. [export reference: filecite | turn168file0 | L358-L379]</p>
+<p>The churn is almost entirely in the <strong>translation layer between approved design and executable SQL</strong>.</p>
+<p>That distinction matters. We&#39;re not discovering that M2.12 was conceptually wrong four times. We&#39;re discovering places where a future SQL author would otherwise have to make an undocumented implementation choice.</p>
+<h3>My recommendation from here</h3>
+<p>Give the build chat the R5 correction I just provided, but I would add this paragraph at the end:</p>
+<blockquote>
+<p><strong>R5 must be treated as a full WP1 implementation-closure pass, not only a remediation of the three R4 findings. After applying the corrections, prospectively simulate literal construction of Programs 220, 221, 222, 220A, 222A, and 222B using only the current WP1 authorities. Identify every point where SQL generation would require an unstated relation, alias, field, type, cast, constraint, identity clause, sequence action, join, hash preimage, construction stage, INSERT projection, mutation, transaction behavior, or recovery decision. Required implementation-time inferred decisions: 0. Expand the R5 static audit to cover this full closure before returning for re-review. Do not generate SQL.</strong></p>
+</blockquote>
+<p>That should materially reduce the chance of another &quot;fix three things, discover two deeper things&quot; cycle.</p>
+<p>And when R5 comes back, <strong>I will audit it differently</strong>: not just as an R4-remediation review, but as if I were about to write WP2 myself and had no permission to improvise a single implementation detail.</p>
+<p>That is the right point at which I should either give you a clean <strong>WP1 APPROVED / WP2 AUTHORIZED</strong> or identify the complete remaining blocker set in one pass.</p>
+</div></article><article id="m-9cda9a3e-b4a6-4a3c-998c-4cc8be0b6309" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00275 · 2026-08-08T01:35:25.987000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260808-053509).md; M2_12_Build_WP1_R5(1).zip</p><div class="bubble"><p>Audit M2_12_Build_WP1_R5. Audit not just as an R4-remediation review, but as if you were about to write WP2 yourself and had no permission to improvise a single implementation detail.  Sign off or escalate blockers/issues:   </p>
+</div></article><article id="m-abb13a70-948c-4e5b-b38c-e79f185f481c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00276 · 2026-08-08T02:17:08.075164-04:00 · active path</p><div class="bubble"><h1>M2.12 WP1 R5 full-closure audit determination</h1>
+<p><strong>HOLD — Work Package 1 R5 is not approved, and Work Package 2 is not authorized.</strong></p>
+<p>I performed the requested review as a prospective implementation audit: I treated the WP1 authorities as the only information available for literally constructing Programs 220, 221, 222, 220A, 222A, and 222B, with no permission to invent an alias, field, DDL clause, expression, predicate, insert projection, sequence action, recovery branch, or transaction setting.</p>
+<p>R5 reports 11,143/11,143 static controls, six of six prospective programs, 2,605 literal construction decisions, and zero inferred decisions. It also correctly generated no SQL, executed no PostgreSQL, and retained the WP1 review hold. [export reference: filecite | turn169file0 | L12-L31]</p>
+<p>My independent prospective compilation does <strong>not</strong> support that zero-inference conclusion.</p>
+<pre><code class="language-text">Accepted M2.11 baseline                    PASS / LOCKED
+Frozen M2.12 business design               RETAINED
+
+R5 latest staging                          PASS
+R5 archive staging                         PASS
+R5 target-generated identity intent        PASS
+R5 helper/dependency metadata parity       PASS
+R4 staged registry construction            PASS
+R1–R3 retained controls                    PASS
+
+Program 220 literal DDL                     BLOCKER
+Seven persistent view definitions           BLOCKER
+Program 221 preflight                       BLOCKER
+Program 222 helper/reconstruction layer      BLOCKER
+Program 222 evidence/lifecycle proof         BLOCKER
+Programs 220A/222A/222B recoveries           BLOCKER
+Program session settings                     CORRECTION REQUIRED
+Prospective compiler validity                GOVERNANCE BLOCKER
+
+WP1 R5 approval                              HOLD
+WP2 authorization                            NO
+Programs 220–227                             NOT AUTHORIZED
+PostgreSQL execution                         NOT AUTHORIZED
+</code></pre>
+<h2>Package verification</h2>
+<p>I independently verified the canonical inner review package:</p>
+<pre><code class="language-text">M2_12_Build_WP1_R5.zip
+
+Bytes
+896,371
+
+SHA-256
+9ceec687e86084d18f40452716450223e50e3fb41587533da1d683ad7028e74d
+
+ZIP entries
+125
+
+ZIP CRC
+PASS
+
+External sidecar
+PASS
+</code></pre>
+<p>That identity matches the submitted delivery record. [export reference: filecite | turn169file0 | L475-L501]</p>
+<h1>Areas that are approved and should remain fixed</h1>
+<h2>Latest and archive staging</h2>
+<p>R5 successfully replaces the undefined <code>lt</code> and <code>ltc</code> latest aliases with three governed stages:</p>
+<pre><code class="language-text">tmp_latest_m2_12_g3_stable_typed
+→ tmp_latest_m2_12_g3_contract_hashed
+→ tmp_latest_m2_12_g3_typed
+</code></pre>
+<p>It also replaces the self-referential archive construction with:</p>
+<pre><code class="language-text">tmp_archive_m2_12_g3_stable_typed
+→ tmp_archive_m2_12_g3_typed
+</code></pre>
+<p>The latest and archive hash preimages are now structurally staged without changing the approved formulas. [export reference: filecite | turn169file0 | L44-L151]</p>
+<h2>Identity intent and sequence-recovery model</h2>
+<p>R5 adopts a consistent intended model:</p>
+<pre><code class="language-text">GENERATED ALWAYS AS IDENTITY
+identity omitted from normal INSERT
+no staged nextval
+no OVERRIDING SYSTEM VALUE
+one target-generated value
+</code></pre>
+<p>It also preserves the three-sequence recovery framework. [export reference: filecite | turn169file0 | L153-L206]</p>
+<p>The implementation defect is not the intended model; it is that the Program 220 DDL authority simultaneously instructs the build to create the same three sequence relations explicitly.</p>
+<h2>Helper/dependency parity and staged registry architecture</h2>
+<p>The R5 helper metadata now agrees with the 141-row dependency authority, and the R4 registry staging remains sound:</p>
+<pre><code class="language-text">stable registry row
+→ registry row hash
+→ registry set hash
+→ contract set hash
+→ staged 134-entity source
+→ combined hash
+→ finalized registry row
+→ one persistent INSERT
+→ persistent reconstruction
+</code></pre>
+<p>R5 reports zero helper/dependency metadata mismatch and 79/79 topological helper coverage. [export reference: filecite | turn169file0 | L210-L228] [export reference: filecite | turn169file0 | L311-L335]</p>
+<p>These areas should not be redesigned during the next correction.</p>
+<h1>Blocker 1 — Program 220 cannot be generated literally</h1>
+<h2>A. The three owned sequences have conflicting creation authorities</h2>
+<p>Program 220’s DDL object specification schedules explicit creation of:</p>
+<pre><code class="language-text">msbf_ctl.m2_12_policy_profile_policy_profile_id_seq
+msbf_ctl.m2_12_g3_bundle_archive_archive_id_seq
+msbf_ctl.m2_12_g3_bundle_registry_registry_id_seq
+</code></pre>
+<p>The persistent-column authority also defines the associated columns as:</p>
+<pre><code class="language-text">GENERATED ALWAYS AS IDENTITY
+(SEQUENCE NAME &lt;same sequence relation&gt;)
+</code></pre>
+<p>These two instructions are not compatible as a literal execution order. PostgreSQL identity columns use an internally created sequence, while relation names—including sequence relation names—must be unique in the schema. An explicit sequence cannot first be created and then created again as the identity sequence under the same name. [export reference: cite | turn405999search15 | turn405999search9 | turn405999search2]</p>
+<p>The correct authority should distinguish:</p>
+<pre><code class="language-text">Executable DDL objects:
+    tables
+    views
+    function
+    trigger
+    indexes
+
+Implicitly installed identity sequences:
+    verified after table creation
+    not separately CREATEd
+</code></pre>
+<h2>B. Archive function and trigger identities disagree</h2>
+<p>The current authorities use two different function names:</p>
+<pre><code class="language-text">Object/DDL authority
+msbf_ctl.m2_12_reject_g3_archive_mutation()
+
+Constraint authority
+msbf_ctl.m2_12_reject_archive_mutation()
+</code></pre>
+<p>They also use two different trigger names:</p>
+<pre><code class="language-text">Object authority
+trg_m2_12_g3_archive_immutable
+
+Constraint authority
+trg_m212_g3_archive_immutable
+</code></pre>
+<p>An implementation author must not decide which pair is current.</p>
+<h2>C. The function body remains undefined</h2>
+<p>The physical object catalog says the exact archive mutation function body is deferred to WP2. At the same time, the installation postflight requires exact:</p>
+<pre><code class="language-text">language
+volatility
+function identity
+body hash
+</code></pre>
+<p>No exact function body means no body hash can be known before WP2 constructs it.</p>
+<h2>D. Required comments are not specified</h2>
+<p>Program 220’s responsibility and postflight authority require exact table and column comments. The prospective compiler contains no <code>COMMENT ON</code> construction decisions and no comment-text authority.</p>
+<h3>Determination</h3>
+<p>Program 220 is <strong>not</strong> literally compilable from WP1.</p>
+<p>Review the Program 220 DDL audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_PROGRAM_220_DDL_AUDIT_20260808.csv</code>; referenced bytes not established here)</p>
+<h1>Blocker 2 — none of the seven persistent views is fully compilable</h1>
+<p>The frozen view surface contains:</p>
+<pre><code class="language-text">Persistent views                         7
+View fields                            845
+Join-plan rows                          23
+</code></pre>
+<p>The prospective compiler does not contain literal construction decisions for those 845 projection fields or 23 joins. Its view-related decisions cover the object existence, blueprint, and postflight—not the actual <code>CREATE VIEW ... AS SELECT ...</code> definitions.</p>
+<p>My alias-resolution scan found:</p>
+<pre><code class="language-text">Unbound view alias references          457
+</code></pre>
+<p>This includes:</p>
+<pre><code class="language-text">ctx references                         453
+g3r references                           4
+</code></pre>
+<h2><code>ctx</code> problem</h2>
+<p>Every view uses <code>ctx</code> as though a transaction-local run-context relation were in scope. No persistent view source, CTE, subquery, or permanent relation binds that alias.</p>
+<p>A persistent view cannot be compiled from:</p>
+<pre><code class="language-sql">ctx.module1_run_id
+ctx.run_code
+ctx.run_version
+</code></pre>
+<p>unless the authority defines where <code>ctx</code> comes from within the view definition.</p>
+<h2><code>g3r</code> problem</h2>
+<p>Four strategy-scope expressions reference:</p>
+<pre><code class="language-text">g3r.&lt;field&gt;
+</code></pre>
+<p>while the view join authority binds the G3 registry as:</p>
+<pre><code class="language-text">gr
+</code></pre>
+<h2>Required correction</h2>
+<p>For each view, freeze literal SQL or an exact compiler defining:</p>
+<pre><code class="language-text">CREATE OR REPLACE VIEW target AS
+base relation
+all joins in sequence
+all aliases
+all 845 projections
+all casts
+all filters
+persistent run-scoping method
+cardinality and multiplicity assertions
+</code></pre>
+<p>No view may depend on a transaction-local helper.</p>
+<p>Review all unbound view references (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_VIEW_ALIAS_AND_COMPILATION_AUDIT_20260808.csv</code>; referenced bytes not established here)</p>
+<p>Review view compiler coverage (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_VIEW_COMPILER_COVERAGE_SUMMARY_20260808.csv</code>; referenced bytes not established here)</p>
+<h1>Blocker 3 — Program 221 contains deterministic contradictions</h1>
+<p>R5 states that Program 221 is fully determined by 48 exact fail-closed assertions. [export reference: filecite | turn169file0 | L363-L381] The current assertions do not represent a state that can exist after successful Program 220.</p>
+<h2>Assertion 003 contradicts Program 220</h2>
+<p>The current assertion is:</p>
+<pre><code class="language-text">P221_003_POLICY_ABSENT
+Expected policy rows = 0
+</code></pre>
+<p>But Program 220’s authorized purpose is to insert exactly one approved policy row. Program 221’s own responsibility matrix also requires the policy row to exist and be exact.</p>
+<p>A successful Program 220 therefore causes Assertion 003 to fail.</p>
+<p>The correct prerequisite is:</p>
+<pre><code class="language-text">Policy rows                              1
+Approved policy identity/hash exact      PASS
+Non-policy M2.12 canonical rows          0
+</code></pre>
+<h2>Assertion 011 has the wrong sequence state</h2>
+<p>The current assertion requires all three M2.12 sequences to remain pristine.</p>
+<p>After Program 220, the required sequence state is:</p>
+<pre><code class="language-text">Policy sequence
+last_value = 1
+is_called  = true
+
+Archive sequence
+last_value = 1
+is_called  = false
+
+Registry sequence
+last_value = 1
+is_called  = false
+</code></pre>
+<p>The current assertion cannot pass after a valid Program 220 execution.</p>
+<h2>The result helper references nonexistent or non-runtime fields</h2>
+<p><code>tmp_preflight_m2_12_result_base</code> references:</p>
+<pre><code class="language-text">assertion.check_code
+assertion.observed_value
+assertion.status
+</code></pre>
+<p>The preflight assertion catalog instead contains:</p>
+<pre><code class="language-text">assertion_code
+observed_calculation
+status
+</code></pre>
+<p>and its <code>status</code> is an authority state such as <code>EXACT_R5</code>, not the runtime PASS/FAIL produced by executing the assertion predicate.</p>
+<h2>The 19 source-edge branches remain descriptive</h2>
+<p>The source-edge branch catalog contains prose of the form:</p>
+<pre><code class="language-text">SELECT accepted source hash...
+compare target-recorded source hash...
+</code></pre>
+<p>It does not provide an executable branch expression returning:</p>
+<pre><code class="language-text">observed_accepted_source_hash
+observed_target_recorded_source_hash
+source_gate_status
+edge_status
+</code></pre>
+<p>Yet the preflight helper attempts to consume those fields.</p>
+<h3>Determination</h3>
+<p>Program 221 would either fail deterministically or require the SQL author to invent the runtime assertion compiler.</p>
+<p>Review the Program 221 state contradictions (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_PREFLIGHT_STATE_CONTRADICTION_AUDIT_20260808.csv</code>; referenced bytes not established here)</p>
+<p>Review cross-catalog field-resolution failures (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_CROSS_CATALOG_FIELD_RESOLUTION_AUDIT_20260808.csv</code>; referenced bytes not established here)</p>
+<h1>Blocker 4 — Program 222 still contains nonliteral construction authority</h1>
+<p>The prospective compiler labels the Program 222 construction as complete, but 19 helper rows remain either prose or references to relations that are not governed.</p>
+<h2>Source-edge placeholders</h2>
+<p>Examples include:</p>
+<pre><code class="language-text">execute edge_spec...
+count exact ...
+</code></pre>
+<p>These are instructions to write SQL later, not executable expressions.</p>
+<p>The 19-edge design itself remains approved. The problem is that the implementation authority still lacks the literal branch construction.</p>
+<h2>Undefined recovery scopes</h2>
+<p>The helper authorities reference:</p>
+<pre><code class="language-text">governed_policy_rows_scope
+governed_nonpolicy_rows_scope
+governed_evidence_rows_scope
+</code></pre>
+<p>No relation, schema, expression, or key defines those scopes.</p>
+<h2>Undefined phase-9 diagnostics</h2>
+<p>The physical reconstruction authority references:</p>
+<pre><code class="language-text">exact_family_mismatch_count_diagnostic
+exact_row_hash_mismatch_count_diagnostic
+exact_set_hash_mismatch_count_diagnostic
+exact_combined_hash_mismatch_count_diagnostic
+exact_sequence_state_mismatch_count_diagnostic
+</code></pre>
+<p>These are not governed helper relations or executable scalar subqueries.</p>
+<h3>Required correction</h3>
+<p>Each item must become either:</p>
+<ul>
+<li>complete PostgreSQL expression text; or</li>
+<li>a named helper with exact schema, grain, business key, dependencies, expression, row expectation, and construction order.</li>
+</ul>
+<p>Review all nonliteral construction rows (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_NONLITERAL_CONSTRUCTION_AUDIT_20260808.csv</code>; referenced bytes not established here)</p>
+<h1>Blocker 5 — Program 222 persistence and proof are incomplete</h1>
+<h2>A. The 24-row generation-evidence INSERT is not defined</h2>
+<p>The helper <code>tmp_generation_m2_12_evidence</code> currently exposes only:</p>
+<pre><code class="language-text">evidence_sequence
+evidence_code
+observed_value
+expected_value
+status
+</code></pre>
+<p>The accepted <code>msbf_ctl.run_evidence</code> target requires a much richer projection, including:</p>
+<pre><code class="language-text">run_id
+evidence_code
+segment_key
+metric_name
+metric_value_numeric or metric_value_text
+unit_code
+status
+threshold value handling
+interpretation
+created_at/default behavior
+</code></pre>
+<p>The package contains the evidence semantics but not the exact 24-row target insert projection.</p>
+<h2>B. Lifecycle transition remains ambiguous</h2>
+<p>The registry lifecycle transition uses:</p>
+<pre><code class="language-text">required_before
+contract_status = GENERATING
+or governed pre-generated state
+</code></pre>
+<p>But the R5 registry seed is inserted as <code>GENERATED</code>.</p>
+<p>“Governed pre-generated state” is not an exact predicate. WP2 would have to decide whether the update is:</p>
+<pre><code class="language-text">GENERATING → GENERATED
+GENERATED → GENERATED
+or another transition
+</code></pre>
+<h2>C. Phase-9 sequence proof omits the policy sequence</h2>
+<p>The physical reconstruction authority expects two sequence rows and identifies the archive and registry sequences.</p>
+<p>The frozen M2.12 model owns three sequences. Phase 9 must also prove that the already committed policy sequence remains exactly:</p>
+<pre><code class="language-text">last_value = 1
+is_called  = true
+</code></pre>
+<p>Review evidence, lifecycle, and sequence-proof gaps (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_EVIDENCE_LIFECYCLE_SEQUENCE_AUDIT_20260808.csv</code>; referenced bytes not established here)</p>
+<h1>Blocker 6 — Recoveries 220A, 222A, and 222B are not literal programs</h1>
+<p>R5 says the recovery programs have exact decision tables, mutations, postconditions, and primary results. [export reference: filecite | turn169file0 | L416-L452] The current authority still contains implementation placeholders.</p>
+<p>Examples include:</p>
+<pre><code class="language-text">drop incomplete exact M2.12 install objects
+remove noncanonical residue
+guarded setval
+exact recovery result
+only permitted branch action
+</code></pre>
+<p>The recovery helpers also reference undefined scopes and fields:</p>
+<pre><code class="language-text">governed_policy_rows_scope
+governed_nonpolicy_rows_scope
+governed_evidence_rows_scope
+
+recovery_permitted_flag
+disposition
+</code></pre>
+<p>The latter fields do not exist in the current recovery decision catalog.</p>
+<p>A literal recovery authority must freeze:</p>
+<pre><code class="language-text">exact decision predicate
+exact source-state query
+exact target relation
+exact DELETE/UPDATE/DROP/setval statement
+exact operation order
+exact transaction boundary
+exact rejection signature
+exact postcondition query
+exact primary-result projection
+</code></pre>
+<p>This is especially important because the recovery programs have permission to alter M2.12 state and sequence state.</p>
+<h1>Required correction — session controls remain placeholders</h1>
+<p>For all six WP2 programs and recoveries, the transaction/session authority uses:</p>
+<pre><code class="language-text">SET LOCAL statement_timeout to governed module value
+SET LOCAL lock_timeout to governed module value
+</code></pre>
+<p>No duration is supplied.</p>
+<p>That produces 12 unresolved session decisions.</p>
+<p>The authority must specify either:</p>
+<pre><code class="language-text">SET LOCAL statement_timeout = &#39;&lt;exact duration&gt;&#39;
+SET LOCAL lock_timeout      = &#39;&lt;exact duration&gt;&#39;
+</code></pre>
+<p>or:</p>
+<pre><code class="language-text">No local override.
+Inherit the governed session configuration.
+</code></pre>
+<p>Review session-parameter placeholders (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_SESSION_PARAMETER_AUDIT_20260808.csv</code>; referenced bytes not established here)</p>
+<h1>Governance blocker — the prospective compiler is not actually literal</h1>
+<p>R5 reports:</p>
+<pre><code class="language-text">Programs compiled                         6 / 6
+Literal decisions                         2,605
+Implementation-time inferred decisions    0
+</code></pre>
+<p>[export reference: filecite | turn169file0 | L230-L335]</p>
+<p>That result is not supported by the authority coverage.</p>
+<p>The compiler omits entire required implementation surfaces:</p>
+<pre><code class="language-text">Persistent view fields                   845
+Persistent view joins                     23
+Archive rejection function body            1
+Required table/column comment text          unresolved
+Generation run_evidence projections        24
+</code></pre>
+<p>It also marks the following as resolved:</p>
+<ul>
+<li>descriptive prose;</li>
+<li>references to nonexistent catalog fields;</li>
+<li>unbound aliases;</li>
+<li>undefined relations;</li>
+<li>contradictory program-state predicates.</li>
+</ul>
+<p>The compiler therefore verifies that a catalog row has been assigned a descriptive “resolution,” not that the resolution is executable PostgreSQL.</p>
+<h2>Required compiler standard</h2>
+<p>A future zero-inference result must be derived from:</p>
+<pre><code class="language-text">parsed executable expression
+all referenced aliases bound
+all referenced fields physically present
+all target fields projected
+all DDL clauses complete
+all predicates internally consistent
+all state transitions reachable
+all recovery mutations literal
+all required implementation surfaces represented
+</code></pre>
+<p>Review literal-compiler coverage (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_LITERAL_COMPILER_COVERAGE_AUDIT_20260808.csv</code>; referenced bytes not established here)</p>
+<h1>Why 11,143/11,143 PASS does not clear WP1</h1>
+<p>The submitted static result is valid for the controls it actually runs. R5 substantially expanded the review surface and correctly closed the R4 findings. [export reference: filecite | turn169file0 | L454-L470]</p>
+<p>But the static audit still treats these as acceptable closure:</p>
+<pre><code class="language-text">catalog row exists
+descriptive resolution is nonblank
+authority file is present
+relationship is declared
+</code></pre>
+<p>The independent full-closure audit tests a stronger condition:</p>
+<pre><code class="language-text">Can the SQL be written literally from this authority,
+without making one unstated implementation decision?
+</code></pre>
+<p>For Programs 220–222 and their recoveries, the answer is still <strong>no</strong>.</p>
+<h1>Direction to return to the M2.12 build chat</h1>
+<p>This should not be handled as another small three-item patch. R6 needs to rebuild the prospective compiler around executable, cross-artifact, state-consistent authority.</p>
+<pre><code class="language-text">Do not begin Work Package 2 and do not generate Program 220 or any SQL.
+
+Produce:
+
+M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R6
+
+R6 must create a genuinely literal WP2 source authority.
+
+Mandatory correction areas:
+
+1. Program 220 DDL
+   - eliminate explicit-sequence / identity-sequence collisions;
+   - freeze exact archive function and trigger names and complete SQL;
+   - freeze exact comments and postflight identities.
+
+2. Seven persistent views
+   - compile all 845 fields and all 23 joins;
+   - replace unbound ctx with an exact persistent run-scoping model;
+   - correct g3r alias references;
+   - add complete view SQL/postflight authority.
+
+3. Program 221
+   - require one exact policy row;
+   - require policy sequence 1/true and archive/registry sequences 1/false;
+   - replace metadata pseudo-results with executable predicates;
+   - make all 48 assertions and 19 edge branches literal.
+
+4. Program 222 helper/reconstruction closure
+   - eliminate all prose execution placeholders;
+   - define all governed recovery scopes;
+   - define all five phase-9 diagnostic relations or exact subqueries.
+
+5. Program 222 evidence and lifecycle
+   - freeze the full 24-row run_evidence INSERT projection;
+   - freeze exact lifecycle before/after predicates and values;
+   - reconstruct all three owned sequence states.
+
+6. Recoveries
+   - freeze every decision predicate, target mutation, setval, drop/delete
+     order, postcondition, rejection signature, and result projection.
+
+7. Sessions
+   - replace all governed-module-value timeout placeholders with exact
+     literals or an explicit no-local-override rule.
+
+8. Prospective compiler
+   - include all DDL, function, trigger, comment, view, preflight,
+     helper, insert, evidence, lifecycle, recovery, and result surfaces;
+   - fail on any prose, unbound alias, missing field, contradictory state,
+     missing projection, or inferred decision.
+
+Required final values:
+
+explicit sequence / identity collisions                     0
+function or trigger identity mismatches                     0
+undefined function bodies/comments                         0
+unbound persistent-view aliases                            0
+view fields or joins absent from compiler                   0
+cross-catalog missing fields                               0
+program-state contradictions                               0
+nonliteral helper/reconstruction expressions               0
+generation-evidence INSERT fields unresolved               0
+owned sequence states omitted from reconstruction           0
+nonliteral recovery scopes/branches/mutations              0
+session-setting placeholders                               0
+implementation-time inferred decisions                     0
+
+Stop after R6 and wait for full independent re-review.
+
+WP2 remains unauthorized.
+</code></pre>
+<p>The complete ready-to-paste version is available here:</p>
+<p>Download the R6 correction prompt (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_IMPLEMENTATION_CONTROL_CORRECTION_R6_PROMPT_20260808.md</code>; referenced bytes not established here)</p>
+<h1>Governing disposition</h1>
+<pre><code class="language-text">M2.12 WP1 R5                               HOLD
+M2.12 WP2                                  NOT AUTHORIZED
+
+Program 220                                NOT AUTHORIZED
+Program 221                                NOT AUTHORIZED
+Program 222                                NOT AUTHORIZED
+Programs 220A/222A/222B                    NOT AUTHORIZED
+Programs 223–227                           NOT AUTHORIZED
+
+SQL generation                             NOT AUTHORIZED
+PostgreSQL execution                       NOT AUTHORIZED
+Implementation packaging                   NOT AUTHORIZED
+Module 3                                   NOT AUTHORIZED
+Production                                 NOT AUTHORIZED
+</code></pre>
+<h1>Independent audit artifacts</h1>
+<ul>
+<li>Full R5 independent full-closure audit report (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_INDEPENDENT_AUDIT_REPORT_20260808.md</code>; referenced bytes not established here)</li>
+<li>Finding register (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_INDEPENDENT_AUDIT_FINDINGS_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable audit summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_INDEPENDENT_AUDIT_SUMMARY_20260808.json</code>; referenced bytes not established here)</li>
+<li>Program 220 DDL audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_PROGRAM_220_DDL_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Persistent-view alias and compilation audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_VIEW_ALIAS_AND_COMPILATION_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>View compiler coverage summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_VIEW_COMPILER_COVERAGE_SUMMARY_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Cross-catalog field-resolution audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_CROSS_CATALOG_FIELD_RESOLUTION_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Program 221 state-contradiction audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_PREFLIGHT_STATE_CONTRADICTION_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Nonliteral construction audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_NONLITERAL_CONSTRUCTION_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Evidence/lifecycle/sequence audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_EVIDENCE_LIFECYCLE_SEQUENCE_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Session-parameter audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_SESSION_PARAMETER_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Literal-compiler coverage audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_LITERAL_COMPILER_COVERAGE_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Complete independent audit package (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_INDEPENDENT_AUDIT_PACKAGE_20260808.zip</code>; referenced bytes not established here)</li>
+<li>Audit-package SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_WP1_R5_INDEPENDENT_AUDIT_PACKAGE_20260808.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<pre><code class="language-text">Independent audit package SHA-256
+317f290b47f10db401a8d88b62759f5fa0d389f9bd56dedf1d48baa977b3f44a
+</code></pre>
+</div></article><article id="m-c38da15f-0396-46dc-ab5a-28be94200d09" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00277 · 2026-08-08T08:08:13.273000-04:00 · active path</p><div class="bubble"><p>quick aside - will the build prompt we sent for R6 take as long as the R5 build chat? the R5 build chat took 2 hours!</p>
+</div></article><article id="m-5d63e0f9-ddd9-47ea-afc7-7e11817b1d83" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00278 · 2026-08-08T08:08:20.169730-04:00 · active path</p><div class="bubble"><p>Probably <strong>shorter than R5, but I would not expect it to be quick</strong>.</p>
+<p>R5 took about two hours because it did two expensive things at once: it corrected the R4 issues <strong>and</strong> performed the first full prospective closure pass across six programs, 2,605 decisions, 1,281 helper fields, 141 dependencies, 7,040 parsed physical references, 327 persistent projections, and the whole DDL/hash/recovery surface. [export reference: filecite | turn169file0 | L230-L243] [export reference: filecite | turn169file0 | L314-L332]</p>
+<p>R6 is more targeted in <em>business scope</em>, but the prompt deliberately asks it to rebuild several important compiler surfaces rather than just patch a few rows. The biggest time consumers will likely be the seven views/845 fields, Program 221&#39;s 48 assertions and 19 edge branches, the full Program 220 DDL/function/comment authority, and making the recovery programs genuinely literal.</p>
+<p>My rough expectation would be:</p>
+<pre><code class="language-text">Best case       45–75 minutes
+Likely          75–120 minutes
+Heavy case      2+ hours
+</code></pre>
+<p>I would <strong>not be alarmed at 90 minutes</strong>. Around two hours would still be plausible if it performs the compiler rebuild carefully rather than shortcutting it.</p>
+<p>The positive difference is that R6 should be doing less architectural discovery. We explicitly told it to preserve the R1–R5 structures that already passed and concentrate on the remaining literal-compilation surfaces. So if the build chat follows the prompt well, it should not be rebuilding thousands of unrelated records.</p>
+<p>More importantly, the longer R6 runtime is worthwhile <strong>if it actually performs the full closure</strong>. The goal is to avoid another R7 caused by checking only the named defects. I would rather R6 take 90–120 minutes and genuinely answer “could I write the SQL now without improvising anything?” than return in 30 minutes with another superficially green catalog.</p>
+<p>One thing I would watch in its progress: it should spend substantial time on <strong>view compilation, Program 221 predicates, Program 220 DDL/function/trigger, and recovery literalization</strong>. If instead it quickly reports that it merely updated a few matrices and reran thousands of static checks, that would concern me more than a long runtime.</p>
+</div></article><article id="m-fd80cc4b-8825-45c1-bc1d-54f7a52429d7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00279 · 2026-08-08T08:12:35.241000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260808-121125).md</p><div class="bubble"><p>activity so far: Listed R5 directory files and extracted audit archive contents</p>
+<p>Audited R5 CSV structures for robust R6 development
+Reviewed R6 decisions, naming constraints, governance boundaries, and source authority rules      Scoped persistent views (current task)</p>
+</div></article><article id="m-af6d9a1c-e3b3-42e4-b61d-2be77618af05" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00280 · 2026-08-08T08:12:41.532564-04:00 · active path</p><div class="bubble"><p>This looks <strong>healthy and on-track</strong>, and—importantly—it looks materially different from the earlier incremental-fix behavior.</p>
+<p>The R6 chat is not just patching the named R5 findings. It is doing what we wanted: rebuilding the implementation authority around literal, executable surfaces. The progression is good:</p>
+<pre><code class="language-text">R5 inventory / audit extraction
+→ structural inspection of all R5 catalogs
+→ consolidation of R6 blockers
+→ governance / naming / authority reconciliation
+→ literal R6 artifact design
+→ executable DDL design
+→ persistent-view compilation
+→ code generation
+</code></pre>
+<p>That is exactly the right sequence for this pass. The log explicitly shows it moving from catalog inspection into “turning the audit requirements into literal, reproducible definitions,” then separating implicit identity sequences from executable DDL, and now compiling persistent views around accepted registered runs instead of session-local context. [export reference: filecite | turn170file0 | L295-L335]</p>
+<p>The <strong>persistent views stage is one of the biggest R6 workloads</strong>. It has to resolve 845 fields and 23 join-plan rows, eliminate the unbound <code>ctx</code> model, correct the <code>g3r</code> aliases, and produce something that can actually be compiled later. The fact that it is spending time here is reassuring rather than concerning. The R5 inventory it inspected confirms the size of that surface: 845 view mappings and 23 join-plan rows. [export reference: filecite | turn170file0 | L241-L242]</p>
+<p>The latest status, <strong>“Writing code,”</strong> is also a meaningful transition. It suggests the long planning/reconciliation phase is largely complete and it is now generating the corrected R6 authorities rather than still deciding what R6 should look like. [export reference: filecite | turn170file0 | L397-L397]</p>
+<p>Given that it has been running only about 12 minutes in the captured log, I would revise my runtime estimate like this:</p>
+<pre><code class="language-text">Elapsed in snapshot                ~12 minutes
+
+Likely remaining from that point   60–100 minutes
+Plausible total runtime            75–120 minutes
+Could still reach                  ~2 hours
+</code></pre>
+<p>I would <strong>not interrupt it</strong>.</p>
+<p>What I would expect next, if the build is proceeding correctly, is something roughly like:</p>
+<pre><code class="language-text">finish persistent-view compiler
+→ literal Program 220 DDL/function/trigger/comments
+→ literal Program 221 assertions and edge branches
+→ Program 222 evidence/lifecycle/reconstruction closure
+→ 220A / 222A / 222B literal recovery compilation
+→ session rules
+→ rebuilt prospective compiler
+→ cross-artifact static audit
+→ package/source-authority reconciliation
+→ final R6 review bundle
+</code></pre>
+<p>One particularly positive sign is that it explicitly says it is:</p>
+<blockquote>
+<p>“defining views around accepted, registered runs rather than session context”</p>
+</blockquote>
+<p>That directly addresses one of the deeper R5 findings instead of merely renaming <code>ctx</code>. [export reference: filecite | turn170file0 | L329-L335]</p>
+<p>So at this point my assessment is:</p>
+<p><strong>No alarm. Do not stop it. The work pattern looks substantially more like the comprehensive R6 pass we asked for.</strong></p>
+<p>If it ultimately takes another 90 minutes from here, that would be entirely consistent with the scope. The more important signal is that it appears to be addressing the hard surfaces directly rather than racing to another large PASS count.</p>
+</div></article><article id="m-fbbb9fa3-1952-4115-9c79-76aa73a80a4b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00281 · 2026-08-08T09:10:42.909000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260808-131000).md</p><div class="bubble"><p>checking back in: Listed R5 directory files and extracted audit archive contents
+Answer now
+Audited R5 CSV structures for robust R6 development
+Reviewed R6 decisions, naming constraints, governance boundaries, and source authority rules     Reviewed conventions, decisions, controls, and packaging expectations</p>
+</div></article><article id="m-3ee38f6b-d5a7-40af-aa21-f942c0276b04" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00282 · 2026-08-08T09:10:45.305924-04:00 · active path</p><div class="bubble"><p>This still looks <strong>healthy</strong>, and at ~71 minutes it appears to be well into the substantive R6 build rather than stalled.</p>
+<p>The activity since your prior check is encouraging. It moved beyond persistent-view design and into the other major closure surfaces we specifically required. The log says it is now completing “reconciliation and lifecycle authorities,” including persistent run scope, evidence, diagnostics, sequence proofs, recovery definitions, and compiler coverage. [export reference: filecite | turn171file0 | L411-L413] That is almost exactly the remaining R6 checklist.</p>
+<p>It then explicitly reconfirmed the three big areas we wanted fixed—<strong>executable Program 220 DDL, valid persistent views, and concrete Program 221 assertions</strong>—while preserving the no-SQL boundary. [export reference: filecite | turn171file0 | L431-L445] Most importantly, it is now at <strong>“Writing code”</strong> after checking the R5 audit package and source materials. [export reference: filecite | turn171file0 | L479-L501]</p>
+<p>So my interpretation of its progress is approximately:</p>
+<pre><code class="language-text">R5 source/audit ingestion                    DONE
+R6 authority/governance planning             DONE
+Program 220 DDL architecture                 DONE / ADVANCED
+Persistent-view redesign                     DONE / ADVANCED
+Persistent run-scope correction              DONE / ADVANCED
+Program 221 assertion design                 ADVANCED
+Evidence/lifecycle authority                 ADVANCED
+Diagnostics + sequence proof                 ADVANCED
+Recovery literalization                      ADVANCED
+Compiler coverage                            IN PROGRESS
+Artifact generation                          IN PROGRESS
+Static validation                            STILL TO COME
+Final packaging                              STILL TO COME
+</code></pre>
+<p>The phrase <strong>“Reviewed conventions, decisions, controls, and packaging expectations”</strong> is not concerning. It looks like the model performed another integration pass before committing the artifact generation. Given how many R1–R5 authorities must remain unchanged, that is appropriate.</p>
+<p>At <strong>71 minutes elapsed</strong>, I would now estimate perhaps <strong>30–60 minutes remaining</strong>, with 60–90 still plausible if the new compiler/static audit is expensive. I would not be surprised by a total around <strong>100–130 minutes</strong>, which puts it in roughly the same general runtime class as R5.</p>
+<p>One thing I particularly like is that it explicitly says:</p>
+<blockquote>
+<p>“I’ll produce catalogs and compiler-style authorities only, without generating SQL files or expanding scope.” [export reference: filecite | turn171file0 | L441-L445]</p>
+</blockquote>
+<p>That means it has not confused our demand for <em>literal SQL-ready authority</em> with authorization to actually build WP2 SQL.</p>
+<p>So: <strong>keep it running.</strong> At 71 minutes, nothing in this activity suggests a hang, loop, or wrong direction. In fact, this looks closer to the comprehensive closure pass we wanted than any of R1–R5 did during construction.</p>
+</div></article><article id="m-d0454fa6-0f02-47a3-a7e2-3d95771bc904" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00283 · 2026-08-08T10:00:52.365000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260808-140029).md; M2_12_Build_WP1_R6(1).zip</p><div class="bubble"><p>Audit M2_12_Build_WP1_R6. Audit not just as an R5-remediation review, but as if you were about to write WP2 yourself and had no permission to improvise a single implementation detail.  Sign off or escalate blockers/issues:     </p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

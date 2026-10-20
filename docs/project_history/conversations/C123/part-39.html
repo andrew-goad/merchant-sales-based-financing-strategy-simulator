@@ -1,0 +1,1162 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5 — part 39 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5 — part 39</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-38.html">Previous part</a><a href="part-40.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-11526322-bb9d-4cd9-bd3a-054826a4195c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00474 · 2026-10-16T12:23:30.593894-04:00 · active path</p><div class="bubble"><p>Great. Since you&#39;ve already removed the extra filter and cleaned up the Marks card, <strong>we can proceed directly to testing the selected-pairing calculation.</strong></p>
+<p>Your screenshots establish the exact decision-code format Tableau is using. We no longer need to guess at the values.</p>
+<h2>1. Use these exact parameter values</h2>
+<p>For our first test, we&#39;ll use the pairing containing <strong>88 applications</strong>:</p>
+<p><strong>Counteroffer review required → Evidence decline</strong></p>
+<p>Set the parameters as follows.</p>
+<p><strong>Selected Baseline Decision Code</strong></p>
+<pre><code class="language-text">COUNTEROFFER_REVIEW_REQUIRED
+</code></pre>
+<p><strong>Selected Stress Decision Code</strong></p>
+<pre><code class="language-text">DECLINE_INSUFFICIENT_EVIDENCE
+</code></pre>
+<p>The second code is directly confirmed in your screenshot. The first is consistent with the naming convention, but <strong>your screenshots do not actually show the Baseline code for the 88-application cell</strong>. We should verify that code before treating the test as passed.</p>
+<h3>How to confirm it</h3>
+<p>Return to <code>02 — Decision Matrix</code> and hover specifically over the cell containing <strong>88</strong>.</p>
+<p>Its tooltip should show:</p>
+<ul>
+<li>Baseline Decision: Counteroffer review required</li>
+<li>Stress Decision: Evidence decline</li>
+<li>Baseline Decision Code: the exact code we need</li>
+<li>Stress Decision Code: <code>DECLINE_INSUFFICIENT_EVIDENCE</code></li>
+</ul>
+<p>Copy the Baseline code exactly as Tableau displays it.</p>
+<p>Then:</p>
+<ol>
+<li>Right-click <code>Selected Baseline Decision Code</code> under <strong>Parameters</strong> → <strong>Edit</strong>.</li>
+<li>Enter the confirmed code in <strong>Current value</strong>.</li>
+<li>Click <strong>OK</strong>.</li>
+<li>Repeat for <code>Selected Stress Decision Code</code>, entering <code>DECLINE_INSUFFICIENT_EVIDENCE</code>.</li>
+</ol>
+<p>Both parameters should retain <strong>Allowable values = All</strong>.</p>
+<h2>2. Return to worksheet 13</h2>
+<p>Open:</p>
+<p><strong>13 — Selected Segment Pairing Concentration</strong></p>
+<p>Make sure the portfolio filters include all industries and all acquisition sources.</p>
+<p>The chart should now display nonzero incidence rates.</p>
+<p>For <strong>Healthcare Services</strong>, our established control is:</p>
+&lt;box border radius=&quot;lg&quot; padding={3} gap={2}&gt;
+  &lt;text weight=&quot;medium&quot;&gt;Healthcare Services&lt;/text&gt;
+  &lt;row align=&quot;baseline&quot; justify=&quot;between&quot;&gt;
+    &lt;title size=&quot;2xl&quot; tabularNums&gt;12.2%&lt;/title&gt;
+    &lt;text color=&quot;secondary&quot; size=&quot;sm&quot;&gt;10 affected / 82 applications&lt;/text&gt;
+  &lt;/row&gt;
+  &lt;box background=&quot;surface-tertiary&quot; radius=&quot;full&quot; height=&quot;12px&quot; clip&gt;
+    &lt;box background=&quot;#438d9c&quot; width=&quot;12.2%&quot; height=&quot;100%&quot; radius=&quot;full&quot;/&gt;
+  &lt;/box&gt;
+&lt;/box&gt;
+
+<p>This test establishes that the chart is counting applications in the selected decision pairing while keeping the denominator at the full Healthcare Services population.</p>
+<h2>3. If Healthcare Services still shows 0.0%</h2>
+<p>Check the two parameters first. A mismatch of even one character will prevent the flag from matching.</p>
+<p>Then verify that <code>Selected Pairing Flag</code> contains:</p>
+<pre><code class="language-tableau">IF [Selected Baseline Decision Code] = &quot;ALL&quot;
+   OR [Selected Stress Decision Code] = &quot;ALL&quot; THEN
+    0
+ELSEIF [Baseline Decision Code] = [Selected Baseline Decision Code]
+   AND [Stress Decision Code] = [Selected Stress Decision Code] THEN
+    1
+ELSE
+    0
+END
+</code></pre>
+<p>Your worksheet should not have a filter restricting it to the selected decision pairing, and it should not retain the old Baseline Authorizations filter.</p>
+<h2>4. Then automate the selection</h2>
+<p>Once the manual test passes, create the two dashboard parameter actions.</p>
+<p>Go to <strong>Dashboard → Actions → Add Action → Change Parameter</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Baseline action</th>
+<th>Stress action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Name</td>
+<td>Set Baseline Pairing</td>
+<td>Set Stress Pairing</td>
+</tr>
+<tr>
+<td>Source sheet</td>
+<td>02 — Decision Matrix</td>
+<td>02 — Decision Matrix</td>
+</tr>
+<tr>
+<td>Run on</td>
+<td>Select</td>
+<td>Select</td>
+</tr>
+<tr>
+<td>Target parameter</td>
+<td>Selected Baseline Decision Code</td>
+<td>Selected Stress Decision Code</td>
+</tr>
+<tr>
+<td>Source field</td>
+<td>Baseline Decision Code</td>
+<td>Stress Decision Code</td>
+</tr>
+<tr>
+<td>Aggregation</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Clearing selection</td>
+<td>Set value to <code>ALL</code></td>
+<td>Set value to <code>ALL</code></td>
+</tr>
+</tbody></table>
+<p>Keep the existing matrix-to-application filter action. The new parameter actions serve a different purpose: they transmit the selected pairing to worksheet 13 <strong>without filtering away the denominator</strong>.</p>
+<h2>5. Important next design decision</h2>
+<p>We should ultimately display the two segment analyses as alternative modes:</p>
+<p><strong>Portfolio authorization rates</strong> — the existing worksheet 08.</p>
+<p><strong>Selected decision-pairing incidence</strong> — worksheet 13.</p>
+<p>That will preserve both capabilities without overcrowding the dashboard.</p>
+<p>But first, we need the calculation to pass its source-data test.</p>
+<p><strong>Next checkpoint:</strong> Hover over the <strong>88</strong> cell, confirm its exact Baseline Decision Code, enter the two parameter values, and check whether Healthcare Services shows <strong>12.2%</strong> on worksheet 13.</p>
+<p>Once that works, we&#39;re ready to connect the parameter actions and make this an interactive extension of your risk-review dashboard.</p>
+</div></article><article id="m-1c4e6c72-17bc-4747-afb8-889b2b4d932a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00475 · 2026-10-16T12:36:15.526000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-163449).png</p><div class="bubble"><p>I updated Selected Baseline Decision Code and Selected Stress Decision Code parameters as:  Are you now saying that I am replacing those with Set Baseline Pairing and Set Stress Pairing?</p>
+</div></article><article id="m-f73cadf8-4e6e-433d-9fd9-5aa6542f4a9c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00476 · 2026-10-16T12:36:24.082012-04:00 · active path</p><div class="bubble"><p><strong>No. Keep both parameters exactly as you&#39;ve created them.</strong> You are not replacing or renaming anything.</p>
+<p>The distinction is:</p>
+<ul>
+<li><strong>Parameters</strong> store the selected decision codes.</li>
+<li><strong>Parameter actions</strong> automatically update those parameters when you click a cell in the decision matrix.</li>
+</ul>
+<p>The names <code>Set Baseline Pairing</code> and <code>Set Stress Pairing</code> are names for the <strong>new dashboard actions</strong>, not replacements for your existing parameters.</p>
+<h3>How the pieces work together</h3>
+&lt;box border radius=&quot;lg&quot; padding={3} gap={2} align=&quot;center&quot;&gt;
+  &lt;box background=&quot;surface-secondary&quot; radius=&quot;md&quot; padding={3} width=&quot;100%&quot; align=&quot;center&quot; gap={1}&gt;
+    **02 — Decision Matrix**
+    &lt;text size=&quot;xs&quot; textAlign=&quot;center&quot;&gt;You click a decision pairing, such as Counteroffer review → Evidence decline&lt;/text&gt;
+  &lt;/box&gt;
+  &lt;icon name=&quot;arrow-down&quot; color=&quot;secondary&quot; size=&quot;lg&quot;/&gt;
+  &lt;grid columns={2} gap={2}&gt;
+    &lt;grid-item&gt;
+      &lt;box border radius=&quot;md&quot; padding={2} gap={1} align=&quot;center&quot;&gt;
+        &lt;text weight=&quot;medium&quot; size=&quot;xs&quot; textAlign=&quot;center&quot;&gt;Action: Set Baseline Pairing&lt;/text&gt;
+        &lt;icon name=&quot;arrow-down&quot; color=&quot;secondary&quot;/&gt;
+        &lt;text size=&quot;2xs&quot; textAlign=&quot;center&quot;&gt;Parameter: Selected Baseline Decision Code&lt;/text&gt;
+      &lt;/box&gt;
+    &lt;/grid-item&gt;
+    &lt;grid-item&gt;
+      &lt;box border radius=&quot;md&quot; padding={2} gap={1} align=&quot;center&quot;&gt;
+        &lt;text weight=&quot;medium&quot; size=&quot;xs&quot; textAlign=&quot;center&quot;&gt;Action: Set Stress Pairing&lt;/text&gt;
+        &lt;icon name=&quot;arrow-down&quot; color=&quot;secondary&quot;/&gt;
+        &lt;text size=&quot;2xs&quot; textAlign=&quot;center&quot;&gt;Parameter: Selected Stress Decision Code&lt;/text&gt;
+      &lt;/box&gt;
+    &lt;/grid-item&gt;
+  &lt;/grid&gt;
+  &lt;icon name=&quot;arrow-down&quot; color=&quot;secondary&quot; size=&quot;lg&quot;/&gt;
+  &lt;box background=&quot;surface-secondary&quot; radius=&quot;md&quot; padding={3} width=&quot;100%&quot; align=&quot;center&quot; gap={1}&gt;
+    **13 — Selected Segment Pairing Concentration**
+    &lt;text size=&quot;xs&quot; textAlign=&quot;center&quot;&gt;Recalculates the affected counts and within-segment incidence&lt;/text&gt;
+  &lt;/box&gt;
+&lt;/box&gt;
+
+<h3>One detail in your screenshot</h3>
+<p>Your parameter currently has <strong>Allowable values = List</strong>, with technical codes in the <strong>Value</strong> column and readable decision labels in <strong>Display As</strong>.</p>
+<p>That is a good setup. It lets Tableau store the exact codes while displaying readable labels.</p>
+<p><strong>Keep it as List.</strong> My earlier instructions said to use <code>All</code>, but your configured list is actually preferable because it restricts the parameter to valid decision codes.</p>
+<p>There is just one adjustment: <strong>add <code>ALL</code> as an allowable value to each parameter</strong>, with <code>All pairings</code> in the Display As column. This gives the parameter actions a valid reset value when you clear the matrix selection.</p>
+<p>Then create the two dashboard actions:</p>
+<table>
+<thead>
+<tr>
+<th>Action name</th>
+<th>Target parameter</th>
+<th>Source field</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Set Baseline Pairing</code></td>
+<td><code>Selected Baseline Decision Code</code></td>
+<td><code>Baseline Decision Code</code></td>
+</tr>
+<tr>
+<td><code>Set Stress Pairing</code></td>
+<td><code>Selected Stress Decision Code</code></td>
+<td><code>Stress Decision Code</code></td>
+</tr>
+</tbody></table>
+<p>Both actions should use <strong>02 — Decision Matrix</strong> as their source worksheet, run on <strong>Select</strong>, and reset to <code>ALL</code> when the selection is cleared.</p>
+<p><strong>One more check:</strong> Your screenshot shows the Baseline parameter&#39;s current value as <em>Approve as requested – authorized</em>. For the manual 88-application test, select <em>Counteroffer review required</em> in that dropdown, and select <em>Evidence decline</em> in the Stress parameter. The underlying values—not the displayed labels—will be compared in the calculation.</p>
+<p>Once worksheet 13 shows the expected <strong>10 of 82 Healthcare Services applications (12.2%)</strong>, we can create and test the automatic actions.</p>
+<p><strong>So the order is: keep your parameters → add the <code>ALL</code> reset option → verify the manual test → create the two parameter actions.</strong></p>
+</div></article><article id="m-290bcc27-44ae-494b-b612-b63b48d9a555" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00477 · 2026-10-16T12:44:25.029000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-164410).png</p><div class="bubble"><p>test passed - ready to move on to the dashboard update</p>
+</div></article><article id="m-17a3b15e-b443-4e79-8d69-0ee30936c3d2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00478 · 2026-10-16T12:44:34.806242-04:00 · active path</p><div class="bubble"><p><strong>Excellent. The manual test passes.</strong> Your screenshot shows the correct decision pairing, nonzero segment incidence rates, and the expected <strong>12.2% for Healthcare Services (10 of 82 applications)</strong>.</p>
+<p>We&#39;re ready to integrate worksheet <code>13 — Selected Segment Pairing Concentration</code> into the dashboard.</p>
+<p>I recommend doing this without disturbing your existing authorization-rate chart or the merchant investigation workflow.</p>
+<h2>1. Final dashboard behavior</h2>
+<p>We want Section 03 to support two analytical views:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>What it answers</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Portfolio Authorization</strong></td>
+<td>How do Baseline and Recession Energy authorization rates compare across industries or acquisition sources?</td>
+</tr>
+<tr>
+<td><strong>Selected Pairing</strong></td>
+<td>Where is the selected decision pairing concentrated, measured against each segment&#39;s full matched population?</td>
+</tr>
+</tbody></table>
+<p>The second mode should update when you click a matrix cell, without altering portfolio KPIs or denominator populations.</p>
+<p>For this build, I recommend <strong>a user-controlled view switch</strong>, rather than automatically changing the chart every time a matrix cell is selected. That makes the analytical context explicit.</p>
+<h2>2. Create the display-mode parameter</h2>
+<p>In Tableau&#39;s Data pane, right-click → <strong>Create Parameter</strong>.</p>
+<p>Configure:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Name</td>
+<td><code>Segment Analysis Mode</code></td>
+</tr>
+<tr>
+<td>Data type</td>
+<td>String</td>
+</tr>
+<tr>
+<td>Allowable values</td>
+<td>List</td>
+</tr>
+<tr>
+<td>Current value</td>
+<td><code>Portfolio Authorization</code></td>
+</tr>
+</tbody></table>
+<p>Add these list values:</p>
+<pre><code class="language-text">Portfolio Authorization
+Selected Pairing
+</code></pre>
+<p>Click <strong>OK</strong>.</p>
+<p>Then create two calculated fields.</p>
+<p><strong><code>Show Portfolio Authorization</code></strong></p>
+<pre><code class="language-tableau">[Segment Analysis Mode] = &quot;Portfolio Authorization&quot;
+</code></pre>
+<p><strong><code>Show Selected Pairing</code></strong></p>
+<pre><code class="language-tableau">[Segment Analysis Mode] = &quot;Selected Pairing&quot;
+</code></pre>
+<p>These Boolean fields will control which worksheet is visible.</p>
+<h2>3. Connect the matrix to your decision-code parameters</h2>
+<p>Return to <strong>Risk Decision &amp; Scenario Review</strong>.</p>
+<p>Open <strong>Dashboard → Actions → Add Action → Change Parameter</strong>.</p>
+<p>Create the first action:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Name</td>
+<td><code>Set Baseline Pairing</code></td>
+</tr>
+<tr>
+<td>Source sheet</td>
+<td><code>02 — Decision Matrix</code></td>
+</tr>
+<tr>
+<td>Run action on</td>
+<td>Select</td>
+</tr>
+<tr>
+<td>Target parameter</td>
+<td><code>Selected Baseline Decision Code</code></td>
+</tr>
+<tr>
+<td>Source field</td>
+<td><code>Baseline Decision Code</code></td>
+</tr>
+<tr>
+<td>Aggregation</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Clearing selection</td>
+<td>Set value to <code>ALL</code></td>
+</tr>
+</tbody></table>
+<p>Create a second action:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Name</td>
+<td><code>Set Stress Pairing</code></td>
+</tr>
+<tr>
+<td>Source sheet</td>
+<td><code>02 — Decision Matrix</code></td>
+</tr>
+<tr>
+<td>Run action on</td>
+<td>Select</td>
+</tr>
+<tr>
+<td>Target parameter</td>
+<td><code>Selected Stress Decision Code</code></td>
+</tr>
+<tr>
+<td>Source field</td>
+<td><code>Stress Decision Code</code></td>
+</tr>
+<tr>
+<td>Aggregation</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Clearing selection</td>
+<td>Set value to <code>ALL</code></td>
+</tr>
+</tbody></table>
+<p><strong>Important:</strong> The parameter actions should not target the KPI sheets or the executive narrative. They update only the two parameter values; worksheet 13 responds through its calculated fields.</p>
+<p>Your existing <code>Select decision pairing</code> filter action should remain unchanged.</p>
+<h3>Verify the actions</h3>
+<p>Click the <strong>88-application</strong> matrix cell:</p>
+<p><strong>Counteroffer review required → Evidence decline</strong></p>
+<p>The two decision-code parameters should update to the corresponding codes.</p>
+<p>Open worksheet 13. Its values should match your manual test.</p>
+<p>Clear the matrix selection. Both parameters should reset to <code>ALL</code>, and worksheet 13 should show 0% across segments.</p>
+<p>That zero state is mathematically expected, but we will make its interpretation clearer before publication.</p>
+<h2>4. Add both segment worksheets to Section 03</h2>
+<p>We will use Tableau&#39;s <strong>Dynamic Zone Visibility</strong> if your Tableau Public version supports it.</p>
+<h3>A. Prepare the dashboard container</h3>
+<ol>
+<li>Return to the dashboard.</li>
+<li>Select the existing <code>08 — Segment Comparison</code> worksheet.</li>
+<li>Open <strong>Layout → Item hierarchy</strong> to identify its current parent.</li>
+<li>Keep worksheet 08 in its existing right-side analytical panel.</li>
+<li>Add worksheet <code>13 — Selected Segment Pairing Concentration</code> to the same panel.</li>
+</ol>
+<p>Initially, both may be visible. That&#39;s fine—we&#39;ll configure visibility next.</p>
+<h3>B. Configure worksheet 08 visibility</h3>
+<ol>
+<li>Select worksheet <code>08 — Segment Comparison</code> on the dashboard.</li>
+<li>Open the <strong>Layout</strong> pane.</li>
+<li>Locate <strong>Control visibility using value</strong>.</li>
+<li>Select <code>Show Portfolio Authorization</code>.</li>
+</ol>
+<h3>C. Configure worksheet 13 visibility</h3>
+<ol>
+<li>Select worksheet <code>13 — Selected Segment Pairing Concentration</code>.</li>
+<li>Under <strong>Control visibility using value</strong>, select <code>Show Selected Pairing</code>.</li>
+</ol>
+<p>Tableau should now show only the worksheet corresponding to the selected parameter value.</p>
+<p>If your version does not expose <strong>Control visibility using value</strong>, stop there rather than using filters to simulate visibility. We can use a supported alternative.</p>
+<h3>D. Add the mode selector</h3>
+<p>On the dashboard, open the dropdown for either segment worksheet and choose:</p>
+<p><strong>Parameters → Segment Analysis Mode</strong></p>
+<p>Place that parameter card immediately beneath your Section 03 heading, near the existing <code>Review Segment By</code> control.</p>
+<p>You can leave <code>Review Segment By</code> in your top control bar because it applies to both segment worksheets.</p>
+<p>The intended arrangement is:</p>
+<pre><code class="language-text">03 / SEGMENT SENSITIVITY
+
+Analysis Mode: [Portfolio Authorization ▼]
+
+[Authorization-rate chart]
+
+or
+
+Analysis Mode: [Selected Pairing ▼]
+
+[Selected-pairing incidence chart]
+</code></pre>
+<p>Keep the same panel width and height in both modes.</p>
+<h2>5. Update worksheet 13&#39;s presentation</h2>
+<p>Before considering the build complete, make three changes.</p>
+<p><strong>Title:</strong> Replace its inherited authorization-rate title with:</p>
+<p><strong>Selected Pairing Concentration</strong></p>
+<p><strong>Subtitle:</strong> Use:</p>
+<blockquote>
+<p>Share of each segment&#39;s matched applications belonging to the selected decision pairing.</p>
+</blockquote>
+<p><strong>Tooltip:</strong> Include:</p>
+<pre><code class="language-text">Segment: &lt;Review Segment&gt;
+Affected applications: &lt;Selected Pairing Applications&gt;
+Segment applications: &lt;Segment Applications&gt;
+Within-segment incidence: &lt;Selected Pairing Incidence&gt;
+</code></pre>
+<p>Use Tableau&#39;s <strong>Insert</strong> menu for the actual field tokens.</p>
+<h3>Optional improvement</h3>
+<p>I would keep the segment bars sorted descending by selected-pairing incidence. Your current screenshot shows the sort order inherited from the original authorization-rate chart, so this is worth checking.</p>
+<h2>6. Correct the empty-selection behavior</h2>
+<p>When both selected-decision parameters are <code>ALL</code>, worksheet 13 currently shows 0% across segments.</p>
+<p>For an executive audience, that can misleadingly look like a genuine zero-incidence result.</p>
+<p>Create:</p>
+<p><strong><code>Selected Pairing Status</code></strong></p>
+<pre><code class="language-tableau">IF [Selected Baseline Decision Code] = &quot;ALL&quot;
+   OR [Selected Stress Decision Code] = &quot;ALL&quot; THEN
+    &quot;Select a decision pairing in the matrix to view its segment concentration.&quot;
+ELSE
+    &quot;Showing the selected decision pairing across the portfolio-filtered segment population.&quot;
+END
+</code></pre>
+<p>Add this as a small text worksheet above the pairing chart, or use it in the chart&#39;s displayed caption.</p>
+<p><strong>Do not interpret the all-zero state as evidence that no applications match a pairing.</strong> It means no pairing has been selected.</p>
+<h2>7. End-to-end test</h2>
+<p>Once both segment views are available, test these states:</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Expected result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Clear all portfolio filters</td>
+<td>KPIs remain <strong>750 / 236 / 103 / 27</strong></td>
+</tr>
+<tr>
+<td>Portfolio Authorization mode</td>
+<td>Original Baseline/stress authorization bars appear</td>
+</tr>
+<tr>
+<td>Select 88-application matrix cell</td>
+<td>Application list narrows to <strong>88</strong></td>
+</tr>
+<tr>
+<td>Switch to Selected Pairing mode</td>
+<td>Healthcare Services shows <strong>12.2%</strong></td>
+</tr>
+<tr>
+<td>Select Merchant 000003</td>
+<td>Scenario explanations update; portfolio KPIs and pairing chart remain unchanged</td>
+</tr>
+<tr>
+<td>Switch Review Segment By</td>
+<td>Pairing chart changes between Industry and Acquisition Source</td>
+</tr>
+<tr>
+<td>Clear matrix selection</td>
+<td>Pairing parameters reset; chart displays selection guidance</td>
+</tr>
+<tr>
+<td>Return to Portfolio Authorization</td>
+<td>Original authorization-rate chart returns</td>
+</tr>
+</tbody></table>
+<p><strong>One outstanding issue remains:</strong> In your earlier dashboard screenshot, the KPI cards fell to <strong>1 / 1 / 1 / 0</strong> after selecting an application while the executive narrative still showed 750. Before publication, verify that the KPI sheets are excluded from both investigation actions and that no additional worksheet filter is reaching them.</p>
+<hr>
+<p><strong>Next checkpoint:</strong> Complete the two parameter actions first. Then confirm whether <strong>Control visibility using value</strong> is available in your Tableau Public Layout pane. That determines whether we can use the clean one-panel, two-mode design directly.</p>
+</div></article><article id="m-dbf8f9d0-71b5-428f-861d-7f4e97590540" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00479 · 2026-10-16T12:53:49.337000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-165304).png; image(20261016-165317).png</p><div class="bubble"><p>full hierarchy - please review and advise in more detail knowing this. thanks. proceed again from step 4.</p>
+</div></article><article id="m-71ba655c-3003-4355-b2f7-48b39a041076" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00480 · 2026-10-16T12:54:04.312939-04:00 · active path</p><div class="bubble"><p>Your hierarchy screenshots clarify the situation considerably. <strong>We can preserve the existing dashboard and integrate worksheet 13 without rebuilding any of the five sections.</strong></p>
+<p>I also see why the earlier instructions were difficult to follow: your Tableau dashboard contains several nested tiled containers, and the two analytical charts already share a horizontal container. That gives us a specific place to make the change.</p>
+<h2>1. What your current hierarchy tells us</h2>
+<p>At the bottom of your second screenshot, the relevant structure is:</p>
+<pre><code class="language-text">Horizontal Container
+    02 - Decision Matrix
+    08 - Segment Comparison
+</code></pre>
+<p><strong>That is the exact container we want to work with.</strong></p>
+<p>The rest of the dashboard is already organized:</p>
+<table>
+<thead>
+<tr>
+<th>Existing area</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Header, controls and four KPI cards</td>
+<td>Built</td>
+<td>Preserve</td>
+</tr>
+<tr>
+<td>01 — Portfolio Interpretation</td>
+<td>Built</td>
+<td>Preserve</td>
+</tr>
+<tr>
+<td>02 — Decision Matrix</td>
+<td>Built</td>
+<td>Preserve</td>
+</tr>
+<tr>
+<td>03 — Segment Sensitivity (<code>08</code>)</td>
+<td>Built</td>
+<td>Add alternate view</td>
+</tr>
+<tr>
+<td>04 — Application Investigation</td>
+<td>Built</td>
+<td>Preserve</td>
+</tr>
+<tr>
+<td>05 — Merchant Evidence &amp; Decision Interpretation</td>
+<td>Built</td>
+<td>Preserve</td>
+</tr>
+</tbody></table>
+<p>Your screenshots also confirm that <code>08 — Segment Comparison</code> is a direct child of the same horizontal container as <code>02 — Decision Matrix</code>. We should <strong>not move the matrix or its parent container</strong>.</p>
+<p>The goal is to make the right-hand panel switch between worksheet 08 and worksheet 13, while the matrix remains permanently visible on the left.</p>
+<h2>2. Step 4 — Prepare the right-hand chart panel</h2>
+<p>We will change the structure from:</p>
+<pre><code class="language-text">Horizontal Container
+    02 - Decision Matrix
+    08 - Segment Comparison
+</code></pre>
+<p>to:</p>
+<pre><code class="language-text">Horizontal Container
+    02 - Decision Matrix
+    Vertical Container
+        08 - Segment Comparison
+        13 - Selected Segment Pairing Concentration
+</code></pre>
+<p>The two segment worksheets will occupy the same right-hand panel, but only one will be visible at a time.</p>
+<h3>A. Save a recovery copy first</h3>
+<p>Choose <strong>File → Save As</strong> and save a new local workbook named:</p>
+<p><code>MCI_Risk_Decision_Scenario_Review_R2</code></p>
+<p>This preserves your functioning R1 layout while we configure the new visibility behavior.</p>
+<h3>B. Add the right-hand vertical container</h3>
+<ol>
+<li>Return to the <strong>Dashboard</strong> tab in the left sidebar.</li>
+<li>Under Objects, select <strong>Tiled</strong>.</li>
+<li>Drag a <strong>Vertical</strong> container toward the existing <code>08 — Segment Comparison</code> chart.</li>
+<li>Watch the placement highlight. You want the container in the right-hand analytical panel, not across the entire dashboard.</li>
+<li>Release when Tableau highlights the appropriate right-hand area.</li>
+</ol>
+<p>If Tableau moves or shrinks the matrix unexpectedly, press <strong>Ctrl+Z</strong> immediately.</p>
+<h3>C. Move worksheet 08 inside it</h3>
+<p>Select <code>08 — Segment Comparison</code> on the dashboard. Use the gray grab handle at the top of its border to drag it into the new vertical container.</p>
+<p>Then drag <code>13 — Selected Segment Pairing Concentration</code> from the Sheets list into the same vertical container, below worksheet 08.</p>
+<p>Your Layout hierarchy should show:</p>
+<pre><code class="language-text">Horizontal Container
+    02 - Decision Matrix
+    Vertical Container
+        08 - Segment Comparison
+        13 - Selected Segment Pairing Concentration
+</code></pre>
+<p><strong>Stop and verify this hierarchy before proceeding.</strong> If worksheet 13 appears underneath the entire decision matrix and application table, it was dropped into the wrong parent.</p>
+<p>At this stage, both segment charts may appear stacked and compressed. That&#39;s temporary.</p>
+<h2>3. Step 5 — Configure Dynamic Zone Visibility</h2>
+<p>You already created:</p>
+<ul>
+<li><code>Segment Analysis Mode</code></li>
+<li><code>Show Portfolio Authorization</code></li>
+<li><code>Show Selected Pairing</code></li>
+</ul>
+<p>We will now connect those calculations to the two worksheets.</p>
+<h3>A. Configure worksheet 08</h3>
+<ol>
+<li>In <strong>Layout → Item hierarchy</strong>, select <code>08 — Segment Comparison</code>.</li>
+<li>Find <strong>Control visibility using value</strong> in the Layout pane.</li>
+<li>Enable that option.</li>
+<li>Select <code>Show Portfolio Authorization</code>.</li>
+</ol>
+<p>The calculation should be:</p>
+<pre><code class="language-tableau">[Segment Analysis Mode] = &quot;Portfolio Authorization&quot;
+</code></pre>
+<h3>B. Configure worksheet 13</h3>
+<p>Select <code>13 — Selected Segment Pairing Concentration</code> in the hierarchy.</p>
+<p>Enable <strong>Control visibility using value</strong> and select:</p>
+<p><code>Show Selected Pairing</code></p>
+<p>Its calculation should be:</p>
+<pre><code class="language-tableau">[Segment Analysis Mode] = &quot;Selected Pairing&quot;
+</code></pre>
+<p>These calculations should be Boolean fields, returning True or False.</p>
+<h3>C. Test the visibility</h3>
+<p>Temporarily show the <code>Segment Analysis Mode</code> parameter control on the dashboard.</p>
+<p>Switch between:</p>
+<ul>
+<li><strong>Portfolio Authorization</strong> — worksheet 08 appears.</li>
+<li><strong>Selected Pairing</strong> — worksheet 13 appears.</li>
+</ul>
+<p>The matrix should remain visible in both modes, and the segment chart should occupy the right-hand analytical panel.</p>
+<p>If <strong>Control visibility using value</strong> is unavailable, or the two charts remain stacked, do not try to fix it by adding filters or converting the entire dashboard to Floating. Send me the Layout pane for worksheet 08. We&#39;ll use a different supported arrangement.</p>
+<h2>4. Step 6 — Update Section 03&#39;s heading and controls</h2>
+<p>Your current heading is:</p>
+<p><strong>03 / SEGMENT SENSITIVITY — Authorization Rates by selected grouping</strong></p>
+<p>That will no longer accurately describe both chart modes.</p>
+<p>I recommend:</p>
+<p><strong>03 / SEGMENT SENSITIVITY</strong> — Compare authorization rates or investigate selected decision pairings.</p>
+<p>This retains your established numbered-section style.</p>
+<h3>Place the new selector</h3>
+<p>Your top control row currently contains:</p>
+<ul>
+<li>Industry</li>
+<li>Acquisition Source</li>
+<li>Review Segment By</li>
+<li>Matched Application Count legend</li>
+<li>Scenario legend</li>
+</ul>
+<p>I would <strong>not add a sixth control to that row</strong>. It is already balanced.</p>
+<p>Instead, place <code>Segment Analysis Mode</code> immediately beneath the Section 03 heading and above the active segment chart.</p>
+<p>Use the parameter card&#39;s dropdown to select <strong>Single Value (Dropdown)</strong>.</p>
+<p>The right-hand panel should read:</p>
+&lt;box border radius=&quot;lg&quot; padding={3} gap={2}&gt;
+  &lt;text weight=&quot;medium&quot; size=&quot;sm&quot;&gt;03 / SEGMENT SENSITIVITY&lt;/text&gt;
+  &lt;text color=&quot;secondary&quot; size=&quot;xs&quot;&gt;Compare authorization rates or investigate selected decision pairings&lt;/text&gt;
+  {@body const [mode,setMode] = DIL.useState(&quot;authorization&quot;)}
+  &lt;box gap={1}&gt;
+    &lt;label&gt;Analysis Mode&lt;/label&gt;
+    &lt;segmented-control block size=&quot;md&quot; value={mode} onChange={setMode} options={[{&quot;label&quot;:&quot;Portfolio Authorization&quot;,&quot;value&quot;:&quot;authorization&quot;},{&quot;label&quot;:&quot;Selected Pairing&quot;,&quot;value&quot;:&quot;pairing&quot;}]}/&gt;
+  &lt;/box&gt;
+  {#if mode===&quot;authorization&quot;}
+    &lt;text size=&quot;xs&quot; weight=&quot;medium&quot;&gt;Authorization rates by industry&lt;/text&gt;
+    &lt;Chart content={{&quot;chartType&quot;:&quot;bar&quot;,&quot;meta&quot;:{&quot;footer&quot;:&quot;Illustrative subset of your verified full-population rates&quot;},&quot;xKey&quot;:&quot;segment&quot;,&quot;series&quot;:[{&quot;dataKey&quot;:&quot;baseline&quot;,&quot;label&quot;:&quot;Baseline&quot;,&quot;valueSuffix&quot;:&quot;%&quot;},{&quot;dataKey&quot;:&quot;stress&quot;,&quot;label&quot;:&quot;Recession Energy&quot;,&quot;valueSuffix&quot;:&quot;%&quot;}],&quot;layout&quot;:&quot;vertical&quot;,&quot;data&quot;:[{&quot;segment&quot;:&quot;Professional Services&quot;,&quot;baseline&quot;:26.8,&quot;stress&quot;:7.1},{&quot;segment&quot;:&quot;Healthcare Services&quot;,&quot;baseline&quot;:18.3,&quot;stress&quot;:4.9},{&quot;segment&quot;:&quot;Ecommerce Digital&quot;,&quot;baseline&quot;:16.2,&quot;stress&quot;:4.4}]}}/&gt;
+  {:else}
+    &lt;text size=&quot;xs&quot; weight=&quot;medium&quot;&gt;Counteroffer review → Evidence decline&lt;/text&gt;
+    &lt;row align=&quot;baseline&quot; justify=&quot;between&quot;&gt;
+      &lt;title size=&quot;xl&quot;&gt;12.2%&lt;/title&gt;
+      &lt;text color=&quot;secondary&quot; size=&quot;xs&quot;&gt;Healthcare Services · 10 of 82&lt;/text&gt;
+    &lt;/row&gt;
+    &lt;box background=&quot;surface-tertiary&quot; radius=&quot;full&quot; height=&quot;12px&quot; clip&gt;
+      &lt;box background=&quot;#438d9c&quot; width=&quot;12.2%&quot; height=&quot;100%&quot;/&gt;
+    &lt;/box&gt;
+    &lt;caption&gt;Example of the verified selected-pairing result, not the full chart.&lt;/caption&gt;
+  {/if}
+&lt;/box&gt;
+
+<p>This is a conceptual illustration. In Tableau, the mode selector will be a dropdown and the existing worksheets will supply the charts.</p>
+<h2>5. Step 7 — Verify the matrix parameter actions</h2>
+<p>Before testing the new panel, confirm the two parameter actions exist.</p>
+<p>Open <strong>Dashboard → Actions</strong>.</p>
+<p>You should have these actions:</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Source</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Select decision pairing</code></td>
+<td>02 — Decision Matrix</td>
+<td>Filters application investigation</td>
+</tr>
+<tr>
+<td><code>Inspect application</code></td>
+<td>04 — Application Detail</td>
+<td>Filters merchant narratives</td>
+</tr>
+<tr>
+<td><code>Set Baseline Pairing</code></td>
+<td>02 — Decision Matrix</td>
+<td>Updates Baseline decision-code parameter</td>
+</tr>
+<tr>
+<td><code>Set Stress Pairing</code></td>
+<td>02 — Decision Matrix</td>
+<td>Updates stress decision-code parameter</td>
+</tr>
+</tbody></table>
+<p>For the last two actions, verify:</p>
+<p><strong>Set Baseline Pairing</strong></p>
+<ul>
+<li>Run on: Select</li>
+<li>Target parameter: <code>Selected Baseline Decision Code</code></li>
+<li>Source field: <code>Baseline Decision Code</code></li>
+<li>Clearing selection: Set value to <code>ALL</code></li>
+</ul>
+<p><strong>Set Stress Pairing</strong></p>
+<ul>
+<li>Run on: Select</li>
+<li>Target parameter: <code>Selected Stress Decision Code</code></li>
+<li>Source field: <code>Stress Decision Code</code></li>
+<li>Clearing selection: Set value to <code>ALL</code></li>
+</ul>
+<p>Keep the existing investigation filter actions. <strong>Do not add worksheet 13 as a target of <code>Select decision pairing</code>.</strong> Its calculations must retain the full segment population to produce meaningful incidence rates.</p>
+<h2>6. Step 8 — Important: correct the KPI scope issue</h2>
+<p>Before final acceptance, we still need to resolve the earlier behavior where selecting Merchant 000340 caused the four portfolio KPIs to display <strong>1 / 1 / 1 / 0</strong>, while the executive narrative remained at 750 applications.</p>
+<p>This may be caused by an additional action or by worksheet filtering outside the two actions we&#39;ve explicitly configured.</p>
+<p>Open <strong>Dashboard → Actions</strong> and verify that neither investigation action targets the KPI worksheets <code>09</code> through <code>12</code>.</p>
+<p>Also check that none of the KPI sheets has an unintended <code>Pair Key</code> or decision-pairing filter.</p>
+<p>The correct behavior is:</p>
+<ul>
+<li>Portfolio filters change the KPIs.</li>
+<li>Matrix selections change the investigation population and selected-pairing analysis.</li>
+<li>Merchant selections change the individual narrative.</li>
+<li>Merchant selections do <strong>not</strong> change the portfolio KPIs.</li>
+</ul>
+<p>This is a release-blocking consistency check.</p>
+<h2>7. Step 9 — Full interaction test</h2>
+<p>Once the visibility controls and actions are configured, test the following sequence.</p>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Expected result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>All portfolio filters cleared</td>
+<td>KPIs: <strong>750 / 236 / 103 / 27</strong></td>
+</tr>
+<tr>
+<td>Portfolio Authorization mode</td>
+<td>Original two-series authorization chart</td>
+</tr>
+<tr>
+<td>Select matrix cell with 88 applications</td>
+<td>Application list narrows to <strong>88</strong></td>
+</tr>
+<tr>
+<td>Switch to Selected Pairing mode</td>
+<td>Healthcare Services shows <strong>12.2%</strong></td>
+</tr>
+<tr>
+<td>Change Review Segment By to Acquisition Source</td>
+<td>Worksheet 13 groups by acquisition source</td>
+</tr>
+<tr>
+<td>Select Merchant 000003</td>
+<td>Baseline and stress explanations update</td>
+</tr>
+<tr>
+<td>Inspect portfolio KPIs</td>
+<td>Still <strong>750 / 236 / 103 / 27</strong></td>
+</tr>
+<tr>
+<td>Clear the matrix selection</td>
+<td>Pairing parameters reset to <code>ALL</code></td>
+</tr>
+<tr>
+<td>Switch back to Portfolio Authorization</td>
+<td>Original chart returns</td>
+</tr>
+</tbody></table>
+<p>One additional check: when no pairing is selected, worksheet 13 should display an instruction to select a matrix cell, not silently present its zero bars as a meaningful risk result. We can handle that as a small final presentation refinement.</p>
+<hr>
+<h2>My recommendation for the next checkpoint</h2>
+<p><strong>Complete Steps 4–5 first: add the vertical container, place worksheets 08 and 13 inside it, and configure their visibility.</strong></p>
+<p>Do not change the application investigation section, the narrative calculations, or the KPI formatting during this pass.</p>
+<p>Then send two screenshots: one showing the expanded hierarchy with both segment worksheets, and another showing the <strong>Control visibility using value</strong> setting for worksheet 13.</p>
+<p>That will let us verify the new panel is structurally correct before testing the full interactive workflow.</p>
+</div></article><article id="m-d3ed6790-2199-4b02-8ee2-1aa1f8ae379c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00481 · 2026-10-16T13:41:08.916000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-174036).png</p><div class="bubble"><p>any idea what could be happening to my tableau here? after taking a break, i came back and changed the title of 03 and then weird things started visually happening.</p>
+</div></article><article id="m-8236afab-1789-41ac-9236-dc46f64cbeb6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00482 · 2026-10-16T13:41:17.457211-04:00 · active path</p><div class="bubble"><p><strong>Yes. This looks much more like a Tableau rendering failure than a problem with your calculations, data, or dashboard design.</strong> I would not start rebuilding anything.</p>
+<p>There are several distinctive symptoms in your screenshot:</p>
+<ul>
+<li>The KPI numbers and labels are duplicated, inverted, or rendered upside down.</li>
+<li>The decision matrix contains horizontal bands of corrupted text and colored pixels.</li>
+<li>The executive narrative and segment chart have similar visual artifacts.</li>
+<li>Some elements, including the dashboard title, row headings, and filter controls, still render normally.</li>
+</ul>
+<p><strong>That combination strongly suggests a graphics-rendering or display-cache issue.</strong> Changing the Section 03 title may have triggered a redraw, but there&#39;s no evidence that the title change itself corrupted the workbook.</p>
+<h2>What I recommend, in order</h2>
+<h3>1. Save a backup without overwriting your last good version</h3>
+<p>You&#39;re currently working in <code>MCI_Risk_Decision_Scenario_Review_R2</code>.</p>
+<p>If you have made changes you want to preserve since your last save, use <strong>File → Save As</strong> and create:</p>
+<p><code>MCI_Risk_Decision_Scenario_Review_R2_Render_Test</code></p>
+<p>This gives us a recovery point without sacrificing the last known-good workbook.</p>
+<h3>2. Test whether it&#39;s only the dashboard renderer</h3>
+<p>Click the separate worksheet tab <strong>02 — Decision Matrix</strong>.</p>
+<p>Check whether the cells and labels look normal there.</p>
+<p>Then open <strong>08 — Segment Comparison</strong> and one KPI worksheet, such as <strong>09 — KPI Matched Applications</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>What you observe</th>
+<th>Likely implication</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Worksheets normal, dashboard corrupted</td>
+<td>Dashboard rendering, layout, or graphics-cache issue</td>
+</tr>
+<tr>
+<td>Worksheets also corrupted</td>
+<td>Broader Tableau graphics-rendering issue</td>
+</tr>
+<tr>
+<td>Corruption disappears after changing tabs</td>
+<td>Transient redraw/cache problem</td>
+</tr>
+<tr>
+<td>Corruption persists after restart</td>
+<td>Investigate graphics acceleration, display scaling, or application version</td>
+</tr>
+</tbody></table>
+<p>This test is particularly useful because it does not change your workbook.</p>
+<h3>3. Force a clean redraw</h3>
+<p>Try these simple actions:</p>
+<ol>
+<li>Switch from the dashboard to a worksheet and back.</li>
+<li>Change the dashboard Fit setting from <strong>Entire View</strong> to <strong>Standard</strong>, then back.</li>
+<li>Resize the Tableau window slightly.</li>
+<li>If you&#39;re using an external monitor, try moving Tableau to your primary display.</li>
+</ol>
+<p>If the issue disappears, that supports the rendering hypothesis.</p>
+<h3>4. Restart Tableau Public</h3>
+<p>If the corruption persists:</p>
+<ol>
+<li>Save the recovery copy.</li>
+<li>Close Tableau Public completely.</li>
+<li>Reopen the application.</li>
+<li>Open your saved R2 workbook.</li>
+</ol>
+<p><strong>I would expect a restart to be a reasonable first remedy</strong>, although I can&#39;t guarantee it will resolve the issue.</p>
+<p>If the workbook opens normally, continue from the existing dashboard. Do not recreate any worksheets or calculations.</p>
+<h3>5. If the issue persists, investigate graphics acceleration</h3>
+<p>Because you&#39;re on Windows, graphics drivers, hardware acceleration, and display scaling are plausible contributors.</p>
+<p>Check <strong>Help → Settings and Performance</strong>, if that menu is available in your Tableau Public version, for a hardware-acceleration setting. Don&#39;t assume the option exists in every version.</p>
+<p>If available, try disabling hardware acceleration, restart Tableau, and compare the result.</p>
+<p>I would not change your graphics drivers or Windows display configuration until the simpler tests establish that the problem persists.</p>
+<h2>What I would not do</h2>
+<p>I would <strong>not</strong> delete Section 03, rebuild the decision matrix, recreate the KPI worksheets, or modify your SQL/CSV source.</p>
+<p>The corrupted text patterns appear across multiple unrelated views. That points away from an isolated worksheet calculation.</p>
+<p>Also, the screenshot still shows <strong>750 matched applications</strong> in Tableau&#39;s status bar. That doesn&#39;t prove every calculation is intact, but it is reassuring that the underlying data connection is still functioning.</p>
+<h2>My recommended immediate test</h2>
+<p><strong>Open <code>02 — Decision Matrix</code> as a standalone worksheet and tell me whether it looks normal.</strong></p>
+<p>That single observation will help us distinguish a dashboard-specific rendering problem from a broader Tableau graphics issue.</p>
+<p>If the worksheet is normal, we&#39;ll concentrate on the dashboard renderer. If it&#39;s corrupted too, we&#39;ll prioritize restarting Tableau and checking the graphics environment before making any further layout changes.</p>
+<p>Your analytical work is too far along to risk unnecessary reconstruction over what may simply be a display issue.</p>
+</div></article><article id="m-aedc56fa-8913-4ec7-823b-2ddd6e966b2a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00483 · 2026-10-16T13:44:18.173000-04:00 · active path</p><div class="bubble"><p>definitely rendering. 02 - looks blank but when I hover over it says matched applications with #&#39;s</p>
+</div></article><article id="m-2e8bc5a6-24bb-467b-abca-43f4df58cb33" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00484 · 2026-10-16T13:44:39.256248-04:00 · active path</p><div class="bubble"><p><strong>That confirms the problem is almost certainly in Tableau&#39;s visual rendering layer, not the underlying data.</strong> If hovering over apparently blank matrix cells still returns the correct application counts, Tableau is calculating the marks and maintaining their interactive positions—it simply isn&#39;t drawing them correctly.</p>
+<p>The upside is that <strong>we have no reason to rebuild your dashboard or redo the calculations.</strong></p>
+<p>I would take the following recovery steps, in order.</p>
+<h3>1. Save a recovery copy and restart Tableau</h3>
+<ol>
+<li>Choose <strong>File → Save As</strong>.</li>
+<li>Save as <code>MCI_Risk_Decision_Scenario_Review_R2_Render_Recovery</code>.</li>
+<li>Close Tableau Public completely.</li>
+<li>Open <strong>Task Manager</strong> (<code>Ctrl + Shift + Esc</code>) and confirm no Tableau processes remain running.</li>
+<li>Reopen Tableau Public and load the recovery copy.</li>
+</ol>
+<p>If everything renders normally, save the workbook and continue. This is the least disruptive solution.</p>
+<h3>2. If restarting doesn&#39;t work, test Windows display scaling</h3>
+<p>Since you&#39;re running Tableau on Windows:</p>
+<ol>
+<li>Right-click the Windows desktop → <strong>Display settings</strong>.</li>
+<li>Under <strong>Scale</strong>, note the current percentage.</li>
+<li>Temporarily try <strong>100%</strong> if you&#39;re using 125% or 150%.</li>
+<li>Close and reopen Tableau after the change.</li>
+</ol>
+<p>If you use multiple monitors, also try Tableau on the primary monitor.</p>
+<p>This is a diagnostic test, not a recommendation to permanently change your display settings.</p>
+<h3>3. If the problem persists, test Tableau&#39;s graphics settings</h3>
+<p>In Tableau Public, check <strong>Help → Settings and Performance</strong> for an option related to hardware acceleration or rendering.</p>
+<p>If such a setting exists, change it and restart Tableau. The exact options vary by version.</p>
+<p>If no setting is available, don&#39;t spend time hunting through unrelated preferences.</p>
+<h3>4. Isolate whether the R2 workbook itself is involved</h3>
+<p>Open your earlier saved <strong>R1 workbook</strong> in the same Tableau session.</p>
+<ul>
+<li><strong>R1 also renders incorrectly:</strong> Strong evidence of an application, graphics-driver, or display-environment issue.</li>
+<li><strong>R1 renders normally but R2 does not:</strong> The newer workbook may contain a rendering-triggering layout or worksheet state. That still does not establish data corruption.</li>
+</ul>
+<p>This comparison is particularly valuable because R1 is your known-good checkpoint.</p>
+<h3>What I would do right now</h3>
+<p><strong>Save the recovery copy, close Tableau completely, and reopen it.</strong> That&#39;s the highest-value next action.</p>
+<p>If the visual corruption disappears, we can resume integrating the selected-pairing chart exactly where we stopped.</p>
+<p>If it persists, tell me whether R1 renders correctly. That will determine whether we troubleshoot Tableau&#39;s graphics environment or isolate an R2-specific rendering problem.</p>
+<p>I would not touch the calculations, dashboard actions, or source data until the rendering issue is resolved.</p>
+</div></article><article id="m-1266e149-76d6-4ea9-b7c0-e02da7cf3131" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00485 · 2026-10-16T14:04:56.697000-04:00 · active path</p><div class="bubble"><p>should 13 be a target sheet of any actions?</p>
+</div></article><article id="m-f4d6914c-61d7-447d-a295-473b8f9c7b22" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00486 · 2026-10-16T14:05:06.133098-04:00 · active path</p><div class="bubble"><p><strong>No. Worksheet <code>13 — Selected Segment Pairing Concentration</code> should NOT be a target sheet of any of your existing filter actions.</strong></p>
+<p>This is intentional and important for preserving the correct denominator in your concentration calculations.</p>
+<p>Here&#39;s the correct configuration:</p>
+<table>
+<thead>
+<tr>
+<th>Dashboard action</th>
+<th>Source</th>
+<th>Target sheets / parameter</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Select decision pairing</strong> (Filter)</td>
+<td>02 — Decision Matrix</td>
+<td>04, 05, 06, 07</td>
+</tr>
+<tr>
+<td><strong>Inspect application</strong> (Filter)</td>
+<td>04 — Application Detail</td>
+<td>05, 06, 07</td>
+</tr>
+<tr>
+<td><strong>Set Baseline Pairing</strong> (Change Parameter)</td>
+<td>02 — Decision Matrix</td>
+<td><code>Selected Baseline Decision Code</code></td>
+</tr>
+<tr>
+<td><strong>Set Stress Pairing</strong> (Change Parameter)</td>
+<td>02 — Decision Matrix</td>
+<td><code>Selected Stress Decision Code</code></td>
+</tr>
+</tbody></table>
+<h3>Why worksheet 13 must remain excluded</h3>
+<p>Worksheet 13 already responds to the two decision-code parameters through its <code>Selected Pairing Flag</code> calculation.</p>
+<p>For example, selecting:</p>
+<p><strong>Counteroffer review required → Evidence decline</strong></p>
+<p>should produce:</p>
+<ul>
+<li><strong>88 applications</strong> in the selected pairing across the portfolio.</li>
+<li><strong>10 affected Healthcare Services applications.</strong></li>
+<li><strong>82 total Healthcare Services applications.</strong></li>
+<li><strong>12.2% within-segment incidence.</strong></li>
+</ul>
+<p>If worksheet 13 were also targeted by the matrix&#39;s ordinary filter action, Tableau would restrict its underlying population to the selected pairing. The Healthcare Services denominator could fall from 82 to 10, producing a misleading <strong>100% incidence</strong>.</p>
+<h3>What should filter worksheet 13?</h3>
+<p>Only your two portfolio filters:</p>
+<ul>
+<li><strong>Industry</strong></li>
+<li><strong>Acquisition Source</strong></li>
+</ul>
+<p>These define the population under review and should continue applying to worksheet 13.</p>
+<p>The <code>Review Segment By</code> parameter also controls whether it groups results by Industry or Acquisition Source, but that is a parameter-driven dimension change, not a filter action.</p>
+<p><strong>Bottom line:</strong> Worksheet 13 receives the selected decision pairing through <strong>parameter actions</strong>, not filter actions. Keep it excluded from the target-sheet lists.</p>
+<p>The same principle applies to your four executive KPI worksheets: they should respond to portfolio filters, not matrix or merchant selections.</p>
+</div></article><article id="m-2a1f1eac-0676-48c1-842b-3b8efcdc2bf9" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00487 · 2026-10-16T14:10:30.378000-04:00 · active path</p><p class="note">3 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-180929).png; image(20261016-180952).png; image(20261016-181005).png</p><div class="bubble"><p>i want to sort the selected pairing better (descending %) - but aside from that, looks good</p>
+</div></article><article id="m-8cf1a544-cf7c-4a69-a436-5ad913e02892" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00488 · 2026-10-16T14:10:40.357481-04:00 · active path</p><div class="bubble"><p><strong>Agreed. The two-mode Segment Sensitivity feature is now working as intended.</strong> Your screenshots show the 88-application pairing selected, the application table narrowed appropriately, the portfolio KPIs remaining at 750 / 236 / 103 / 27, and the segment chart switching correctly between authorization rates and pairing incidence.</p>
+<p>The main remaining refinement is to sort worksheet <strong>13 — Selected Segment Pairing Concentration</strong> by its own incidence rate, rather than retaining the original authorization-rate ordering from worksheet 08.</p>
+<h2>1. Sort worksheet 13 by Selected Pairing Incidence</h2>
+<p>Open the standalone worksheet <strong>13 — Selected Segment Pairing Concentration</strong>.</p>
+<p>On the <strong>Rows</strong> shelf, locate the blue <code>Review Segment</code> pill.</p>
+<ol>
+<li>Click the dropdown arrow on <code>Review Segment</code>.</li>
+<li>Select <strong>Sort…</strong></li>
+<li>Configure the dialog:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Sort Order</td>
+<td><strong>Descending</strong></td>
+</tr>
+<tr>
+<td>Sort By</td>
+<td><strong>Field</strong></td>
+</tr>
+<tr>
+<td>Field Name</td>
+<td><code>Selected Pairing Incidence</code></td>
+</tr>
+<tr>
+<td>Aggregation</td>
+<td><strong>Custom</strong>, if Tableau displays it for the aggregate calculation</td>
+</tr>
+</tbody></table>
+<p>Click <strong>OK</strong>.</p>
+<p>If Tableau does not offer <code>Selected Pairing Incidence</code> as a sortable field, do not substitute <code>Selected Pairing Applications</code>. Sorting by counts would answer a different question.</p>
+<p>Instead, try selecting the <code>Review Segment</code> row header and using Tableau&#39;s descending-sort button. Verify that it sorts by the incidence measure on Columns. If neither method produces the correct result, we can build a dedicated sort calculation.</p>
+<h2>2. Verify the expected ordering</h2>
+<p>For your currently selected pairing:</p>
+<p><strong>Counteroffer review required → Evidence decline</strong></p>
+<p>The percentages visible in your screenshot imply this descending order:</p>
+<table>
+<thead>
+<tr>
+<th>Rank</th>
+<th>Industry</th>
+<th align="right">Pairing incidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>General Retail</td>
+<td align="right"><strong>19.2%</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Professional Services</td>
+<td align="right"><strong>12.5%</strong></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Healthcare Services</td>
+<td align="right"><strong>12.2%</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Ecommerce Digital</td>
+<td align="right"><strong>11.8%</strong></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Restaurant Food Service</td>
+<td align="right"><strong>10.8%</strong></td>
+</tr>
+<tr>
+<td>6</td>
+<td>Energy Services</td>
+<td align="right"><strong>10.0%</strong></td>
+</tr>
+<tr>
+<td>7</td>
+<td>Construction Trades</td>
+<td align="right"><strong>8.2%</strong></td>
+</tr>
+<tr>
+<td>8</td>
+<td>Transportation Logistics</td>
+<td align="right"><strong>6.7%</strong></td>
+</tr>
+</tbody></table>
+<p>These are the displayed values from your selected-pairing chart. After sorting, General Retail should move to the top and Transportation Logistics to the bottom.</p>
+<p>The sorting should also recalculate when you select a different matrix pairing or switch <code>Review Segment By</code> to Acquisition Source.</p>
+<h2>3. Two final presentation refinements</h2>
+<p><strong>First, remove the inherited sort indicator from the chart header if possible.</strong> Your screenshot shows <code>Review Segment</code> with a sort icon. That&#39;s normal in Tableau, but for a polished dashboard, you can hide the field label or header if doing so doesn&#39;t remove the industry names.</p>
+<p><strong>Second, consider shortening the selected-pairing axis title.</strong> Instead of <code>Selected Pairing Incidence</code>, I would use:</p>
+<p><strong>% of segment applications</strong></p>
+<p>That is immediately understandable to a nontechnical risk-management reader.</p>
+<p>The chart&#39;s subtitle can explain the denominator:</p>
+<blockquote>
+<p>Share of applications within each segment belonging to the selected decision pairing.</p>
+</blockquote>
+<p>This avoids confusing within-segment incidence with the percentage distribution of the 88 affected applications across industries.</p>
+<h2>4. My assessment of the current dashboard</h2>
+<p>I would preserve the layout. The selected-pairing mode adds an important capability without crowding the report.</p>
+<p>The two modes now support distinct executive questions:</p>
+<ul>
+<li><strong>Portfolio Authorization:</strong> How do authorization rates differ across segments and scenarios?</li>
+<li><strong>Selected Pairing:</strong> Within each segment, how prevalent is the decision pairing under investigation?</li>
+</ul>
+<p>The pairing mode is particularly useful because it distinguishes <strong>absolute counts from normalized concentration</strong>. A smaller segment may have a higher incidence rate even when it contributes fewer affected applications.</p>
+<p>One remaining acceptance test is worth preserving: select an individual merchant after choosing a matrix pairing and verify that the four KPI cards and pairing-incidence chart remain unchanged. Your current screenshots establish the matrix-to-segment behavior, but not that final merchant-selection boundary.</p>
+<p><strong>Otherwise, I would consider the dashboard&#39;s analytical structure complete.</strong> Once the sort is correct, we should focus on the final interaction QA, narrative readability across all four modes, and preparing a clean Tableau Public presentation rather than adding more analytical features.</p>
+</div></article><article id="m-b1b4cedc-deb8-4b25-95c0-a1c13fc5f2d4" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00489 · 2026-10-16T14:19:00.817000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(20261016-181604).png; image(20261016-181625).png</p><div class="bubble"><p>I think this is good and I&#39;m ready to save and work on publishing to github. I have saved the final version as MCI_Risk_Decision_Scenario_Review. now, let&#39;s work on any screenshots that would be helpful to add to the GitHub readme. We do not need anything too lengthy right now. I want to get this published and e-mail Bank of America interviewers by 3:30pm est.</p>
+</div></article><article id="m-079ac109-6903-4293-b3e5-8bd65498ba54" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00490 · 2026-10-16T14:19:11.459359-04:00 · active path</p><div class="bubble"><p><strong>I agree—this is ready to move into publication preparation.</strong> The dashboard now demonstrates Tableau visualization, matched-scenario risk analysis, interactive investigation, segment sensitivity, and source-backed narrative interpretation. That&#39;s a compelling combination for a Bank of America Global Risk Management audience.</p>
+<p>Given your 3:30 p.m. Eastern deadline, I would keep the GitHub update focused: <strong>three screenshots, a concise README section, a Tableau Public link, and a short interviewer email.</strong> No new dashboard features or redesign.</p>
+<h2>The three screenshots I&#39;d publish</h2>
+&lt;box gap={3}&gt;
+  &lt;row align=&quot;start&quot; gap={3}&gt;
+    &lt;AsyncImage query={null} fallback={&lt;box background=&quot;surface-secondary&quot; radius=&quot;md&quot; padding={2}&gt;&lt;icon name=&quot;layout-dashboard&quot; size=&quot;2xl&quot; color=&quot;secondary&quot;/&gt;&lt;/box&gt;} width=&quot;112px&quot;/&gt;
+    &lt;box flex=&quot;1&quot; gap={1}&gt;
+      **1. Executive risk overview**
+
+<pre><code>  Show the complete dashboard with all portfolio filters cleared, four KPIs, decision matrix, and Portfolio Authorization mode. This establishes the overall analytical capability immediately.
+&lt;/box&gt;
+</code></pre>
+  &lt;/row&gt;
+  &lt;divider color=&quot;subtle&quot;/&gt;
+  &lt;row align=&quot;start&quot; gap={3}&gt;
+    &lt;box width=&quot;112px&quot; background=&quot;surface-secondary&quot; radius=&quot;md&quot; padding={2} align=&quot;center&quot; justify=&quot;center&quot;&gt;
+      &lt;icon name=&quot;chart-bar&quot; size=&quot;2xl&quot; color=&quot;secondary&quot;/&gt;
+    &lt;/box&gt;
+    &lt;box flex=&quot;1&quot; gap={1}&gt;
+      **2. Selected decision-pairing concentration**
+
+<pre><code>  Use your first screenshot, with the **88-application pairing** selected and the segment chart sorted by incidence. This demonstrates the investigative capability beyond a conventional dashboard.
+&lt;/box&gt;
+</code></pre>
+  &lt;/row&gt;
+  &lt;divider color=&quot;subtle&quot;/&gt;
+  &lt;row align=&quot;start&quot; gap={3}&gt;
+    &lt;box width=&quot;112px&quot; background=&quot;surface-secondary&quot; radius=&quot;md&quot; padding={2} align=&quot;center&quot; justify=&quot;center&quot;&gt;
+      &lt;icon name=&quot;file-search&quot; size=&quot;2xl&quot; color=&quot;secondary&quot;/&gt;
+    &lt;/box&gt;
+    &lt;box flex=&quot;1&quot; gap={1}&gt;
+      **3. Merchant 000003 — Evidence-based explanation**
+
+<pre><code>  Select Merchant 000003 and show the lower investigation area with Baseline and Recession Energy narratives. This is the signature feature: a decision is not just displayed; its supporting evidence is explained.
+&lt;/box&gt;
+</code></pre>
+  &lt;/row&gt;
+&lt;/box&gt;
+
+<p>You already have screenshots for the first two. <strong>Only the Merchant 000003 explanation screenshot still needs to be captured.</strong> Select the 88-application pairing, click Merchant 000003, and choose the <code>Decision</code> narrative mode.</p>
+<p>For that third screenshot, include Section 04 and Section 05 together, with both narrative panels visible. There&#39;s no need to capture every narrative mode.</p>
+<p>I&#39;ve packaged your two existing screenshots <strong>without altering their pixels</strong>:</p>
+&lt;box gap={2}&gt;
+  &lt;row align=&quot;center&quot; gap={2}&gt;
+    &lt;icon name=&quot;file-archive&quot; color=&quot;secondary&quot; size=&quot;lg&quot;/&gt;
+    Download GitHub screenshot package (historical reference: `sandbox:[session]/tableau_github_screenshots.zip`; referenced bytes not established here)
+  &lt;/row&gt;
+  &lt;text size=&quot;xs&quot; color=&quot;secondary&quot;&gt;Contains portfolio_authorization_overview.png and selected_pairing_concentration.png.&lt;/text&gt;
+&lt;/box&gt;
+
+<h2>Suggested GitHub README section</h2>
+<p>&lt;WritingBlock id=&quot;58321&quot; variant=&quot;document&quot;&gt;### Tableau | Merchant Credit Intelligence — Risk Decision &amp; Scenario Review</p>
+<p>An interactive Tableau risk-analysis dashboard comparing <strong>750 matched synthetic merchant-financing applications</strong> across Baseline and Recession Energy scenarios.</p>
+<p>The dashboard demonstrates:</p>
+<ul>
+<li><strong>Portfolio risk oversight:</strong> Decision distributions, authorization rates, and dynamically generated executive interpretation.</li>
+<li><strong>Scenario sensitivity:</strong> A matched-application decision matrix identifying where final decision categories differ.</li>
+<li><strong>Segment concentration:</strong> Industry and acquisition-source comparisons, including within-segment incidence of selected decision pairings.</li>
+<li><strong>Application-level investigation:</strong> Interactive drill-down from portfolio results to individual merchant evidence.</li>
+<li><strong>Explainable decisions:</strong> Source-backed narratives covering decision rationale, operating evidence, structure assessment, and technical source explanations.</li>
+</ul>
+<p><strong>Analytical distinction:</strong> The scenarios are alternatives, not sequential account histories. Review does not imply authorization, and authorization does not establish funding.</p>
+<p>Built with Tableau using deterministic synthetic data and governed decision outputs from the Merchant Credit Intelligence project.</p>
+<p>Explore the interactive Tableau dashboard (historical reference: <code>INSERT_TABLEAU_PUBLIC_URL</code>; referenced bytes not established here)</p>
+<p>Portfolio authorization overview (historical reference: <code>tableau_github_assets/portfolio_authorization_overview.png</code>; referenced bytes not established here)</p>
+<p>Selected decision-pairing concentration (historical reference: <code>tableau_github_assets/selected_pairing_concentration.png</code>; referenced bytes not established here)&lt;/WritingBlock&gt;</p>
+<h2>Fastest publication sequence</h2>
+<ol>
+<li><strong>Publish the Tableau workbook:</strong> In Tableau Public, use <strong>Server → Tableau Public → Save to Tableau Public As</strong>. Confirm the published view works in a browser. Tableau Public is publicly accessible, so verify the workbook contains only intended synthetic/public data.</li>
+<li><strong>Add the screenshots:</strong> Upload the two PNGs from the ZIP to <code>tableau_github_assets/</code> in your GitHub repository.</li>
+<li><strong>Update the README:</strong> Add the section above, replacing the Tableau URL placeholder with the actual published link.</li>
+<li><strong>Capture Merchant 003:</strong> Optional for today&#39;s deadline. It can be added after the interview follow-up rather than delaying publication.</li>
+<li><strong>Verify:</strong> Open the GitHub README in a private browser window, confirm both images display, and click through to Tableau.</li>
+</ol>
+<p>One important point: I would <strong>not delay your Bank of America follow-up for the third screenshot</strong>. The two existing images already demonstrate the portfolio and interactive risk-investigation capabilities.</p>
+<p>For the interviewer email, I&#39;d keep the message brief and make the work relevant to the Risk Analysis Manager discussion—not present it as merely a Tableau exercise. The strongest framing is that you&#39;ve built an interactive, explainable risk-analysis workflow connecting portfolio indicators, scenario sensitivity, and application-level evidence.</p>
+<p><strong>The immediate next step is publishing the Tableau Public workbook and getting its URL.</strong> Once you have that link, we can finalize the GitHub wording and interviewer message quickly.</p>
+</div></article><article id="m-acee2f1a-32f1-4fe2-8e77-2537e978dfc0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00491 · 2026-10-16T14:21:52.413000-04:00 · active path</p><div class="bubble"><p>for the screenshots, is there a way to zoom out to show the full dashboard in these screenshots? even in presentation mode it is not capturing the full page.</p>
+</div></article><article id="m-eb08a82f-e730-48a3-9375-4e5035805c81" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00492 · 2026-10-16T14:22:03.015816-04:00 · active path</p><div class="bubble"><p><strong>Yes. Tableau has a better option than trying to zoom out in Presentation Mode: export the dashboard directly as an image.</strong> This is what I recommend for your GitHub screenshots because it can capture the full dashboard rather than just the portion visible on your monitor.</p>
+<h2>Option 1 — Export the entire dashboard as an image (recommended)</h2>
+<ol>
+<li>Open your <strong>Risk Decision &amp; Scenario Review</strong> dashboard in Tableau Public Desktop.</li>
+<li>Set the desired filters, matrix selection, and Segment Analysis Mode.</li>
+<li>From the top menu, select <strong>Dashboard → Export Image</strong>.</li>
+<li>Save the image as a PNG.</li>
+<li>Open the exported image and verify that Sections 01–05, including the Baseline and Recession Energy explanations, are visible.</li>
+</ol>
+<p>Tableau exports the dashboard at its configured dimensions rather than relying on your screen capture.</p>
+<p><strong>Important:</strong> Your dashboard uses a fixed size and has some scrollable worksheets. The export captures the dashboard canvas, but it will not automatically expand internally scrollable application tables or text panels. Make sure the narrative paragraphs are fully visible in their allocated areas before exporting.</p>
+<h2>Option 2 — Increase the dashboard&#39;s export resolution</h2>
+<p>If the exported PNG looks too small or text is difficult to read:</p>
+<ol>
+<li>In Tableau, open the dashboard.</li>
+<li>In the left <strong>Dashboard</strong> pane, locate <strong>Size</strong>.</li>
+<li>Choose <strong>Fixed Size</strong>.</li>
+<li>Set a larger canvas, such as:<ul>
+<li>Width: <strong>1600 px</strong></li>
+<li>Height: <strong>1400 px</strong></li>
+</ul>
+</li>
+<li>Inspect the dashboard to ensure the additional space is distributed appropriately.</li>
+<li>Export again using <strong>Dashboard → Export Image</strong>.</li>
+</ol>
+<p>I would first try exporting at your current dimensions. Increasing the canvas size can introduce unwanted whitespace or affect tiled-container proportions.</p>
+<h2>Option 3 — Zoom out temporarily for a screen capture</h2>
+<p>If you specifically want a screenshot of the Tableau application rather than a clean dashboard export, try:</p>
+<ul>
+<li><strong>Windows Settings → Display → Scale</strong> and temporarily use 100% scaling.</li>
+<li>Maximize Tableau and use Presentation Mode.</li>
+<li>If viewing the published dashboard in a browser, use <strong>Ctrl + minus (-)</strong> to zoom out until the entire dashboard fits.</li>
+</ul>
+<p>The browser method is usually more convenient than changing Windows display scaling, but it may make text too small.</p>
+<h2>What I recommend for your GitHub README</h2>
+<p>Use <strong>Dashboard → Export Image</strong>, and capture these two states:</p>
+<table>
+<thead>
+<tr>
+<th>Image</th>
+<th>Configuration</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>portfolio_authorization_overview.png</code></td>
+<td>All portfolio filters cleared; Portfolio Authorization mode; no matrix or merchant selection</td>
+</tr>
+<tr>
+<td><code>selected_pairing_concentration.png</code></td>
+<td>Select the 88-application pairing; Selected Pairing mode; Merchant 000003 selected if the narrative remains readable</td>
+</tr>
+</tbody></table>
+<p>If the full-dashboard image makes the text too small for GitHub, that&#39;s acceptable for an overview, but I would additionally use a focused crop of the Merchant 003 narrative as a supporting image.</p>
+<p><strong>My recommendation: try Dashboard → Export Image first.</strong> It is the cleanest way to capture your full Tableau work without altering the underlying visuals or rebuilding the layout.</p>
+</div></article><article id="m-cf3674d5-e7f8-45ad-97a8-7fe5cd63ce69" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00493 · 2026-10-16T14:25:16.941000-04:00 · active path</p><div class="bubble"><p>let&#39;s do option 1 and I want the most interesting cases for a linkedin carousel focused on the tableau. I will share this with BofA as well. Please give me the 12 most powerful dashboard displays and examples that not only show off Tableau but the Merchant system that was built. please explore the data and to advise all selections for those 12 images and then the order. i will then create those 12 visuals and you can help me then turn them into a carousel.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

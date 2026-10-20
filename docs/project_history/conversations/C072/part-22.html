@@ -1,0 +1,1315 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PostgreSQL M1.14 Execution — part 22 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>PostgreSQL M1.14 Execution — part 22</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-21.html">Previous part</a><a href="part-23.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-04ebdca2-258d-4a47-81ce-4e05988ba451" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00284 · 2026-08-08T11:03:39.746857-04:00 · active path</p><div class="bubble"><h1>M2.12 WP1 R6 independent audit determination</h1>
+<p><strong>HOLD — Work Package 1 R6 is not approved, and Work Package 2 is not authorized.</strong></p>
+<p>I reviewed R6 as a prospective WP2 author with no authority to invent a relation, alias, source, statement, ordering decision, transaction boundary, or recovery dependency.</p>
+<p>R6 is a substantial improvement. It closes the named R5 findings and now provides literal authorities for Program 220 DDL, seven persistent views, 48 Program 221 assertions, 38 source-edge branches, generation evidence, lifecycle handling, recovery branches, and session behavior. It reports 4,202 compilation decisions, 4,241/4,241 static controls, 80/80 independent validation controls, and zero inferred decisions. [export reference: filecite | turn172file0 | L5-L30]</p>
+<p>The remaining problems occur one level deeper: <strong>program-scoped temporary-state lifetime, full helper-statement compilation, and exact interleaving of Program 222 construction and persistence.</strong></p>
+<pre><code class="language-text">Accepted M2.11 baseline                    PASS / LOCKED
+Frozen M2.12 business design               RETAINED
+
+Program 220 persistent DDL                 PASS
+Archive function and trigger               PASS
+Seven persistent views                     PASS
+Program 221 assertion semantics            PASS
+R5 latest/archive staging                  PASS
+R4 registry/hash staging                   PASS
+Generation-evidence projection             PASS
+Session-control policy                     PASS
+Package integrity                          PASS
+
+Cross-program temporary state              BLOCKER
+Literal helper statement coverage          BLOCKER
+Program 222 merged execution order         BLOCKER
+Zero-inference compiler conclusion          NOT SUPPORTED
+
+WP1 R6 approval                            HOLD
+WP2 authorization                          NO
+Programs 220–227                           NOT AUTHORIZED
+PostgreSQL execution                       NOT AUTHORIZED
+</code></pre>
+<h2>Package verification</h2>
+<p>I independently verified the canonical inner review package:</p>
+<pre><code class="language-text">M2_12_Build_WP1_R6.zip
+
+Bytes
+1,309,675
+
+SHA-256
+861b7745daea99b0565a66582abd744a27eb918e50f264292a2cd66e04eaad67
+
+ZIP entries
+200
+
+ZIP CRC
+PASS
+
+External sidecar
+PASS
+</code></pre>
+<p>These values match the R6 delivery record. [export reference: filecite | turn172file0 | L473-L508]</p>
+<p>No SQL file was generated, PostgreSQL was not executed, and R6 correctly retained the full-review hold. [export reference: filecite | turn172file0 | L568-L588]</p>
+<h1>Areas approved and retained</h1>
+<h2>Program 220 persistent installation authority</h2>
+<p>R6 resolves the R5 DDL issues:</p>
+<ul>
+<li>nine persistent tables;</li>
+<li>one exact archive rejection function;</li>
+<li>eight indexes;</li>
+<li>one exact immutability trigger;</li>
+<li>seven persistent views;</li>
+<li>no independent <code>CREATE SEQUENCE</code> collision with the identity columns;</li>
+<li>exact function body and trigger binding;</li>
+<li>formal exclusion of comments from the governed installation identity.</li>
+</ul>
+<p>The identity model is now consistently stated as <code>GENERATED ALWAYS AS IDENTITY</code>, identity omitted from normal inserts, no <code>OVERRIDING SYSTEM VALUE</code>, and one target-generated value. [export reference: filecite | turn172file0 | L34-L105]</p>
+<h2>Persistent views</h2>
+<p>R6 now supplies seven complete view statements, 845 projection expressions, and 23 joins. The prior transaction-local <code>ctx</code> references and incorrect <code>g3r</code> aliases have been removed from the persistent view SQL. [export reference: filecite | turn172file0 | L110-L148]</p>
+<h2>Program 221 assertion logic</h2>
+<p>The prior policy and sequence contradictions are corrected:</p>
+<pre><code class="language-text">Approved policy rows                       1
+Non-policy canonical rows                  0
+
+Policy sequence                         1 / true
+Archive sequence                        1 / false
+Registry sequence                       1 / false
+</code></pre>
+<p>All 48 assertions now have observed-value SQL, expected values, executable pass predicates, failure signatures, and result-row SQL. The 19 Program 221 source-edge branches are also represented as executable branches. [export reference: filecite | turn172file0 | L150-L219]</p>
+<h2>Program 222 evidence, lifecycle, and sequence proof</h2>
+<p>The 24 generation-evidence rows now have a complete ten-field target projection, exactly one populated metric channel, target-default <code>created_at</code>, an exact <code>M2_11_ACCEPTED → M2_12_GENERATED</code> run transition, and all-three-sequence proof. [export reference: filecite | turn172file0 | L290-L344]</p>
+<p>These areas should remain fixed during the next correction.</p>
+<h1>Blocker 1 — transaction-local helpers cross program boundaries</h1>
+<p>The current helper catalog explicitly treats these relations as transaction-local, <code>ON COMMIT DROP</code>, and restricted to their owning program. Yet the executable field and recovery authorities contain <strong>113 references across five cross-program relation pairs</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Consumer</th>
+<th>Referenced temporary relation</th>
+<th align="right">Declared owner</th>
+<th align="right">References</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Program 220</td>
+<td><code>tmp_src_m2_12_run_context</code></td>
+<td align="right">222</td>
+<td align="right">39</td>
+</tr>
+<tr>
+<td>Program 222</td>
+<td><code>tmp_src_m2_12_policy_typed</code></td>
+<td align="right">220</td>
+<td align="right">61</td>
+</tr>
+<tr>
+<td>Program 222B</td>
+<td><code>tmp_reconcile_m2_12_physical</code></td>
+<td align="right">222</td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td>Program 222B</td>
+<td><code>tmp_src_m2_12_run_context</code></td>
+<td align="right">222</td>
+<td align="right">3</td>
+</tr>
+<tr>
+<td>Program 222B</td>
+<td><code>tmp_generation_m2_12_evidence</code></td>
+<td align="right">222</td>
+<td align="right">2</td>
+</tr>
+</tbody></table>
+<h2>Program 220</h2>
+<p>Program 220’s policy-seed base uses:</p>
+<pre><code class="language-text">tmp_src_m2_12_run_context
+</code></pre>
+<p>to obtain:</p>
+<pre><code class="language-text">module1_run_id
+accepted M2.11 contract set hash
+accepted M2.11 combined set hash
+accepted M2.11 registry row hash
+</code></pre>
+<p>But that helper is owned by Program 222 and is created only in the later Program 222 transaction.</p>
+<p>Program 220’s actual context is:</p>
+<pre><code class="language-text">tmp_install_m2_12_run_context
+</code></pre>
+<p>and currently exposes only:</p>
+<pre><code class="language-text">module1_run_id
+run_code
+run_version
+run_status
+as_of_date
+</code></pre>
+<p>Therefore, Program 220 cannot literally construct its policy row from the current authorities.</p>
+<h2>Program 222</h2>
+<p>The stable registry construction consumes:</p>
+<pre><code class="language-text">tmp_src_m2_12_policy_typed
+</code></pre>
+<p>That helper was created during Program 220 and explicitly dropped when Program 220 committed.</p>
+<p>Program 222 already defines:</p>
+<pre><code class="language-text">tmp_src_m2_12_policy_observation
+</code></pre>
+<p>from the persisted <code>msbf_ctl.m2_12_policy_profile</code> row. That is the appropriate Program 222 source, but the registry staging authority does not use it.</p>
+<h2>Program 222B</h2>
+<p>Program 222B’s context, dispatch, mutation, and result authorities consume Program 222 helpers:</p>
+<pre><code class="language-text">tmp_reconcile_m2_12_physical
+tmp_generation_m2_12_evidence
+tmp_src_m2_12_run_context
+</code></pre>
+<p>Those helpers do not survive Program 222’s commit. Program 222B’s topological helper inventory does not reconstruct them, and <code>tmp_src_</code> is not an authorized Program 222B namespace.</p>
+<p>This is a guaranteed runtime boundary defect—not merely incomplete documentation.</p>
+<ul>
+<li>Detailed cross-program lifetime audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_CROSS_PROGRAM_TEMP_LIFECYCLE_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Five-pair summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_CROSS_PROGRAM_TEMP_SUMMARY_20260808.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Blocker 2 — 72 current helpers lack an exact relation statement</h1>
+<p>R6 contains:</p>
+<pre><code class="language-text">Current governed helper relations             90
+Helpers with exact CREATE TEMP statement       18
+Helpers without exact CREATE TEMP statement    72
+</code></pre>
+<p>Breakdown:</p>
+<table>
+<thead>
+<tr>
+<th>Owner</th>
+<th align="right">Current helpers</th>
+<th align="right">Exact <code>CREATE TEMP TABLE</code></th>
+<th align="right">Missing</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>220</td>
+<td align="right">4</td>
+<td align="right">0</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td>221</td>
+<td align="right">19</td>
+<td align="right">14</td>
+<td align="right">5</td>
+</tr>
+<tr>
+<td>222</td>
+<td align="right">54</td>
+<td align="right">2</td>
+<td align="right">52</td>
+</tr>
+<tr>
+<td>220A</td>
+<td align="right">4</td>
+<td align="right">0</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td>222A</td>
+<td align="right">4</td>
+<td align="right">0</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td>222B</td>
+<td align="right">4</td>
+<td align="right">1</td>
+<td align="right">3</td>
+</tr>
+<tr>
+<td>Shared recoveries</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+</tr>
+</tbody></table>
+<p>The current field and branch catalogs often provide:</p>
+<pre><code class="language-text">output fields
+field expressions
+aliases
+row selectors
+join predicates
+dependencies
+expected rows
+</code></pre>
+<p>but do not provide the complete executable relation statement:</p>
+<pre><code class="language-sql">CREATE TEMP TABLE ...
+ON COMMIT DROP
+AS
+SELECT ...
+FROM ...
+JOIN ...
+WHERE ...
+GROUP BY ...
+ORDER BY ...;
+</code></pre>
+<p>This leaves the WP2 author to decide:</p>
+<ul>
+<li>how multiple source relations become a <code>FROM</code> clause;</li>
+<li>whether a relation uses <code>CROSS JOIN</code>, <code>LEFT JOIN</code>, scalar subqueries, or nested projections;</li>
+<li>where filters apply;</li>
+<li>whether aggregation requires <code>GROUP BY</code>;</li>
+<li>where key assertions, indexes, and <code>ANALYZE</code> occur;</li>
+<li>how branch rows are combined;</li>
+<li>which current helper records are stale and should not be generated.</li>
+</ul>
+<p>The issue is especially material for Program 222, where only two of 54 current helpers have complete <code>CREATE TEMP TABLE</code> statements.</p>
+<p>Program 221 also retains five current helpers that are absent from its exact 12-relation helper compiler:</p>
+<pre><code class="language-text">tmp_preflight_m2_12_gate_catalog
+tmp_preflight_m2_12_module3_boundary_base
+tmp_preflight_m2_12_source_edge_design
+tmp_preflight_m2_12_source_node_design
+tmp_preflight_m2_12_target_state
+</code></pre>
+<p>They must either receive exact statements or be removed from all current helper, topology, compiler, and source-authority records.</p>
+<ul>
+<li>Full 90-helper coverage audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_HELPER_STATEMENT_COMPILER_COVERAGE_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Coverage by owning program (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_HELPER_STATEMENT_COVERAGE_SUMMARY_20260808.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Blocker 3 — Program 222 lacks one executable merged statement order</h1>
+<p>R6 has several useful but separate sequencing authorities:</p>
+<pre><code class="language-text">helper topological order
+nine-phase hash plan
+persistent insert order
+prospective category blueprint
+</code></pre>
+<p>They do not combine into one literal Program 222 statement order.</p>
+<h2>Current contradiction</h2>
+<p>The prospective blueprint places:</p>
+<pre><code class="language-text">helper relations
+helper fields
+helper branches
+source-edge branches
+</code></pre>
+<p>before:</p>
+<pre><code class="language-text">persistent INSERT fields
+persistent INSERT statements
+</code></pre>
+<p>But one of the early helper relations is:</p>
+<pre><code class="language-text">tmp_hash_m2_12_base_six
+</code></pre>
+<p>which calculates set hashes from the five persistent base-family tables. Those tables do not contain the governed rows until persistent insert steps 1–5.</p>
+<p>Similarly, the helper topology places phase-9 mismatch helpers and:</p>
+<pre><code class="language-text">tmp_reconcile_m2_12_physical
+</code></pre>
+<p>before latest, archive, registry, and the full persistent insert chain—even though phase 9 must read the completed persisted 134-entity state.</p>
+<p><code>tmp_generation_m2_12_evidence</code> is also placed in the helper sequence before the completed phase-9 checkpoint it is supposed to evidence.</p>
+<p>The separate persistence-order catalog correctly lists:</p>
+<pre><code class="language-text">five base INSERTs
+latest INSERT
+archive INSERT
+registry INSERT
+phase-9 proof
+evidence
+run lifecycle
+commit
+</code></pre>
+<p>but does not say where the 54 Program 222 helper statements occur between those steps.</p>
+<p>A WP2 author must therefore improvise the merged order.</p>
+<h2>Required order authority</h2>
+<p>The correction should freeze one complete Program 222 sequence:</p>
+<pre><code class="language-text">BEGIN / session controls
+run, policy, design, source and observation helpers
+five base-family typed helpers
+five base-family INSERTs
+base-six set-hash helper
+latest seed/stable/contract-hashed/final helpers
+latest INSERT
+archive stable/final helpers
+archive INSERT
+registry seed/stable/prehash/set/contract/combined/final helpers
+registry INSERT
+phase-9 reconstruction and diagnostics
+24 generation-evidence rows
+run lifecycle update
+primary result
+COMMIT
+</code></pre>
+<ul>
+<li>Program 222 execution-order audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_PROGRAM_222_EXECUTION_ORDER_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Why the 4,202-decision result does not clear WP1</h1>
+<p>R6 reports:</p>
+<pre><code class="language-text">Literal decisions                         4,202
+Implementation-time inferred decisions       0
+Required-zero metrics                    18/18 PASS
+</code></pre>
+<p>and states that the compiler includes DDL, views, assertions, helpers, canonical insert fields, evidence, recovery, sessions, and primary results. [export reference: filecite | turn172file0 | L410-L466]</p>
+<p>That result is valid for the surfaces it enumerates. It does not test:</p>
+<pre><code class="language-text">temporary helper owner versus consuming program
+whether a helper survives the prior program&#39;s commit
+whether a consuming program recreates the helper
+whether every current helper has a complete CREATE statement
+whether helper construction and persistent inserts have one merged order
+whether phase-9 relations are scheduled only after persistence
+</code></pre>
+<p>The claimed zero-inference result is therefore not supported by the actual program lifecycle and assembly authorities.</p>
+<h1>Required R7 correction</h1>
+<pre><code class="language-text">Do not begin Work Package 2 and do not generate Program 220 or any SQL.
+
+Produce:
+
+M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R7
+
+Preserve all R1–R6 authorities already found sound.
+
+1. Eliminate all cross-program temporary dependencies.
+
+   Program 220:
+   - replace tmp_src_m2_12_run_context with a Program-220-owned context;
+   - provide the exact accepted M2.11 contract, combined, registry and
+     project identities needed by policy construction.
+
+   Program 222:
+   - replace tmp_src_m2_12_policy_typed with the persisted exact policy row,
+     preferably through tmp_src_m2_12_policy_observation.
+
+   Program 222B:
+   - reconstruct its own run context, phase-9 proof and evidence rows;
+   - do not consume Program 222 transaction-local helpers;
+   - remove unauthorized tmp_src_ references.
+
+2. Compile every retained helper relation into an exact CREATE TEMP TABLE
+   statement, including full projection, FROM/JOIN, filter, grouping,
+   ordering, key assertion, indexes and ANALYZE.
+
+   Retire stale helpers from every current authority rather than leaving
+   uncompiled current records.
+
+3. Create one complete literal statement-order catalog for each of:
+
+   220
+   221
+   222
+   220A
+   222A
+   222B
+
+   Program 222 must interleave helpers and persistent writes under the
+   approved nine-phase model.
+
+4. Add fail-closed controls requiring:
+
+   cross-program temporary references                         0
+   temporary references surviving owner commit                0
+   unauthorized temporary-prefix references                   0
+   current helpers lacking exact CREATE statements            0
+   stale helpers absent from statement compiler               0
+   programs lacking one complete literal statement order      0
+   helpers reading persistent targets before required INSERT  0
+   phase-9 relations constructed before persistence           0
+   implementation-time inferred decisions                     0
+   frozen business-semantic changes                           0
+   SQL files generated                                        0
+   PostgreSQL executions                                      0
+
+Stop after R7 and wait for full independent re-review.
+
+WP2 remains unauthorized.
+</code></pre>
+<p>Download the complete R7 correction prompt (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_IMPLEMENTATION_CONTROL_CORRECTION_R7_PROMPT_20260808.md</code>; referenced bytes not established here)</p>
+<h1>Governing disposition</h1>
+<pre><code class="language-text">M2.12 WP1 R6                               HOLD
+M2.12 WP2                                  NOT AUTHORIZED
+
+Program 220                                NOT AUTHORIZED
+Program 221                                NOT AUTHORIZED
+Program 222                                NOT AUTHORIZED
+Programs 220A/222A/222B                    NOT AUTHORIZED
+Programs 223–227                           NOT AUTHORIZED
+
+SQL generation                             NOT AUTHORIZED
+PostgreSQL execution                       NOT AUTHORIZED
+Implementation packaging                   NOT AUTHORIZED
+Module 3                                   NOT AUTHORIZED
+Production                                 NOT AUTHORIZED
+</code></pre>
+<h1>Independent audit artifacts</h1>
+<ul>
+<li>Full R6 independent audit report (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_INDEPENDENT_AUDIT_REPORT_20260808.md</code>; referenced bytes not established here)</li>
+<li>Finding register (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_INDEPENDENT_AUDIT_FINDINGS_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable audit summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_INDEPENDENT_AUDIT_SUMMARY_20260808.json</code>; referenced bytes not established here)</li>
+<li>Cross-program temporary-lifecycle audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_CROSS_PROGRAM_TEMP_LIFECYCLE_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Cross-program relation summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_CROSS_PROGRAM_TEMP_SUMMARY_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Helper statement-coverage audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_HELPER_STATEMENT_COMPILER_COVERAGE_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Helper coverage summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_HELPER_STATEMENT_COVERAGE_SUMMARY_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Program 222 execution-order audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_PROGRAM_222_EXECUTION_ORDER_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Complete independent audit package (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_INDEPENDENT_AUDIT_PACKAGE_20260808.zip</code>; referenced bytes not established here)</li>
+<li>Audit-package SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_WP1_R6_INDEPENDENT_AUDIT_PACKAGE_20260808.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<pre><code class="language-text">Independent audit package SHA-256
+f2fea9f85b3283b2976a73c27606f163a488444cc8b56636f295942f34c51daa
+</code></pre>
+</div></article><article id="m-7fca3c06-5f60-4fae-993d-b264381cef2c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00285 · 2026-08-08T15:24:56.830000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260808-192355).md; M2_12_Build_WP1_R7(2).zip</p><div class="bubble"><p>Audit M2_12_Build_WP1_R7. Audit not just as an R6-remediation review, but as if you were about to write WP2 yourself and had no permission to improvise a single implementation detail.  Sign off or escalate blockers/issues, while noting that we need to push to resolve WP1 and move onto WP2 build asap:      </p>
+</div></article><article id="m-c3adb84f-58db-4865-b881-53231f2682f0" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00286 · 2026-08-08T16:35:34.030585-04:00 · active path</p><div class="bubble"><h1>M2.12 WP1 R7 audit determination</h1>
+<p><strong>HOLD — WP1 R7 is not approved, and WP2 is not yet authorized.</strong></p>
+<p>R7 is the strongest WP1 delivery to date. It genuinely resolves the R6 architecture findings:</p>
+<ul>
+<li>cross-program temporary dependencies are reported at zero;</li>
+<li>all 85 retained helpers have exact <code>CREATE TEMP TABLE</code> authorities;</li>
+<li>all six WP2 programs have merged statement-order catalogs;</li>
+<li>Program 222’s helper, persistence, phase-9, evidence, lifecycle, and result phases are explicitly interleaved;</li>
+<li>13,354/13,354 submitted static controls pass;</li>
+<li>no SQL files or PostgreSQL execution occurred. [export reference: filecite | turn172file0 | L13-L28]</li>
+</ul>
+<p>The R7 statement-order authority is also materially complete at the architectural level: 48 statements for Program 220, 64 for 221, 203 for 222, and 25/25/33 for Recoveries 220A/222A/222B. [export reference: filecite | turn172file0 | L239-L268]</p>
+<p>However, literal prospective compilation still exposes <strong>six bounded runtime blockers</strong>. These are no longer architectural-design defects. They are parser, postflight-integration, final-state, and recovery-operability defects.</p>
+<pre><code class="language-text">Accepted M2.11 baseline                    PASS / LOCKED
+Frozen M2.12 business design               RETAINED
+
+R7 temporary ownership/lifecycle           PASS
+R7 helper CREATE authority                 PASS
+R7 six-program statement order             PASS
+R7 Program 222 phase ordering              PASS
+R7 source authority/package integrity      PASS
+
+Program 221 PL/pgSQL syntax                BLOCKER
+Program 220 installation postflight         BLOCKER
+Program 222 final lifecycle proof           BLOCKER
+Program 220A absent-object recovery         BLOCKER
+Program 222A sequence restoration           BLOCKER
+Program 222B evidence parity                BLOCKER
+
+WP1 R7 approval                            HOLD
+WP2 authorization                          NO
+</code></pre>
+<h2>Package verification</h2>
+<p>I independently verified the canonical inner package:</p>
+<pre><code class="language-text">M2_12_Build_WP1_R7.zip
+
+Bytes
+1,601,484
+
+SHA-256
+1d70ba1f121f20569bf6aae46e6cf0442e61a55f994f6ac06945738994e2b0a3
+
+ZIP entries
+178
+
+ZIP CRC
+PASS
+
+External sidecar
+PASS
+</code></pre>
+<p>Those values reconcile with the submitted R7 record. [export reference: filecite | turn172file0 | L32-L75]</p>
+<h1>Areas now approved and fixed</h1>
+<p>The following WP1 authorities should <strong>not</strong> be reopened during R8:</p>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Cross-program temporary ownership</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Owner-commit lifecycle rules</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Temporary-prefix authorization</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Current helper statement coverage</td>
+<td><strong>85/85 PASS</strong></td>
+</tr>
+<tr>
+<td>Complete program statement orders</td>
+<td><strong>6/6 PASS</strong></td>
+</tr>
+<tr>
+<td>Program 222 helper/write interleaving</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Base inserts before base-family hashes</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Latest before archive</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Registry prerequisites before registry insert</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Phase 9 after all eight non-policy inserts</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Evidence after phase-9 proof</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Program 222B owner-local reconstruction</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>R6 Program 220 DDL/views/function</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>R5 latest/archive hash staging</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>R4 registry/contract/combined staging</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>R3 edge and boundary architecture</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>R2 reproduction and copied-contract identity</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>R1 type/domain, constraints, and view joins</td>
+<td><strong>PASS</strong></td>
+</tr>
+</tbody></table>
+<p>R7 reports zero cross-program temporary references across 9,124 inspected references, and all retained helpers now have exact projection, join, filter, assertion, index, and <code>ANALYZE</code> authorities. [export reference: filecite | turn172file0 | L77-L168] [export reference: filecite | turn172file0 | L171-L208]</p>
+<h1>Blocker 1 — Program 221’s assertion block cannot parse</h1>
+<p>The combined Program 221 anonymous block contains 48 branches of this form:</p>
+<pre><code class="language-sql">IF NOT (&lt;predicate&gt;) THEN
+    RAISE EXCEPTION ...;
+END IF
+</code></pre>
+<p>Every internal <code>END IF</code> is missing its terminating semicolon.</p>
+<p>Independent count:</p>
+<pre><code class="language-text">IF NOT branches                              48
+END IF clauses without semicolon             48
+Correct END IF; clauses                       0
+</code></pre>
+<p>The exact correction is:</p>
+<pre><code class="language-sql">END IF;
+</code></pre>
+<p>for all 48 branches.</p>
+<p>This is a guaranteed parser blocker. Program 221 cannot reach its primary result until the combined assertion compiler is regenerated.</p>
+<p>PL/pgSQL literal-syntax audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_PLPGSQL_LITERAL_SYNTAX_AUDIT_20260808.csv</code>; referenced bytes not established here)</p>
+<h1>Blocker 2 — Program 220 does not execute its governed installation postflight</h1>
+<p>R7 has detailed current postflight authorities for:</p>
+<pre><code class="language-text">Top-level installed-object checks             21
+Persistent-column checks                     327
+Constraint/index checks                       65
+Implicit identity-sequence checks              3
+Persistent-view checks                         7
+                                               ---
+Governed postflight catalog rows             423
+</code></pre>
+<p>But the Program 220 statement order schedules only one postflight block. That block checks:</p>
+<pre><code class="language-text">approved policy row count = 1
+</code></pre>
+<p>It does <strong>not</strong> execute the current exact object, column, constraint, index, identity-sequence, function, trigger, or view checks.</p>
+<p>The Program 220 primary result then returns hardcoded values:</p>
+<pre><code class="language-text">installed_top_level_objects = 21
+executable_ddl_statements   = 26
+</code></pre>
+<p>without those installation identities having been proven before commit.</p>
+<p>R7’s claim that Program 220 has a complete literal installation authority is therefore only partially realized. The underlying postflight catalogs are strong; they simply have not been compiled into the actual Program 220 execution order.</p>
+<h3>Required correction</h3>
+<p>Before Program 220’s primary result and <code>COMMIT</code>, compile and execute:</p>
+<ul>
+<li>all 21 top-level object checks;</li>
+<li>all 327 column checks;</li>
+<li>all 65 constraint/index checks;</li>
+<li>all three identity-sequence checks;</li>
+<li>all seven view checks;</li>
+<li>exact archive function/trigger identity and body checks;</li>
+<li>exact policy configuration hash, row hash, identity, and sequence state.</li>
+</ul>
+<p>Program 220 must fail before commit if any check fails.</p>
+<p>Program 220 postflight-integration audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_PROGRAM_220_POSTFLIGHT_INTEGRATION_AUDIT_20260808.csv</code>; referenced bytes not established here)</p>
+<h1>Blocker 3 — Program 222 returns stale run status and does not prove its lifecycle update</h1>
+<p>Program 222 creates:</p>
+<pre><code class="language-text">tmp_src_m2_12_run_context
+</code></pre>
+<p>while the persistent run status is:</p>
+<pre><code class="language-text">M2_11_ACCEPTED
+</code></pre>
+<p>It later updates <code>msbf_ctl.run_registry</code> to:</p>
+<pre><code class="language-text">M2_12_GENERATED
+</code></pre>
+<p>But the primary result still projects:</p>
+<pre><code class="language-sql">ctx.run_status::text AS final_run_status
+</code></pre>
+<p>That value remains the <strong>pre-update</strong> status:</p>
+<pre><code class="language-text">M2_11_ACCEPTED
+</code></pre>
+<p>even though the declared expected result is <code>M2_12_GENERATED</code>.</p>
+<p>R7 also creates:</p>
+<pre><code class="language-text">tmp_generation_m2_12_persistence_result
+</code></pre>
+<p>after the update, but that helper hardcodes:</p>
+<pre><code class="language-text">final_run_status          M2_12_GENERATED
+final_contract_status     GENERATED
+generation_evidence_rows  24
+generation_status         PASS
+</code></pre>
+<p>It does not query those values from persistent state.</p>
+<p>Therefore:</p>
+<ul>
+<li>the lifecycle <code>UPDATE</code> may affect zero rows without a fail-closed rejection;</li>
+<li>the post-update helper does not prove the new state;</li>
+<li>the primary result returns the stale status anyway.</li>
+</ul>
+<h3>Required correction</h3>
+<p>After the lifecycle update, create one target-typed persistent-state checkpoint that verifies:</p>
+<pre><code class="language-text">Governed run rows                          1
+Run status                                 M2_12_GENERATED
+G3 registry rows                           1
+Contract status                            GENERATED
+Generation-evidence rows                  24
+Phase-9 mismatches                          0
+Policy/archive/registry sequences       1/true each
+</code></pre>
+<p>The primary result must source <code>final_run_status</code> and <code>final_contract_status</code> from that post-update checkpoint.</p>
+<p>Program 222 post-update/result audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_PROGRAM_222_POSTUPDATE_RESULT_AUDIT_20260808.csv</code>; referenced bytes not established here)</p>
+<h1>Blocker 4 — Program 220A cannot safely inspect an absent or partial installation</h1>
+<p>Program 220A is specifically intended to operate when Program 220 objects may be absent or partially installed.</p>
+<p>Its shared recovery helper nevertheless uses constructs such as:</p>
+<pre><code class="language-sql">CASE
+    WHEN to_regclass(&#39;msbf_ctl.m2_12_policy_profile&#39;) IS NULL
+        THEN 0
+    ELSE
+        (SELECT count(*)
+         FROM msbf_ctl.m2_12_policy_profile)
+END
+</code></pre>
+<p>A static relation reference must be resolved before the <code>CASE</code> condition can protect it. If the table is absent, the SQL cannot be parsed/planned merely because <code>to_regclass()</code> returns <code>NULL</code>.</p>
+<p>Independent findings:</p>
+<pre><code class="language-text">Potentially absent static table/sequence references
+inside guarded CASE expressions                  20
+</code></pre>
+<p>The same problem occurs for:</p>
+<ul>
+<li>nine M2.12 tables;</li>
+<li>three identity sequences;</li>
+<li>Program 220A’s sequence-before helper;</li>
+<li>Program 220A’s result helper.</li>
+</ul>
+<p>After the recovery drops the owning tables and identity sequences, its result helper again directly names those now-absent sequence relations.</p>
+<h3>Required correction</h3>
+<p>Program 220A needs owner-specific recovery observation built from:</p>
+<ul>
+<li>catalog-only existence checks; and</li>
+<li>guarded dynamic <code>EXECUTE</code> only after existence is established.</li>
+</ul>
+<p>It may not statically reference a relation that is permitted to be absent.</p>
+<p>Its final postcondition should also prove the full Program 220 installation surface is absent, including:</p>
+<pre><code class="language-text">tables
+views
+function
+trigger
+indexes
+implicit identity sequences
+policy rows
+evidence/gate rows
+</code></pre>
+<p>Program 220A absent-object audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_PROGRAM_220A_ABSENT_OBJECT_GUARD_AUDIT_20260808.csv</code>; referenced bytes not established here)</p>
+<h1>Blocker 5 — Program 222A uses destinationless <code>SELECT setval(...)</code></h1>
+<p>Inside the Program 222A PL/pgSQL dispatch block, the recovery branch uses:</p>
+<pre><code class="language-sql">SELECT setval(
+    &#39;msbf_ctl.m2_12_g3_bundle_archive_archive_id_seq&#39;::regclass,
+    1,
+    false
+);
+
+SELECT setval(
+    &#39;msbf_ctl.m2_12_g3_bundle_registry_registry_id_seq&#39;::regclass,
+    1,
+    false
+);
+</code></pre>
+<p>Inside PL/pgSQL, a row-returning <code>SELECT</code> requires a destination. These statements should be:</p>
+<pre><code class="language-sql">PERFORM setval(...);
+</code></pre>
+<p>Independent count:</p>
+<pre><code class="language-text">Destinationless SELECT setval statements       2
+</code></pre>
+<p>Without this correction, the only mutation branch of Program 222A fails when invoked.</p>
+<h1>Blocker 6 — Program 222B uses evidence counts instead of exact evidence identity</h1>
+<p>Program 222B correctly reconstructs the 24 expected generation-evidence rows in:</p>
+<pre><code class="language-text">tmp_recover_m2_12_222b_evidence
+</code></pre>
+<p>But it does not compare those expected rows field-for-field with the persisted <code>msbf_ctl.run_evidence</code> rows.</p>
+<p>Its decision logic currently relies on:</p>
+<pre><code class="language-text">M2.12 evidence-row count                      24
+M2.12 PASS evidence-row count                 24
+</code></pre>
+<p>That allows <code>NO_ACTION_COMPLETE</code> or <code>REPAIR_RUN_STATUS_ONLY</code> to proceed without proving exact parity of:</p>
+<pre><code class="language-text">evidence_code
+segment_key
+metric_name
+numeric/text metric channel
+metric value
+unit_code
+status
+threshold
+interpretation
+</code></pre>
+<p>The postflight also checks only that 24 matching-prefix rows have <code>PASS</code> status.</p>
+<p>A set of 24 wrong-but-PASS rows could therefore satisfy the current count test.</p>
+<h3>Required correction</h3>
+<p>Full-join the 24 target-shaped expected rows to persisted evidence and require:</p>
+<pre><code class="language-text">Missing rows                         0
+Extra rows                           0
+Duplicate business keys              0
+Code/segment/metric mismatches        0
+Metric-value mismatches               0
+Unit/status mismatches                0
+Threshold mismatches                  0
+Interpretation mismatches             0
+</code></pre>
+<p>Both <code>NO_ACTION_COMPLETE</code> and <code>REPAIR_RUN_STATUS_ONLY</code> must require exact parity.</p>
+<p>Program 222B evidence-parity audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_PROGRAM_222B_EVIDENCE_PARITY_AUDIT_20260808.csv</code>; referenced bytes not established here)</p>
+<h1>Why 13,354/13,354 PASS did not clear WP1</h1>
+<p>R7’s required-zero ledger is valid for the controls it performs: temporary ownership, helper coverage, statement-order coverage, dependency order, early persistent reads, phase ordering, and inference records. [export reference: filecite | turn172file0 | L437-L455]</p>
+<p>It does not currently test:</p>
+<pre><code class="language-text">internal PL/pgSQL terminators
+destinationless PL/pgSQL SELECT statements
+whether postflight catalogs are actually scheduled
+pre-update versus post-update result freshness
+static relation binding in absent-object recovery
+expected-versus-persisted evidence field parity
+</code></pre>
+<p>So R7’s broad architectural closure is real, but the literal operability conclusion is not yet complete.</p>
+<h1>Fastest governed path to WP2</h1>
+<p>We should <strong>not</strong> request another broad WP1 reconstruction.</p>
+<p>The next correction should be one narrow, delta-only:</p>
+<pre><code class="language-text">M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R8
+</code></pre>
+<p>R8 should touch only:</p>
+<ul>
+<li>Program 221 assertion compiler and statement order;</li>
+<li>Program 220 postflight compiler and statement order;</li>
+<li>Program 222 post-update checkpoint and primary result;</li>
+<li>Program 220A recovery observation/result/postcondition;</li>
+<li>Program 222A mutation syntax;</li>
+<li>Program 222B evidence reconciliation;</li>
+<li>affected audits, source identities, review, and package records.</li>
+</ul>
+<p>It should <strong>not</strong> reopen the 85 helpers, six-program architecture, view definitions, hash architecture, source graph, canonical counts, or business semantics except where one of the six corrections has a direct dependency.</p>
+<p>Download the complete R8 correction prompt (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_IMPLEMENTATION_CONTROL_CORRECTION_R8_PROMPT_20260808.md</code>; referenced bytes not established here)</p>
+<p>The intended next review is narrow: verify these six corrected surfaces, byte preservation of unaffected authorities, and no unrelated changes. Assuming that succeeds, the target disposition is:</p>
+<pre><code class="language-text">WP1 APPROVED
+WP2 AUTHORIZED
+</code></pre>
+<h1>Governing disposition</h1>
+<pre><code class="language-text">M2.12 WP1 R7                               HOLD
+M2.12 WP2                                  NOT AUTHORIZED
+
+R8 bounded correction                      AUTHORIZED
+Program 220 SQL generation                 NOT AUTHORIZED
+Programs 221–227 SQL generation            NOT AUTHORIZED
+PostgreSQL execution                       NOT AUTHORIZED
+Implementation packaging                   NOT AUTHORIZED
+Module 3                                   NOT AUTHORIZED
+Production                                 NOT AUTHORIZED
+</code></pre>
+<p>R7 itself correctly retained the independent-review hold and did not claim WP2 authorization or SQL generation. [export reference: filecite | turn172file0 | L532-L558]</p>
+<h2>Independent audit artifacts</h2>
+<ul>
+<li>Full R7 independent audit report (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_INDEPENDENT_AUDIT_REPORT_20260808.md</code>; referenced bytes not established here)</li>
+<li>Finding register (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_INDEPENDENT_AUDIT_FINDINGS_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable audit summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_INDEPENDENT_AUDIT_SUMMARY_20260808.json</code>; referenced bytes not established here)</li>
+<li>PL/pgSQL syntax audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_PLPGSQL_LITERAL_SYNTAX_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Program 220 postflight audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_PROGRAM_220_POSTFLIGHT_INTEGRATION_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Program 222 final-state audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_PROGRAM_222_POSTUPDATE_RESULT_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Program 220A absent-object audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_PROGRAM_220A_ABSENT_OBJECT_GUARD_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Program 222B evidence-parity audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_PROGRAM_222B_EVIDENCE_PARITY_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Complete independent audit package (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_INDEPENDENT_AUDIT_PACKAGE_20260808.zip</code>; referenced bytes not established here)</li>
+<li>Audit-package SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_WP1_R7_INDEPENDENT_AUDIT_PACKAGE_20260808.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<pre><code class="language-text">Independent audit package SHA-256
+d6c3c69f721317dc403a32b89f8e72450e5ec5dafa24f699e3ef1d271c6ce1ce
+</code></pre>
+</div></article><article id="m-76229299-b139-479f-b6ea-f1d2b8751b61" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00287 · 2026-08-08T19:11:56.407000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260808-231132).md; M2_12_Build_WP1_R8(1).zip</p><div class="bubble"><p>Audit M2_12_Build_WP1_R8. Audit not just as an R7-remediation review, but as if you were about to write WP2 yourself and had no permission to improvise a single implementation detail.  Sign off or escalate blockers/issues, while noting that we need to push to resolve WP1 and move onto WP2 build asap:    </p>
+</div></article><article id="m-8e518677-ec14-4c74-ab9c-b15efe271dff" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00288 · 2026-08-08T20:03:02.370257-04:00 · active path</p><div class="bubble"><h1>M2.12 WP1 R8 audit determination</h1>
+<p><strong>HOLD — Work Package 1 R8 is not approved, and Work Package 2 is not yet authorized.</strong></p>
+<p>R8 successfully resolves all six R7 findings. I independently verified the corrected parser controls, integrated Program 220 postflight scheduling, Program 222 post-update checkpoint, Program 220A absent-object recovery, Program 222A <code>PERFORM setval</code> syntax, and Program 222B field-level evidence reconciliation. The package also preserves the no-SQL and no-execution boundary. [export reference: filecite | turn172file0 | L42-L70] [export reference: filecite | turn172file0 | L134-L224] [export reference: filecite | turn172file0 | L227-L365]</p>
+<p>A full prospective assembly of WP2 nevertheless identified <strong>two remaining implementation blockers and one associated compiler-governance gap</strong>.</p>
+<pre><code class="language-text">Accepted M2.11 baseline                    PASS / LOCKED
+Frozen M2.12 business design               RETAINED
+
+R8 Program 221 PL/pgSQL correction         PASS
+R8 Program 220 postflight scheduling       PASS — predicate issue remains
+R8 Program 222 persisted checkpoint        PASS
+R8 Program 220A absent-object recovery     PASS
+R8 Program 222A sequence syntax            PASS
+R8 Program 222B evidence parity            PASS
+R7 85-helper CREATE authority              PASS
+R7/R8 six-program merged order             PASS — component omission remains
+
+Program 220 postflight predicate model      BLOCKER
+Helper-index statement scheduling           BLOCKER
+Zero-inference compiler conclusion          NOT YET SUPPORTED
+
+WP1 R8 approval                             HOLD
+WP2 authorization                           NO
+</code></pre>
+<h2>Package verification</h2>
+<p>I independently verified the canonical review package:</p>
+<pre><code class="language-text">M2_12_Build_WP1_R8.zip
+
+Bytes
+1,677,842
+
+SHA-256
+e71f4461ce0b7573509145b44d6c3a00d85d32d81145ac3c9d6d8454581aed62
+
+ZIP entries
+213
+
+ZIP CRC
+PASS
+
+External sidecar
+PASS
+</code></pre>
+<p>These identities agree with the R8 delivery record. [export reference: filecite | turn172file0 | L465-L501]</p>
+<h1>What is now approved and should remain fixed</h1>
+<p>R8 genuinely closes the R7 blockers:</p>
+<ul>
+<li>all 48 Program 221 branches now use valid <code>END IF;</code> terminators;</li>
+<li>Program 220 schedules all 426 governed postflight records before its primary result and commit;</li>
+<li>Program 222 requires exactly one lifecycle update and builds its result from persistent post-update state;</li>
+<li>Program 220A uses catalog inspection and guarded dynamic SQL instead of statically binding potentially absent objects;</li>
+<li>Program 222A uses <code>PERFORM setval(...)</code>;</li>
+<li>Program 222B performs a full expected-versus-persisted evidence comparison rather than relying on counts alone. [export reference: filecite | turn172file0 | L42-L123] [export reference: filecite | turn172file0 | L134-L224] [export reference: filecite | turn172file0 | L227-L365]</li>
+</ul>
+<p>The six-program ordering architecture also remains approved:</p>
+<pre><code class="language-text">Program 220      473 statements
+Program 221       64 statements
+Program 222      203 statements
+Program 220A      22 statements
+Program 222A      25 statements
+Program 222B      34 statements
+                 ---
+Current total    821 statements
+</code></pre>
+<p>R8 correctly retains zero cross-program temporary references and 85 of 85 helper <code>CREATE</code> authorities. [export reference: filecite | turn172file0 | L368-L393]</p>
+<h1>Blocker 1 — Program 220’s postflight assumes PostgreSQL preserves original source text</h1>
+<p>The 426 checks are now scheduled correctly. The problem is the pass/fail logic used by <strong>79 of those checks</strong>.</p>
+<pre><code class="language-text">Constraint-definition source/deparse comparisons    57
+Index-definition source/deparse comparisons           8
+View source-body hash/deparse comparisons             14
+                                                     ---
+Affected postflight checks                            79
+</code></pre>
+<h2>Constraints and indexes</h2>
+<p>The current predicates compare:</p>
+<pre><code class="language-sql">pg_get_constraintdef(...)
+</code></pre>
+<p>or:</p>
+<pre><code class="language-sql">pg_get_indexdef(...)
+</code></pre>
+<p>with the normalized text of the original <code>PRIMARY KEY</code>, <code>UNIQUE</code>, <code>FOREIGN KEY</code>, <code>CHECK</code>, or <code>CREATE INDEX</code> clause.</p>
+<h2>Views</h2>
+<p>The seven persistent views are each checked twice—once in the top-level object family and once in the dedicated view family. In both cases the runtime predicate hashes:</p>
+<pre><code class="language-sql">pg_get_viewdef(...)
+</code></pre>
+<p>and compares it with an expected MD5 derived from the <strong>original source <code>SELECT</code> body</strong>. I independently reproduced all seven expected hashes from the source view statements.</p>
+<h2>Why this is not a valid deterministic postcondition</h2>
+<p>PostgreSQL defines <code>pg_get_constraintdef</code>, <code>pg_get_indexdef</code>, and <code>pg_get_viewdef</code> as <strong>decompiled reconstructions, not the original command text</strong>. Therefore, original-source spelling is not a governed invariant of those functions. [export reference: cite | turn155522search0]</p>
+<p>PostgreSQL may canonicalize such details as:</p>
+<ul>
+<li>operator spacing and parentheses;</li>
+<li>explicit casts;</li>
+<li>default index access methods;</li>
+<li>qualification and quoting;</li>
+<li>reconstructed view expressions.</li>
+</ul>
+<p>Whitespace normalization does not resolve all of those changes. A correctly installed object can therefore fail the R8 postflight because its decompiled representation differs from the source spelling—not because its physical structure is wrong.</p>
+<h3>Required correction</h3>
+<p>Preserve the 426-check scheduling, but replace all 79 source/deparser text-equality predicates with catalog-native structural checks.</p>
+<p>For example:</p>
+<pre><code class="language-text">Constraints:
+name, table, contype, exact key-column order,
+validation and deferrability flags,
+referenced table/columns and actions,
+required CHECK operators/columns/constants
+
+Indexes:
+name, table, access method, key order,
+unique/primary flags, validity/readiness,
+predicate/expression absence where required
+
+Views:
+ordered column names and types,
+persistent dependencies,
+required joins and scope predicates,
+required expression tokens,
+absence of temporary dependencies
+</code></pre>
+<p>Deparsed SQL may remain available as diagnostic output, but it should not be compared with original source text as a blocking identity.</p>
+<ul>
+<li>Review all 79 unstable postflight comparisons (historical reference: <code>sandbox:[session]/M2_12_WP1_R8_POSTFLIGHT_DEPARSE_STABILITY_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Postflight issue summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R8_POSTFLIGHT_DEPARSE_STABILITY_SUMMARY_20260808.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Blocker 2 — sixteen governed helper indexes are absent from the statement orders</h1>
+<p>The helper authority contains nonblank <code>index_sql</code> for these sixteen program/helper occurrences, but the exact index statements do not appear in the current merged execution orders:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Program</th>
+<th align="right">Missing governed helper indexes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">221</td>
+<td align="right">12</td>
+</tr>
+<tr>
+<td align="right">222</td>
+<td align="right">3</td>
+</tr>
+<tr>
+<td align="right">222A</td>
+<td align="right">1</td>
+</tr>
+<tr>
+<td align="right"><strong>Total</strong></td>
+<td align="right"><strong>16</strong></td>
+</tr>
+</tbody></table>
+<p>The Program 221 omissions include indexes for its run context, node/component/evidence/capability design relations, policy and non-policy scopes, source-edge observation, component/node assertion state, sequence state, and Module 3 boundary relation.</p>
+<p>Program 222 omits the governed indexes for:</p>
+<pre><code class="language-text">tmp_src_m2_12_source_edge_physical
+tmp_reconcile_m2_12_physical
+tmp_generation_m2_12_evidence
+</code></pre>
+<p>Program 222A omits the index for:</p>
+<pre><code class="language-text">tmp_recover_m2_12_governed_scope
+</code></pre>
+<p>These are <code>CREATE UNIQUE INDEX</code> authorities. They are not merely undocumented tuning suggestions; they also physically enforce the helper business keys that WP1 claims to have frozen.</p>
+<p>R8’s statement-order audit confirms that every helper has a <code>CREATE TEMP TABLE</code> authority, but it does not reconcile all four helper components:</p>
+<pre><code class="language-text">CREATE
+row-count assertion
+index
+ANALYZE
+</code></pre>
+<h3>Required correction</h3>
+<p>Schedule each index immediately:</p>
+<pre><code class="language-text">after its helper row-count assertion
+before its ANALYZE statement
+</code></pre>
+<p>Assuming no other directly required scheduling rows, the corrected counts should be:</p>
+<pre><code class="language-text">Program 220      473
+Program 221       76
+Program 222      206
+Program 220A      22
+Program 222A      26
+Program 222B      34
+                 ---
+Corrected total  837
+</code></pre>
+<ul>
+<li>Review all helper-index scheduling results (historical reference: <code>sandbox:[session]/M2_12_WP1_R8_HELPER_INDEX_SCHEDULING_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Scheduling summary by program (historical reference: <code>sandbox:[session]/M2_12_WP1_R8_HELPER_INDEX_SCHEDULING_SUMMARY_20260808.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Why 4,678/4,678 PASS does not clear WP1</h1>
+<p>R8’s required-zero ledger correctly tests the six R7 findings, complete helper <code>CREATE</code> authority, statement-order presence, temporary ownership, parser terminators, lifecycle proof, and evidence parity. [export reference: filecite | turn172file0 | L404-L425]</p>
+<p>It does not currently test:</p>
+<pre><code class="language-text">source SQL versus PostgreSQL decompiler stability
+complete helper component scheduling
+nonblank index_sql absent from statement order
+index placement between assertion and ANALYZE
+</code></pre>
+<p>Therefore, the reported zero inferred decisions and complete statement-order conclusion are still slightly broader than the controls actually establish. R8’s prospective compiler reports 2,784 successful decisions, but these two omitted surfaces prevent final literal closure. [export reference: filecite | turn172file0 | L427-L463]</p>
+<h1>Fastest governed path to WP2</h1>
+<p>We should <strong>not reopen or broadly rebuild WP1</strong>.</p>
+<p>The appropriate action is one final bounded correction:</p>
+<pre><code class="language-text">M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R9
+</code></pre>
+<p>R9 should change only:</p>
+<ul>
+<li>the Program 220 postflight predicate model;</li>
+<li>the Program 221, 222, and 222A index scheduling rows;</li>
+<li>directly affected statement-order, compiler, static-audit, review, source-identity, and packaging records.</li>
+</ul>
+<p>It should preserve byte-identical all other R8 authorities unless a direct hash/provenance update is necessary.</p>
+<p>Download the complete R9 correction prompt (historical reference: <code>sandbox:[session]/M2_12_WP1_R8_IMPLEMENTATION_CONTROL_CORRECTION_R9_PROMPT_20260808.md</code>; referenced bytes not established here)</p>
+<p>The intended next review is narrow:</p>
+<pre><code class="language-text">79 postflight predicates structurally corrected
+16 helper indexes scheduled
+unaffected authorities byte-identical
+no unrelated change
+</code></pre>
+<p>Assuming those checks pass, the target disposition is:</p>
+<pre><code class="language-text">WP1 APPROVED
+WP2 AUTHORIZED
+</code></pre>
+<h1>Governing disposition</h1>
+<pre><code class="language-text">M2.12 WP1 R8                               HOLD
+M2.12 WP2                                  NOT AUTHORIZED
+
+R9 bounded correction                      AUTHORIZED
+Program 220 SQL generation                 NOT AUTHORIZED
+Programs 221–227 SQL generation            NOT AUTHORIZED
+PostgreSQL execution                       NOT AUTHORIZED
+Implementation packaging                   NOT AUTHORIZED
+Module 3                                   NOT AUTHORIZED
+Production                                 NOT AUTHORIZED
+</code></pre>
+<p>R8 itself correctly stopped at the final-review boundary and did not generate SQL or authorize WP2. [export reference: filecite | turn172file0 | L551-L577]</p>
+<h2>Independent audit artifacts</h2>
+<ul>
+<li>Full R8 independent audit report (historical reference: <code>sandbox:[session]/M2_12_WP1_R8_INDEPENDENT_AUDIT_REPORT_20260808.md</code>; referenced bytes not established here)</li>
+<li>Finding register (historical reference: <code>sandbox:[session]/M2_12_WP1_R8_INDEPENDENT_AUDIT_FINDINGS_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable audit summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R8_INDEPENDENT_AUDIT_SUMMARY_20260808.json</code>; referenced bytes not established here)</li>
+<li>Postflight deparser-stability audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R8_POSTFLIGHT_DEPARSE_STABILITY_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Postflight issue summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R8_POSTFLIGHT_DEPARSE_STABILITY_SUMMARY_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Helper-index scheduling audit (historical reference: <code>sandbox:[session]/M2_12_WP1_R8_HELPER_INDEX_SCHEDULING_AUDIT_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Helper-index scheduling summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R8_HELPER_INDEX_SCHEDULING_SUMMARY_20260808.csv</code>; referenced bytes not established here)</li>
+<li>Complete independent audit package (historical reference: <code>sandbox:[session]/M2_12_WP1_R8_INDEPENDENT_AUDIT_PACKAGE_20260808.zip</code>; referenced bytes not established here)</li>
+<li>Audit-package SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_WP1_R8_INDEPENDENT_AUDIT_PACKAGE_20260808.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<pre><code class="language-text">Independent audit package SHA-256
+228d48c81e97eb06ea9d5f44b279a11cb7c01b34381880fe5188c9357b890577
+</code></pre>
+</div></article><article id="m-e26f8aed-3c8e-4541-847c-a0d9df638467" class="message user"><p class="meta"><strong>Andrew / user</strong> · C072-M00289 · 2026-08-08T21:49:32.528000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260809-014917).md; M2_12_Build_WP1_R9(1).zip</p><div class="bubble"><p>Perform the narrow M2.12 WP1 R9 audit review. Sign off or escalate blockers/issues. </p>
+</div></article><article id="m-f2a7ae5b-0d80-4e5a-90f5-7e07c58225db" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00290 · 2026-08-08T22:07:11.801141-04:00 · active path</p><div class="bubble"><p>I completed the narrow R9 review and am packaging the independent signoff, check register, and WP2 authorization record.</p>
+</div></article><article id="m-a849e7f1-2ef0-4fd5-9bb6-737f835cd9d6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C072-M00291 · 2026-08-08T22:26:30.994335-04:00 · active path</p><div class="bubble"><h1>M2.12 WP1 R9 final audit determination</h1>
+<p><strong>APPROVED — Work Package 1 Revision 9 receives final independent signoff. Work Package 2 source construction is authorized.</strong></p>
+<pre><code class="language-text">M2.12 Work Package 1 R9                   APPROVED
+M2.12 Work Package 2                      AUTHORIZED — SOURCE CONSTRUCTION ONLY
+
+Program 220                               AUTHORIZED FOR SQL SOURCE GENERATION
+Program 221                               AUTHORIZED FOR SQL SOURCE GENERATION
+Program 222                               AUTHORIZED FOR SQL SOURCE GENERATION
+Recovery 220A                             AUTHORIZED FOR SQL SOURCE GENERATION
+Recovery 222A                             AUTHORIZED FOR SQL SOURCE GENERATION
+Recovery 222B                             AUTHORIZED FOR SQL SOURCE GENERATION
+
+PostgreSQL execution                      NOT AUTHORIZED
+Programs 223–227                          NOT AUTHORIZED
+Recovery 223A                             NOT AUTHORIZED
+Implementation execution packaging        NOT AUTHORIZED
+M2.12 validation or acceptance            NOT CLAIMED
+Module 3                                  NOT AUTHORIZED
+Production                                NOT AUTHORIZED
+</code></pre>
+<p>I found <strong>no remaining WP1 approval blocker and no additional evidence request</strong>.</p>
+<h2>Independent audit result</h2>
+<pre><code class="language-text">Independent controls                      39 / 39 PASS
+Independent failures                       0
+Approval blockers                          0
+Evidence requests                          0
+</code></pre>
+<p>The bounded R9 correction reports 426/426 Program 220 postflights scheduled, 79/79 structural corrections passed, 85/85 indexed-helper occurrences scheduled, six complete program orders, 837 ordered statements, 2,800 literal decisions, zero inferred decisions, and 4,470/4,470 static controls. It also preserves the no-SQL and no-execution boundary. [export reference: filecite | turn172file0 | L13-L30]</p>
+<h1>Package and source-authority verification</h1>
+<p>I independently verified the canonical package:</p>
+<pre><code class="language-text">Package
+M2_12_Build_WP1_R9.zip
+
+Bytes
+1,717,498
+
+SHA-256
+d340b94800efe89a0ff06ca38d51ff30304294fbbdc847a4068078f1c74b0330
+
+ZIP entries
+199
+
+ZIP CRC
+PASS
+
+External sidecar
+PASS
+</code></pre>
+<p>These values match the submitted R9 delivery record. [export reference: filecite | turn172file0 | L204-L239]</p>
+<p>I also independently reconciled:</p>
+<pre><code class="language-text">Current R9 authority files                       173
+Source-identity records                          172
+Missing source-authority files                     0
+Byte-count mismatches                               0
+SHA-256 mismatches                                  0
+
+Unsafe paths                                        0
+Exact duplicate paths                               0
+Case-insensitive duplicate paths                    0
+SQL files                                           0
+</code></pre>
+<h1>R9 blocker closure</h1>
+<h2>1. Program 220 structural postflights — PASS</h2>
+<p>R9 replaces the 79 unstable original-source-versus-deparser comparisons with catalog-native structural certification:</p>
+<pre><code class="language-text">Constraint structural checks                     57
+Explicit-index structural checks                  8
+View-related structural checks                   14
+                                                 --
+Structurally corrected checks                    79
+</code></pre>
+<p>The constraint checks now govern catalog identity, constraint type, ordered keys, validation and deferrability state, foreign-key targets/actions, backing-index structure, and parsed CHECK-expression identity. The index checks govern relation identity, access method, uniqueness, ordered keys, validity/readiness, collation, operator class, and absence of ungoverned predicates or expressions. The view checks compare ordered columns and types, persistent dependencies, absence of temporary dependencies, and normalized rewrite trees. [export reference: filecite | turn172file0 | L34-L113]</p>
+<p>My independent review confirmed:</p>
+<pre><code class="language-text">Structural checks                              79 / 79 PASS
+Structural-completeness checks                 79 / 79 PASS
+
+Blocking pg_get_constraintdef comparisons             0
+Blocking pg_get_indexdef comparisons                  0
+Blocking pg_get_viewdef comparisons                   0
+
+Program 220 postflights absent from order              0
+Duplicate scheduled postflights                        0
+Postflights after primary result or COMMIT             0
+</code></pre>
+<p>Decompiled definitions remain available only as nonblocking diagnostics.</p>
+<h2>2. Helper-index scheduling — PASS</h2>
+<p>R9 schedules the sixteen previously omitted index occurrences:</p>
+<pre><code class="language-text">Program 221                                    12
+Program 222                                     3
+Program 222A                                    1
+                                               --
+Newly scheduled                                16
+</code></pre>
+<p>Across the complete authority, all 85 required program/helper index occurrences are scheduled exactly once after the corresponding helper assertion and before <code>ANALYZE</code>. [export reference: filecite | turn172file0 | L115-L152]</p>
+<p>My independent compiler reconciliation found:</p>
+<pre><code class="language-text">Required helper-index occurrences             85
+Scheduled exactly once                        85
+Missing index statements                       0
+Duplicate index statements                     0
+Index-placement failures                       0
+</code></pre>
+<p>The final complete statement counts are:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Program</th>
+<th align="right">Statements</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">220</td>
+<td align="right">473</td>
+</tr>
+<tr>
+<td align="right">221</td>
+<td align="right">76</td>
+</tr>
+<tr>
+<td align="right">222</td>
+<td align="right">206</td>
+</tr>
+<tr>
+<td align="right">220A</td>
+<td align="right">22</td>
+</tr>
+<tr>
+<td align="right">222A</td>
+<td align="right">26</td>
+</tr>
+<tr>
+<td align="right">222B</td>
+<td align="right">34</td>
+</tr>
+<tr>
+<td align="right"><strong>Total</strong></td>
+<td align="right"><strong>837</strong></td>
+</tr>
+</tbody></table>
+<p>All six sequences are contiguous from statement 1 through the final statement.</p>
+<h1>Preservation and bounded-change conclusion</h1>
+<p>Independent R8-to-R9 comparison confirmed:</p>
+<pre><code class="language-text">R8 and R9 common authority files             153
+Byte-identical unaffected authorities        141
+Directly changed common authorities           12
+New R9 physical files                         20
+Superseded R8 governance/static files         10
+</code></pre>
+<p>The submitted 141-row unaffected certification exactly matches the independently derived byte-identical set. The affected-artifact inventory also reconciles to all twelve changed authorities and eighteen governed new records; the two additional physical files are the self-referential R9 source-identity and affected-inventory records.</p>
+<p>R9 expressly reports no change to the approved source edges, reproduction methods, helper definitions, view definitions, hash preimages, sequence model, canonical fields, recovery branches, evidence definitions, grains, counts, or business boundaries. [export reference: filecite | turn172file0 | L154-L181]</p>
+<h1>Final implementation-closure conclusion</h1>
+<pre><code class="language-text">Literal compilation decisions                    2,800
+Implementation-time inferred decisions               0
+Failed program-closure records                        0
+
+Required-zero metrics                          13 / 13
+R9 static controls                         4,470 / 4,470
+
+Frozen business-semantic changes                    0
+SQL files generated                                  0
+PostgreSQL executions                                0
+</code></pre>
+<p>Every R9 source-identity record, package path, byte count, and SHA-256 value independently reconciled. WP1 has reached the intended implementation-control standard: WP2 may now generate the six SQL sources without making an unstated implementation decision.</p>
+<h1>Exact signoff for the build record</h1>
+<pre><code class="language-text">M2.12 WP1 R9 FINAL INDEPENDENT SIGNOFF
+
+M2.12 Work Package 1 Revision 9 is approved as the sole current
+implementation-control authority for Work Package 2 source construction.
+
+Approved governing package:
+
+M2_12_Build_WP1_R9.zip
+
+SHA-256:
+
+d340b94800efe89a0ff06ca38d51ff30304294fbbdc847a4068078f1c74b0330
+
+Confirmed:
+
+- Program 220 postflights scheduled = 426 / 426;
+- structurally corrected postflights = 79 / 79 PASS;
+- blocking source/deparser comparisons = 0;
+- indexed helper program occurrences = 85 / 85;
+- helper-index placement failures = 0;
+- complete program orders = 6 / 6;
+- ordered statements = 837;
+- literal compilation decisions = 2,800;
+- implementation-time inferred decisions = 0;
+- required-zero metrics = 13 / 13 PASS;
+- static controls = 4,470 / 4,470 PASS;
+- unaffected R8 authorities byte-identical = 141 / 141;
+- source-identity mismatches = 0;
+- frozen business-semantic changes = 0;
+- SQL files generated = 0;
+- PostgreSQL executions = 0.
+
+Work Package 1 is complete and approved.
+
+Work Package 2 is authorized for source construction only:
+
+220
+221
+222
+220A
+222A
+222B
+
+WP2 must translate the exact R9 statement-order and literal-compilation
+authorities into six SQL source files without adding, removing, reordering,
+or reinterpreting any governed implementation decision.
+
+WP2 must stop after SQL source construction, static review, source/hash
+authority generation, and its review bundle.
+
+This signoff does not authorize:
+
+- PostgreSQL execution;
+- Programs 223–227;
+- Recovery 223A;
+- Work Packages 3–5;
+- implementation execution packaging;
+- M2.12 validation or acceptance;
+- Module 3;
+- production deployment.
+</code></pre>
+<h1>Immediate next step</h1>
+<p>Send the R9 package and sidecar, the final signoff, and the authorized WP2 prompt to the M2.12 build chat. That chat may begin <strong>WP2 source construction immediately</strong>, but it must stop before PostgreSQL execution or WP3.</p>
+<h2>Final audit artifacts</h2>
+<ul>
+<li>Final independent R9 audit report (historical reference: <code>sandbox:[session]/M2_12_WP1_R9_FINAL_INDEPENDENT_AUDIT_REPORT_20260809.md</code>; referenced bytes not established here)</li>
+<li>All 39 independent audit controls (historical reference: <code>sandbox:[session]/M2_12_WP1_R9_FINAL_INDEPENDENT_AUDIT_CONTROLS_20260809.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable audit summary (historical reference: <code>sandbox:[session]/M2_12_WP1_R9_FINAL_INDEPENDENT_AUDIT_SUMMARY_20260809.json</code>; referenced bytes not established here)</li>
+<li>Final WP1 signoff and WP2 authorization (historical reference: <code>sandbox:[session]/M2_12_WP1_R9_FINAL_SIGNOFF_AND_WP2_AUTHORIZATION_20260809.md</code>; referenced bytes not established here)</li>
+<li>Authorized WP2 build-chat prompt (historical reference: <code>sandbox:[session]/M2_12_WP2_AUTHORIZED_BUILD_PROMPT_20260809.md</code>; referenced bytes not established here)</li>
+<li>Complete independent audit package (historical reference: <code>sandbox:[session]/M2_12_WP1_R9_FINAL_INDEPENDENT_AUDIT_PACKAGE_20260809.zip</code>; referenced bytes not established here)</li>
+<li>Audit-package SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_WP1_R9_FINAL_INDEPENDENT_AUDIT_PACKAGE_20260809.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<pre><code class="language-text">Independent audit package SHA-256
+adff7e558a311fbbaa6464218a184221a75911efa4ea9d3e0aa464219093b01f
+</code></pre>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

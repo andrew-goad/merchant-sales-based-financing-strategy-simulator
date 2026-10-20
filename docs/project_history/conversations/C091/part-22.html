@@ -1,0 +1,1493 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence — part 22 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence — part 22</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-21.html">Previous part</a><a href="part-23.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-26f23016-ab53-4158-a349-d7d9277de025" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00280 · 2026-08-25T02:00:23.863424-04:00 · active path</p><div class="bubble"><p>This is now narrow enough to classify. The serialization-aware validator is failing because <strong>five pre-existing tables picked up or reverted Power BI-authored annotations during Desktop save/refresh</strong>, not because their substantive schema, partitions, measures, or relationships changed.</p>
+<p>The exact residuals are:</p>
+<pre><code class="language-text">DimDate
+PBI_ResultType: Exception → Table
+
+DimRunCampaign
+PBI_ResultType: Exception → Table
+
+DimMerchant
+added PBI_NavigationStepName = Navigation
+
+DimReportingScope
+added PBI_NavigationStepName = Navigation
+
+FactAccountCertification
+added PBI_NavigationStepName = Navigation
+</code></pre>
+<p>Those are all annotation-only changes. There is no column, partition, relationship, measure, source-root, or table-definition drift in the output you just produced. That is strongly consistent with Power BI Desktop rewriting navigation/result-type metadata during save/refresh rather than with unauthorized A3 semantics.</p>
+<p>The next step is to prove that <strong>after ignoring only these five annotation differences</strong>, every existing A1b table is otherwise identical and all remaining original relationships, expressions, measures, and counts pass. Do not patch <code>model.bim</code>.</p>
+<p>Run this diagnostic copy of the validator, changing only the equality test for existing tables so it removes those specific Desktop annotations before comparing.</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+
+$work   = &quot;C:\MSBF\MSBF_PBI_A3_WORKING_R1_20260821&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+$sourceValidator = Join-Path $return `
+    &quot;A3_E07_Validate-A3Static_SERIALIZATION_AWARE_DIAGNOSTIC.py&quot;
+
+$normalizedValidator = Join-Path $return `
+    &quot;A3_E09_Validate-A3Static_ANNOTATION_NORMALIZED_DIAGNOSTIC.py&quot;
+
+Copy-Item `
+    -LiteralPath $sourceValidator `
+    -Destination $normalizedValidator `
+    -Force
+
+$text = [IO.File]::ReadAllText($normalizedValidator)
+
+$old = @&#39;
+for n,x in bt.items(): assert pt[n]==x
+&#39;@.Trim()
+
+$new = @&#39;
+def normalize_desktop_annotations(table):
+    t=json.loads(json.dumps(table))
+    anns=t.get(&#39;annotations&#39;,[])
+    filtered=[]
+    for a in anns:
+        name=a.get(&#39;name&#39;)
+        if name in (&#39;PBI_ResultType&#39;,&#39;PBI_NavigationStepName&#39;):
+            continue
+        filtered.append(a)
+    t[&#39;annotations&#39;]=filtered
+    return t
+
+for n,x in bt.items():
+    assert normalize_desktop_annotations(pt[n])==normalize_desktop_annotations(x)
+&#39;@.Trim()
+
+$matches = (
+    [regex]::Matches(
+        $text,
+        [regex]::Escape($old)
+    )
+).Count
+
+Write-Host &quot;Existing-table assertion matches:&quot; $matches
+
+if ($matches -ne 1) {
+    throw &quot;STOP: expected exactly one existing-table assertion; found $matches.&quot;
+}
+
+$patched = $text.Replace($old,$new)
+
+[IO.File]::WriteAllText(
+    $normalizedValidator,
+    $patched,
+    [Text.UTF8Encoding]::new($false)
+)
+
+Write-Host &quot;Annotation-normalized diagnostic validator prepared.&quot;
+</code></pre>
+<p>Then run it:</p>
+<pre><code class="language-powershell">$python = &quot;C:\Python314\python.exe&quot;
+
+&amp; $python `
+    $normalizedValidator `
+    $work *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$return\A3_E09_ANNOTATION_NORMALIZED_STATIC_BOUNDARY.txt&quot;
+</code></pre>
+<p>If this returns <code>PASS</code>, we will have a very clean evidence chain:</p>
+<pre><code class="language-text">Original validator:
+FAIL at literal physical-file assumption
+
+Serialization-aware copy:
+advances past physical-file assumption
+FAIL at existing-table byte/object equality
+
+Existing-table diagnostic:
+5 changed tables only
+all differences annotation-only
+
+Annotation-normalized diagnostic:
+expected PASS across all remaining A3 controls
+</code></pre>
+<p>I would also preserve a classification note now:</p>
+<pre><code class="language-powershell">@&#39;
+# A3 Desktop Annotation Serialization Classification
+
+The saved A3 project differs from the accepted A1b predecessor in five
+pre-existing table objects only through Power BI-authored annotations.
+
+Observed differences:
+
+DimDate
+- PBI_ResultType: Exception -&gt; Table
+
+DimRunCampaign
+- PBI_ResultType: Exception -&gt; Table
+
+DimMerchant
+- added PBI_NavigationStepName = Navigation
+
+DimReportingScope
+- added PBI_NavigationStepName = Navigation
+
+FactAccountCertification
+- added PBI_NavigationStepName = Navigation
+
+No column, partition, measure, relationship, source-root, or business-logic
+difference was identified in these five existing tables.
+
+These changes are classified by the source owner as Power BI Desktop
+serialization/navigation metadata pending Independent Audit disposition.
+
+No annotation was manually added, removed, or normalized in model.bim.
+
+The accepted A1b predecessor remains preserved and unchanged.
+The A3 semantic additions remain exactly:
+- FactAccountReconciliation
+- REL-047
+- FactAccountReconciliation Power Query/partition
+- stg_msbf_m2_account_payment_reconciliation_snapshot
+- zero measures
+&#39;@ |
+    Set-Content `
+        -LiteralPath &quot;$return\A3_E09_DESKTOP_ANNOTATION_SERIALIZATION_CLASSIFICATION.md&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Send me the output from <code>A3_E09_ANNOTATION_NORMALIZED_STATIC_BOUNDARY.txt</code>. If that passes, we should be ready for the hardened final evidence exporter and the ER-PBI-009 / ER-PBI-012 audit package.</p>
+</div></article><article id="m-bee562c4-d9af-4e0a-8b91-47e786b5f158" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00281 · 2026-08-25T02:01:46.314000-04:00 · active path</p><div class="bubble"><p>Existing-table assertion matches: 1
+Annotation-normalized diagnostic validator prepared.
+PS C:\MSBF&gt; $python = &quot;C:\Python314\python.exe&quot;</p>
+<blockquote>
+<blockquote>
+<p>&amp; $python <code>    $normalizedValidator</code>
+    $work *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$return\A3_E09_ANNOTATION_NORMALIZED_STATIC_BOUNDARY.txt&quot;
+←[31;1mTraceback (most recent call last):←[0m
+←[31;1m  File &quot;C:\MSBF\MSBF_PBI_A3_WORKING_R1_20260821\evidence\local_engine_return\A3_E09_Validate-A3Static_ANNOTATION_NORMALIZED_DIAGNOSTIC.py&quot;, line 50, in &lt;module&gt;←[0m
+←[31;1m    for n,x in be.items(): assert pe[n]==x←[0m
+←[31;1m                                  ^^^^^^^^←[0m
+←[31;1mAssertionError←[0m</p>
+</blockquote>
+</blockquote>
+</div></article><article id="m-67b44c06-b2e5-49ae-971e-b19ba4807e6d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00282 · 2026-08-25T02:01:50.464072-04:00 · active path</p><div class="bubble"><p>This is another useful narrowing result. The annotation-normalized diagnostic has now passed:</p>
+<ul>
+<li>the five known existing-table annotation differences;</li>
+<li>the authorized added table;</li>
+<li>the authorized added relationship;</li>
+<li>the authorized added staging expression;</li>
+<li>all existing-table semantics after annotation normalization;</li>
+<li>all existing relationships.</li>
+</ul>
+<p>It now stops at <strong>line 50</strong>, where the validator requires every pre-existing named Power Query expression to be object-identical:</p>
+<pre><code class="language-python">for n,x in be.items(): assert pe[n]==x
+</code></pre>
+<p>So the remaining question is very specific: <strong>which of the 47 inherited named expressions Power BI Desktop serialized differently?</strong></p>
+<p>Do <strong>not</strong> patch the diagnostic validator again yet, and do not reopen Power BI. First identify the exact expressions and whether their actual M text changed semantically.</p>
+<p>Run this read-only diagnostic:</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+
+$work   = &quot;C:\MSBF\MSBF_PBI_A3_WORKING_R1_20260821&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+$baselineModel = Join-Path $work `
+    &quot;authority\accepted_a1b_project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;
+
+$currentModel = Join-Path $work `
+    &quot;project\MSBF_PBI_A1A_Local_Construction_R1.SemanticModel\model.bim&quot;
+
+$exprDiffScript = Join-Path $return `
+    &quot;A3_E10_EXISTING_EXPRESSION_NONREGRESSION_DIAGNOSTIC.py&quot;
+
+@&#39;
+from pathlib import Path
+import json
+import hashlib
+import sys
+
+baseline_path = Path(sys.argv[1])
+current_path  = Path(sys.argv[2])
+out_path      = Path(sys.argv[3])
+
+with baseline_path.open(&quot;r&quot;, encoding=&quot;utf-8-sig&quot;) as f:
+    b = json.load(f)
+
+with current_path.open(&quot;r&quot;, encoding=&quot;utf-8-sig&quot;) as f:
+    c = json.load(f)
+
+be = {e[&quot;name&quot;]: e for e in b[&quot;model&quot;][&quot;expressions&quot;]}
+ce = {e[&quot;name&quot;]: e for e in c[&quot;model&quot;][&quot;expressions&quot;]}
+
+def norm(e):
+    if isinstance(e, list):
+        s = &quot;\n&quot;.join(str(x) for x in e)
+    else:
+        s = str(e)
+
+    return (
+        s.replace(&quot;\r\n&quot;, &quot;\n&quot;)
+         .replace(&quot;\r&quot;, &quot;\n&quot;)
+         .rstrip(&quot;\n&quot;)
+    )
+
+def sha_text(s):
+    return hashlib.sha256(s.encode(&quot;utf-8&quot;)).hexdigest()
+
+def diff(a, b, path, out):
+    if type(a) != type(b):
+        out.append({
+            &quot;path&quot;: path,
+            &quot;change&quot;: &quot;TYPE_CHANGED&quot;,
+            &quot;baseline&quot;: repr(a),
+            &quot;current&quot;: repr(b)
+        })
+        return
+
+    if isinstance(a, dict):
+        for k in sorted(set(a) | set(b)):
+            p = f&quot;{path}.{k}&quot;
+
+            if k not in a:
+                out.append({
+                    &quot;path&quot;: p,
+                    &quot;change&quot;: &quot;ADDED&quot;,
+                    &quot;baseline&quot;: None,
+                    &quot;current&quot;: repr(b[k])
+                })
+            elif k not in b:
+                out.append({
+                    &quot;path&quot;: p,
+                    &quot;change&quot;: &quot;DELETED&quot;,
+                    &quot;baseline&quot;: repr(a[k]),
+                    &quot;current&quot;: None
+                })
+            else:
+                diff(a[k], b[k], p, out)
+
+    elif isinstance(a, list):
+        if len(a) != len(b):
+            out.append({
+                &quot;path&quot;: path,
+                &quot;change&quot;: &quot;LIST_LENGTH_CHANGED&quot;,
+                &quot;baseline&quot;: len(a),
+                &quot;current&quot;: len(b)
+            })
+
+        common = min(len(a), len(b))
+
+        for i in range(common):
+            diff(a[i], b[i], f&quot;{path}[{i}]&quot;, out)
+
+        for i in range(common, len(b)):
+            out.append({
+                &quot;path&quot;: f&quot;{path}[{i}]&quot;,
+                &quot;change&quot;: &quot;ADDED&quot;,
+                &quot;baseline&quot;: None,
+                &quot;current&quot;: repr(b[i])
+            })
+
+        for i in range(common, len(a)):
+            out.append({
+                &quot;path&quot;: f&quot;{path}[{i}]&quot;,
+                &quot;change&quot;: &quot;DELETED&quot;,
+                &quot;baseline&quot;: repr(a[i]),
+                &quot;current&quot;: None
+            })
+
+    elif a != b:
+        out.append({
+            &quot;path&quot;: path,
+            &quot;change&quot;: &quot;VALUE_CHANGED&quot;,
+            &quot;baseline&quot;: repr(a),
+            &quot;current&quot;: repr(b)
+        })
+
+baseline_names = set(be)
+current_names  = set(ce)
+
+added = sorted(current_names - baseline_names)
+deleted = sorted(baseline_names - current_names)
+
+changed = []
+
+for name in sorted(baseline_names &amp; current_names):
+    diffs = []
+    diff(be[name], ce[name], f&quot;expression[{name}]&quot;, diffs)
+
+    if diffs:
+        b_expr = norm(be[name].get(&quot;expression&quot;, &quot;&quot;))
+        c_expr = norm(ce[name].get(&quot;expression&quot;, &quot;&quot;))
+
+        changed.append({
+            &quot;name&quot;: name,
+            &quot;object_diff_count&quot;: len(diffs),
+            &quot;normalized_expression_equal&quot;:
+                b_expr == c_expr,
+            &quot;baseline_expression_sha256&quot;:
+                sha_text(b_expr),
+            &quot;current_expression_sha256&quot;:
+                sha_text(c_expr),
+            &quot;diffs&quot;: diffs
+        })
+
+result = {
+    &quot;baseline_expression_count&quot;: len(be),
+    &quot;current_expression_count&quot;: len(ce),
+    &quot;added_expressions&quot;: added,
+    &quot;deleted_expressions&quot;: deleted,
+    &quot;changed_existing_expression_count&quot;: len(changed),
+    &quot;changed_existing_expressions&quot;: changed
+}
+
+out_path.write_text(
+    json.dumps(result, indent=2, ensure_ascii=False),
+    encoding=&quot;utf-8&quot;
+)
+
+print(&quot;BASELINE_EXPRESSIONS=&quot;, len(be))
+print(&quot;CURRENT_EXPRESSIONS=&quot;, len(ce))
+print(&quot;ADDED_EXPRESSIONS=&quot;, added)
+print(&quot;DELETED_EXPRESSIONS=&quot;, deleted)
+print(&quot;CHANGED_EXISTING_EXPRESSIONS=&quot;, len(changed))
+
+for e in changed:
+    print()
+    print(&quot;========================================&quot;)
+    print(&quot;EXPRESSION:&quot;, e[&quot;name&quot;])
+    print(&quot;OBJECT DIFF COUNT:&quot;, e[&quot;object_diff_count&quot;])
+    print(
+        &quot;NORMALIZED M EXPRESSION EQUAL:&quot;,
+        e[&quot;normalized_expression_equal&quot;]
+    )
+    print(
+        &quot;BASELINE M SHA256:&quot;,
+        e[&quot;baseline_expression_sha256&quot;]
+    )
+    print(
+        &quot;CURRENT M SHA256:&quot;,
+        e[&quot;current_expression_sha256&quot;]
+    )
+    print(&quot;========================================&quot;)
+
+    for d in e[&quot;diffs&quot;]:
+        print()
+        print(d[&quot;path&quot;])
+        print(&quot;  change:  &quot;, d[&quot;change&quot;])
+        print(&quot;  baseline:&quot;, d[&quot;baseline&quot;])
+        print(&quot;  current: &quot;, d[&quot;current&quot;])
+&#39;@ |
+    Set-Content `
+        -LiteralPath $exprDiffScript `
+        -Encoding utf8
+
+&amp; &quot;C:\Python314\python.exe&quot; `
+    $exprDiffScript `
+    $baselineModel `
+    $currentModel `
+    &quot;$return\A3_E10_EXISTING_EXPRESSION_NONREGRESSION_DIAGNOSTIC.json&quot; *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$return\A3_E10_EXISTING_EXPRESSION_NONREGRESSION_DIAGNOSTIC_CONSOLE.txt&quot;
+</code></pre>
+<p>The high-level result should begin with something like:</p>
+<pre><code class="language-text">BASELINE_EXPRESSIONS=47
+CURRENT_EXPRESSIONS=48
+
+ADDED_EXPRESSIONS=
+[&#39;stg_msbf_m2_account_payment_reconciliation_snapshot&#39;]
+
+DELETED_EXPRESSIONS=[]
+</code></pre>
+<p>The critical output is:</p>
+<pre><code class="language-text">CHANGED_EXISTING_EXPRESSIONS=...
+</code></pre>
+<p>and, for each one:</p>
+<pre><code class="language-text">NORMALIZED M EXPRESSION EQUAL: True/False
+</code></pre>
+<h3>Why that distinction matters</h3>
+<p>There are two materially different cases.</p>
+<p>If we get something like:</p>
+<pre><code class="language-text">expression object differs
+NORMALIZED M EXPRESSION EQUAL: True
+</code></pre>
+<p>then Desktop changed expression-object metadata or serialization while leaving the actual M logic identical. That is analogous to the table annotation and <code>diagramLayout.json</code> findings and can likely be normalized in the diagnostic validator without touching the project.</p>
+<p>If instead we get:</p>
+<pre><code class="language-text">NORMALIZED M EXPRESSION EQUAL: False
+</code></pre>
+<p>then we need to inspect the exact M before/after. An inherited query changing its actual M logic would be more consequential because A3 authorized only two new Power Query objects and did <strong>not</strong> authorize mutation of the existing 79.</p>
+<p>There is one especially important invariant I expect to remain unchanged:</p>
+<pre><code class="language-text">pDataRoot  =
+\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi
+
+pBuildRoot =
+\\localhost\MSBF_PBI_A1B_SYNTHETIC\build
+</code></pre>
+<p>We already physically captured those in Power Query before refresh, so if the saved-model diagnostic says otherwise we would reconcile that carefully rather than assume either source is correct.</p>
+<p>At this point, I still see <strong>no evidence of a substantive A3 defect</strong>. The validator is progressively exposing where its strict predecessor-object equality does not accommodate normal Desktop serialization. But we should continue classifying each failure rather than simply weakening the validator wholesale.</p>
+<p>Send me the <code>A3_E10</code> console output. If it shows only serialization/metadata differences or normalized-identical M, we&#39;ll make one final bounded diagnostic adjustment and continue through the remaining validator controls.</p>
+</div></article><article id="m-0a8fd411-cca0-4011-ae0f-fdeb98a4576a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00283 · 2026-08-25T02:03:00.079000-04:00 · active path</p><div class="bubble"><p>BASELINE_EXPRESSIONS= 47
+CURRENT_EXPRESSIONS= 48
+ADDED_EXPRESSIONS= [&#39;stg_msbf_m2_account_payment_reconciliation_snapshot&#39;]
+DELETED_EXPRESSIONS= []
+CHANGED_EXISTING_EXPRESSIONS= 8</p>
+<h1>========================================
+EXPRESSION: pBuildRoot
+OBJECT DIFF COUNT: 2
+NORMALIZED M EXPRESSION EQUAL: True
+BASELINE M SHA256: 09caa699164959a6003d5bff373e0fde49fd83fcacf5af27aebd891a4d56dcb3
+CURRENT M SHA256: 09caa699164959a6003d5bff373e0fde49fd83fcacf5af27aebd891a4d56dcb3</h1>
+<p>expression[pBuildRoot].annotations
+  change:   LIST_LENGTH_CHANGED
+  baseline: 3
+  current:  4</p>
+<p>expression[pBuildRoot].annotations[3]
+  change:   ADDED
+  baseline: None
+  current:  {&#39;name&#39;: &#39;PBI_NavigationStepName&#39;, &#39;value&#39;: &#39;Navigation&#39;}</p>
+<h1>========================================
+EXPRESSION: pCampaignOrRunId
+OBJECT DIFF COUNT: 2
+NORMALIZED M EXPRESSION EQUAL: True
+BASELINE M SHA256: 73282917d4201f751c9a6e9b9fff2491afa51ce54b4f01b58e12df6791c93455
+CURRENT M SHA256: 73282917d4201f751c9a6e9b9fff2491afa51ce54b4f01b58e12df6791c93455</h1>
+<p>expression[pCampaignOrRunId].annotations
+  change:   LIST_LENGTH_CHANGED
+  baseline: 3
+  current:  4</p>
+<p>expression[pCampaignOrRunId].annotations[3]
+  change:   ADDED
+  baseline: None
+  current:  {&#39;name&#39;: &#39;PBI_NavigationStepName&#39;, &#39;value&#39;: &#39;Navigation&#39;}</p>
+<h1>========================================
+EXPRESSION: pDefaultAsOfDate
+OBJECT DIFF COUNT: 2
+NORMALIZED M EXPRESSION EQUAL: True
+BASELINE M SHA256: a30167fdcdeebabf2cc92331846d9c9551e244aa2c31a57b261ac0d85f0cff8c
+CURRENT M SHA256: a30167fdcdeebabf2cc92331846d9c9551e244aa2c31a57b261ac0d85f0cff8c</h1>
+<p>expression[pDefaultAsOfDate].annotations
+  change:   LIST_LENGTH_CHANGED
+  baseline: 3
+  current:  4</p>
+<p>expression[pDefaultAsOfDate].annotations[3]
+  change:   ADDED
+  baseline: None
+  current:  {&#39;name&#39;: &#39;PBI_NavigationStepName&#39;, &#39;value&#39;: &#39;Navigation&#39;}</p>
+<h1>========================================
+EXPRESSION: pDefaultScenario
+OBJECT DIFF COUNT: 2
+NORMALIZED M EXPRESSION EQUAL: True
+BASELINE M SHA256: 1106ad04a140f6c1ed48db5d3a47e209002fa59a902ba0b022d04b6f481865a9
+CURRENT M SHA256: 1106ad04a140f6c1ed48db5d3a47e209002fa59a902ba0b022d04b6f481865a9</h1>
+<p>expression[pDefaultScenario].annotations
+  change:   LIST_LENGTH_CHANGED
+  baseline: 3
+  current:  4</p>
+<p>expression[pDefaultScenario].annotations[3]
+  change:   ADDED
+  baseline: None
+  current:  {&#39;name&#39;: &#39;PBI_NavigationStepName&#39;, &#39;value&#39;: &#39;Navigation&#39;}</p>
+<h1>========================================
+EXPRESSION: pLoadOptionalDailyBase
+OBJECT DIFF COUNT: 2
+NORMALIZED M EXPRESSION EQUAL: True
+BASELINE M SHA256: d24a043a15035db472d1e30395c51778781e72dd5c8147b4ab03fdb064f0fdd0
+CURRENT M SHA256: d24a043a15035db472d1e30395c51778781e72dd5c8147b4ab03fdb064f0fdd0</h1>
+<p>expression[pLoadOptionalDailyBase].annotations
+  change:   LIST_LENGTH_CHANGED
+  baseline: 3
+  current:  4</p>
+<p>expression[pLoadOptionalDailyBase].annotations[3]
+  change:   ADDED
+  baseline: None
+  current:  {&#39;name&#39;: &#39;PBI_NavigationStepName&#39;, &#39;value&#39;: &#39;Navigation&#39;}</p>
+<h1>========================================
+EXPRESSION: pModelDefinitionVersion
+OBJECT DIFF COUNT: 2
+NORMALIZED M EXPRESSION EQUAL: True
+BASELINE M SHA256: 8ea874f07e5dc9d1919c33bad8b6cb70ce57bf690b8d1a4fc7c768f9fbd7e701
+CURRENT M SHA256: 8ea874f07e5dc9d1919c33bad8b6cb70ce57bf690b8d1a4fc7c768f9fbd7e701</h1>
+<p>expression[pModelDefinitionVersion].annotations
+  change:   LIST_LENGTH_CHANGED
+  baseline: 3
+  current:  4</p>
+<p>expression[pModelDefinitionVersion].annotations[3]
+  change:   ADDED
+  baseline: None
+  current:  {&#39;name&#39;: &#39;PBI_NavigationStepName&#39;, &#39;value&#39;: &#39;Navigation&#39;}</p>
+<h1>========================================
+EXPRESSION: pRecommendationDefinitionVersion
+OBJECT DIFF COUNT: 2
+NORMALIZED M EXPRESSION EQUAL: True
+BASELINE M SHA256: 0f6d8763f2573e7cb6724f5b14e6c4f84b3693e6b622ec31557c126dac1f2cac
+CURRENT M SHA256: 0f6d8763f2573e7cb6724f5b14e6c4f84b3693e6b622ec31557c126dac1f2cac</h1>
+<p>expression[pRecommendationDefinitionVersion].annotations
+  change:   LIST_LENGTH_CHANGED
+  baseline: 3
+  current:  4</p>
+<p>expression[pRecommendationDefinitionVersion].annotations[3]
+  change:   ADDED
+  baseline: None
+  current:  {&#39;name&#39;: &#39;PBI_NavigationStepName&#39;, &#39;value&#39;: &#39;Navigation&#39;}</p>
+<h1>========================================
+EXPRESSION: pSourceRelease
+OBJECT DIFF COUNT: 2
+NORMALIZED M EXPRESSION EQUAL: True
+BASELINE M SHA256: cf892c88204cf81e77a00ede95275058ea85710f08c1d7c21cd24994f2480401
+CURRENT M SHA256: cf892c88204cf81e77a00ede95275058ea85710f08c1d7c21cd24994f2480401</h1>
+<p>expression[pSourceRelease].annotations
+  change:   LIST_LENGTH_CHANGED
+  baseline: 3
+  current:  4</p>
+<p>expression[pSourceRelease].annotations[3]
+  change:   ADDED
+  baseline: None
+  current:  {&#39;name&#39;: &#39;PBI_NavigationStepName&#39;, &#39;value&#39;: &#39;Navigation&#39;}</p>
+</div></article><article id="m-2575c9fe-5c6e-4ed6-b5ac-43b1a84b5686" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00284 · 2026-08-25T02:03:03.685533-04:00 · active path</p><div class="bubble"><p>That is a clean result. The inherited Power Query expressions are <strong>semantically unchanged</strong>: all eight changed objects have identical normalized M text and identical SHA-256 hashes. The only differences are added <code>PBI_NavigationStepName = Navigation</code> annotations.</p>
+<p>So we can now classify the current validator failure as <strong>Desktop annotation serialization</strong>, not a Power Query regression.</p>
+<p>The eight affected expressions are:</p>
+<pre><code class="language-text">pBuildRoot
+pCampaignOrRunId
+pDefaultAsOfDate
+pDefaultScenario
+pLoadOptionalDailyBase
+pModelDefinitionVersion
+pRecommendationDefinitionVersion
+pSourceRelease
+</code></pre>
+<p>For each one:</p>
+<pre><code class="language-text">Normalized M expression equal: TRUE
+Baseline M SHA-256 = Current M SHA-256
+Only added metadata:
+PBI_NavigationStepName = Navigation
+</code></pre>
+<p>That also confirms the important source-root invariant: <code>pBuildRoot</code>&#39;s actual M expression is unchanged.</p>
+<p>We can now make one final diagnostic-validator normalization that ignores only the already-proven Power BI annotations:</p>
+<ul>
+<li><code>PBI_ResultType</code></li>
+<li><code>PBI_NavigationStepName</code></li>
+</ul>
+<p>for both existing tables and existing named expressions.</p>
+<p>Do not alter the project or original validator. Modify only the diagnostic copy.</p>
+<p>Use this:</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+
+$work   = &quot;C:\MSBF\MSBF_PBI_A3_WORKING_R1_20260821&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+$sourceValidator = Join-Path $return `
+    &quot;A3_E09_Validate-A3Static_ANNOTATION_NORMALIZED_DIAGNOSTIC.py&quot;
+
+$finalDiagnostic = Join-Path $return `
+    &quot;A3_E11_Validate-A3Static_FINAL_SERIALIZATION_AWARE_DIAGNOSTIC.py&quot;
+
+Copy-Item `
+    -LiteralPath $sourceValidator `
+    -Destination $finalDiagnostic `
+    -Force
+
+$text = [IO.File]::ReadAllText($finalDiagnostic)
+
+$old = @&#39;
+for n,x in be.items(): assert pe[n]==x
+&#39;@.Trim()
+
+$new = @&#39;
+def normalize_expression_desktop_annotations(expr):
+    e=json.loads(json.dumps(expr))
+    anns=e.get(&#39;annotations&#39;,[])
+    filtered=[]
+    for a in anns:
+        if a.get(&#39;name&#39;)==&#39;PBI_NavigationStepName&#39;:
+            continue
+        filtered.append(a)
+    e[&#39;annotations&#39;]=filtered
+    return e
+
+for n,x in be.items():
+    assert normalize_expression_desktop_annotations(pe[n])==normalize_expression_desktop_annotations(x)
+&#39;@.Trim()
+
+$matches = (
+    [regex]::Matches(
+        $text,
+        [regex]::Escape($old)
+    )
+).Count
+
+Write-Host &quot;Existing-expression assertion matches:&quot; $matches
+
+if ($matches -ne 1) {
+    throw &quot;STOP: expected exactly one existing-expression assertion; found $matches.&quot;
+}
+
+$patched = $text.Replace($old,$new)
+
+[IO.File]::WriteAllText(
+    $finalDiagnostic,
+    $patched,
+    [Text.UTF8Encoding]::new($false)
+)
+
+Write-Host &quot;Final serialization-aware diagnostic validator prepared.&quot;
+</code></pre>
+<p>Then run it:</p>
+<pre><code class="language-powershell">$python = &quot;C:\Python314\python.exe&quot;
+
+&amp; $python `
+    $finalDiagnostic `
+    $work *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$return\A3_E11_FINAL_SERIALIZATION_AWARE_STATIC_BOUNDARY.txt&quot;
+</code></pre>
+<p>Also preserve the expression classification:</p>
+<pre><code class="language-powershell">@&#39;
+# A3 Existing Power Query Expression Serialization Classification
+
+Eight inherited named expressions differ from the accepted A1b predecessor
+only through an added Power BI annotation:
+
+PBI_NavigationStepName = Navigation
+
+Affected expressions:
+
+- pBuildRoot
+- pCampaignOrRunId
+- pDefaultAsOfDate
+- pDefaultScenario
+- pLoadOptionalDailyBase
+- pModelDefinitionVersion
+- pRecommendationDefinitionVersion
+- pSourceRelease
+
+For every affected expression:
+
+- normalized Power Query M text is byte-equivalent after newline normalization;
+- baseline and current normalized-expression SHA-256 values are identical;
+- no M logic changed;
+- no parameter value changed;
+- no source root changed.
+
+The source owner classifies these as Power BI Desktop annotation serialization
+metadata pending Independent Audit disposition.
+
+No expression was manually normalized or altered in model.bim.
+The original validator remains unchanged.
+&#39;@ |
+    Set-Content `
+        -LiteralPath &quot;$return\A3_E11_EXPRESSION_SERIALIZATION_CLASSIFICATION.md&quot; `
+        -Encoding utf8
+</code></pre>
+<p>If the <code>A3_E11</code> validator now returns <code>PASS</code>, that should be the end of the diagnostic loop. At that point we will have shown that the only post-Desktop deviations from strict predecessor object equality are known Power BI metadata/serialization effects, while the actual A3 semantic delta remains exactly the authorized four objects and zero measures.</p>
+<p>Then we can run the hardened final evidence exporter and build the <code>ER-PBI-009</code> / <code>ER-PBI-012</code> audit package without reopening Desktop or DAX Studio. [export reference: memcite]</p>
+</div></article><article id="m-acdda31b-0231-4194-9d19-24aaff8b2b67" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00285 · 2026-08-25T02:04:08.234000-04:00 · active path</p><div class="bubble"><p>Existing-expression assertion matches: 1
+Final serialization-aware diagnostic validator prepared.
+PS C:\MSBF&gt; $python = &quot;C:\Python314\python.exe&quot;</p>
+<blockquote>
+<blockquote>
+<p>&amp; $python <code>    $finalDiagnostic</code>
+    $work *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$return\A3_E11_FINAL_SERIALIZATION_AWARE_STATIC_BOUNDARY.txt&quot;
+{
+  &quot;status&quot;: &quot;PASS&quot;,
+  &quot;baseline_project_root&quot;: &quot;4d67e1a43ae4e540bb5efed0c8b55eca0ecc4a40c30e2784485c0b400b7424d0&quot;,
+  &quot;a3_static_project_root&quot;: &quot;5d3b9b203de120ded06306cb7a556153c884f007a440fabcf7ff043077001b00&quot;,
+  &quot;baseline_model_sha256&quot;: &quot;71ecb70eaa345ecd0d68398c844198424e62f954453b83f5e68ec13ac348de6f&quot;,
+  &quot;a3_static_model_sha256&quot;: &quot;5e5c9c063517e9de9c05e561d61970b342e41ac344be6f42d3bd16a35c097b2a&quot;,
+  &quot;changed_project_files&quot;: [
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.Report/.pbi/localSettings.json&quot;,
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.SemanticModel/.pbi/cache.abf&quot;,
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.SemanticModel/.pbi/localSettings.json&quot;,
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.SemanticModel/diagramLayout.json&quot;,
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.SemanticModel/model.bim&quot;
+  ],
+  &quot;added_tables&quot;: [
+    &quot;FactAccountReconciliation&quot;
+  ],
+  &quot;added_relationships&quot;: [
+    &quot;REL-047&quot;
+  ],
+  &quot;added_power_query_objects&quot;: [
+    &quot;FactAccountReconciliation&quot;,
+    &quot;stg_msbf_m2_account_payment_reconciliation_snapshot&quot;
+  ],
+  &quot;added_measures&quot;: 0,
+  &quot;tables&quot;: 33,
+  &quot;relationships&quot;: 33,
+  &quot;power_query_objects&quot;: 81,
+  &quot;measures&quot;: 60,
+  &quot;technical_shell_pages&quot;: 1,
+  &quot;substantive_pages&quot;: 0,
+  &quot;visuals&quot;: 0,
+  &quot;source_rows&quot;: 59,
+  &quot;source_distinct_account_keys&quot;: 59
+}</p>
+</blockquote>
+</blockquote>
+</div></article><article id="m-a4de7b34-7624-4402-864f-23cc06c3f69d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00286 · 2026-08-25T02:04:11.817628-04:00 · active path</p><div class="bubble"><p>This is the result we needed. <strong>A3 final serialization-aware static boundary = PASS.</strong> No further diagnostic normalization, model edit, Power Query edit, or live-engine rerun is warranted.</p>
+<p>The executed A3 candidate is now established as:</p>
+<pre><code class="language-text">Accepted A1b predecessor project root
+4d67e1a43ae4e540bb5efed0c8b55eca0ecc4a40c30e2784485c0b400b7424d0
+
+Final saved/executed A3 project root
+5d3b9b203de120ded06306cb7a556153c884f007a440fabcf7ff043077001b00
+
+Accepted A1b model.bim
+71ecb70eaa345ecd0d68398c844198424e62f954453b83f5e68ec13ac348de6f
+
+Final saved/executed A3 model.bim
+5e5c9c063517e9de9c05e561d61970b342e41ac344be6f42d3bd16a35c097b2a
+</code></pre>
+<p>The validator confirms the substantive delta remains exactly:</p>
+<pre><code class="language-text">+ FactAccountReconciliation
++ REL-047
++ FactAccountReconciliation Power Query/partition
++ stg_msbf_m2_account_payment_reconciliation_snapshot
++ 0 measures
+
+33 tables
+33 relationships
+81 Power Query objects
+60 measures
+
+1 technical shell
+0 substantive pages
+0 visuals
+
+59 FactAccountReconciliation rows
+59 distinct AccountKey values
+</code></pre>
+<p>The five physical-file differences are now fully explained by the authorized A3 change plus Desktop serialization. Importantly, we did <strong>not</strong> modify the project to make the original validator pass.</p>
+<p>One terminology point for Audit: the diagnostic validator calls <code>5d3b9b...</code> the <code>a3_static_project_root</code>, but at this stage that hash is actually the <strong>final saved post-Desktop A3 project identity</strong>. We should describe it that way in the submission rather than implying it is the original pre-Desktop static candidate <code>512d8c...</code>.</p>
+<h2>Now run the hardened final evidence exporter</h2>
+<p>Power BI Desktop and DAX Studio are already closed. Keep them closed.</p>
+<p>Use the hardened exporter that we installed earlier:</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+
+$work = &quot;C:\MSBF\MSBF_PBI_A3_WORKING_R1_20260821&quot;
+
+&amp; &quot;$work\tools\hardening\Export-A3FinalEvidence_HARDENED.ps1&quot; `
+    -PackageRoot $work
+</code></pre>
+<p>Do not use the original <code>Export-A3FinalEvidence.ps1</code>.</p>
+<p>The hardened exporter should now operate against the exact frozen state and create the final manifests/identity evidence without changing the PBIP.</p>
+<p>When it finishes, <strong>do not reopen Power BI or DAX Studio</strong>.</p>
+<p>Send me the complete console output. In particular, I want the exporter-reported values for:</p>
+<ul>
+<li>final project-file count and project-root SHA-256;</li>
+<li>final <code>model.bim</code> SHA-256;</li>
+<li>predecessor-to-final changed-file population;</li>
+<li>authored report-definition nonregression;</li>
+<li>Power Query/evidence manifest counts;</li>
+<li>any PASS/HOLD/FAIL status it returns.</li>
+</ul>
+<p>I expect its final project identity to reconcile to:</p>
+<pre><code class="language-text">5d3b9b203de120ded06306cb7a556153c884f007a440fabcf7ff043077001b00
+</code></pre>
+<p>and:</p>
+<pre><code class="language-text">5e5c9c063517e9de9c05e561d61970b342e41ac344be6f42d3bd16a35c097b2a
+</code></pre>
+<p>If it does, we can move directly to the <strong>final A3 evidence freeze, Independent Audit carrier, SHA-256/ZIP validation, and ER-PBI-009 / ER-PBI-012 submission prompt</strong>. The substantive execution work is complete; what remains is controlled evidence sealing and independent disposition.</p>
+</div></article><article id="m-dca4ba98-d067-466a-994d-a8f0e6d9c6a4" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00287 · 2026-08-25T02:05:21.212000-04:00 · active path</p><div class="bubble"><blockquote>
+<blockquote>
+<p>$work = &quot;C:\MSBF\MSBF_PBI_A3_WORKING_R1_20260821&quot;</p>
+<p>&amp; &quot;$work\tools\hardening\Export-A3FinalEvidence_HARDENED.ps1&quot; `
+    -PackageRoot $work
+Exception: C:\MSBF\MSBF_PBI_A3_WORKING_R1_20260821\tools\hardening\Export-A3FinalEvidence_HARDENED.ps1:109
+Line |
+ 109 |  …  $bookmarks -ne 0){throw &#39;STOP: report-experience boundary changed.&#39;}
+     |                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | STOP: report-experience boundary changed.</p>
+</blockquote>
+</blockquote>
+</div></article><article id="m-93a48a68-0b0e-4106-a03e-63d745a98d35" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00288 · 2026-08-25T02:05:50.539427-04:00 · active path</p><div class="bubble"><p>This is almost certainly a <strong>hardening-exporter logic defect, not a report-boundary failure</strong>.</p>
+<p>The exporter already passed its stronger check immediately before the failing line: it compares the entire authored report <code>definition/**</code> plus <code>definition.pbir</code> and <code>.platform</code> against the accepted A1b report and stops if anything differs. [export reference: filecite | turn48file1 | L92-L105] Since execution reached the later <code>report-experience boundary changed</code> test, the authored report definition is already proven byte-for-byte unchanged from the accepted one-shell / zero-substantive-page / zero-visual authority. The A3 authorization itself requires exactly that boundary. [export reference: filecite | turn49file6 | L310-L320]</p>
+<p>So <strong>do not reopen Power BI, do not change the report, and do not rerun any DAX evidence</strong>.</p>
+<p>The problem is specifically in the exporter&#39;s secondary counting logic:</p>
+<pre><code class="language-powershell">$pdirs = @(Get-ChildItem ... -Directory)
+...
+$visuals += @($pj.visualContainers).Count
+...
+$bookmarks = ...
+if($pdirs.Count -ne 1 -or $visuals -ne 0 -or $bookmarks -ne 0) {
+    throw &#39;STOP: report-experience boundary changed.&#39;
+}
+</code></pre>
+<p>[export reference: filecite | turn48file3 | L215-L224]</p>
+<p>We need identify which of those three counters is being misinterpreted.</p>
+<p>Run this <strong>read-only diagnostic</strong>:</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+
+$work = &quot;C:\MSBF\MSBF_PBI_A3_WORKING_R1_20260821&quot;
+
+$baselineReport = Join-Path $work `
+    &quot;authority\accepted_a1b_project\MSBF_PBI_A1A_Local_Construction_R1.Report&quot;
+
+$currentReport = Join-Path $work `
+    &quot;project\MSBF_PBI_A1A_Local_Construction_R1.Report&quot;
+
+function Get-ReportBoundaryDiagnostic {
+    param(
+        [Parameter(Mandatory)]
+        [string]$ReportRoot,
+
+        [Parameter(Mandatory)]
+        [string]$Label
+    )
+
+    $definition = Join-Path $ReportRoot &quot;definition&quot;
+    $pages      = Join-Path $definition &quot;pages&quot;
+
+    $pdirs = @(
+        Get-ChildItem `
+            -LiteralPath $pages `
+            -Directory `
+            -Force
+    )
+
+    $pageRows = @()
+
+    foreach ($d in $pdirs) {
+
+        $pageJsonPath = Join-Path $d.FullName &quot;page.json&quot;
+
+        $pj = Get-Content `
+            -LiteralPath $pageJsonPath `
+            -Raw |
+            ConvertFrom-Json
+
+        $visualContainersPropertyExists =
+            $null -ne (
+                $pj.PSObject.Properties |
+                Where-Object { $_.Name -ceq &quot;visualContainers&quot; }
+            )
+
+        $legacyVisualContainerCount =
+            if ($visualContainersPropertyExists) {
+                @($pj.visualContainers).Count
+            }
+            else {
+                0
+            }
+
+        $visualDir = Join-Path $d.FullName &quot;visuals&quot;
+
+        $physicalVisualFiles =
+            if (Test-Path -LiteralPath $visualDir) {
+                @(
+                    Get-ChildItem `
+                        -LiteralPath $visualDir `
+                        -File `
+                        -Recurse `
+                        -Force
+                ).Count
+            }
+            else {
+                0
+            }
+
+        $pageRows += [pscustomobject]@{
+            label = $Label
+            page_directory = $d.Name
+            page_display_name = [string]$pj.displayName
+            visualContainers_property_exists =
+                $visualContainersPropertyExists
+            legacy_visualContainers_count =
+                $legacyVisualContainerCount
+            physical_visual_files =
+                $physicalVisualFiles
+        }
+    }
+
+    $bookmarksDir = Join-Path $definition &quot;bookmarks&quot;
+
+    $bookmarkFiles =
+        if (Test-Path -LiteralPath $bookmarksDir) {
+            @(
+                Get-ChildItem `
+                    -LiteralPath $bookmarksDir `
+                    -File `
+                    -Recurse `
+                    -Force
+            )
+        }
+        else {
+            @()
+        }
+
+    [pscustomobject]@{
+        label = $Label
+        physical_page_directories = $pdirs.Count
+        page_rows = @($pageRows)
+        bookmarks_directory_exists =
+            (Test-Path -LiteralPath $bookmarksDir)
+        bookmark_file_count = $bookmarkFiles.Count
+        bookmark_files = @(
+            $bookmarkFiles |
+            ForEach-Object {
+                $_.FullName.Substring($definition.Length + 1)
+            }
+        )
+    }
+}
+
+$baselineBoundary = Get-ReportBoundaryDiagnostic `
+    -ReportRoot $baselineReport `
+    -Label &quot;ACCEPTED_A1B&quot;
+
+$currentBoundary = Get-ReportBoundaryDiagnostic `
+    -ReportRoot $currentReport `
+    -Label &quot;FINAL_A3&quot;
+
+$baselineBoundary,$currentBoundary |
+    ConvertTo-Json -Depth 10 |
+    Set-Content `
+        -LiteralPath `
+        &quot;$work\evidence\local_engine_return\A3_E12_REPORT_BOUNDARY_EXPORTER_DIAGNOSTIC.json&quot; `
+        -Encoding utf8
+
+$baselineBoundary,$currentBoundary |
+    ConvertTo-Json -Depth 10
+</code></pre>
+<p>Then run this second check to prove the authored report is still byte-identical, independent of the exporter:</p>
+<pre><code class="language-powershell">function Get-FileManifest {
+    param([string]$Root)
+
+    @(
+        Get-ChildItem `
+            -LiteralPath $Root `
+            -File `
+            -Recurse `
+            -Force |
+        Sort-Object {
+            $_.FullName.Substring($Root.Length + 1).ToLowerInvariant()
+        } |
+        ForEach-Object {
+            [pscustomobject]@{
+                relative_path =
+                    $_.FullName.Substring($Root.Length + 1).Replace(&#39;\&#39;,&#39;/&#39;)
+                sha256 = (
+                    Get-FileHash `
+                        -LiteralPath $_.FullName `
+                        -Algorithm SHA256
+                ).Hash.ToLowerInvariant()
+            }
+        }
+    )
+}
+
+$bDef = Get-FileManifest `
+    -Root (Join-Path $baselineReport &quot;definition&quot;)
+
+$cDef = Get-FileManifest `
+    -Root (Join-Path $currentReport &quot;definition&quot;)
+
+$definitionExactMatch =
+    (ConvertTo-Json $bDef -Depth 5 -Compress) -ceq
+    (ConvertTo-Json $cDef -Depth 5 -Compress)
+
+[pscustomobject]@{
+    baseline_definition_files = $bDef.Count
+    current_definition_files  = $cDef.Count
+    exact_manifest_match      = $definitionExactMatch
+} | Format-List
+
+if (-not $definitionExactMatch) {
+    throw &quot;STOP: report definition actually differs.&quot;
+}
+</code></pre>
+<h3>What I expect</h3>
+<p>I expect:</p>
+<pre><code class="language-text">ACCEPTED_A1B and FINAL_A3
+physical_page_directories = 1
+
+same page name:
+A1A_TECHNICAL_SHELL_NO_VISUALS
+
+exact_manifest_match = True
+</code></pre>
+<p>and then one of the secondary counters will explain the false stop—most likely a Power BI representation detail that the exporter interpreted as a visual/bookmark object.</p>
+<p>The crucial point is that the accepted report definition was already independently established as <strong>1 technical shell / 0 substantive pages / 0 visuals</strong>. [export reference: filecite | turn49file1 | L41-L54] If the current report definition is byte-identical to that accepted definition, it cannot simultaneously have acquired a new authored report-experience object. The exporter gate is then definitively wrong.</p>
+<p>Send me the JSON output and the <code>exact_manifest_match</code> result. I will then give you a <strong>bounded exporter-only correction</strong>—preserving the original failed exporter and changing no project/evidence semantics—so we can complete the final freeze without another Power BI session.</p>
+</div></article><article id="m-2576116c-56b1-479d-beee-ba26a5e23608" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00289 · 2026-08-25T02:09:56.733000-04:00 · active path</p><div class="bubble"><p>[
+  {
+    &quot;label&quot;: &quot;ACCEPTED_A1B&quot;,
+    &quot;physical_page_directories&quot;: 1,
+    &quot;page_rows&quot;: [
+      {
+        &quot;label&quot;: &quot;ACCEPTED_A1B&quot;,
+        &quot;page_directory&quot;: &quot;b164c3b67606af1817c0&quot;,
+        &quot;page_display_name&quot;: &quot;A1A_TECHNICAL_SHELL_NO_VISUALS&quot;,
+        &quot;visualContainers_property_exists&quot;: false,
+        &quot;legacy_visualContainers_count&quot;: 0,
+        &quot;physical_visual_files&quot;: 0
+      }
+    ],
+    &quot;bookmarks_directory_exists&quot;: false,
+    &quot;bookmark_file_count&quot;: 0,
+    &quot;bookmark_files&quot;: []
+  },
+  {
+    &quot;label&quot;: &quot;FINAL_A3&quot;,
+    &quot;physical_page_directories&quot;: 1,
+    &quot;page_rows&quot;: [
+      {
+        &quot;label&quot;: &quot;FINAL_A3&quot;,
+        &quot;page_directory&quot;: &quot;b164c3b67606af1817c0&quot;,
+        &quot;page_display_name&quot;: &quot;A1A_TECHNICAL_SHELL_NO_VISUALS&quot;,
+        &quot;visualContainers_property_exists&quot;: false,
+        &quot;legacy_visualContainers_count&quot;: 0,
+        &quot;physical_visual_files&quot;: 0
+      }
+    ],
+    &quot;bookmarks_directory_exists&quot;: false,
+    &quot;bookmark_file_count&quot;: 0,
+    &quot;bookmark_files&quot;: []
+  }
+]
+PS C:\MSBF&gt; function Get-FileManifest {</p>
+<blockquote>
+<blockquote>
+<pre><code>param([string]$Root)
+
+@(
+    Get-ChildItem `
+        -LiteralPath $Root `
+        -File `
+        -Recurse `
+        -Force |
+    Sort-Object {
+        $_.FullName.Substring($Root.Length + 1).ToLowerInvariant()
+    } |
+    ForEach-Object {
+        [pscustomobject]@{
+            relative_path =
+                $_.FullName.Substring($Root.Length + 1).Replace(&#39;\&#39;,&#39;/&#39;)
+            sha256 = (
+                Get-FileHash `
+                    -LiteralPath $_.FullName `
+                    -Algorithm SHA256
+            ).Hash.ToLowerInvariant()
+        }
+    }
+)
+</code></pre>
+<p>}</p>
+<p>$bDef = Get-FileManifest `
+    -Root (Join-Path $baselineReport &quot;definition&quot;)</p>
+<p>$cDef = Get-FileManifest `
+    -Root (Join-Path $currentReport &quot;definition&quot;)</p>
+<p>$definitionExactMatch =
+    (ConvertTo-Json $bDef -Depth 5 -Compress) -ceq
+    (ConvertTo-Json $cDef -Depth 5 -Compress)</p>
+<p>[pscustomobject]@{
+    baseline_definition_files = $bDef.Count
+    current_definition_files  = $cDef.Count
+    exact_manifest_match      = $definitionExactMatch
+} | Format-List</p>
+<p>if (-not $definitionExactMatch) {
+    throw &quot;STOP: report definition actually differs.&quot;
+}</p>
+</blockquote>
+</blockquote>
+<p>baseline_definition_files : 4
+current_definition_files  : 4
+exact_manifest_match      : True</p>
+</div></article><article id="m-ab8f68f8-1100-420e-994f-2a7919fe7856" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00290 · 2026-08-25T02:10:00.848995-04:00 · active path</p><div class="bubble"><p>This proves the <strong>report-experience boundary itself is intact</strong>. The accepted A1b report and final A3 report both have exactly one page directory, the same <code>A1A_TECHNICAL_SHELL_NO_VISUALS</code> page, zero physical visual files, no <code>visualContainers</code> property, no bookmarks directory, and the complete four-file authored <code>definition/**</code> manifests are byte-for-byte identical. The exporter had already performed an authored-report comparison before reaching its secondary counter and is designed to stop if that comparison differs. [export reference: filecite | turn48file1 | L92-L116]</p>
+<p>So this is an <strong>exporter-only false stop</strong>. Do not reopen Power BI or modify the project.</p>
+<p>The safest correction is to preserve the failed hardened exporter and create a second copy whose report-boundary counter uses the physical PBIP representation you have now independently proved, rather than the fragile <code>page.json.visualContainers</code> expression. The original exporter remains evidence.</p>
+<p>Run the following.</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+
+$work   = &quot;C:\MSBF\MSBF_PBI_A3_WORKING_R1_20260821&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+$originalExporter = Join-Path $work `
+    &quot;tools\hardening\Export-A3FinalEvidence_HARDENED.ps1&quot;
+
+$correctedExporter = Join-Path $return `
+    &quot;A3_E13_Export-A3FinalEvidence_REPORT_BOUNDARY_CORRECTED.ps1&quot;
+
+Copy-Item `
+    -LiteralPath $originalExporter `
+    -Destination $correctedExporter `
+    -Force
+
+$originalExporterHash = (
+    Get-FileHash `
+        -LiteralPath $originalExporter `
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+Write-Host &quot;Original exporter preserved:&quot;
+Write-Host $originalExporter
+Write-Host &quot;&quot;
+Write-Host &quot;Original exporter SHA-256:&quot;
+Write-Host $originalExporterHash
+</code></pre>
+<p>Now patch <strong>only</strong> its secondary report-boundary counting block:</p>
+<pre><code class="language-powershell">$text = [IO.File]::ReadAllText($correctedExporter)
+
+$old = @&#39;
+$pages=Join-Path $finalReport &#39;definition\pages&#39;
+$pdirs=@(Get-ChildItem -LiteralPath $pages -Directory -Force)
+$visuals=0
+foreach($d in $pdirs){
+    $pj=Get-Content -LiteralPath (Join-Path $d.FullName &#39;page.json&#39;) -Raw | ConvertFrom-Json
+    $visuals += @($pj.visualContainers).Count
+}
+$bookmarksDir=Join-Path $finalReport &#39;definition\bookmarks&#39;
+$bookmarks=if(Test-Path -LiteralPath $bookmarksDir){@(Get-ChildItem -LiteralPath $bookmarksDir -File -Recurse -Force).Count}else{0}
+if($pdirs.Count -ne 1 -or $visuals -ne 0 -or $bookmarks -ne 0){throw &#39;STOP: report-experience boundary changed.&#39;}
+&#39;@.Trim()
+
+$new = @&#39;
+$pages=Join-Path $finalReport &#39;definition\pages&#39;
+$pdirs=@(Get-ChildItem -LiteralPath $pages -Directory -Force)
+
+$visuals=0
+foreach($d in $pdirs){
+    $visualDir=Join-Path $d.FullName &#39;visuals&#39;
+    if(Test-Path -LiteralPath $visualDir){
+        $visuals += @(
+            Get-ChildItem `
+                -LiteralPath $visualDir `
+                -File `
+                -Recurse `
+                -Force
+        ).Count
+    }
+}
+
+$bookmarksDir=Join-Path $finalReport &#39;definition\bookmarks&#39;
+$bookmarks=0
+
+if(Test-Path -LiteralPath $bookmarksDir){
+    $bookmarks=@(
+        Get-ChildItem `
+            -LiteralPath $bookmarksDir `
+            -File `
+            -Recurse `
+            -Force
+    ).Count
+}
+
+$pageCount=[int]$pdirs.Count
+$visualCount=[int]$visuals
+$bookmarkCount=[int]$bookmarks
+
+if(
+    $pageCount -ne 1 -or
+    $visualCount -ne 0 -or
+    $bookmarkCount -ne 0
+){
+    throw &quot;STOP: report-experience boundary changed. pages=$pageCount visuals=$visualCount bookmarks=$bookmarkCount&quot;
+}
+&#39;@.Trim()
+
+$matches = (
+    [regex]::Matches(
+        $text,
+        [regex]::Escape($old)
+    )
+).Count
+
+Write-Host &quot;Report-boundary block matches:&quot; $matches
+
+if ($matches -ne 1) {
+    throw &quot;STOP: expected exactly one report-boundary block; found $matches.&quot;
+}
+
+$patched = $text.Replace($old,$new)
+
+[IO.File]::WriteAllText(
+    $correctedExporter,
+    $patched,
+    [Text.UTF8Encoding]::new($false)
+)
+
+$correctedExporterHash = (
+    Get-FileHash `
+        -LiteralPath $correctedExporter `
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+Write-Host &quot;&quot;
+Write-Host &quot;Corrected exporter SHA-256:&quot;
+Write-Host $correctedExporterHash
+Write-Host &quot;&quot;
+Write-Host &quot;Original exporter remains unchanged.&quot;
+</code></pre>
+<p>Preserve the reason for the correction:</p>
+<pre><code class="language-powershell">@&#39;
+# A3 Final Exporter Report-Boundary False-Stop Observation
+
+The hardened final exporter stopped at its secondary report-experience boundary
+counter.
+
+Independent read-only verification established:
+
+ACCEPTED A1b:
+- physical page directories = 1
+- page = A1A_TECHNICAL_SHELL_NO_VISUALS
+- visualContainers property absent
+- physical visual files = 0
+- bookmarks directory absent
+- bookmark files = 0
+
+FINAL A3:
+- physical page directories = 1
+- page = A1A_TECHNICAL_SHELL_NO_VISUALS
+- visualContainers property absent
+- physical visual files = 0
+- bookmarks directory absent
+- bookmark files = 0
+
+The complete authored report definition contains four files in both states and
+the baseline-versus-final definition manifest comparison is an exact match.
+
+The exporter had already passed its stronger authored-report-definition equality
+check before reaching the secondary report-experience counter.
+
+Classification:
+EXPORTER_ONLY_REPORT_BOUNDARY_COUNTING_FALSE_STOP
+
+Remediation:
+Preserve the original hardened exporter unchanged and execute a diagnostic/final
+exporter copy in which only the secondary report-boundary counting implementation
+is replaced with explicit physical PBIP page/visual/bookmark counts.
+
+No report file, semantic-model file, Power Query object, relationship, measure,
+source carrier, page, visual, bookmark, navigation, tooltip, drillthrough, or
+mobile layout is changed by this correction.
+&#39;@ |
+    Set-Content `
+        -LiteralPath &quot;$return\A3_E13_FINAL_EXPORTER_REPORT_BOUNDARY_FALSE_STOP.md&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Then execute the corrected exporter:</p>
+<pre><code class="language-powershell">&amp; $correctedExporter `
+    -PackageRoot $work *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$return\A3_E13_FINAL_EVIDENCE_EXPORT_CONSOLE.txt&quot;
+</code></pre>
+<h3>What should happen now</h3>
+<p>The corrected exporter should report:</p>
+<pre><code class="language-text">project files                 16
+project root                  5d3b9b203de120ded06306cb7a556153c884f007a440fabcf7ff043077001b00
+model.bim                     5e5c9c063517e9de9c05e561d61970b342e41ac344be6f42d3bd16a35c097b2a
+
+baseline project root         4d67e1a43ae4e540bb5efed0c8b55eca0ecc4a40c30e2784485c0b400b7424d0
+
+changed physical files        5
+technical shell pages         1
+visuals                       0
+bookmarks                     0
+authored report definition    unchanged
+</code></pre>
+<p>The exporter is designed to calculate and persist the final project root, model hash, changed-file population, Power Query manifest and report-boundary identity once that secondary gate passes. [export reference: filecite | turn48file3 | L226-L243]</p>
+<p>One additional point: the A3 authorization explicitly prohibits report pages, visuals, bookmarks, navigation, tooltips, drillthrough and mobile layout. [export reference: filecite | turn49file6 | L317-L320] Your direct physical evidence now proves the report definition itself remained exactly the accepted technical shell, so this exporter correction does <strong>not</strong> weaken that control.</p>
+<p>Send me the complete <code>A3_E13</code> exporter output. If it returns successfully and the identities reconcile, we can move directly into the <strong>final A3 freeze and ER-PBI-009 / ER-PBI-012 Independent Audit carrier</strong>.</p>
+</div></article><article id="m-1addd3be-e7b9-4d94-868d-af6e920cb643" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00291 · 2026-08-25T02:11:38.566000-04:00 · active path</p><div class="bubble"><p>Original exporter preserved:
+C:\MSBF\MSBF_PBI_A3_WORKING_R1_20260821\tools\hardening\Export-A3FinalEvidence_HARDENED.ps1</p>
+<p>Original exporter SHA-256:
+e1075cf5b4b83b7653cd70ab8a0f329ce2c31fc42bd5c72a21a62b42402f55df
+PS C:\MSBF&gt; $text = IO.File (historical reference: :WriteAllText()::ReadAllText($correctedExporter)</p>
+<blockquote>
+<blockquote>
+<p>$old = @&#39;
+$pages=Join-Path $finalReport &#39;definition\pages&#39;
+$pdirs=@(Get-ChildItem -LiteralPath $pages -Directory -Force)
+$visuals=0
+foreach($d in $pdirs){
+    $pj=Get-Content -LiteralPath (Join-Path $d.FullName &#39;page.json&#39;) -Raw | ConvertFrom-Json
+    $visuals += @($pj.visualContainers).Count
+}
+$bookmarksDir=Join-Path $finalReport &#39;definition\bookmarks&#39;
+$bookmarks=if(Test-Path -LiteralPath $bookmarksDir){@(Get-ChildItem -LiteralPath $bookmarksDir -File -Recurse -Force).Count}else{0}
+if($pdirs.Count -ne 1 -or $visuals -ne 0 -or $bookmarks -ne 0){throw &#39;STOP: report-experience boundary changed.&#39;}
+&#39;@.Trim()</p>
+<p>$new = @&#39;
+$pages=Join-Path $finalReport &#39;definition\pages&#39;
+$pdirs=@(Get-ChildItem -LiteralPath $pages -Directory -Force)</p>
+<p>$visuals=0
+foreach($d in $pdirs){
+    $visualDir=Join-Path $d.FullName &#39;visuals&#39;
+    if(Test-Path -LiteralPath $visualDir){
+        $visuals += @(
+            Get-ChildItem <code>                -LiteralPath $visualDir</code>
+                -File <code>                -Recurse</code>
+                -Force
+        ).Count
+    }
+}</p>
+<p>$bookmarksDir=Join-Path $finalReport &#39;definition\bookmarks&#39;
+$bookmarks=0</p>
+<p>if(Test-Path -LiteralPath $bookmarksDir){
+    $bookmarks=@(
+        Get-ChildItem <code>            -LiteralPath $bookmarksDir</code>
+            -File <code>            -Recurse</code>
+            -Force
+    ).Count
+}</p>
+<p>$pageCount=[int]$pdirs.Count
+$visualCount=[int]$visuals
+$bookmarkCount=[int]$bookmarks</p>
+<p>if(
+    $pageCount -ne 1 -or
+    $visualCount -ne 0 -or
+    $bookmarkCount -ne 0
+){
+    throw &quot;STOP: report-experience boundary changed. pages=$pageCount visuals=$visualCount bookmarks=$bookmarkCount&quot;
+}
+&#39;@.Trim()</p>
+<p>$matches = (
+    [regex]::Matches(
+        $text,
+        [regex]::Escape($old)
+    )
+).Count</p>
+<p>Write-Host &quot;Report-boundary block matches:&quot; $matches</p>
+<p>if ($matches -ne 1) {
+    throw &quot;STOP: expected exactly one report-boundary block; found $matches.&quot;
+}</p>
+<p>$patched = $text.Replace($old,$new)</p>
+<pre><code>$correctedExporter,
+$patched,
+[Text.UTF8Encoding]::new($false)
+</code></pre>
+<p>)</p>
+<p>$correctedExporterHash = (
+    Get-FileHash <code>        -LiteralPath $correctedExporter</code>
+        -Algorithm SHA256
+).Hash.ToLowerInvariant()</p>
+<p>Write-Host &quot;&quot;
+Write-Host &quot;Corrected exporter SHA-256:&quot;
+Write-Host $correctedExporterHash
+Write-Host &quot;&quot;
+Write-Host &quot;Original exporter remains unchanged.&quot;
+Report-boundary block matches: 1</p>
+</blockquote>
+</blockquote>
+<p>Corrected exporter SHA-256:
+b2e0dca7e9d043af9079e3c7901cf64d167af1db5108a1bc016d76da1f6cc48a</p>
+<p>Original exporter remains unchanged.
+PS C:\MSBF&gt; @&#39;</p>
+<blockquote>
+<blockquote>
+<h1>A3 Final Exporter Report-Boundary False-Stop Observation</h1>
+<p>The hardened final exporter stopped at its secondary report-experience boundary
+counter.</p>
+<p>Independent read-only verification established:</p>
+<p>ACCEPTED A1b:</p>
+<ul>
+<li>physical page directories = 1</li>
+<li>page = A1A_TECHNICAL_SHELL_NO_VISUALS</li>
+<li>visualContainers property absent</li>
+<li>physical visual files = 0</li>
+<li>bookmarks directory absent</li>
+<li>bookmark files = 0</li>
+</ul>
+<p>FINAL A3:</p>
+<ul>
+<li>physical page directories = 1</li>
+<li>page = A1A_TECHNICAL_SHELL_NO_VISUALS</li>
+<li>visualContainers property absent</li>
+<li>physical visual files = 0</li>
+<li>bookmarks directory absent</li>
+<li>bookmark files = 0</li>
+</ul>
+<p>The complete authored report definition contains four files in both states and
+the baseline-versus-final definition manifest comparison is an exact match.</p>
+<p>The exporter had already passed its stronger authored-report-definition equality
+check before reaching the secondary report-experience counter.</p>
+<p>Classification:
+EXPORTER_ONLY_REPORT_BOUNDARY_COUNTING_FALSE_STOP</p>
+<p>Remediation:
+Preserve the original hardened exporter unchanged and execute a diagnostic/final
+exporter copy in which only the secondary report-boundary counting implementation
+is replaced with explicit physical PBIP page/visual/bookmark counts.</p>
+<p>No report file, semantic-model file, Power Query object, relationship, measure,
+source carrier, page, visual, bookmark, navigation, tooltip, drillthrough, or
+mobile layout is changed by this correction.
+&#39;@ |
+    Set-Content <code>        -LiteralPath &quot;$return\A3_E13_FINAL_EXPORTER_REPORT_BOUNDARY_FALSE_STOP.md&quot;</code>
+        -Encoding utf8
+PS C:\MSBF&gt; &amp; $correctedExporter `</p>
+<blockquote>
+<pre><code>-PackageRoot $work *&gt;&amp;1 |
+Tee-Object `
+    -FilePath &quot;$return\A3_E13_FINAL_EVIDENCE_EXPORT_CONSOLE.txt&quot;
+</code></pre>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>{
+  &quot;captured_utc&quot;: &quot;2026-08-25T06:11:16.0758034Z&quot;,
+  &quot;project_files&quot;: 16,
+  &quot;project_root_sha256&quot;: &quot;5d3b9b203de120ded06306cb7a556153c884f007a440fabcf7ff043077001b00&quot;,
+  &quot;model_bim_sha256&quot;: &quot;5e5c9c063517e9de9c05e561d61970b342e41ac344be6f42d3bd16a35c097b2a&quot;,
+  &quot;baseline_project_root_sha256&quot;: &quot;4d67e1a43ae4e540bb5efed0c8b55eca0ecc4a40c30e2784485c0b400b7424d0&quot;,
+  &quot;changed_project_files&quot;: [
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.Report/.pbi/localSettings.json&quot;,
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.SemanticModel/.pbi/cache.abf&quot;,
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.SemanticModel/.pbi/localSettings.json&quot;,
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.SemanticModel/diagramLayout.json&quot;,
+    &quot;MSBF_PBI_A1A_Local_Construction_R1.SemanticModel/model.bim&quot;
+  ],
+  &quot;power_query_files&quot;: 81,
+  &quot;technical_shell_pages&quot;: 1,
+  &quot;substantive_pages&quot;: 0,
+  &quot;visuals&quot;: 0,
+  &quot;bookmarks&quot;: 0,
+  &quot;authored_report_definition_unchanged&quot;: true,
+  &quot;status&quot;: &quot;FINAL_EVIDENCE_EXPORTED_PENDING_SEMANTIC_DIFF_REVIEW_AND_INDEPENDENT_AUDIT&quot;
+}
+A3 hardened final evidence exported. Preserve exact Desktop serialization; do not normalize. Independent Audit acceptance remains pending.</p>
+</div></article><article id="m-129a80c4-8e95-4bc2-9703-34e6d0666a3c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00292 · 2026-08-25T02:11:44.865347-04:00 · active path</p><div class="bubble"><p>The hardened exporter now passes and the <strong>final executed A3 evidence freeze is complete</strong>.</p>
+<p>The final controlling A3 identity is:</p>
+<pre><code class="language-text">Final project files:
+16
+
+Final executed A3 project root:
+5d3b9b203de120ded06306cb7a556153c884f007a440fabcf7ff043077001b00
+
+Final executed A3 model.bim:
+5e5c9c063517e9de9c05e561d61970b342e41ac344be6f42d3bd16a35c097b2a
+
+Accepted A1b predecessor project root:
+4d67e1a43ae4e540bb5efed0c8b55eca0ecc4a40c30e2784485c0b400b7424d0
+</code></pre>
+<p>The exporter confirms the complete final boundary: <strong>33 tables / 33 relationships / 81 Power Query files / 60 measures</strong>, one technical shell, zero substantive pages, zero visuals, zero bookmarks, and the authored report definition remains unchanged. The A3 authorization required exactly one table, one relationship, two Power Query objects, zero measures, and this same 33/33/81/60 cumulative state. [export reference: filecite | turn49file6 | L310-L320]</p>
+<p>The five physical project-file differences are now explicitly frozen rather than normalized:</p>
+<pre><code class="language-text">Report/.pbi/localSettings.json
+SemanticModel/.pbi/cache.abf
+SemanticModel/.pbi/localSettings.json
+SemanticModel/diagramLayout.json
+SemanticModel/model.bim
+</code></pre>
+<p>That is acceptable for submission because we have separately demonstrated the nature of each class of change: the two <code>localSettings.json</code> files differ only in Desktop security-binding serialization; <code>diagramLayout.json</code> is parsed-JSON identical; the model contains the exact authorized A3 additions plus identified Power BI annotation serialization; and the accepted report definition is byte-identical. The exporter itself is designed to preserve exact Desktop serialization rather than normalize it. [export reference: filecite | turn48file3 | L226-L244]</p>
+<p>The original hardened exporter also remains preserved at SHA-256 <code>e1075cf5...</code>, together with its false-stop evidence. The corrected exporter changed only the secondary physical page/visual/bookmark counting implementation after the stronger authored-definition equality check had already passed. That original script&#39;s report logic and final identity logic are visible in the supplied source. [export reference: filecite | turn48file1 | L92-L116] [export reference: filecite | turn48file3 | L226-L243]</p>
+<h3>Current A3 disposition</h3>
+<p>At this point I would record:</p>
+<pre><code class="language-text">A3 bounded semantic construction             PASS — source-owner evidence
+A3 local-engine execution                    PASS
+FactAccountReconciliation                    59 / 59 keys
+REL-047 live propagation                     PASS
+REL-047 orphan control                       PASS
+All 33 physical relationship orphan tests    PASS
+All 32 active relationship propagation       PASS
+All 60 inherited measures                    PASS
+Scenario nonregression                       PASS
+A1b 3-date endpoint nonregression             PASS
+AUD-ASOF-003C seven A3 factual assertions    7 / 7 PASS
+
+Final serialization-aware static boundary    PASS
+Final report boundary                        PASS
+Final project freeze                         PASS
+
+ER-PBI-009                                   READY FOR INDEPENDENT AUDIT
+ER-PBI-012                                   READY FOR INDEPENDENT AUDIT
+
+PBI-WP2                                      STILL HOLD
+Report experience                            NOT AUTHORIZED
+Publication / deployment                     NOT AUTHORIZED
+</code></pre>
+<p>The revised A3 authorization expressly requires resubmission under <code>ER-PBI-009</code> and <code>ER-PBI-012</code> and continues to prohibit A2/B/C/D objects and all report-experience construction. [export reference: filecite | turn49file6 | L317-L320]</p>
+<p>The next step is <strong>packaging only</strong>. Do not reopen Power BI or DAX Studio and do not modify the working project. I can now give you one controlled PowerShell block that will create the Independent Audit submission, include the authority, final executed project, Power Query sources, synthetic source/evidence, DAX/query evidence, all diagnostic/serialization records and original/corrected tooling, generate exact copy reconciliation and manifests, ZIP it, validate the archive, and prepare the narrowly framed <code>ER-PBI-009</code> / <code>ER-PBI-012</code> audit request.</p>
+</div></article><article id="m-c72c0b03-599f-4c66-bd34-1a6ac2df80ba" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00293 · 2026-08-25T02:12:57.091000-04:00 · active path</p><div class="bubble"><p>provide the powershell block to package A3 and provide the prompt, etc for audit.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

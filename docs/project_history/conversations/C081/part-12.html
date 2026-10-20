@@ -1,0 +1,1062 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>M2.11 Plan Review — part 12 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>M2.11 Plan Review — part 12</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-11.html">Previous part</a><a href="part-13.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-ef0639d0-0697-4ba9-a530-595bbf59c300" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00141 · 2026-08-08T21:43:54.562749-04:00 · active path</p><div class="bubble"><h1>M2.12 Work Package 1 R9 complete</h1>
+<p>The R8 audit confirmed that the prior six R7 issues were closed and narrowed the remaining WP1 scope to two blockers: Program 220’s unstable postflight predicate model and 16 unscheduled helper indexes. [export reference: filecite | turn26file0 | L5-L24]</p>
+<p>I completed:</p>
+<pre><code class="language-text">M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R9
+</code></pre>
+<pre><code class="language-text">R9 bounded correction                       COMPLETE
+Program 220 postflight checks               426 / 426 scheduled
+Structurally corrected postflights           79 / 79 PASS
+Structural-dimension completeness            79 / 79 PASS
+Current indexed helper occurrences           85 / 85 PASS
+Merged program statement orders               6 / 6 PASS
+Total ordered statements                    837
+Literal compilation decisions             2,800
+Implementation-time inferred decisions        0
+Required-zero metrics                        13 / 13 PASS
+Static controls                           4,470 / 4,470 PASS
+
+Frozen business-semantic changes              0
+SQL files generated                           0
+PostgreSQL executions                         0
+
+WP1 approval                                 HOLD — NARROW FINAL RE-REVIEW
+WP2 authorization                            NO
+</code></pre>
+<h2>1. Program 220 postflights converted to structural certification</h2>
+<p>The R8 audit identified 79 predicates that incorrectly treated PostgreSQL’s decompiled definitions as if they preserved the original source text:</p>
+<pre><code class="language-text">Constraint-definition comparisons            57
+Index-definition comparisons                  8
+View source-body/deparser comparisons        14
+                                             --
+Total                                        79
+</code></pre>
+<p>[export reference: filecite | turn26file0 | L84-L167]</p>
+<p>R9 removes all such comparisons from blocking predicates.</p>
+<h3>Constraints</h3>
+<p>The 57 PK, UNIQUE, FK, and CHECK controls now verify catalog-native structure through <code>pg_constraint</code> and associated catalog relations:</p>
+<ul>
+<li>exact schema, table, constraint name, and <code>contype</code>;</li>
+<li>exact constrained-column attnum and name order;</li>
+<li>validation, deferrability, inheritance, and parent flags;</li>
+<li>exact referenced schema, table, and column order for foreign keys;</li>
+<li>exact update, delete, and match actions;</li>
+<li>exact backing-index structure for primary and unique constraints;</li>
+<li>server-parsed <code>conbin</code> equivalence for CHECK expressions;</li>
+<li>exact CHECK constrained-column attnums;</li>
+<li>no source-text comparison to <code>pg_get_constraintdef</code>.</li>
+</ul>
+<p>For CHECK constraints, Program 220 constructs a transaction-local target-shaped expected table, applies the frozen CHECK expression, and compares the actual and expected parsed catalog trees after normalizing parser-location metadata.</p>
+<h3>Indexes</h3>
+<p>The eight explicit indexes, along with constraint-backed indexes, now verify:</p>
+<pre><code class="language-text">Schema, table and index identity
+B-tree access method
+Unique and primary flags
+Immediate and NULLS DISTINCT behavior
+Valid, ready and live state
+Exact ordered key columns
+ASC / NULLS LAST options
+Column collation parity
+Default operator classes
+No INCLUDE columns
+No index expressions
+No partial predicate
+No exclusion behavior
+No clustering designation
+No replica-identity designation
+</code></pre>
+<p>No blocking check compares source <code>CREATE INDEX</code> text to <code>pg_get_indexdef</code>.</p>
+<h3>Views</h3>
+<p>Each of the seven persistent views now has:</p>
+<ol>
+<li>a stable top-level persistent-object/no-temporary-dependency check; and</li>
+<li>a complete structural check.</li>
+</ol>
+<p>The complete check creates a transaction-local expected view from the approved SELECT authority and compares:</p>
+<pre><code class="language-text">Exact ordered column names
+Exact ordered column types and typmods
+Exact persistent dependency relations
+Absence of temporary dependencies
+Normalized pg_rewrite.ev_action parse trees
+Exact parsed joins, projections, casts, filters and run-scope predicate
+</code></pre>
+<p>The seven top-level checks plus the seven complete checks account for all 14 corrected view-related predicates.</p>
+<p><code>pg_get_constraintdef</code>, <code>pg_get_indexdef</code>, and <code>pg_get_viewdef</code> remain available only as <strong>nonblocking diagnostic evidence</strong>.</p>
+<h2>2. All helper indexes are now scheduled</h2>
+<p>The independent audit found 16 governed <code>index_sql</code> statements missing from the merged program orders and required each to execute immediately after its helper row assertion and before <code>ANALYZE</code>. [export reference: filecite | turn26file0 | L172-L233]</p>
+<p>R9 schedules:</p>
+<pre><code class="language-text">Program 221                                  12
+Program 222                                   3
+Program 222A                                  1
+                                              --
+Newly scheduled                              16
+</code></pre>
+<p>Across the complete current helper authority:</p>
+<pre><code class="language-text">Current helper relations                     85
+Nonblank helper indexes                      85
+Indexes scheduled exactly once               85
+Index placement failures                      0
+</code></pre>
+<p>The final merged statement counts are exactly:</p>
+<table>
+<thead>
+<tr>
+<th align="right">Program</th>
+<th align="right">Statements</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">220</td>
+<td align="right">473</td>
+</tr>
+<tr>
+<td align="right">221</td>
+<td align="right">76</td>
+</tr>
+<tr>
+<td align="right">222</td>
+<td align="right">206</td>
+</tr>
+<tr>
+<td align="right">220A</td>
+<td align="right">22</td>
+</tr>
+<tr>
+<td align="right">222A</td>
+<td align="right">26</td>
+</tr>
+<tr>
+<td align="right">222B</td>
+<td align="right">34</td>
+</tr>
+<tr>
+<td align="right"><strong>Total</strong></td>
+<td align="right"><strong>837</strong></td>
+</tr>
+</tbody></table>
+<p>Program 222’s existing persistence interleaving remains unchanged except for its three newly inserted helper-index statements. Phase 9 remains after all required persistent inserts, evidence remains after phase-9 proof, and the lifecycle update remains after evidence insertion.</p>
+<h2>3. Prospective compiler and preservation</h2>
+<p>The prospective compiler now contains:</p>
+<pre><code class="language-text">Program 220 decisions                     1,040
+Program 221 decisions                       211
+Program 222 decisions                     1,285
+Program 220A decisions                       67
+Program 222A decisions                       70
+Program 222B decisions                      127
+                                           -----
+Total literal decisions                   2,800
+
+Implementation-time inferred decisions        0
+Failed decisions                               0
+</code></pre>
+<p>R9 certifies <strong>141 unaffected R8 authorities as byte-identical</strong>. The affected inventory separately identifies:</p>
+<pre><code class="language-text">New R9 records                               18
+Directly changed R9 authorities              12
+</code></pre>
+<p>No previously approved source edge, reproduction method, helper definition, view definition, hash preimage, sequence model, canonical field, recovery branch, evidence definition, grain, count, or business boundary was changed.</p>
+<h2>4. Required-zero controls</h2>
+<pre><code class="language-text">Source-text/decompiled constraint comparisons             0
+Source-text/decompiled index comparisons                  0
+Source-body-hash/decompiled view comparisons              0
+Current nonblank helper indexes absent from order         0
+Helper indexes outside assertion-before-ANALYZE position  0
+Program 220 structural postflights unscheduled            0
+Cross-program temporary references                        0
+Current helpers lacking exact CREATE authority            0
+Programs lacking complete statement order                 0
+Implementation-time inferred decisions                    0
+Frozen business-semantic changes                          0
+SQL files generated                                       0
+PostgreSQL executions                                     0
+</code></pre>
+<p>The R8 audit indicated that, assuming these exact corrections reconcile without unrelated change, the intended next governed disposition is WP1 approval and WP2 authorization. [export reference: filecite | turn26file0 | L256-L290] R9 itself does not claim that approval.</p>
+<h1>Primary R9 delivery</h1>
+<h2>Review bundle</h2>
+<p>Download the M2.12 WP1 R9 review bundle (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R9.zip</code>; referenced bytes not established here)</p>
+<p>Download the matching R9 SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R9.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">Package
+M2_12_Build_WP1_R9.zip
+
+Bytes
+1,717,498
+
+SHA-256
+d340b94800efe89a0ff06ca38d51ff30304294fbbdc847a4068078f1c74b0330
+
+ZIP entries
+199
+
+Current R9 authority files
+173
+
+Source-identity records
+172
+
+Historical/noncurrent files
+24
+
+Maximum ZIP path length
+97
+</code></pre>
+<p>The package was constructed twice with the same size and SHA-256.</p>
+<h2>Package validation</h2>
+<ul>
+<li>R9 package-validation report (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R9_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>R9 package-validation controls — 29/29 PASS (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R9_VALIDATION_CONTROLS.csv</code>; referenced bytes not established here)</li>
+<li>R9 package-validation summary (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R9_VALIDATION_SUMMARY.json</code>; referenced bytes not established here)</li>
+<li>Separate extracted-package validation report (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R9_INDEPENDENT_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Extracted-package validation controls — 22/22 PASS (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R9_INDEPENDENT_VALIDATION_CONTROLS.csv</code>; referenced bytes not established here)</li>
+</ul>
+<pre><code class="language-text">ZIP CRC                                  PASS
+Complete extraction/hash parity         PASS
+Source-identity mismatches                 0
+Bundle-inventory mismatches                0
+Exact duplicate paths                      0
+Case-insensitive duplicate paths           0
+Unsafe or traversal paths                  0
+External sidecar pairing                 PASS
+SQL files                                  0
+</code></pre>
+<h1>Governing R9 records</h1>
+<ul>
+<li>Implementation Control Correction R9 (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R9.md</code>; referenced bytes not established here)</li>
+<li>WP1 Source Authority R9 (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WP1_SOURCE_AUTHORITY_R9.md</code>; referenced bytes not established here)</li>
+<li>WP1 R9 Review (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WORK_PACKAGE_1_REVIEW.md</code>; referenced bytes not established here)</li>
+<li>R9 Source-Identity Inventory (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WP1_R9_SOURCE_IDENTITY.csv</code>; referenced bytes not established here)</li>
+<li>R8-to-R9 Finding-Remediation Matrix (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WP1_R9_FINDING_REMEDIATION_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Affected-Artifact Inventory (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WP1_R9_AFFECTED_ARTIFACT_INVENTORY.csv</code>; referenced bytes not established here)</li>
+<li>Unaffected Byte-Identity Certification — 141/141 PASS (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WP1_R9_UNAFFECTED_BYTE_IDENTITY_CERTIFICATION.csv</code>; referenced bytes not established here)</li>
+</ul>
+<p>Current governance identities:</p>
+<pre><code class="language-text">Implementation Control Correction R9
+3d8a40908a7ebf05dfae796a7aa968055eec5bfc0c158cccefbbd50b4e86768a
+
+WP1 Source Authority R9
+4399d9180dc6b8f983fdb2ae8133ebe2e076683d6d6d114eef15806a9c125585
+
+WP1 R9 Review
+3beaca9e79b10a095be17dd4dc4951d786a790f8807bc93f4918862ee1443ee0
+
+R9 Source-Identity Inventory
+19c21f4b358ac4c64c15fc2f31bd4fa7ab49858a40fd510230cd33f5d51f02ba
+</code></pre>
+<h1>Program 220 structural authorities</h1>
+<ul>
+<li>Constraint Structural Postflight Specification — 57 rows (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_PROGRAM_220_CONSTRAINT_STRUCTURAL_POSTFLIGHT_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Index Structural Postflight Specification — 8 rows (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_PROGRAM_220_INDEX_STRUCTURAL_POSTFLIGHT_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>View Structural Postflight Specification — 7 views (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_PROGRAM_220_VIEW_STRUCTURAL_POSTFLIGHT_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Complete Program 220 Postflight Compiler — 426 checks (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_PROGRAM_220_POSTFLIGHT_EXECUTION_COMPILER.csv</code>; referenced bytes not established here)</li>
+<li>Structural Postflight Audit — 79/79 PASS (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_PROGRAM_220_STRUCTURAL_POSTFLIGHT_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Structural-Dimension Completeness Audit — 79/79 PASS (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_PROGRAM_220_STRUCTURAL_POSTFLIGHT_COMPLETENESS_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Deparser-Stability Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_PROGRAM_220_POSTFLIGHT_DEPARSE_STABILITY_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Diagnostic-Only Decompiled Definitions (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_PROGRAM_220_DEPARSED_DEFINITION_DIAGNOSTIC_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Helper-index and statement-order authorities</h1>
+<ul>
+<li>Helper-Index Scheduling Audit — 85/85 PASS (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_HELPER_INDEX_SCHEDULING_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Helper-Index Scheduling Summary (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_HELPER_INDEX_SCHEDULING_SUMMARY.csv</code>; referenced bytes not established here)</li>
+<li>Complete Six-Program Statement-Order Catalog — 837 rows (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WP2_LITERAL_PROGRAM_STATEMENT_ORDER_CATALOG.csv</code>; referenced bytes not established here)</li>
+<li>Statement-Order Audit — 6/6 PASS (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WP2_LITERAL_PROGRAM_STATEMENT_ORDER_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Program Phase-Order Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_PROGRAM_PHASE_ORDER_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Persistence-Dependency Order Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_PERSISTENCE_DEPENDENCY_ORDER_AUDIT.csv</code>; referenced bytes not established here)</li>
+</ul>
+<p>Within the ZIP, the phase-order audit is located at:</p>
+<pre><code class="language-text">00_current_r9_authority/
+M2_12_PROGRAM_PHASE_ORDER_AUDIT.csv
+</code></pre>
+<h1>Compiler and static-review evidence</h1>
+<ul>
+<li>All 2,800 Literal Compilation Decisions (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WP2_LITERAL_COMPILATION_DECISION_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Six-Program Closure Summary (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WP2_LITERAL_PROGRAM_CLOSURE_SUMMARY.csv</code>; referenced bytes not established here)</li>
+<li>Prospective Program Construction Blueprint (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WP2_PROSPECTIVE_PROGRAM_CONSTRUCTION_BLUEPRINT.csv</code>; referenced bytes not established here)</li>
+<li>Zero-Row Inference-Gap Register (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WP2_PROSPECTIVE_INFERENCE_GAP_REGISTER.csv</code>; referenced bytes not established here)</li>
+<li>Required-Zero Metric Ledger — 13/13 PASS (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WP1_R9_REQUIRED_ZERO_METRICS.csv</code>; referenced bytes not established here)</li>
+<li>R9 Static Audit Report — 4,470/4,470 PASS (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WORK_PACKAGE_1_R9_STATIC_AUDIT.md</code>; referenced bytes not established here)</li>
+<li>Machine-Readable R9 Static Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WORK_PACKAGE_1_R9_STATIC_AUDIT.json</code>; referenced bytes not established here)</li>
+<li>All 4,470 Static Controls (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_9/M2_12_WORK_PACKAGE_1_R9_STATIC_AUDIT_CONTROLS.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Final governed state</h1>
+<pre><code class="language-text">M2.12 Work Package 1 R9                 COMPLETE
+Bounded postflight/index correction     PASS
+Recommended independent disposition     APPROVE WP1 R9
+
+WP1 final approval                      HOLD — NARROW FINAL RE-REVIEW
+WP2                                     NOT AUTHORIZED
+
+Program 220                             NOT GENERATED
+Programs 221–227                        NOT GENERATED
+Recoveries 220A/222A/222B/223A         NOT GENERATED
+SQL files                               0
+PostgreSQL                              NOT EXECUTED
+Implementation execution package       NOT CREATED
+Module 3                               NOT AUTHORIZED
+Production                             NOT AUTHORIZED
+</code></pre>
+</div></article><article id="m-f87e752c-35fe-4754-8938-a82bf8d2f6b4" class="message user"><p class="meta"><strong>Andrew / user</strong> · C081-M00142 · 2026-08-08T22:34:36.528000-04:00 · active path</p><p class="note">Attachment references: M2_12_WP1_R9_FINAL_SIGNOFF_AND_WP2_AUTHORIZATION_20260809(1).md; M2_12_WP2_AUTHORIZED_BUILD_PROMPT_20260809(1).md; AUDIT_M2_12_Build_WP1_R9.zip; M2_12_Build_WP1_R9(2).zip; M2_11_FULL_PROJECT_ACCEPTED_20260806(5).zip; M2_11_FULL_PROJECT_ACCEPTED_20260806.zip(4).sha256</p><div class="bubble"><p>M2.12 WP1 is approved. M2.12 WP2 build is authorized. Please proceed to build M2.12 WP2. See attached prompts. M2.12 WP1 R9 attached to aid this prompt. M2.11 baseline attached to aid this prompt.</p>
+</div></article><article id="m-8c907893-6f8e-404e-9a88-b2a55c90eeba" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00143 · 2026-08-08T22:51:37.811229-04:00 · active path</p><div class="bubble"><h1>M2.12 WP2 source construction stopped fail-closed</h1>
+<p>WP1 R9 was correctly treated as the sole current implementation-control authority, and the authorization was limited to source construction for Programs 220–222 and Recoveries 220A/222A/222B. PostgreSQL execution, Programs 223–227, Recovery 223A, and implementation execution packaging remained unauthorized. [export reference: filecite | turn26file0 | L3-L22]</p>
+<p>The preconstruction authority checks passed, but literal construction exposed defects inside the <strong>current R9 statement authority itself</strong>. Because the WP2 authorization prohibits implementation-time inference and requires the exact 473/76/206/22/26/34 statement orders, I did not silently rewrite those defects. [export reference: filecite | turn26file1 | L31-L72]</p>
+<h2>Preconstruction verification</h2>
+<pre><code class="language-text">M2_12_Build_WP1_R9.zip
+
+Recalculated SHA-256
+d340b94800efe89a0ff06ca38d51ff30304294fbbdc847a4068078f1c74b0330
+
+External sidecar                              PASS
+ZIP CRC                                       PASS
+ZIP entries                                   199
+R9 source identities                          172 / 172 PASS
+</code></pre>
+<pre><code class="language-text">Accepted M2.11 full-project baseline
+
+Recalculated SHA-256
+92f0491eea26b0d546c85992e27433cd006a0b2f126c32a139d795b7749904fc
+
+External sidecar                              PASS
+ZIP CRC                                       PASS
+ZIP entries                                 4,819
+Numbered stages                                30
+Final stage                              30_M2_11
+</code></pre>
+<h2>Static construction result</h2>
+<p>I generated all six source files as exact ordered R9 transcriptions for static inspection. They are <strong>diagnostic only and must not be executed</strong>.</p>
+<pre><code class="language-text">R9 governed logical statement rows           837
+Physical top-level statements                887
+Excess physical statements                    50
+
+R9 rows not compiling to one statement         7
+Program 220 unauthorized temp objects         41
+
+Implementation-time inferred decisions         0
+Frozen business-semantic changes               0
+PostgreSQL executions                           0
+Programs 223–227 generated                      0
+</code></pre>
+<p>The source-construction prompt required zero omitted, duplicated, reordered, ungoverned, or inferred decisions before WP2 could pass static review. [export reference: filecite | turn26file1 | L74-L108]</p>
+<h1>Blocking R9 authority defects</h1>
+<h2>1. Program 222 statement 51</h2>
+<pre><code class="language-text">CREATE_TMP_CERT_M2_12_REPRODUCTION_OBSERVATION_BASE
+</code></pre>
+<p>The literal CTAS embeds descriptive text inside its predicates, including:</p>
+<pre><code class="language-sql">module1_run_id=ctx.module1_run_id; current contract version 1
+</code></pre>
+<p>and:</p>
+<pre><code class="language-sql">component_sequence = 1;
+module1_run_id=ctx.module1_run_id;
+contract_version=cd.contract_version
+</code></pre>
+<p>The one governed statement-order row therefore parses into <strong>40 physical top-level statements</strong> instead of one.</p>
+<h2>2. Program 222 statement 55</h2>
+<pre><code class="language-text">CREATE_TMP_CERT_M2_12_SOURCE_EDGE_OBSERVATION
+</code></pre>
+<p>Its <code>WHERE</code> clause contains non-SQL prose:</p>
+<pre><code class="language-sql">one-to-one on edge_sequence/edge_code
+</code></pre>
+<p>The row parses into two physical statements.</p>
+<h2>3. Program 222 statement 63</h2>
+<pre><code class="language-text">CREATE_TMP_CERT_M2_12_REPRODUCTION_OBSERVATION
+</code></pre>
+<p>This row repeats the descriptive semicolon-delimited selectors and physically constructs only one component branch, although its governed helper contract requires <strong>13 component-reproduction rows</strong>.</p>
+<h2>4. Program 222 statement 79</h2>
+<pre><code class="language-text">CREATE_TMP_CERT_M2_12_EVIDENCE_OBSERVATION
+</code></pre>
+<p>Its predicate contains unquoted metadata:</p>
+<pre><code class="language-sql">node_sequence=1;
+family=LATEST_ARCHIVE_REPRODUCTION
+</code></pre>
+<p>The literal statement also constructs one hard-coded evidence row rather than the governed <strong>72 mandatory evidence-certification rows</strong>.</p>
+<h2>5. Program 222 statement 83</h2>
+<pre><code class="language-text">CREATE_TMP_CERT_M2_12_NODE_OBSERVATION
+</code></pre>
+<p>Its <code>WHERE</code> clause contains semicolon-delimited join descriptions and the non-SQL phrase:</p>
+<pre><code class="language-text">pos/neg aggregates keyed by certification_node_sequence
+</code></pre>
+<p>The exact joins among node, component, evidence, edge, positive-control, and negative-control observations are therefore not executable as written.</p>
+<h2>6. Program 222 statement 178</h2>
+<pre><code class="language-text">CREATE_TMP_HASH_M2_12_CANONICAL_ENTITY_SOURCE
+</code></pre>
+<p>The CTAS reads the same relation it is attempting to create:</p>
+<pre><code class="language-sql">FROM tmp_hash_m2_12_canonical_entity_source u
+</code></pre>
+<p>It is not a governed recursive construction. The predicate also embeds:</p>
+<pre><code class="language-text">exactly 134 rows across nine families
+</code></pre>
+<p>as unquoted SQL text. The approved nine-family/134-entity union is not present in this literal statement.</p>
+<h2>7. Program 222 statement 195</h2>
+<pre><code class="language-text">CREATE_TMP_GENERATION_M2_12_EVIDENCE
+</code></pre>
+<p>The row contains three physical commands:</p>
+<pre><code class="language-sql">CREATE TEMP TABLE ...
+CREATE UNIQUE INDEX ...
+ANALYZE ...
+</code></pre>
+<p>The index and <code>ANALYZE</code> are already separately governed as statements 197 and 198. The literal row therefore duplicates those helper components and violates the authorized 206-statement Program 222 boundary.</p>
+<h2>8. Program 220 temporary-namespace mismatch</h2>
+<p>The current responsibility matrix authorizes Program 220 to use only:</p>
+<pre><code class="language-text">tmp_install_
+tmp_src_
+</code></pre>
+<p>The current postflight authority creates an additional:</p>
+<pre><code class="language-text">34  tmp_pf_ck_* temporary tables
+7   m2_12_pf_view_* temporary views
+---
+41  unauthorized temporary objects
+</code></pre>
+<p>Those postflight objects may be technically reasonable, but WP2 cannot silently expand the approved Program 220 namespace or rename them without reissuing the affected authority.</p>
+<h1>Governing disposition</h1>
+<pre><code class="language-text">M2.12 WP1 R9 authority verification       PASS
+Accepted M2.11 baseline verification      PASS
+
+WP2 exact transcription                   COMPLETED FOR DIAGNOSIS
+WP2 static source review                  FAIL
+Valid WP2 source authority issued         NO
+Valid WP2 review bundle issued            NO
+
+Program 220 executable authority          HOLD
+Program 221 executable authority          HOLD
+Program 222 executable authority          BLOCKED
+Recoveries 220A/222A/222B                 HOLD
+
+PostgreSQL                                NOT EXECUTED
+WP3                                       NOT AUTHORIZED
+Module 3                                  NOT AUTHORIZED
+Production                                NOT AUTHORIZED
+</code></pre>
+<p>No frozen business design, source edge, hash preimage, canonical count, evidence requirement, control, grain, recovery boundary, or non-production boundary needs to change. The required next action is a bounded correction of the malformed R9 literal implementation-control records, followed by resumed WP2 source construction.</p>
+<h1>Diagnostic delivery</h1>
+<h2>Primary blocker bundle</h2>
+<ul>
+<li>Download the M2.12 WP2 source-construction blocker bundle (historical reference: <code>sandbox:[session]/M2_12_WP2_SOURCE_CONSTRUCTION_BLOCKER_R1_20260809.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_WP2_SOURCE_CONSTRUCTION_BLOCKER_R1_20260809.zip.sha256</code>; referenced bytes not established here)</li>
+</ul>
+<pre><code class="language-text">Package
+M2_12_WP2_SOURCE_CONSTRUCTION_BLOCKER_R1_20260809.zip
+
+Bytes
+859,580
+
+SHA-256
+7fcaca2ec9ab1f3fa6462018cc44a042a4daaed1552db01d32bdc2067919757a
+
+ZIP entries
+32
+
+ZIP CRC
+PASS
+</code></pre>
+<p>This is a <strong>diagnostic review bundle</strong>, not an execution package.</p>
+<h2>Core review records</h2>
+<ul>
+<li>Full source-construction blocker report (historical reference: <code>sandbox:[session]/M2_12_WP2_SOURCE_CONSTRUCTION_BLOCKER_R1/00_read_first/M2_12_WP2_SOURCE_CONSTRUCTION_BLOCKER_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Machine-readable execution checkpoint (historical reference: <code>sandbox:[session]/M2_12_WP2_SOURCE_CONSTRUCTION_BLOCKER_R1/00_read_first/M2_12_WP2_SOURCE_CONSTRUCTION_CHECKPOINT.json</code>; referenced bytes not established here)</li>
+<li>Eight-item blocker register (historical reference: <code>sandbox:[session]/M2_12_WP2_SOURCE_CONSTRUCTION_BLOCKER_R1/02_diagnostics/M2_12_WP2_LITERAL_AUTHORITY_BLOCKERS.csv</code>; referenced bytes not established here)</li>
+<li>837-row logical-to-physical statement audit (historical reference: <code>sandbox:[session]/M2_12_WP2_SOURCE_CONSTRUCTION_BLOCKER_R1/02_diagnostics/M2_12_WP2_LOGICAL_TO_PHYSICAL_STATEMENT_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Program statement summary (historical reference: <code>sandbox:[session]/M2_12_WP2_SOURCE_CONSTRUCTION_BLOCKER_R1/02_diagnostics/M2_12_WP2_PROGRAM_STATEMENT_SUMMARY.csv</code>; referenced bytes not established here)</li>
+<li>Program 220 temporary-namespace audit (historical reference: <code>sandbox:[session]/M2_12_WP2_SOURCE_CONSTRUCTION_BLOCKER_R1/02_diagnostics/M2_12_WP2_PROGRAM_220_TEMP_NAMESPACE_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Preconstruction baseline and authority validation (historical reference: <code>sandbox:[session]/M2_12_WP2_SOURCE_CONSTRUCTION_BLOCKER_R1/02_diagnostics/M2_12_WP2_PRECONSTRUCTION_VALIDATION.csv</code>; referenced bytes not established here)</li>
+<li>Diagnostic SQL transcription inventory (historical reference: <code>sandbox:[session]/M2_12_WP2_SOURCE_CONSTRUCTION_BLOCKER_R1/02_diagnostics/M2_12_WP2_EXACT_TRANSCRIPTION_INVENTORY.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Ready-to-use bounded correction direction</h2>
+<ul>
+<li>R10 literal-authority correction prompt (historical reference: <code>sandbox:[session]/M2_12_WP2_SOURCE_CONSTRUCTION_BLOCKER_R1/03_governance/M2_12_WP1_R9_LITERAL_AUTHORITY_BOUNDED_R10_CORRECTION_PROMPT.md</code>; referenced bytes not established here)</li>
+</ul>
+<p>The exact six source transcriptions are included under:</p>
+<pre><code class="language-text">01_exact_r9_transcription/normal/
+01_exact_r9_transcription/recovery/
+</code></pre>
+<p>They are preserved only to reproduce the findings and are prominently marked <strong>DO NOT EXECUTE</strong>.</p>
+</div></article><article id="m-0eb2b6a5-a32c-4999-b085-a95e49e3f20a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C081-M00144 · 2026-08-09T00:02:32.853000-04:00 · active path</p><p class="note">Attachment references: AUDIT_M2_12_Build_ WP2_Source_Construction_Exception.zip; Pasted markdown(20260809-040217).md</p><div class="bubble"><h1>M2.12 WP2 Source-Construction Exception Review — R10 Authorization</h1>
+<h2>Determination</h2>
+<p><strong>PASS — the WP2 build chat correctly stopped fail-closed.</strong></p>
+<p>The seven malformed Program 222 literal-authority rows and the Program 220 temporary-namespace mismatch are physically reproducible defects in the current R9 implementation-control authority.</p>
+<pre><code class="language-text">WP1 R9 unaffected authorities             RETAINED / APPROVED
+WP1 R9 affected literal authority          REOPENED — BOUNDED R10 REQUIRED
+WP2 source-construction authorization      SUSPENDED
+WP1 R10 bounded correction                 AUTHORIZED
+PostgreSQL execution                       NOT AUTHORIZED
+Programs 223–227 / Recovery 223A           NOT AUTHORIZED
+</code></pre>
+<p>The diagnostic R9 SQL transcriptions remain <strong>DO NOT EXECUTE</strong> and may not be promoted or patched into current WP2 source authority.</p>
+<p>R10 must remain limited to the eight confirmed defects and directly affected governance, compiler, audit, and source-authority records. It must stop for independent review before WP2 resumes. </p>
+<h1>M2.12 WP1 R9 Literal Authority — Audit-Approved Bounded R10 Correction</h1>
+<p>Do not execute PostgreSQL. Do not resume WP2 source construction. Do not begin Programs 223–227 or Recovery 223A.</p>
+<p>Produce only:</p>
+<p><code>M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R10</code></p>
+<p>Preserve every unaffected R9 authority byte-identically unless a direct hash/provenance reissue is required. Do not change any approved business semantic, source edge, evidence requirement, hash preimage/formula, sequence rule, grain, count, recovery boundary, view definition, Module 3 boundary, or non-production boundary.</p>
+<h2>1. Correct the seven Program 222 statement authorities</h2>
+<h3>Statement 51 — reproduction observation base</h3>
+<p>Regenerate from the current thirteen-row component reproduction and source-authority catalogs.</p>
+<p>Required:</p>
+<ul>
+<li>one top-level PostgreSQL statement;</li>
+<li>exactly 13 output rows;</li>
+<li>exactly 13 distinct component_sequence values 1–13;</li>
+<li>exact component_contract_code/version identities;</li>
+<li>exact node assignment, including both M2.2 components;</li>
+<li>zero duplicate component business keys;</li>
+<li>no semicolon-delimited metadata or descriptive prose in executable predicates.</li>
+</ul>
+<h3>Statement 55 — source-edge observation</h3>
+<p>Required:</p>
+<ul>
+<li>one top-level PostgreSQL statement;</li>
+<li>exactly 19 distinct edge_sequence/edge_code rows;</li>
+<li>exact module1_run_id binding;</li>
+<li>exact expected, accepted-source, target-recorded-source, and gate reconciliation;</li>
+<li>zero descriptive join text.</li>
+</ul>
+<h3>Statement 63 — final reproduction observation</h3>
+<p>Construct from the corrected 13-row reproduction base and exact component design identity.</p>
+<p>Required:</p>
+<ul>
+<li>one top-level PostgreSQL statement;</li>
+<li>exactly 13 unique component rows;</li>
+<li>exact reproduction_status evaluation for every component;</li>
+<li>no one-component physical-source branch repeated or hard-coded.</li>
+</ul>
+<h3>Statement 79 — evidence observation</h3>
+<p>Generate from the frozen 72-row applicability matrix and current evidence-method authorities.</p>
+<p>Required:</p>
+<ul>
+<li>one top-level PostgreSQL statement;</li>
+<li>exactly 72 rows;</li>
+<li>matrix_sequence 1–72 exactly once;</li>
+<li>exactly one row for every node_sequence 1–12 x evidence_family_sequence 1–6;</li>
+<li>all applicability cells mandatory;</li>
+<li>zero duplicate business keys;</li>
+<li>exact family-specific observation source and status logic;</li>
+<li>no hard-coded substitute row or unquoted metadata.</li>
+</ul>
+<h3>Statement 83 — node observation</h3>
+<p>Required:</p>
+<ul>
+<li>one top-level PostgreSQL statement;</li>
+<li>exactly 12 unique certification-node rows;</li>
+<li>exact joins or pre-aggregates for component, six evidence cells, source edges, positive controls, and negative controls;</li>
+<li>no Cartesian multiplication;</li>
+<li>exact grouping/scalar-subquery model;</li>
+<li>zero descriptive join prose.</li>
+</ul>
+<h3>Statement 178 — canonical entity source</h3>
+<p>Build directly from the current nine-row canonical entity-source specification.</p>
+<p>Required exact family counts:</p>
+<pre><code class="language-text">POLICY                   1
+STAGE_CERTIFICATION     12
+CONTRACT_COMPONENT      13
+EVIDENCE_CERTIFICATION  72
+CONTRACT_REPRODUCTION   13
+CAPABILITY_COVERAGE     20
+LATEST                   1
+ARCHIVE                  1
+REGISTRY                 1
+                        ---
+TOTAL                  134
+</code></pre>
+<p>Required:</p>
+<ul>
+<li>one top-level PostgreSQL statement;</li>
+<li>explicit nine-branch UNION ALL;</li>
+<li>134 unique <code>(module1_run_id, entity_type, entity_key)</code> rows;</li>
+<li>no target-relation self-reference;</li>
+<li>no descriptive row-count prose.</li>
+</ul>
+<h3>Statement 195 — generation evidence</h3>
+<p>Retain only the exact 24-row CTAS. Keep the index and ANALYZE exclusively in statements 197 and 198.</p>
+<p>Required embedded duplicate helper components: 0.</p>
+<h2>2. Correct Program 220 temporary namespace authority</h2>
+<p>Preferred bounded resolution:</p>
+<pre><code class="language-text">tmp_install_
+tmp_src_
+tmp_pf_ck_
+m2_12_pf_view_
+</code></pre>
+<p>Formally authorize the exact two postflight namespaces rather than renaming 41 otherwise valid self-cleaning postflight objects.</p>
+<p>Update the responsibility matrix, transaction/mutation matrix, implementation invariants, prefix/namespace audits, literal decision matrix, and source authority.</p>
+<p>Required:</p>
+<ul>
+<li>34 tmp_pf_ck_ temporary tables authorized;</li>
+<li>seven m2_12_pf_view_ temporary views authorized;</li>
+<li>all 41 objects created only inside Program 220 postflight;</li>
+<li>all 41 objects explicitly dropped before the enclosing block ends;</li>
+<li>zero postflight temporary objects remaining before primary result/COMMIT;</li>
+<li>zero additional namespace grants.</li>
+</ul>
+<h2>3. Reissue every directly affected implementation authority</h2>
+<p>At minimum reconcile and reissue, where changed:</p>
+<ul>
+<li><code>M2_12_HELPER_LITERAL_CREATE_STATEMENT_CATALOG.csv</code>;</li>
+<li><code>M2_12_HELPER_FIELD_CONSTRUCTION_SPECIFICATION.csv</code>;</li>
+<li><code>M2_12_HELPER_BRANCH_COMPILER_SPECIFICATION.csv</code>;</li>
+<li><code>M2_12_HELPER_TEMP_RELATION_SPECIFICATION.csv</code>;</li>
+<li><code>M2_12_INTERNAL_ADAPTER_DEPENDENCY_SPECIFICATION.csv</code>;</li>
+<li><code>M2_12_CANONICAL_ENTITY_SOURCE_SPECIFICATION.csv</code>;</li>
+<li><code>M2_12_WP2_LITERAL_PROGRAM_STATEMENT_ORDER_CATALOG.csv</code>;</li>
+<li><code>M2_12_WP2_LITERAL_COMPILATION_DECISION_MATRIX.csv</code>;</li>
+<li><code>M2_12_WP2_PROSPECTIVE_PROGRAM_CONSTRUCTION_BLUEPRINT.csv</code>;</li>
+<li><code>M2_12_PROGRAM_RESPONSIBILITY_MATRIX.csv</code>;</li>
+<li><code>M2_12_TRANSACTION_AND_MUTATION_MATRIX.csv</code>;</li>
+<li><code>M2_12_IMPLEMENTATION_INVARIANTS.md</code>;</li>
+<li>parser/cardinality/namespace audits;</li>
+<li>R10 review, source identity, source authority, package validation, ZIP, and sidecar.</li>
+</ul>
+<p>Do not leave a corrected CREATE statement contradicted by a stale current field, branch, dependency, grain, or namespace authority.</p>
+<h2>4. Final R10 controls</h2>
+<pre><code class="language-text">R9 authority rows represented in R10 order                         837
+literal rows producing more than one top-level statement             0
+physical top-level statements                                      837
+non-SQL prose in executable predicates                               0
+self-referential nonrecursive CTAS                                   0
+reproduction-base component rows / distinct keys                 13 / 13
+final reproduction rows / distinct keys                          13 / 13
+source-edge rows / distinct keys                                 19 / 19
+evidence rows / distinct mandatory cells                         72 / 72
+node rows / distinct node keys                                    12 / 12
+canonical families / entities                                    9 / 134
+canonical duplicate business keys                                    0
+embedded duplicate helper index/ANALYZE commands                      0
+Program 220 unauthorized temporary objects                           0
+Program 220 postflight temp objects not cleaned before result         0
+implementation-time inferred decisions                                0
+unaffected R9 authority byte mismatches                                0
+frozen business-semantic changes                                      0
+SQL source authority issued                                            0
+PostgreSQL executions                                                  0
+</code></pre>
+<p>Stop after R10 implementation-control construction and validation. Return R10 for independent review. WP2 source construction remains suspended until R10 is approved. </p>
+</div></article><article id="m-8f431d1f-a7e8-4319-a10f-a411f49c3185" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00145 · 2026-08-09T00:45:49.228000-04:00 · active path</p><div class="bubble"><h1>M2.12 Work Package 1 R10 complete</h1>
+<p>The independent exception review confirmed that the WP2 build correctly stopped fail-closed, retained the unaffected R9 authorities, suspended WP2 source construction, and authorized one bounded R10 correction. PostgreSQL execution, Programs 223–227, Recovery 223A, Module 3, and production remain unauthorized. [export reference: filecite | turn26file0 | L5-L18]</p>
+<p>The review also independently proved that all 837 R9 statement-order rows had been transcribed exactly, so the malformed construction originated in the R9 literal authority—not in the diagnostic WP2 transcription. [export reference: filecite | turn26file0 | L54-L68]</p>
+<pre><code class="language-text">Correction identity
+M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R10
+
+R10 construction                              COMPLETE
+Seven Program 222 corrections                 7 / 7 PASS
+Program 220 namespace correction              PASS
+
+R9 ordered statement rows represented         837 / 837
+Physical top-level statements                 837
+Rows producing multiple statements              0
+
+Static controls                             2,251 / 2,251 PASS
+Package-validation controls                    46 / 46 PASS
+Independent extracted-package controls         11 / 11 PASS
+Known failures                                  0
+
+Unaffected R9 technical authorities           140 / 140 BYTE-IDENTICAL
+Directly affected R9 technical authorities     22
+Implementation-time inferred decisions          0
+Frozen business-semantic changes                0
+
+SQL source files generated                      0
+PostgreSQL executions                            0
+WP2 source construction                         SUSPENDED
+WP1 R10 approval                                HOLD — INDEPENDENT REVIEW REQUIRED
+</code></pre>
+<h1>1. Seven Program 222 statement authorities corrected</h1>
+<p>The exception audit verified the exact malformed statement-order rows as:</p>
+<pre><code class="language-text">51
+55
+63
+79
+83
+178
+195
+</code></pre>
+<p>and required correction of their literal SQL authority rather than patching the diagnostic R9 transcription. [export reference: filecite | turn26file0 | L70-L80]</p>
+<table>
+<thead>
+<tr>
+<th align="right">Sequence</th>
+<th>Corrected authority</th>
+<th>Final static reconciliation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">51</td>
+<td>Reproduction observation base</td>
+<td>13 rows; 13 distinct component keys; sequences 1–13</td>
+</tr>
+<tr>
+<td align="right">55</td>
+<td>Physical source-edge observation</td>
+<td>19 rows; 19 distinct edge identities</td>
+</tr>
+<tr>
+<td align="right">63</td>
+<td>Final reproduction observation</td>
+<td>13 rows; 13 distinct component keys</td>
+</tr>
+<tr>
+<td align="right">79</td>
+<td>Evidence-certification observation</td>
+<td>72 rows; 72 mandatory node × family cells</td>
+</tr>
+<tr>
+<td align="right">83</td>
+<td>Certification-node observation</td>
+<td>12 rows; 12 distinct node identities</td>
+</tr>
+<tr>
+<td align="right">178</td>
+<td>Canonical entity source</td>
+<td>9 explicit <code>UNION ALL</code> families; 134 entities</td>
+</tr>
+<tr>
+<td align="right">195</td>
+<td>Generation-evidence construction</td>
+<td>24-row CTAS only; no embedded index or <code>ANALYZE</code></td>
+</tr>
+</tbody></table>
+<h2>Statement 51 — reproduction base</h2>
+<p>The replacement is one top-level CTAS compiled from the current 13-row component-contract and reproduction authorities. It contains the exact component sequence, contract code, version, and node identity for every component, including both M2.2 contracts.</p>
+<pre><code class="language-text">Rows                                      13
+Distinct component business keys          13
+Component sequences                     1–13
+Top-level statements                       1
+Repeated hard-coded M2.7 identity          0
+Descriptive predicate prose                0
+</code></pre>
+<h2>Statement 55 — source-edge observation</h2>
+<p>The corrected CTAS binds the governed run and constructs the 19 physical edge observations from executable fields:</p>
+<pre><code class="language-text">expected_source_hash
+observed_accepted_source_hash
+observed_target_recorded_source_hash
+source_gate_status
+source_hash_mismatch_flag
+target_hash_mismatch_flag
+edge_status
+</code></pre>
+<pre><code class="language-text">Rows                                      19
+Distinct edge sequence/code keys          19
+Top-level statements                       1
+Descriptive join text                      0
+</code></pre>
+<h2>Statement 63 — final reproduction observation</h2>
+<p>The final reproduction relation is derived from the corrected 13-row base and the exact component-design identity. No component-specific physical branch is repeated or hard-coded.</p>
+<pre><code class="language-text">Rows                                      13
+Distinct component keys                   13
+Reproduction status evaluated             13 / 13
+Top-level statements                       1
+</code></pre>
+<h2>Statement 79 — evidence observation</h2>
+<p>The corrected authority is driven by the frozen 72-row applicability matrix:</p>
+<pre><code class="language-text">12 certification nodes
+× 6 evidence families
+= 72 mandatory cells
+</code></pre>
+<p>It uses family-specific acceptance, positive-validation, negative-control, source-edge, canonical-identity, contract-reproduction, and stage-boundary sources.</p>
+<pre><code class="language-text">Rows                                      72
+Distinct matrix sequence values           72
+Distinct node × family cells               72
+Applicability = MANDATORY                  72 / 72
+Allowed status = PASS                      72 / 72
+Hard-coded substitute evidence rows         0
+</code></pre>
+<h2>Statement 83 — node observation</h2>
+<p>The corrected node authority uses exact pre-aggregated inputs for:</p>
+<pre><code class="language-text">component certification
+six evidence cells
+source edges
+positive controls
+negative controls
+</code></pre>
+<p>It produces one row per certification node without Cartesian multiplication.</p>
+<pre><code class="language-text">Rows                                      12
+Distinct certification-node keys          12
+Top-level statements                       1
+Descriptive join prose                     0
+</code></pre>
+<h2>Statement 178 — canonical entity source</h2>
+<p>The self-referential CTAS was replaced by an explicit nine-branch <code>UNION ALL</code>:</p>
+<pre><code class="language-text">POLICY                    1
+STAGE_CERTIFICATION      12
+CONTRACT_COMPONENT       13
+EVIDENCE_CERTIFICATION   72
+CONTRACT_REPRODUCTION    13
+CAPABILITY_COVERAGE      20
+LATEST                    1
+ARCHIVE                   1
+REGISTRY                  1
+                         ---
+TOTAL                   134
+</code></pre>
+<pre><code class="language-text">Canonical families                         9
+Canonical entities                       134
+Duplicate canonical business keys          0
+Target-relation self-references             0
+</code></pre>
+<h2>Statement 195 — generation evidence</h2>
+<p>The current authority now contains only the exact 24-row CTAS. The already-governed unique index and <code>ANALYZE</code> remain exclusively in Program 222 statements 197 and 198.</p>
+<pre><code class="language-text">Generation-evidence rows                   24
+Distinct evidence codes                    24
+Embedded CREATE INDEX commands              0
+Embedded ANALYZE commands                   0
+</code></pre>
+<h1>2. Program 220 temporary namespaces formally authorized</h1>
+<p>The audit confirmed that Program 220 legitimately creates 34 <code>tmp_pf_ck_</code> temporary tables and seven <code>m2_12_pf_view_</code> temporary views during postflight, and that formal authorization—rather than renaming 41 valid self-cleaning objects—was the appropriate bounded correction. [export reference: filecite | turn26file0 | L221-L262]</p>
+<p>The exact Program 220 namespace authority is now:</p>
+<pre><code class="language-text">tmp_install_
+tmp_src_
+tmp_pf_ck_
+m2_12_pf_view_
+</code></pre>
+<p>The added prefixes are tightly bounded:</p>
+<pre><code class="language-text">tmp_pf_ck_
+Program 220 only
+Postflight temporary tables only
+Authorized objects: 34
+
+m2_12_pf_view_
+Program 220 only
+Postflight temporary views only
+Authorized objects: 7
+</code></pre>
+<p>Validation:</p>
+<pre><code class="language-text">Postflight temporary objects created          41
+Authorized                                    41
+Explicitly cleaned                            41
+Remaining before primary result/COMMIT         0
+Additional namespace grants                    0
+</code></pre>
+<p>The responsibility matrix, transaction/mutation matrix, implementation invariants, prefix audits, lifecycle audits, prospective compiler, and source authority now agree on this exact model.</p>
+<h1>3. Cross-artifact authority reconciled</h1>
+<p>The correction was propagated through every directly affected implementation-control surface, including:</p>
+<pre><code class="language-text">Helper CREATE authority
+Helper field-construction authority
+Helper branch compiler
+Helper relation specification
+Literal alias authority
+Internal dependency specification
+Canonical entity-source specification
+Program 222 persistence-order specification
+837-row merged statement-order catalog
+2,800-row literal decision matrix
+Prospective program blueprint
+Program responsibility matrix
+Transaction and mutation matrix
+Implementation invariants
+Namespace and lifecycle audits
+Static audit and review
+Source identity and source authority
+</code></pre>
+<p>No corrected CREATE authority remains contradicted by a stale current field, branch, dependency, cardinality, grain, or namespace record.</p>
+<pre><code class="language-text">Current helper relations                         85
+Exact helper CREATE authorities                  85 / 85 PASS
+Helper projection/schema checks                  85 / 85 PASS
+Current dependency checks                       167 / 167 PASS
+Implementation-time inferred decisions            0
+</code></pre>
+<h1>4. Byte preservation and supersession</h1>
+<pre><code class="language-text">Unaffected R9 technical authorities            140 / 140 PASS
+Byte mismatches                                  0
+
+Directly affected R9 technical authorities      22
+New R10 governance/audit records                governed separately
+</code></pre>
+<p>The six diagnostic R9 SQL transcriptions remain:</p>
+<pre><code class="language-text">DO NOT EXECUTE
+NOT CURRENT WP2 SOURCE
+NOT PATCHABLE INTO CURRENT AUTHORITY
+</code></pre>
+<p>They are deliberately excluded from the R10 package. Following R10 approval, WP2 must regenerate all six SQL files from the approved R10 authority.</p>
+<h1>5. Required final metrics</h1>
+<pre><code class="language-text">R9 authority rows represented in R10 order                  837
+Literal rows producing &gt;1 top-level statement                 0
+Physical top-level statements                               837
+Non-SQL prose in executable predicates                        0
+Self-referential nonrecursive CTAS                             0
+
+Reproduction-base rows / distinct keys                    13 / 13
+Final reproduction rows / distinct keys                   13 / 13
+Source-edge rows / distinct keys                          19 / 19
+Evidence rows / distinct mandatory cells                  72 / 72
+Node rows / distinct keys                                 12 / 12
+Canonical families / entities                              9 / 134
+Canonical duplicate business keys                              0
+
+Embedded duplicate helper index/ANALYZE commands               0
+Program 220 unauthorized temporary objects                     0
+Program 220 postflight temps surviving before result           0
+Implementation-time inferred decisions                         0
+Unaffected R9 authority byte mismatches                         0
+Frozen business-semantic changes                               0
+SQL source authority issued                                    0
+PostgreSQL executions                                          0
+</code></pre>
+<p>The 837-statement result is a static PostgreSQL-aware lexical reconciliation, not PostgreSQL parser or runtime evidence.</p>
+<h1>6. R10 package identity</h1>
+<pre><code class="language-text">Package
+M2_12_Build_WP1_R10.zip
+
+Bytes
+1,643,504
+
+SHA-256
+2e4017c80b03bf7ff691b114654beed0a63dcf677607bde11696f6b5582e6d10
+
+ZIP entries
+196
+
+Current R10 authority files
+178
+
+Source-identity records
+177
+
+Maximum ZIP path length
+113
+</code></pre>
+<pre><code class="language-text">ZIP CRC                                  PASS
+Complete extraction                      PASS
+Source-versus-extracted hashes           PASS
+Review-bundle inventory parity           PASS
+Current source-identity parity            PASS
+Exact duplicate paths                       0
+Case-insensitive duplicate paths             0
+Unsafe or traversal paths                   0
+External sidecar pairing                 PASS
+SQL files                                   0
+</code></pre>
+<p>Repeated deterministic construction reproduced the same ZIP byte size and SHA-256.</p>
+<h2>Primary delivery</h2>
+<ul>
+<li>Download the M2.12 WP1 R10 review bundle (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R10.zip</code>; referenced bytes not established here)</li>
+<li>Download the matching R10 SHA-256 sidecar (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R10.zip.sha256</code>; referenced bytes not established here)</li>
+<li>Read the R10 package-validation report (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R10_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Read the independent extracted-package validation (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R10_INDEPENDENT_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Package-validation controls — 46/46 PASS (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R10_VALIDATION_CONTROLS.csv</code>; referenced bytes not established here)</li>
+<li>Independent validation controls — 11/11 PASS (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R10_INDEPENDENT_VALIDATION_CONTROLS.csv</code>; referenced bytes not established here)</li>
+<li>Machine-readable package summary (historical reference: <code>sandbox:[session]/M2_12_Build_WP1_R10_VALIDATION_SUMMARY.json</code>; referenced bytes not established here)</li>
+</ul>
+<h1>7. Governing R10 records</h1>
+<ul>
+<li>Implementation Control Correction R10 (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_WORK_PACKAGE_1_IMPLEMENTATION_CONTROL_CORRECTION_R10.md</code>; referenced bytes not established here)</li>
+<li>WP1 Source Authority R10 (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_WP1_SOURCE_AUTHORITY_R10.md</code>; referenced bytes not established here)</li>
+<li>WP1 R10 Review (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_WORK_PACKAGE_1_REVIEW.md</code>; referenced bytes not established here)</li>
+<li>Complete R10 Source-Identity Inventory (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_WP1_R10_SOURCE_IDENTITY.csv</code>; referenced bytes not established here)</li>
+<li>Eight-Finding Remediation Matrix (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_WP1_R10_FINDING_REMEDIATION_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Affected-Artifact Inventory (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_WP1_R10_AFFECTED_ARTIFACT_INVENTORY.csv</code>; referenced bytes not established here)</li>
+<li>Unaffected R9 Byte-Identity Certification — 140/140 PASS (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_WP1_R10_UNAFFECTED_BYTE_IDENTITY_CERTIFICATION.csv</code>; referenced bytes not established here)</li>
+</ul>
+<p>Current governance identities:</p>
+<pre><code class="language-text">Implementation Control Correction R10
+88a41589868893447f30c2161005142550790b73df57c1961983f608f83d6978
+
+WP1 Source Authority R10
+29436a841a04dc5ca9780ece5bc528335895909408cb60b52b1c894283426bc6
+
+R10 Source-Identity Inventory
+3ea3b899ab8c38a5dfa9c6ab198bb1560fec5fb5dea1bfe3f76f7cc06729b7d8
+
+WP1 R10 Review
+58a2e89c21b5f91fc142040fbca5e5c8619b793228d3cd215af31b421f7a7598
+</code></pre>
+<h1>8. Literal-authority and namespace audits</h1>
+<ul>
+<li>Corrected 837-Row Statement-Order Catalog (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_WP2_LITERAL_PROGRAM_STATEMENT_ORDER_CATALOG.csv</code>; referenced bytes not established here)</li>
+<li>Logical-to-Physical Statement Audit — 837/837 (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_WP2_LOGICAL_TO_PHYSICAL_STATEMENT_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Seven-Statement Parser Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_PROGRAM_222_R10_LITERAL_PARSER_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Seven-Statement Cardinality Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_PROGRAM_222_R10_LITERAL_CARDINALITY_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Source-Catalog Reconciliation Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_PROGRAM_222_R10_SOURCE_CATALOG_RECONCILIATION_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Program 220 Postflight Namespace Audit — 41/41 PASS (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_PROGRAM_220_POSTFLIGHT_TEMP_NAMESPACE_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Current Program Responsibility Matrix (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_PROGRAM_RESPONSIBILITY_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Current Transaction and Mutation Matrix (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_TRANSACTION_AND_MUTATION_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Current Implementation Invariants (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_IMPLEMENTATION_INVARIANTS.md</code>; referenced bytes not established here)</li>
+</ul>
+<h1>9. Static review evidence</h1>
+<ul>
+<li>R10 Static Audit Report — 2,251/2,251 PASS (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_WORK_PACKAGE_1_R10_STATIC_AUDIT.md</code>; referenced bytes not established here)</li>
+<li>Machine-Readable R10 Static Audit (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_WORK_PACKAGE_1_R10_STATIC_AUDIT.json</code>; referenced bytes not established here)</li>
+<li>All 2,251 Static Controls (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_WORK_PACKAGE_1_R10_STATIC_AUDIT_CONTROLS.csv</code>; referenced bytes not established here)</li>
+<li>Required Final Metric Ledger (historical reference: <code>sandbox:[session]/M2_12_WORK_PACKAGE_1_REVISION_10/M2_12_WP1_R10_REQUIRED_ZERO_METRICS.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Final governed state</h1>
+<pre><code class="language-text">M2.12 WP1 R9 unaffected authority          RETAINED
+M2.12 WP1 affected literal authority       SUPERSEDED BY R10
+M2.12 WP1 R10                              COMPLETE / AWAITING REVIEW
+
+WP2 source construction                    SUSPENDED
+Program 220 SQL generation                 NOT AUTHORIZED UNDER R10 YET
+Programs 221–227                           NOT AUTHORIZED
+Recoveries 220A/222A/222B                  NOT AUTHORIZED FOR GENERATION
+Recovery 223A                              NOT AUTHORIZED
+
+SQL source files                           0
+PostgreSQL                                 NOT EXECUTED
+M2.12 validation                           NOT CLAIMED
+M2.12 acceptance                           NOT CLAIMED
+Module 3                                  NOT AUTHORIZED
+Production                                NOT AUTHORIZED
+</code></pre>
+<p>R10 has stopped at the required independent-review boundary.</p>
+</div></article><article id="m-a9bcc0ce-38cb-4843-92b6-30634a4a3c9c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C081-M00146 · 2026-08-09T07:23:22.024000-04:00 · active path</p><p class="note">Attachment references: AUDIT_M2_12_Build_WP1_R10.zip; M2_12_Build_WP1_R10(3).zip; M2_12_Build_WP1_R10.zip(1).sha256; M2_11_FULL_PROJECT_ACCEPTED_20260806(6).zip; M2_11_FULL_PROJECT_ACCEPTED_20260806.zip(5).sha256</p><div class="bubble"><p>M2.12 WP1 R10 is approved. M2.12 WP2 build is authorized. Please proceed to build M2.12 WP2. See attached prompts. M2.12 WP1 R10 attached to aid this prompt. M2.11 baseline attached to aid this prompt.  </p>
+<h1>M2.12 WP1 R10 Final Signoff and WP2 Reauthorization</h1>
+<h2>Determination</h2>
+<p><strong>APPROVED.</strong></p>
+<pre><code class="language-text">M2.12 Work Package 1 R10                   APPROVED
+WP2 source construction                    REAUTHORIZED
+
+Programs 220 / 221 / 222                    AUTHORIZED FOR SQL SOURCE GENERATION
+Recoveries 220A / 222A / 222B               AUTHORIZED FOR SQL SOURCE GENERATION
+
+PostgreSQL execution                       NOT AUTHORIZED
+Programs 223–227                            NOT AUTHORIZED
+Recovery 223A                              NOT AUTHORIZED
+Implementation execution packaging         NOT AUTHORIZED
+Module 3                                   NOT AUTHORIZED
+Production                                 NOT AUTHORIZED
+</code></pre>
+<h2>Governing package</h2>
+<pre><code class="language-text">M2_12_Build_WP1_R10.zip
+
+SHA-256
+2e4017c80b03bf7ff691b114654beed0a63dcf677607bde11696f6b5582e6d10
+</code></pre>
+<p>WP2 must regenerate all six SQL source files from R10. The diagnostic R9
+transcriptions remain historical, <code>DO NOT EXECUTE</code>, and may not be patched or
+promoted.</p>
+<p>WP2 must stop after source construction, parser/static review, source hashes,
+source authority, and its review bundle.     </p>
+<h1>M2.12 WP2 Source Construction — R10 Reauthorized Resume Prompt</h1>
+<p>The independent narrow audit has approved <strong>M2.12 Work Package 1 R10</strong> and
+reauthorized <strong>WP2 source construction only</strong>.</p>
+<h2>Governing implementation-control authority</h2>
+<pre><code class="language-text">M2_12_Build_WP1_R10.zip
+
+SHA-256
+2e4017c80b03bf7ff691b114654beed0a63dcf677607bde11696f6b5582e6d10
+</code></pre>
+<p>Use R10 as the sole current WP1 implementation-control authority. Treat R9
+statement authority as superseded on the eight R10 matters. Preserve all R10
+unaffected authorities.</p>
+<p>Regenerate—not patch—the six SQL sources:</p>
+<pre><code class="language-text">220
+221
+222
+220A
+222A
+222B
+</code></pre>
+<p>The diagnostic R9 transcriptions remain:</p>
+<pre><code class="language-text">DO NOT EXECUTE
+NOT CURRENT WP2 SOURCE
+NOT PATCHABLE
+</code></pre>
+<h2>Required WP2 source-construction checks</h2>
+<pre><code class="language-text">R10 logical statement rows represented                  837 / 837
+Physical top-level statements                           837
+Rows producing multiple top-level statements              0
+Program statement counts                 473/76/206/22/26/34
+
+Malformed descriptive SQL fragments                        0
+Self-referential nonrecursive CTAS                          0
+Program 220 unauthorized temporary objects                 0
+Implementation-time inferred decisions                     0
+Omitted / duplicated / reordered governed rows             0
+Frozen business-semantic changes                           0
+</code></pre>
+<p>Produce the six SQL files, static/parser review, SHA-256/source identity, current
+WP2 source authority, and WP2 review bundle.</p>
+<p><strong>STOP before PostgreSQL execution and before WP3.</strong></p>
+<p>Do not generate Programs 223–227 or Recovery 223A. Do not create an execution
+package. Do not claim M2.12 validation or acceptance.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

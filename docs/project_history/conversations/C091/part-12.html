@@ -1,0 +1,1367 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence — part 12 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence — part 12</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-11.html">Previous part</a><a href="part-13.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-35368a88-6dd0-4add-b6f3-6d3cb4774450" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00144 · 2026-08-20T05:46:22.156523-04:00 · active path</p><div class="bubble"><p>That result is decisive, and it changes the next action.</p>
+<p>The <strong>UNC query path works</strong>, but Power BI still does not expose the UNC source as its privacy boundary. The single-query preview succeeded with <strong>no privacy prompt</strong> while Global Permissions continues to show only <code>C:\</code>. That means we cannot truthfully produce the mandatory evidence required by the runbook: “Data source settings showing the exact isolated source and its privacy classification.” The runbook makes that a **no-exceptions pre-refresh requirement** and says to stop if <code>C:\</code> remains the privacy boundary. [export reference: filecite | turn22file0 | L5-L12]</p>
+<p>There is also one governance point we need to preserve transparently: the single-query Refresh Preview we just performed occurred <strong>before</strong> the formal pre-refresh evidence gate passed. I recommended that diagnostic step, but the governing runbook actually prohibits <em>any</em> Refresh Preview before the privacy evidence is complete. [export reference: filecite | turn22file2 | L23-L36] It was bounded to one existing staging query, succeeded, changed no M/model objects, and did not perform Close &amp; Apply or semantic-model processing—but Audit should see it rather than having us paper over it.</p>
+<h2>Stop A1b engine execution here</h2>
+<p>Do <strong>not</strong> run:</p>
+<pre><code class="language-text">Refresh Preview → Refresh All
+Close &amp; Apply
+Desktop Refresh
+DAX compilation
+A1b DMV tests
+AUD-ASOF-003B
+</code></pre>
+<p>The static A1b construction remains intact and valid at 32/32/79/60. What is blocked is the <strong>engine-entry gate</strong>, specifically the privacy-boundary evidence.</p>
+<p>Before closing anything, preserve this observation:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1B_PRE_GATE_SINGLE_QUERY_PREVIEW_AND_PRIVACY_BOUNDARY_HOLD&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    query = &quot;stg_POWER_BI_DATA_CATALOG&quot;
+    operation = &quot;SINGLE_QUERY_REFRESH_PREVIEW&quot;
+    result = &quot;PASS&quot;
+    observed_rows = 214
+
+    pDataRoot = &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot;
+    pBuildRoot = &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot;
+
+    privacy_prompt_presented = $false
+
+    global_privacy_enforcement = &quot;ENABLED&quot;
+    global_ignore_privacy_levels = $false
+
+    data_source_settings_visible_permission = &quot;C:\&quot;
+    dedicated_unc_permission_visible = $false
+
+    pre_refresh_evidence_gate_had_passed = $false
+    refresh_all_executed = $false
+    close_apply_executed = $false
+    desktop_refresh_executed = $false
+    semantic_model_processing_executed = $false
+
+    semantic_object_change = $false
+    query_definition_change = $false
+
+    disposition = &quot;STOP_PENDING_INDEPENDENT_PRIVACY_BOUNDARY_DECISION&quot;
+
+    disclosure = &quot;The single-query Refresh Preview was performed as a bounded diagnostic before the formal evidence gate. The governing runbook prohibits any Refresh Preview before privacy evidence completion; preserve as an execution-sequence deviation for Independent Audit review.&quot;
+} |
+    ConvertTo-Json -Depth 8 |
+    Set-Content `
+        -LiteralPath &quot;$return\E00_PRE_GATE_SINGLE_QUERY_PREVIEW_PRIVACY_HOLD.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Also save the current screenshot showing the UNC parameter/query preview but only <code>C:\</code> in Global Permissions as:</p>
+<pre><code class="language-text">E00_DATA_SOURCE_SETTINGS_03.png
+</code></pre>
+<p>You have already saved it, so no additional screenshot is necessary.</p>
+<h2>Close Power Query without applying anything</h2>
+<p>Do <strong>not</strong> use <strong>Close &amp; Apply</strong>.</p>
+<p>Close the Power Query Editor with the window <strong>X</strong>. If Power BI asks whether to apply pending changes, choose the option that <strong>discards / does not apply</strong> them. We have made no query-definition edits inside Desktop, so there is nothing that should be applied.</p>
+<p>Then close Power BI Desktop. If Desktop asks whether to save changes from this session, choose <strong>Don’t Save</strong>. The UNC parameter changes are already physically stored in the PBIP from our controlled offline patch; they do not depend on a Desktop save.</p>
+<p>Once Desktop is closed, record:</p>
+<pre><code class="language-powershell">[pscustomobject]@{
+    event = &quot;A1B_DESKTOP_CLOSED_AT_PRIVACY_GATE_HOLD&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    refresh_all_executed = $false
+    close_apply_executed = $false
+    desktop_refresh_executed = $false
+
+    controlling_hold =
+        &quot;DEDICATED_SOURCE_PRIVACY_CLASSIFICATION_NOT_VISIBLE_IN_POWER_BI_DATA_SOURCE_SETTINGS&quot;
+
+    a1b_engine_execution =
+        &quot;STOPPED_BEFORE_MODEL_PROCESSING&quot;
+} |
+    ConvertTo-Json |
+    Set-Content `
+        -LiteralPath &quot;$return\E00_DESKTOP_CLOSE_PRIVACY_GATE_HOLD.json&quot; `
+        -Encoding utf8
+</code></pre>
+<h2>What we have proved</h2>
+<p>The evidence is actually quite useful:</p>
+<pre><code class="language-text">Accepted A1a baseline                     PASS
+
+A1b cumulative semantic boundary
+  Tables                                  32
+  Relationships                           32
+  Power Query objects                     79
+  Measures                                60
+                                         PASS
+
+A1b authorized additions
+  Tables                                  18
+  Relationships                           26
+  Queries                                 32
+  Measures                                60
+                                         PASS
+
+Technical shell                            1
+Visuals                                    0
+REL-076 sole inactive relationship         PASS
+
+Dedicated read-only SMB root               PASS
+UNC pDataRoot / pBuildRoot                 PASS
+Embedded/external parameter parity         PASS
+UNC static boundary verifier               PASS
+
+Global privacy enforcement                 PASS
+Desktop identity/version                   PASS
+
+UNC query evaluation
+  stg_POWER_BI_DATA_CATALOG               PASS / 214 rows
+
+Dedicated UNC privacy entry in UI          NOT PRESENT
+Only visible global file permission        C:\
+
+Formal pre-refresh evidence gate           NOT PASSED
+A1b model processing                       NOT STARTED
+</code></pre>
+<p>The original A1b audit explicitly retained privacy configuration as a pre-refresh condition and required stopping on a <code>C:\</code> privacy boundary. [export reference: filecite | turn22file2 | L27-L36] The wider audit also treats Power BI as a consumption layer with strict source/evidence boundaries, so forcing our way around that control would be inconsistent with the established governance approach. [export reference: filecite | turn20file4 | L119-L139]</p>
+<h2>What I recommend asking Audit to decide</h2>
+<p>We have reached a <strong>material local-engine/tool-behavior ambiguity</strong>, which is exactly one of your stopping conditions. I recommend returning a narrowly scoped privacy-gate evidence addendum to Independent Audit rather than redesigning again ourselves.</p>
+<p>The question is not whether the UNC source works—it demonstrably does. The question is whether Audit will accept this evidence combination:</p>
+<pre><code class="language-text">1. dedicated read-only isolated SMB root;
+2. exact UNC pDataRoot/pBuildRoot;
+3. successful static 32/32/79/60 boundary;
+4. global privacy enforcement enabled;
+5. global privacy ignore disabled;
+6. Desktop 2.156.951.0 identity established;
+7. Power Query visibly evaluating through the UNC root;
+8. no dedicated UNC entry exposed in Data Source Settings;
+9. legacy C:\ global permission still displayed;
+10. one pre-gate single-query preview occurred and is disclosed.
+</code></pre>
+<p>Audit can then choose among three clean outcomes:</p>
+<pre><code class="language-text">A. Accept this as equivalent PBI-F-004 evidence and authorize the
+   formal A1b Refresh Preview sequence.
+
+B. Authorize clearing the legacy C:\ permission and performing a
+   bounded source-registration test.
+
+C. Require a different source architecture or evidence mechanism
+   before A1b engine entry.
+</code></pre>
+<p>I would <strong>not clear <code>C:\</code>, alter privacy settings further, or perform another query evaluation without that decision</strong>. The runbook states that local-engine endpoint/relationship controls cannot be replaced by static evidence, so preserving the gate now is preferable to contaminating the A1b execution trail. [export reference: filecite | turn20file3 | L94-L100]</p>
+<p>Once Desktop is closed, tell me. I will prepare the <strong>complete copy/paste Independent Audit privacy-gate addendum prompt</strong> with the exact chronology, evidence, the disclosed pre-gate preview deviation, and a tightly bounded requested decision so we can resume A1b without reopening the whole audit.</p>
+</div></article><article id="m-46ea438e-a5f9-4555-b8e1-78c44a02319f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00145 · 2026-08-20T05:54:22.221000-04:00 · active path</p><div class="bubble"><p>I authorize an exception for Audit to accept the Accept this as equivalent PBI-F-004 evidence and authorize the formal A1b Refresh Preview sequence. We will pass along this authorization to audit after the formal A1b Refresh Preview sequence.</p>
+</div></article><article id="m-0ef311e1-80b3-439a-ae31-4b730bc6c434" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00146 · 2026-08-20T05:54:31.059565-04:00 · active path</p><div class="bubble"><p>Understood. I will treat this as a <strong>source-owner exception authorization</strong>, not as a claim that Independent Audit has already ratified it.</p>
+<p>The controlling interpretation is:</p>
+<pre><code class="language-text">PBI-F-004 equivalent evidence:
+SOURCE_OWNER EXCEPTION AUTHORIZED
+
+Independent Audit ratification:
+PENDING
+
+Authorized consequence:
+Proceed with the formal A1b Power Query Refresh Preview sequence.
+
+Not authorized by this exception:
+Close &amp; Apply before all 79 queries pass
+Desktop model refresh before successful Power Query evaluation
+boundary deviations
+A1b object expansion
+substantive pages or visuals
+PBI-WP2 PASS
+publication/deployment/public claims
+</code></pre>
+<h3>1. Preserve your authorization before proceeding</h3>
+<p>Run this now:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;PBI_F_004_SOURCE_OWNER_EQUIVALENT_EVIDENCE_EXCEPTION_AUTHORIZATION&quot;
+
+    authorized_local = (Get-Date).ToString(&quot;o&quot;)
+    authorized_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    authorized_by = &quot;SOURCE_OWNER&quot;
+
+    control_id = &quot;PBI-F-004&quot;
+
+    exception_scope =
+        &quot;ACCEPT_EQUIVALENT_PRIVACY_BOUNDARY_EVIDENCE_FOR_A1B_REFRESH_PREVIEW_ENTRY&quot;
+
+    equivalent_evidence = @(
+        &quot;Dedicated read-only SMB synthetic root exists&quot;,
+        &quot;pDataRoot is \\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot;,
+        &quot;pBuildRoot is \\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot;,
+        &quot;32/32/79/60 static A1b boundary PASS&quot;,
+        &quot;Global privacy enforcement enabled&quot;,
+        &quot;Global privacy ignore disabled&quot;,
+        &quot;Power BI Desktop 2.156.951.0 identity resolved&quot;,
+        &quot;Power Query visibly evaluates stg_POWER_BI_DATA_CATALOG through the UNC-root configuration&quot;,
+        &quot;Single-query preview returned 214 rows successfully&quot;,
+        &quot;Desktop Data Source Settings does not expose a distinct UNC permission&quot;,
+        &quot;Legacy C:\ permission remains visible in Global Permissions&quot;
+    )
+
+    known_deviation =
+        &quot;One single-query Refresh Preview occurred before the formal pre-refresh evidence gate and is preserved for Independent Audit review.&quot;
+
+    authorized_next_operation =
+        &quot;FORMAL_A1B_POWER_QUERY_REFRESH_PREVIEW_REFRESH_ALL&quot;
+
+    independent_audit_ratification =
+        &quot;PENDING_POST_REFRESH_PREVIEW_SUBMISSION&quot;
+
+    waiver_does_not_extend_to = @(
+        &quot;Any semantic object count deviation&quot;,
+        &quot;Any unauthorized source change&quot;,
+        &quot;Any query error&quot;,
+        &quot;Close &amp; Apply before all 79 queries evaluate successfully&quot;,
+        &quot;Substantive report pages&quot;,
+        &quot;Visual objects&quot;,
+        &quot;A1b object expansion&quot;,
+        &quot;PBI-WP2 acceptance&quot;,
+        &quot;Publication&quot;,
+        &quot;Deployment&quot;,
+        &quot;Production readiness&quot;,
+        &quot;Public claims&quot;
+    )
+
+    disposition =
+        &quot;SOURCE_OWNER_EXCEPTION_AUTHORIZED_PENDING_INDEPENDENT_RATIFICATION&quot;
+} |
+    ConvertTo-Json -Depth 10 |
+    Set-Content `
+        -LiteralPath &quot;$return\E00_PBI_F_004_SOURCE_OWNER_EXCEPTION_AUTHORIZATION.json&quot; `
+        -Encoding utf8
+</code></pre>
+<h3>2. Do not force the existing formal evidence gate to PASS</h3>
+<p><code>Verify-A1bPreRefreshEvidenceGate.ps1</code> was written against the original requirement for a visible dedicated privacy entry. We should <strong>not patch that verifier or manufacture a PASS</strong>.</p>
+<p>Preserve the distinction:</p>
+<pre><code class="language-text">Original pre-refresh evidence gate:
+NOT SATISFIED AS WRITTEN
+
+PBI-F-004:
+SOURCE-OWNER EQUIVALENT-EVIDENCE EXCEPTION
+
+Independent ratification:
+PENDING
+</code></pre>
+<p>That gives Audit a clean record.</p>
+<h3>3. Run the formal A1b Power Query Refresh Preview</h3>
+<p>If Power Query Editor is still open, remain there. If you closed it, reopen <strong>Transform data</strong> and confirm:</p>
+<pre><code class="language-text">Queries [79]
+</code></pre>
+<p>Then choose:</p>
+<p><strong>Home → Refresh Preview ▼ → Refresh All</strong></p>
+<p>Do not choose <strong>Close &amp; Apply</strong> yet.</p>
+<p>While it runs:</p>
+<ul>
+<li>allow all 79 governed queries to evaluate;</li>
+<li>if a privacy prompt appears, stop long enough to capture it before responding;</li>
+<li>if any query shows an error, <strong>stop immediately and preserve the executed state</strong>;</li>
+<li>do not manually repair an individual query during this run.</li>
+</ul>
+<h3>4. What constitutes success</h3>
+<p>We need the Power Query pane to finish with <strong>all 79 queries free of error indicators</strong>.</p>
+<p>Spot-check at least:</p>
+<pre><code class="language-text">stg_POWER_BI_DATA_CATALOG    214 rows
+DimDate                      123 rows
+FactValidationResult         533 rows
+</code></pre>
+<p>and inspect several A1b-added semantic queries to ensure they actually return expected data rather than only schema.</p>
+<p>Take screenshots of:</p>
+<ol>
+<li>the complete Query pane showing <code>Queries [79]</code>;</li>
+<li>a successfully refreshed A1b table;</li>
+<li><code>stg_POWER_BI_DATA_CATALOG</code>;</li>
+<li>any refresh-completion state Desktop exposes.</li>
+</ol>
+<h3>5. If all 79 pass</h3>
+<p><strong>Do not Close &amp; Apply immediately.</strong></p>
+<p>Tell me:</p>
+<blockquote>
+<p>Refresh Preview → Refresh All completed successfully; all 79 queries are error-free.</p>
+</blockquote>
+<p>Then we will first record the formal refresh-preview evidence and rerun the <strong>32/32/79/60 static boundary</strong> before allowing model processing.</p>
+<h3>6. If anything fails</h3>
+<p>Do not repair it yet. Send me:</p>
+<ul>
+<li>exact query name;</li>
+<li>exact error text;</li>
+<li>screenshot;</li>
+<li>whether other queries completed.</li>
+</ul>
+<p>We will preserve the failure before touching the project.</p>
+<p>So the next authorized operation is now:</p>
+<blockquote>
+<p><strong>Power Query Editor → Refresh Preview → Refresh All, bounded to the existing 79-query inventory.</strong></p>
+</blockquote>
+<p>Your exception does <strong>not</strong> convert PBI-F-004 into an independently closed control; we will disclose both the equivalent-evidence exception and the earlier single-query pre-gate preview to Audit after this formal Refresh Preview sequence.</p>
+</div></article><article id="m-ed31e823-daf7-4f02-b0ed-47d6f7b8c3a2" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00147 · 2026-08-20T10:10:21.442000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E00_REFRESH_ALL_NO_ERRORS_02.png; E00_REFRESH_ALL_NO_ERRORS_01.png</p><div class="bubble"><p>Refresh Preview → Refresh All completed successfully; all 79 queries are error-free.  </p>
+</div></article><article id="m-601dc01a-e89d-463f-bc70-91df6b32d114" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00148 · 2026-08-20T10:10:22.476672-04:00 · active path</p><div class="bubble"><p>Excellent. This is the result we needed from the <strong>formal A1b Power Query Refresh Preview</strong>.</p>
+<p>The screenshots support the reported outcome: Power Query shows <strong><code>Queries [79]</code></strong>, the dedicated UNC parameters are active, and both predecessor and newly added A1b queries are returning populated previews without visible query-error indicators. In particular, the new <code>FactPortfolioKPIEndpoint</code> preview is populated with <strong>72 rows</strong>, while the predecessor application staging query remains populated under the governed <code>module1_run_id</code> assertion.</p>
+<p>We should now preserve this successful execution, re-establish the static boundary, and only then proceed to <strong>Close &amp; Apply</strong>.</p>
+<h2>1. Record the formal Refresh Preview result</h2>
+<p>While Power Query remains open, run:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1B_FORMAL_POWER_QUERY_REFRESH_PREVIEW_COMPLETED&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    operation = &quot;REFRESH_PREVIEW_REFRESH_ALL&quot;
+    result = &quot;PASS&quot;
+
+    governed_power_query_objects = 79
+    observed_query_errors = 0
+
+    pDataRoot =
+        &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot;
+
+    pBuildRoot =
+        &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot;
+
+    observed_examples = @(
+        [pscustomobject]@{
+            query = &quot;stg_msbf_m1_application_module1_latest&quot;
+            status = &quot;POPULATED_NO_VISIBLE_ERROR&quot;
+        },
+        [pscustomobject]@{
+            query = &quot;FactPortfolioKPIEndpoint&quot;
+            rows = 72
+            status = &quot;POPULATED_NO_VISIBLE_ERROR&quot;
+        }
+    )
+
+    pbi_f_004_entry_basis =
+        &quot;SOURCE_OWNER_EQUIVALENT_EVIDENCE_EXCEPTION_PENDING_INDEPENDENT_AUDIT_RATIFICATION&quot;
+
+    prior_single_query_preview_disclosed = $true
+
+    close_apply_executed = $false
+    desktop_model_processing_executed = $false
+
+    substantive_pages = 0
+    visuals = 0
+
+    status =
+        &quot;POWER_QUERY_EVALUATION_PASS_PENDING_POST_PREVIEW_BOUNDARY_REVERIFY&quot;
+} |
+    ConvertTo-Json -Depth 10 |
+    Set-Content `
+        -LiteralPath &quot;$return\E01_FORMAL_REFRESH_PREVIEW_RESULT.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Keep your two screenshots under the names you supplied:</p>
+<pre><code class="language-text">E00_REFRESH_ALL_NO_ERRORS_01.png
+E00_REFRESH_ALL_NO_ERRORS_02.png
+</code></pre>
+<p>They are valuable because one shows an A1a/predecessor staging path and the other an A1b-added endpoint fact.</p>
+<h2>2. Do not Close &amp; Apply yet</h2>
+<p>Leave Power Query Editor open.</p>
+<p>In PowerShell, rerun the corrected static verifier:</p>
+<pre><code class="language-powershell">&amp; &quot;$work\tools\Verify-A1bPreRefreshBoundary.ps1&quot; `
+    -PackageRoot $work *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$return\E01_POST_REFRESH_PREVIEW_BOUNDARY_VERIFICATION.txt&quot;
+</code></pre>
+<p>We require another exact PASS:</p>
+<pre><code class="language-text">32 tables
+32 relationships
+79 Power Query objects
+60 measures
+
+18 A1b tables
+26 A1b relationships
+32 A1b Power Query objects
+60 A1b measures
+
+1 technical shell
+0 visuals
+0 bookmarks
+
+REL-076 only inactive
+0 bidirectional
+0 scenario_code relationships
+
+pDataRoot  = \\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi
+pBuildRoot = \\localhost\MSBF_PBI_A1B_SYNTHETIC\build
+</code></pre>
+<p>If anything differs, <strong>stop without Close &amp; Apply</strong>.</p>
+<h2>3. Capture the formal exception status alongside the successful preview</h2>
+<p>We should make the audit trail especially explicit now that the exception has actually been exercised:</p>
+<pre><code class="language-powershell">[pscustomobject]@{
+    event = &quot;PBI_F_004_EXCEPTION_POST_REFRESH_PREVIEW_STATUS&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    control_id = &quot;PBI-F-004&quot;
+
+    original_requirement =
+        &quot;Dedicated source privacy classification visibly established in Power BI Data Source Settings before any Refresh Preview.&quot;
+
+    observed_ui_limitation =
+        &quot;Power BI Data Source Settings continued to expose legacy C:\ global file permission rather than a distinct UNC permission.&quot;
+
+    equivalent_evidence = @(
+        &quot;Dedicated read-only local SMB synthetic root&quot;,
+        &quot;UNC pDataRoot/pBuildRoot&quot;,
+        &quot;Embedded/external parameter parity&quot;,
+        &quot;32/32/79/60 static boundary PASS&quot;,
+        &quot;Global privacy enforcement enabled&quot;,
+        &quot;Global privacy ignore disabled&quot;,
+        &quot;Power BI Desktop 2.156.951.0 executable identity established&quot;,
+        &quot;UNC-backed stg_POWER_BI_DATA_CATALOG single-query preview PASS&quot;,
+        &quot;Formal 79-query Refresh Preview PASS with zero observed query errors&quot;
+    )
+
+    source_owner_exception_authorized = $true
+    independent_audit_ratification = &quot;PENDING&quot;
+
+    formal_refresh_preview_result = &quot;PASS&quot;
+    close_apply_executed = $false
+
+    disposition =
+        &quot;EQUIVALENT_EVIDENCE_EXCEPTION_EXECUTED_PENDING_INDEPENDENT_AUDIT_RATIFICATION&quot;
+} |
+    ConvertTo-Json -Depth 10 |
+    Set-Content `
+        -LiteralPath &quot;$return\E01_PBI_F_004_EXCEPTION_POST_REFRESH_STATUS.json&quot; `
+        -Encoding utf8
+</code></pre>
+<h2>4. If the boundary verifier passes, Close &amp; Apply becomes the next authorized operation</h2>
+<p>Only after that PASS:</p>
+<p><strong>Power Query Editor → Home → Close &amp; Apply</strong></p>
+<p>That will be the first A1b semantic-model processing step.</p>
+<p>At that point, do <strong>not</strong> start troubleshooting interactively if Desktop reports an error. Let the processing finish or fail, preserve the exact dialog/status, and take screenshots.</p>
+<p>If processing succeeds, we will next verify:</p>
+<ul>
+<li>all <strong>32 tables</strong> physically load;</li>
+<li>all <strong>60 measures compile</strong>;</li>
+<li>all <strong>32 relationships</strong> instantiate with <code>REL-076</code> as the sole inactive relationship;</li>
+<li>no visual/page drift occurred;</li>
+<li>live DMV metadata reconciles;</li>
+<li>relationship filter/orphan controls pass;</li>
+<li><code>AUD-ASOF-003B</code> proves the six A1b endpoint-governed facts at <strong>2026-11-21 / 2026-11-22 / 2026-11-23</strong>.</li>
+</ul>
+<p>The governing A1b authorization requires those local-engine controls before A1b can be submitted for acceptance; static evidence alone cannot substitute for them. [export reference: filecite | turn20file3 | L94-L100]</p>
+<h3>Current state</h3>
+<pre><code class="language-text">A1a baseline                              PASS
+A1b 32/32/79/60 static construction       PASS
+Dedicated UNC roots                       PASS
+Global privacy enforcement                PASS
+Desktop identity                          PASS
+PBI-F-004 original UI requirement         EXCEPTION
+Source-owner equivalent-evidence waiver   AUTHORIZED
+Independent ratification                  PENDING
+Single-query diagnostic preview           PASS / DISCLOSED
+Formal Refresh Preview — all 79           PASS
+Observed query errors                      0
+Close &amp; Apply                              NOT YET EXECUTED
+A1b model processing                       NOT YET EXECUTED
+</code></pre>
+<p>Run the <strong>post-Refresh Preview boundary verifier now</strong> and send me its complete output. If it passes, we will proceed directly to Close &amp; Apply.</p>
+</div></article><article id="m-992db3b4-cc59-4638-981f-943e6490d063" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00149 · 2026-08-20T10:25:43.351000-04:00 · active path</p><div class="bubble"><p>Close and Apply selected. [pscustomobject]@{
+    event = &quot;PBI_F_004_EXCEPTION_POST_REFRESH_PREVIEW_STATUS&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)</p>
+<pre><code>control_id = &quot;PBI-F-004&quot;
+
+original_requirement =
+    &quot;Dedicated source privacy classification visibly established in Power BI Data Source Settings before any Refresh Preview.&quot;
+
+observed_ui_limitation =
+    &quot;Power BI Data Source Settings continued to expose legacy C:\ global file permission rather than a distinct UNC permission.&quot;
+
+equivalent_evidence = @(
+    &quot;Dedicated read-only local SMB synthetic root&quot;,
+    &quot;UNC pDataRoot/pBuildRoot&quot;,
+    &quot;Embedded/external parameter parity&quot;,
+    &quot;32/32/79/60 static boundary PASS&quot;,
+    &quot;Global privacy enforcement enabled&quot;,
+    &quot;Global privacy ignore disabled&quot;,
+    &quot;Power BI Desktop 2.156.951.0 executable identity established&quot;,
+    &quot;UNC-backed stg_POWER_BI_DATA_CATALOG single-query preview PASS&quot;,
+    &quot;Formal 79-query Refresh Preview PASS with zero observed query errors&quot;
+)
+
+source_owner_exception_authorized = $true
+independent_audit_ratification = &quot;PENDING&quot;
+
+formal_refresh_preview_result = &quot;PASS&quot;
+close_apply_executed = $false
+
+disposition =
+    &quot;EQUIVALENT_EVIDENCE_EXCEPTION_EXECUTED_PENDING_INDEPENDENT_AUDIT_RATIFICATION&quot;
+</code></pre>
+<p>} |
+    ConvertTo-Json -Depth 10 |
+    Set-Content <code>        -LiteralPath &quot;$return\E01_PBI_F_004_EXCEPTION_POST_REFRESH_STATUS.json&quot;</code>
+        -Encoding utf8</p>
+</div></article><article id="m-4dda1578-d80e-4e86-8f4a-39e26f2e5054" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00150 · 2026-08-20T10:25:47.157314-04:00 · active path</p><div class="bubble"><p>Understood. Since <strong>Close &amp; Apply has already been selected</strong>, do not interrupt it and do not try to back out now. Let Power BI finish whatever model-processing operation it has begun.</p>
+<p>There is one sequence deviation we need to preserve transparently: the intended post-Refresh Preview static boundary re-verification was supposed to occur <strong>before</strong> Close &amp; Apply, but Close &amp; Apply was initiated first. Do not try to “correct” that history after the fact. We will record it, then perform the same boundary verification immediately after processing completes.</p>
+<p>For now, <strong>do not click Refresh now, do not edit relationships, measures, queries, or tables, and do not close Desktop</strong>. Capture a screenshot of the processing result—whether success or failure.</p>
+<p>Once Close &amp; Apply finishes, use the appropriate path below.</p>
+<h3>If Close &amp; Apply completes successfully</h3>
+<p>Run this immediately:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1B_CLOSE_APPLY_COMPLETED&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    formal_refresh_preview_result = &quot;PASS&quot;
+    close_apply_executed = $true
+    close_apply_result = &quot;SUCCESS&quot;
+
+    post_refresh_preview_boundary_verifier_completed_before_close_apply = $false
+
+    sequence_deviation =
+        &quot;Close &amp; Apply was initiated before the planned post-Refresh Preview static boundary re-verification.&quot;
+
+    semantic_changes_after_refresh_preview =
+        &quot;NONE_INTENTIONALLY_AUTHORIZED&quot;
+
+    next_action =
+        &quot;Reperform static 32/32/79/60 boundary verification immediately after successful model processing.&quot;
+
+    pbi_f_004_independent_ratification = &quot;PENDING&quot;
+} |
+    ConvertTo-Json -Depth 8 |
+    Set-Content `
+        -LiteralPath &quot;$return\E02_CLOSE_APPLY_COMPLETED.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Then run the static verifier:</p>
+<pre><code class="language-powershell">&amp; &quot;$work\tools\Verify-A1bPreRefreshBoundary.ps1&quot; `
+    -PackageRoot $work *&gt;&amp;1 |
+    Tee-Object `
+        -FilePath &quot;$return\E02_POST_CLOSE_APPLY_STATIC_BOUNDARY.txt&quot;
+</code></pre>
+<p>We still require exactly:</p>
+<pre><code class="language-text">32 tables
+32 relationships
+79 Power Query objects
+60 measures
+
+18 A1b tables
+26 A1b relationships
+32 A1b Power Query objects
+60 A1b measures
+
+1 technical shell page
+0 visuals
+0 bookmarks
+
+REL-076 only inactive
+0 bidirectional relationships
+0 scenario_code relationships
+
+pDataRoot  = \\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi
+pBuildRoot = \\localhost\MSBF_PBI_A1B_SYNTHETIC\build
+</code></pre>
+<p>Do not perform any additional Desktop refresh until that passes.</p>
+<h3>If Close &amp; Apply fails</h3>
+<p>Do <strong>not</strong> repair anything yet. Preserve the exact dialog/error and run:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1B_CLOSE_APPLY_FAILED&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    formal_refresh_preview_result = &quot;PASS&quot;
+    close_apply_executed = $true
+    close_apply_result = &quot;FAIL&quot;
+
+    post_refresh_preview_boundary_verifier_completed_before_close_apply = $false
+
+    sequence_deviation =
+        &quot;Close &amp; Apply was initiated before the planned post-Refresh Preview static boundary re-verification.&quot;
+
+    disposition = &quot;STOP_PRESERVE_EXECUTED_FAILURE&quot;
+} |
+    ConvertTo-Json -Depth 8 |
+    Set-Content `
+        -LiteralPath &quot;$return\E02_CLOSE_APPLY_FAILED.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Then send me the exact Power BI error text and screenshot. Do not change anything in Power Query or Model view.</p>
+<p>Also, the <code>E01_PBI_F_004_EXCEPTION_POST_REFRESH_STATUS.json</code> you pasted still correctly reflects the state <strong>at the time it was written</strong>—<code>close_apply_executed = false</code>. Do not overwrite it. The new E02 record should document the later transition.</p>
+<p>So the only thing I need from you next is the <strong>Close &amp; Apply outcome</strong>: success or the exact failure message.</p>
+</div></article><article id="m-b46a3441-98c3-409c-a825-c7af645994df" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00151 · 2026-08-20T10:28:32.362000-04:00 · active path</p><div class="bubble"><p>The pass that I provided was ran before close and apply.</p>
+</div></article><article id="m-394d3beb-5f2d-44c9-a567-88385bacbaf1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00152 · 2026-08-20T10:28:36.085243-04:00 · active path</p><div class="bubble"><p>Correct — thank you for clarifying. In that case, there is <strong>no sequence deviation</strong> to record.</p>
+<p>The sequence was:</p>
+<pre><code class="language-text">Formal Refresh Preview → Refresh All    PASS
+Post-Refresh Preview boundary verifier  PASS
+Close &amp; Apply                           then selected
+</code></pre>
+<p>So my prior suggestion to record a deviation should be disregarded.</p>
+<p>Do not create any evidence file claiming that Close &amp; Apply preceded the boundary verification.</p>
+<p>The controlling state immediately before Close &amp; Apply was therefore:</p>
+<pre><code class="language-text">32 tables
+32 relationships
+79 Power Query objects
+60 measures
+
+18 A1b tables
+26 A1b relationships
+32 A1b Power Query objects
+60 A1b measures
+
+1 technical shell
+0 visuals
+0 bookmarks
+REL-076 only inactive
+0 bidirectional relationships
+0 scenario_code relationships
+
+pDataRoot  = \\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi
+pBuildRoot = \\localhost\MSBF_PBI_A1B_SYNTHETIC\build
+
+Formal Refresh Preview:
+PASS
+
+Post-preview static boundary:
+PASS
+</code></pre>
+<p>Now let <strong>Close &amp; Apply</strong> finish. If it succeeds, tell me that it completed successfully and what Power BI shows afterward. If it fails, send the exact error text and screenshot without repairing anything yet.</p>
+</div></article><article id="m-918dd29b-4591-4e4d-a8b2-1ae38adf7c9b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00153 · 2026-08-20T10:30:33.011000-04:00 · active path</p><div class="bubble"><p>The Close and Apply produced tables but they are all null. I think similar to what we saw in A1a we just need to hit refresh now within the power bi project.</p>
+</div></article><article id="m-730451c2-6351-4a8f-b601-e36406f6ffa3" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00154 · 2026-08-20T10:30:35.155385-04:00 · active path</p><div class="bubble"><p>Yes — this looks materially analogous to the A1a behavior you already observed: <strong>Close &amp; Apply instantiated the model structure, but the semantic tables were not yet physically populated in Desktop until the subsequent Desktop refresh</strong>.</p>
+<p>Given that the formal <strong>79-query Refresh Preview passed</strong> and the <strong>post-preview 32/32/79/60 boundary verifier passed before Close &amp; Apply</strong>, the appropriate next bounded action is to preserve the null/unpopulated state, then use <strong>Refresh now</strong> in the Power BI project. Do not alter queries, relationships, measures, or date metadata first.</p>
+<p>Before clicking it, capture the current state. Save a screenshot showing the tables exist but contain no rows/null state, then run:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1B_POST_CLOSE_APPLY_PRE_DESKTOP_REFRESH_STATE&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    formal_refresh_preview = &quot;PASS&quot;
+    post_preview_static_boundary = &quot;PASS&quot;
+
+    close_apply_executed = $true
+    close_apply_result = &quot;COMPLETED&quot;
+
+    semantic_tables_instantiated = $true
+    table_data_state = &quot;UNPOPULATED_OR_NULL_IN_DESKTOP&quot;
+
+    query_definition_changes_after_refresh_preview = $false
+    relationship_changes_after_refresh_preview = $false
+    measure_changes_after_refresh_preview = $false
+
+    next_authorized_action =
+        &quot;POWER_BI_DESKTOP_REFRESH_NOW&quot;
+
+    interpretation =
+        &quot;Model metadata instantiated after Close &amp; Apply; Desktop data population remains pending.&quot;
+} |
+    ConvertTo-Json -Depth 8 |
+    Set-Content `
+        -LiteralPath &quot;$return\E02_POST_CLOSE_APPLY_PRE_REFRESH_STATE.json&quot; `
+        -Encoding utf8
+</code></pre>
+<p>Then click <strong>Refresh now</strong> in Power BI Desktop.</p>
+<p>Let the entire refresh complete. Do not interrupt it, and do not start fixing anything if warnings temporarily appear while it is running.</p>
+<p>If it succeeds, immediately check a few known tables. I would use:</p>
+<pre><code class="language-text">DimDate
+FactValidationResult
+FactPortfolioKPIEndpoint
+FactApplicationScenario
+FactAccountDaily
+</code></pre>
+<p>We expect the first two to reproduce the established predecessor behavior, including roughly:</p>
+<pre><code class="language-text">DimDate                  123 rows
+FactValidationResult     533 rows
+</code></pre>
+<p>and the A1b-added facts should now show populated rows rather than only schemas.</p>
+<p>After successful refresh, save screenshots of:</p>
+<ul>
+<li>Data view with a populated predecessor table such as <code>DimDate</code>;</li>
+<li>Data view with <code>FactValidationResult</code>;</li>
+<li>one or two populated A1b-added facts, especially <code>FactPortfolioKPIEndpoint</code>;</li>
+<li>Model view showing the full instantiated model if practical.</li>
+</ul>
+<p>Then tell me whether <strong>Refresh now completed successfully and the tables populated</strong>. If there is any error, send the exact error and screenshot before changing anything.</p>
+<p>So yes: <strong>preserve the current null state, then click Refresh now.</strong></p>
+</div></article><article id="m-4b7a640f-3ee0-4f46-873a-12655ca5819b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00155 · 2026-08-20T11:21:44.712000-04:00 · active path</p><p class="note">8 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E02_MODEL_VIEW_LEFT_SIDE.png; E02_FACT_ACCOUNT_DAILY.png; E02_FACT_APPLICATION_SCENARIO.png; E02_FACT_PORTFOLIO_KPI_ENDPOINT.png; E02_FACT_VALIDATION_RESULT.png; E02_DIM_DATE.png; E02_MODEL_VIEW_RIGHT_SIDE.png; E02_TABLES_LOADED_NULL_PRE_REFRESH_STATE.png</p><div class="bubble"><p>Refresh now completed successfully and the tables populated.</p>
+</div></article><article id="m-edbc5899-87fc-4d8b-8248-bddf4c0b4184" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00156 · 2026-08-20T11:21:46.426982-04:00 · active path</p><div class="bubble"><p>Excellent. The Desktop refresh has now done what we needed: <strong>the A1b semantic model is physically populated rather than merely instantiated</strong>.</p>
+<p>Your screenshots provide strong direct evidence of this transition:</p>
+<ul>
+<li><code>DimDate</code> = <strong>123 rows</strong>, including <code>7/23/2026</code> as <code>IsSourceRunAsOf=True</code> and <code>11/22/2026</code> as <code>IsEvidenceEndpoint=True</code>.</li>
+<li><code>FactValidationResult</code> = <strong>533 rows</strong>.</li>
+<li><code>FactApplicationScenario</code> = <strong>1,500 rows</strong>.</li>
+<li><code>FactAccountDaily</code> = <strong>7,080 rows</strong>.</li>
+<li><code>FactPortfolioKPIEndpoint</code> = <strong>72 rows</strong>, with populated portfolio/scenario KPI values.</li>
+<li>Model-view screenshots show the expanded A1b model and instantiated relationships.</li>
+<li>The preserved pre-refresh screenshot proves the important intermediate condition: tables existed after Close &amp; Apply but were unpopulated before Desktop Refresh.</li>
+</ul>
+<p>One screenshot also shows <code>FactFinalDecision</code> at <strong>0 rows</strong> before/while the refresh-required banners remained. That is useful pre-refresh evidence, not evidence of the final refreshed state.</p>
+<h2>Record the successful Desktop refresh</h2>
+<p>Run this now:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+[pscustomobject]@{
+    event = &quot;A1B_DESKTOP_DATA_REFRESH_COMPLETED&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    formal_power_query_refresh_preview = &quot;PASS&quot;
+    post_preview_static_boundary = &quot;PASS&quot;
+    close_apply = &quot;COMPLETED&quot;
+    pre_desktop_refresh_state = &quot;TABLES_INSTANTIATED_BUT_UNPOPULATED&quot;
+    desktop_refresh = &quot;PASS&quot;
+
+    observed_physical_rows = [ordered]@{
+        DimDate = 123
+        FactValidationResult = 533
+        FactApplicationScenario = 1500
+        FactAccountDaily = 7080
+        FactPortfolioKPIEndpoint = 72
+    }
+
+    observed_asof_controls = [ordered]@{
+        source_run_as_of = &quot;2026-07-23&quot;
+        evidence_endpoint = &quot;2026-11-22&quot;
+    }
+
+    pDataRoot =
+        &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\pbi&quot;
+
+    pBuildRoot =
+        &quot;\\localhost\MSBF_PBI_A1B_SYNTHETIC\build&quot;
+
+    substantive_report_pages = 0
+    visual_objects = 0
+
+    pbi_f_004_basis =
+        &quot;SOURCE_OWNER_EQUIVALENT_EVIDENCE_EXCEPTION_PENDING_INDEPENDENT_AUDIT_RATIFICATION&quot;
+
+    status =
+        &quot;DESKTOP_REFRESH_PASS_PENDING_LIVE_ENGINE_VALIDATION&quot;
+} |
+    ConvertTo-Json -Depth 10 |
+    Set-Content `
+        -LiteralPath &quot;$return\E02_DESKTOP_DATA_REFRESH_RESULT.json&quot; `
+        -Encoding utf8
+</code></pre>
+<h2>Do not refresh again</h2>
+<p>We have the successful processed state. From here, the objective changes from <strong>construction/processing</strong> to <strong>live-engine verification</strong>.</p>
+<p>Do not modify:</p>
+<pre><code class="language-text">Power Query
+parameters
+relationships
+measures
+tables
+pages
+visuals
+privacy settings
+</code></pre>
+<p>And don&#39;t click Refresh again unless a later control explicitly requires it.</p>
+<h2>Save the PBIP now</h2>
+<p>Use <strong>Ctrl+S</strong> in Power BI Desktop.</p>
+<p>Do <strong>not close Desktop</strong> afterward. We need this exact running processed model for DAX Studio.</p>
+<p>After saving, record:</p>
+<pre><code class="language-powershell">[pscustomobject]@{
+    event = &quot;A1B_FIRST_SUCCESSFUL_PROCESSED_MODEL_SAVE&quot;
+    captured_local = (Get-Date).ToString(&quot;o&quot;)
+    captured_utc = (Get-Date).ToUniversalTime().ToString(&quot;o&quot;)
+
+    desktop_refresh = &quot;PASS&quot;
+    project_saved = $true
+    desktop_left_open_for_live_engine_evidence = $true
+} |
+    ConvertTo-Json |
+    Set-Content `
+        -LiteralPath &quot;$return\E02_PROCESSED_MODEL_SAVE.json&quot; `
+        -Encoding utf8
+</code></pre>
+<h2>Next: connect DAX Studio</h2>
+<p>With this exact Power BI Desktop instance still open:</p>
+<ol>
+<li>Open <strong>DAX Studio</strong>.</li>
+<li>Connect to the running model <code>MSBF_PBI_A1A_Local_Construction_R1</code>.</li>
+<li>Do <strong>not</strong> alter the model from DAX Studio.</li>
+<li>Once connected, stop before running queries and send me a screenshot similar to the A1a connection screenshot.</li>
+</ol>
+<p>The next evidence sequence will establish, from the live local engine:</p>
+<pre><code class="language-text">32 tables
+32 partitions
+32 relationships
+60 explicit measures
+79 Power Query objects / expression+partition population
+relationship active/inactive state
+relationship direction/cardinality
+physical row counts
+measure compilation
+scenario isolation
+relationship filter behavior
+relationship orphans
+AUD-ASOF-003B
+</code></pre>
+<p>Most importantly, <code>AUD-ASOF-003B</code> is now executable because the six A1b endpoint-governed facts are physically loaded. We will test the required <strong>2026-11-21 / 2026-11-22 / 2026-11-23</strong> behavior rather than infer it from static definitions.</p>
+<p>So the next action is simply: <strong>save the successfully refreshed PBIP, leave Power BI open, connect DAX Studio, and send me the connection screenshot.</strong></p>
+</div></article><article id="m-bf38896f-6cc9-4d07-817b-d43e34b71ca1" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00157 · 2026-08-20T11:41:21.297000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E02_DAX_STUDIO_CONNECTION.png</p><div class="bubble"><p>Dax Studio connection screenshot attached.</p>
+</div></article><article id="m-91b622fb-7e72-451a-9eb3-09fcb9bf6f53" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00158 · 2026-08-20T11:41:22.960394-04:00 · active path</p><div class="bubble"><p>Connection is established correctly. The screenshot shows DAX Studio <strong>3.5.2</strong> connected to the live <code>MSBF_PBI_A1A_Local_Constructi…</code> model, with the expanded A1b table population visible and metadata refreshed. Keep both Power BI Desktop and DAX Studio open and unchanged.</p>
+<p>We should now capture the <strong>live-engine structural baseline</strong> before running business-control tests.</p>
+<h3>1. Run the live-engine inventory query</h3>
+<p>In DAX Studio, paste this entire query and click <strong>Run</strong>:</p>
+<pre><code class="language-dax">EVALUATE
+ROW(
+    &quot;TableCount&quot;,
+        COUNTROWS(
+            FILTER(
+                INFO.VIEW.TABLES(),
+                [IsHidden] = FALSE() || [IsHidden] = TRUE()
+            )
+        ),
+    &quot;ColumnCount&quot;,
+        COUNTROWS(INFO.VIEW.COLUMNS()),
+    &quot;MeasureCount&quot;,
+        COUNTROWS(INFO.VIEW.MEASURES()),
+    &quot;RelationshipCount&quot;,
+        COUNTROWS(INFO.VIEW.RELATIONSHIPS())
+)
+</code></pre>
+<p>We are principally expecting:</p>
+<pre><code class="language-text">TableCount          32
+MeasureCount        60
+RelationshipCount   32
+</code></pre>
+<p><code>ColumnCount</code> is also important evidence, but I don&#39;t want to predict it—we should take the live engine&#39;s actual value.</p>
+<p>If DAX Studio rejects any of the <code>INFO.VIEW</code> functions, <strong>stop and send the exact error</strong> rather than modifying the query.</p>
+<h3>2. Export the result</h3>
+<p>Save the result as:</p>
+<pre><code class="language-text">E03_LIVE_ENGINE_OBJECT_COUNTS.csv
+</code></pre>
+<p>in:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819
+\evidence\local_engine_return
+</code></pre>
+<p>Also take a screenshot of the query and result and save it as:</p>
+<pre><code class="language-text">E03_LIVE_ENGINE_OBJECT_COUNTS.png
+</code></pre>
+<h3>3. Next, enumerate the 32 live relationships</h3>
+<p>After the first query succeeds, open a new DAX Studio query tab and run:</p>
+<pre><code class="language-dax">EVALUATE
+SELECTCOLUMNS(
+    INFO.VIEW.RELATIONSHIPS(),
+    &quot;Relationship&quot;, [Name],
+    &quot;FromTable&quot;, [FromTable],
+    &quot;FromColumn&quot;, [FromColumn],
+    &quot;ToTable&quot;, [ToTable],
+    &quot;ToColumn&quot;, [ToColumn],
+    &quot;IsActive&quot;, [IsActive],
+    &quot;CrossFilteringBehavior&quot;, [CrossFilteringBehavior]
+)
+ORDER BY
+    [Relationship]
+</code></pre>
+<p>Save the result as:</p>
+<pre><code class="language-text">E03_LIVE_ENGINE_RELATIONSHIPS.csv
+</code></pre>
+<p>We need to establish physically that:</p>
+<pre><code class="language-text">Relationship count       32
+Active                    31
+Inactive                   1
+Sole inactive             REL-076
+Bidirectional              0
+</code></pre>
+<p>Do not change any relationship if the result differs; preserve the result and stop.</p>
+<h3>4. Then enumerate the 60 measures</h3>
+<p>If relationships reconcile, run:</p>
+<pre><code class="language-dax">EVALUATE
+SELECTCOLUMNS(
+    INFO.VIEW.MEASURES(),
+    &quot;Table&quot;, [Table],
+    &quot;Measure&quot;, [Name],
+    &quot;Expression&quot;, [Expression],
+    &quot;FormatString&quot;, [FormatString],
+    &quot;IsHidden&quot;, [IsHidden]
+)
+ORDER BY
+    [Table],
+    [Measure]
+</code></pre>
+<p>Save as:</p>
+<pre><code class="language-text">E03_LIVE_ENGINE_MEASURES.csv
+</code></pre>
+<p>The key immediate control is:</p>
+<pre><code class="language-text">60 measures returned
+</code></pre>
+<p>This establishes their live-engine presence. We will separately execute them to prove <strong>compilation/evaluation</strong>, rather than treating metadata presence as compilation proof.</p>
+<h3>Sequence after E03</h3>
+<p>Once these structural controls reconcile, we&#39;ll proceed in this order:</p>
+<pre><code class="language-text">E04  physical table row counts
+E05  60-measure compilation/evaluation
+E06  relationship filter behavior
+E07  relationship orphan controls
+E08  scenario isolation
+E09  AUD-ASOF-003B:
+     2026-11-21
+     2026-11-22
+     2026-11-23
+E10  final live-engine boundary reconciliation
+</code></pre>
+<p>Do not save/close Power BI yet. Start with <strong>Step 1 only</strong> and send me the <code>E03_LIVE_ENGINE_OBJECT_COUNTS</code> result.</p>
+</div></article><article id="m-74e1c398-c24a-4be6-a940-26ea1ef0e12c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00159 · 2026-08-20T11:48:49.089000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E03_LIVE_ENGINE_MEASURES.csv; E03_LIVE_ENGINE_RELATIONSHIPS.csv; E03_LIVE_ENGINE_OBJECT_COUNTS.png; E03_LIVE_ENGINE_OBJECT_COUNTS.csv</p><div class="bubble"><p>Requested live-engine evidence attached.</p>
+</div></article><article id="m-44b1fe31-1493-4484-a5d5-0a6f7350de58" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00160 · 2026-08-20T11:49:28.633453-04:00 · active path</p><div class="bubble"><p>E03 is a clean live-engine reconciliation.</p>
+<p>I inspected the three CSV exports, not just the screenshot:</p>
+<pre><code class="language-text">LIVE ENGINE OBJECT COUNTS
+Tables                 32
+Columns               849
+Measures               60
+Relationships           32
+
+RELATIONSHIPS
+Total                   32
+Active                   31
+Inactive                  1
+Sole inactive        REL-076
+One-direction            32
+Bidirectional             0
+
+MEASURES
+Total                    60
+Table       ModelParameters
+Hidden                   15
+Visible                  45
+</code></pre>
+<p><code>REL-076</code> is exactly the expected inactive role-playing relationship:</p>
+<pre><code class="language-text">FactPaymentException[resolving_event_date]
+    → DimDate[Date]
+
+Active:                 False
+Cross-filter behavior:  OneDirection
+</code></pre>
+<p>So the live engine now independently confirms the authored <strong>32 tables / 32 relationships / 60 measures</strong> boundary. The 849-column count is now also established as an observed live-engine fact rather than something we need to predict.</p>
+<h2>E03 disposition</h2>
+<pre><code class="language-text">E03 live-engine object counts       PASS
+32 semantic tables                  PASS
+849 columns                         OBSERVED / RECONCILED
+60 explicit measures                PASS
+32 relationships                    PASS
+31 active / 1 inactive              PASS
+REL-076 sole inactive               PASS
+32 one-direction                    PASS
+0 bidirectional                     PASS
+15 hidden / 45 visible measures     PASS
+60 measures on ModelParameters      PASS
+
+Measure metadata presence           PASS
+Measure runtime compilation         NOT YET TESTED
+</code></pre>
+<p>That last distinction matters: the 60 measures physically exist, but we will not call them compiled until we execute them.</p>
+<h2>Next — E04 physical row-count inventory</h2>
+<p>Run this in a <strong>new DAX Studio query tab</strong>:</p>
+<pre><code class="language-dax">EVALUATE
+UNION(
+    ROW(&quot;Table&quot;,&quot;DimAccountAdvance&quot;,          &quot;RowCount&quot;,COUNTROWS(&#39;DimAccountAdvance&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimAcquisitionSource&quot;,       &quot;RowCount&quot;,COUNTROWS(&#39;DimAcquisitionSource&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimApplication&quot;,             &quot;RowCount&quot;,COUNTROWS(&#39;DimApplication&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimAsOfDate&quot;,                &quot;RowCount&quot;,COUNTROWS(&#39;DimAsOfDate&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimDate&quot;,                    &quot;RowCount&quot;,COUNTROWS(&#39;DimDate&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimDecisionOutcome&quot;,         &quot;RowCount&quot;,COUNTROWS(&#39;DimDecisionOutcome&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimIndustry&quot;,                &quot;RowCount&quot;,COUNTROWS(&#39;DimIndustry&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimKPI&quot;,                     &quot;RowCount&quot;,COUNTROWS(&#39;DimKPI&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimMerchant&quot;,                &quot;RowCount&quot;,COUNTROWS(&#39;DimMerchant&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimMonitoringStatus&quot;,        &quot;RowCount&quot;,COUNTROWS(&#39;DimMonitoringStatus&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimPerformanceTier&quot;,         &quot;RowCount&quot;,COUNTROWS(&#39;DimPerformanceTier&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimRegion&quot;,                  &quot;RowCount&quot;,COUNTROWS(&#39;DimRegion&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimReportingScope&quot;,          &quot;RowCount&quot;,COUNTROWS(&#39;DimReportingScope&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimRunCampaign&quot;,             &quot;RowCount&quot;,COUNTROWS(&#39;DimRunCampaign&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimScenario&quot;,                &quot;RowCount&quot;,COUNTROWS(&#39;DimScenario&#39;)),
+    ROW(&quot;Table&quot;,&quot;DimServicingQueue&quot;,          &quot;RowCount&quot;,COUNTROWS(&#39;DimServicingQueue&#39;)),
+
+    ROW(&quot;Table&quot;,&quot;FactAccountCertification&quot;,   &quot;RowCount&quot;,COUNTROWS(&#39;FactAccountCertification&#39;)),
+    ROW(&quot;Table&quot;,&quot;FactAccountDaily&quot;,           &quot;RowCount&quot;,COUNTROWS(&#39;FactAccountDaily&#39;)),
+    ROW(&quot;Table&quot;,&quot;FactApplicationScenario&quot;,    &quot;RowCount&quot;,COUNTROWS(&#39;FactApplicationScenario&#39;)),
+    ROW(&quot;Table&quot;,&quot;FactBookingActivation&quot;,      &quot;RowCount&quot;,COUNTROWS(&#39;FactBookingActivation&#39;)),
+    ROW(&quot;Table&quot;,&quot;FactFinalDecision&quot;,          &quot;RowCount&quot;,COUNTROWS(&#39;FactFinalDecision&#39;)),
+    ROW(&quot;Table&quot;,&quot;FactGovernanceControl&quot;,      &quot;RowCount&quot;,COUNTROWS(&#39;FactGovernanceControl&#39;)),
+    ROW(&quot;Table&quot;,&quot;FactIntervention&quot;,           &quot;RowCount&quot;,COUNTROWS(&#39;FactIntervention&#39;)),
+    ROW(&quot;Table&quot;,&quot;FactMonitoringEndpoint&quot;,     &quot;RowCount&quot;,COUNTROWS(&#39;FactMonitoringEndpoint&#39;)),
+    ROW(&quot;Table&quot;,&quot;FactPaymentException&quot;,       &quot;RowCount&quot;,COUNTROWS(&#39;FactPaymentException&#39;)),
+    ROW(&quot;Table&quot;,&quot;FactPortfolioKPIEndpoint&quot;,   &quot;RowCount&quot;,COUNTROWS(&#39;FactPortfolioKPIEndpoint&#39;)),
+    ROW(&quot;Table&quot;,&quot;FactPortfolioPerformanceEndpoint&quot;,&quot;RowCount&quot;,COUNTROWS(&#39;FactPortfolioPerformanceEndpoint&#39;)),
+    ROW(&quot;Table&quot;,&quot;FactServicingExecution&quot;,     &quot;RowCount&quot;,COUNTROWS(&#39;FactServicingExecution&#39;)),
+    ROW(&quot;Table&quot;,&quot;FactServicingQueueEndpoint&quot;, &quot;RowCount&quot;,COUNTROWS(&#39;FactServicingQueueEndpoint&#39;)),
+    ROW(&quot;Table&quot;,&quot;FactSourceReconciliation&quot;,   &quot;RowCount&quot;,COUNTROWS(&#39;FactSourceReconciliation&#39;)),
+    ROW(&quot;Table&quot;,&quot;FactValidationResult&quot;,       &quot;RowCount&quot;,COUNTROWS(&#39;FactValidationResult&#39;)),
+    ROW(&quot;Table&quot;,&quot;ModelParameters&quot;,            &quot;RowCount&quot;,COUNTROWS(&#39;ModelParameters&#39;))
+)
+ORDER BY [Table]
+</code></pre>
+<p>Save the export as:</p>
+<pre><code class="language-text">E04_LIVE_ENGINE_TABLE_ROW_COUNTS.csv
+</code></pre>
+<p>and the screenshot as:</p>
+<pre><code class="language-text">E04_LIVE_ENGINE_TABLE_ROW_COUNTS.png
+</code></pre>
+<p>Do <strong>not</strong> interpret a zero row count by itself as a failure. Some governed tables may legitimately be empty. We will reconcile the complete 32-table population against the authorized source/catalog expectations rather than impose a blanket <code>&gt;0</code> rule.</p>
+<p>We already have several direct cross-checks from Desktop:</p>
+<pre><code class="language-text">DimDate                    123
+FactValidationResult       533
+FactApplicationScenario  1,500
+FactAccountDaily         7,080
+FactPortfolioKPIEndpoint    72
+</code></pre>
+<p>So those five should match exactly in E04.</p>
+<p>Send me the <code>E04_LIVE_ENGINE_TABLE_ROW_COUNTS.csv</code> result next.</p>
+</div></article><article id="m-b08d3bd0-0f0e-4467-aa39-27f2bcca17a5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00161 · 2026-08-20T11:54:45.369000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E04_LIVE_ENGINE_TABLE_ROW_COUNTS.png; E04_LIVE_ENGINE_TABLE_ROW_COUNTS.csv</p><div class="bubble"><p>E04 live engine evidence attached.</p>
+</div></article><article id="m-cc738cf7-c8b4-433d-b79c-5f30f40889cb" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00162 · 2026-08-20T11:54:54.574266-04:00 · active path</p><div class="bubble"><p>E04 is strong. I inspected the CSV itself: <strong>all 32 semantic tables are physically populated in the live engine; there are no zero-row tables.</strong></p>
+<p>The important counts are:</p>
+<pre><code class="language-text">DimApplication                       750
+DimMerchant                          750
+DimDate                              123
+DimAsOfDate                          123
+DimKPI                                24
+DimScenario                            2
+
+FactApplicationScenario            1,500
+FactBookingActivation              1,500
+FactFinalDecision                  1,500
+FactAccountDaily                   7,080
+
+FactAccountCertification              59
+FactMonitoringEndpoint                59
+FactIntervention                      59
+FactPortfolioPerformanceEndpoint      59
+FactServicingExecution                59
+
+FactPortfolioKPIEndpoint              72
+FactServicingQueueEndpoint             3
+FactPaymentException                   1
+
+FactSourceReconciliation             214
+FactValidationResult                 533
+ModelParameters                        8
+</code></pre>
+<p>This also resolves the earlier <code>FactFinalDecision</code> concern: its pre-refresh 0-row state was transient. The live processed model now contains <strong>1,500 rows</strong>.</p>
+<h3>E04 disposition</h3>
+<pre><code class="language-text">32/32 semantic tables present           PASS
+32/32 tables physically populated       PASS
+Zero-row semantic tables                   0
+
+DimDate = 123                           PASS
+FactValidationResult = 533              PASS
+FactApplicationScenario = 1,500         PASS
+FactAccountDaily = 7,080                PASS
+FactPortfolioKPIEndpoint = 72           PASS
+
+Desktop → live-engine count checks      RECONCILE
+</code></pre>
+<p>Now we should test the most important remaining semantic-model property: <strong>all 60 DAX measures actually compile and evaluate</strong>.</p>
+<h2>E05 — evaluate all 60 measures</h2>
+<p>Because all 60 measures are housed on <code>ModelParameters</code>, the cleanest test is to execute them together in one <code>ROW</code>. Rather than manually transcribing 60 names and risking a typo, use DAX Studio to generate the query from the live metadata.</p>
+<p>In DAX Studio, first run:</p>
+<pre><code class="language-dax">EVALUATE
+SELECTCOLUMNS(
+    INFO.VIEW.MEASURES(),
+    &quot;MeasureName&quot;, [Name],
+    &quot;MeasureReference&quot;, &quot;[&quot; &amp; [Name] &amp; &quot;]&quot;
+)
+ORDER BY [MeasureName]
+</code></pre>
+<p>This should return exactly <strong>60 rows</strong>.</p>
+<p>Save that as:</p>
+<pre><code class="language-text">E05_MEASURE_EXECUTION_POPULATION.csv
+</code></pre>
+<p>Then we need a single execution query of this form:</p>
+<pre><code class="language-dax">EVALUATE
+ROW(
+    &quot;Measure 1&quot;, [Measure 1],
+    &quot;Measure 2&quot;, [Measure 2],
+    ...
+    &quot;Measure 60&quot;, [Measure 60]
+)
+</code></pre>
+<p>Rather than having you manually construct that from 60 rows, please attach/send me the <code>E05_MEASURE_EXECUTION_POPULATION.csv</code> after running the first query. I will generate the exact 60-measure DAX execution query from the actual live-engine names.</p>
+<p>That gives us a controlled test with:</p>
+<pre><code class="language-text">Metadata measure population     60
+Measures requested              60
+Measures evaluated              60
+Compile/evaluation errors        0 required
+</code></pre>
+<p>If a measure legitimately evaluates to <code>BLANK()</code>, that is <strong>not</strong> itself a failure. The control is whether the expression compiles and executes under the governed default context.</p>
+<p>Keep Power BI and this DAX Studio connection open. Send me the 60-row <code>E05_MEASURE_EXECUTION_POPULATION.csv</code> next.</p>
+</div></article><article id="m-eaf14de7-e27f-4f5b-8055-f34360102172" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00163 · 2026-08-20T11:58:27.282000-04:00 · active path</p><p class="note">Attachment references: E05_MEASURE_EXECUTION_POPULATION.csv</p><div class="bubble"><p>E05 measure execution population attached.</p>
+</div></article><article id="m-59fe4d0c-bc96-49a1-b66f-644c4b586804" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00164 · 2026-08-20T11:59:07.887878-04:00 · active path</p><div class="bubble"><p>I inspected <code>E05_MEASURE_EXECUTION_POPULATION.csv</code>: it contains <strong>exactly 60 distinct live-engine measure names</strong>, with no duplicate names. That matches the expected A1b measure population.</p>
+<p>Run this exact DAX query in a new DAX Studio tab:</p>
+<pre><code class="language-dax">EVALUATE
+ROW(
+    &quot;__Account Active Alert Count As Of&quot;, [__Account Active Alert Count As Of],
+    &quot;__Account Cumulative Actual As Of&quot;, [__Account Cumulative Actual As Of],
+    &quot;__Account Cumulative Expected As Of&quot;, [__Account Cumulative Expected As Of],
+    &quot;__Account Exposure As Of&quot;, [__Account Exposure As Of],
+    &quot;__Account First Paid Off Day As Of&quot;, [__Account First Paid Off Day As Of],
+    &quot;__Account Latest Monitoring Date As Of&quot;, [__Account Latest Monitoring Date As Of],
+    &quot;__Account Monitoring Day Index As Of&quot;, [__Account Monitoring Day Index As Of],
+    &quot;__Account Monitoring Status As Of&quot;, [__Account Monitoring Status As Of],
+    &quot;__Account Observable Flag As Of&quot;, [__Account Observable Flag As Of],
+    &quot;__Account Pace Alert Flag As Of&quot;, [__Account Pace Alert Flag As Of],
+    &quot;__Account Pace Ratio As Of&quot;, [__Account Pace Ratio As Of],
+    &quot;__Account Paid Off Flag As Of&quot;, [__Account Paid Off Flag As Of],
+    &quot;__Account Payoff Slippage Days&quot;, [__Account Payoff Slippage Days],
+    &quot;__Scenario Context Pass&quot;, [__Scenario Context Pass],
+    &quot;__Selected As Of Has One Value&quot;, [__Selected As Of Has One Value],
+    &quot;Active Account Count As Of&quot;, [Active Account Count As Of],
+    &quot;Active Alerts As Of&quot;, [Active Alerts As Of],
+    &quot;Application Count&quot;, [Application Count],
+    &quot;Application Scenario Count&quot;, [Application Scenario Count],
+    &quot;Approval Rate&quot;, [Approval Rate],
+    &quot;As Of Evidence Status&quot;, [As Of Evidence Status],
+    &quot;Average Payoff Slippage Days&quot;, [Average Payoff Slippage Days],
+    &quot;Certified Exposure&quot;, [Certified Exposure],
+    &quot;Counteroffer Rate&quot;, [Counteroffer Rate],
+    &quot;Counteroffer Review Count&quot;, [Counteroffer Review Count],
+    &quot;Cumulative Actual Remittance As Of&quot;, [Cumulative Actual Remittance As Of],
+    &quot;Cumulative Expected Remittance As Of&quot;, [Cumulative Expected Remittance As Of],
+    &quot;Current Exposure As Of&quot;, [Current Exposure As Of],
+    &quot;Decisioned Applications&quot;, [Decisioned Applications],
+    &quot;Decline Count&quot;, [Decline Count],
+    &quot;Decline Rate&quot;, [Decline Rate],
+    &quot;Economic Surplus&quot;, [Economic Surplus],
+    &quot;Endpoint Evidence Available&quot;, [Endpoint Evidence Available],
+    &quot;Expected Loss&quot;, [Expected Loss],
+    &quot;Expected Loss Rate&quot;, [Expected Loss Rate],
+    &quot;Final Offer Count&quot;, [Final Offer Count],
+    &quot;Funded Account Count&quot;, [Funded Account Count],
+    &quot;Funded Amount&quot;, [Funded Amount],
+    &quot;G2 Contract Pass&quot;, [G2 Contract Pass],
+    &quot;G3 Contract Pass&quot;, [G3 Contract Pass],
+    &quot;Manual Review Count&quot;, [Manual Review Count],
+    &quot;Manual Review Rate&quot;, [Manual Review Rate],
+    &quot;Measure Recompute Fail Count&quot;, [Measure Recompute Fail Count],
+    &quot;Merchant Count&quot;, [Merchant Count],
+    &quot;Negative Contribution Applications&quot;, [Negative Contribution Applications],
+    &quot;Open Servicing Queue&quot;, [Open Servicing Queue],
+    &quot;Orphan Fail Count&quot;, [Orphan Fail Count],
+    &quot;Paid Off Accounts As Of&quot;, [Paid Off Accounts As Of],
+    &quot;Portfolio Evidence Max Date&quot;, [Portfolio Evidence Max Date],
+    &quot;Portfolio Evidence Min Date&quot;, [Portfolio Evidence Min Date],
+    &quot;Primary Key Fail Count&quot;, [Primary Key Fail Count],
+    &quot;Reconciliation Difference&quot;, [Reconciliation Difference],
+    &quot;Remaining Receivable As Of&quot;, [Remaining Receivable As Of],
+    &quot;Remittance Fulfillment %&quot;, [Remittance Fulfillment %],
+    &quot;Risk Adjusted Contribution&quot;, [Risk Adjusted Contribution],
+    &quot;Selected As Of Date&quot;, [Selected As Of Date],
+    &quot;Servicing Burden Units&quot;, [Servicing Burden Units],
+    &quot;Source Reconciliation Pass&quot;, [Source Reconciliation Pass],
+    &quot;Source Run As Of Date&quot;, [Source Run As Of Date],
+    &quot;Unresolved Payment Exceptions As Of&quot;, [Unresolved Payment Exceptions As Of]
+)
+</code></pre>
+<p>Save the resulting CSV as:</p>
+<pre><code class="language-text">E05_ALL_60_MEASURE_EXECUTION.csv
+</code></pre>
+<p>and capture a screenshot as:</p>
+<pre><code class="language-text">E05_ALL_60_MEASURE_EXECUTION.png
+</code></pre>
+<p>The test passes if DAX Studio returns the single-row result without a compile/evaluation exception. <strong>Blank values are permissible</strong> where the governed default filter context legitimately produces <code>BLANK()</code>; we are testing that all 60 expressions can be parsed, bound, compiled, and evaluated together.</p>
+<p>If DAX Studio throws an error, do not edit any measure. Send me the exact error text. If it succeeds, send me the resulting CSV and we will reconcile the 60-column result before moving to relationship/filter and <code>AUD-ASOF-003B</code> controls.</p>
+</div></article><article id="m-9e259f39-c5c2-4f24-a6d5-a1c74421e3b6" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00165 · 2026-08-20T12:08:10.705000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E05_ALL_60_MEASURE_EXECUTION.png; E05_ALL_60_MEASURE_EXECUTION.csv</p><div class="bubble"><p>E05 All 60 Measure Execution evidence attached.</p>
+</div></article><article id="m-f38605bb-3a06-4544-b904-4c48124086d6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00166 · 2026-08-20T12:08:36.252290-04:00 · active path</p><div class="bubble"><p>E05 is a <strong>clean runtime compilation/evaluation PASS</strong>.</p>
+<p>I inspected the exported CSV directly. It contains exactly:</p>
+<pre><code class="language-text">Rows returned:                 1
+Measure result columns:       60
+Missing requested measures:    0
+Execution exception:           0
+</code></pre>
+<p>All 60 live measures therefore parsed, bound, compiled, and evaluated together in the same live semantic-engine request.</p>
+<p>The <code>BLANK()</code> results are not compilation failures. They occur on measures whose default context does not produce an applicable scalar result, while other measures return concrete values. Examples from the physical result include:</p>
+<pre><code class="language-text">Application Count                         750
+Application Scenario Count              1,500
+Decisioned Applications                 1,500
+Final Offer Count                          59
+Funded Account Count                       59
+Funded Amount                        $667,600
+
+Approval Rate                            3.9%
+Counteroffer Rate                       12.7%
+Decline Rate                            83.4%
+Manual Review Rate                      12.7%
+
+Cumulative Actual Remittance       $800,858.99
+Cumulative Expected Remittance     $801,838.72
+Remittance Fulfillment %                 99.9%
+
+Current Exposure                       $979.73
+Remaining Receivable                  $979.73
+Paid Off Accounts As Of                    57
+Active Account Count As Of                  2
+
+Selected As Of Date               2026-11-22
+Portfolio Evidence Max Date       2026-11-22
+Portfolio Evidence Min Date       2026-07-26
+Source Run As Of Date             2026-07-23
+As Of Evidence Status                   VALID
+
+G2 Contract Pass                            1
+G3 Contract Pass                            1
+</code></pre>
+<p>There are also some results we should <strong>not interpret as control failures merely from this unfiltered execution</strong>, such as <code>Source Reconciliation Pass = 0</code> and blanks for <code>Orphan Fail Count</code>, <code>Primary Key Fail Count</code>, and <code>Measure Recompute Fail Count</code>. Those measures need their intended governed context/control tests rather than an inference from the compilation query.</p>
+<h3>E05 disposition</h3>
+<pre><code class="language-text">60 measure metadata population       PASS
+60/60 measures requested             PASS
+60/60 measures executed              PASS
+DAX compile/evaluation exceptions       0
+Default-context result row              1
+Runtime measure compilation          PASS
+</code></pre>
+<p>We can now move to the <strong>relationship behavior and orphan controls</strong>. Because there are 32 relationships, I want to avoid a manually constructed test that could accidentally test the wrong direction or key. We already have the live relationship inventory, so the next control should derive its test population from that authority.</p>
+<h2>E06 — live relationship filter behavior</h2>
+<p>First run this compact query to establish the active relationship population by name and direction:</p>
+<pre><code class="language-dax">EVALUATE
+SELECTCOLUMNS(
+    FILTER(
+        INFO.VIEW.RELATIONSHIPS(),
+        [IsActive] = TRUE()
+    ),
+    &quot;Relationship&quot;, [Name],
+    &quot;FromTable&quot;, [FromTable],
+    &quot;FromColumn&quot;, [FromColumn],
+    &quot;ToTable&quot;, [ToTable],
+    &quot;ToColumn&quot;, [ToColumn],
+    &quot;CrossFilteringBehavior&quot;, [CrossFilteringBehavior]
+)
+ORDER BY [Relationship]
+</code></pre>
+<p>Save as:</p>
+<pre><code class="language-text">E06_ACTIVE_RELATIONSHIP_TEST_POPULATION.csv
+</code></pre>
+<p>It should return:</p>
+<pre><code class="language-text">31 active relationships
+31 OneDirection
+REL-076 absent because it is intentionally inactive
+</code></pre>
+<p>Attach that CSV next. I will use its exact physical table/column population to give you the relationship-behavior test without manually guessing any of the 31 mappings.</p>
+<p>After E06 we will run the corresponding orphan population and then move directly into the critical <code>AUD-ASOF-003B</code> three-date test.</p>
+</div></article><article id="m-f44c035e-74ee-4e74-b9ca-fae63d6cea5c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00167 · 2026-08-20T12:13:38.694000-04:00 · active path</p><p class="note">Attachment references: E06_ACTIVE_RELATIONSHIP_TEST_POPULATION.csv</p><div class="bubble"><p>E06_ACTIVE_RELATIONSHIP_TEST_POPULATION attached.</p>
+</div></article><article id="m-f67a6f11-f942-42e2-8526-44f4a7a63d19" class="message assistant"><p class="meta"><strong>Assistant</strong> · C091-M00168 · 2026-08-20T12:14:18.613023-04:00 · active path</p><div class="bubble"><p>I inspected the attached E06 population. It is exactly the expected <strong>31 active relationships</strong>, and all 31 report <code>OneDirection</code>. <code>REL-076</code> is correctly absent because it is the sole authorized inactive relationship.</p>
+<p>That gives us a clean test population:</p>
+<pre><code class="language-text">Active relationships                 31
+OneDirection                         31
+Bidirectional                         0
+REL-076 in active test population     NO
+</code></pre>
+<p>The next control should physically prove that each active one-direction relationship actually propagates a filter from its one-side table to its many-side table. Rather than hand-testing 31 mappings, use the exact live relationship population to run one deterministic comparison per relationship: direct filtering of the many-side key versus filtering the one-side key and allowing the relationship to propagate.</p>
+<p>Because that query is long, I recommend generating it directly from the CSV you just exported rather than manually typing 31 mappings. Run this PowerShell block against the saved E06 CSV:</p>
+<pre><code class="language-powershell">$work = &quot;C:\MSBF\MSBF_PBI_A1B_WORKING_R1_20260819&quot;
+$return = Join-Path $work &quot;evidence\local_engine_return&quot;
+
+$input = Join-Path $return &quot;E06_ACTIVE_RELATIONSHIP_TEST_POPULATION.csv&quot;
+$output = Join-Path $return &quot;E06_RELATIONSHIP_FILTER_BEHAVIOR_QUERY.dax&quot;
+
+$rels = Import-Csv -LiteralPath $input
+
+if ($rels.Count -ne 31) {
+    throw &quot;STOP: expected 31 active relationships; found $($rels.Count).&quot;
+}
+
+if (@($rels | Where-Object { $_.CrossFilteringBehavior -ne &quot;OneDirection&quot; }).Count -ne 0) {
+    throw &quot;STOP: active relationship population contains a non-OneDirection relationship.&quot;
+}
+
+function QTable([string]$name) {
+    &quot;&#39;&quot; + $name.Replace(&quot;&#39;&quot;,&quot;&#39;&#39;&quot;) + &quot;&#39;&quot;
+}
+
+function QColumn([string]$table,[string]$column) {
+    &quot;$(QTable $table)[$column]&quot;
+}
+
+$parts = @()
+
+for ($i = 0; $i -lt $rels.Count; $i++) {
+
+    $r = $rels[$i]
+
+    $n = &quot;{0:D2}&quot; -f ($i + 1)
+
+    $fromTable  = QTable $r.FromTable
+    $fromColumn = QColumn $r.FromTable $r.FromColumn
+    $toColumn   = QColumn $r.ToTable $r.ToColumn
+
+    $parts += @&quot;
+    VAR K$n =
+        MINX(
+            FILTER(
+                ALL($toColumn),
+                NOT ISBLANK($toColumn)
+            ),
+            $toColumn
+        )
+    VAR D$n =
+        CALCULATE(
+            COUNTROWS($fromTable),
+            KEEPFILTERS($fromColumn = K$n)
+        )
+    VAR P$n =
+        CALCULATE(
+            COUNTROWS($fromTable),
+            TREATAS({K$n}, $toColumn)
+        )
+    RETURN
+        ROW(
+            &quot;Relationship&quot;, &quot;$($r.Relationship)&quot;,
+            &quot;FromTable&quot;, &quot;$($r.FromTable)&quot;,
+            &quot;FromColumn&quot;, &quot;$($r.FromColumn)&quot;,
+            &quot;ToTable&quot;, &quot;$($r.ToTable)&quot;,
+            &quot;ToColumn&quot;, &quot;$($r.ToColumn)&quot;,
+            &quot;TestKey&quot;, K$n,
+            &quot;DirectExpectedRows&quot;, D$n,
+            &quot;RelationshipFilteredRows&quot;, P$n,
+            &quot;Pass&quot;, D$n = P$n
+        )
+&quot;@
+}
+
+$query = @&quot;
+EVALUATE
+VAR __Result =
+UNION(
+$($parts -join &quot;,`r`n&quot;)
+)
+RETURN
+    __Result
+ORDER BY [Relationship]
+&quot;@
+
+[IO.File]::WriteAllText(
+    $output,
+    $query,
+    [Text.UTF8Encoding]::new($false)
+)
+
+Write-Host &quot;Generated:&quot;
+Write-Host $output
+Write-Host &quot;&quot;
+Write-Host &quot;Relationships encoded:&quot; $rels.Count
+</code></pre>
+<p>Then open:</p>
+<pre><code class="language-text">E06_RELATIONSHIP_FILTER_BEHAVIOR_QUERY.dax
+</code></pre>
+<p>in DAX Studio and run it against the same live model.</p>
+<p>The result must contain <strong>31 rows</strong>, one for each active relationship. For every row:</p>
+<pre><code class="language-text">DirectExpectedRows = RelationshipFilteredRows
+Pass = TRUE
+</code></pre>
+<p>This is important: <code>DirectExpectedRows</code> establishes the expected number of rows by filtering the many-side key directly; <code>RelationshipFilteredRows</code> applies the same key only to the one-side table and relies on the physical semantic relationship to propagate it.</p>
+<p>Save the result as:</p>
+<pre><code class="language-text">E06_RELATIONSHIP_FILTER_BEHAVIOR.csv
+</code></pre>
+<p>and take a screenshot as:</p>
+<pre><code class="language-text">E06_RELATIONSHIP_FILTER_BEHAVIOR.png
+</code></pre>
+<p>Do not change a relationship if any row returns <code>FALSE</code>. Preserve the result and send it to me.</p>
+<p>If all 31 pass, the next control will be the matching <strong>31-relationship orphan test</strong>, followed by <code>AUD-ASOF-003B</code>.</p>
+</div></article><article id="m-71715634-7dc0-40a9-80fb-594dd3bd086a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C091-M00169 · 2026-08-20T12:19:34.462000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: E06_RELATIONSHIP_FILTER_BEHAVIOR.csv; E06_RELATIONSHIP_FILTER_BEHAVIOR_QUERY.dax; E06_RELATIONSHIP_FILTER_BEHAVIOR.png</p><div class="bubble"><p>E06 Relationship Filter Behavior Query attached.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

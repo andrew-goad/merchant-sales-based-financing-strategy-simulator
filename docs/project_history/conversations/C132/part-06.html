@@ -1,0 +1,860 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Campaign Scale 750 - 2,500 - 25,000 Part 2 — part 06 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Campaign Scale 750 - 2,500 - 25,000 Part 2 — part 06</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-05.html">Previous part</a><a href="part-07.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-2cfe47be-b34a-4779-8678-748a68d2f2e9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00099 · 2026-09-12T20:50:23.300234-04:00 · active path</p><div class="bubble"><p><strong>The downstream calculations completed, and the only failed comparison is one execution-audit timestamp.</strong> This is a defect in my sealed comparison specification—not evidence of a difference in the MSBF business results compared in this run.</p>
+<p><strong>Do not rerun the campaign or change either database.</strong> I have already reproduced the failure from your returned files and isolated it precisely.</p>
+<h2>What this run established</h2>
+<p>Your return is intact: <strong>57,898,235 bytes</strong>, with the SHA-256 matching your terminal output and CRC PASS. [export reference: filecite | turn14file0 | L9-L14] I also rehashed its internal manifests and reran the original sealed comparisons against the actual returned reference and subject exports.</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+<th>Verification basis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Certified input roundtrip</td>
+<td><strong>183/183 PASS</strong>, all using the byte-exact fast path</td>
+<td>Owner-run receipts, reconciled to retained hash manifests</td>
+</tr>
+<tr>
+<td>M2.4 generation, controls, and finalization</td>
+<td><strong>Completed; stage receipts PASS</strong></td>
+<td>Returned execution evidence</td>
+</tr>
+<tr>
+<td>M2.5–M2.10 / Wave A</td>
+<td><strong>Completed; stage receipts PASS</strong></td>
+<td>Returned execution evidence</td>
+</tr>
+<tr>
+<td>M2.11–M2.12 / G3-v2</td>
+<td><strong>Completed; stage receipt PASS</strong></td>
+<td>Returned execution evidence</td>
+</tr>
+<tr>
+<td>Relational output comparisons</td>
+<td><strong>84/85 PASS</strong></td>
+<td>Reperformed here under the unchanged contract</td>
+</tr>
+<tr>
+<td>Wave A business exports</td>
+<td><strong>7/7 byte-exact</strong></td>
+<td>Rehashed against the locked reference</td>
+</tr>
+<tr>
+<td>Wave A stage/control exports</td>
+<td><strong>2/2 PASS</strong></td>
+<td>Reperformed using the unchanged accepted canonicalization</td>
+</tr>
+<tr>
+<td>G3 exports</td>
+<td><strong>6/6 byte-exact</strong></td>
+<td>Rehashed against the sealed reference hashes</td>
+</tr>
+<tr>
+<td>G3 identity fields</td>
+<td><strong>10/10 exact</strong></td>
+<td>Recompared against the locked identity</td>
+</tr>
+<tr>
+<td>Reference nonmutation observation</td>
+<td><strong>PASS within the observed scope</strong></td>
+<td>268 before/after file-identity records remained stable</td>
+</tr>
+</tbody></table>
+<p>The full results and verification limits are recorded in the review report (historical reference: <code>sandbox:[session]/MSBF_HYBRID750_R2_RETURN_REVIEW_7e43009e_R1_20260912.md</code>; referenced bytes not established here) and machine-readable review summary (historical reference: <code>sandbox:[session]/MSBF_HYBRID750_R2_RETURN_REVIEW_7e43009e_R1_20260912_SUMMARY.json</code>; referenced bytes not established here).</p>
+<p><strong>R2 also passed the previous input-comparison bottleneck.</strong> It reached all 183 input comparisons and then executed the downstream chain; this is no longer an infrastructure or input-loading problem.</p>
+<h2>The exact difference</h2>
+<p>The single failing surface is:</p>
+<pre><code class="language-text">msbf_ctl.acceptance_gate_result__M24
+</code></pre>
+<p>Both sides contain one row, with the same key:</p>
+<pre><code class="language-text">run_id         = 1
+gate_id        = M2_4_BOOKING_FUNDING_PORTFOLIO_ACTIVATION
+review_version = 1
+</code></pre>
+<p>Only this field differs:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Accepted reference</th>
+<th>Newly executed subject</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>reviewed_at</code></td>
+<td>August 30, 2026, 02:49:39.260355 −04:00</td>
+<td>September 12, 2026, 20:14:04.509573 −04:00</td>
+</tr>
+</tbody></table>
+<p><strong>All nine other fields are exactly equal</strong>, including the gate status, result hash, control threshold, finding, limitation, and reviewer-role text. Both rows contain:</p>
+<pre><code class="language-text">result_status = PASS
+observed_value = deedb8bd7696e441126a6f4526fc4842
+
+threshold_value =
+120/120 positive; 20/20 negative; zero deterministic, stress,
+archive, activation-link, real-funds, notice, or
+adverse-action violations
+</code></pre>
+<p>The field-by-field comparison (historical reference: <code>sandbox:[session]/MSBF_HYBRID750_R2_7e43009e_EXACT_FIELD_DIFFERENCES.json</code>; referenced bytes not established here) preserves both timestamps and every compared value.</p>
+<h3>Why the timestamp should differ</h3>
+<p>The executed schema defines the column as:</p>
+<pre><code class="language-sql">reviewed_at timestamp with time zone
+    DEFAULT clock_timestamp() NOT NULL
+</code></pre>
+<p>The accepted M2.4 finalizer inserts the gate row <strong>without supplying <code>reviewed_at</code></strong>, so PostgreSQL supplies the current wall-clock time. Those source excerpts and their hashes are retained in the review package. PostgreSQL documents that <code>clock_timestamp()</code> returns the actual current time. [export reference: cite | turn260129search0]</p>
+<p>This is therefore the time the new gate record was created—not the campaign’s business date or a calculated financial result. It is also <strong>not merely a timezone-formatting difference</strong>: these are genuinely different audit times.</p>
+<h2>Why the runtime still had to stop</h2>
+<p>For this particular output surface, the shipped contract contains:</p>
+<pre><code class="language-json">&quot;excluded_columns&quot;: {}
+</code></pre>
+<p>I omitted <code>reviewed_at</code> from its execution-metadata classification. <strong>I should have caught that before issuing the package.</strong></p>
+<p>The comparator correctly enforced the contract it received. The original result must therefore remain:</p>
+<pre><code class="language-text">CAMPAIGN_STOPPED
+original sealed comparison = FAIL
+certification_granted = false
+</code></pre>
+<p>We should not backdate the subject’s timestamp, remove the acceptance row, or quietly broaden the exclusions. That would conceal the specification defect rather than resolve it.</p>
+<p>The useful engineering conclusion is narrower and well supported:</p>
+<blockquote>
+<p><strong>Within this post-R4 replay’s compared fields, no business-value, control-result, or business-lineage difference was found. The sole remaining difference is the newly generated M2.4 review timestamp.</strong></p>
+</blockquote>
+<p>That is not the same as saying the original pre-sealed contract passed.</p>
+<h2>Recommended next step: a documented exception review—not another campaign run</h2>
+<p>My recommendation is to approve <strong>one explicitly retrospective metadata exception</strong> for:</p>
+<pre><code class="language-text">Surface: msbf_ctl.acceptance_gate_result__M24
+Column:  reviewed_at
+</code></pre>
+<p>The separate review would retain the real timestamps, require a valid non-null timestamp, retain the original STOP, and recognize the equality of the other nine fields alongside all the comparisons that already passed. The new subject timestamp also falls within this run’s recorded start/end interval.</p>
+<p><strong>This would not be described as an exclusion declared before execution, a new native replay, or an original-contract PASS.</strong> It would be a documented owner-approved disposition of a demonstrated comparison-specification defect.</p>
+<p>There is no technical reason to regenerate the campaign outputs merely to determine what this difference means: the necessary outputs are already preserved in your return. For future executions, the narrowly corrected contract should be versioned and sealed beforehand.</p>
+<p>The proposed exception record (historical reference: <code>sandbox:[session]/MSBF_HYBRID750_R2_7e43009e_PROPOSED_METADATA_EXCEPTION.json</code>; referenced bytes not established here) is <strong>not authorized or applied</strong>.</p>
+<h2>Two separate runner corrections are recorded</h2>
+<p>The return’s <code>all_required_stages_completed=false</code> is misleading in this case. The driver derives it from <code>certification_granted</code>, even though all computation-stage receipts are present and PASS. Execution completion and certification outcome need separate status fields; I reconciled those facts without modifying your original receipt.</p>
+<p>The Python <code>return</code>-in-<code>finally</code> warning also needs correction, but it did not cause this comparison failure. Python 3.14 warns about that construct because it can discard a pending exception; it should be fixed rather than suppressed. [export reference: cite | turn315808view1]</p>
+<p>Neither correction requires changing MSBF business logic.</p>
+<h2>Preserved review evidence</h2>
+<p><strong>Download the complete return-review package (historical reference: <code>sandbox:[session]/MSBF_HYBRID750_R2_RETURN_REVIEW_7e43009e_R1_20260912.zip</code>; referenced bytes not established here)</strong></p>
+<p>This contains the reperformed results, exact failed row pair, source excerpts, original-contract identity, stage-status reconciliation, and proposed—but unapplied—exception. It is <strong>not another runtime package</strong>, and it requires no PowerShell execution.</p>
+<p>The remaining scope boundary is unchanged: this run covers <strong>certified post-R4/M2.3 inputs through M2.4–M2.12/G3</strong>. It does not qualify the compatibility-producing adapter or fresh-population provider, so fresh 2,500 remains on hold. [export reference: filecite | turn14file1 | L35-L41]</p>
+<p><strong>Do you approve the one-field retrospective metadata-exception review, preserving the original STOP and using the existing return rather than rerunning the campaign?</strong></p>
+</div></article><article id="m-6316008e-eee6-4400-bd39-aae8bd9dee69" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00100 · 2026-09-12T20:52:11.684000-04:00 · active path</p><div class="bubble"><p>It sounds to me like the 750 campaign is a pass. I agree that metadata difference is a non-issue. The fact that we have an exact match across all substantive fields is high quality validation.</p>
+</div></article><article id="m-2b88417a-d979-4247-a6f5-ffbed061fa8f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00101 · 2026-09-12T20:52:30.603225-04:00 · active path</p><div class="bubble"><p>I’ll record your approval as a scoped hybrid-750 PASS, preserving the original STOP and documenting the timestamp exception separately.</p>
+</div></article><article id="m-09084e77-dede-4ea9-857a-02488bde5ed4" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00102 · 2026-09-12T20:55:36.790300-04:00 · active path</p><div class="bubble"><p>The saved row confirms all nine substantive fields match; only <code>reviewed_at</code> differs within the run interval. No database rerun is needed for this difference.</p>
+</div></article><article id="m-76959c03-12bd-412b-b6e4-5828de08bd2b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00103 · 2026-09-12T20:56:24.607672-04:00 · active path</p><div class="bubble"><p><strong>Yes. The hybrid 750 validation is a PASS on the substantive evidence, with the single execution-audit timestamp difference documented as an owner-approved metadata exception.</strong> Your approval closes that acceptance issue; another campaign run is not warranted solely for this timestamp.</p>
+<p>The evidence supports your assessment:</p>
+<table>
+<thead>
+<tr>
+<th>Validation area</th>
+<th>Accepted result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Certified input roundtrip</td>
+<td><strong>183/183 PASS</strong></td>
+</tr>
+<tr>
+<td>M2.4–M2.12/G3 computation-stage receipts</td>
+<td><strong>All required receipts PASS</strong></td>
+</tr>
+<tr>
+<td>Relational output comparisons</td>
+<td><strong>84/85 passed the original contract; the remaining surface matches on all nine substantive fields</strong></td>
+</tr>
+<tr>
+<td>Wave A outputs</td>
+<td><strong>7 byte-exact files and 2 canonical comparisons PASS</strong></td>
+</tr>
+<tr>
+<td>G3 outputs and identity</td>
+<td><strong>6 byte-exact files and 10 identity fields PASS</strong></td>
+</tr>
+</tbody></table>
+<p>Those results come from the owner-run evidence and the subsequent reperformance against the returned outputs—not merely an interpretation of the terminal message. [export reference: filecite | turn16file0 | L31-L46]</p>
+<p>The sole difference, <code>msbf_ctl.acceptance_gate_result__M24.reviewed_at</code>, records when the new acceptance row was created. Its actual value is retained, valid, and within the run interval. The gate status, control thresholds, result hash, findings, and all other fields match exactly. <strong>That is not a deterioration in MSBF logic or output accuracy.</strong> [export reference: filecite | turn16file0 | L54-L70]</p>
+<h2>Acceptance recorded</h2>
+<p>I created a separate owner-acceptance record with this disposition:</p>
+<pre><code class="language-text">HYBRID_750_PASS_OWNER_APPROVED_METADATA_EXCEPTION
+
+Substantive differences within reviewed scope: 0
+Accepted execution-metadata differences:       1
+Rerun required solely for this difference:     NO
+</code></pre>
+<p><strong>Download the owner-acceptance package (historical reference: <code>sandbox:[session]/MSBF_HYBRID750_OWNER_ACCEPTANCE_7e43009e_R1_20260912.zip</code>; referenced bytes not established here)</strong><br>Readable acceptance record (historical reference: <code>sandbox:[session]/MSBF_HYBRID750_OWNER_ACCEPTANCE_7e43009e_R1_20260912.md</code>; referenced bytes not established here) · Machine-readable decision (historical reference: <code>sandbox:[session]/MSBF_HYBRID750_OWNER_ACCEPTANCE_7e43009e_R1_20260912.json</code>; referenced bytes not established here)</p>
+<p>The original return and its <code>CAMPAIGN_STOPPED</code> receipt remain unchanged as historical execution evidence. <strong>The new record supplies the final owner disposition: substantive PASS.</strong> This preserves the history without allowing an overly strict audit-clock comparison to obscure a successful logical validation.</p>
+<p>The accepted claim is:</p>
+<blockquote>
+<p><strong>The source-locked post-R4 downstream runtime reproduced the accepted M2.4–M2.12/G3 substantive outputs from certified 750 post-R4/M2.3 inputs. One regenerated audit timestamp was accepted as nonsemantic, with its actual value retained and validated.</strong></p>
+</blockquote>
+<h2>What this means for the next leap</h2>
+<p><strong>We should now move forward—not keep trying to earn this same 750 result again.</strong></p>
+<p>The remaining work is to connect fresh population generation and the R4-to-compatibility producing adapter to the qualified downstream runtime, finish population-aware validation, and make that common process straightforward to run. Those implementation gaps are separate from the timestamp exception; they are why a fresh 2,500 run still needs readiness qualification. [export reference: filecite | turn16file0 | L76-L80]</p>
+<p>The next runtime revision should also classify this exact audit timestamp correctly before execution, separate stage completion from certification status, and fix the <code>return</code>-in-<code>finally</code> warning. Those are targeted engineering corrections—not reasons to reopen the accepted MSBF business results.</p>
+<p><strong>The milestone is now: hybrid 750 substantive validation accepted. The next objective is the reusable fresh-population campaign path, leading to the 2,500 shakedown.</strong></p>
+</div></article><article id="m-2806ef8b-2669-41e0-8f18-63e0dc029841" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00104 · 2026-09-12T21:00:26.302000-04:00 · active path</p><div class="bubble"><p>The bar is, &quot;Have we done enough to prove there is no logical difference between this campaign scale process vs the v2.1 approved code?&quot; That is the bar we are trying to pass with this 750 refresh and reconciliation. I believe we are at a point to answer yes to that question. I agree with the accepted 750 validation. Before we move on, let&#39;s make sure we prepare a package documenting the work done to prove this bar. This package should be ready to handoff to the next GitHub publication. We will then shift to the next phase, preparing for the 2,500 fresh population.  For that process, once we nail down the process, I want to start fresh, and mimic, as much as possible, how a new user would perform this work. For now, please document the current 750 validation as requested. In that package, include a detailed pdf validation report, complete with evidence, an executive narrative, and detailed audit detail. It should flow naturally and be very professional.</p>
+</div></article><article id="m-76be693b-3b53-40f6-b213-8d3003f21049" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00105 · 2026-09-12T21:00:44.822842-04:00 · active path</p><div class="bubble"><p>I’ll assemble a publication-handoff evidence package and detailed PDF report documenting the accepted 750 result, supporting checks, and scope carried forward to 2,500.</p>
+</div></article><article id="m-72816fef-c7df-4fd3-9747-ef9251fb5a3d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00106 · 2026-09-12T21:03:50.735219-04:00 · active path</p><div class="bubble"><p>The six core evidence archives match recorded identities; I’ll preserve them unchanged, separate publication-ready material from private logs, and distinguish the original STOP from owner acceptance.</p>
+</div></article><article id="m-8b0b2dbe-e1cd-4277-a8b7-d1eef8b07795" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00107 · 2026-09-12T21:12:57.225563-04:00 · active path</p><div class="bubble"><p>The draft now includes all 85 relational surfaces plus complete R4/Wave A/G3 indexes; I’m validating pagination, evidence links, and carefully bounded publication wording before sealing.</p>
+</div></article><article id="m-e24ef791-9de1-420b-a1c6-d96f18263715" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00108 · 2026-09-12T21:20:46.673082-04:00 · active path</p><div class="bubble"><h2>The 750 validation documentation and publication handoff are complete</h2>
+<p>The report records the accepted conclusion:</p>
+<blockquote>
+<p><strong>For the accepted 750 reference population and governing configuration, the Campaign Scale validation met the owner’s logical non-regression bar against approved v2.1.0. No substantive difference was found within the tested scope. One regenerated M2.4 review timestamp was accepted as nonsemantic, with its actual value retained and validated.</strong></p>
+</blockquote>
+<p>That preserves your accepted PASS without rewriting the original execution receipt or presenting the timestamp exception as having been declared before the run. [export reference: filecite | turn18file0 | L11-L25] [export reference: filecite | turn18file0 | L29-L44]</p>
+<h3>Deliverables</h3>
+<table>
+<thead>
+<tr>
+<th>Deliverable</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Detailed validation report — PDF (historical reference: <code>sandbox:[session]/MSBF_750_Validation_Report_R1_20260912.pdf</code>; referenced bytes not established here)</strong></td>
+<td><strong>20 pages</strong> with executive narrative, validation methodology, evidence, complete comparison appendices, exception disposition, and publication conclusions.</td>
+</tr>
+<tr>
+<td><strong>Complete publication-handoff package (historical reference: <code>sandbox:[session]/MSBF_750_VALIDATION_PUBLICATION_HANDOFF_R1_20260912.zip</code>; referenced bytes not established here)</strong></td>
+<td><strong>144.5 MB.</strong> Report, editable sources, publication materials, detailed audit registers, six unchanged original evidence/runtime archives, verification records, and next-phase instructions.</td>
+</tr>
+<tr>
+<td><strong>Compact publication candidate (historical reference: <code>sandbox:[session]/MSBF_750_VALIDATION_PUBLICATION_CANDIDATE_R1_20260912.zip</code>; referenced bytes not established here)</strong></td>
+<td><strong>662 KB.</strong> The report, selected evidence, comparison registers, accepted wording, and integration notes—without the large private audit annex.</td>
+</tr>
+</tbody></table>
+<p>An <strong>editable Word version (historical reference: <code>sandbox:[session]/MSBF_750_Validation_Report_R1_20260912.docx</code>; referenced bytes not established here)</strong> is also available and included in both packages.</p>
+<h2>What the report documents</h2>
+<p>The report begins with the business question and accepted conclusion, then develops the evidence supporting it: publication/source identity, certified inputs, native Module A/R4 parity, the separate downstream replay, reconciliation methods, and owner acceptance.</p>
+<p>The audit detail includes the <strong>six Module A comparisons, all 20 R4 output files, all 85 relational comparison surfaces, the 183 certified-input receipt register, Wave A/G3 comparisons, source hashes, and computation-stage results</strong>. It preserves the distinction between the two linked execution legs rather than describing them as one newly generated campaign.</p>
+<p>The timestamp exception has its own analysis showing the original and regenerated values, the exact nine matching substantive fields, the source-backed reason for the difference, and the owner’s decision. <strong>The historical STOP remains intact; the final owner disposition is substantive PASS.</strong></p>
+<p>The report also covers evidence custody, verification limits, observed performance, and the runtime-quality corrections to carry into future engineering. Those corrections do not reopen the accepted 750 result.</p>
+<h2>Ready for the next publication handoff</h2>
+<p>The complete package includes a <strong>copy/paste publication-handoff prompt</strong>, proposed release-note language, a claim matrix, suggested asset placement, and a review route through the evidence.</p>
+<p>The compact candidate is the material prepared for publication integration. The complete package is the archival handoff; <strong>its private audit annex should not be uploaded wholesale to GitHub by default</strong>.</p>
+<p>For this documentation build, I rechecked the six retained archive identities and manifests, reproduced the original 85 relational comparison results, rechecked Module A/R4 and Wave A/G3 equality, and validated the accepted timestamp pair. Both delivery ZIPs passed integrity checks and <strong>clean-extraction verification</strong>. All 20 final PDF pages were visually inspected.</p>
+<p>Complete-package validation record (historical reference: <code>sandbox:[session]/MSBF_750_VALIDATION_PUBLICATION_HANDOFF_R1_20260912_VALIDATION.json</code>; referenced bytes not established here) · Complete-package SHA-256 (historical reference: <code>sandbox:[session]/MSBF_750_VALIDATION_PUBLICATION_HANDOFF_R1_20260912.zip.sha256</code>; referenced bytes not established here)</p>
+<h2>The 2,500 transition is preserved</h2>
+<p>The handoff explicitly carries your requirement: <strong>after the process is engineered and qualified, start a clean 2,500 run that resembles a new user’s documented setup → run → review experience</strong>, without hidden dependence on historical subjects or copied expected outcomes.</p>
+<p>Save the complete package under <code>D:\MSBF_ARCHIVE</code>. <strong>No PowerShell command, database rerun, cleanup, or publication change is required for this delivery.</strong> The accepted 750 validation is now documented and ready for the next GitHub publication workstream.</p>
+</div></article><article id="m-62df409a-6aa3-463d-af07-7910fef36e07" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00109 · 2026-09-12T21:26:22.207000-04:00 · active path</p><div class="bubble"><p>Looks good. Thank you. Let&#39;s continue with the campaign. What do we need to do to finalize the process for a fresh 2,500 run? We want to mimic, as much as possible, how future users will perform such fresh runs? Once established, we&#39;ll want to draft detailed procedures for future users to follow. What is the right next step?</p>
+</div></article><article id="m-d2e72bb9-70e4-480e-bd75-9a7be0d23e8f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00110 · 2026-09-12T21:26:42.024741-04:00 · active path</p><div class="bubble"><p>I’ll check the accepted 750 handoff and remaining runtime gaps, then define a clean 2,500 qualification path that also rehearses the future user procedure.</p>
+</div></article><article id="m-29ac0118-d26b-43e7-b171-2ebff135ef87" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00111 · 2026-09-12T21:30:19.180222-04:00 · active path</p><div class="bubble"><p><strong>The right next step is to build a Fresh Campaign Runtime Candidate, then qualify it through a clean 2,500-user rehearsal.</strong> We should not reopen the accepted 750 validation, and we should not simply change the population parameter in the current reference-replay package and call that a fresh campaign.</p>
+<p>The 750 work has answered the logical non-regression question for the accepted validation scope. The remaining work is to make the <strong>fresh-input-to-results process complete, self-contained, and usable without our development history</strong>. The acceptance record already identifies the unfinished pieces: fresh-input generation, the R4-to-compatibility producing adapter, population-aware validation, and integration with the qualified downstream runtime. [export reference: filecite | turn21file0 | L46-L50]</p>
+<p>My recommended sequence is:</p>
+<pre><code class="language-text">Complete the reusable fresh-campaign path
+        ↓
+Test the new and changed components
+        ↓
+Freeze a runnable candidate and draft procedures
+        ↓
+Perform a clean 2,500 run using only that candidate and those procedures
+        ↓
+Validate results, efficiency, and user experience
+        ↓
+Finalize the detailed user guide and publication materials
+</code></pre>
+<h2>1. Finish the campaign path—not another certification harness</h2>
+<p>The next engineering delivery should close five practical gaps.</p>
+<table>
+<thead>
+<tr>
+<th>Workstream</th>
+<th>What needs to be completed</th>
+<th>Completion standard</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Fresh population and input generation</strong></td>
+<td>Generate merchants, histories, applications, scenarios, verification, features, and required strategy inputs from explicit configuration and seed.</td>
+<td>Every required campaign input has a legitimate producing step; no fallback to accepted 750 business rows.</td>
+</tr>
+<tr>
+<td><strong>Strategy-to-downstream integration</strong></td>
+<td>Run the strategy and produce the compatibility records, identifiers, and lineage consumed by the qualified downstream components.</td>
+<td>Newly generated strategy results flow into M2.4–M2.12/G3 without manual table copying or retained compatibility CSVs.</td>
+</tr>
+<tr>
+<td><strong>Population-aware controls</strong></td>
+<td>Replace reference-profile assumptions with documented formulas and actual population-dependent checks.</td>
+<td>Fixed input contracts remain strict; data-dependent outcomes are measured rather than forced to historical counts.</td>
+</tr>
+<tr>
+<td><strong>Self-contained setup</strong></td>
+<td>Package the necessary platform objects, static configuration, dependencies, and connection checks.</td>
+<td>Setup works without reading Reference R1 or locating old development archives.</td>
+</tr>
+<tr>
+<td><strong>Operational usability</strong></td>
+<td>Integrate progress, status, failure handling, summaries, timing, and evidence packaging.</td>
+<td>The user runs the process—not individual SQL files or diagnostic commands in several PowerShell windows.</td>
+</tr>
+</tbody></table>
+<p><strong>The highest-priority technical task is connecting fresh inputs through strategy and compatibility into the downstream runtime we have already validated.</strong> That is the missing bridge between our current qualification result and the normal campaign experience.</p>
+<p>For each input consumed by that path, the implementation should answer: <em>Who produces it? From which configuration or preceding result? How is it validated?</em> A required input must not remain an undocumented dependency on a historical database.</p>
+<p>This does not require reimplementing approved business logic. It requires packaging and connecting its producing and consuming components correctly. Any genuinely unresolved business rule should be identified explicitly—not filled in with an invented calculation or a retained expected answer.</p>
+<h2>2. Define “starting fresh” as a new-user rehearsal</h2>
+<p>For the <strong>2,500 rehearsal</strong>, I recommend a clean operational boundary:</p>
+<blockquote>
+<p><strong>A new working directory, new campaign identity, new campaign database, and newly generated population—using only the distributed candidate, documented prerequisites, and written procedures.</strong></p>
+</blockquote>
+<p>We can keep your existing Python and PostgreSQL installations. We do not need a new computer, an operating-system reinstall, or a demonstration that every platform object can be invented from nothing.</p>
+<p>A documented setup package may install accepted schemas, functions, lookup tables, and policy configuration. The important distinction is that <strong>those components must be supplied through the intended distribution</strong>, not borrowed silently from <code>msbf_restore_test</code>.</p>
+<p>For this rehearsal, the following should be true:</p>
+<table>
+<thead>
+<tr>
+<th>Permitted</th>
+<th>Not part of the normal fresh-run dependency chain</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Existing supported software installations</td>
+<td>Reference R1 as an input source</td>
+</tr>
+<tr>
+<td>A versioned platform/setup package</td>
+<td>Prior campaign subject databases</td>
+</tr>
+<tr>
+<td>Approved static configuration and policy</td>
+<td>Copied 750 decisions, compatibility rows, funding, or servicing results</td>
+</tr>
+<tr>
+<td>Explicit population size, seed, date, and scenario settings</td>
+<td>Manually assembled intermediate tables</td>
+</tr>
+<tr>
+<td>New subject and output workspace</td>
+<td>Conversation-specific instructions or searches through old archives</td>
+</tr>
+</tbody></table>
+<p><strong>A particularly useful acceptance condition is that the normal fresh-campaign command works without connecting to Reference R1.</strong> We can test that dependency boundary without shutting down, deleting, or modifying the reference environment.</p>
+<p>This is a product-usability requirement—not a reinstatement of the ultra-conservative greenfield certification requirement.</p>
+<h2>3. Make the user interface the route we actually test</h2>
+<p>We should decide the small set of user actions before the final rehearsal and implement around them.</p>
+<p>Conceptually, the interface should be:</p>
+<pre><code class="language-text">setup using an environment configuration
+run using a campaign configuration
+review the resulting campaign
+</code></pre>
+<p>The eventual commands might resemble the following, but these are <strong>interface targets, not commands to execute now</strong>:</p>
+<pre><code class="language-text">msbf setup --config environment.json
+msbf run --config campaigns/2500.json
+msbf review &lt;run-id&gt;
+</code></pre>
+<p>For your first rehearsal, those operations can be delivered through PowerShell and Python rather than requiring a polished installed command-line application. <strong>Simple and dependable is more important than introducing another packaging framework.</strong></p>
+<p>The configuration should distinguish three kinds of settings:</p>
+<table>
+<thead>
+<tr>
+<th>Configuration</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Environment</strong></td>
+<td>PostgreSQL connection, credential method, working directory, storage locations</td>
+</tr>
+<tr>
+<td><strong>Campaign</strong></td>
+<td>Population size, seed, business date, scenario set, campaign identity</td>
+</tr>
+<tr>
+<td><strong>Governance and validation</strong></td>
+<td>Approved policy/source version, standard versus reference-certification mode, evidence level</td>
+</tr>
+</tbody></table>
+<p>That separation prevents local paths or certification settings from becoming part of the business logic.</p>
+<p>For your machine, the package source remains <code>D:\MSBF_ARCHIVE</code>; substantial database, temporary, output, and evidence storage remains on D:. PowerShell instructions should include your established process-scoped execution-policy line. The implementation should measure available space at setup rather than assume the earlier capacity figures are still current.</p>
+<h3>What should happen automatically</h3>
+<p>The runtime should validate prerequisites, prepare its subject, generate inputs, execute stages, check controls, and produce a clear result. Progress should identify the current stage and show meaningful activity during long operations.</p>
+<p>The user should not need to inspect a scratch SQLite filename to discover whether a run is moving.</p>
+<p>Interruption handling also needs to be explicit. <strong>We do not need sophisticated resume capability to make the first version trustworthy.</strong> A clear interrupted status, preserved evidence, and a documented safe new-run procedure may be sufficient initially. Resume should be offered only where completed-stage state can be verified—not merely because files remain on disk.</p>
+<h2>4. Keep accuracy controls always on, without repeating reference certification</h2>
+<p>The 2,500 run should use the same qualified business calculations, but its validation question is different:</p>
+<blockquote>
+<p><strong>Did this newly generated population complete the intended MSBF process correctly, with valid lineage, complete stages, and reconciled results?</strong></p>
+</blockquote>
+<p>It is not:</p>
+<blockquote>
+<p><strong>Did 2,500 merchants reproduce the accepted outcomes of 750 merchants?</strong></p>
+</blockquote>
+<p>The retained 2,500 profile specifies these input contracts: [export reference: filecite | turn20file3 | L431-L447]</p>
+<table>
+<thead>
+<tr>
+<th>Input surface</th>
+<th align="right">Required rows for this profile</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Merchants</td>
+<td align="right">2,500</td>
+</tr>
+<tr>
+<td>Application-scenario rows</td>
+<td align="right">5,000</td>
+</tr>
+<tr>
+<td>Verification rows</td>
+<td align="right">15,000</td>
+</tr>
+<tr>
+<td>Feature rows</td>
+<td align="right">5,000</td>
+</tr>
+<tr>
+<td>Base-history rows</td>
+<td align="right">450,000</td>
+</tr>
+<tr>
+<td>Scenario-history rows</td>
+<td align="right">900,000</td>
+</tr>
+</tbody></table>
+<p>These requirements must be attached to their <strong>specific grains and producing stages</strong>. For example, 5,000 application-scenario rows should not silently become an assertion that every physical application-related table must contain 5,000 rows.</p>
+<p>Candidate counts, recommendations, authorizations, funded paths, monitoring, servicing, and portfolio outcomes must emerge from the new population.</p>
+<p>Standard campaign validation should retain required-key checks, uniqueness or multiplicity checks, lineage integrity, stage completion, business/control checks, financial reconciliation, and source-certification requirements. A missing mandatory control or incomplete stage must prevent PASS.</p>
+<p><strong>The expensive comparison against the historical reference belongs in regression/certification mode, not every ordinary campaign.</strong> That separation is already part of your governing directive. [export reference: filecite | turn20file4 | L543-L563]</p>
+<p>Before release, the new or modified components should receive targeted regression and negative testing against the accepted evidence where applicable. That protects the 750 baseline without demanding another wholesale 750 owner run merely to reconfirm an unchanged result.</p>
+<h2>5. Separate engineering shakedown from the clean rehearsal</h2>
+<p>This is important to your goal of mimicking a future user.</p>
+<p>During engineering, we can inspect sources, test generators and adapters, correct defects, and use disposable test runs. Those are development activities.</p>
+<p><strong>Once the candidate is ready, freeze it and perform the new-user rehearsal separately.</strong> Use a new directory and subject, and follow the draft instructions exactly.</p>
+<p>If the rehearsal requires an unlisted SQL command, manual table repair, or an ad hoc code patch, that exposes a procedure or product defect. Preserve the attempt, fix the candidate and instructions, and make the next clean rehearsal from the revised version. Do not quietly turn a manually repaired run into evidence that the documented process worked.</p>
+<p>The rehearsal should assess three things:</p>
+<table>
+<thead>
+<tr>
+<th>Acceptance dimension</th>
+<th>Question</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Correctness</strong></td>
+<td>Did fresh inputs flow through all required stages with controls and reconciliation passing?</td>
+</tr>
+<tr>
+<td><strong>Reproducibility and independence</strong></td>
+<td>Are inputs, configuration, source identity, and outcomes traceable without hidden historical state?</td>
+</tr>
+<tr>
+<td><strong>Usability and efficiency</strong></td>
+<td>Could the run be completed from the supplied instructions, with understandable progress, manageable resource use, and clear results?</td>
+</tr>
+</tbody></table>
+<p>Capture setup, generation, calculation, validation, and packaging time separately. That will show whether a bottleneck belongs to business processing, validation, or evidence handling. <strong>No claim that the process is “quick” should precede those measurements.</strong></p>
+<p>Determinism should also receive a defined test: the generator must reproduce its inputs under the same configuration and seed, and any claimed full-run reproducibility needs corresponding execution evidence. We should not infer it merely because a seed appears in the configuration.</p>
+<h2>6. Write the procedures alongside the candidate, then finalize them from the rehearsal</h2>
+<p>I would not wait until everything is finished to begin the procedures. The initial runbook should define the user experience we are trying to deliver; the clean rehearsal should validate that runbook.</p>
+<p>The final documentation should have three layers:</p>
+<p><strong>Quick Start.</strong> Prerequisites, setup, one campaign example, expected completion status, and where to find results.</p>
+<p><strong>Detailed Campaign Operations Guide.</strong> Configuration fields, seeds and dates, population/scenario settings, database and output organization, validation modes, result interpretation, and running another campaign.</p>
+<p><strong>Troubleshooting and Engineering Reference.</strong> Actionable failure messages, interrupted-run handling, storage and connection problems, evidence contents, known limitations, supported environments, and the relationship to the accepted 750 validation.</p>
+<p>The detailed guide should come from the actual tested commands and observed outputs—not an idealized workflow written after the fact.</p>
+<p>We can prepare these materials in a staged distribution without modifying the accepted GitHub release or published documentation yet.</p>
+<h2>The next delivery I recommend</h2>
+<p>Call it:</p>
+<h3><strong>MSBF Fresh Campaign Runtime Candidate R1 — 2,500 New-User Rehearsal</strong></h3>
+<p>It should contain the integrated fresh-input path, qualified compatibility production, reusable setup, campaign configuration, automatic controls, progress/status reporting, results packaging, targeted regression evidence, and a draft setup/run/review guide.</p>
+<p>It should also incorporate the already-recorded housekeeping corrections: precise audit-timestamp treatment, separate computation completion from certification outcome, and fix the <code>return</code>-in-<code>finally</code> path. Those are future-runtime corrections; they do not undo the accepted 750 decision. [export reference: filecite | turn21file0 | L48-L50]</p>
+<p><strong>The immediate next step is engineering that candidate—not asking you to run 2,500 with the current reference-replay package.</strong> No database cleanup, reference rerun, or fresh owner-side execution is needed at this point.</p>
+<p>The milestone we are aiming for is straightforward:</p>
+<blockquote>
+<p><strong>Starting from the supplied candidate and written procedures, a user can generate a genuinely new 2,500-merchant population, execute the intended MSBF lifecycle, obtain automatically validated results, and understand the outcome without knowing the project’s development history.</strong></p>
+</blockquote>
+<p>That is the next proof to earn. The 750 logical non-regression validation remains accepted and preserved.</p>
+</div></article><article id="m-d653a638-85b2-42d8-827e-7cceba871a98" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00112 · 2026-09-12T21:32:00.121000-04:00 · active path</p><div class="bubble"><p>Does this guidance align with the detailed directive I passed along earlier? If not, where does it deviate and why?</p>
+</div></article><article id="m-aca41f85-dfa5-4be8-8823-520a3c69c830" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00113 · 2026-09-12T21:32:19.441292-04:00 · active path</p><div class="bubble"><p>I’ll compare the guidance against your directive, separating genuine deviations from phase-specific implementation choices and anything that should be restated more explicitly.</p>
+</div></article><article id="m-31f1343d-1ae1-4ab0-882b-a50f47b9a051" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00114 · 2026-09-12T21:35:18.054763-04:00 · active path</p><div class="bubble"><p><strong>Yes—the guidance is substantively aligned with your directive. It does not require a new strategic direction or a replacement directive.</strong> However, I added some implementation choices, and a few need tighter wording so they do not become extra certification hurdles or another rebuild.</p>
+<p>The most important distinction is:</p>
+<blockquote>
+<p><strong>The 750 validation is accepted. The next phase completes and tests the reusable fresh-campaign workflow; it does not reconsider whether the accepted 750 validation was sufficient.</strong></p>
+</blockquote>
+<p>Your acceptance record expressly closes that gate while identifying fresh-input generation, compatibility production, and population-aware integration as the remaining product work. [export reference: filecite | turn23file1 | L896-L904] [export reference: filecite | turn23file1 | L931-L935]</p>
+<h2>1. Where the guidance directly follows your directive</h2>
+<table>
+<thead>
+<tr>
+<th>Governing requirement</th>
+<th>How the proposed next step follows it</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>One reusable runtime, not separate 750 and 2,500 engines</strong> — §§2, 8, 29</td>
+<td>Complete fresh-input production and connect it to the qualified downstream runtime, rather than build a different business engine.</td>
+</tr>
+<tr>
+<td><strong>Simple setup → run → review experience</strong> — §§1, 17, 24, 33</td>
+<td>Supply documented setup, campaign configuration, one orchestrated execution, and understandable results.</td>
+</tr>
+<tr>
+<td><strong>Fresh 2,500 population with endogenous outcomes</strong> — §§21, 30</td>
+<td>Generate the new population and required inputs; do not copy or arithmetically scale the 750 business outcomes.</td>
+</tr>
+<tr>
+<td><strong>Accuracy and controls remain mandatory</strong> — §§14, 25–28, 37</td>
+<td>Keep input contracts, lineage, stage completion, financial reconciliation, source certification, and fail-closed handling in normal runs.</td>
+</tr>
+<tr>
+<td><strong>Certification is separate from normal execution</strong> — §§8, 11, 28</td>
+<td>Do not require every ordinary campaign to perform the historical reference comparisons used for qualification.</td>
+</tr>
+<tr>
+<td><strong>Efficiency and usability are design requirements</strong> — §§15, 32–34</td>
+<td>Measure stage costs, expose meaningful progress, and separate user-facing summaries from detailed evidence.</td>
+</tr>
+</tbody></table>
+<p>These are not new requirements from my latest answer. Your directive explicitly requires the common runtime, interchangeable certified-versus-generated input paths, and separate certification controls. [export reference: filecite | turn23file0 | L80-L108] [export reference: filecite | turn23file0 | L308-L384] It also fixes the 2,500 input cardinalities while requiring business outcomes to emerge from the new population. [export reference: filecite | turn23file0 | L807-L840]</p>
+<h2>2. Where I added detail—and how it should be bounded</h2>
+<h3>A. “No dependency on Reference R1” is appropriate for the normal fresh-run path, not a ban on reusing accepted platform components</h3>
+<p>My guidance said the new-user workflow should operate without connecting to Reference R1 or locating historical development archives.</p>
+<p>That is <strong>more explicit than the directive</strong>, but it follows your goal: a future user should not need your private reference environment to generate and execute a new campaign.</p>
+<p>It must not be interpreted as requiring us to rebuild accepted infrastructure from first principles. Your directive permits accepted schemas, functions, lookup tables, configuration, and support objects. [export reference: filecite | turn23file0 | L167-L186]</p>
+<p>The correct boundary is:</p>
+<ul>
+<li><strong>During engineering:</strong> use retained sources and Reference R1 where useful to understand, extract, or qualify reusable components.</li>
+<li><strong>During the new-user run:</strong> obtain necessary platform components through the supplied setup/distribution; generate campaign-specific inputs and outcomes through the runtime.</li>
+</ul>
+<p>For example, a versioned schema-and-static-configuration package derived from approved components is acceptable. Requiring a future user to connect to <code>msbf_restore_test</code> and copy campaign tables is not.</p>
+<p><strong>Why the addition is useful:</strong> it makes “no hidden historical dependencies” testable without imposing a greenfield rebuild.</p>
+<h3>B. The “Fresh Campaign Runtime Candidate” must be a continuation—not a replacement engine</h3>
+<p>The proposed delivery name could make it sound as though we are beginning a new implementation. That would conflict with the same-runtime requirement.</p>
+<p>The intended work is a <strong>versioned continuation of the existing runtime</strong>:</p>
+<pre><code class="language-text">Existing qualified downstream runtime
+    + fresh-input provider
+    + strategy-to-compatibility production
+    + population-aware orchestration and controls
+    + operational improvements
+</code></pre>
+<p>It is not:</p>
+<pre><code class="language-text">Discard the qualified implementation
+    → write a new 2,500 engine
+    → requalify everything from scratch
+</code></pre>
+<p>The distinction between permitted orchestration changes and protected business semantics remains governing. The acceptance record also calls for regression testing proportional to the affected stages, not an automatic wholesale rerun of the accepted campaign. [export reference: filecite | turn23file1 | L931-L935]</p>
+<p><strong>Correction to my wording:</strong> “complete and extend the reusable runtime” is more precise than “build a fresh runtime.”</p>
+<h3>C. Engineering shakedown and new-user rehearsal should not become two mandatory full owner runs</h3>
+<p>I proposed separating engineering work from a clean new-user rehearsal. That is sensible, but it could be interpreted too heavily.</p>
+<p>Your directive asks for the largest controlled engineering leap and discourages repeated small owner diagnostics. [export reference: filecite | turn23file0 | L707-L752] It does not require two complete 2,500 campaigns simply because we call one “engineering” and another “rehearsal.”</p>
+<p>The proportionate interpretation is:</p>
+<blockquote>
+<p><strong>Complete source inspection, component tests, negative tests, and readiness work first. Then make the first ready owner-run 2,500 campaign serve both as the scale shakedown and the new-user procedure rehearsal.</strong></p>
+</blockquote>
+<p>Additional native attempts may become necessary if genuine defects appear. They should not be scheduled as mandatory duplication before we know that.</p>
+<p><strong>Why this matters:</strong> we should test the real workflow, not create another layer of process around it.</p>
+<h3>D. My rule about restarting the rehearsal after any procedural defect was too broad</h3>
+<p>I said that an unlisted command or ad hoc patch should lead to a revised candidate and another clean rehearsal.</p>
+<p>That is appropriate for a <strong>material defect</strong>—for example, discovering that the campaign secretly depends on retained 750 rows, needs a manual data repair, or executed the wrong configuration.</p>
+<p>It is excessive for every minor issue.</p>
+<table>
+<thead>
+<tr>
+<th>Finding</th>
+<th>Proportionate treatment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Typo in the guide, unclear wording, or an incorrect description of an output location</td>
+<td>Correct the documentation and record the observation; no automatic full campaign rerun.</td>
+</tr>
+<tr>
+<td>Nonsemantic progress or reporting defect</td>
+<td>Test the affected behavior and preserve the actual execution evidence.</td>
+</tr>
+<tr>
+<td>Missing required calculation, manual business-data repair, wrong inputs, or hidden historical dependency</td>
+<td>Correct the candidate and perform the execution needed to establish a valid result.</td>
+</tr>
+</tbody></table>
+<p><strong>This is a real refinement to my previous guidance.</strong> The standard should be “a trustworthy, documented result,” not “the first instructions must have been editorially perfect.”</p>
+<p>That treatment follows the directive’s distinction between material failures and nonmaterial observations, rather than making every imperfection a campaign failure. [export reference: filecite | turn23file0 | L591-L625]</p>
+<h3>E. Reproducibility testing must not silently become a second universal certification program</h3>
+<p>I correctly said that a seed in a configuration file is not, by itself, execution evidence of reproducibility.</p>
+<p>However, the directive’s reproducibility requirement does <strong>not automatically require two full 2,500 runs, a second computer, a second operating system, and a completely independent environment</strong> before proceeding.</p>
+<p>We should test determinism at the relevant generating and calculation boundaries, preserve the exact source/configuration/input identities, and describe what was actually tested. A second full campaign is warranted when it resolves a material uncertainty or supports a specific full-run reproducibility claim—not simply as an additional ritual.</p>
+<p><strong>Why this addition needs restraint:</strong> reproducibility matters, but its testing should remain tied to the actual risks and claims.</p>
+<h3>F. Drafting procedures before the run is a sequencing choice, not authorization to reopen publication</h3>
+<p>You said that once the process is established, we should draft detailed procedures. I proposed drafting the operating steps alongside the candidate and finalizing them after the rehearsal.</p>
+<p>That is a modest sequencing adjustment:</p>
+<pre><code class="language-text">Draft the instructions needed to run the candidate
+    → follow them during the 2,500 rehearsal
+    → correct and complete the detailed user procedures
+</code></pre>
+<p>It is consistent with your requirement that public usability be designed now. It does not authorize modifying the accepted release or rewriting current public documentation prematurely. Your directive retains that publication boundary. [export reference: filecite | turn23file0 | L844-L863]</p>
+<p><strong>The draft is a test instrument; the finalized guide is a deliverable.</strong></p>
+<h2>3. Requirements my latest guidance should have repeated more explicitly</h2>
+<p>These were omissions of emphasis—not decisions to abandon the directive.</p>
+<p><strong>Population-aware validation cannot become blanket replacement of old numbers.</strong> Each hardcoded value must be classified. A population-derived cardinality may become a formula; an endogenous outcome must be measured; a policy limit must remain the approved policy limit. G3/source-certification semantics cannot be weakened merely because the population changes.</p>
+<p><strong>The normal runtime must remain parameterized.</strong> The 2,500 profile is the next validation configuration, not a new software limit. Your directive explicitly retains 750, 2,500, and 25,000 as profile labels rather than an allowlist of supported population sizes. [export reference: filecite | turn23file0 | L441-L462]</p>
+<p><strong>Readiness still requires the integrated path, not just working components.</strong> A generator test, a compatibility fixture test, and a downstream test do not by themselves demonstrate that the assembled candidate connects them correctly. The §27 readiness criteria and §36 honest delivery-outcome rule still apply, adapted to the fresh 2,500 phase.</p>
+<p><strong>25,000 remains a later evidence-based decision.</strong> A successful 2,500 run should provide resource and performance evidence for that decision; it does not automatically establish larger-scale readiness. The directive explicitly makes measurement part of the transition. [export reference: filecite | turn23file0 | L629-L648]</p>
+<h2>4. The remaining implementation gap is not a new acceptance hurdle</h2>
+<p>There is one point worth stating plainly.</p>
+<p>Your directive aimed for certification of a reusable campaign runtime. The accepted work established the documented logical non-regression result, but the delivered implementation still lacks the complete fresh-input and compatibility-producing path. That distinction is recorded in the acceptance package. [export reference: filecite | turn23file1 | L931-L935]</p>
+<p><strong>Finishing that path is not moving the goalposts on the 750 PASS. It is completing the functionality needed to run a genuinely fresh 2,500 population.</strong></p>
+<p>Conversely, we should not use those unfinished components as a reason to reconsider your accepted 750 conclusion.</p>
+<h2>Bottom line</h2>
+<p><strong>Keep the detailed directive as the controlling instruction. Treat my latest guidance as an implementation plan under it, with the refinements above—not as a new set of gates.</strong></p>
+<p>The aligned next step is:</p>
+<blockquote>
+<p><strong>Extend the existing qualified runtime with fresh-input generation and compatibility production, preserve approved MSBF semantics, perform proportionate readiness testing, and deliver one integrated candidate with draft procedures. Use the ready 2,500 run to test both the fresh campaign and the future-user workflow. Finalize the procedures from that evidence.</strong></p>
+</blockquote>
+<p>That preserves the balance you asked for: <strong>accuracy first, one reusable process, meaningful automation, and no unnecessary reconstruction or repeat certification.</strong></p>
+</div></article><article id="m-05a3e1c7-f6e8-44a1-9075-a8acb6dd3442" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00115 · 2026-09-12T21:38:31.442000-04:00 · active path</p><div class="bubble"><p>I agree and I&#39;m aligned with the implementation plan: Extend the existing qualified runtime with fresh-input generation and compatibility production, preserve approved MSBF semantics, perform proportionate readiness testing, and deliver one integrated candidate with draft procedures. Use the ready 2,500 run to test both the fresh campaign and the future-user workflow. Finalize the procedures from that evidence.  Begin the first leap in that implementation plan. Do not bite off more than is manageable in a simple prompt, but leap as far as you can without my input and without overloading the next prompt.</p>
+</div></article><article id="m-78fe98fa-faed-4dc6-9897-9e3441824618" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00116 · 2026-09-12T21:38:51.811818-04:00 · active path</p><div class="bubble"><p>I’ll extend the retained runtime with configuration/input-provider contracts, bind the fresh-generation path, and regression-test runner fixes. The accepted 750 baseline stays unchanged; 2,500 will not launch yet.</p>
+</div></article><article id="m-f796f24c-0e3a-462a-b46c-6cb9f168f2b2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00117 · 2026-09-12T21:41:58.192221-04:00 · active path</p><div class="bubble"><p>The generator is population-parameterized, but deterministic draws depend on population identity and historical G1/run bindings. I’m mapping those explicitly while preserving unrelated fixed rules and formula-based cardinality checks.</p>
+</div></article><article id="m-334788af-9cc3-463c-9bc7-0f762cd4a2fd" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00118 · 2026-09-12T21:51:03.893738-04:00 · active path</p><div class="bubble"><p>I found and fixed a hidden verification-cardinality bug, adding broader scenario tests; configuration and four-file strategy handoff validation now cover lineage and failure cases. Packaging follows successful regression testing.</p>
+</div></article><article id="m-0705423f-c5eb-488c-ae77-10236d338f1c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00119 · 2026-09-12T21:58:12.065148-04:00 · active path</p><div class="bubble"><h2>First leap complete: configuration, input validation, and runtime corrections</h2>
+<p>I completed a bounded extension of the existing runtime. It establishes the configuration and input-handoff layer needed for fresh campaigns, corrects a hidden cardinality assumption, and fixes the three recorded runner issues.</p>
+<p><strong>Download the engineering extension (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP1_R1_20260912.zip</code>; referenced bytes not established here)</strong> — 37.3 MB.</p>
+<p>Engineering report (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP1_R1_20260912_ENGINEERING_REPORT.md</code>; referenced bytes not established here) · Validation record (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP1_R1_20260912_VALIDATION.json</code>; referenced bytes not established here) · SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP1_R1_20260912.zip.sha256</code>; referenced bytes not established here)</p>
+<p><strong>This is a tested engineering extension, not yet the owner-run 2,500 candidate. No PowerShell or database action is needed.</strong> The accepted 750 validation remains unchanged and closed. [export reference: filecite | turn25file0 | L15-L19]</p>
+<h2>1. Fresh-campaign configuration is now implemented</h2>
+<p>The existing <code>msbf.py</code> entrypoint now supports an offline planning operation that validates an explicit campaign configuration and produces its input identities, cardinalities, and readiness status.</p>
+<p>The configuration separates population size, seed, business date, scenarios, history window, input provider, validation mode, and source identity. Missing or unknown fields, invalid dates, duplicate scenarios, invalid population values, and unbound source identities are rejected.</p>
+<p>The seed is also distinguished from <strong><code>DET_HASH_V1</code>, which is the retained generation-method version</strong>. A deterministic namespace convention now maps the explicit user seed to a planned population identity without using the clock, filesystem, or execution-attempt identifier. Its application through the native generation chain remains the next implementation task.</p>
+<p>The included 2,500 example produces these planning requirements:</p>
+<table>
+<thead>
+<tr>
+<th>Input surface</th>
+<th align="right">Required rows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Merchants</td>
+<td align="right">2,500</td>
+</tr>
+<tr>
+<td>Application-scenario rows</td>
+<td align="right">5,000</td>
+</tr>
+<tr>
+<td>Verification rows</td>
+<td align="right">15,000</td>
+</tr>
+<tr>
+<td>Decision-critical feature-availability rows</td>
+<td align="right">5,000</td>
+</tr>
+<tr>
+<td>Base-history rows, <strong>per source stream</strong></td>
+<td align="right">450,000</td>
+</tr>
+<tr>
+<td>Scenario-history rows, <strong>per source stream</strong></td>
+<td align="right">900,000</td>
+</tr>
+</tbody></table>
+<p>These are derived input requirements—not generated campaign results or predicted business outcomes.</p>
+<h2>2. A hidden cardinality error was found and corrected</h2>
+<p>The inherited helper calculated verification rows as:</p>
+<pre><code class="language-text">population_size × scenario_count × 3
+</code></pre>
+<p>The accepted source actually requires <strong>six verification checks per original application</strong>, independent of scenario count.</p>
+<p>With two scenarios, both formulas produce the same number. That concealed the incorrect generalization:</p>
+<table>
+<thead>
+<tr>
+<th>Population and scenarios</th>
+<th align="right">Inherited formula</th>
+<th align="right">Source-correct formula</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>750 merchants, two scenarios</td>
+<td align="right">4,500</td>
+<td align="right">4,500</td>
+</tr>
+<tr>
+<td>2,500 merchants, two scenarios</td>
+<td align="right">15,000</td>
+<td align="right">15,000</td>
+</tr>
+<tr>
+<td>2,500 merchants, one scenario</td>
+<td align="right">7,500</td>
+<td align="right"><strong>15,000</strong></td>
+</tr>
+<tr>
+<td>2,500 merchants, three scenarios</td>
+<td align="right">22,500</td>
+<td align="right"><strong>15,000</strong></td>
+</tr>
+</tbody></table>
+<p>I checked this against both the retained M1.8 source and the actual retained verification input: <strong>750 applications, six checks each, 4,500 unique application/check pairs, and no scenario column</strong>. The evidence is preserved in the cardinality finding (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP1_R1_20260912/review/leap1/VERIFICATION_GRAIN_FINDING.json</code>; referenced bytes not established here).</p>
+<p><strong>This corrects the adapter’s interpretation; it does not change MSBF verification policy or the accepted 750 result.</strong> It is precisely the kind of issue we need to catch before treating campaign size and configuration as reusable parameters.</p>
+<h2>3. The fresh-input handoff now has executable validation</h2>
+<p>The new handoff validator checks the four Module A input files for exact schemas, required-file completeness, key uniqueness, application/scenario coverage, scenario mapping, run/population/date identity, verification-check completeness, feature coverage, and candidate-parent relationships.</p>
+<p>It rejects retained predecessor files and reference-population identities in the fresh-input route. Candidate counts remain data-dependent.</p>
+<p>Its result is deliberately named:</p>
+<pre><code class="language-text">INPUT_HANDOFF_STRUCTURAL_PASS
+</code></pre>
+<p><strong>It does not claim that the inputs were freshly generated or that their economic calculations are correct.</strong> Those assurances must come from the producing source chain. This distinction prevents a correctly shaped file from being mistaken for a qualified fresh population.</p>
+<h2>4. The recorded runner corrections are implemented and tested</h2>
+<table>
+<thead>
+<tr>
+<th>Correction</th>
+<th>Implemented behavior</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Computation completion versus certification</strong></td>
+<td>Required computation receipts are evaluated independently. Completed calculations can be reported accurately even when comparison fails. Missing, duplicated, failed, or out-of-order receipts prevent a complete-stage assertion.</td>
+</tr>
+<tr>
+<td><strong>Packaging failure handling</strong></td>
+<td>The failure path no longer returns from <code>finally</code>. It preserves an earlier stage failure, records packaging errors separately, and prevents a successful final status after packaging failure.</td>
+</tr>
+<tr>
+<td><strong>M2.4 audit timestamp</strong></td>
+<td>The prospective rule excludes only <code>reviewed_at</code> from cross-run equality while requiring a valid, non-null, timezone-aware value within the subject execution interval. Actual values remain preserved.</td>
+</tr>
+</tbody></table>
+<p>The timestamp and stage-reporting changes were checked against the <strong>actual accepted return evidence</strong>. The original contract and original STOP remain unchanged; these corrections apply to future runtime behavior.</p>
+<h2>Verification completed</h2>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Full engineering test suite</td>
+<td><strong>189 passed; zero failures or errors</strong></td>
+</tr>
+<tr>
+<td>Same suite from a clean extraction of the delivered ZIP</td>
+<td><strong>189 passed again</strong></td>
+</tr>
+<tr>
+<td>Retained vendor business-source files</td>
+<td><strong>67/67 byte-identical to R2</strong></td>
+</tr>
+<tr>
+<td>Curated upstream source programs</td>
+<td><strong>24/24 match the carried publication locks</strong></td>
+</tr>
+<tr>
+<td>Package manifest, seal, archive integrity, and path checks</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td>Native database execution or fresh population generation</td>
+<td><strong>Not performed</strong></td>
+</tr>
+</tbody></table>
+<p>The package includes the code, tests, logs, exact change set, source register, targeted evidence checks, configuration examples, and draft future-user procedures.</p>
+<h2>The next bounded leap</h2>
+<p>The next task is now narrower:</p>
+<blockquote>
+<p><strong>Connect the curated G0/G1 configuration and M1.2/M1.3 population/application sources to the generated-input provider, using the new explicit configuration and identity binding.</strong></p>
+</blockquote>
+<p>That means preserving the accepted allocation and draw calculations while replacing only the historical context bindings. Snapshot reconciliation, stage authorization, and regeneration guards must remain intact.</p>
+<p>The package’s <strong><code>NEXT_LEAP.md</code></strong> supplies a short continuation instruction for that work. We do not need to tackle the remaining histories, features, compatibility production, and downstream scale integration in the same prompt.</p>
+<p><strong>Retain this package under <code>D:\MSBF_ARCHIVE</code>; do not install it over the repository or run a campaign from it.</strong> This leap completes the configuration and handoff-validation layer. The next leap implements the initial fresh-population producing component, continuing toward one ready 2,500 run that also tests the future-user workflow.</p>
+</div></article><article id="m-c4d33f42-78bb-4f97-82a3-68479febf57f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00120 · 2026-09-12T22:02:23.670000-04:00 · active path</p><div class="bubble"><p>Before we move on, I assume this is an issue in the current github repository logic?  2. A hidden cardinality error was found and corrected
+The inherited helper calculated verification rows as:</p>
+<pre><code>
+</code></pre>
+<pre><code>population_size × scenario_count × 3
+</code></pre>
+<p>The accepted source actually requires <strong>six verification checks per original application</strong>, independent of scenario count.</p>
+<p>With two scenarios, both formulas produce the same number. That concealed the incorrect generalization:</p>
+<table>
+<thead>
+<tr>
+<th>Population and scenariosInherited formulaSource-correct formula</th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>750 merchants, two scenarios</td>
+<td>4,500</td>
+<td>4,500</td>
+</tr>
+<tr>
+<td>2,500 merchants, two scenarios</td>
+<td>15,000</td>
+<td>15,000</td>
+</tr>
+<tr>
+<td>2,500 merchants, one scenario</td>
+<td>7,500</td>
+<td><strong>15,000</strong></td>
+</tr>
+<tr>
+<td>2,500 merchants, three scenarios</td>
+<td>22,500</td>
+<td><strong>15,000</strong></td>
+</tr>
+</tbody></table>
+<p>I checked this against both the retained M1.8 source and the actual retained verification input: <strong>750 applications, six checks each, 4,500 unique application/check pairs, and no scenario column</strong>. The evidence is preserved in the svgcardinality finding.</p>
+<p><strong>This corrects the adapter’s interpretation; it does not change MSBF verification policy or the accepted 750 result.</strong> It is precisely the kind of issue we need to catch before treating campaign size and configuration as reusable parameters.</p>
+</div></article><article id="m-9d188d18-0786-4942-9672-bdff52d999f6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00121 · 2026-09-12T22:02:43.630592-04:00 · active path</p><div class="bubble"><p>I’ll trace the formula to its source file and publication status to distinguish a GitHub logic defect from a campaign-adapter defect.</p>
+</div></article><article id="m-3856214a-04ce-49bf-a614-ebb9d68ab4a4" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00122 · 2026-09-12T22:05:50.042838-04:00 · active path</p><div class="bubble"><p>The incorrect formula is in the private Hybrid R1/R2 <code>fixed_cardinalities()</code> helper, not published M1.8 logic; M1.8 correctly enforces six verification checks per application.</p>
+</div></article><article id="m-5fbcf216-d3f5-402c-aebe-2b930fa349cd" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00123 · 2026-09-12T22:06:51.162268-04:00 · active path</p><div class="bubble"><p><strong>No—not in the approved v2.1.0 verification-generation logic. The defect was in the later Campaign Scale expected-count helper I supplied while developing the reusable runtime.</strong> My phrase “inherited helper” was ambiguous; I should have identified that distinction explicitly. The finding itself classifies this as a <strong>parameterized-cardinality adapter defect, not an MSBF calculation change</strong>. [export reference: filecite | turn27file0 | L9-L28]</p>
+<h2>Where the error actually lives</h2>
+<p>I checked the delivered code and rehashed the retained <strong>2,884-file publication snapshot against its v2.1.0 file lock</strong>. The distinction is:</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>What it does</th>
+<th>Finding</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Approved M1.8 SQL</strong></td>
+<td>Generates verification results for each original application</td>
+<td>Explicitly requires six checks; constructs application/check pairs.</td>
+</tr>
+<tr>
+<td><strong>Later Campaign Scale helper</strong> — <code>runtime/contracts.py</code>, <code>fixed_cardinalities()</code></td>
+<td>Calculates how many input rows the campaign should expect</td>
+<td>Incorrectly used <code>population_size × scenario_count × 3</code>.</td>
+</tr>
+<tr>
+<td><strong>Leap 1 correction</strong></td>
+<td>Aligns that expected-count calculation with the approved source</td>
+<td>Uses <code>population_size × 6</code> for the current one-original-application-per-merchant profile.</td>
+</tr>
+</tbody></table>
+<p>The defective helper is <strong>not present in the checked v2.1.0 publication tree</strong> by its path, function name, or old file hash. It is in the separately delivered hybrid-runtime package. I preserved the exact locations, source excerpts, and checks in this provenance clarification (historical reference: <code>sandbox:[session]/MSBF_VERIFICATION_CARDINALITY_PROVENANCE_CLARIFICATION.md</code>; referenced bytes not established here).</p>
+<h3>The approved logic was the source used to correct the helper</h3>
+<p>The accepted M1.8 source requires these six checks:</p>
+<pre><code class="language-text">BANK_ACCOUNT_MATCH
+BENEFICIAL_OWNER
+FRAUD_SCREEN
+KYB_ENTITY
+PROCESSOR_MATCH
+SANCTIONS
+</code></pre>
+<p>Its verification grain is <strong>original application × check</strong>, not <strong>application × scenario × check</strong>. The retained evidence confirms 750 original applications, 4,500 rows, six checks per application, and no scenario column in that input surface. [export reference: filecite | turn27file1 | L87-L98]</p>
+<p>The general relationship is therefore:</p>
+<pre><code class="language-text">verification rows = original applications × 6 approved checks
+</code></pre>
+<p>It simplifies to <code>population_size × 6</code> only because the current profile creates one original application per merchant. It should not be applied indiscriminately to later candidate/replay applications or accumulated historical versions.</p>
+<h2>What this means for the accepted 750 validation</h2>
+<p><strong>This finding does not indicate that the published engine generated the wrong verification results, nor does it invalidate the accepted 750 validation.</strong></p>
+<p>The erroneous expression was an <strong>expected-count calculation</strong>, not the SQL producing verification outcomes. With the accepted two-scenario configuration, both expressions happen to give 4,500 rows. The actual retained verification population also satisfies the correct application/check grain—not merely the coincidentally matching total. [export reference: filecite | turn27file0 | L12-L31]</p>
+<p>The defect becomes visible when generalizing the helper to a different scenario count. For example, it would incorrectly expect 7,500 rather than 15,000 verification rows for 2,500 original applications with one scenario. That is why the one- and three-scenario tests matter. [export reference: filecite | turn27file0 | L33-L40]</p>
+<h2>A separate published-source limitation still needs adaptation</h2>
+<p>The accepted SQL does contain <strong>750-example-specific reconciliation checks</strong>, including expected totals of 4,500 verification rows and 750 application summaries. Those need controlled parameterization for new campaign sizes.</p>
+<p>That is a <strong>different issue</strong> from the wrong scenario-dependent formula: preserving the approved six-check methodology while adapting historical run/count bindings is part of the fresh-campaign work already identified. It is not permission to remove the checks or change verification policy. [export reference: filecite | turn27file1 | L130-L136]</p>
+<h2>Publication disposition</h2>
+<p><strong>This particular finding does not call for an emergency v2.1.0 logic patch or another 750 run.</strong> The correction belongs in the new Campaign Scale extension and its future release notes, with wording such as:</p>
+<blockquote>
+<p>Corrected the campaign adapter’s expected verification-row count to follow the approved six-check-per-original-application grain, independent of scenario count. Approved M1.8 verification-generation semantics are unchanged.</p>
+</blockquote>
+<p>For precision, my code-level conclusion is based on the <strong>byte-locked approved publication and the delivered campaign packages</strong>. The public repository page also describes generalized campaign execution as a separately gated development capability, but I could not retrieve the individual SQL file live during this check; this is not a fresh audit of every current remote file. [export reference: cite | turn274133view0]</p>
+<p><strong>The approved source supplied the correct rule. The new campaign helper misinterpreted that rule, and Leap 1 corrected the helper.</strong></p>
+</div></article><article id="m-4996d596-4b92-4a9e-8528-35e5ae8c1000" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00124 · 2026-09-12T22:09:14.804000-04:00 · active path</p><div class="bubble"><p>That is a bit concerning for our current process though. While nice that the 750 reconciliation validated substantive results matched, the fact that we identified a case where your logic differed from the main logic but we just got lucky that it was a non-impactful scenario...it makes me pause and want to do a brief review to ensure no other misses in our current process vs the approved, published logic.</p>
+</div></article><article id="m-6ed11d22-209f-41df-b2bb-e9c6bbfbb033" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00125 · 2026-09-12T22:09:36.753591-04:00 · active path</p><div class="bubble"><p>That concern is justified. I’ll review the added adapters and validation gates against locked published sources, focusing on assumptions the two-scenario 750 test could mask.</p>
+</div></article><article id="m-80c4158c-4610-455e-ada8-184649efeff6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00126 · 2026-09-12T22:12:42.621172-04:00 · active path</p><div class="bubble"><p>I’m testing changed scenarios, identities, lineage, input mappings, and acceptance checks—not just row totals—to expose adapter assumptions that the successful 750 configuration could conceal.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

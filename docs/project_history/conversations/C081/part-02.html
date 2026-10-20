@@ -1,0 +1,1122 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>M2.11 Plan Review — part 02 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>M2.11 Plan Review — part 02</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-01.html">Previous part</a><a href="part-03.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-139f1d6e-0ef1-4ae3-a2fd-9c8aaaacaf84" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00030 · 2026-08-05T13:10:32.147913-04:00 · active path</p><div class="bubble"><h1>M2.11 WP2 bounded correction complete</h1>
+<p>I treated the attached review as controlling: <strong>WP2 remains unapproved, WP3 remains unauthorized, and Program 212 must not be executed yet.</strong> The first WP2 release was corrected rather than discarded or redesigned. [export reference: filecite | turn2file0]</p>
+<pre><code class="language-text">Revision                               WP2_IMPLEMENTATION_CORRECTION_R2
+Correction release                     COMPLETE
+WP2 approval                           HOLD — NOT APPROVED
+WP3 authorization                      NO
+Program 212 execution authorization    NO
+PostgreSQL execution                   NOT PERFORMED
+Validation                             NOT PERFORMED
+Acceptance                             NOT CLAIMED
+Packaging                              NOT CREATED
+Accepted M2.10 baseline                UNMODIFIED
+</code></pre>
+<h2>Corrections made</h2>
+<h3>1. Invalid PL/pgSQL declaration syntax</h3>
+<p>All <strong>15 malformed blocks</strong> identified in the review were corrected. The expanded audit then examined <strong>all 59 anonymous <code>DO</code> blocks</strong> across Programs 212–214 and Recoveries 212A, 214A, and 214B.</p>
+<p>Every block now has:</p>
+<pre><code class="language-sql">DECLARE
+    variable_1 data_type;
+    variable_2 data_type;
+BEGIN
+</code></pre>
+<p>or begins directly with <code>BEGIN</code> when it has no declarations. This matches PostgreSQL’s documented block structure of one optional declaration section followed by the executable section. [export reference: cite | turn501937search0 | turn501937search1]</p>
+<h3>2. Exact target typing before hashing</h3>
+<p>The implementation sequence is now:</p>
+<pre><code class="language-text">calculate
+→ coerce to exact persistent target type and typmod
+→ calculate hash from the governed preimage
+→ persist
+→ reconstruct from persisted physical fields
+</code></pre>
+<p>Program 212 now uses:</p>
+<pre><code class="language-text">raw seed values
+→ jsonb_populate_record against the physical target composite
+→ hash target-typed values
+→ insert
+</code></pre>
+<p>Program 214 now uses <strong>14 target-shaped temporary relations</strong>. Before any physical hash is calculated, it verifies:</p>
+<pre><code class="language-text">column ordinal
+column name
+PostgreSQL type OID
+typmod
+collation
+</code></pre>
+<p>against the persistent target.</p>
+<p>This explicitly resolves the quoted-text-versus-physical-numeric defect identified in the objective tolerances and strategy weights.</p>
+<h3>3. Physical row-hash reconstruction before Program 214 commits</h3>
+<p>Program 214 now independently reconstructs, from persisted physical values:</p>
+<ul>
+<li>policy configuration hash;</li>
+<li>four definition dictionaries;</li>
+<li>five source-snapshot families;</li>
+<li>candidate evaluations;</li>
+<li>application simulations;</li>
+<li>account simulations;</li>
+<li>strategy summaries;</li>
+<li>frontier rows;</li>
+<li>comparisons;</li>
+<li>latest contract rows;</li>
+<li>archive rows;</li>
+<li>registry row;</li>
+<li>all <strong>19 ordered object-set hashes</strong>;</li>
+<li>contract-set hash;</li>
+<li>final combined hash.</li>
+</ul>
+<p>This reconciliation occurs <strong>before</strong>:</p>
+<pre><code class="language-text">generation evidence insertion
+run lifecycle advancement
+COMMIT
+</code></pre>
+<p>Any mismatch raises an exception and rolls back the complete Program 214 transaction. Program 214B is no longer the first point at which pre-insert versus persisted-physical hash differences could be detected.</p>
+<h3>4. Authoritative hash metadata corrected</h3>
+<p>The revised authoritative controls now include:</p>
+<pre><code class="language-text">Hash-preimage specification             1,014 fields
+Target-type/prehash audit               1,014 fields
+Revised type dictionary                 1,014 fields
+Ordered canonical hash families            19
+Physical object catalog                    44
+Canonical object families                  19
+</code></pre>
+<p>The two legitimate noncanonical helper functions are now formally cataloged:</p>
+<pre><code class="language-text">msbf_ctl.m2_11_hash_jsonb(jsonb)
+msbf_ctl.m2_11_registry_row_hash(jsonb)
+</code></pre>
+<p>The field-level metadata now excludes, where applicable:</p>
+<pre><code class="language-text">the object’s own hash output
+generated surrogate IDs
+mutable lifecycle fields
+M2.11 audit timestamps
+derived set hashes
+combined hashes
+</code></pre>
+<p>The archive’s copied latest <code>contract_row_hash</code> remains deliberately included in the archive preimage under the governed <code>source_latest_row_hash</code> key; it is not treated as the archive row’s own hash output.</p>
+<h3>5. PORTFOLIO adversity tie-break formally governed</h3>
+<p>The undocumented <code>pre_adversity_hash</code> has been replaced by the formally governed:</p>
+<pre><code class="language-text">adversity_tiebreak_hash
+</code></pre>
+<p>The new specification contains:</p>
+<pre><code class="language-text">Application fields       114
+Account fields            40
+Total                    154
+</code></pre>
+<p>For the application simulation, the target-typed preimage excludes:</p>
+<pre><code class="language-text">portfolio_adverse_selected_flag
+portfolio_adversity_order
+primary_reason_code
+reason_codes
+row_hash
+created_at
+</code></pre>
+<p>For the account simulation, it excludes:</p>
+<pre><code class="language-text">portfolio_adverse_selected_flag
+portfolio_adversity_order
+row_hash
+created_at
+</code></pre>
+<p>The temporary hash is noncanonical and is not added as a persistent business column. Its preimage and reconstruction method are now explicit so Program 215 can independently reproduce the tie-break.</p>
+<h3>6. Program 214 staging-only compliance restored</h3>
+<p>Program 214 now creates five target-typed and prehashed source-snapshot staging relations:</p>
+<pre><code class="language-text">tmp_src_m2_11_application_snapshot
+tmp_src_m2_11_candidate_snapshot
+tmp_src_m2_11_account_snapshot
+tmp_src_m2_11_kpi_snapshot
+tmp_src_m2_11_queue_snapshot
+</code></pre>
+<p>Each temporary relation is used for both:</p>
+<ol>
+<li>insertion into its canonical snapshot table; and  </li>
+<li>all downstream candidate, application, account, scope, stress, frontier, comparison, latest, archive, and registry business generation.</li>
+</ol>
+<p>Persistent canonical source-snapshot tables are read only after generation for:</p>
+<pre><code class="language-text">persisted physical reconstruction
+ordered set-hash reconstruction
+canonical counts
+non-production boundary checks
+</code></pre>
+<p>The static audit found <strong>zero persistent source-snapshot reads in downstream business generation</strong>.</p>
+<p>The governed <code>run_registry</code> row is also staged and row-locked in its sole accepted-source read. Later access is confined to the authorized lifecycle update.</p>
+<h3>7. Program 213 installation certification expanded</h3>
+<p>The read-only preflight now fails closed unless the installed Program 212 surface includes the governed:</p>
+<ul>
+<li>hash-helper signatures and behavior;</li>
+<li>registry-hash exclusion behavior;</li>
+<li>archive mutation-blocking function;</li>
+<li>immutable archive trigger;</li>
+<li>trigger event mask, function, and table binding;</li>
+<li>primary and unique keys;</li>
+<li>critical <code>CHECK</code> constraints;</li>
+<li>required indexes;</li>
+<li>four governed view interfaces, types, definitions, and dependencies;</li>
+<li>policy configuration hash;</li>
+<li>physical row hashes for all four definition dictionaries.</li>
+</ul>
+<p>A column-compatible but structurally conflicting installation will therefore fail Program 213.</p>
+<h3>8. M2.2 inherited bounds governed</h3>
+<p>The accepted M2.2 limits are now carried in the M2.11 policy configuration with their accepted provenance:</p>
+<pre><code class="language-text">Policy code                    M2_2_PRICING_STRUCTURE_POLICY_V1
+Configuration hash             9e03c9ee37880e3ed16e12fb0c0ce0d4
+Contract                       M2_PRICING_STRUCTURE_CONSUMPTION v1
+Schema                         M2_2_PRICING_STRUCTURE_SCHEMA_V1
+Methodology                    M2_2_METHOD_V1
+
+Minimum candidate amount       2500.00
+Remittance-rate range          0.050000–0.200000
+Payback-multiple range         1.050000–1.400000
+Collection-horizon range       1–120 days
+</code></pre>
+<p>Program 213 verifies the policy payload and the policy hash carried by the accepted M2.2 latest and candidate rows using null-safe comparisons.</p>
+<p>Program 214 loads the values into one target-typed governed bounds relation. The candidate-classification section no longer contains the raw boundary literals.</p>
+<h3>9. Object comments improved</h3>
+<p>Program 212 comments now identify, as applicable:</p>
+<pre><code class="language-text">grain
+analytical purpose
+mutation boundary
+canonical role
+downstream role
+non-production limitation
+</code></pre>
+<h2>Revised static audit</h2>
+<pre><code class="language-text">Static controls                         179 / 179 PASS
+Known static failures                   0
+SQL files                               6
+SQL source lines                        13,374
+Top-level statements                    469
+PL/pgSQL DO blocks                      59
+Explicit INSERT projections             43
+Transaction-local temporary tables      83
+Ordered string_agg constructions        85
+Unordered string_agg constructions       0
+
+Authorized physical source objects      15
+Required source fields                 404
+Source-to-target mappings              397
+Physical target fields               1,014
+Target/support objects                  44
+Canonical families                     19
+Canonical entities                 19,298
+</code></pre>
+<p>The audit now includes field-level alignment among the type dictionary, hash-preimage specification, target-type/prehash audit, and adversity tie-break specification—not just row-count checks.</p>
+<h3>Important limitation</h3>
+<p>The environment still has no PostgreSQL server/client parser or PostgreSQL grammar library, and PostgreSQL execution was prohibited. Therefore:</p>
+<pre><code class="language-text">Static lexical and structural audit     PASS
+PostgreSQL parse evidence               NONE
+PostgreSQL runtime evidence             NONE
+Program 215 validation evidence         NONE
+</code></pre>
+<p>I am not representing the static result as proof that the scripts will execute successfully in PostgreSQL.</p>
+<h2>Accepted baseline preservation</h2>
+<pre><code class="language-text">Recalculated M2.10 ZIP SHA-256
+ca6aac62b1bb9442f3f3c5749930a13965a96c5141a18cf49fd8a37c765cf02c
+
+Sidecar-declared SHA-256
+ca6aac62b1bb9442f3f3c5749930a13965a96c5141a18cf49fd8a37c765cf02c
+
+Archive-to-sidecar reconciliation      PASS
+ZIP CRC                                PASS
+ZIP entries                            4,488
+Archive size                           20,259,040 bytes
+</code></pre>
+<h1>Primary review artifacts</h1>
+<ul>
+<li>Revised WP2 Correction Review (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/reports/M2_11_WORK_PACKAGE_2_REVIEW.md</code>; referenced bytes not established here)</li>
+<li>Revised Static SQL Audit (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/reports/M2_11_STATIC_SQL_AUDIT.md</code>; referenced bytes not established here)</li>
+<li>Machine-Readable Static Audit Results (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/reports/M2_11_STATIC_AUDIT_RESULTS.json</code>; referenced bytes not established here)</li>
+<li>WP1/WP2 Implementation Errata R2 (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/wp1_errata/M2_11_WP1_WP2_IMPLEMENTATION_ERRATA.md</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Reissued normal SQL</h1>
+<ul>
+<li>Program 212 — Schema, policy, definitions, contracts, triggers, and views (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/sql/212_msbf_m2_11_schema_policy_definitions_contracts_triggers_views_v1.sql</code>; referenced bytes not established here)</li>
+<li>Program 213 — Accepted-source and pristine-target preflight (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/sql/213_msbf_m2_11_accepted_source_pristine_target_preflight_v1.sql</code>; referenced bytes not established here)</li>
+<li>Program 214 — Deterministic strategy simulation and physical reconciliation (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/sql/214_msbf_m2_11_deterministic_strategy_simulation_reconciliation_v1.sql</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Reissued recovery SQL</h1>
+<ul>
+<li>Recovery 212A — Failed schema/policy installation (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/recovery/212A_msbf_m2_11_failed_schema_policy_installation_recovery_v1.sql</code>; referenced bytes not established here)</li>
+<li>Recovery 214A — Failed precommit generation rollback (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/recovery/214A_msbf_m2_11_failed_precommit_generation_rollback_recovery_v1.sql</code>; referenced bytes not established here)</li>
+<li>Recovery 214B — Committed generation-checkpoint reconstruction (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/recovery/214B_msbf_m2_11_committed_generation_checkpoint_reconstruction_v1.sql</code>; referenced bytes not established here)</li>
+</ul>
+<h1>New hash and typing controls</h1>
+<ul>
+<li>Hash Preimage Specification (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/catalogs/M2_11_HASH_PREIMAGE_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Target-Type Prehash Audit (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/catalogs/M2_11_TARGET_TYPE_PREHASH_AUDIT.csv</code>; referenced bytes not established here)</li>
+<li>Adversity Tie-Break Hash Specification (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/catalogs/M2_11_ADVERSITY_TIEBREAK_HASH_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+<li>Revised Ordered Hash Specification (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/catalogs/M2_11_ORDERED_HASH_SPECIFICATION.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Revised implementation catalogs</h1>
+<ul>
+<li>Revised Physical Object Catalog (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/wp1_errata/M2_11_PHYSICAL_OBJECT_CATALOG.csv</code>; referenced bytes not established here)</li>
+<li>Revised Type and Precision Dictionary (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/wp1_errata/M2_11_TYPE_PRECISION_DICTIONARY.csv</code>; referenced bytes not established here)</li>
+<li>Revised Source-to-Target Mapping (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/wp1_errata/M2_11_SOURCE_TO_TARGET_MAPPING.csv</code>; referenced bytes not established here)</li>
+<li>Revised Consolidated Implementation Specification (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/wp1_errata/M2_11_CONSOLIDATED_IMPLEMENTATION_SPECIFICATION.md</code>; referenced bytes not established here)</li>
+<li>Revised Implementation Invariants (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/wp1_errata/M2_11_IMPLEMENTATION_INVARIANTS.md</code>; referenced bytes not established here)</li>
+<li>Revised WP1 Review (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/wp1_errata/M2_11_WORK_PACKAGE_1_REVIEW.md</code>; referenced bytes not established here)</li>
+<li>Program Responsibility Matrix (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/wp1_errata/M2_11_PROGRAM_RESPONSIBILITY_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Transaction and Mutation Matrix (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/wp1_errata/M2_11_TRANSACTION_AND_MUTATION_MATRIX.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Revised WP2 control catalogs</h1>
+<ul>
+<li>Source Field Usage Inventory (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/catalogs/M2_11_SOURCE_FIELD_USAGE_INVENTORY.csv</code>; referenced bytes not established here)</li>
+<li>Target Object Usage Inventory (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/catalogs/M2_11_TARGET_OBJECT_USAGE_INVENTORY.csv</code>; referenced bytes not established here)</li>
+<li>Program 214 Expected-Count Reconciliation (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/catalogs/M2_11_PROGRAM_214_EXPECTED_COUNT_RECONCILIATION.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Current governing status</h1>
+<pre><code class="language-text">READY FOR LIVE EXECUTION
+NOT EXECUTED
+NOT VALIDATED
+NOT ACCEPTED
+
+WP2 APPROVAL              HOLD — USER REVIEW REQUIRED
+WP3 AUTHORIZATION         NO
+PROGRAM 212 EXECUTION     NO
+</code></pre>
+<p>“Ready for live execution” is the artifact-readiness label required by the build plan. It is <strong>not</strong> approval to execute Program 212.</p>
+</div></article><article id="m-5b13ef44-5148-47fa-9734-f81eca611b6f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C081-M00031 · 2026-08-05T14:00:38.252000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(24).md</p><div class="bubble"><p>See attached review. Correct remaining blocker and minor documentation issues. WP2 is not approved yet.</p>
+</div></article><article id="m-263eb21c-b3b7-430b-9181-71dc716782c1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00032 · 2026-08-05T14:00:53.079340-04:00 · active path</p><div class="bubble"><p>I’m applying a bounded R3 correction: eliminating Program 214’s pre-reconciliation target reads, strengthening the audit, and reissuing documentation without starting WP3.</p>
+</div></article><article id="m-c831e697-307a-4b40-87ca-b338ed3b0b37" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00033 · 2026-08-05T14:03:57.531035-04:00 · active path</p><div class="bubble"><p>The blocker is confirmed: R2 still feeds downstream construction from persisted generated tables. I’m replacing those paths with typed temporary relations and relocating early checks.</p>
+</div></article><article id="m-9e6f42a2-452a-45d3-99e3-b3e5beb351ef" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00034 · 2026-08-05T14:13:01.429734-04:00 · active path</p><div class="bubble"><p>The SQL graph is now clean: 48 reads were redirected, leaving only 13 permitted target-shape reads and zero generated-target or registry construction reads.</p>
+</div></article><article id="m-83b1cf39-7bb9-4920-844a-4c33f264d6f9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00035 · 2026-08-05T14:25:26.621290-04:00 · active path</p><div class="bubble"><h1>M2.11 WP2 Implementation Correction R3 complete</h1>
+<p>I applied the remaining correction as a <strong>bounded R3 release</strong>. The frozen business design was not reopened, Work Package 3 was not started, and Program 212 was not executed or authorized for execution.</p>
+<p>The attached review identified one remaining blocker: Program 214 was still using newly persisted generated tables to construct later business objects rather than using its target-typed temporary construction layer. It also required corrected account-population wording and a definitive source-authority record. [export reference: filecite | turn2file0]</p>
+<pre><code class="language-text">Revision                               WP2_IMPLEMENTATION_CORRECTION_R3
+Correction status                      COMPLETE / READY FOR RE-REVIEW
+WP2 approval                           HOLD — NOT APPROVED
+WP3 authorization                      NO
+Program 212 execution authorization    NO
+
+PostgreSQL execution                   NOT PERFORMED
+PostgreSQL parser/runtime evidence      NONE
+Positive validation                    NOT PERFORMED
+Negative controls                      NOT PERFORMED
+Acceptance                             NOT CLAIMED
+Programs 215–219                       NOT CREATED
+Manifest/checksum/ZIP packaging        NOT CREATED
+Accepted M2.10 baseline                UNMODIFIED
+</code></pre>
+<h2>Remaining blocker corrected</h2>
+<p>R3 redirects every pre-reconciliation read of a newly persisted generated table to its corresponding target-typed temporary authority.</p>
+<table>
+<thead>
+<tr>
+<th>Generated target formerly read</th>
+<th align="right">R2 reads corrected</th>
+<th>R3 construction authority</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Candidate evaluation</td>
+<td align="right">4</td>
+<td><code>tmp_eval_m2_11_candidate_evaluation</code></td>
+</tr>
+<tr>
+<td>Account simulation</td>
+<td align="right">10</td>
+<td><code>tmp_eval_m2_11_account_simulation</code></td>
+</tr>
+<tr>
+<td>Application simulation</td>
+<td align="right">14</td>
+<td><code>tmp_eval_m2_11_application_simulation</code></td>
+</tr>
+<tr>
+<td>Strategy summary</td>
+<td align="right">8</td>
+<td><code>tmp_scope_m2_11_strategy_summary</code></td>
+</tr>
+<tr>
+<td>Frontier</td>
+<td align="right">6</td>
+<td><code>tmp_frontier_m2_11_strategy_frontier</code></td>
+</tr>
+<tr>
+<td>Comparison</td>
+<td align="right">2</td>
+<td><code>tmp_scope_m2_11_strategy_comparison</code></td>
+</tr>
+<tr>
+<td>Latest contract</td>
+<td align="right">2</td>
+<td><code>tmp_latest_m2_11_contract</code></td>
+</tr>
+<tr>
+<td>Archive contract</td>
+<td align="right">2</td>
+<td><code>tmp_archive_m2_11_contract</code></td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td align="right"><strong>48</strong></td>
+<td></td>
+</tr>
+</tbody></table>
+<p>This covers:</p>
+<ul>
+<li>application selection and candidate-replay joins;</li>
+<li>account-to-application association;</li>
+<li>application and account scope populations;</li>
+<li>summary-to-frontier construction;</li>
+<li>summary/frontier-to-comparison construction;</li>
+<li>summary/frontier/comparison-to-latest construction;</li>
+<li>latest-to-archive construction;</li>
+<li>intermediate count, replay, tie, scope, frontier, comparison, and latest/archive consistency checks.</li>
+</ul>
+<p>Persistent generated targets are now read only after all business objects through latest and archive have been constructed.</p>
+<h2>Explicit Program 214 audit boundary</h2>
+<p>Program 214 now includes three machine-detectable markers:</p>
+<pre><code class="language-text">Line 925
+BEGIN_M2_11_CANONICAL_BUSINESS_CONSTRUCTION
+
+Line 6281
+END_M2_11_CANONICAL_BUSINESS_CONSTRUCTION
+
+Line 6282
+BEGIN_M2_11_PERSISTED_RECONCILIATION
+</code></pre>
+<p>The replacement control:</p>
+<pre><code class="language-text">P214_CANONICAL_BUSINESS_STAGING_ONLY
+</code></pre>
+<p>inspects all fourteen generated canonical projection families between the construction markers.</p>
+<pre><code class="language-text">Generated canonical families inspected             14
+R2 generated-target reads redirected                48
+Permitted WITH NO DATA target-shape reads           13
+Registry business-window reads                       0
+Prohibited generated-target business reads           0
+</code></pre>
+<p>The thirteen permitted reads are solely:</p>
+<pre><code class="language-sql">SELECT *
+FROM &lt;persistent_target&gt;
+WITH NO DATA;
+</code></pre>
+<p>They create exact target-shaped temporary relations. The registry has no construction-window read because its target-shaped temporary row is created after the nineteen ordered object-set hashes become available.</p>
+<p>Beginning at the persisted-reconciliation marker, persistent canonical reads are confined to:</p>
+<pre><code class="language-text">ordered object-set hashes
+independent physical row-hash reconstruction
+canonical-count reconciliation
+exact latest/archive verification
+final non-production and lifecycle checks
+</code></pre>
+<h2>Temporary indexes and statistics</h2>
+<p>Because the corrected temporary relations now drive downstream joins, R3 also adds and audits their indexing and statistics sequence.</p>
+<pre><code class="language-text">Control
+P214_CORRECTED_TEMP_INDEX_ANALYZE
+
+Temporary construction relations inspected          8
+Temporary indexes inspected                         10
+Relations indexed before ANALYZE                   8 / 8
+Relations ANALYZE&#39;d before downstream read          8 / 8
+Ordering failures                                     0
+</code></pre>
+<p>Each temporary relation has a unique index enforcing its frozen grain before persistent insertion. The application simulation also receives two additional indexes supporting:</p>
+<pre><code class="language-text">BASELINE and RECESSION_ENERGY scope construction
+PORTFOLIO adverse-row selection
+</code></pre>
+<p>The machine-readable audit records each relation’s:</p>
+<pre><code class="language-text">creation line
+index line or lines
+ANALYZE line
+first downstream FROM/JOIN line
+</code></pre>
+<h2>Documentation corrections</h2>
+<p>The inaccurate phrase suggesting that all 59 records were baseline-scenario accounts has been removed from the current authority.</p>
+<p>The governing language is now:</p>
+<pre><code class="language-text">59 accepted scenario-account rows
+
+44 BASELINE records
+15 RECESSION_ENERGY records
+</code></pre>
+<p>This distinguishes the <code>BASELINE_REPLAY</code> strategy from the BASELINE scenario panel.</p>
+<p>The source-authority record also explicitly identifies:</p>
+<ul>
+<li>the current R3 Program 214;</li>
+<li>unchanged R2 Programs 212 and 213;</li>
+<li>unchanged R2 Recoveries 212A, 214A, and 214B;</li>
+<li>unchanged R2 technical catalogs;</li>
+<li>current R3 reports and implementation-control documents;</li>
+<li>the initial WP2 release as superseded;</li>
+<li>R2 Program 214 and the replaced R2 reports/specification passages as superseded.</li>
+</ul>
+<h2>R3 static audit</h2>
+<pre><code class="language-text">Static controls                          185 / 185 PASS
+Known static failures                    0
+
+SQL source files                         6
+SQL source lines                    13,434
+Top-level statements                   479
+Anonymous PL/pgSQL blocks               59
+Explicit INSERT projections             43
+Transaction-local temporary tables      83
+string_agg constructions                85
+Unordered string_agg constructions       0
+
+Authorized physical source objects      15
+Required source fields                 404
+Physical target fields               1,014
+Physical/support objects                44
+Canonical families                     19
+Canonical entities                 19,298
+</code></pre>
+<p>The audit also reconfirmed:</p>
+<pre><code class="language-text">Malformed declaration blocks                          0
+Lexical-balance failures                              0
+Transaction-boundary failures                         0
+Unauthorized accepted-source rescans                  0
+Unauthorized source families                          0
+Unauthorized persistent writers                       0
+Generated-target construction reads                   0
+Unordered combined hashes                             0
+Floating-point target types                           0
+Unresolved TODO/TBD/placeholders                      0
+Programs 215–219 present                              0
+Frozen-semantic deviations                            0
+</code></pre>
+<p>No PostgreSQL server, client parser, or PostgreSQL grammar library was available, and execution was prohibited. The result is therefore a static structural result—not PostgreSQL parse, execution, validation, or acceptance evidence.</p>
+<h2>Accepted-baseline preservation</h2>
+<pre><code class="language-text">Recalculated M2.10 ZIP SHA-256
+ca6aac62b1bb9442f3f3c5749930a13965a96c5141a18cf49fd8a37c765cf02c
+
+Sidecar-declared SHA-256
+ca6aac62b1bb9442f3f3c5749930a13965a96c5141a18cf49fd8a37c765cf02c
+
+Archive-to-sidecar reconciliation      PASS
+Accepted M2.10 baseline modified        NO
+</code></pre>
+<h1>R3 deliverables</h1>
+<h2>Revised implementation</h2>
+<ul>
+<li>Program 214 — WP2 Implementation Correction R3 (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_3/sql/214_msbf_m2_11_deterministic_strategy_simulation_reconciliation_v1.sql</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Revised audit and review</h2>
+<ul>
+<li>Machine-Readable Static Audit Results (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_3/reports/M2_11_STATIC_AUDIT_RESULTS.json</code>; referenced bytes not established here)</li>
+<li>R3 Static SQL Audit (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_3/reports/M2_11_STATIC_SQL_AUDIT.md</code>; referenced bytes not established here)</li>
+<li>R3 Work Package 2 Review (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_3/reports/M2_11_WORK_PACKAGE_2_REVIEW.md</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Revised implementation controls</h2>
+<ul>
+<li>WP1/WP2 Implementation Errata R3 (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_3/wp1_errata/M2_11_WP1_WP2_IMPLEMENTATION_ERRATA.md</code>; referenced bytes not established here)</li>
+<li>Corrected Consolidated Implementation Specification (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_3/wp1_errata/M2_11_CONSOLIDATED_IMPLEMENTATION_SPECIFICATION.md</code>; referenced bytes not established here)</li>
+<li>WP2 Source Authority R3 (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_3/M2_11_WP2_SOURCE_AUTHORITY_R3.md</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Unchanged authoritative SQL</h1>
+<p>These files were not edited, copied over, or reissued for R3. Their exact R2 files remain the authoritative byte streams:</p>
+<ul>
+<li>Program 212 — Unchanged R2 Authority (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/sql/212_msbf_m2_11_schema_policy_definitions_contracts_triggers_views_v1.sql</code>; referenced bytes not established here)</li>
+<li>Program 213 — Unchanged R2 Authority (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/sql/213_msbf_m2_11_accepted_source_pristine_target_preflight_v1.sql</code>; referenced bytes not established here)</li>
+<li>Recovery 212A — Unchanged R2 Authority (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/recovery/212A_msbf_m2_11_failed_schema_policy_installation_recovery_v1.sql</code>; referenced bytes not established here)</li>
+<li>Recovery 214A — Unchanged R2 Authority (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/recovery/214A_msbf_m2_11_failed_precommit_generation_rollback_recovery_v1.sql</code>; referenced bytes not established here)</li>
+<li>Recovery 214B — Unchanged R2 Authority (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_2_REVISION_1/recovery/214B_msbf_m2_11_committed_generation_checkpoint_reconstruction_v1.sql</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Current governing state</h1>
+<pre><code class="language-text">STATICALLY BUILT
+NOT EXECUTED
+NOT VALIDATED
+NOT ACCEPTED
+PROGRAM 212 NOT AUTHORIZED FOR EXECUTION
+
+WP2 APPROVAL              HOLD — USER REVIEW REQUIRED
+WP3 AUTHORIZATION         NO
+</code></pre>
+<p>The R3 correction is complete and has stopped at the required static-review boundary.</p>
+</div></article><article id="m-a849ac4a-169c-4b50-a825-5dc197fbfc75" class="message user"><p class="meta"><strong>Andrew / user</strong> · C081-M00036 · 2026-08-05T14:49:43.039000-04:00 · active path</p><div class="bubble"><p>WP2 is approved. WP3 is authorized.</p>
+<p><strong>M2.11 Work Package 2 — Implementation Correction R3 is approved.</strong></p>
+<p>The remaining Program 214 staging-only blocker has been resolved, the minor documentation issues have been corrected, and I found <strong>no remaining blocker within the WP2 review scope</strong>.</p>
+<pre><code class="language-text">WP1 Source and Design Freeze                 APPROVED
+Amendments A and B                           APPROVED
+WP1 Implementation Erratum R2                APPROVED
+WP2 Implementation Correction R3             APPROVED
+
+WP3                                           AUTHORIZED
+Program 212 live execution                    NOT AUTHORIZED
+Programs 217–219                              NOT AUTHORIZED
+Documentation/package construction            NOT AUTHORIZED
+M2.11 validation or acceptance                NOT CLAIMED
+</code></pre>
+<h2>Blocker resolution confirmed</h2>
+<p>I directly inspected the revised R3 Program 214 and confirmed the following:</p>
+<ul>
+<li>the business-construction boundary begins at line 925;</li>
+<li>the construction boundary ends at line 6281;</li>
+<li>persisted reconciliation begins at line 6282;</li>
+<li>all eight previously problematic downstream business paths now consume their target-typed temporary relations;</li>
+<li>the 48 R2 persistent-table reads identified in the prior review were redirected;</li>
+<li>no newly persisted generated canonical table is used as a <code>FROM</code> or <code>JOIN</code> business input inside the construction window;</li>
+<li>the only persistent target reads inside that window are the 13 governed <code>WITH NO DATA</code> target-shape projections, plus nonbusiness metadata/type references;</li>
+<li>persistent generated tables are read only after the explicit reconciliation boundary for ordered set hashes, physical row-hash reconstruction, canonical counts, latest/archive verification, and final boundary checks.</li>
+</ul>
+<p>This now conforms to the approved invariant that the generation business graph is temporary-only and persisted canonical state is a verification surface, not an intermediate business-construction source.  </p>
+<p>The corrected eight temporary authorities are also indexed and analyzed before downstream consumption. The R3 control reports eight relations, ten indexes, and zero index/<code>ANALYZE</code> ordering failures. </p>
+<h2>Documentation and source authority confirmed</h2>
+<p>The current governing documentation now correctly states:</p>
+<pre><code class="language-text">59 accepted scenario-account rows
+44 BASELINE records
+15 RECESSION_ENERGY records
+</code></pre>
+<p>It no longer conflates the <code>BASELINE_REPLAY</code> strategy with the BASELINE scenario population. </p>
+<p>The source-authority record is also sufficiently explicit:</p>
+<ul>
+<li>Program 212: unchanged R2 authority;</li>
+<li>Program 213: unchanged R2 authority;</li>
+<li>Program 214: revised R3 authority;</li>
+<li>Recoveries 212A, 214A, and 214B: unchanged R2 authority;</li>
+<li>R2 technical catalogs remain authoritative;</li>
+<li>R3 consolidated specification, errata, reports, and source-authority record are current;</li>
+<li>the initial WP2 release and R2 Program 214 are superseded and prohibited as WP3 inputs.</li>
+</ul>
+<p>I also confirmed that the uploaded copies of Programs 212, 213, 212A, 214A, and 214B are byte-identical to their prior R2 counterparts. Only Program 214 changed for R3, consistent with the source-authority certification.</p>
+<h2>Static audit disposition</h2>
+<p>The current audit reports:</p>
+<pre><code class="language-text">Static controls                         185 / 185 PASS
+Known static failures                   0
+Generated-target construction reads     0
+Unauthorized source-family reads        0
+Unordered string_agg calls              0
+Target fields                           1,014
+Canonical families                      19
+Canonical entities                      19,298
+</code></pre>
+<p>The audit still has no PostgreSQL parser or runtime evidence. That is an explicit and appropriate limitation, not a remaining WP2 defect. WP2 approval therefore means:</p>
+<pre><code class="language-text">APPROVED AS THE FIXED PRE-EXECUTION
+GENERATED-STATE IMPLEMENTATION BASELINE
+</code></pre>
+<p>It does <strong>not</strong> mean parsed, executed, validated, accepted, or approved for production use. </p>
+<h1>Signoff to send to the M2.11 build chat</h1>
+<pre><code class="language-text">M2.11 WORK PACKAGE 2 SIGNOFF
+
+Work Package 2 — Implementation Correction R3 is approved.
+
+The remaining Program 214 staging-only blocker is resolved. The corrected implementation demonstrates:
+
+- zero generated-canonical business-input reads before the persisted-reconciliation boundary;
+- all downstream business construction through latest and archive uses target-typed temporary relations;
+- all eight corrected temporary construction authorities are indexed and ANALYZE&#39;d before downstream use;
+- persistent canonical reads are confined to post-construction physical reconciliation, ordered hashes, canonical counts, latest/archive verification, and final boundary checks;
+- the account-population wording is corrected to 59 accepted scenario-account rows: 44 BASELINE and 15 RECESSION_ENERGY;
+- the R3 source-authority and supersession record is complete;
+- no frozen business semantic, source family, grain, strategy, objective, constraint, reason, reporting scope, canonical family, canonical count, program boundary, production boundary, data-sufficiency boundary, or M2.12 handoff changed.
+
+Authoritative WP2 source set:
+
+- Program 212 — exact unchanged R2 authority
+- Program 213 — exact unchanged R2 authority
+- Program 214 — R3 authority
+- Recovery 212A — exact unchanged R2 authority
+- Recovery 214A — exact unchanged R2 authority
+- Recovery 214B — exact unchanged R2 authority
+- R2 technical catalogs listed in M2_11_WP2_SOURCE_AUTHORITY_R3.md
+- R3 consolidated implementation specification, implementation errata, static audit, WP2 review, and source-authority record
+
+The initial WP2 release and R2 Program 214 are superseded and must not be used.
+
+Proceed with Work Package 3 only:
+
+- Program 215 — Positive Validation
+- Program 216 — Negative Controls
+- Recovery 215A — Failed Positive-Validation Recovery
+
+Work Package 3 requirements:
+
+1. Treat Programs 212–214 as the fixed generated-state implementation baseline.
+2. Do not alter WP2 business logic, physical grains, hashes, scoring, selection, stress, Pareto, frontier, archive, contract, or count semantics merely to make validation pass.
+3. Program 215 must define exactly 120 positive controls and independently reconstruct the governed results, including target-typed hashes, adversity tie-break identities, candidate scores, selections, PORTFOLIO rollups, scope metrics, frontier ranks, governance priorities, latest/archive reproduction, all nineteen ordered set hashes, and the 19,298 canonical count.
+4. Program 216 must define exactly 20 real, isolated, rollback-safe negative controls.
+5. Recovery 215A may repair validation-state artifacts only. It may not regenerate or alter Program 214 business rows.
+6. If WP3 identifies a genuine defect in Programs 212–214, stop and escalate it as a bounded WP2 correction. Do not silently repair WP2 source inside WP3.
+7. Do not execute PostgreSQL.
+8. Do not create Programs 217–219.
+9. Do not create manifests, checksum inventories, ZIP packages, execution evidence, champion claims, validation-pass claims, or acceptance records.
+
+Current governing state:
+
+WP2                              APPROVED
+WP3                              AUTHORIZED
+Programs 212–214                 FIXED PRE-EXECUTION BASELINE
+Program 212 execution            NOT AUTHORIZED
+Programs 217–219                 NOT AUTHORIZED
+Packaging                        NOT AUTHORIZED
+PostgreSQL execution             NOT PERFORMED
+M2.11 validation                 NOT PERFORMED
+M2.11 acceptance                 NOT CLAIMED
+
+Stop after the WP3 static review and wait for user approval.
+</code></pre>
+<p><strong>No R4 correction is required.</strong> WP3 may now proceed under the exact R3 source authority.</p>
+</div></article><article id="m-c074af4e-19cf-4802-bba7-92c1e549206b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00037 · 2026-08-05T14:50:14.705675-04:00 · active path</p><div class="bubble"><p>I’ll audit the fixed R3 interfaces, then build Programs 215, 216, Recovery 215A, and static-review artifacts only. Any baseline defect will be escalated to WP2.</p>
+</div></article><article id="m-f5316443-d30c-47e0-b2b9-3c44cb0c9a0e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00038 · 2026-08-05T14:53:19.519860-04:00 · active path</p><div class="bubble"><p>The validation plan now uses independent reconstruction tables, with dedicated control families covering scoring, adversity, aggregation, Pareto, governance priority, physical hashes, and latest/archive reproduction.</p>
+</div></article><article id="m-80647a76-aef7-4527-805e-7e6439999958" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00039 · 2026-08-05T15:02:24.766009-04:00 · active path</p><div class="bubble"><p>The 120-control plan now explicitly covers all 19 ordered set hashes, replay, stress behavior, and non-production boundaries.</p>
+</div></article><article id="m-5f5f0683-91d2-4292-a51e-67e86ca56e79" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00040 · 2026-08-05T15:29:28.119327-04:00 · active path</p><div class="bubble"><p>The full independent validation chain is built; I’m hardening negative controls to guarantee rollback of injected persistent defects, while defining four fail-closed Recovery 215A checks.</p>
+</div></article><article id="m-d76d54de-6b7c-4fe2-a51c-c1f7577a8098" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00041 · 2026-08-05T16:27:45.662208-04:00 · active path</p><div class="bubble"><h1>M2.11 Work Package 3 complete</h1>
+<p>Work Package 3 has been built against the exact approved WP2 R3 source authority. Programs 212–214 were treated as the fixed generated-state implementation baseline and were not altered. The package contains only Program <strong>215</strong>, Program <strong>216</strong>, and Recovery <strong>215A</strong>, as authorized by the final freeze, Amendments A and B, and the approved five-work-package plan. [export reference: filecite | turn2file2] [export reference: filecite | turn2file5] [export reference: filecite | turn2file3]</p>
+<pre><code class="language-text">Work Package 3 implementation           COMPLETE
+Static review                           PASS
+Static controls                         103 / 103 PASS
+Known static blockers                   0
+Known static warnings                   0
+
+Program 215                              BUILT / NOT EXECUTED
+Program 216                              BUILT / NOT EXECUTED
+Recovery 215A                            BUILT / NOT EXECUTED
+
+Programs 212–214                         UNCHANGED
+Programs 217–219                         NOT CREATED
+PostgreSQL execution                     NOT PERFORMED
+Live positive validation                 NOT PERFORMED
+Live negative controls                   NOT PERFORMED
+M2.11 validation                         NOT CLAIMED
+M2.11 acceptance                         NOT CLAIMED
+Manifest/checksum/ZIP packaging          NOT CREATED
+Accepted M2.10 baseline                  UNMODIFIED
+</code></pre>
+<h2>Program 215 — Positive Validation</h2>
+<p>Program 215 defines exactly:</p>
+<pre><code class="language-text">Positive-control definitions            120
+Control sequence                        1–120 exactly
+Duplicate control codes                 0
+Duplicate control titles                0
+Positive-control families               21
+Independent reconstruction methods      59
+Generic padding controls                0
+</code></pre>
+<p>The program independently reconstructs the complete governed chain, including:</p>
+<ul>
+<li>all five accepted source-family identities, gates, statuses, hashes, counts, grains and materialized snapshots;</li>
+<li>all eight strategies, eight objectives, twelve constraints and thirty-two reasons;</li>
+<li>the exact 8 × 8 strategy-weight matrix and candidate/scope denominators;</li>
+<li>baseline replay across all 1,500 application rows and 59 scenario-account rows;</li>
+<li>candidate hard constraints, feasibility, raw values, normalization, weighted components, scores, equality tolerance, deterministic selection and reason evidence;</li>
+<li>application outcomes, preserved declines, no-access economics, selected economics, account applicability, stress flags and application adversity;</li>
+<li>all 472 account treatments, timing-only EARLY_INTERVENTION treatment, reason evidence and account adversity;</li>
+<li>all BASELINE, RECESSION_ENERGY and PORTFOLIO scope populations and metrics;</li>
+<li>Pareto eligibility, seven-objective dominance edges, iterative frontier ranks, governance balance scores and priorities;</li>
+<li>all 21 baseline/challenger comparisons;</li>
+<li>all 24 latest rows and all 24 archive rows;</li>
+<li>every target-typed physical row hash, all nineteen ordered set hashes, the contract-set hash and combined-set hash; and</li>
+<li>exactly nineteen canonical families and 19,298 canonical entities.</li>
+</ul>
+<p>The higher-level physical surfaces are compared across every immutable field:</p>
+<pre><code class="language-text">Strategy-summary immutable fields        59
+Frontier immutable fields                24
+Comparison immutable fields              44
+Latest-contract immutable fields         85
+</code></pre>
+<p>Program 215 accumulates its results in temporary validation objects. It may insert the 120 positive-evidence rows and advance the lifecycle only when the complete control inventory reconciles to:</p>
+<pre><code class="language-text">120 PASS
+0 FAIL
+</code></pre>
+<p>Its only permitted lifecycle transition is:</p>
+<pre><code class="language-text">run_status       M2_11_GENERATED → M2_11_VALIDATED
+contract_status  GENERATED       → VALIDATED
+validated_at     populated
+</code></pre>
+<p>It cannot alter generated business rows, latest contract values or archive values.</p>
+<h2>Program 216 — Negative Controls</h2>
+<p>Program 216 defines exactly twenty substantive negative controls:</p>
+<pre><code class="language-text">Negative-control definitions             20
+Control sequence                          1–20 exactly
+Duplicate control codes                   0
+Duplicate control titles                  0
+Isolated exception subtransactions        20
+Controls lacking rollback isolation        0
+Controls with persistent injected defect   0
+</code></pre>
+<p>Each injected defect executes within an inner PL/pgSQL exception subtransaction:</p>
+<pre><code class="language-text">Expected rejection
+→ injected mutation automatically rolls back
+→ SQLSTATE and message captured
+
+No expected rejection
+→ sentinel SQLSTATE P2199 is raised
+→ injected mutation automatically rolls back
+→ control records FAIL
+
+Unexpected rejection
+→ injected mutation automatically rolls back
+→ control records FAIL
+</code></pre>
+<p>The twenty controls cover:</p>
+<ol>
+<li>accepted-source identity tampering;</li>
+<li>source-grain duplication;</li>
+<li>selection outside accepted M2.2 inventory;</li>
+<li>policy-decline override;</li>
+<li>insufficient-evidence override;</li>
+<li>hard-constraint bypass;</li>
+<li>missing required objective evidence;</li>
+<li>strategy-weight corruption;</li>
+<li>deterministic winner or tie corruption;</li>
+<li>PORTFOLIO double counting;</li>
+<li>favorable accepted-source movement under stress;</li>
+<li>favorable strategy movement under stress;</li>
+<li>archive update;</li>
+<li>archive delete;</li>
+<li>latest/archive divergence;</li>
+<li>committed version-1 rerun;</li>
+<li>production-action behavior;</li>
+<li>external-system behavior;</li>
+<li>canonical-count mismatch; and</li>
+<li>unauthorized source-family or stage-boundary use.</li>
+</ol>
+<p>Only the final twenty negative-control evidence rows may commit, and only after all twenty expected rejection signatures reconcile. Program 216 does not change lifecycle state; it must leave the run and contract at <code>VALIDATED</code>.</p>
+<h2>Recovery 215A</h2>
+<p>Recovery 215A is restricted to incomplete positive-validation state.</p>
+<p>It may only:</p>
+<pre><code class="language-text">delete partial M2_11_POS evidence
+restore contract_status to GENERATED
+clear validated_at
+restore run_status to M2_11_GENERATED
+</code></pre>
+<p>It fails closed when it encounters:</p>
+<ul>
+<li>a complete 120/120 positive-validation checkpoint;</li>
+<li>any negative-control evidence;</li>
+<li>any acceptance evidence;</li>
+<li>accepted lifecycle state;</li>
+<li>unsupported lifecycle state;</li>
+<li>a pristine generated checkpoint requiring no repair; or</li>
+<li>anything other than nineteen canonical families and 19,298 canonical entities.</li>
+</ul>
+<p>Before and after recovery, it reconciles every canonical family’s count and ordered hash. It also confirms that the immutable registry row hash and combined-set hash did not change.</p>
+<h2>Traceability</h2>
+<pre><code class="language-text">Control-traceability rows               144
+Positive controls represented       120 / 120
+Negative controls represented         20 / 20
+Recovery requirements represented      4 / 4
+Unknown traceability codes                 0
+Unmapped freeze requirements               0
+</code></pre>
+<h2>Static audit result</h2>
+<p>The final audit reports:</p>
+<pre><code class="language-text">Static controls                         103 / 103 PASS
+
+Malformed PL/pgSQL declaration blocks            0
+Unbalanced SQL or PL/pgSQL structures            0
+Unknown persistent columns                       0
+Invalid explicit INSERT target columns           0
+Unauthorized schema objects                      0
+Unapproved temporary namespaces                  0
+Unauthorized persistent writers                  0
+Unordered string_agg constructions               0
+Floating-point SQL types                         0
+Identifiers exceeding 63 bytes                   0
+Unresolved TODO/TBD/FIXME placeholders           0
+Generic positive-control padding                 0
+Negative controls lacking isolation              0
+Programs 217–219 present                         0
+Packaging artifacts present                      0
+</code></pre>
+<p>The static audit also reconfirmed that the approved WP2 sources remain the exact governing byte streams:</p>
+<pre><code class="language-text">Program 212       exact R2 authority
+Program 213       exact R2 authority
+Program 214       exact R3 authority
+Recovery 212A     exact R2 authority
+Recovery 214A     exact R2 authority
+Recovery 214B     exact R2 authority
+</code></pre>
+<p>The accepted M2.10 baseline still reconciles to its external sidecar:</p>
+<pre><code class="language-text">SHA-256
+ca6aac62b1bb9442f3f3c5749930a13965a96c5141a18cf49fd8a37c765cf02c
+
+Archive-to-sidecar reconciliation       PASS
+ZIP CRC                                 PASS
+Archive bytes                           20,259,040
+ZIP entries                             4,488
+</code></pre>
+<h3>Execution limitation</h3>
+<p>No PostgreSQL server, client, grammar parser or compatible SQL linter was available, and execution was prohibited. Therefore:</p>
+<pre><code class="language-text">Static lexical/structural audit          PASS
+PostgreSQL parse evidence                NONE
+PostgreSQL runtime evidence              NONE
+Live 120/120 positive result             NONE
+Live 20/20 negative result               NONE
+</code></pre>
+<p>A static PASS does not constitute live validation or acceptance.</p>
+<h2>Corrections completed during WP3 construction</h2>
+<p>The final release incorporates corrections for:</p>
+<ul>
+<li>one unmatched parenthesis in archive physical-hash reconstruction;</li>
+<li>lifecycle updates that initially exceeded the approved status/timestamp boundary;</li>
+<li>latest-contract comparison that initially covered only a subset of immutable fields;</li>
+<li>incomplete reason reconstruction at candidate, application, account and frontier layers;</li>
+<li>negative-test injections that could have been intercepted by an unrelated physical constraint instead of the intended governed assertion;</li>
+<li>SQL-to-catalog title differences;</li>
+<li>statement-global alias analysis that incorrectly combined reused aliases from unrelated SQL statements; and</li>
+<li>overbroad <code>ANALYZE</code> requirements for three very small control relations.</li>
+</ul>
+<p>No frozen semantic and no WP2 source was changed.</p>
+<h1>Deliverables</h1>
+<h2>SQL</h2>
+<ul>
+<li>Program 215 — Positive Validation (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3/sql/215_msbf_m2_11_positive_validation_v1.sql</code>; referenced bytes not established here)</li>
+<li>Program 216 — Negative Controls (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3/sql/216_msbf_m2_11_negative_controls_v1.sql</code>; referenced bytes not established here)</li>
+<li>Recovery 215A — Failed Positive-Validation Recovery (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3/recovery/215A_msbf_m2_11_failed_positive_validation_recovery_v1.sql</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Control catalogs</h2>
+<ul>
+<li>Positive Control Catalog — 120 controls (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3/catalogs/M2_11_POSITIVE_CONTROL_CATALOG.csv</code>; referenced bytes not established here)</li>
+<li>Negative Control Catalog — 20 controls (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3/catalogs/M2_11_NEGATIVE_CONTROL_CATALOG.csv</code>; referenced bytes not established here)</li>
+<li>Control Traceability Matrix — 144 rows (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3/catalogs/M2_11_CONTROL_TRACEABILITY_MATRIX.csv</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Review and audit records</h2>
+<ul>
+<li>Validation Static Audit (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3/reports/M2_11_VALIDATION_STATIC_AUDIT.md</code>; referenced bytes not established here)</li>
+<li>Machine-Readable Static Audit Results (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3/reports/M2_11_STATIC_AUDIT_RESULTS.json</code>; referenced bytes not established here)</li>
+<li>Work Package 3 Review (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3/reports/M2_11_WORK_PACKAGE_3_REVIEW.md</code>; referenced bytes not established here)</li>
+</ul>
+<h1>Current governing state</h1>
+<pre><code class="language-text">WP1                              APPROVED
+WP2 R3                           APPROVED / FIXED BASELINE
+WP3                              COMPLETE / USER REVIEW REQUIRED
+WP4                              NOT AUTHORIZED
+
+Program 212 live execution       NOT AUTHORIZED
+Programs 217–219                 NOT CREATED
+PostgreSQL execution             NOT PERFORMED
+M2.11 validation                 NOT PERFORMED
+M2.11 acceptance                 NOT CLAIMED
+Packaging                        NOT AUTHORIZED
+</code></pre>
+<p>The correct artifact status remains:</p>
+<pre><code class="language-text">STATICALLY BUILT
+NOT EXECUTED
+NOT VALIDATED
+NOT ACCEPTED
+</code></pre>
+<p>After explicit WP3 approval, the next permitted build boundary is <strong>Work Package 4 only: Programs 217–219</strong>.</p>
+</div></article><article id="m-fe938906-6556-4a22-9e02-7adf623e1727" class="message user"><p class="meta"><strong>Andrew / user</strong> · C081-M00042 · 2026-08-05T17:17:29.551000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260805-211625).md</p><div class="bubble"><p>Correct several WP3 blockers and issues:</p>
+</div></article><article id="m-5870e8aa-3485-4527-94a2-2c09e90cc1d2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00043 · 2026-08-05T17:17:45.030949-04:00 · active path</p><div class="bubble"><p>I’m applying bounded WP3 Correction R1: revise Programs 215–216, fix Control 008, strengthen snapshot reconciliation and rollback checks, while preserving the 120/20 architecture and Recovery 215A.</p>
+</div></article><article id="m-1c952d64-0179-4e42-abe6-6b4299fa8adb" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00044 · 2026-08-05T17:20:51.403971-04:00 · active path</p><div class="bubble"><p>I confirmed Control 008 is intercepted by table checks, while Controls 022–025 currently compare only selected fields instead of complete immutable snapshot payloads.</p>
+</div></article><article id="m-25c844c4-9e53-4e3b-8cda-c1d7af8263d2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00045 · 2026-08-05T17:29:56.134240-04:00 · active path</p><div class="bubble"><p>The correction now includes five target-shaped snapshot surfaces covering 348 physical and 338 immutable fields, plus a 19-family rollback fingerprint; final structural and authority audits are underway.</p>
+</div></article><article id="m-888063df-b992-477c-920c-760838b448ad" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00046 · 2026-08-05T17:45:14.115419-04:00 · active path</p><div class="bubble"><h1>M2.11 WP3 Validation Correction R1 complete</h1>
+<p>I treated the attached re-review as controlling and made one bounded WP3 correction. The M2.11 design and approved WP2 R3 implementation were not reopened or altered. [export reference: filecite | turn2file0]</p>
+<pre><code class="language-text">Correction release                       WP3_VALIDATION_CORRECTION_R1
+Bounded correction                       COMPLETE
+Static audit                             113 / 113 PASS
+Known static blockers                    0
+
+WP3 approval                             HOLD — USER RE-REVIEW REQUIRED
+WP4 authorization                        NO
+Program 212 live execution               NOT AUTHORIZED
+
+Programs 212–214                         UNCHANGED
+Recoveries 212A, 214A, 214B             UNCHANGED
+Recovery 215A                            UNCHANGED / BYTE-IDENTICAL
+Programs 217–219                         NOT CREATED
+
+PostgreSQL execution                     NOT PERFORMED
+Live validation                          NOT PERFORMED
+M2.11 acceptance                         NOT CLAIMED
+Manifest/checksum/ZIP packaging          NOT CREATED
+</code></pre>
+<h2>1. Negative Control 008 corrected</h2>
+<p>The previous one-field mutation was removed. Control 008 now performs a balanced target-typed change to <code>ACCESS_EXPANSION</code>:</p>
+<pre><code class="language-sql">access_rate_weight
+    = access_rate_weight + 0.010000::numeric(9,6)
+
+selected_exposure_weight
+    = selected_exposure_weight - 0.010000::numeric(9,6)
+</code></pre>
+<p>The revised control requires exactly one row to be updated and explicitly confirms, before calling the intended matrix assertion, that:</p>
+<pre><code class="language-text">access_rate_weight after mutation          0.460000
+selected_exposure_weight after mutation    0.140000
+all eight individual weights in [0,1]      YES
+candidate-domain total                     1.000000
+scope-domain total                         1.000000
+stored candidate-domain total              1.000000
+stored scope-domain total                  1.000000
+</code></pre>
+<p>The mutation therefore passes the physical strategy-profile <code>CHECK</code> constraints and reaches:</p>
+<pre><code class="language-sql">pg_temp.m2_11_assert_weight_matrix()
+</code></pre>
+<p>The intended expected rejection remains:</p>
+<pre><code class="language-text">SQLSTATE               P0001
+Message prefix         M2.11 NEG WEIGHT_CORRUPTION
+</code></pre>
+<p>A physical-precondition failure uses a different SQLSTATE and records the negative control as <code>FAIL</code>; it cannot be mistaken for the intended assertion.</p>
+<h2>2. Complete source-snapshot reconstruction added</h2>
+<p>Controls 022–025 retain their existing codes and sequences, but now perform complete field-for-field reconstruction from the accepted upstream physical sources.</p>
+<table>
+<thead>
+<tr>
+<th>Snapshot family</th>
+<th align="right">Expected rows</th>
+<th align="right">Physical fields</th>
+<th align="right">Immutable payload fields</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Application</td>
+<td align="right">1,500</td>
+<td align="right">155</td>
+<td align="right"><strong>153</strong></td>
+</tr>
+<tr>
+<td>Candidate</td>
+<td align="right">557</td>
+<td align="right">50</td>
+<td align="right"><strong>48</strong></td>
+</tr>
+<tr>
+<td>Account</td>
+<td align="right">59</td>
+<td align="right">96</td>
+<td align="right"><strong>94</strong></td>
+</tr>
+<tr>
+<td>KPI</td>
+<td align="right">72</td>
+<td align="right">25</td>
+<td align="right"><strong>23</strong></td>
+</tr>
+<tr>
+<td>Queue</td>
+<td align="right">3</td>
+<td align="right">22</td>
+<td align="right"><strong>20</strong></td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td align="right"><strong>2,191</strong></td>
+<td align="right"><strong>348</strong></td>
+<td align="right"><strong>338</strong></td>
+</tr>
+</tbody></table>
+<p>Program 215 now creates the requested target-typed expected relations:</p>
+<pre><code class="language-text">tmp_eval_expected_application_source_snapshot
+tmp_eval_expected_candidate_source_snapshot
+tmp_eval_expected_account_source_snapshot
+tmp_eval_expected_kpi_source_snapshot
+tmp_eval_expected_queue_source_snapshot
+</code></pre>
+<p>For each family, it performs:</p>
+<pre><code class="language-text">accepted upstream materialization
+→ approved source-to-target projection
+→ exact persistent target shape using WITH NO DATA
+→ ordinal/name/type OID/typmod/collation verification
+→ explicit target-typed population of every physical field
+→ independent expected M2.11 row-hash calculation
+→ FULL JOIN on the frozen business key
+→ complete immutable-payload comparison
+→ expected-versus-actual row-hash comparison
+</code></pre>
+<p>Payload comparison excludes only:</p>
+<pre><code class="language-text">M2.11 row_hash
+M2.11 created_at
+</code></pre>
+<p>All copied upstream timestamps, accepted contract identities, source hashes, lineage attributes and business values remain inside the comparison.</p>
+<p>The required live result for each family is now:</p>
+<pre><code class="language-text">missing rows               0
+extra rows                 0
+payload mismatches         0
+row-hash mismatches        0
+</code></pre>
+<p>The mappings are statically equivalent to the approved fixed WP2/WP1 source-to-target mappings after temporary-object names and comments are normalized. The validation remains independent because expected rows are rebuilt from the accepted upstream sources rather than consumed from Program 214’s persisted M2.11 snapshots.</p>
+<h2>3. Negative-suite rollback postflight added</h2>
+<p>Program 216 now captures the complete canonical state before Negative Control 001 and reconstructs it after Negative Control 020, before any negative-control evidence is inserted.</p>
+<p>The fingerprint covers:</p>
+<pre><code class="language-text">Canonical family counts                          19
+Row-level canonical identities               19,298
+Target-typed physical row hashes              19,298
+Explicitly ordered physical family hashes         19
+Stored registry set-hash fields                   19
+Latest contract identities                        24
+Archive contract identities                       24
+Registry row hash                                   1
+Combined set hash                                   1
+</code></pre>
+<p>The row-level comparison uses a <code>FULL JOIN</code> on:</p>
+<pre><code class="language-text">object_code
++ frozen business_key
+</code></pre>
+<p>and compares independently reconstructed physical row hashes. The family-level comparison separately checks counts and ordered family hashes. A fixed-order registry vector also covers all nineteen stored set-hash fields, including <code>contract_set_hash</code>.</p>
+<p>Required Program 216 postflight:</p>
+<pre><code class="language-text">changed_canonical_families          0
+changed_canonical_entities          0
+changed_ordered_set_hashes          0
+changed_latest_archive_rows         0
+changed_registry_identities         0
+</code></pre>
+<p>The postflight also fails closed unless both the before and after states contain exactly nineteen canonical families and 19,298 canonical entities.</p>
+<p>Only after:</p>
+<pre><code class="language-text">20 expected rejection signatures
++
+complete zero-change canonical postflight
+</code></pre>
+<p>may the twenty <code>M2_11_NEG</code> evidence rows be inserted.</p>
+<h2>Static audit result</h2>
+<pre><code class="language-text">Static controls                         113 / 113 PASS
+Known static failures                   0
+
+Positive controls                       120
+Negative controls                        20
+Traceability rows                       144
+Duplicate positive codes                  0
+Duplicate negative codes                  0
+
+Expected snapshot relations               5
+Physical snapshot fields                348
+Immutable snapshot fields               338
+Snapshot mapping-parity failures          0
+Persisted snapshots used as expected
+construction inputs                       0
+
+Control 008 physical-validity failures    0
+Negative controls lacking isolation       0
+Canonical rollback-postflight gaps        0
+
+Unauthorized WP2 modifications            0
+Programs 217–219 present                  0
+Packaging artifacts present               0
+</code></pre>
+<p>The approved WP2 sources remain exact:</p>
+<pre><code class="language-text">Program 212       unchanged R2 authority
+Program 213       unchanged R2 authority
+Program 214       unchanged R3 authority
+Recovery 212A     unchanged R2 authority
+Recovery 214A     unchanged R2 authority
+Recovery 214B     unchanged R2 authority
+</code></pre>
+<p>Recovery 215A was not copied or reissued. Its authoritative original remains byte-identical:</p>
+<pre><code class="language-text">SHA-256
+56fd8f2549046483e826b475f3c42ca0576517d20402e34f8a2a53a3d24d0bb3
+</code></pre>
+<p>The accepted M2.10 archive also remains unchanged and reconciles to its sidecar:</p>
+<pre><code class="language-text">SHA-256
+ca6aac62b1bb9442f3f3c5749930a13965a96c5141a18cf49fd8a37c765cf02c
+
+ZIP CRC                         PASS
+ZIP entries                    4,488
+Accepted baseline modified     NO
+</code></pre>
+<h2>Revised authoritative files</h2>
+<h3>Source authority</h3>
+<p>WP3 Source Authority R1 (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3_REVISION_1/M2_11_WP3_SOURCE_AUTHORITY_R1.md</code>; referenced bytes not established here)</p>
+<p>This record lists the exact current WP2/WP3 authorities, the unchanged Recovery 215A authority, and every superseded initial WP3 file.</p>
+<h3>Revised SQL</h3>
+<p>Program 215 — Positive Validation R1 (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3_REVISION_1/sql/215_msbf_m2_11_positive_validation_v1.sql</code>; referenced bytes not established here)</p>
+<p>Program 216 — Negative Controls R1 (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3_REVISION_1/sql/216_msbf_m2_11_negative_controls_v1.sql</code>; referenced bytes not established here)</p>
+<p>Recovery 215A — Unchanged Original Authority (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3/recovery/215A_msbf_m2_11_failed_positive_validation_recovery_v1.sql</code>; referenced bytes not established here)</p>
+<h3>Revised control catalogs</h3>
+<p>Positive Control Catalog — 120 controls (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3_REVISION_1/catalogs/M2_11_POSITIVE_CONTROL_CATALOG.csv</code>; referenced bytes not established here)</p>
+<p>Negative Control Catalog — 20 controls (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3_REVISION_1/catalogs/M2_11_NEGATIVE_CONTROL_CATALOG.csv</code>; referenced bytes not established here)</p>
+<p>Control Traceability Matrix — 144 rows (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3_REVISION_1/catalogs/M2_11_CONTROL_TRACEABILITY_MATRIX.csv</code>; referenced bytes not established here)</p>
+<h3>Revised audit and review</h3>
+<p>Machine-Readable Static Audit Results (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3_REVISION_1/reports/M2_11_STATIC_AUDIT_RESULTS.json</code>; referenced bytes not established here)</p>
+<p>Validation Correction R1 Static Audit (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3_REVISION_1/reports/M2_11_VALIDATION_STATIC_AUDIT.md</code>; referenced bytes not established here)</p>
+<p>Work Package 3 Correction Review (historical reference: <code>sandbox:[session]/M2_11_WORK_PACKAGE_3_REVISION_1/reports/M2_11_WORK_PACKAGE_3_REVIEW.md</code>; referenced bytes not established here)</p>
+<h2>Current governing state</h2>
+<pre><code class="language-text">STATICALLY BUILT
+NOT EXECUTED
+NOT VALIDATED
+NOT ACCEPTED
+
+WP3 approval              HOLD — USER RE-REVIEW REQUIRED
+WP4 authorization         NO
+Program 212 execution     NOT AUTHORIZED
+Programs 217–219          NOT CREATED
+Packaging                 NOT AUTHORIZED
+</code></pre>
+<p>The bounded R1 correction is complete and is ready for WP3 re-review.</p>
+</div></article><article id="m-6c0b24b5-6a8a-4acc-9bda-53faeb5846b4" class="message user"><p class="meta"><strong>Andrew / user</strong> · C081-M00047 · 2026-08-05T18:09:54.575000-04:00 · active path</p><p class="note">Attachment references: Pasted markdown(20260805-220948).md</p><div class="bubble"><p>Correct remaining WP3 blocker and minor issues:</p>
+</div></article><article id="m-1d11e08f-28fc-4c0a-b6f3-2acedbb24dc2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00048 · 2026-08-05T18:10:09.468223-04:00 · active path</p><div class="bubble"><p>I’ll apply a narrow WP3 R2 correction to Program 216 Control 016 and sequence postflight, update governance records, rerun static audits, and preserve all other sources.</p>
+</div></article><article id="m-cc7f22f3-247e-43f8-aee3-dced3a4960c1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00049 · 2026-08-05T18:13:13.254935-04:00 · active path</p><div class="bubble"><p>The blocker is confirmed: the rollback can still advance the archive identity sequence. I’ll use an explicit unused ID and reconcile sequence state before evidence commits.</p>
+</div></article><article id="m-b88ffe73-0aa7-41f6-8368-625ca29115c4" class="message assistant"><p class="meta"><strong>Assistant</strong> · C081-M00050 · 2026-08-05T18:22:16.718153-04:00 · active path</p><div class="bubble"><p>The patch now fingerprints <code>last_value</code> and <code>is_called</code>; static checks pass 113/113. I’m finalizing authority, diff, traceability, catalog, and report-hash verification.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

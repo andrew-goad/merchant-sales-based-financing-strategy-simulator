@@ -1,0 +1,1585 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5 — part 09 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5 — part 09</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-08.html">Previous part</a><a href="part-10.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-a66589f3-25a4-412e-b97c-f25916076a82" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00080 · 2026-09-10T09:14:02.394735-04:00 · active path</p><div class="bubble"><p>Phase F-R2 is a clean <strong>PASS</strong>. I reviewed the returned evidence, including the 21-check register, the 2,884-row R6→index blob certification, the certified index tree, and the validator outputs. The key point is that the Git index is now independently bound to the exact approved R6 content: <strong>2,884 index paths, 0 missing, 0 extra, 0 blob mismatches, 0 blob errors</strong>, with certified index tree <code>fa82f71a9aabf88d5ecbc16ba38cac8de8d83cbb</code>. The authoritative 11-path R22 exclusion set is also absent from the index. [export reference: filecite | turn30file6 | L10-L21]</p>
+<p>The existing validators also remain green: public release validation reports <strong>2,880 governed manifest files and 12 Module 2 stage folders</strong>; the rc1 overlay reports <strong>235 governed candidate files</strong>; and rc2 reports <strong>248</strong>. [export reference: filecite | turn30file0 | L1-L3] [export reference: filecite | turn30file1 | L1-L2] [export reference: filecite | turn30file2 | L1-L2]</p>
+<p>The large <code>git diff --cached --check</code> result is now correctly classified as <strong>diagnostic/source-bound</strong>, not a release blocker. The evidence records 42,098 raw lines, 21,050 parsed findings across 102 paths, while separately establishing that the staged index is exactly the approved R6 content. [export reference: filecite | turn30file3 | L1-L9] That is materially stronger than trying to “fix” those whitespace findings, because doing so would alter the already approved R6 bytes.</p>
+<p>So we can now advance to the actual <strong>commit-binding step</strong>. I recommend one bounded command block that rechecks the index state immediately before commit, commits the exact staged tree, then captures the new commit/tree/parent identities. Do <strong>not</strong> create the tag yet.</p>
+<p>Run this in the same PowerShell:</p>
+<pre><code class="language-powershell">Set-Location &#39;D:\x\m&#39;
+
+$ErrorActionPreference = &#39;Stop&#39;
+
+$expectedParent = &#39;46fb1f9198475678edc9cabdeefd2f91a59e49c2&#39;
+$expectedTree   = &#39;fa82f71a9aabf88d5ecbc16ba38cac8de8d83cbb&#39;
+
+Write-Host &#39;============================================================&#39;
+Write-Host &#39;MSBF PHASE F-R3 — FINAL COMMIT BINDING&#39;
+Write-Host &#39;============================================================&#39;
+
+# ------------------------------------------------------------------
+# 1. Immediate pre-commit identity checks
+# ------------------------------------------------------------------
+
+$headBefore = (git rev-parse HEAD).Trim()
+$branch     = (git branch --show-current).Trim()
+$indexTree  = (git write-tree).Trim()
+$unstaged   = @(git diff --name-only)
+$untracked  = @(git ls-files --others --exclude-standard)
+$staged     = @(git diff --cached --name-only)
+
+Write-Host &quot;HEAD before:        $headBefore&quot;
+Write-Host &quot;Branch:             $branch&quot;
+Write-Host &quot;Index tree:         $indexTree&quot;
+Write-Host &quot;Staged delta paths: $($staged.Count)&quot;
+Write-Host &quot;Unstaged paths:     $($unstaged.Count)&quot;
+Write-Host &quot;Untracked paths:    $($untracked.Count)&quot;
+
+if ($headBefore -ne $expectedParent) {
+    throw &quot;STOP: HEAD changed unexpectedly.&quot;
+}
+if ($branch -ne &#39;main&#39;) {
+    throw &quot;STOP: Current branch is not main.&quot;
+}
+if ($indexTree -ne $expectedTree) {
+    throw &quot;STOP: Git index tree no longer matches certified R6 tree.&quot;
+}
+if ($unstaged.Count -ne 0) {
+    throw &quot;STOP: Unstaged tracked changes appeared.&quot;
+}
+if ($untracked.Count -ne 0) {
+    throw &quot;STOP: Untracked paths appeared.&quot;
+}
+if ($staged.Count -ne 966) {
+    throw &quot;STOP: Expected 966 staged delta paths; found $($staged.Count).&quot;
+}
+
+Write-Host &#39;&#39;
+Write-Host &#39;Final staged summary:&#39;
+git diff --cached --stat
+Write-Host &#39;&#39;
+git diff --cached --name-status
+
+# ------------------------------------------------------------------
+# 2. Commit exact certified index
+# ------------------------------------------------------------------
+
+git commit -m &quot;Publish Module 2 / G3 v2.1.0 integrated successor&quot;
+
+if ($LASTEXITCODE -ne 0) {
+    throw &quot;STOP: git commit failed.&quot;
+}
+
+# ------------------------------------------------------------------
+# 3. Capture commit binding
+# ------------------------------------------------------------------
+
+$commit = (git rev-parse HEAD).Trim()
+$tree   = (git rev-parse &#39;HEAD^{tree}&#39;).Trim()
+$parent = (git rev-parse &#39;HEAD^&#39;).Trim()
+$subject = (git log -1 --format=&#39;%s&#39;).Trim()
+$timestamp = (git log -1 --format=&#39;%cI&#39;).Trim()
+$status = @(git status --short)
+
+Write-Host &#39;&#39;
+Write-Host &#39;============================================================&#39;
+Write-Host &#39;PHASE_F_R3_COMMIT_BINDING&#39;
+Write-Host &#39;============================================================&#39;
+Write-Host &quot;Commit SHA: $commit&quot;
+Write-Host &quot;Tree SHA:   $tree&quot;
+Write-Host &quot;Parent SHA: $parent&quot;
+Write-Host &quot;Branch:     $branch&quot;
+Write-Host &quot;Timestamp:  $timestamp&quot;
+Write-Host &quot;Subject:    $subject&quot;
+Write-Host &quot;Status rows after commit: $($status.Count)&quot;
+
+if ($tree -ne $expectedTree) {
+    throw &quot;STOP: committed tree does not equal certified R6 index tree.&quot;
+}
+if ($parent -ne $expectedParent) {
+    throw &quot;STOP: commit parent does not equal verified predecessor.&quot;
+}
+if ($status.Count -ne 0) {
+    Write-Host &#39;&#39;
+    Write-Host &#39;Post-commit status:&#39;
+    git status --short
+    throw &quot;STOP: working tree is not clean after commit.&quot;
+}
+
+Write-Host &#39;&#39;
+Write-Host &#39;PHASE_F_R3_COMMIT_BINDING = PASS&#39;
+Write-Host &#39;No tag created.&#39;
+Write-Host &#39;No push performed.&#39;
+Write-Host &#39;No publication performed.&#39;
+Write-Host &#39;STOP HERE and return this console output.&#39;
+</code></pre>
+<p>Expected hard invariants are:</p>
+<ul>
+<li>parent remains <code>46fb1f9198475678edc9cabdeefd2f91a59e49c2</code>;</li>
+<li>committed tree must be exactly <code>fa82f71a9aabf88d5ecbc16ba38cac8de8d83cbb</code>;</li>
+<li>staged delta count immediately before commit remains <strong>966</strong>;</li>
+<li>post-commit working tree is clean;</li>
+<li>no tag, push, or publication occurs.</li>
+</ul>
+<p>The F-R2 receipt itself confirms that no commit, tag, push, or publication has yet occurred, so this is the correct next publication boundary. [export reference: filecite | turn30file6 | L27-L36]</p>
+<p>Return the full F-R3 console result. If it passes, our next step is <strong>Phase G: create and verify the new annotated <code>module-2-g3-v2.1.0</code> tag while proving the historical v2.0.0 tag remains untouched</strong>.</p>
+</div></article><article id="m-9fbe1fce-f06c-4b47-9560-d33dc67401da" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00081 · 2026-09-10T09:43:56.376000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 325ca548-6b6a-4a80-8ebe-e0b8583f8741.png</p><div class="bubble"><p>i had to keep  pressing spacebar to get all of the output to show. now it&#39;s on this screen. is there anything i need to do? </p>
+</div></article><article id="m-fe1ff0df-8808-477a-b2f1-c711eb53ba6d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00082 · 2026-09-10T09:43:58.988746-04:00 · active path</p><div class="bubble"><p>Yes. You are simply inside Git&#39;s <strong>pager (<code>less</code>)</strong> because the <code>git diff --cached --stat</code> / <code>--name-status</code> output was long.</p>
+<p>The <code>(END)</code> at the bottom means <strong>all output has been displayed</strong>. Nothing is wrong, and you do <strong>not</strong> need to press Space anymore.</p>
+<h3>Do this now</h3>
+<p>Press:</p>
+<pre><code class="language-text">q
+</code></pre>
+<p>just once.</p>
+<p>That exits the pager and returns control to the PowerShell script. <strong>Do not press Ctrl+C and do not close PowerShell.</strong></p>
+<p>After you press <code>q</code>, the script should continue automatically. Because our block has another long <code>git diff --cached --name-status</code> command, it <strong>may put you into another pager</strong>. If you again see <code>(END)</code>, press <strong><code>q</code> again</strong>. You do not need to page through it with Space—we already have the relevant staged-set certification from F-R2.</p>
+<p>Eventually you should see the commit execute and then something like:</p>
+<pre><code class="language-text">PHASE_F_R3_COMMIT_BINDING
+...
+Commit SHA: ...
+Tree SHA:   fa82f71a9aabf88d5ecbc16ba38cac8de8d83cbb
+Parent SHA: 46fb1f9198475678edc9cabdeefd2f91a59e49c2
+...
+PHASE_F_R3_COMMIT_BINDING = PASS
+No tag created.
+No push performed.
+No publication performed.
+STOP HERE and return this console output.
+</code></pre>
+<p><strong>Important:</strong> right now, just press <code>q</code>. Don&#39;t type or run any new command manually.</p>
+</div></article><article id="m-af016f85-c189-4d18-b259-2f6f7b1561aa" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00083 · 2026-09-10T09:45:28.386000-04:00 · active path</p><div class="bubble"><h1>============================================================
+PHASE_F_R3_COMMIT_BINDING</h1>
+<p>Commit SHA: fd9f67b6d1d7fc848d315bcb696487b82c9a8046
+Tree SHA:   fa82f71a9aabf88d5ecbc16ba38cac8de8d83cbb
+Parent SHA: 46fb1f9198475678edc9cabdeefd2f91a59e49c2
+Branch:     main
+Timestamp:  2026-09-10T09:44:47-04:00
+Subject:    Publish Module 2 / G3 v2.1.0 integrated successor
+Status rows after commit: 0</p>
+<p>PHASE_F_R3_COMMIT_BINDING = PASS
+No tag created.
+No push performed.
+No publication performed.
+STOP HERE and return this console output.</p>
+</div></article><article id="m-32a65a3e-f2b0-44f2-afec-a977d70b15b0" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00084 · 2026-09-10T09:45:29.308833-04:00 · active path</p><div class="bubble"><p><strong>Phase F-R3 passes.</strong> We now have the exact local publication commit bound to the previously certified R6 Git tree:</p>
+<pre><code class="language-text">Publication commit:
+fd9f67b6d1d7fc848d315bcb696487b82c9a8046
+
+Certified/committed tree:
+fa82f71a9aabf88d5ecbc16ba38cac8de8d83cbb
+
+Parent:
+46fb1f9198475678edc9cabdeefd2f91a59e49c2
+
+Branch:
+main
+
+Working tree:
+CLEAN
+
+Commit subject:
+Publish Module 2 / G3 v2.1.0 integrated successor
+</code></pre>
+<p>That tree identity is particularly important: it is exactly the tree independently certified in F-R2 from all <strong>2,884 R6 files with 0 blob mismatches and 0 blob errors</strong>. [export reference: filecite | turn30file6 | L10-L21]</p>
+<p>We have crossed the <strong>local commit boundary</strong>, but nothing is public yet.</p>
+<h2>Phase G — create and certify the new stable tag</h2>
+<p>We can now create the <strong>new annotated tag</strong>:</p>
+<pre><code class="language-text">module-2-g3-v2.1.0
+</code></pre>
+<p>This block first freshly verifies the local/remote historical v2.0.0 identities and confirms v2.1.0 is still absent remotely. Only then does it create the <strong>local</strong> new tag. It does <strong>not push anything</strong>.</p>
+<p>Paste this in the same PowerShell window:</p>
+<pre><code class="language-powershell">&amp; {
+    $ErrorActionPreference = &#39;Stop&#39;
+
+    $Repo = &#39;D:\x\m&#39;
+
+    $ExpectedCommit = &#39;fd9f67b6d1d7fc848d315bcb696487b82c9a8046&#39;
+    $ExpectedTree   = &#39;fa82f71a9aabf88d5ecbc16ba38cac8de8d83cbb&#39;
+    $ExpectedParent = &#39;46fb1f9198475678edc9cabdeefd2f91a59e49c2&#39;
+
+    $OldTag = &#39;module-2-g3-v2.0.0&#39;
+    $ExpectedOldTagObject = &#39;fcf32b615142a06075a7fccede26a97042ca8194&#39;
+    $ExpectedOldCommit    = &#39;500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65&#39;
+
+    $NewTag = &#39;module-2-g3-v2.1.0&#39;
+    $TagMessage = &#39;Module 2 / G3 v2.1.0 integrated successor&#39;
+
+    $Stamp = (Get-Date).ToUniversalTime().ToString(&#39;yyyyMMddTHHmmssfffZ&#39;)
+    $Suffix = [guid]::NewGuid().ToString(&#39;N&#39;).Substring(0,8)
+    $EvidenceDir = &quot;D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_G_${Stamp}_${Suffix}&quot;
+
+    New-Item -ItemType Directory -Path $EvidenceDir -Force | Out-Null
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;MSBF PHASE G — STABLE TAG / PRE-PUSH CERTIFICATION&quot;
+    Write-Host &quot;============================================================&quot;
+
+    # ------------------------------------------------------------
+    # 1. Certify local publication commit
+    # ------------------------------------------------------------
+
+    $Head = (git -C $Repo rev-parse HEAD).Trim().ToLowerInvariant()
+    $Tree = (git -C $Repo rev-parse &#39;HEAD^{tree}&#39;).Trim().ToLowerInvariant()
+    $Parent = (git -C $Repo rev-parse &#39;HEAD^&#39;).Trim().ToLowerInvariant()
+    $Branch = (git -C $Repo branch --show-current).Trim()
+    $Status = @(git -C $Repo status --porcelain=v1)
+
+    if ($Head -ne $ExpectedCommit) {
+        throw &quot;STOP: HEAD differs from certified publication commit.&quot;
+    }
+
+    if ($Tree -ne $ExpectedTree) {
+        throw &quot;STOP: HEAD tree differs from certified R6 tree.&quot;
+    }
+
+    if ($Parent -ne $ExpectedParent) {
+        throw &quot;STOP: publication commit parent changed.&quot;
+    }
+
+    if ($Branch -ne &#39;main&#39;) {
+        throw &quot;STOP: branch is not main.&quot;
+    }
+
+    if ($Status.Count -ne 0) {
+        throw &quot;STOP: working tree is not clean.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 2. Fresh historical tag verification — LOCAL
+    # ------------------------------------------------------------
+
+    $OldLocalObject = (
+        git -C $Repo rev-parse &quot;$OldTag^{tag}&quot;
+    ).Trim().ToLowerInvariant()
+
+    $OldLocalCommit = (
+        git -C $Repo rev-parse &quot;$OldTag^{commit}&quot;
+    ).Trim().ToLowerInvariant()
+
+    if ($OldLocalObject -ne $ExpectedOldTagObject) {
+        throw &quot;STOP: historical local v2.0.0 tag object changed.&quot;
+    }
+
+    if ($OldLocalCommit -ne $ExpectedOldCommit) {
+        throw &quot;STOP: historical local v2.0.0 peeled commit changed.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 3. Fresh historical tag + branch verification — REMOTE
+    #    ls-remote does not update local refs.
+    # ------------------------------------------------------------
+
+    $RemoteMainRaw = @(git -C $Repo ls-remote origin refs/heads/main)
+
+    if ($LASTEXITCODE -ne 0 -or $RemoteMainRaw.Count -ne 1) {
+        throw &quot;STOP: unable to resolve remote main.&quot;
+    }
+
+    $RemoteMain = (
+        ($RemoteMainRaw[0] -split &#39;\s+&#39;)[0]
+    ).ToLowerInvariant()
+
+    # Remote main must still be the predecessor because we have not pushed.
+    if ($RemoteMain -ne $ExpectedParent) {
+        throw &quot;STOP: remote main changed unexpectedly before push. Actual: $RemoteMain&quot;
+    }
+
+    $OldRemoteRaw = @(
+        git -C $Repo ls-remote origin `
+            &quot;refs/tags/$OldTag&quot; `
+            &quot;refs/tags/$OldTag^{}&quot;
+    )
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;STOP: unable to query historical remote tag.&quot;
+    }
+
+    $OldRemoteObjectLine = @(
+        $OldRemoteRaw |
+        Where-Object { $_ -match &quot;refs/tags/$([regex]::Escape($OldTag))$&quot; }
+    )
+
+    $OldRemoteCommitLine = @(
+        $OldRemoteRaw |
+        Where-Object { $_ -match &quot;refs/tags/$([regex]::Escape($OldTag))\^\{\}$&quot; }
+    )
+
+    if (
+        $OldRemoteObjectLine.Count -ne 1 -or
+        $OldRemoteCommitLine.Count -ne 1
+    ) {
+        throw &quot;STOP: historical remote annotated tag could not be resolved exactly.&quot;
+    }
+
+    $OldRemoteObject = (
+        ($OldRemoteObjectLine[0] -split &#39;\s+&#39;)[0]
+    ).ToLowerInvariant()
+
+    $OldRemoteCommit = (
+        ($OldRemoteCommitLine[0] -split &#39;\s+&#39;)[0]
+    ).ToLowerInvariant()
+
+    if ($OldRemoteObject -ne $ExpectedOldTagObject) {
+        throw &quot;STOP: historical remote tag object changed.&quot;
+    }
+
+    if ($OldRemoteCommit -ne $ExpectedOldCommit) {
+        throw &quot;STOP: historical remote peeled commit changed.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 4. New tag must still be absent locally AND remotely
+    # ------------------------------------------------------------
+
+    git -C $Repo show-ref --verify --quiet &quot;refs/tags/$NewTag&quot;
+    $NewLocalExists = ($LASTEXITCODE -eq 0)
+
+    $NewRemoteRaw = @(
+        git -C $Repo ls-remote origin &quot;refs/tags/$NewTag&quot;
+    )
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;STOP: unable to query proposed remote tag.&quot;
+    }
+
+    $NewRemoteExists = (
+        @(
+            $NewRemoteRaw |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+        ).Count -gt 0
+    )
+
+    if ($NewLocalExists) {
+        throw &quot;STOP: proposed v2.1.0 tag unexpectedly already exists locally.&quot;
+    }
+
+    if ($NewRemoteExists) {
+        throw &quot;STOP: proposed v2.1.0 tag unexpectedly already exists remotely.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 5. CREATE NEW LOCAL ANNOTATED TAG
+    # ------------------------------------------------------------
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;All pre-tag controls PASS.&quot;
+    Write-Host &quot;Creating new LOCAL annotated tag...&quot;
+
+    git -C $Repo tag -a $NewTag $ExpectedCommit -m $TagMessage
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;STOP: annotated tag creation failed.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 6. Certify new tag
+    # ------------------------------------------------------------
+
+    $NewTagObject = (
+        git -C $Repo rev-parse &quot;$NewTag^{tag}&quot;
+    ).Trim().ToLowerInvariant()
+
+    $NewTagCommit = (
+        git -C $Repo rev-parse &quot;$NewTag^{commit}&quot;
+    ).Trim().ToLowerInvariant()
+
+    if ($NewTagCommit -ne $ExpectedCommit) {
+        throw &quot;STOP: new tag does not peel to publication commit.&quot;
+    }
+
+    # Reconfirm old tag did not move.
+    $OldObjectAfter = (
+        git -C $Repo rev-parse &quot;$OldTag^{tag}&quot;
+    ).Trim().ToLowerInvariant()
+
+    $OldCommitAfter = (
+        git -C $Repo rev-parse &quot;$OldTag^{commit}&quot;
+    ).Trim().ToLowerInvariant()
+
+    if (
+        $OldObjectAfter -ne $ExpectedOldTagObject -or
+        $OldCommitAfter -ne $ExpectedOldCommit
+    ) {
+        throw &quot;STOP: historical tag changed during new-tag creation.&quot;
+    }
+
+    $HeadAfter = (
+        git -C $Repo rev-parse HEAD
+    ).Trim().ToLowerInvariant()
+
+    $StatusAfter = @(
+        git -C $Repo status --porcelain=v1
+    )
+
+    if ($HeadAfter -ne $ExpectedCommit) {
+        throw &quot;STOP: branch HEAD changed unexpectedly.&quot;
+    }
+
+    if ($StatusAfter.Count -ne 0) {
+        throw &quot;STOP: working tree changed unexpectedly.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 7. Evidence
+    # ------------------------------------------------------------
+
+    git -C $Repo show-ref --tags |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;ALL_LOCAL_TAG_REFS.txt&#39;) `
+            -Encoding UTF8
+
+    git -C $Repo cat-file -p $NewTagObject |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;NEW_TAG_OBJECT.txt&#39;) `
+            -Encoding UTF8
+
+    $Receipt = [ordered]@{
+        Task = &#39;MSBF_PHASE_G_LOCAL_TAG_PRE_PUSH_CERTIFICATION&#39;
+
+        Repository = $Repo
+        EvidenceDirectory = $EvidenceDir
+
+        Branch = $Branch
+
+        PublicationCommit = $ExpectedCommit
+        PublicationTree = $ExpectedTree
+        PublicationParent = $ExpectedParent
+
+        RemoteMainBeforePush = $RemoteMain
+
+        HistoricalTag = $OldTag
+        HistoricalTagObject = $OldObjectAfter
+        HistoricalTagPeeledCommit = $OldCommitAfter
+
+        NewTag = $NewTag
+        NewTagObject = $NewTagObject
+        NewTagPeeledCommit = $NewTagCommit
+
+        WorkingTreeClean = ($StatusAfter.Count -eq 0)
+
+        CommitPushPerformed = $false
+        TagPushPerformed = $false
+        GitHubReleasePerformed = $false
+        PublicationPerformed = $false
+
+        PrePushGate = &#39;PASS&#39;
+    }
+
+    $ReceiptPath = Join-Path $EvidenceDir `
+        &#39;MSBF_PHASE_G_PRE_PUSH_GATE.json&#39;
+
+    $Receipt |
+        ConvertTo-Json -Depth 6 |
+        Set-Content `
+            -LiteralPath $ReceiptPath `
+            -Encoding UTF8
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;PRE_PUSH_GATE = PASS&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;Publication commit:       $ExpectedCommit&quot;
+    Write-Host &quot;Publication tree:         $ExpectedTree&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;Historical v2.0.0 object: $OldObjectAfter&quot;
+    Write-Host &quot;Historical v2.0.0 commit: $OldCommitAfter&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;New v2.1.0 tag object:    $NewTagObject&quot;
+    Write-Host &quot;New v2.1.0 peeled commit: $NewTagCommit&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;Remote main before push:  $RemoteMain&quot;
+    Write-Host &quot;Working tree clean:       $($StatusAfter.Count -eq 0)&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;Commit pushed:            NO&quot;
+    Write-Host &quot;Tag pushed:               NO&quot;
+    Write-Host &quot;GitHub release:           NO&quot;
+    Write-Host &quot;Publication:              NO&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;Receipt: $ReceiptPath&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;STOP HERE.&quot;
+    Write-Host &quot;Do not push anything yet.&quot;
+}
+</code></pre>
+<p>The new annotated tag will naturally have a <strong>new tag-object SHA</strong> that we do not know in advance; that is expected because the annotated tag object includes metadata. What is invariant is that its <strong>peeled commit must be exactly</strong>:</p>
+<pre><code class="language-text">fd9f67b6d1d7fc848d315bcb696487b82c9a8046
+</code></pre>
+<p>and the historical tag must remain exactly:</p>
+<pre><code class="language-text">v2.0.0 tag object:
+fcf32b615142a06075a7fccede26a97042ca8194
+
+v2.0.0 peeled commit:
+500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+</code></pre>
+<p>If this returns <code>PRE_PUSH_GATE = PASS</code>, stop and send me the output. The following phase will be the <strong>first network mutation</strong>: explicit push of <code>main</code>, verification, then explicit push of <strong>only</strong> <code>module-2-g3-v2.1.0</code>, followed by fresh remote binding checks. No force options and no historical-tag mutation.</p>
+</div></article><article id="m-74d03780-3170-42a6-b660-e90884c92920" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00085 · 2026-09-10T09:48:29.014000-04:00 · active path</p><p class="note">Attachment references: ALL_LOCAL_TAG_REFS.txt; MSBF_PHASE_G_PRE_PUSH_GATE.json; NEW_TAG_OBJECT.txt</p><div class="bubble"><h1>============================================================
+MSBF PHASE G — STABLE TAG / PRE-PUSH CERTIFICATION</h1>
+<p>All pre-tag controls PASS.
+Creating new LOCAL annotated tag...</p>
+<h1>============================================================
+PRE_PUSH_GATE = PASS</h1>
+<p>Publication commit:       fd9f67b6d1d7fc848d315bcb696487b82c9a8046
+Publication tree:         fa82f71a9aabf88d5ecbc16ba38cac8de8d83cbb</p>
+<p>Historical v2.0.0 object: fcf32b615142a06075a7fccede26a97042ca8194
+Historical v2.0.0 commit: 500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65</p>
+<p>New v2.1.0 tag object:    cdef0c49eb37d0cc72444c0829c253e09eee050a
+New v2.1.0 peeled commit: fd9f67b6d1d7fc848d315bcb696487b82c9a8046</p>
+<p>Remote main before push:  46fb1f9198475678edc9cabdeefd2f91a59e49c2
+Working tree clean:       True</p>
+<p>Commit pushed:            NO
+Tag pushed:               NO
+GitHub release:           NO
+Publication:              NO</p>
+<h1>Receipt: D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_G_20260910T134637937Z_1aa0f38f\MSBF_PHASE_G_PRE_PUSH_GATE.json</h1>
+<p>STOP HERE.
+Do not push anything yet.</p>
+</div></article><article id="m-fc7b3729-32a1-47be-995f-da9f1ce287c8" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00086 · 2026-09-10T09:48:34.112559-04:00 · active path</p><div class="bubble"><p><strong>Phase G is closed with an exact PASS.</strong> The uploaded receipt confirms the local publication commit and certified R6 tree are unchanged, the working tree is clean, the historical <code>module-2-g3-v2.0.0</code> tag object/peeled commit remain intact, and the new annotated <code>module-2-g3-v2.1.0</code> tag exists locally and peels to the exact publication commit. [export reference: filecite | turn31file1 | L5-L16]</p>
+<p>The local tag inventory also shows the old and new tag objects as distinct refs, with the new v2.1.0 object at <code>cdef0c49...</code> and the old v2.0.0 object still at <code>fcf32b61...</code>. [export reference: filecite | turn31file0 | L1-L3] The annotated tag itself targets commit <code>fd9f67b6...</code> and carries the intended <code>Module 2 / G3 v2.1.0 integrated successor</code> message. [export reference: filecite | turn31file2 | L1-L6]</p>
+<p>So the controlling identities are now:</p>
+<pre><code class="language-text">PUBLICATION COMMIT
+fd9f67b6d1d7fc848d315bcb696487b82c9a8046
+
+CERTIFIED R6 TREE
+fa82f71a9aabf88d5ecbc16ba38cac8de8d83cbb
+
+NEW v2.1.0 TAG OBJECT
+cdef0c49eb37d0cc72444c0829c253e09eee050a
+
+NEW v2.1.0 PEELED COMMIT
+fd9f67b6d1d7fc848d315bcb696487b82c9a8046
+
+PRESERVED v2.0.0 TAG OBJECT
+fcf32b615142a06075a7fccede26a97042ca8194
+
+PRESERVED v2.0.0 PEELED COMMIT
+500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+</code></pre>
+<p>The receipt correctly records that no commit push, tag push, GitHub release, or publication had occurred at the end of Phase G. [export reference: filecite | turn31file1 | L17-L21]</p>
+<h2>Phase H — push <code>main</code>, then push only the new tag</h2>
+<p>This is the <strong>first network mutation</strong>. We will push the branch first, verify the remote branch, then push <strong>only</strong> <code>module-2-g3-v2.1.0</code>, then verify both new and historical remote tag identities.</p>
+<p>Run this entire block in the same PowerShell window:</p>
+<pre><code class="language-powershell">&amp; {
+    $ErrorActionPreference = &#39;Stop&#39;
+
+    $Repo = &#39;D:\x\m&#39;
+
+    $ExpectedCommit = &#39;fd9f67b6d1d7fc848d315bcb696487b82c9a8046&#39;
+    $ExpectedTree   = &#39;fa82f71a9aabf88d5ecbc16ba38cac8de8d83cbb&#39;
+
+    $OldTag = &#39;module-2-g3-v2.0.0&#39;
+    $ExpectedOldTagObject = &#39;fcf32b615142a06075a7fccede26a97042ca8194&#39;
+    $ExpectedOldTagCommit = &#39;500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65&#39;
+
+    $NewTag = &#39;module-2-g3-v2.1.0&#39;
+    $ExpectedNewTagObject = &#39;cdef0c49eb37d0cc72444c0829c253e09eee050a&#39;
+
+    $Stamp = (Get-Date).ToUniversalTime().ToString(&#39;yyyyMMddTHHmmssfffZ&#39;)
+    $Suffix = [guid]::NewGuid().ToString(&#39;N&#39;).Substring(0,8)
+    $EvidenceDir = &quot;D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_H_${Stamp}_${Suffix}&quot;
+
+    New-Item -ItemType Directory -Path $EvidenceDir -Force | Out-Null
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;MSBF PHASE H — PUSH COMMIT AND NEW STABLE TAG&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;Repository: $Repo&quot;
+    Write-Host &quot;Evidence:   $EvidenceDir&quot;
+    Write-Host &quot;&quot;
+
+    # ------------------------------------------------------------
+    # 1. Immediate local pre-push checks
+    # ------------------------------------------------------------
+
+    $Head = (git -C $Repo rev-parse HEAD).Trim().ToLowerInvariant()
+    $Tree = (git -C $Repo rev-parse &#39;HEAD^{tree}&#39;).Trim().ToLowerInvariant()
+    $Branch = (git -C $Repo branch --show-current).Trim()
+    $Status = @(git -C $Repo status --porcelain=v1)
+
+    $NewTagObject = (
+        git -C $Repo rev-parse &quot;$NewTag^{tag}&quot;
+    ).Trim().ToLowerInvariant()
+
+    $NewTagCommit = (
+        git -C $Repo rev-parse &quot;$NewTag^{commit}&quot;
+    ).Trim().ToLowerInvariant()
+
+    $OldTagObject = (
+        git -C $Repo rev-parse &quot;$OldTag^{tag}&quot;
+    ).Trim().ToLowerInvariant()
+
+    $OldTagCommit = (
+        git -C $Repo rev-parse &quot;$OldTag^{commit}&quot;
+    ).Trim().ToLowerInvariant()
+
+    if ($Head -ne $ExpectedCommit) {
+        throw &quot;STOP: local HEAD differs from certified publication commit.&quot;
+    }
+
+    if ($Tree -ne $ExpectedTree) {
+        throw &quot;STOP: local tree differs from certified R6 tree.&quot;
+    }
+
+    if ($Branch -ne &#39;main&#39;) {
+        throw &quot;STOP: branch is not main.&quot;
+    }
+
+    if ($Status.Count -ne 0) {
+        throw &quot;STOP: working tree is not clean.&quot;
+    }
+
+    if ($NewTagObject -ne $ExpectedNewTagObject) {
+        throw &quot;STOP: new tag object changed.&quot;
+    }
+
+    if ($NewTagCommit -ne $ExpectedCommit) {
+        throw &quot;STOP: new tag no longer peels to publication commit.&quot;
+    }
+
+    if (
+        $OldTagObject -ne $ExpectedOldTagObject -or
+        $OldTagCommit -ne $ExpectedOldTagCommit
+    ) {
+        throw &quot;STOP: historical tag changed locally.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 2. Fresh remote state immediately before mutation
+    # ------------------------------------------------------------
+
+    $RemoteMainBeforeRaw = @(
+        git -C $Repo ls-remote origin refs/heads/main
+    )
+
+    if ($LASTEXITCODE -ne 0 -or $RemoteMainBeforeRaw.Count -ne 1) {
+        throw &quot;STOP: unable to resolve remote main before push.&quot;
+    }
+
+    $RemoteMainBefore = (
+        ($RemoteMainBeforeRaw[0] -split &#39;\s+&#39;)[0]
+    ).ToLowerInvariant()
+
+    $NewRemoteBefore = @(
+        git -C $Repo ls-remote origin &quot;refs/tags/$NewTag&quot;
+    )
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;STOP: unable to query remote new tag before push.&quot;
+    }
+
+    if (@($NewRemoteBefore | Where-Object { $_.Trim() }).Count -ne 0) {
+        throw &quot;STOP: new tag unexpectedly already exists remotely.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 3. Push MAIN explicitly
+    # ------------------------------------------------------------
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Pushing main explicitly...&quot;
+
+    $PushMainOutput = @(
+        git -C $Repo push origin main 2&gt;&amp;1
+    )
+
+    $PushMainCode = $LASTEXITCODE
+
+    $PushMainOutput |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;PUSH_MAIN_OUTPUT.txt&#39;) `
+            -Encoding UTF8
+
+    $PushMainOutput | ForEach-Object { Write-Host $_ }
+
+    if ($PushMainCode -ne 0) {
+        throw &quot;STOP: main push failed. Do NOT push tag.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 4. Verify REMOTE MAIN now equals publication commit
+    # ------------------------------------------------------------
+
+    $RemoteMainAfterRaw = @(
+        git -C $Repo ls-remote origin refs/heads/main
+    )
+
+    if ($LASTEXITCODE -ne 0 -or $RemoteMainAfterRaw.Count -ne 1) {
+        throw &quot;STOP: unable to verify remote main after push.&quot;
+    }
+
+    $RemoteMainAfter = (
+        ($RemoteMainAfterRaw[0] -split &#39;\s+&#39;)[0]
+    ).ToLowerInvariant()
+
+    if ($RemoteMainAfter -ne $ExpectedCommit) {
+        throw &quot;STOP: remote main does not equal publication commit after push.&quot;
+    }
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;REMOTE MAIN VERIFIED:&quot;
+    Write-Host $RemoteMainAfter
+
+    # ------------------------------------------------------------
+    # 5. Reconfirm old remote tag BEFORE new-tag push
+    # ------------------------------------------------------------
+
+    $OldRemoteBefore = @(
+        git -C $Repo ls-remote origin `
+            &quot;refs/tags/$OldTag&quot; `
+            &quot;refs/tags/$OldTag^{}&quot;
+    )
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;STOP: unable to verify old remote tag.&quot;
+    }
+
+    $OldObjLine = @(
+        $OldRemoteBefore |
+        Where-Object { $_ -match &quot;refs/tags/$([regex]::Escape($OldTag))$&quot; }
+    )
+
+    $OldCommitLine = @(
+        $OldRemoteBefore |
+        Where-Object { $_ -match &quot;refs/tags/$([regex]::Escape($OldTag))\^\{\}$&quot; }
+    )
+
+    if (
+        $OldObjLine.Count -ne 1 -or
+        $OldCommitLine.Count -ne 1
+    ) {
+        throw &quot;STOP: historical remote tag cannot be resolved exactly.&quot;
+    }
+
+    $OldRemoteObj = (
+        ($OldObjLine[0] -split &#39;\s+&#39;)[0]
+    ).ToLowerInvariant()
+
+    $OldRemoteCommit = (
+        ($OldCommitLine[0] -split &#39;\s+&#39;)[0]
+    ).ToLowerInvariant()
+
+    if (
+        $OldRemoteObj -ne $ExpectedOldTagObject -or
+        $OldRemoteCommit -ne $ExpectedOldTagCommit
+    ) {
+        throw &quot;STOP: historical remote tag changed before new-tag push.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 6. Push ONLY the new stable tag
+    # ------------------------------------------------------------
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Pushing ONLY $NewTag ...&quot;
+
+    $PushTagOutput = @(
+        git -C $Repo push origin &quot;refs/tags/$NewTag&quot; 2&gt;&amp;1
+    )
+
+    $PushTagCode = $LASTEXITCODE
+
+    $PushTagOutput |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;PUSH_NEW_TAG_OUTPUT.txt&#39;) `
+            -Encoding UTF8
+
+    $PushTagOutput | ForEach-Object { Write-Host $_ }
+
+    if ($PushTagCode -ne 0) {
+        throw &quot;STOP: tag push failed.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 7. Fresh remote verification of new tag
+    # ------------------------------------------------------------
+
+    $NewRemoteAfter = @(
+        git -C $Repo ls-remote origin `
+            &quot;refs/tags/$NewTag&quot; `
+            &quot;refs/tags/$NewTag^{}&quot;
+    )
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;STOP: unable to verify new remote tag.&quot;
+    }
+
+    $NewObjLine = @(
+        $NewRemoteAfter |
+        Where-Object { $_ -match &quot;refs/tags/$([regex]::Escape($NewTag))$&quot; }
+    )
+
+    $NewCommitLine = @(
+        $NewRemoteAfter |
+        Where-Object { $_ -match &quot;refs/tags/$([regex]::Escape($NewTag))\^\{\}$&quot; }
+    )
+
+    if (
+        $NewObjLine.Count -ne 1 -or
+        $NewCommitLine.Count -ne 1
+    ) {
+        throw &quot;STOP: new remote annotated tag did not resolve exactly.&quot;
+    }
+
+    $NewRemoteObj = (
+        ($NewObjLine[0] -split &#39;\s+&#39;)[0]
+    ).ToLowerInvariant()
+
+    $NewRemoteCommit = (
+        ($NewCommitLine[0] -split &#39;\s+&#39;)[0]
+    ).ToLowerInvariant()
+
+    if ($NewRemoteObj -ne $ExpectedNewTagObject) {
+        throw &quot;STOP: remote new-tag object differs from local certified tag object.&quot;
+    }
+
+    if ($NewRemoteCommit -ne $ExpectedCommit) {
+        throw &quot;STOP: remote new tag does not peel to publication commit.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 8. Final old-tag preservation check AFTER new-tag push
+    # ------------------------------------------------------------
+
+    $OldRemoteAfter = @(
+        git -C $Repo ls-remote origin `
+            &quot;refs/tags/$OldTag&quot; `
+            &quot;refs/tags/$OldTag^{}&quot;
+    )
+
+    $OldObjAfterLine = @(
+        $OldRemoteAfter |
+        Where-Object { $_ -match &quot;refs/tags/$([regex]::Escape($OldTag))$&quot; }
+    )
+
+    $OldCommitAfterLine = @(
+        $OldRemoteAfter |
+        Where-Object { $_ -match &quot;refs/tags/$([regex]::Escape($OldTag))\^\{\}$&quot; }
+    )
+
+    $OldRemoteObjAfter = (
+        ($OldObjAfterLine[0] -split &#39;\s+&#39;)[0]
+    ).ToLowerInvariant()
+
+    $OldRemoteCommitAfter = (
+        ($OldCommitAfterLine[0] -split &#39;\s+&#39;)[0]
+    ).ToLowerInvariant()
+
+    if (
+        $OldRemoteObjAfter -ne $ExpectedOldTagObject -or
+        $OldRemoteCommitAfter -ne $ExpectedOldTagCommit
+    ) {
+        throw &quot;STOP: historical tag changed after new-tag push.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 9. Final branch/worktree check
+    # ------------------------------------------------------------
+
+    $HeadAfter = (git -C $Repo rev-parse HEAD).Trim().ToLowerInvariant()
+    $StatusAfter = @(git -C $Repo status --porcelain=v1)
+
+    if ($HeadAfter -ne $ExpectedCommit) {
+        throw &quot;STOP: local HEAD changed unexpectedly.&quot;
+    }
+
+    if ($StatusAfter.Count -ne 0) {
+        throw &quot;STOP: working tree is no longer clean.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 10. Evidence receipt
+    # ------------------------------------------------------------
+
+    $Receipt = [ordered]@{
+        Task = &#39;MSBF_PHASE_H_REMOTE_COMMIT_TAG_BINDING&#39;
+
+        Repository = $Repo
+        EvidenceDirectory = $EvidenceDir
+
+        PublicationCommit = $ExpectedCommit
+        PublicationTree = $ExpectedTree
+
+        RemoteMainBeforePush = $RemoteMainBefore
+        RemoteMainAfterPush = $RemoteMainAfter
+
+        HistoricalTag = $OldTag
+        HistoricalTagObjectAfterPush = $OldRemoteObjAfter
+        HistoricalTagPeeledCommitAfterPush = $OldRemoteCommitAfter
+
+        NewTag = $NewTag
+        NewTagObjectRemote = $NewRemoteObj
+        NewTagPeeledCommitRemote = $NewRemoteCommit
+
+        WorkingTreeClean = ($StatusAfter.Count -eq 0)
+
+        MainPushPerformed = $true
+        NewTagPushPerformed = $true
+        ForcePushPerformed = $false
+        HistoricalTagMutationPerformed = $false
+
+        GitHubReleasePerformed = $false
+        PublicationEventComplete = $false
+
+        RemoteBinding = &#39;PASS&#39;
+    }
+
+    $ReceiptPath = Join-Path $EvidenceDir `
+        &#39;MSBF_PHASE_H_REMOTE_BINDING.json&#39;
+
+    $Receipt |
+        ConvertTo-Json -Depth 6 |
+        Set-Content `
+            -LiteralPath $ReceiptPath `
+            -Encoding UTF8
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;REMOTE_BINDING = PASS&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;Remote main:             $RemoteMainAfter&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;New v2.1.0 tag object:   $NewRemoteObj&quot;
+    Write-Host &quot;New v2.1.0 peeled commit:$NewRemoteCommit&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;Old v2.0.0 tag object:   $OldRemoteObjAfter&quot;
+    Write-Host &quot;Old v2.0.0 peeled commit:$OldRemoteCommitAfter&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;Working tree clean:      $($StatusAfter.Count -eq 0)&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;GitHub release created:  NO&quot;
+    Write-Host &quot;Publication event:       NOT COMPLETE&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;Receipt: $ReceiptPath&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;STOP HERE.&quot;
+    Write-Host &quot;Do not create the GitHub release yet.&quot;
+}
+</code></pre>
+<p>A successful Phase H should end with:</p>
+<pre><code class="language-text">REMOTE_BINDING = PASS
+
+Remote main:
+fd9f67b6d1d7fc848d315bcb696487b82c9a8046
+
+New v2.1.0 tag object:
+cdef0c49eb37d0cc72444c0829c253e09eee050a
+
+New v2.1.0 peeled commit:
+fd9f67b6d1d7fc848d315bcb696487b82c9a8046
+
+Old v2.0.0 tag object:
+fcf32b615142a06075a7fccede26a97042ca8194
+
+Old v2.0.0 peeled commit:
+500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+</code></pre>
+<p>If the <strong>main push succeeds but the tag push fails</strong>, stop and return the output; do not retry blindly. If both pass, we will have completed the remote Git binding but <strong>not yet the GitHub release publication event</strong>.</p>
+<p>After Phase H passes, the next step will be <strong>Phase I</strong>: create the GitHub release attached to the exact <code>module-2-g3-v2.1.0</code> tag and upload exactly the four locked ZIPs—no R6 candidate, private controls, history evidence, or other carrier.</p>
+</div></article><article id="m-8d448489-d15d-4d00-8e66-9d23247cce02" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00087 · 2026-09-10T09:52:32.523000-04:00 · active path</p><p class="note">Attachment references: MSBF_PHASE_H_REMOTE_BINDING.json; PUSH_MAIN_OUTPUT.txt; PUSH_NEW_TAG_OUTPUT.txt</p><div class="bubble"><h1>============================================================
+MSBF PHASE H — PUSH COMMIT AND NEW STABLE TAG</h1>
+<p>Repository: D:\x\m
+Evidence:   D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_H_20260910T135054341Z_007dc7ce</p>
+<p>Pushing main explicitly...
+info: please complete authentication in your browser...
+To <a href="https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git">https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git</a>
+   46fb1f9..fd9f67b  main -&gt; main</p>
+<p>REMOTE MAIN VERIFIED:
+fd9f67b6d1d7fc848d315bcb696487b82c9a8046</p>
+<p>Pushing ONLY module-2-g3-v2.1.0 ...
+To <a href="https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git">https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator.git</a></p>
+<ul>
+<li>[new tag]         module-2-g3-v2.1.0 -&gt; module-2-g3-v2.1.0</li>
+</ul>
+<h1>============================================================
+REMOTE_BINDING = PASS</h1>
+<p>Remote main:             fd9f67b6d1d7fc848d315bcb696487b82c9a8046</p>
+<p>New v2.1.0 tag object:   cdef0c49eb37d0cc72444c0829c253e09eee050a
+New v2.1.0 peeled commit:fd9f67b6d1d7fc848d315bcb696487b82c9a8046</p>
+<p>Old v2.0.0 tag object:   fcf32b615142a06075a7fccede26a97042ca8194
+Old v2.0.0 peeled commit:500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65</p>
+<p>Working tree clean:      True</p>
+<p>GitHub release created:  NO
+Publication event:       NOT COMPLETE</p>
+<h1>Receipt: D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_H_20260910T135054341Z_007dc7ce\MSBF_PHASE_H_REMOTE_BINDING.json</h1>
+<p>STOP HERE.
+Do not create the GitHub release yet.</p>
+</div></article><article id="m-df630cdb-0ef5-4ce2-8617-cf773478f1d0" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00088 · 2026-09-10T09:52:36.138749-04:00 · active path</p><div class="bubble"><p><strong>Phase H is closed with an exact PASS.</strong> Remote <code>main</code> now equals the certified publication commit, the new v2.1.0 annotated tag is on the remote and peels to that same commit, and the historical v2.0.0 tag object/target remain unchanged. The working tree is clean, no force operation occurred, and the receipt correctly records that the GitHub release itself has not yet been created. [export reference: filecite | turn32file0 | L5-L22] The underlying push evidence independently shows the <code>main</code> update and creation of only the new v2.1.0 tag. [export reference: filecite | turn32file1 | L1-L2] [export reference: filecite | turn32file2 | L1-L2]</p>
+<p>So the current state is:</p>
+<pre><code class="language-text">REMOTE_BINDING = PASS
+
+Remote main
+fd9f67b6d1d7fc848d315bcb696487b82c9a8046
+
+New v2.1.0 tag object
+cdef0c49eb37d0cc72444c0829c253e09eee050a
+
+New v2.1.0 peeled commit
+fd9f67b6d1d7fc848d315bcb696487b82c9a8046
+
+Historical v2.0.0 tag object
+fcf32b615142a06075a7fccede26a97042ca8194
+
+Historical v2.0.0 peeled commit
+500ec776ca25f1d4ade4eb45ecddb8df5e4f2e65
+
+GitHub release
+NOT YET CREATED
+</code></pre>
+<h2>Phase I — create the GitHub release</h2>
+<p>This is the actual <strong>release-publication event</strong>. The block below uses GitHub CLI, but it first fails closed if <code>gh</code> is unavailable/not authenticated, if the release already exists, if the remote tag no longer matches our certified identity, or if any of the four locked ZIPs differs from its expected filename, size, or SHA-256.</p>
+<p>It uploads <strong>exactly four assets</strong>. It does <strong>not</strong> upload R6, any overlay, private evidence, chat export, audit carrier, or checkpoint backup.</p>
+<p>Run this in the same PowerShell window:</p>
+<pre><code class="language-powershell">&amp; {
+    $ErrorActionPreference = &#39;Stop&#39;
+
+    $RepoDir = &#39;D:\x\m&#39;
+    $AssetDir = &#39;D:\MSBF_ZIP_FILES_091026&#39;
+
+    $GitHubRepo = &#39;andrew-goad/merchant-sales-based-financing-strategy-simulator&#39;
+    $Tag = &#39;module-2-g3-v2.1.0&#39;
+
+    $ExpectedCommit = &#39;fd9f67b6d1d7fc848d315bcb696487b82c9a8046&#39;
+    $ExpectedTagObject = &#39;cdef0c49eb37d0cc72444c0829c253e09eee050a&#39;
+
+    $ReleaseTitle = &#39;Module 2 / G3 v2.1.0 — Integrated Successor&#39;
+
+    $Assets = @(
+        [pscustomobject]@{
+            Name = &#39;MSBF_R26_R3_RETAINED_FINAL_RESUME_RUNTIME_20260902.zip&#39;
+            Bytes = 39382961
+            Sha256 = &#39;b17d0292180adf2bf49725be63b6c12f297d4ff64e0eba52c648045884497746&#39;
+        },
+        [pscustomobject]@{
+            Name = &#39;MSBF_MCI_POWER_BI_GITHUB_PUBLICATION_SUPPORT_R3_20260904.zip&#39;
+            Bytes = 31056035
+            Sha256 = &#39;1fe42707eabfb53512729581ded0dc2d1addf7ca4f6e4d4de594f3f3ea37551a&#39;
+        },
+        [pscustomobject]@{
+            Name = &#39;MSBF_Visual_Publication_Candidate_R1_20260909.zip&#39;
+            Bytes = 125229642
+            Sha256 = &#39;c2122d0c47cd1bd604dd372bb4aa662a61be86af0578c23ed768629cccd855b5&#39;
+        },
+        [pscustomobject]@{
+            Name = &#39;MSBF_Cohort_R3_Editorial_Patch_R1_20260908.zip&#39;
+            Bytes = 9613925
+            Sha256 = &#39;aadcb403b662fc5e53280fd92357e53db4f4c9bcad6b1111ba286d61f9f2bcc3&#39;
+        }
+    )
+
+    $Stamp = (Get-Date).ToUniversalTime().ToString(&#39;yyyyMMddTHHmmssfffZ&#39;)
+    $Suffix = [guid]::NewGuid().ToString(&#39;N&#39;).Substring(0,8)
+    $EvidenceDir = &quot;D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_I_${Stamp}_${Suffix}&quot;
+
+    New-Item -ItemType Directory -Path $EvidenceDir -Force | Out-Null
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;MSBF PHASE I — CREATE GITHUB RELEASE&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;Repository: $GitHubRepo&quot;
+    Write-Host &quot;Tag:        $Tag&quot;
+    Write-Host &quot;Evidence:   $EvidenceDir&quot;
+    Write-Host &quot;&quot;
+
+    # ------------------------------------------------------------
+    # 1. GitHub CLI availability / authentication
+    # ------------------------------------------------------------
+
+    $Gh = Get-Command gh.exe -ErrorAction SilentlyContinue
+
+    if (-not $Gh) {
+        throw @&quot;
+STOP: GitHub CLI (gh.exe) was not found.
+
+Do not create the release manually yet.
+Return this message and I will give you the bounded GitHub-UI procedure.
+&quot;@
+    }
+
+    Write-Host &quot;GitHub CLI:&quot;
+    &amp; $Gh.Source --version
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Checking GitHub authentication...&quot;
+
+    $AuthOutput = @(&amp; $Gh.Source auth status 2&gt;&amp;1)
+    $AuthCode = $LASTEXITCODE
+
+    $AuthOutput |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;GH_AUTH_STATUS.txt&#39;) `
+            -Encoding UTF8
+
+    $AuthOutput | ForEach-Object { Write-Host $_ }
+
+    if ($AuthCode -ne 0) {
+        throw &quot;STOP: GitHub CLI is not authenticated. Do not create the release.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 2. Reconfirm local repository state
+    # ------------------------------------------------------------
+
+    $Head = (git -C $RepoDir rev-parse HEAD).Trim().ToLowerInvariant()
+    $TreeStatus = @(git -C $RepoDir status --porcelain=v1)
+
+    if ($Head -ne $ExpectedCommit) {
+        throw &quot;STOP: local HEAD differs from publication commit.&quot;
+    }
+
+    if ($TreeStatus.Count -ne 0) {
+        throw &quot;STOP: working tree is not clean.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 3. Reconfirm remote tag identities immediately before release
+    # ------------------------------------------------------------
+
+    $RemoteTag = @(
+        git -C $RepoDir ls-remote origin `
+            &quot;refs/tags/$Tag&quot; `
+            &quot;refs/tags/$Tag^{}&quot;
+    )
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;STOP: unable to query remote v2.1.0 tag.&quot;
+    }
+
+    $TagObjectLine = @(
+        $RemoteTag |
+        Where-Object {
+            $_ -match &quot;refs/tags/$([regex]::Escape($Tag))$&quot;
+        }
+    )
+
+    $TagCommitLine = @(
+        $RemoteTag |
+        Where-Object {
+            $_ -match &quot;refs/tags/$([regex]::Escape($Tag))\^\{\}$&quot;
+        }
+    )
+
+    if (
+        $TagObjectLine.Count -ne 1 -or
+        $TagCommitLine.Count -ne 1
+    ) {
+        throw &quot;STOP: remote annotated tag did not resolve exactly.&quot;
+    }
+
+    $RemoteTagObject = (
+        ($TagObjectLine[0] -split &#39;\s+&#39;)[0]
+    ).ToLowerInvariant()
+
+    $RemoteTagCommit = (
+        ($TagCommitLine[0] -split &#39;\s+&#39;)[0]
+    ).ToLowerInvariant()
+
+    if ($RemoteTagObject -ne $ExpectedTagObject) {
+        throw &quot;STOP: remote tag object changed.&quot;
+    }
+
+    if ($RemoteTagCommit -ne $ExpectedCommit) {
+        throw &quot;STOP: remote tag target changed.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 4. Fresh four-asset identity verification
+    # ------------------------------------------------------------
+
+    $AssetRows = New-Object System.Collections.Generic.List[object]
+
+    foreach ($a in $Assets) {
+
+        $Path = Join-Path $AssetDir $a.Name
+
+        if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+            throw &quot;STOP: release asset missing: $Path&quot;
+        }
+
+        $Item = Get-Item -LiteralPath $Path
+        $Hash = (
+            Get-FileHash -LiteralPath $Path -Algorithm SHA256
+        ).Hash.ToLowerInvariant()
+
+        $Pass = (
+            $Item.Name -ceq $a.Name -and
+            $Item.Length -eq $a.Bytes -and
+            $Hash -ceq $a.Sha256
+        )
+
+        $AssetRows.Add([pscustomobject]@{
+            Name = $Item.Name
+            FullPath = $Item.FullName
+            ExpectedBytes = $a.Bytes
+            ActualBytes = $Item.Length
+            ExpectedSha256 = $a.Sha256
+            ActualSha256 = $Hash
+            Status = if ($Pass) { &#39;PASS&#39; } else { &#39;FAIL&#39; }
+        })
+
+        if (-not $Pass) {
+            throw &quot;STOP: release asset identity mismatch: $($a.Name)&quot;
+        }
+    }
+
+    $AssetRows |
+        Export-Csv `
+            -LiteralPath (Join-Path $EvidenceDir &#39;RELEASE_ASSET_UPLOAD_PREFLIGHT.csv&#39;) `
+            -NoTypeInformation `
+            -Encoding UTF8
+
+    Write-Host &quot;&quot;
+    $AssetRows |
+        Select-Object Name,ActualBytes,Status |
+        Format-Table -AutoSize |
+        Out-Host
+
+    # ------------------------------------------------------------
+    # 5. Release must NOT already exist
+    # ------------------------------------------------------------
+
+    &amp; $Gh.Source release view $Tag `
+        --repo $GitHubRepo `
+        --json tagName `
+        *&gt; $null
+
+    $ExistingRelease = ($LASTEXITCODE -eq 0)
+
+    if ($ExistingRelease) {
+        throw &quot;STOP: a GitHub release already exists for $Tag. Do not overwrite or edit it automatically.&quot;
+    }
+
+    # ------------------------------------------------------------
+    # 6. Create exact release notes
+    # ------------------------------------------------------------
+
+    $NotesPath = Join-Path $EvidenceDir &#39;RELEASE_NOTES_v2.1.0.md&#39;
+
+    @&#39;
+# Module 2 / G3 v2.1.0 — Integrated Successor
+
+Merchant evidence → governed structure search → explicit authority → funded-account lifecycle → explainable portfolio intelligence.
+
+This release activates the accepted integrated successor for the MSBF Module 1 / Module 2 portfolio and preserves the historical v2.0.0 record.
+
+## What this release demonstrates
+
+The portfolio connects source-owned merchant evidence and capacity analysis to governed structure search, explicit decision authority, funded-account monitoring, intervention logic, source certification, and executive portfolio intelligence.
+
+Representative governed populations include:
+
+- **750 synthetic merchants**
+- **1,500 application-scenario paths**
+- **6,519 reportable structures**
+- **130 funded scenario paths**
+- **15,600 monitoring rows**
+- **70/70 G3-v2 source-certification controls**
+
+## Module 2 / G3 successor
+
+The successor incorporates the corrected governed structure-search and authority model, including the funded lifecycle through M2.4–M2.10, retained-final R26 monitoring calibration, bounded M2.11 strategy/account-treatment comparison, M2.12 servicing and reconciliation, and G3-v2 source certification.
+
+The repository documentation distinguishes stage ownership, requirements, validation evidence, historical records, and the current reading path.
+
+## Power BI and explainability
+
+The accepted Power BI publication covers **P01–P04**.
+
+A central differentiator is **P03 Application Journey explainability**: business-facing narratives connect merchant operating evidence, risk/economics assessment, and final decision authority while retaining the technical rationale underneath.
+
+Curated examples illustrate distinct governed outcomes, including cases where missing evidence cannot be repaired through terms and cases where permissible structure changes can repair a structure problem.
+
+## Cohort and visual documentation
+
+The publication includes the accepted 750-merchant cohort report, enterprise / Module 1 / Module 2 lineage visuals, executive and teaching material, and the two end-to-end proof posters:
+
+- **How the Governed Decision Engine Works**
+- **What Happens After the Decision**
+
+## Reproducibility boundary
+
+The public repository supports analytical reading, source study, delivered validation/reconciliation procedures, and the accepted Power BI artifact.
+
+The qualified Windows Route-B scope remains limited to **portable checkpoint restore plus isolated retained-final M2.11 / M2.12 / G3-v2 replay**.
+
+It does **not** establish a qualified arbitrary-new-campaign end-to-end runner. Route D remains **NOT_QUALIFIED**. Larger Campaign Scale execution and streamlined generalized orchestration remain separate future work.
+
+## Scope
+
+This portfolio uses **deterministic synthetic / non-production data**.
+
+This release does not claim production deployment, real customer or real-funds activity, causal impact, CECL implementation, audited realized profitability, regulatory approval, or autonomous production operation.
+
+## Release assets
+
+The four attached ZIPs preserve the accepted identities for:
+
+1. retained-final R26 runtime / reproducibility support;
+2. Power BI publication support;
+3. the approved visual publication family;
+4. the accepted cohort report package.
+
+For the current reading path, start with the repository README and Documentation Portal.
+&#39;@ |
+        Set-Content `
+            -LiteralPath $NotesPath `
+            -Encoding UTF8
+
+    # ------------------------------------------------------------
+    # 7. CREATE GITHUB RELEASE
+    # ------------------------------------------------------------
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;All release-publication prechecks PASS.&quot;
+    Write-Host &quot;Creating GitHub release and uploading EXACTLY four assets...&quot;
+    Write-Host &quot;&quot;
+
+    $AssetPaths = @(
+        $Assets |
+        ForEach-Object {
+            Join-Path $AssetDir $_.Name
+        }
+    )
+
+    $CreateOutput = @(
+        &amp; $Gh.Source release create $Tag `
+            --repo $GitHubRepo `
+            --verify-tag `
+            --title $ReleaseTitle `
+            --notes-file $NotesPath `
+            @AssetPaths 2&gt;&amp;1
+    )
+
+    $CreateCode = $LASTEXITCODE
+
+    $CreateOutput |
+        Set-Content `
+            -LiteralPath (Join-Path $EvidenceDir &#39;GH_RELEASE_CREATE_OUTPUT.txt&#39;) `
+            -Encoding UTF8
+
+    $CreateOutput | ForEach-Object { Write-Host $_ }
+
+    if ($CreateCode -ne 0) {
+        throw @&quot;
+STOP: GitHub release creation returned a failure.
+
+Do NOT retry automatically.
+Do NOT delete the tag.
+Do NOT recreate the release.
+
+Return the complete output for reconciliation.
+&quot;@
+    }
+
+    # ------------------------------------------------------------
+    # 8. Fresh hosted release metadata verification
+    # ------------------------------------------------------------
+
+    $ReleaseJsonPath = Join-Path $EvidenceDir &#39;GH_RELEASE_VIEW.json&#39;
+
+    $ViewRaw = @(
+        &amp; $Gh.Source release view $Tag `
+            --repo $GitHubRepo `
+            --json `
+            tagName,name,url,isDraft,isPrerelease,publishedAt,assets
+    )
+
+    if ($LASTEXITCODE -ne 0) {
+        throw &quot;STOP: release creation may have succeeded, but fresh release metadata could not be retrieved.&quot;
+    }
+
+    $ViewText = $ViewRaw -join &quot;`n&quot;
+
+    $ViewText |
+        Set-Content `
+            -LiteralPath $ReleaseJsonPath `
+            -Encoding UTF8
+
+    $Release = $ViewText | ConvertFrom-Json
+
+    if ($Release.tagName -cne $Tag) {
+        throw &quot;STOP: hosted release tag differs from expected tag.&quot;
+    }
+
+    if ($Release.isDraft -eq $true) {
+        throw &quot;STOP: release exists but is still a draft.&quot;
+    }
+
+    if ($Release.isPrerelease -eq $true) {
+        throw &quot;STOP: release was unexpectedly created as a prerelease.&quot;
+    }
+
+    $HostedAssetNames = @($Release.assets | ForEach-Object name)
+
+    $MissingAssets = @(
+        $Assets.Name |
+        Where-Object { $_ -notin $HostedAssetNames }
+    )
+
+    $UnexpectedAssets = @(
+        $HostedAssetNames |
+        Where-Object { $_ -notin $Assets.Name }
+    )
+
+    if (
+        $MissingAssets.Count -ne 0 -or
+        $UnexpectedAssets.Count -ne 0 -or
+        $HostedAssetNames.Count -ne 4
+    ) {
+        throw @&quot;
+STOP: hosted release asset-name population is not exactly four expected ZIPs.
+
+Do not delete or modify the release automatically.
+Return the metadata for bounded reconciliation.
+&quot;@
+    }
+
+    # ------------------------------------------------------------
+    # 9. Receipt
+    # ------------------------------------------------------------
+
+    $Receipt = [ordered]@{
+        Task = &#39;MSBF_PHASE_I_GITHUB_RELEASE_PUBLICATION&#39;
+
+        GitHubRepository = $GitHubRepo
+
+        ReleaseTag = $Tag
+        ReleaseTitle = $Release.name
+        ReleaseUrl = $Release.url
+        PublishedAt = $Release.publishedAt
+
+        PublicationCommit = $ExpectedCommit
+        TagObject = $RemoteTagObject
+        TagPeeledCommit = $RemoteTagCommit
+
+        HostedAssetCount = $HostedAssetNames.Count
+        HostedAssetNames = $HostedAssetNames
+
+        MissingExpectedAssets = $MissingAssets
+        UnexpectedAssets = $UnexpectedAssets
+
+        ReleaseIsDraft = $Release.isDraft
+        ReleaseIsPrerelease = $Release.isPrerelease
+
+        GitCommitPushAlreadyComplete = $true
+        GitTagPushAlreadyComplete = $true
+        GitHubReleasePerformed = $true
+
+        HostedHashVerificationPerformed = $false
+        WindowsNativeHostedExtractionPerformed = $false
+        AnonymousNavigationVerificationPerformed = $false
+
+        PublicationEvent = &#39;COMPLETE&#39;
+        ReleaseClosure = &#39;PENDING_POST_PUBLICATION_VERIFICATION&#39;
+    }
+
+    $ReceiptPath = Join-Path $EvidenceDir `
+        &#39;MSBF_PHASE_I_PUBLICATION_EVENT.json&#39;
+
+    $Receipt |
+        ConvertTo-Json -Depth 8 |
+        Set-Content `
+            -LiteralPath $ReceiptPath `
+            -Encoding UTF8
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;PUBLICATION_EVENT = COMPLETE&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;Release title: $($Release.name)&quot;
+    Write-Host &quot;Release tag:   $($Release.tagName)&quot;
+    Write-Host &quot;Release URL:   $($Release.url)&quot;
+    Write-Host &quot;Published at:  $($Release.publishedAt)&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;Hosted assets: $($HostedAssetNames.Count)&quot;
+    $HostedAssetNames | ForEach-Object {
+        Write-Host &quot;  $_&quot;
+    }
+    Write-Host &quot;&quot;
+    Write-Host &quot;Hosted hashes:              NOT YET VERIFIED&quot;
+    Write-Host &quot;Windows hosted extraction:  NOT YET VERIFIED&quot;
+    Write-Host &quot;Anonymous navigation:       NOT YET VERIFIED&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;RELEASE CLOSURE = PENDING&quot;
+    Write-Host &quot;Receipt: $ReceiptPath&quot;
+    Write-Host &quot;============================================================&quot;
+    Write-Host &quot;&quot;
+    Write-Host &quot;STOP HERE.&quot;
+    Write-Host &quot;Do not modify or re-upload release assets.&quot;
+    Write-Host &quot;Return the console output and publication-event receipt.&quot;
+}
+</code></pre>
+<h3>Two possible outcomes</h3>
+<p>If <code>gh.exe</code> is <strong>not installed</strong> or isn&#39;t authenticated, the block stops <strong>before publication</strong>. Send me that message and I&#39;ll give you the exact bounded GitHub web-interface procedure instead. Do not improvise asset selection.</p>
+<p>If it succeeds, we should see:</p>
+<pre><code class="language-text">PUBLICATION_EVENT = COMPLETE
+
+Release tag:
+module-2-g3-v2.1.0
+
+Hosted assets:
+4
+
+Hosted hashes:             NOT YET VERIFIED
+Windows hosted extraction: NOT YET VERIFIED
+Anonymous navigation:      NOT YET VERIFIED
+
+RELEASE CLOSURE = PENDING
+</code></pre>
+<p>That distinction matters. <strong>Creating the GitHub release will complete the publication event, but it will not complete release closure.</strong> The next mandatory phases will download the actual GitHub-hosted copies into a clean Windows directory, prove all four SHA-256/size identities, perform Windows-native extraction on those hosted files, and then verify the public repository/navigation anonymously.</p>
+<p>Do not download the assets manually yet after Phase I. Once you return its result, I&#39;ll give you a controlled hosted-download block that cannot accidentally substitute the local originals.</p>
+</div></article><article id="m-3710281a-292b-4b9e-9617-d558c7bc3c74" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00089 · 2026-09-10T09:55:31.329000-04:00 · active path</p><div class="bubble"><h1>============================================================
+MSBF PHASE I — CREATE GITHUB RELEASE</h1>
+<p>Repository: andrew-goad/merchant-sales-based-financing-strategy-simulator
+Tag:        module-2-g3-v2.1.0
+Evidence:   D:\MSBF_RELEASE_ENGINEERING_EVIDENCE\PHASE_I_20260910T135512047Z_403c896f</p>
+<p>Exception:
+Line |
+  60 |          throw @&quot;
+     |          ~~~~~~~~
+     | STOP: GitHub CLI (gh.exe) was not found.</p>
+<p>Do not create the release manually yet.
+Return this message and I will give you the bounded GitHub-UI procedure.</p>
+</div></article><article id="m-28044717-851a-4964-9b5c-7c931f08fdab" class="message assistant"><p class="meta"><strong>Assistant</strong> · C123-M00090 · 2026-09-10T09:55:35.328057-04:00 · active path</p><div class="bubble"><p>Phase I stopped exactly where it should have: <strong>before publication</strong>, because <code>gh.exe</code> is not installed. Nothing about the repository, tag, or release assets changed.</p>
+<p>We can now use the bounded GitHub web interface path. Keep the PowerShell window open, but you do not need to run anything else there yet.</p>
+<p>Open this page in your browser:</p>
+<p><code>https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/releases/new</code></p>
+<p>Then use these exact values:</p>
+<ul>
+<li><strong>Choose a tag:</strong> <code>module-2-g3-v2.1.0</code></li>
+<li><strong>Target:</strong> leave it on the commit associated with that tag; do not retarget it</li>
+<li><strong>Release title:</strong> <code>Module 2 / G3 v2.1.0 — Integrated Successor</code></li>
+<li><strong>Do not mark as prerelease</strong></li>
+<li><strong>Do not create a new tag in the UI</strong></li>
+<li><strong>Do not upload R6</strong></li>
+<li><strong>Upload exactly these four ZIPs from <code>D:\MSBF_ZIP_FILES_091026</code>:</strong><ul>
+<li><code>MSBF_R26_R3_RETAINED_FINAL_RESUME_RUNTIME_20260902.zip</code></li>
+<li><code>MSBF_MCI_POWER_BI_GITHUB_PUBLICATION_SUPPORT_R3_20260904.zip</code></li>
+<li><code>MSBF_Visual_Publication_Candidate_R1_20260909.zip</code></li>
+<li><code>MSBF_Cohort_R3_Editorial_Patch_R1_20260908.zip</code></li>
+</ul>
+</li>
+</ul>
+<p>Use these release notes:</p>
+<blockquote>
+<p>Merchant evidence → governed structure search → explicit authority → funded-account lifecycle → explainable portfolio intelligence.</p>
+<p>This release activates the accepted integrated successor for the MSBF Module 1 / Module 2 portfolio and preserves the historical v2.0.0 record.</p>
+<p>Representative governed populations include 750 synthetic merchants, 1,500 application-scenario paths, 6,519 reportable structures, 130 funded scenario paths, 15,600 monitoring rows, and 70/70 G3-v2 source-certification controls.</p>
+<p>The successor incorporates the corrected governed structure-search and authority model, funded lifecycle through M2.4–M2.10, retained-final R26 monitoring calibration, bounded M2.11 strategy/account-treatment comparison, M2.12 servicing and reconciliation, and G3-v2 source certification.</p>
+<p>The accepted Power BI publication covers P01–P04. A central differentiator is P03 Application Journey explainability: business-facing narratives connect merchant operating evidence, risk/economics assessment, and final decision authority while retaining technical rationale underneath.</p>
+<p>The publication also includes the accepted 750-merchant cohort report, enterprise / Module 1 / Module 2 lineage visuals, executive and teaching material, and the two end-to-end proof posters, “How the Governed Decision Engine Works” and “What Happens After the Decision.”</p>
+<p>The qualified Windows Route-B scope remains limited to portable checkpoint restore plus isolated retained-final M2.11 / M2.12 / G3-v2 replay. It does not establish a qualified arbitrary-new-campaign end-to-end runner. Route D remains NOT_QUALIFIED.</p>
+<p>This portfolio uses deterministic synthetic / non-production data. This release does not claim production deployment, real customer or real-funds activity, causal impact, CECL implementation, audited realized profitability, regulatory approval, or autonomous production operation.</p>
+<p>Start with the repository README and Documentation Portal for the current reading path.</p>
+</blockquote>
+<p>Before you click <strong>Publish release</strong>, visually confirm all four filenames exactly. Then publish once.</p>
+<p>After publication, send me:</p>
+<ul>
+<li>the release URL,</li>
+<li>the four displayed asset filenames,</li>
+<li>the published timestamp if visible,</li>
+<li>and ideally a screenshot of the release page.</li>
+</ul>
+<p>Do <strong>not</strong> download or modify anything yet after publishing. The next step is the mandatory hosted-download verification against the actual GitHub-hosted copies.</p>
+</div></article><article id="m-606551d3-584a-44f8-9f3b-cd5e2e53a7ec" class="message user"><p class="meta"><strong>Andrew / user</strong> · C123-M00091 · 2026-09-10T10:01:30.415000-04:00 · active path</p><p class="note">Attachment references: Module 2 - G3 v2.1.0 - Integrated Successor.pdf</p><div class="bubble"><p><a href="https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/releases/tag/module-2-g3-v2.1.0">https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/releases/tag/module-2-g3-v2.1.0</a></p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

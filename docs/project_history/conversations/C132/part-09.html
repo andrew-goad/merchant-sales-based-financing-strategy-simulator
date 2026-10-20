@@ -1,0 +1,869 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Campaign Scale 750 - 2,500 - 25,000 Part 2 — part 09 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Campaign Scale 750 - 2,500 - 25,000 Part 2 — part 09</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-08.html">Previous part</a><a href="part-10.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-3b25e371-ce1f-4d3b-a3f5-5235e0abd945" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00179 · 2026-09-13T10:22:39.647577-04:00 · active path</p><div class="bubble"><p>Absolutely. Here is the corrected full block using <strong>only <code>D:\MSBF_ARCHIVE</code></strong>.</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$ErrorActionPreference = &#39;Stop&#39;
+
+$Zip = &#39;D:\MSBF_ARCHIVE\MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP3_R2_20260913.zip&#39;
+$ExpectedSHA256 = &#39;95cec614697a7958c16876c583cc2aaf7dac77a15efe250fa07f2b4a318f0c35&#39;
+$Python = &#39;C:\Python314\python.exe&#39;
+$PgBin = &#39;C:\Program Files\PostgreSQL\17\bin&#39;
+$AllocationMode = &#39;RETAIN_ABSOLUTE_THRESHOLDS_DERIVE_SUBMISSIONS_V1&#39;
+
+# ----------------------------------------------------------------------
+# 1. Validate package and required local software
+# ----------------------------------------------------------------------
+
+if (-not (Test-Path -LiteralPath $Zip -PathType Leaf)) {
+    throw &quot;Package not found: $Zip&quot;
+}
+
+$ObservedSHA256 = (
+    Get-FileHash -LiteralPath $Zip -Algorithm SHA256
+).Hash.ToLowerInvariant()
+
+if ($ObservedSHA256 -ne $ExpectedSHA256) {
+    throw &quot;Package hash mismatch. Expected $ExpectedSHA256; observed $ObservedSHA256. No native execution started.&quot;
+}
+
+if (-not (Test-Path -LiteralPath $Python -PathType Leaf)) {
+    throw &quot;Python not found: $Python&quot;
+}
+
+foreach ($Binary in @(
+    &#39;psql.exe&#39;,
+    &#39;createdb.exe&#39;,
+    &#39;pg_isready.exe&#39;,
+    &#39;pg_ctl.exe&#39;,
+    &#39;postgres.exe&#39;
+)) {
+    $BinaryPath = Join-Path $PgBin $Binary
+
+    if (-not (Test-Path -LiteralPath $BinaryPath -PathType Leaf)) {
+        throw &quot;Required PostgreSQL binary not found: $BinaryPath&quot;
+    }
+}
+
+Write-Host &quot;`nPackage SHA-256........ PASS&quot;
+Write-Host &quot;Python................ PASS&quot;
+Write-Host &quot;PostgreSQL binaries... PASS&quot;
+
+# ----------------------------------------------------------------------
+# 2. Create unique D:-resident execution locations
+# ----------------------------------------------------------------------
+
+$Stamp = (
+    [DateTime]::UtcNow.ToString(&quot;yyyyMMdd&#39;T&#39;HHmmss&#39;Z&#39;&quot;) +
+    &#39;_&#39; +
+    [guid]::NewGuid().ToString(&#39;N&#39;).Substring(0, 8)
+)
+
+$Database = &#39;msbf_m1core_l3r2_&#39; + $Stamp.ToLowerInvariant()
+
+$ToolRoot = (
+    &#39;D:\MSBF_CAMPAIGNS\tools\LEAP3_R2_NATIVE_&#39; +
+    $Stamp
+)
+
+$Workspace = (
+    &#39;D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R2_NATIVE_&#39; +
+    $Stamp
+)
+
+$ScratchRoot = (
+    &#39;D:\MSBF_CAMPAIGNS\temp\LEAP3_R2_NATIVE_&#39; +
+    $Stamp
+)
+
+foreach ($NewPath in @(
+    $ToolRoot,
+    $Workspace,
+    $ScratchRoot
+)) {
+    if (Test-Path -LiteralPath $NewPath) {
+        throw &quot;Destination already exists; no overwrite or resume: $NewPath&quot;
+    }
+}
+
+# The qualification tool owns creation of $Workspace.
+# Create only the temporary working directory here.
+New-Item -ItemType Directory -Path $ScratchRoot -Force | Out-Null
+
+# ----------------------------------------------------------------------
+# 3. Redirect temporary work to D:
+# ----------------------------------------------------------------------
+
+$OldTemps = @{}
+
+foreach ($Name in @(
+    &#39;TEMP&#39;,
+    &#39;TMP&#39;,
+    &#39;TMPDIR&#39;
+)) {
+    $OldTemps[$Name] = [Environment]::GetEnvironmentVariable(
+        $Name,
+        &#39;Process&#39;
+    )
+}
+
+$RunExitCode = $null
+
+try {
+
+    foreach ($Name in @(
+        &#39;TEMP&#39;,
+        &#39;TMP&#39;,
+        &#39;TMPDIR&#39;
+    )) {
+        [Environment]::SetEnvironmentVariable(
+            $Name,
+            $ScratchRoot,
+            &#39;Process&#39;
+        )
+    }
+
+    # ------------------------------------------------------------------
+    # 4. Extract the locked runtime package
+    # ------------------------------------------------------------------
+
+    Expand-Archive `
+        -LiteralPath $Zip `
+        -DestinationPath $ToolRoot
+
+    $Entry = Join-Path `
+        $ToolRoot `
+        &#39;tools\qualify_m1_continuation.py&#39;
+
+    $Config = Join-Path `
+        $ToolRoot `
+        &#39;examples\campaign_2500.json&#39;
+
+    $EnvironmentFile = Join-Path `
+        $ToolRoot `
+        &#39;examples\environment_leap3_owner.json&#39;
+
+    foreach ($RequiredFile in @(
+        $Entry,
+        $Config,
+        $EnvironmentFile
+    )) {
+        if (-not (Test-Path -LiteralPath $RequiredFile -PathType Leaf)) {
+            throw &quot;Required package file missing: $RequiredFile&quot;
+        }
+    }
+
+    # ------------------------------------------------------------------
+    # 5. Display exact execution scope
+    # ------------------------------------------------------------------
+
+    Write-Host &quot;`n============================================================&quot;
+    Write-Host &quot;LEAP 3 R2 - COMPLETE NATIVE MODULE 1 CONTINUATION&quot;
+    Write-Host &quot;============================================================&quot;
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Scope:&quot;
+    Write-Host &quot;  M1.4 through M1.17 / G2 only&quot;
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Source checkpoint:&quot;
+    Write-Host &quot;  msbf_provider_l2_20260913t112052z_6f05f7a5&quot;
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;New target:&quot;
+    Write-Host &quot;  $Database&quot;
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Workspace:&quot;
+    Write-Host &quot;  $Workspace&quot;
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Allocation mode:&quot;
+    Write-Host &quot;  $AllocationMode&quot;
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Environment behavior:&quot;
+    Write-Host &quot;  The packaged environment layer checks PostgreSQL readiness.&quot;
+    Write-Host &quot;  It may safely start only the configured stopped MSBF cluster.&quot;
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Excluded from this execution:&quot;
+    Write-Host &quot;  Reference R1 data&quot;
+    Write-Host &quot;  Candidate replay&quot;
+    Write-Host &quot;  Fresh R4 / compatibility&quot;
+    Write-Host &quot;  Module 2&quot;
+    Write-Host &quot;  Full 2,500 campaign acceptance&quot;
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Starting native qualification...&quot;
+    Write-Host &quot;&quot;
+
+    # ------------------------------------------------------------------
+    # 6. Execute the complete native Module 1 continuation
+    # ------------------------------------------------------------------
+
+    &amp; $Python -u -B $Entry `
+        --acknowledge-native-m1-qualification `
+        --allocation-mode $AllocationMode `
+        --environment $EnvironmentFile `
+        --config $Config `
+        --database $Database `
+        --workspace $Workspace
+
+    $RunExitCode = $LASTEXITCODE
+}
+finally {
+
+    # ------------------------------------------------------------------
+    # 7. Restore original process TEMP settings
+    # ------------------------------------------------------------------
+
+    foreach ($Name in @(
+        &#39;TEMP&#39;,
+        &#39;TMP&#39;,
+        &#39;TMPDIR&#39;
+    )) {
+        [Environment]::SetEnvironmentVariable(
+            $Name,
+            $OldTemps[$Name],
+            &#39;Process&#39;
+        )
+    }
+}
+
+# ----------------------------------------------------------------------
+# 8. Report disposition
+# ----------------------------------------------------------------------
+
+if ($null -ne $RunExitCode -and $RunExitCode -ne 0) {
+
+    Write-Warning @&#39;
+Continuation stopped.
+
+Preserve:
+  - emitted RETURN package, if present
+  - workspace
+  - new subject database
+  - terminal output
+
+Do NOT:
+  - retry automatically
+  - resume manually
+  - delete the subject
+  - patch SQL
+  - weaken source/control guards
+  - restore Reference R1
+  - advance to strategy
+&#39;@
+}
+
+$ReturnZip = $Workspace + &#39;_RETURN.zip&#39;
+$ValidationFile = $ReturnZip + &#39;.validation.json&#39;
+
+if (Test-Path -LiteralPath $ReturnZip -PathType Leaf) {
+
+    Write-Host &quot;`n============================================================&quot;
+    Write-Host &quot;RETURN PACKAGE CREATED&quot;
+    Write-Host &quot;============================================================&quot;
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Return ZIP:&quot;
+    Write-Host &quot;  $ReturnZip&quot;
+
+    if (Test-Path -LiteralPath $ValidationFile -PathType Leaf) {
+        Write-Host &quot;&quot;
+        Write-Host &quot;Validation file:&quot;
+        Write-Host &quot;  $ValidationFile&quot;
+    }
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Attach the RETURN ZIP and validation JSON to ChatGPT.&quot;
+
+}
+else {
+
+    Write-Host &quot;`n============================================================&quot;
+    Write-Host &quot;NO COMPLETED RETURN PACKAGE FOUND&quot;
+    Write-Host &quot;============================================================&quot;
+
+    Write-Host &quot;&quot;
+    Write-Host &quot;Preserve the terminal output and any workspace:&quot;
+    Write-Host &quot;  $Workspace&quot;
+}
+</code></pre>
+<p>The package hash used above is the locked R2 identity: <code>95cec614697a7958c16876c583cc2aaf7dac77a15efe250fa07f2b4a318f0c35</code>. [export reference: filecite | turn50file1 | L115-L128]</p>
+<p>A successful native run should ultimately report:</p>
+<pre><code class="language-text">M1_CONTINUATION_COMPONENT_PASS
+</code></pre>
+<p>and should stop at G2 without proceeding into strategy or Module 2. [export reference: filecite | turn50file0 | L82-L92]</p>
+</div></article><article id="m-b1d2a69d-043d-4fea-9dee-ffecba977552" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00180 · 2026-09-13T10:24:29.039000-04:00 · active path</p><div class="bubble"><p>Package SHA-256........ PASS
+Python................ PASS
+PostgreSQL binaries... PASS</p>
+<h1>============================================================
+LEAP 3 R2 - COMPLETE NATIVE MODULE 1 CONTINUATION</h1>
+<p>Scope:
+  M1.4 through M1.17 / G2 only</p>
+<p>Source checkpoint:
+  msbf_provider_l2_20260913t112052z_6f05f7a5</p>
+<p>New target:
+  msbf_m1core_l3r2_20260913t142321z_48feda17</p>
+<p>Workspace:
+  D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R2_NATIVE_20260913T142321Z_48feda17</p>
+<p>Allocation mode:
+  RETAIN_ABSOLUTE_THRESHOLDS_DERIVE_SUBMISSIONS_V1</p>
+<p>Environment behavior:
+  The packaged environment layer checks PostgreSQL readiness.
+  It may safely start only the configured stopped MSBF cluster.</p>
+<p>Excluded from this execution:
+  Reference R1 data
+  Candidate replay
+  Fresh R4 / compatibility
+  Module 2
+  Full 2,500 campaign acceptance</p>
+<p>Starting native qualification...</p>
+<p>M1_PREREQUISITE_STOP: G2 composition anchor mismatch
+WARNING: Continuation stopped.</p>
+<p>Preserve:</p>
+<ul>
+<li>emitted RETURN package, if present</li>
+<li>workspace</li>
+<li>new subject database</li>
+<li>terminal output</li>
+</ul>
+<p>Do NOT:</p>
+<ul>
+<li>retry automatically</li>
+<li>resume manually</li>
+<li>delete the subject</li>
+<li>patch SQL</li>
+<li>weaken source/control guards</li>
+<li>restore Reference R1</li>
+<li>advance to strategy</li>
+</ul>
+<h1>============================================================
+NO COMPLETED RETURN PACKAGE FOUND</h1>
+<p>Preserve the terminal output and any workspace:
+  D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R2_NATIVE_20260913T142321Z_48feda17</p>
+</div></article><article id="m-3787a5b8-6eb6-4bd6-94c6-557974625e36" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00181 · 2026-09-13T10:24:32.116615-04:00 · active path</p><div class="bubble"><p>This stopped before any Module 1 SQL ran. I’ll inspect the sealed G2 composition anchors in the R2 package and determine whether the mismatch is a packaging defect or an environment/source mismatch.</p>
+</div></article><article id="m-bb5626e5-23da-4fdc-b979-456281232360" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00182 · 2026-09-13T10:24:53.888014-04:00 · active path</p><div class="bubble"><p>The stop is before PostgreSQL work; I’m reproducing the package’s own prerequisite check against its sealed sources to locate the exact composition-anchor defect.</p>
+</div></article><article id="m-7661f017-dd4c-4a3f-a880-4f3274c806be" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00183 · 2026-09-13T10:25:12.147312-04:00 · active path</p><div class="bubble"><p>The package itself passes the same composition check here, so this is likely a Windows text-decoding mismatch in the prerequisite verifier—not a G2 source-content mismatch. I’m checking that portability defect before asking you to rerun.</p>
+</div></article><article id="m-7d0b6823-3497-43a8-8353-1a1c9af18cb1" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00184 · 2026-09-13T10:30:04.498409-04:00 · active path</p><div class="bubble"><p>This stop was caused by a <strong>Windows text-decoding portability defect in R2</strong>, not by the G2 source composition itself.</p>
+<p>The qualification stopped before password entry, environment startup, workspace creation, subject creation, or any Module 1 SQL. The package’s G2 verifier used locale-default <code>Path.read_text()</code> decoding. On your Windows/Python environment, the UTF-8 em dash in the sealed source anchor was interpreted as <code>â€”</code>, so the exact anchor check failed even though the underlying package bytes and hashes were correct.</p>
+<p>I corrected that in <strong>Leap 3 R3</strong> by making the runtime/tool text reads explicitly UTF-8. No MSBF business logic, SQL source, allocation mode, G2 composition contract, 715 core bindings, or 303 tail bindings were changed.</p>
+<p>The corrected package passes <strong>477/477 tests</strong>, and the same <strong>477/477 tests pass again from a clean extraction</strong>.</p>
+<h3>Corrected package</h3>
+<p>Download Leap 3 R3 (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP3_R3_20260913.zip</code>; referenced bytes not established here)</p>
+<p>SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP3_R3_20260913.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Validation record (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP3_R3_20260913_VALIDATION.json</code>; referenced bytes not established here)</p>
+<p>Corrected native run block (historical reference: <code>sandbox:[session]/MSBF_LEAP3_R3_NATIVE_M1_CONTINUATION_RUN_BLOCK.txt</code>; referenced bytes not established here)</p>
+<p>Package identity:</p>
+<pre><code class="language-text">MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP3_R3_20260913.zip
+
+SHA-256:
+b511eee30df1774ffaa8df13282a3ef84349a3b5e7fe88bece3c1afdd9014e92
+</code></pre>
+<p>The R2 attempt should be recorded as:</p>
+<pre><code class="language-text">PREREQUISITE_STOP
+
+Database work started:       NO
+Subject created:              NO
+Workspace created by tool:    NO
+Module 1 SQL executed:        NO
+Business/control failure:     NO
+
+Root cause:
+Windows locale-dependent UTF-8 decoding in G2 source-anchor verification.
+</code></pre>
+<p>Save R3 under:</p>
+<pre><code class="language-text">D:\MSBF_ARCHIVE
+</code></pre>
+<p>and use the corrected R3 run block linked above. The execution scope remains exactly the same:</p>
+<pre><code class="language-text">Leap 2 checkpoint
+    → M1.4–M1.15
+    → M1.16
+    → M1.17 / G2
+</code></pre>
+<p>with:</p>
+<pre><code class="language-text">RETAIN_ABSOLUTE_THRESHOLDS_DERIVE_SUBMISSIONS_V1
+</code></pre>
+<p>No strategy, compatibility, or Module 2 execution is included.</p>
+</div></article><article id="m-ccea8d33-96a9-40cb-9fa8-36d5169211f8" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00185 · 2026-09-13T11:05:17.871000-04:00 · active path</p><div class="bubble"><p>is that R3 run block complete or just a section? just confirming. simple yes/no.</p>
+</div></article><article id="m-030fb1a3-7a3e-4903-8807-52f36f1b9572" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00186 · 2026-09-13T11:05:19.472922-04:00 · active path</p><div class="bubble"><p>Yes.</p>
+</div></article><article id="m-57c51afb-1436-476d-8959-a068cf9202c3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00187 · 2026-09-13T11:20:38.088000-04:00 · active path</p><div class="bubble"><p>how long approximately do we expect this to take (based on my prior run timings) and your expectations for this stage?</p>
+</div></article><article id="m-89394b42-9b1b-4eac-863b-ebe6970c5559" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00188 · 2026-09-13T11:20:39.460584-04:00 · active path</p><div class="bubble"><p>Based on your prior native timings and what Leap 3 is doing, I would budget <strong>roughly 30–60 minutes</strong>, with <strong>~40 minutes</strong> as my best estimate.</p>
+<p>Your prior native timings give us useful anchors:</p>
+<ul>
+<li><strong>Leap 2 G0/G1 → M1.3:</strong> about <strong>5.8 minutes</strong> for 2,500 merchants/applications.</li>
+<li>Earlier 750 work showed large snapshots/exports often taking <strong>2–4 minutes each</strong>.</li>
+<li>Leap 3 is substantially heavier: <strong>80 SQL programs</strong>, including two 450,000-row base-history streams, two 900,000-row scenario-history streams, feature engineering, verification, risk/economics, M1.16 acquisition calculations, M1.17/G2 hashing/control work, exports, and final packaging.</li>
+</ul>
+<p>My rough expectation is:</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th align="right">Approx.</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Environment/checkpoint copy &amp; preflight</td>
+<td align="right">2–5 min</td>
+</tr>
+<tr>
+<td>M1.4–M1.6 histories/scenarios</td>
+<td align="right"><strong>8–18 min</strong></td>
+</tr>
+<tr>
+<td>M1.7–M1.10 evidence/features/capacity</td>
+<td align="right"><strong>6–12 min</strong></td>
+</tr>
+<tr>
+<td>M1.11–M1.15 risk/economics/contracts</td>
+<td align="right"><strong>5–10 min</strong></td>
+</tr>
+<tr>
+<td>M1.16 acquisition/CAC</td>
+<td align="right">2–6 min</td>
+</tr>
+<tr>
+<td>M1.17/G2 controls &amp; hashing</td>
+<td align="right">3–8 min</td>
+</tr>
+<tr>
+<td>Exports/postflight/RETURN packaging</td>
+<td align="right">3–8 min</td>
+</tr>
+<tr>
+<td><strong>Likely total</strong></td>
+<td align="right"><strong>~30–60 min</strong></td>
+</tr>
+</tbody></table>
+<p>The biggest uncertainty is disk-heavy PostgreSQL work on the D: HDD, particularly the history generation, indexes, hashing, and CSV exports. A <strong>60–90 minute run would not by itself concern me</strong> if the terminal continues showing stage progress or PostgreSQL/disk activity.</p>
+<p>If it sits on one named operation for <strong>15–20+ minutes with no new console output</strong>, I would <strong>not interrupt it</strong>. We can use a second PowerShell window, as before, to check CPU, I/O, PostgreSQL activity, and file growth without touching the run.</p>
+<p>So for practical planning: <strong>expect around 40 minutes, allow an hour, and don&#39;t assume it&#39;s stuck merely because one large stage is quiet for several minutes.</strong></p>
+</div></article><article id="m-5871a7e3-8386-4ab6-ad2c-ac856bb416d0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00189 · 2026-09-13T13:56:53.041000-04:00 · active path</p><div class="bubble"><p>still running. is there a query we can do in a second powershell to see progress. do not give me 20 queries to diagnose piece by piece. give me one great query.</p>
+</div></article><article id="m-9880630f-7d3f-47ab-a111-b800f9bb0d7a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00190 · 2026-09-13T13:56:58.772358-04:00 · active path</p><div class="bubble"><p>Yes. Open a <strong>second PowerShell window</strong> and run this single read-only block. It automatically finds the current Leap 3 R3 process/workspace and gives you the most useful progress picture in one shot:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$ErrorActionPreference = &#39;Stop&#39;
+
+$PgBin = &#39;C:\Program Files\PostgreSQL\17\bin&#39;
+
+# Find the active Leap 3 native Python process
+$Proc = Get-CimInstance Win32_Process |
+    Where-Object {
+        $_.Name -match &#39;^python.*\.exe$&#39; -and
+        $_.CommandLine -match &#39;qualify_m1_continuation\.py&#39;
+    } |
+    Sort-Object CreationDate -Descending |
+    Select-Object -First 1
+
+# Find the newest Leap 3 R3 workspace
+$RunRoot = Get-ChildItem &#39;D:\MSBF_CAMPAIGNS\PART2_RETURNS&#39; -Directory -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -like &#39;LEAP3_R3_NATIVE_*&#39; } |
+    Sort-Object CreationTime -Descending |
+    Select-Object -First 1
+
+Write-Host &quot;`n================ LEAP 3 R3 LIVE STATUS ================&quot;
+
+if ($Proc) {
+    $P = Get-Process -Id $Proc.ProcessId -ErrorAction SilentlyContinue
+
+    Write-Host &quot;`nPYTHON RUNTIME&quot;
+    [pscustomobject]@{
+        PID        = $Proc.ProcessId
+        Started    = $Proc.CreationDate
+        CPUSeconds = if ($P) { [math]::Round($P.CPU,1) } else { $null }
+        WorkingMB  = if ($P) { [math]::Round($P.WorkingSet64/1MB,1) } else { $null }
+        Command    = $Proc.CommandLine
+    } | Format-List
+}
+else {
+    Write-Host &quot;`nPYTHON RUNTIME: no active Leap 3 qualification process found.&quot;
+}
+
+if ($RunRoot) {
+    Write-Host &quot;`nWORKSPACE&quot;
+    Write-Host $RunRoot.FullName
+
+    Write-Host &quot;`nLATEST COMPLETED NATIVE STEPS&quot;
+    Get-ChildItem &quot;$($RunRoot.FullName)\logs\*.process.json&quot; -ErrorAction SilentlyContinue |
+        Sort-Object Name |
+        Select-Object -Last 12 |
+        ForEach-Object {
+            $j = Get-Content $_.FullName -Raw | ConvertFrom-Json
+            [pscustomobject]@{
+                Receipt = $_.Name
+                Label   = $j.label
+                Exit    = $j.exit_code
+                Seconds = $j.elapsed_seconds
+            }
+        } |
+        Format-Table -AutoSize
+
+    Write-Host &quot;`nMOST RECENT FILE ACTIVITY&quot;
+    Get-ChildItem $RunRoot.FullName -Recurse -File -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 12 LastWriteTime,
+            @{N=&#39;MB&#39;;E={[math]::Round($_.Length/1MB,2)}},
+            FullName |
+        Format-Table -AutoSize
+}
+else {
+    Write-Host &quot;`nWORKSPACE: no Leap 3 R3 workspace found.&quot;
+}
+
+Write-Host &quot;`nPOSTGRESQL ACTIVITY&quot;
+&amp; (Join-Path $PgBin &#39;psql.exe&#39;) `
+    -h 127.0.0.1 `
+    -p 55432 `
+    -U postgres `
+    -d postgres `
+    -X `
+    -P pager=off `
+    -c &quot;
+SELECT
+    pid,
+    datname,
+    state,
+    wait_event_type,
+    wait_event,
+    now() - query_start AS query_age,
+    left(regexp_replace(query, E&#39;[\\n\\r\\t]+&#39;, &#39; &#39;, &#39;g&#39;), 160) AS query
+FROM pg_stat_activity
+WHERE pid &lt;&gt; pg_backend_pid()
+  AND (
+      datname LIKE &#39;msbf_m1core_l3r3_%&#39;
+      OR query ILIKE &#39;%msbf_%&#39;
+  )
+ORDER BY query_start NULLS LAST;
+&quot;
+
+Write-Host &quot;`n=========================================================&quot;
+</code></pre>
+<p>The most useful parts are:</p>
+<ul>
+<li><strong>Latest completed native steps</strong> → tells us exactly which program/stage has finished.</li>
+<li><strong>PostgreSQL activity</strong> → tells us what it is executing or waiting on now.</li>
+<li><strong>Most recent file activity</strong> → confirms evidence is still being written.</li>
+<li><strong>Python runtime</strong> → confirms the orchestrator itself is alive.</li>
+</ul>
+<p>Paste that one output back to me and I can tell you where it is and whether anything looks abnormal.</p>
+</div></article><article id="m-6aa4584b-1b94-4af9-a2e9-127fdbc5b5d5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00191 · 2026-09-13T13:57:42.704000-04:00 · active path</p><div class="bubble"><p>================ LEAP 3 R3 LIVE STATUS ================</p>
+<p>PYTHON RUNTIME</p>
+<p>PID        : 2772
+Started    : 9/13/2026 11:06:37 AM
+CPUSeconds : 3.7
+WorkingMB  : 23.3
+Command    : &quot;C:\Python314\python.exe&quot; -u -B D:\MSBF_CAMPAIGNS\tools\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\tools\qualify_m1_continuation.py --acknowledge-native-m1-qualification --allocation-mode
+             RETAIN_ABSOLUTE_THRESHOLDS_DERIVE_SUBMISSIONS_V1 --environment D:\MSBF_CAMPAIGNS\tools\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\examples\environment_leap3_owner.json --config
+             D:\MSBF_CAMPAIGNS\tools\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\examples\campaign_2500.json --database msbf_m1core_l3r3_20260913t150634z_03679d52 --workspace
+             D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52</p>
+<p>WORKSPACE
+D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52</p>
+<p>LATEST COMPLETED NATIVE STEPS</p>
+<p>MOST RECENT FILE ACTIVITY</p>
+<p>LastWriteTime           MB FullName</p>
+<hr>
+<p>9/13/2026 11:07:00 AM 0.00 D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\environment_logs\0006_configured_data_directory.stdout.log
+9/13/2026 11:07:00 AM 0.00 D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\environment_logs\0006_configured_data_directory.process.json
+9/13/2026 11:07:00 AM 0.00 D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\environment_logs\0006_configured_data_directory.stderr.log
+9/13/2026 11:07:00 AM 0.00 D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\environment_logs\0005_binary_version.process.json
+9/13/2026 11:07:00 AM 0.00 D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\environment_logs\0005_binary_version.stdout.log
+9/13/2026 11:07:00 AM 0.00 D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\environment_logs\0005_binary_version.stderr.log
+9/13/2026 11:07:00 AM 0.00 D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\environment_logs\0004_pg_ctl_status.stdout.log
+9/13/2026 11:07:00 AM 0.00 D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\environment_logs\0004_pg_ctl_status.stderr.log
+9/13/2026 11:07:00 AM 0.00 D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\environment_logs\0004_pg_ctl_status.process.json
+9/13/2026 11:07:00 AM 0.00 D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\environment_logs\0003_pg_isready.process.json
+9/13/2026 11:07:00 AM 0.00 D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\environment_logs\0003_pg_isready.stderr.log
+9/13/2026 11:07:00 AM 0.00 D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52\environment_logs\0003_pg_isready.stdout.log</p>
+<p>POSTGRESQL ACTIVITY
+ pid | datname | state | wait_event_type | wait_event | query_age | query
+-----+---------+-------+-----------------+------------+-----------+-------
+(0 rows)</p>
+<p>=========================================================</p>
+</div></article><article id="m-846a205c-8218-4884-81f6-a46d2ff3b705" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00192 · 2026-09-13T13:57:45.009551-04:00 · active path</p><div class="bubble"><p>This does <strong>not</strong> look like normal long-running SQL. It appears stalled in the environment/authentication phase before any Module 1 program started. I’m checking the exact next call in the packaged state machine so I can tell you what it is waiting on without guessing.</p>
+</div></article><article id="m-19482b71-2108-485a-a5fb-acc0fefb58d7" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00193 · 2026-09-13T13:58:52.329739-04:00 · active path</p><div class="bubble"><p>This is abnormal. The run has been alive for hours, but it has not advanced past environment validation and has created <strong>no native-stage receipts</strong>. I’m narrowing whether it is safely interruptible before any subject work.</p>
+</div></article><article id="m-aff765f6-12b1-4e0a-b9ed-081d41b990ef" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00194 · 2026-09-13T13:58:52.329739-04:00 · active path</p><div class="bubble"><p>This run is <strong>not progressing normally</strong>. It has been stuck in the environment-preflight phase since about 11:07 AM.</p>
+<p>The decisive evidence is:</p>
+<ul>
+<li>Python is alive but essentially idle.</li>
+<li>No PostgreSQL campaign activity exists.</li>
+<li>No native Module 1 step receipts exist.</li>
+<li>The newest files are only <code>environment_logs</code>.</li>
+<li>The last completed environment operation is <code>0006_configured_data_directory</code>.</li>
+<li>There is <strong>no <code>ENVIRONMENT_RECEIPT.json</code></strong> and no subject-stage evidence.</li>
+</ul>
+<p>I checked the R3 source. After <code>configured_data_directory</code>, the next operation should be a <code>pg_isready</code> call and then authenticated server identity verification. More importantly, <strong>the campaign backend and new subject database are not created until <code>ensure_environment()</code> finishes successfully</strong>. So this hang occurred before any M1.4–M1.17/G2 SQL execution or new target creation.</p>
+<h3>What to do</h3>
+<p>Go to the <strong>original running PowerShell window</strong> and press:</p>
+<pre><code class="language-text">Ctrl+C
+</code></pre>
+<p><strong>once.</strong></p>
+<p>The qualification tool catches interruptions inside this phase and should attempt to preserve a stopped receipt/return package. Give it a moment to finish its cleanup/packaging rather than closing the window immediately.</p>
+<p>You may see something like:</p>
+<pre><code class="language-text">M1_CONTINUATION_STOPPED
+CONTINUATION RETURN: ...
+</code></pre>
+<p>or it may simply return to PowerShell.</p>
+<p>Do <strong>not</strong> rerun R3 afterward yet.</p>
+<h3>Why this is safe</h3>
+<p>At this point:</p>
+<pre><code class="language-text">Environment preflight              STARTED
+Environment preflight              NOT COMPLETED
+
+New M1 subject                     NOT CREATED
+M1.4–M1.17 SQL                     NOT EXECUTED
+G2                                 NOT EXECUTED
+Leap 2 source checkpoint           NOT MODIFIED
+Reference R1                       NOT USED
+</code></pre>
+<p>So we are not interrupting a material campaign calculation.</p>
+<h3>What this means technically</h3>
+<p>This has exposed another environment-layer defect. The safe-start feature is conceptually right, but its <strong>native Windows execution path can hang after the configured-data-directory check instead of failing within its intended timeout</strong>. That behavior is unacceptable for the future user experience.</p>
+<p>After you press Ctrl+C, send me <strong>only the terminal output that follows the interruption</strong> and, if one is created, the <code>_RETURN.zip</code>. I’ll correct this preflight hang before asking you to rerun the Module 1 continuation.</p>
+</div></article><article id="m-bd9b6dc1-6e70-4960-86f5-df1eb3dfa81e" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00195 · 2026-09-13T14:02:32.527000-04:00 · active path</p><p class="note">Attachment references: LEAP3_R3_NATIVE_20260913T150634Z_03679d52_RETURN.zip.sha256; LEAP3_R3_NATIVE_20260913T150634Z_03679d52_RETURN.zip.validation.json; LEAP3_R3_NATIVE_20260913T150634Z_03679d52_RETURN.zip</p><div class="bubble"><p>LEAP 3 R3 - COMPLETE NATIVE MODULE 1 CONTINUATION
+Scope: M1.4 through M1.17/G2 only.
+Source checkpoint: msbf_provider_l2_20260913t112052z_6f05f7a5
+New target: msbf_m1core_l3r3_20260913t150634z_03679d52
+Workspace:  D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52
+Allocation: RETAIN_ABSOLUTE_THRESHOLDS_DERIVE_SUBMISSIONS_V1
+PostgreSQL password (not logged; Enter uses trust/pgpass):
+M1 CONTINUATION STOP:
+M1_CONTINUATION_STOPPED
+CONTINUATION RETURN: D:\MSBF_CAMPAIGNS\PART2_RETURNS\LEAP3_R3_NATIVE_20260913T150634Z_03679d52_RETURN.zip
+SHA256: f5dbac7dc88e5ab5dde13b442a058fdc828bd42b71019dc19fd0f1e84fde95c2
+Scope ends at G2. No candidate search, compatibility, Module2 or full fresh campaign acceptance.</p>
+</div></article><article id="m-b5531b8a-acfd-46d1-89e4-ae0efcc1092b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00196 · 2026-09-13T14:02:34.632680-04:00 · active path</p><div class="bubble"><p>The interruption packaged cleanly. I’m inspecting the return now to identify the exact blocked environment call and fix only that failure path before any rerun.</p>
+</div></article><article id="m-f4821028-a758-4ec0-81dd-15f5dede971b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00197 · 2026-09-13T14:03:15.293253-04:00 · active path</p><div class="bubble"><p>The return pinpoints the cause. PostgreSQL <strong>did start successfully</strong>, but the R3 Python process hung while capturing <code>pg_ctl start</code> output because the newly spawned long-lived server inherited the captured pipe handles. Your second PowerShell query succeeding against port 55432 is the confirming evidence.</p>
+<p>I’m fixing that startup transport path now so <code>pg_ctl start</code> writes to files instead of captured pipes; this is infrastructure-only and does not touch MSBF SQL or business logic.</p>
+</div></article><article id="m-4ddeec42-4796-4287-b01c-a7f661dd956c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00198 · 2026-09-13T14:07:04.840987-04:00 · active path</p><div class="bubble"><p>The R4 fix passes the full suite: <strong>478/478 tests</strong>. I’m sealing a fresh carrier and rerunning those tests from a clean extraction so the package you use is the one actually verified.</p>
+</div></article><article id="m-a58312dd-296b-4205-8b7a-b03e4a74dbe6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00199 · 2026-09-13T14:09:12.752959-04:00 · active path</p><div class="bubble"><p>The R3 return is clean and useful: it confirms <code>M1_CONTINUATION_STOPPED</code>, with an intact return ZIP/CRC. [export reference: filecite | turn51file0 | L2-L6]</p>
+<p>I found the actual hang mechanism and corrected it rather than asking you for another diagnostic.</p>
+<h3>Root cause</h3>
+<p>R3 correctly found the configured PostgreSQL cluster stopped and invoked <code>pg_ctl start</code>. The server then came up—as demonstrated by your second PowerShell window successfully connecting to <code>127.0.0.1:55432</code>—but Python was capturing <code>pg_ctl</code> stdout/stderr with <code>subprocess.PIPE</code>.</p>
+<p>On Windows, the long-lived <code>postgres</code> child can inherit those pipe handles. That means Python can remain waiting for EOF even though <code>pg_ctl</code> itself has finished and PostgreSQL is already running.</p>
+<p>That explains the complete pattern:</p>
+<pre><code class="language-text">pg_isready        exit 2   (server initially unavailable)
+pg_ctl status     exit 3   (configured cluster stopped)
+pg_ctl start               (server launched)
+PostgreSQL later reachable
+Python still hung
+</code></pre>
+<p>No continuation subject was created and <strong>no M1 SQL executed</strong>.</p>
+<h2>Leap 3 R4</h2>
+<p>I corrected only that infrastructure transport path:</p>
+<ul>
+<li><code>pg_ctl start</code> now writes stdout/stderr directly to evidence files instead of <code>PIPE</code>.</li>
+<li>All other environment commands retain their normal captured output.</li>
+<li>The timeout, one-start rule, exact configured-cluster restriction, authenticated identity check, no-restart rule, and no-PID-deletion rule remain unchanged.</li>
+<li><strong>No MSBF SQL, business logic, M1.16 allocation logic, G2 composition, core bindings, or tail bindings changed.</strong></li>
+</ul>
+<p>R4 passes:</p>
+<pre><code class="language-text">Build suite:             478 / 478 PASS
+Clean-extraction suite:  478 / 478 PASS
+Manifest:                PASS
+Seal:                    PASS
+CRC:                     PASS
+</code></pre>
+<h3>Files</h3>
+<p><strong>Download Leap 3 R4</strong> (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP3_R4_20260913.zip</code>; referenced bytes not established here)</p>
+<p>SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP3_R4_20260913.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Validation record (historical reference: <code>sandbox:[session]/MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP3_R4_20260913_VALIDATION.json</code>; referenced bytes not established here)</p>
+<p><strong>Complete R4 native run block</strong> (historical reference: <code>sandbox:[session]/MSBF_LEAP3_R4_NATIVE_M1_CONTINUATION_RUN_BLOCK.txt</code>; referenced bytes not established here)</p>
+<p>Final verification evidence (historical reference: <code>sandbox:[session]/MSBF_LEAP3_R4_FINAL_DELIVERY_VERIFICATION_20260913.zip</code>; referenced bytes not established here)</p>
+<p>Locked R4 carrier:</p>
+<pre><code class="language-text">MSBF_FRESH_CAMPAIGN_EXTENSION_LEAP3_R4_20260913.zip
+
+SHA-256
+801b519208b5ea4027f95276574497554d3619e3a95eb6242d718144f0cefa54
+</code></pre>
+<p>Save it to:</p>
+<pre><code class="language-text">D:\MSBF_ARCHIVE
+</code></pre>
+<p>Then run the <strong>complete R4 block linked above</strong> in a new PowerShell window.</p>
+<p>Because PostgreSQL was already successfully started during the R3 attempt, assuming it has remained running, R4 should simply observe the endpoint as ready, authenticate the configured cluster identity, and proceed into the actual continuation rather than invoking startup again.</p>
+<p>The R3 stopped workspace/return should remain preserved. Do <strong>not</strong> reuse or resume it; R4 creates a new target and workspace.</p>
+</div></article><article id="m-a36603b1-1fea-49aa-9503-1e6a6a2cc698" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00200 · 2026-09-13T16:40:10.267000-04:00 · active path</p><p class="note">Attachment references: Pasted text(20260913-204007).txt</p><div class="bubble"><p>this is what I&#39;ve seen so far. Give me a query to test the current status and see if there is an inefficient bottleneck or process or if something stalled. or...if i just need to be patient, and if that&#39;s the case - how long to expect: </p>
+</div></article><article id="m-64875a60-297f-4e8c-99f5-6ecae3ab2e7b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00201 · 2026-09-13T16:40:12.459747-04:00 · active path</p><div class="bubble"><p>The log already tells us one important thing: <strong>the run is advancing, not globally hung</strong>. <code>source_028</code> completed after about <strong>69.5 minutes</strong>, and it then moved into <code>source_029</code>, which has now been running about <strong>60 minutes</strong>. </p>
+<p>Use this <strong>one read-only status query</strong> in a second PowerShell window. It will tell us whether the current backend is actively consuming CPU/I/O, waiting on a lock, blocked by another session, or doing a measurable index/vacuum operation.</p>
+</div></article><article id="m-fc367786-58a2-4118-8a62-2651a5f4d5ff" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00202 · 2026-09-13T16:40:12.459747-04:00 · active path</p><div class="bubble"><p>Run this once in a second PowerShell window:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$ErrorActionPreference = &#39;Stop&#39;
+
+$PgBin = &#39;C:\Program Files\PostgreSQL\17\bin&#39;
+$Db = &#39;msbf_m1core_l3r4_20260913t182750z_b28da63f&#39;
+
+&amp; (Join-Path $PgBin &#39;psql.exe&#39;) `
+    -h 127.0.0.1 `
+    -p 55432 `
+    -U postgres `
+    -d $Db `
+    -X `
+    -P pager=off `
+    -c &quot;
+WITH active AS (
+    SELECT
+        a.pid,
+        a.state,
+        a.query_start,
+        now() - a.query_start AS query_age,
+        a.state_change,
+        a.wait_event_type,
+        a.wait_event,
+        pg_blocking_pids(a.pid) AS blocking_pids,
+        a.backend_xid,
+        a.backend_xmin,
+        regexp_replace(a.query, E&#39;[\n\r\t]+&#39;, &#39; &#39;, &#39;g&#39;) AS query
+    FROM pg_stat_activity a
+    WHERE a.datname = current_database()
+      AND a.pid &lt;&gt; pg_backend_pid()
+),
+idx AS (
+    SELECT
+        pid,
+        phase,
+        lockers_total,
+        lockers_done,
+        blocks_total,
+        blocks_done,
+        tuples_total,
+        tuples_done
+    FROM pg_stat_progress_create_index
+),
+vac AS (
+    SELECT
+        pid,
+        phase,
+        heap_blks_total,
+        heap_blks_scanned,
+        heap_blks_vacuumed,
+        index_vacuum_count
+    FROM pg_stat_progress_vacuum
+)
+SELECT
+    now() AS observed_at,
+    a.pid,
+    a.state,
+    a.query_age,
+    a.wait_event_type,
+    a.wait_event,
+    a.blocking_pids,
+    CASE
+        WHEN cardinality(a.blocking_pids) &gt; 0
+            THEN &#39;BLOCKED&#39;
+        WHEN a.state = &#39;idle in transaction&#39;
+            THEN &#39;IDLE IN TRANSACTION&#39;
+        WHEN a.state = &#39;active&#39; AND a.wait_event_type = &#39;Lock&#39;
+            THEN &#39;LOCK WAIT&#39;
+        WHEN a.state = &#39;active&#39; AND a.wait_event_type = &#39;IO&#39;
+            THEN &#39;ACTIVE - I/O BOUND&#39;
+        WHEN a.state = &#39;active&#39; AND a.wait_event_type IS NULL
+            THEN &#39;ACTIVE - CPU/RUNNING&#39;
+        WHEN a.state = &#39;active&#39;
+            THEN &#39;ACTIVE - WAITING: &#39; || coalesce(a.wait_event_type,&#39;&#39;) ||
+                 &#39;/&#39; || coalesce(a.wait_event,&#39;&#39;)
+        ELSE upper(a.state)
+    END AS diagnosis,
+    i.phase AS index_phase,
+    CASE
+        WHEN i.blocks_total &gt; 0
+        THEN round(100.0 * i.blocks_done / i.blocks_total, 1)
+    END AS index_block_pct,
+    CASE
+        WHEN i.tuples_total &gt; 0
+        THEN round(100.0 * i.tuples_done / i.tuples_total, 1)
+    END AS index_tuple_pct,
+    v.phase AS vacuum_phase,
+    CASE
+        WHEN v.heap_blks_total &gt; 0
+        THEN round(100.0 * v.heap_blks_scanned / v.heap_blks_total, 1)
+    END AS vacuum_scan_pct,
+    pg_size_pretty(pg_database_size(current_database())) AS database_size,
+    left(a.query, 500) AS current_query
+FROM active a
+LEFT JOIN idx i ON i.pid = a.pid
+LEFT JOIN vac v ON v.pid = a.pid
+ORDER BY a.query_start;
+&quot;
+</code></pre>
+<h3>What your current log already suggests</h3>
+<p>I <strong>would not interrupt it yet</strong>. The strongest fact is that <code>source_028</code> eventually completed at roughly <strong>4,170 seconds / 69.5 minutes</strong> and the runtime successfully advanced to <code>source_029</code>. [export reference: filecite | turn52file0 | L161-L181]</p>
+<p><code>source_029</code> is now around <strong>3,600 seconds / 60 minutes</strong>. [export reference: filecite | turn52file0 | L241-L301] So, based purely on the observed runtime pattern, another source taking approximately an hour is plausible.</p>
+<p>If the query above reports:</p>
+<ul>
+<li><strong><code>ACTIVE - CPU/RUNNING</code></strong> → be patient.</li>
+<li><strong><code>ACTIVE - I/O BOUND</code></strong> → also generally be patient; your D:-resident HDD is likely the limiting resource.</li>
+<li><strong><code>BLOCKED</code> / <code>LOCK WAIT</code></strong> with blocker PIDs → that&#39;s actionable.</li>
+<li><strong><code>IDLE IN TRANSACTION</code></strong> → suspicious.</li>
+<li>No campaign backend at all while Python still says <code>source_029 running</code> → suspicious.</li>
+</ul>
+<p>If it is actively running or doing I/O, my present expectation would be <strong>perhaps another 10–30 minutes for source_029</strong>, given source_028&#39;s ~69.5-minute runtime. I would <strong>not extrapolate 60–70 minutes × all remaining 65 programs</strong>; these first history-building stages are expected to be among the heaviest.</p>
+<p>Paste the output of that single query and I can tell you whether this is healthy-but-slow or whether we found a real bottleneck.</p>
+</div></article><article id="m-55958c06-3e88-4e96-bb75-5b7c425ade39" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00203 · 2026-09-13T16:42:16.750000-04:00 · active path</p><div class="bubble"><pre><code>     observed_at          | pid  | state  |    query_age    | wait_event_type | wait_event | blocking_pids |      diagnosis       | index_phase | index_block_pct | index_tuple_pct | vacuum_phase | vacuum_scan_pct | database_size |                                                                                                                                                                                                                                                    current_query                                                                                                                                                                                                                           
+</code></pre>
+<p>-------------------------------+------+--------+-----------------+-----------------+------------+---------------+----------------------+-------------+-----------------+-----------------+--------------+-----------------+---------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 2026-09-13 16:41:35.029728-04 | 7200 | active | 00:41:11.177151 |                 |            | {}            | ACTIVE - CPU/RUNNING |             |                 |                 |              |                 | 463 MB        | /* 31 - expected/actual mismatch <em>/ INSERT INTO _m1_4_checks WITH r AS (SELECT run_id FROM msbf_ctl.run_registry WHERE run_code=&#39;M1_CAMP_5BA03D33A9616E4750EDF150&#39; AND run_version=1), x AS (  SELECT COUNT(</em>) mismatches FROM msbf_m1.m1_4_expected_pos_snapshot((SELECT run_id FROM r)) e  FULL JOIN msbf_m1.m1_4_actual_pos_snapshot((SELECT run_id FROM r)) a USING(entity_key)  WHERE e.row_hash IS DISTINCT FROM a.row_hash) SELECT &#39;M1_4_POS_31_ROW_REPRODUCTION&#39;,&#39;Row-level deterministic reproduction&#39;,mism
+(1 row)</p>
+</div></article><article id="m-65e228c5-ade5-4361-869c-0f57a90c3413" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00204 · 2026-09-13T16:42:18.516058-04:00 · active path</p><div class="bubble"><p>This is <strong>healthy-but-slow, not stalled</strong>.</p>
+<p>The important fields are:</p>
+<ul>
+<li><code>state = active</code></li>
+<li><code>blocking_pids = {}</code></li>
+<li><code>diagnosis = ACTIVE - CPU/RUNNING</code></li>
+<li>no lock wait</li>
+<li>no I/O wait</li>
+<li>no index/vacuum operation</li>
+<li>current SQL has been actively executing for <strong>41 minutes</strong></li>
+</ul>
+<p>The current statement is:</p>
+<pre><code class="language-text">M1_4_POS_31_ROW_REPRODUCTION
+Row-level deterministic reproduction
+</code></pre>
+<p>It is recomputing the expected M1.4 POS snapshot, recomputing the actual snapshot, then doing a <code>FULL JOIN</code> and comparing row hashes. That is a <strong>computationally expensive validation control</strong>, and PostgreSQL is actively using CPU to do it.</p>
+<p>So the bottleneck is clear:</p>
+<blockquote>
+<p><strong>CPU-heavy deterministic row-reproduction validation, not a deadlock, disk stall, or orchestration problem.</strong></p>
+</blockquote>
+<p>I would <strong>leave it alone</strong>.</p>
+<h3>How much longer?</h3>
+<p><code>source_029</code> is around an hour total so far, and this particular POS-31 query has consumed ~41 minutes of that. The name suggests it is control 31 in the M1.4 positive-control sequence, but we should not assume every later control costs the same—this row-reproduction check is very plausibly one of the expensive ones.</p>
+<p>My best estimate from what we now know:</p>
+<ul>
+<li><strong>source_029:</strong> likely another <strong>10–30 minutes</strong>, but potentially <strong>30–45</strong> if another heavy reproduction/hash check follows.</li>
+<li>Once M1.4 completes, I would expect later stages to vary substantially. I would no longer expect the entire run to finish in the original 30–60 minute estimate; these native 2,500-scale deterministic controls are much more expensive than the offline work suggested.</li>
+<li>A more realistic <strong>overall</strong> expectation from here is <strong>several more hours</strong>, not dozens of hours, assuming the later history/reproduction controls have similar characteristics.</li>
+</ul>
+<p>There is also an optimization lesson for the eventual production runtime: this check is proving correctness, but <strong>40+ minutes for a single deterministic-reproduction assertion at only 2,500 merchants is too expensive for routine user execution</strong>. After this qualification, we should distinguish heavy certification controls from always-on operational controls, without weakening accuracy.</p>
+<p>For this qualification run, though: <strong>let it run. PostgreSQL is doing exactly what the control asked it to do.</strong></p>
+</div></article><article id="m-bbc428e9-1d25-4d4e-b714-6a14a2610fcb" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00205 · 2026-09-13T16:43:53.310000-04:00 · active path</p><div class="bubble"><p>are those checks that this campaign added or that exist in the published code?</p>
+</div></article><article id="m-197c360d-237a-4bb0-a6a3-679566bbd126" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00206 · 2026-09-13T16:43:55.363450-04:00 · active path</p><div class="bubble"><p>They <strong>already exist in the published Module 1 code</strong>. This campaign did <strong>not invent</strong> <code>M1_4_POS_31_ROW_REPRODUCTION</code>.</p>
+<p>The Leap 3 compiler deliberately preserved the source-owned validation framework. For M1.4 alone, the published stage requires <strong>52 positive controls and 4 negative controls</strong>, and those totals were carried forward as source-preserved requirements. [export reference: filecite | turn46file0 | L35-L50]</p>
+<p>The campaign-scale work changed only the context-dependent pieces needed for a fresh 2,500 population—run identity, population-derived counts, predecessor hashes, etc.—while preserving the calculation/helper definitions and validation semantics. [export reference: filecite | turn46file0 | L56-L64]</p>
+<p>So the current expensive check:</p>
+<pre><code class="language-text">M1_4_POS_31_ROW_REPRODUCTION
+Row-level deterministic reproduction
+</code></pre>
+<p>is fundamentally <strong>an original published M1.4 certification control</strong>.</p>
+<p>What Campaign Scale added is the orchestration around it:</p>
+<pre><code class="language-text">published M1.4 validation logic
+        ↓
+parameterized to fresh run/population
+        ↓
+executed automatically by reusable controller
+        ↓
+receipts / evidence / fail-closed handling
+</code></pre>
+<p>That distinction matters for optimization later. If we decide this 40+ minute check is too expensive for ordinary campaign execution, we would not be “removing a Campaign Scale diagnostic.” We would be making an explicit product decision about when a <strong>published certification-grade control</strong> must run—e.g. every ordinary campaign versus qualification/certification runs—while keeping cheaper always-on accuracy controls in routine execution.</p>
+</div></article><article id="m-5678c46b-9303-4bd1-9d78-4519ada6bef5" class="message user"><p class="meta"><strong>Andrew / user</strong> · C132-M00207 · 2026-09-13T16:45:53.923000-04:00 · active path</p><div class="bubble"><p>I see. those are an important part of my brand - no cold handoffs - logic, controls, validation, evidence, and interpretation travel together. now if there are redundant or duplicative controls - that is something to discuss but would be handled in a later publication.</p>
+</div></article><article id="m-39adbfea-08b8-4917-b7d4-6e316425e4e9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C132-M00208 · 2026-09-13T16:45:55.919785-04:00 · active path</p><div class="bubble"><p>Agreed. That is the correct boundary.</p>
+<p>For the <strong>current campaign-scale qualification</strong>, we should preserve the published control architecture even when individual controls are expensive. The point is not merely to produce outputs; it is to preserve the chain:</p>
+<p><strong>logic → controls → validation → evidence → interpretation</strong></p>
+<p>That is central to the “no cold handoffs” thesis.</p>
+<p>A later publication can absolutely examine whether some controls are redundant, duplicative, or computationally inefficient—but that should be treated as a <strong>governed control-framework redesign</strong>, not an optimization patch inside Campaign Scale. Any such review should distinguish:</p>
+<ul>
+<li>genuinely duplicate controls measuring the same failure mode;</li>
+<li>controls that appear similar but protect different lifecycle or evidence boundaries;</li>
+<li>repeated recomputation that could safely share certified intermediate evidence;</li>
+<li>certification-grade controls versus routine operational controls;</li>
+<li>performance improvements that preserve the same assurance objective.</li>
+</ul>
+<p>And any consolidation should itself have regression evidence showing that assurance coverage was not weakened.</p>
+<p>So for <strong>this run</strong>, the posture remains: <strong>let the published controls run as designed and measure their actual 2,500-scale cost.</strong> The runtime evidence we are collecting is valuable input to that later publication-quality control rationalization.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

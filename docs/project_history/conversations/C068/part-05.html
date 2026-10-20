@@ -1,0 +1,2179 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Merchant POS Lending Simulator — part 05 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>Merchant POS Lending Simulator — part 05</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-04.html">Previous part</a><a href="part-06.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-f49688b0-70b5-4ac3-bc07-b07d766c9ffe" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00031 · 2026-07-23T17:42:51.297610-04:00 · active path</p><div class="bubble"><p>Yes, I can guide you through it precisely, but I cannot perform the live execution in this session because the current runtime does not have PostgreSQL installed or running. I verified that <code>psql</code>, <code>postgres</code>, and <code>pg_isready</code> are unavailable.</p>
+<p>The best approach is to run the scripts locally in your PostgreSQL 15 environment, ideally through <strong>DBeaver</strong>, since that matches your existing setup. The instructions below assume PostgreSQL 15 and DBeaver, with a command-line alternative afterward.</p>
+<h1>Recommended execution path: DBeaver</h1>
+<h2>Step 1 — Download the two SQL files</h2>
+<p>Use these files:</p>
+<ul>
+<li>Physical PostgreSQL schema (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/sql/00_msbf_physical_schema_v0_2.sql</code>; referenced bytes not established here)</li>
+<li>Reference and parameter seed (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_module1_foundation_v0_2/sql/01_msbf_reference_parameter_seed_v0_2.sql</code>; referenced bytes not established here)</li>
+</ul>
+<p>Keep them in a local folder such as:</p>
+<pre><code class="language-text">[local user directory]\Documents\merchant_sales_based_financing\
+</code></pre>
+<p>Do not modify the files before the first execution.</p>
+<hr>
+<h1>Part A — Create a clean database</h1>
+<h2>Step 2 — Open DBeaver</h2>
+<p>Open DBeaver and connect to your local PostgreSQL server.</p>
+<p>You likely already have a connection similar to:</p>
+<pre><code class="language-text">PostgreSQL 15
+localhost
+Port 5432
+</code></pre>
+<p>If prompted, enter your PostgreSQL password.</p>
+<h2>Step 3 — Create a new database</h2>
+<p>In the left-side <strong>Database Navigator</strong>:</p>
+<ol>
+<li>Expand your PostgreSQL connection.</li>
+<li>Right-click <strong>Databases</strong>.</li>
+<li>Select <strong>Create New Database</strong>.</li>
+<li>Enter:</li>
+</ol>
+<pre><code class="language-text">msbf_strategy
+</code></pre>
+<p>Recommended settings:</p>
+<pre><code class="language-text">Database name: msbf_strategy
+Owner: postgres
+Encoding: UTF8
+Template: template0 or default
+</code></pre>
+<p>Click <strong>OK</strong> or <strong>Save</strong>.</p>
+<p>Use a new database rather than placing this project inside an existing simulator database. This isolates the schemas, seed data, and testing evidence.</p>
+<h2>Step 4 — Refresh the connection</h2>
+<p>Right-click the PostgreSQL connection and select:</p>
+<pre><code class="language-text">Refresh
+</code></pre>
+<p>You should now see:</p>
+<pre><code class="language-text">Databases
+└── msbf_strategy
+</code></pre>
+<p>Double-click the database or open a SQL editor connected specifically to it.</p>
+<p>Confirm the active database shown in the SQL editor toolbar is:</p>
+<pre><code class="language-text">msbf_strategy
+</code></pre>
+<p>This is critical. Do not execute against your existing credit decisioning database.</p>
+<hr>
+<h1>Part B — Execute the physical schema</h1>
+<h2>Step 5 — Open the schema SQL file</h2>
+<p>From DBeaver:</p>
+<ol>
+<li>Select <strong>SQL Editor</strong>.</li>
+<li>Choose <strong>Open SQL Script</strong>.</li>
+<li>Open:</li>
+</ol>
+<pre><code class="language-text">00_msbf_physical_schema_v0_2.sql
+</code></pre>
+<p>Alternatively, drag the file into DBeaver.</p>
+<h2>Step 6 — Confirm the active connection</h2>
+<p>At the top of the script window, verify:</p>
+<pre><code class="language-text">Connection: your PostgreSQL connection
+Database: msbf_strategy
+</code></pre>
+<p>If it is connected to the wrong database:</p>
+<ol>
+<li>Right-click within the SQL editor.</li>
+<li>Select <strong>Connection</strong> or <strong>Set active connection</strong>.</li>
+<li>Choose <code>msbf_strategy</code>.</li>
+</ol>
+<h2>Step 7 — Turn off auto-commit for the first execution</h2>
+<p>For the initial run, I recommend disabling auto-commit.</p>
+<p>In DBeaver, find the transaction mode control, often near the top toolbar.</p>
+<p>Select:</p>
+<pre><code class="language-text">Manual commit
+</code></pre>
+<p>This allows you to roll back if the script stops unexpectedly before completion.</p>
+<h2>Step 8 — Execute the entire schema file</h2>
+<p>Do not highlight only part of the script.</p>
+<p>Use:</p>
+<pre><code class="language-text">Alt + X
+</code></pre>
+<p>or select:</p>
+<pre><code class="language-text">Execute SQL Script
+</code></pre>
+<p>Do not use the command that executes only the current statement.</p>
+<p>The script should build the following schemas:</p>
+<pre><code class="language-text">msbf_ref
+msbf_ctl
+msbf_m1
+msbf_m2
+msbf_m3
+msbf_m4
+msbf_evd
+msbf_rpt
+</code></pre>
+<p>It will also create tables, indexes, functions, views, comments, and constraints.</p>
+<h2>Step 9 — Review the execution log</h2>
+<p>At the bottom of DBeaver, inspect:</p>
+<ul>
+<li><strong>Output</strong></li>
+<li><strong>Error Log</strong></li>
+<li><strong>Query Manager</strong></li>
+<li><strong>Statistics</strong></li>
+</ul>
+<p>You should not see any red error messages.</p>
+<p>Normal successful messages may include:</p>
+<pre><code class="language-text">CREATE SCHEMA
+CREATE TABLE
+CREATE INDEX
+CREATE FUNCTION
+CREATE VIEW
+COMMENT
+ALTER TABLE
+</code></pre>
+<p>Warnings or notices are not automatically failures, but save any message that appears unusual.</p>
+<h2>Step 10 — Commit the schema</h2>
+<p>If the full execution succeeds:</p>
+<pre><code class="language-text">Commit
+</code></pre>
+<p>Use the checkmark or commit button in the DBeaver toolbar.</p>
+<p>If execution fails before completion:</p>
+<pre><code class="language-text">Rollback
+</code></pre>
+<p>Do not commit a partially created schema unless we intentionally diagnose an idempotent rerun.</p>
+<hr>
+<h1>Part C — Verify the schema before loading seed data</h1>
+<h2>Step 11 — Refresh the database objects</h2>
+<p>In Database Navigator:</p>
+<ol>
+<li>Right-click <code>msbf_strategy</code>.</li>
+<li>Select <strong>Refresh</strong>.</li>
+<li>Expand:</li>
+</ol>
+<pre><code class="language-text">Schemas
+</code></pre>
+<p>Confirm all eight schemas appear.</p>
+<h2>Step 12 — Run the schema inventory query</h2>
+<p>Open a new SQL editor connected to <code>msbf_strategy</code> and execute:</p>
+<pre><code class="language-sql">SELECT
+    schema_name
+FROM information_schema.schemata
+WHERE schema_name LIKE &#39;msbf_%&#39;
+ORDER BY schema_name;
+</code></pre>
+<p>Expected schemas:</p>
+<pre><code class="language-text">msbf_ctl
+msbf_evd
+msbf_m1
+msbf_m2
+msbf_m3
+msbf_m4
+msbf_ref
+msbf_rpt
+</code></pre>
+<p>Expected row count:</p>
+<pre><code class="language-text">8
+</code></pre>
+<h2>Step 13 — Count physical tables</h2>
+<p>Execute:</p>
+<pre><code class="language-sql">SELECT
+    table_schema,
+    COUNT(*) AS table_count
+FROM information_schema.tables
+WHERE table_schema LIKE &#39;msbf_%&#39;
+  AND table_type = &#39;BASE TABLE&#39;
+GROUP BY table_schema
+ORDER BY table_schema;
+</code></pre>
+<p>The total should be approximately:</p>
+<pre><code class="language-text">70 physical tables
+</code></pre>
+<p>To get the exact total:</p>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS total_table_count
+FROM information_schema.tables
+WHERE table_schema LIKE &#39;msbf_%&#39;
+  AND table_type = &#39;BASE TABLE&#39;;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">70
+</code></pre>
+<h2>Step 14 — Count physical columns</h2>
+<p>Execute:</p>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS total_column_count
+FROM information_schema.columns
+WHERE table_schema LIKE &#39;msbf_%&#39;;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">1041
+</code></pre>
+<p>A materially different result means the schema did not execute fully or the database contains another version of the project.</p>
+<h2>Step 15 — Count foreign keys</h2>
+<p>Execute:</p>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS foreign_key_count
+FROM information_schema.table_constraints
+WHERE constraint_schema LIKE &#39;msbf_%&#39;
+  AND constraint_type = &#39;FOREIGN KEY&#39;;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">141
+</code></pre>
+<h2>Step 16 — Confirm functions</h2>
+<p>Execute:</p>
+<pre><code class="language-sql">SELECT
+    routine_schema,
+    routine_name,
+    routine_type
+FROM information_schema.routines
+WHERE routine_schema LIKE &#39;msbf_%&#39;
+ORDER BY routine_schema, routine_name;
+</code></pre>
+<p>You should see the deterministic helper and contract-validation functions defined by the physical schema.</p>
+<h2>Step 17 — Confirm views</h2>
+<p>Execute:</p>
+<pre><code class="language-sql">SELECT
+    table_schema,
+    table_name
+FROM information_schema.views
+WHERE table_schema LIKE &#39;msbf_%&#39;
+ORDER BY table_schema, table_name;
+</code></pre>
+<p>You should see the governed reporting and reconciliation views.</p>
+<hr>
+<h1>Part D — Execute the reference and parameter seed</h1>
+<h2>Step 18 — Open the seed file</h2>
+<p>Open:</p>
+<pre><code class="language-text">01_msbf_reference_parameter_seed_v0_2.sql
+</code></pre>
+<p>Again, ensure the active database is:</p>
+<pre><code class="language-text">msbf_strategy
+</code></pre>
+<h2>Step 19 — Execute the entire seed script</h2>
+<p>Use:</p>
+<pre><code class="language-text">Execute SQL Script
+</code></pre>
+<p>The seed script should populate reference catalogs, governed parameter definitions, parameter values, feature definitions, industry assumptions, contract definitions, and related control records.</p>
+<h2>Step 20 — Review the output</h2>
+<p>Confirm there are no:</p>
+<pre><code class="language-text">duplicate key value violates unique constraint
+foreign key violation
+relation does not exist
+column does not exist
+invalid input syntax
+</code></pre>
+<p>If successful, commit the transaction.</p>
+<hr>
+<h1>Part E — Validate the seed</h1>
+<h2>Step 21 — Verify parameter-definition count</h2>
+<p>The exact table name can be confirmed from the DDL, but the primary parameter-definition table should return approximately:</p>
+<pre><code class="language-text">155 parameter definitions
+</code></pre>
+<p>A likely query pattern is:</p>
+<pre><code class="language-sql">SELECT COUNT(*)
+FROM msbf_ctl.parameter_definition;
+</code></pre>
+<p>If the table uses a different exact name, locate it in DBeaver under:</p>
+<pre><code class="language-text">Schemas
+└── msbf_ctl
+    └── Tables
+</code></pre>
+<p>Expected count:</p>
+<pre><code class="language-text">155
+</code></pre>
+<h2>Step 22 — Verify baseline scoped values</h2>
+<p>Likely query:</p>
+<pre><code class="language-sql">SELECT COUNT(*)
+FROM msbf_ctl.parameter_value;
+</code></pre>
+<p>Expected baseline value count:</p>
+<pre><code class="language-text">397
+</code></pre>
+<p>The table may contain additional control records depending on the seed design, so use the appropriate filter if needed, such as active parameter-set version or baseline status.</p>
+<h2>Step 23 — Verify feature-definition count</h2>
+<p>Likely query:</p>
+<pre><code class="language-sql">SELECT COUNT(*)
+FROM msbf_ctl.feature_definition;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">32
+</code></pre>
+<h2>Step 24 — Verify industry reference values</h2>
+<p>Run a query against the industry reference table, likely in <code>msbf_ref</code>.</p>
+<p>Example:</p>
+<pre><code class="language-sql">SELECT *
+FROM msbf_ref.industry
+ORDER BY industry_code;
+</code></pre>
+<p>Expected initial segment count:</p>
+<pre><code class="language-text">8
+</code></pre>
+<h2>Step 25 — Inspect parameter values by category</h2>
+<p>Run:</p>
+<pre><code class="language-sql">SELECT
+    pd.parameter_category,
+    COUNT(DISTINCT pd.parameter_definition_id) AS parameter_count,
+    COUNT(pv.parameter_value_id) AS scoped_value_count
+FROM msbf_ctl.parameter_definition pd
+LEFT JOIN msbf_ctl.parameter_value pv
+    ON pv.parameter_definition_id = pd.parameter_definition_id
+GROUP BY pd.parameter_category
+ORDER BY pd.parameter_category;
+</code></pre>
+<p>This should reconcile to the parameter workbook.</p>
+<hr>
+<h1>Part F — Test idempotence</h1>
+<p>Idempotence means that rerunning the seed does not create duplicate approved reference or parameter records.</p>
+<h2>Step 26 — Record initial counts</h2>
+<p>Save the results of:</p>
+<pre><code class="language-sql">SELECT COUNT(*) FROM msbf_ctl.parameter_definition;
+SELECT COUNT(*) FROM msbf_ctl.parameter_value;
+SELECT COUNT(*) FROM msbf_ctl.feature_definition;
+</code></pre>
+<h2>Step 27 — Run the seed file a second time</h2>
+<p>Execute the complete:</p>
+<pre><code class="language-text">01_msbf_reference_parameter_seed_v0_2.sql
+</code></pre>
+<p>again.</p>
+<h2>Step 28 — Recheck the counts</h2>
+<p>The counts should remain unchanged.</p>
+<p>Expected:</p>
+<pre><code class="language-text">Parameter definitions: 155
+Baseline scoped values: 397
+Feature definitions:   32
+</code></pre>
+<p>If counts increase, the seed is not behaving idempotently and should not yet be accepted.</p>
+<p>If the second run produces duplicate-key errors, capture the exact error and line number. That is fixable, but it should be corrected before implementation continues.</p>
+<hr>
+<h1>Part G — Test deterministic functions</h1>
+<p>The schema includes deterministic helper functions. Their purpose is to generate the same value whenever the same seed and inputs are supplied.</p>
+<h2>Step 29 — Locate the exact function names</h2>
+<p>Run:</p>
+<pre><code class="language-sql">SELECT
+    n.nspname AS schema_name,
+    p.proname AS function_name,
+    pg_get_function_identity_arguments(p.oid) AS arguments
+FROM pg_proc p
+JOIN pg_namespace n
+    ON n.oid = p.pronamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+ORDER BY n.nspname, p.proname;
+</code></pre>
+<p>Identify the deterministic uniform and normal helper functions.</p>
+<h2>Step 30 — Run the same call twice</h2>
+<p>Using the exact function signature shown by PostgreSQL, execute the same input twice.</p>
+<p>The conceptual test is:</p>
+<pre><code class="language-sql">SELECT deterministic_function(&#39;same_seed&#39;, &#39;same_key&#39;);
+SELECT deterministic_function(&#39;same_seed&#39;, &#39;same_key&#39;);
+</code></pre>
+<p>The returned values must be identical.</p>
+<h2>Step 31 — Test input sensitivity</h2>
+<p>Change one input:</p>
+<pre><code class="language-sql">SELECT deterministic_function(&#39;same_seed&#39;, &#39;different_key&#39;);
+</code></pre>
+<p>The result should generally differ while remaining within the defined output range.</p>
+<h2>Step 32 — Test a batch</h2>
+<p>A stronger test pattern is:</p>
+<pre><code class="language-sql">WITH test_keys AS (
+    SELECT generate_series(1, 100) AS key_value
+)
+SELECT
+    key_value,
+    function_call_1,
+    function_call_2,
+    function_call_1 = function_call_2 AS exact_match
+FROM ...
+</code></pre>
+<p>All <code>exact_match</code> values should be <code>TRUE</code>.</p>
+<hr>
+<h1>Part H — Validate constraints and data types</h1>
+<h2>Step 33 — Inspect primary keys</h2>
+<pre><code class="language-sql">SELECT
+    tc.table_schema,
+    tc.table_name,
+    kcu.column_name
+FROM information_schema.table_constraints tc
+JOIN information_schema.key_column_usage kcu
+    ON tc.constraint_name = kcu.constraint_name
+   AND tc.constraint_schema = kcu.constraint_schema
+WHERE tc.table_schema LIKE &#39;msbf_%&#39;
+  AND tc.constraint_type = &#39;PRIMARY KEY&#39;
+ORDER BY tc.table_schema, tc.table_name, kcu.ordinal_position;
+</code></pre>
+<p>Confirm every operational and archive table has an appropriate primary key.</p>
+<h2>Step 34 — Inspect check constraints</h2>
+<pre><code class="language-sql">SELECT
+    n.nspname AS schema_name,
+    c.relname AS table_name,
+    con.conname AS constraint_name,
+    pg_get_constraintdef(con.oid) AS definition
+FROM pg_constraint con
+JOIN pg_class c
+    ON c.oid = con.conrelid
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND con.contype = &#39;c&#39;
+ORDER BY n.nspname, c.relname, con.conname;
+</code></pre>
+<p>Review constraints for:</p>
+<ul>
+<li>percentages between valid bounds;</li>
+<li>nonnegative monetary values;</li>
+<li>effective-date validity;</li>
+<li>allowable status codes;</li>
+<li>scenario and run controls;</li>
+<li>EAD and loss values;</li>
+<li>required version fields.</li>
+</ul>
+<h2>Step 35 — Confirm partitioned tables</h2>
+<pre><code class="language-sql">SELECT
+    n.nspname AS schema_name,
+    c.relname AS partitioned_table
+FROM pg_partitioned_table pt
+JOIN pg_class c
+    ON c.oid = pt.partrelid
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+ORDER BY n.nspname, c.relname;
+</code></pre>
+<p>Expected partitioned structures:</p>
+<pre><code class="language-text">4
+</code></pre>
+<hr>
+<h1>Part I — Test views and reconciliation logic</h1>
+<h2>Step 36 — Query every project view</h2>
+<p>First list them:</p>
+<pre><code class="language-sql">SELECT
+    table_schema,
+    table_name
+FROM information_schema.views
+WHERE table_schema LIKE &#39;msbf_%&#39;
+ORDER BY table_schema, table_name;
+</code></pre>
+<p>Then execute:</p>
+<pre><code class="language-sql">SELECT * FROM schema_name.view_name LIMIT 10;
+</code></pre>
+<p>for each view.</p>
+<p>At this stage, many views may return zero rows because Module 1 has not yet generated analytical data. That is acceptable.</p>
+<p>What is not acceptable:</p>
+<pre><code class="language-text">relation does not exist
+column does not exist
+ambiguous column
+operator does not exist
+invalid cast
+</code></pre>
+<h2>Step 37 — Confirm empty-state behavior</h2>
+<p>Contract and reconciliation views should return either:</p>
+<ul>
+<li>zero rows; or</li>
+<li>structurally valid rows showing zero counts or not-yet-executed status.</li>
+</ul>
+<p>They should not fail merely because analytical runs do not yet exist.</p>
+<hr>
+<h1>Part J — Run the contract-validation function</h1>
+<p>The delivered schema includes a Module 1 contract-validation function.</p>
+<h2>Step 38 — Identify its exact signature</h2>
+<p>Run:</p>
+<pre><code class="language-sql">SELECT
+    n.nspname AS schema_name,
+    p.proname AS function_name,
+    pg_get_function_identity_arguments(p.oid) AS arguments,
+    pg_get_function_result(p.oid) AS return_type
+FROM pg_proc p
+JOIN pg_namespace n
+    ON n.oid = p.pronamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND p.proname ILIKE &#39;%contract%&#39;
+ORDER BY n.nspname, p.proname;
+</code></pre>
+<h2>Step 39 — Do not expect a passing analytical contract yet</h2>
+<p>Because no Module 1 population or risk snapshots have been generated, the function may correctly return:</p>
+<ul>
+<li>missing run;</li>
+<li>no analytical rows;</li>
+<li>incomplete contract;</li>
+<li>failed run existence;</li>
+<li>not accepted.</li>
+</ul>
+<p>That is expected at this phase.</p>
+<p>The objective is to ensure:</p>
+<ol>
+<li>The function executes.</li>
+<li>It returns a structured result.</li>
+<li>It fails coherently rather than raising a SQL error.</li>
+<li>Its result identifies the appropriate unmet validation gates.</li>
+</ol>
+<hr>
+<h1>Part K — Create an execution evidence file</h1>
+<p>Capture the results of the following queries:</p>
+<pre><code class="language-sql">SELECT version();
+
+SELECT current_database();
+
+SELECT current_user;
+
+SELECT
+    COUNT(*) AS schema_count
+FROM information_schema.schemata
+WHERE schema_name LIKE &#39;msbf_%&#39;;
+
+SELECT
+    COUNT(*) AS table_count
+FROM information_schema.tables
+WHERE table_schema LIKE &#39;msbf_%&#39;
+  AND table_type = &#39;BASE TABLE&#39;;
+
+SELECT
+    COUNT(*) AS column_count
+FROM information_schema.columns
+WHERE table_schema LIKE &#39;msbf_%&#39;;
+
+SELECT
+    COUNT(*) AS foreign_key_count
+FROM information_schema.table_constraints
+WHERE constraint_schema LIKE &#39;msbf_%&#39;
+  AND constraint_type = &#39;FOREIGN KEY&#39;;
+
+SELECT
+    COUNT(*) AS view_count
+FROM information_schema.views
+WHERE table_schema LIKE &#39;msbf_%&#39;;
+
+SELECT
+    COUNT(*) AS function_count
+FROM information_schema.routines
+WHERE routine_schema LIKE &#39;msbf_%&#39;;
+</code></pre>
+<p>Export the results from DBeaver:</p>
+<ol>
+<li>Right-click the result grid.</li>
+<li>Select <strong>Export Data</strong>.</li>
+<li>Choose CSV or Excel.</li>
+<li>Save as:</li>
+</ol>
+<pre><code class="language-text">msbf_postgresql_live_execution_evidence_YYYYMMDD.xlsx
+</code></pre>
+<p>Also export the DBeaver execution log or save screenshots showing:</p>
+<ul>
+<li>successful schema execution;</li>
+<li>successful seed execution;</li>
+<li>counts;</li>
+<li>deterministic function tests;</li>
+<li>second-run idempotence;</li>
+<li>contract-function behavior.</li>
+</ul>
+<hr>
+<h1>Part L — Recommended acceptance checklist</h1>
+<p>Mark each item as pass or fail.</p>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Expected result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PostgreSQL version</td>
+<td>14+; PostgreSQL 15 preferred</td>
+</tr>
+<tr>
+<td>Correct database</td>
+<td><code>msbf_strategy</code></td>
+</tr>
+<tr>
+<td>Schema script execution</td>
+<td>No errors</td>
+</tr>
+<tr>
+<td>Seed script execution</td>
+<td>No errors</td>
+</tr>
+<tr>
+<td>Project schema count</td>
+<td>8</td>
+</tr>
+<tr>
+<td>Physical table count</td>
+<td>70</td>
+</tr>
+<tr>
+<td>Physical column count</td>
+<td>1,041</td>
+</tr>
+<tr>
+<td>Foreign-key count</td>
+<td>141</td>
+</tr>
+<tr>
+<td>Partitioned structures</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Parameter definitions</td>
+<td>155</td>
+</tr>
+<tr>
+<td>Baseline scoped values</td>
+<td>397</td>
+</tr>
+<tr>
+<td>Feature definitions</td>
+<td>32</td>
+</tr>
+<tr>
+<td>Industry segments</td>
+<td>8</td>
+</tr>
+<tr>
+<td>Seed rerun</td>
+<td>No duplicate records</td>
+</tr>
+<tr>
+<td>Deterministic same-input test</td>
+<td>Exact match</td>
+</tr>
+<tr>
+<td>Deterministic changed-input test</td>
+<td>Usually changed result</td>
+</tr>
+<tr>
+<td>Views</td>
+<td>Compile and query</td>
+</tr>
+<tr>
+<td>Contract function</td>
+<td>Executes and returns structured gate results</td>
+</tr>
+<tr>
+<td>Database transaction</td>
+<td>Committed only after successful execution</td>
+</tr>
+<tr>
+<td>Evidence</td>
+<td>Saved and exportable</td>
+</tr>
+</tbody></table>
+<hr>
+<h1>Command-line alternative</h1>
+<p>If you prefer <code>psql</code>, use this sequence.</p>
+<h2>Step 1 — Create the database</h2>
+<p>From Command Prompt or PowerShell:</p>
+<pre><code class="language-bash">createdb -U postgres msbf_strategy
+</code></pre>
+<h2>Step 2 — Execute the schema</h2>
+<pre><code class="language-bash">psql -U postgres -d msbf_strategy \
+  -v ON_ERROR_STOP=1 \
+  -f &quot;C:\path\to\00_msbf_physical_schema_v0_2.sql&quot;
+</code></pre>
+<p>On Windows PowerShell, a single-line version may be easier:</p>
+<pre><code class="language-powershell">psql -U postgres -d msbf_strategy -v ON_ERROR_STOP=1 -f &quot;C:\path\to\00_msbf_physical_schema_v0_2.sql&quot;
+</code></pre>
+<h2>Step 3 — Execute the seed</h2>
+<pre><code class="language-powershell">psql -U postgres -d msbf_strategy -v ON_ERROR_STOP=1 -f &quot;C:\path\to\01_msbf_reference_parameter_seed_v0_2.sql&quot;
+</code></pre>
+<p>The critical option is:</p>
+<pre><code class="language-text">-v ON_ERROR_STOP=1
+</code></pre>
+<p>Without it, <code>psql</code> can continue after an error and leave a partially executed database.</p>
+<h2>Step 4 — Save a full execution log</h2>
+<pre><code class="language-powershell">psql -U postgres -d msbf_strategy -v ON_ERROR_STOP=1 -a -e `
+  -f &quot;C:\path\to\00_msbf_physical_schema_v0_2.sql&quot; `
+  &gt; &quot;C:\path\to\logs\00_schema_execution.log&quot; 2&gt;&amp;1
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-powershell">psql -U postgres -d msbf_strategy -v ON_ERROR_STOP=1 -a -e `
+  -f &quot;C:\path\to\01_msbf_reference_parameter_seed_v0_2.sql&quot; `
+  &gt; &quot;C:\path\to\logs\01_seed_execution.log&quot; 2&gt;&amp;1
+</code></pre>
+<hr>
+<h1>Safest workflow for us</h1>
+<p>My recommended workflow is:</p>
+<ol>
+<li>You execute the schema in DBeaver.</li>
+<li>If any error appears, stop immediately.</li>
+<li>Copy the <strong>complete error</strong>, including:<ul>
+<li>SQLSTATE;</li>
+<li>line number;</li>
+<li>statement;</li>
+<li>preceding context.</li>
+</ul>
+</li>
+<li>Send me the error or screenshot.</li>
+<li>I diagnose and revise the SQL.</li>
+<li>You rerun against a newly created clean database.</li>
+<li>Once both scripts execute cleanly, we run the count, idempotence, function, and contract tests.</li>
+<li>We preserve the live execution evidence as part of the repository.</li>
+</ol>
+<p>Do not begin the Module 1 analytical stage build until the physical foundation passes this live-execution gate.</p>
+</div></article><article id="m-a33201a0-8098-4a21-b8e7-a92467d58389" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00032 · 2026-07-23T19:09:52.554000-04:00 · active path</p><p class="note">5 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(132).png; image(133).png; image(134).png; image(135).png; image(136).png</p><div class="bubble"><p>in step 13 - Count physical tables, I get 74, not 70.</p>
+</div></article><article id="m-5b10662b-1cc7-468c-a0b7-0cadd82820b6" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00033 · 2026-07-23T19:10:17.550466-04:00 · active path</p><div class="bubble"><p>You are correct. <strong>The live PostgreSQL result of 74 is the correct physical table count.</strong></p>
+<p>My prior expected count of <strong>70</strong> excluded the four default partition child tables. PostgreSQL’s <code>information_schema.tables</code> reports those child partitions as <code>BASE TABLE</code>, so your query correctly returns:</p>
+<table>
+<thead>
+<tr>
+<th>Schema</th>
+<th align="right">Tables</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>msbf_ctl</code></td>
+<td align="right">35</td>
+</tr>
+<tr>
+<td><code>msbf_m1</code></td>
+<td align="right">31</td>
+</tr>
+<tr>
+<td><code>msbf_ref</code></td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td align="right"><strong>74</strong></td>
+</tr>
+</tbody></table>
+<p>The difference is these four default partitions:</p>
+<pre><code class="language-text">msbf_m1.merchant_pos_daily_base_default
+msbf_m1.merchant_pos_daily_scenario_default
+msbf_m1.merchant_deposit_daily_base_default
+msbf_m1.merchant_deposit_daily_scenario_default
+</code></pre>
+<p>So the correct interpretation is:</p>
+<pre><code class="language-text">70 parent and non-partition physical tables
++
+4 default partition child tables
+=
+74 PostgreSQL base-table relations
+</code></pre>
+<h2>Verify the four child partitions</h2>
+<p>Run:</p>
+<pre><code class="language-sql">SELECT
+    child_ns.nspname AS child_schema,
+    child.relname AS child_partition,
+    parent_ns.nspname AS parent_schema,
+    parent.relname AS parent_table
+FROM pg_inherits i
+JOIN pg_class child
+    ON child.oid = i.inhrelid
+JOIN pg_namespace child_ns
+    ON child_ns.oid = child.relnamespace
+JOIN pg_class parent
+    ON parent.oid = i.inhparent
+JOIN pg_namespace parent_ns
+    ON parent_ns.oid = parent.relnamespace
+WHERE child_ns.nspname LIKE &#39;msbf_%&#39;
+ORDER BY parent_ns.nspname, parent.relname, child.relname;
+</code></pre>
+<p>Expected result: four rows corresponding to the four <code>_default</code> tables.</p>
+<h2>Count all physical table relations</h2>
+<p>Your current query is correct:</p>
+<pre><code class="language-sql">SELECT COUNT(*) AS total_physical_table_relations
+FROM information_schema.tables
+WHERE table_schema LIKE &#39;msbf_%&#39;
+  AND table_type = &#39;BASE TABLE&#39;;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">74
+</code></pre>
+<h2>Count only the 70 parent/non-child tables</h2>
+<p>Use this query to exclude partition children:</p>
+<pre><code class="language-sql">SELECT COUNT(*) AS parent_and_nonpartition_tables
+FROM pg_class c
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND c.relkind IN (&#39;r&#39;, &#39;p&#39;)
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = c.oid
+  );
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">70
+</code></pre>
+<p>Here:</p>
+<ul>
+<li><code>r</code> = ordinary table</li>
+<li><code>p</code> = partitioned parent table</li>
+<li><code>NOT EXISTS</code> removes child partitions</li>
+</ul>
+<h2>Count partitioned parent tables</h2>
+<pre><code class="language-sql">SELECT COUNT(*) AS partitioned_parent_tables
+FROM pg_partitioned_table pt
+JOIN pg_class c
+    ON c.oid = pt.partrelid
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">4
+</code></pre>
+<h2>Revised acceptance figures</h2>
+<p>Please use these corrected counts going forward:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th align="right">Correct expected result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Project schemas</td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td>Parent/non-child tables</td>
+<td align="right">70</td>
+</tr>
+<tr>
+<td>Partitioned parent tables</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td>Default partition child tables</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td>Total PostgreSQL base-table relations</td>
+<td align="right"><strong>74</strong></td>
+</tr>
+</tbody></table>
+<p>This is a documentation/counting discrepancy, not a schema execution problem. Your screenshot indicates that the table-creation phase completed correctly. Proceed to the column-count check next.</p>
+</div></article><article id="m-52554a8c-8c1f-4110-9957-f5a657376505" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00034 · 2026-07-23T19:14:50.260000-04:00 · active path</p><div class="bubble"><p>so the next step 14 total_column_count (currently 1,213) also counts the child default partition child tables. how do I adjust steps 13 onward to ensure the exact QA values you anticipate above?</p>
+</div></article><article id="m-8567d080-a9f9-4f41-8db7-ba0a7f4803a5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00035 · 2026-07-23T19:15:29.833361-04:00 · active path</p><div class="bubble"><p>Exactly. Your <code>1,213</code> result is not just counting the four child partitions. <code>information_schema.columns</code> also includes the five project views.</p>
+<p>The count decomposes as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Object class</th>
+<th align="right">Column count</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>70 designed parent/non-child tables</td>
+<td align="right"><strong>1,041</strong></td>
+</tr>
+<tr>
+<td>4 default partition child tables</td>
+<td align="right"><strong>80</strong></td>
+</tr>
+<tr>
+<td>5 views</td>
+<td align="right"><strong>92</strong></td>
+</tr>
+<tr>
+<td><strong>Total returned by <code>information_schema.columns</code></strong></td>
+<td align="right"><strong>1,213</strong></td>
+</tr>
+</tbody></table>
+<p>The four partition children inherit these parent structures:</p>
+<table>
+<thead>
+<tr>
+<th>Parent table</th>
+<th align="right">Columns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>merchant_pos_daily_base</code></td>
+<td align="right">21</td>
+</tr>
+<tr>
+<td><code>merchant_pos_daily_scenario</code></td>
+<td align="right">27</td>
+</tr>
+<tr>
+<td><code>merchant_deposit_daily_base</code></td>
+<td align="right">14</td>
+</tr>
+<tr>
+<td><code>merchant_deposit_daily_scenario</code></td>
+<td align="right">18</td>
+</tr>
+<tr>
+<td><strong>Inherited child-partition columns</strong></td>
+<td align="right"><strong>80</strong></td>
+</tr>
+</tbody></table>
+<p>Use the following revised QA steps. These queries distinguish the <strong>designed object counts</strong> from PostgreSQL’s physical child relations and views.</p>
+<h1>Revised Step 13 — Table counts</h1>
+<h2>13A. Count the 70 designed tables</h2>
+<p>This includes ordinary tables and partitioned parent tables but excludes child partitions.</p>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS designed_table_count
+FROM pg_class c
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND c.relkind IN (&#39;r&#39;, &#39;p&#39;)
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = c.oid
+  );
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">70
+</code></pre>
+<h2>13B. Count all PostgreSQL base-table relations</h2>
+<p>This includes the four child partitions.</p>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS all_base_table_relations
+FROM information_schema.tables
+WHERE table_schema LIKE &#39;msbf_%&#39;
+  AND table_type = &#39;BASE TABLE&#39;;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">74
+</code></pre>
+<h2>13C. Count partitioned parent tables</h2>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS partitioned_parent_count
+FROM pg_partitioned_table pt
+JOIN pg_class c
+    ON c.oid = pt.partrelid
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">4
+</code></pre>
+<h2>13D. Count child partitions</h2>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS child_partition_count
+FROM pg_inherits i
+JOIN pg_class child
+    ON child.oid = i.inhrelid
+JOIN pg_namespace n
+    ON n.oid = child.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">4
+</code></pre>
+<h2>13E. Reconcile by schema</h2>
+<p>Use this instead of <code>information_schema.tables</code> when you want the designed 70-table count by schema:</p>
+<pre><code class="language-sql">SELECT
+    n.nspname AS table_schema,
+    COUNT(*) AS designed_table_count
+FROM pg_class c
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND c.relkind IN (&#39;r&#39;, &#39;p&#39;)
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = c.oid
+  )
+GROUP BY n.nspname
+ORDER BY n.nspname;
+</code></pre>
+<p>Expected:</p>
+<table>
+<thead>
+<tr>
+<th>Schema</th>
+<th align="right">Designed tables</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>msbf_ctl</code></td>
+<td align="right">35</td>
+</tr>
+<tr>
+<td><code>msbf_m1</code></td>
+<td align="right">27</td>
+</tr>
+<tr>
+<td><code>msbf_ref</code></td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td align="right"><strong>70</strong></td>
+</tr>
+</tbody></table>
+<p>Your earlier result showed <code>31</code> in <code>msbf_m1</code> because it included the four default child partitions.</p>
+<hr>
+<h1>Revised Step 14 — Column counts</h1>
+<h2>14A. Count columns across the 70 designed tables only</h2>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS designed_table_column_count
+FROM pg_attribute a
+JOIN pg_class c
+    ON c.oid = a.attrelid
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND c.relkind IN (&#39;r&#39;, &#39;p&#39;)
+  AND a.attnum &gt; 0
+  AND NOT a.attisdropped
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = c.oid
+  );
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">1041
+</code></pre>
+<p>This is the canonical QA value aligned with the physical column catalog.</p>
+<h2>14B. Count columns on child partitions</h2>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS child_partition_column_count
+FROM pg_attribute a
+JOIN pg_class c
+    ON c.oid = a.attrelid
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND a.attnum &gt; 0
+  AND NOT a.attisdropped
+  AND EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = c.oid
+  );
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">80
+</code></pre>
+<h2>14C. Count view columns</h2>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS view_column_count
+FROM pg_attribute a
+JOIN pg_class c
+    ON c.oid = a.attrelid
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND c.relkind = &#39;v&#39;
+  AND a.attnum &gt; 0
+  AND NOT a.attisdropped;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">92
+</code></pre>
+<h2>14D. Reconcile the full <code>information_schema.columns</code> count</h2>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS information_schema_column_count
+FROM information_schema.columns
+WHERE table_schema LIKE &#39;msbf_%&#39;;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">1213
+</code></pre>
+<p>Reconciliation:</p>
+<pre><code class="language-text">1,041 designed-table columns
++   80 child-partition columns
++   92 view columns
+=1,213 total information_schema columns
+</code></pre>
+<h2>14E. Designed-table columns by schema</h2>
+<pre><code class="language-sql">SELECT
+    n.nspname AS table_schema,
+    COUNT(*) AS designed_column_count
+FROM pg_attribute a
+JOIN pg_class c
+    ON c.oid = a.attrelid
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND c.relkind IN (&#39;r&#39;, &#39;p&#39;)
+  AND a.attnum &gt; 0
+  AND NOT a.attisdropped
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = c.oid
+  )
+GROUP BY n.nspname
+ORDER BY n.nspname;
+</code></pre>
+<p>The total must equal:</p>
+<pre><code class="language-text">1041
+</code></pre>
+<hr>
+<h1>Revised Step 15 — Foreign-key count</h1>
+<p>Use <code>pg_constraint</code> and exclude child partitions explicitly.</p>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS designed_foreign_key_count
+FROM pg_constraint con
+JOIN pg_class c
+    ON c.oid = con.conrelid
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND con.contype = &#39;f&#39;
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = c.oid
+  );
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">141
+</code></pre>
+<p>Do not rely solely on:</p>
+<pre><code class="language-sql">information_schema.table_constraints
+</code></pre>
+<p>for exact designed-object reconciliation, because inherited or partition-related constraint presentation may vary by PostgreSQL version and object type.</p>
+<h2>Foreign keys by schema</h2>
+<pre><code class="language-sql">SELECT
+    n.nspname AS table_schema,
+    COUNT(*) AS foreign_key_count
+FROM pg_constraint con
+JOIN pg_class c
+    ON c.oid = con.conrelid
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND con.contype = &#39;f&#39;
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = c.oid
+  )
+GROUP BY n.nspname
+ORDER BY n.nspname;
+</code></pre>
+<p>Total expected:</p>
+<pre><code class="language-text">141
+</code></pre>
+<hr>
+<h1>Revised Step 16 — Functions</h1>
+<p>Use PostgreSQL catalog functions rather than <code>information_schema.routines</code>, which can behave differently depending on privileges and overloads.</p>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS project_function_count
+FROM pg_proc p
+JOIN pg_namespace n
+    ON n.oid = p.pronamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND p.prokind = &#39;f&#39;;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">3
+</code></pre>
+<p>List them:</p>
+<pre><code class="language-sql">SELECT
+    n.nspname AS schema_name,
+    p.proname AS function_name,
+    pg_get_function_identity_arguments(p.oid) AS arguments,
+    pg_get_function_result(p.oid) AS return_type
+FROM pg_proc p
+JOIN pg_namespace n
+    ON n.oid = p.pronamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND p.prokind = &#39;f&#39;
+ORDER BY n.nspname, p.proname;
+</code></pre>
+<p>Expected functions:</p>
+<pre><code class="language-text">msbf_ctl.deterministic_normal
+msbf_ctl.deterministic_uniform
+msbf_m1.validate_module1_contract
+</code></pre>
+<hr>
+<h1>Revised Step 17 — Views</h1>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS project_view_count
+FROM pg_class c
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND c.relkind = &#39;v&#39;;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">5
+</code></pre>
+<p>List them:</p>
+<pre><code class="language-sql">SELECT
+    n.nspname AS schema_name,
+    c.relname AS view_name
+FROM pg_class c
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND c.relkind = &#39;v&#39;
+ORDER BY n.nspname, c.relname;
+</code></pre>
+<p>Expected views:</p>
+<pre><code class="language-text">msbf_ctl.v_active_parameter_values
+msbf_m1.v_module1_application_risk_contract_v1
+msbf_m1.v_module1_feature_lineage
+msbf_m1.v_module1_latest_accepted
+msbf_m1.v_module1_run_reconciliation
+</code></pre>
+<hr>
+<h1>Revised Step 18 — Primary keys</h1>
+<p>Count primary keys only on the 70 designed tables:</p>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS designed_primary_key_count
+FROM pg_constraint con
+JOIN pg_class c
+    ON c.oid = con.conrelid
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND con.contype = &#39;p&#39;
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = c.oid
+  );
+</code></pre>
+<p>Rather than relying on a hard-coded total initially, use this to identify any designed table without a primary key:</p>
+<pre><code class="language-sql">SELECT
+    n.nspname AS table_schema,
+    c.relname AS table_name,
+    c.relkind
+FROM pg_class c
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND c.relkind IN (&#39;r&#39;, &#39;p&#39;)
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = c.oid
+  )
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pg_constraint con
+      WHERE con.conrelid = c.oid
+        AND con.contype = &#39;p&#39;
+  )
+ORDER BY n.nspname, c.relname;
+</code></pre>
+<p>Review any returned tables against the physical table catalog. Some registry or associative structures may intentionally use a unique key rather than a conventional surrogate primary key, although the design generally expects governed identifiers.</p>
+<hr>
+<h1>Revised Step 19 — Check constraints</h1>
+<p>Count only designed-table check constraints:</p>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS designed_check_constraint_count
+FROM pg_constraint con
+JOIN pg_class c
+    ON c.oid = con.conrelid
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND con.contype = &#39;c&#39;
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = c.oid
+  );
+</code></pre>
+<p>List them:</p>
+<pre><code class="language-sql">SELECT
+    n.nspname AS table_schema,
+    c.relname AS table_name,
+    con.conname AS constraint_name,
+    pg_get_constraintdef(con.oid) AS constraint_definition
+FROM pg_constraint con
+JOIN pg_class c
+    ON c.oid = con.conrelid
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND con.contype = &#39;c&#39;
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = c.oid
+  )
+ORDER BY n.nspname, c.relname, con.conname;
+</code></pre>
+<p>For this test, focus more on successful compilation and reasonableness than on a single count unless reconciling directly to the catalog.</p>
+<hr>
+<h1>Revised Step 20 — Indexes</h1>
+<p>PostgreSQL indexes on partitioned parents and child partitions can complicate raw counts. Use two separate views.</p>
+<h2>Designed parent/non-child index definitions</h2>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS designed_index_count
+FROM pg_index ix
+JOIN pg_class tbl
+    ON tbl.oid = ix.indrelid
+JOIN pg_namespace n
+    ON n.oid = tbl.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = tbl.oid
+  );
+</code></pre>
+<h2>Child-partition indexes</h2>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS child_partition_index_count
+FROM pg_index ix
+JOIN pg_class tbl
+    ON tbl.oid = ix.indrelid
+JOIN pg_namespace n
+    ON n.oid = tbl.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = tbl.oid
+  );
+</code></pre>
+<p>Do not compare the combined index count directly to the design catalog unless you separate:</p>
+<ul>
+<li>automatically created primary-key indexes;</li>
+<li>unique-constraint indexes;</li>
+<li>explicit secondary indexes;</li>
+<li>partitioned-index definitions;</li>
+<li>physical child indexes.</li>
+</ul>
+<hr>
+<h1>Revised Step 21 — Seed counts</h1>
+<p>These counts should be taken from the exact seeded tables, not inferred from catalog metadata.</p>
+<h2>Parameter definitions</h2>
+<pre><code class="language-sql">SELECT COUNT(*) AS parameter_definition_count
+FROM msbf_ctl.parameter_definition;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">155
+</code></pre>
+<h2>Parameter values</h2>
+<pre><code class="language-sql">SELECT COUNT(*) AS parameter_value_count
+FROM msbf_ctl.parameter_value;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">397
+</code></pre>
+<h2>Feature definitions</h2>
+<pre><code class="language-sql">SELECT COUNT(*) AS feature_definition_count
+FROM msbf_m1.feature_definition;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">32
+</code></pre>
+<h2>Industries</h2>
+<pre><code class="language-sql">SELECT COUNT(*) AS industry_count
+FROM msbf_ref.industry;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">8
+</code></pre>
+<hr>
+<h1>Revised Step 22 — Seed idempotence</h1>
+<p>Before rerunning the seed:</p>
+<pre><code class="language-sql">SELECT
+    (SELECT COUNT(*) FROM msbf_ctl.parameter_definition) AS parameter_definitions,
+    (SELECT COUNT(*) FROM msbf_ctl.parameter_value) AS parameter_values,
+    (SELECT COUNT(*) FROM msbf_m1.feature_definition) AS feature_definitions,
+    (SELECT COUNT(*) FROM msbf_ref.industry) AS industries;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">155 | 397 | 32 | 8
+</code></pre>
+<p>Run the seed file again, then rerun the same query.</p>
+<p>The result must remain:</p>
+<pre><code class="language-text">155 | 397 | 32 | 8
+</code></pre>
+<hr>
+<h1>Revised Step 23 — Deterministic function tests</h1>
+<p>Use the exact function names.</p>
+<h2>Uniform reproducibility</h2>
+<pre><code class="language-sql">SELECT
+    msbf_ctl.deterministic_uniform(
+        &#39;MERCHANT-000001&#39;,
+        &#39;MSBF_BASE_SEED&#39;
+    ) AS first_call,
+    msbf_ctl.deterministic_uniform(
+        &#39;MERCHANT-000001&#39;,
+        &#39;MSBF_BASE_SEED&#39;
+    ) AS second_call;
+</code></pre>
+<p>The two values must match exactly.</p>
+<h2>Uniform input sensitivity</h2>
+<pre><code class="language-sql">SELECT
+    msbf_ctl.deterministic_uniform(
+        &#39;MERCHANT-000001&#39;,
+        &#39;MSBF_BASE_SEED&#39;
+    ) AS merchant_1,
+    msbf_ctl.deterministic_uniform(
+        &#39;MERCHANT-000002&#39;,
+        &#39;MSBF_BASE_SEED&#39;
+    ) AS merchant_2;
+</code></pre>
+<p>The values should normally differ.</p>
+<h2>Normal reproducibility</h2>
+<pre><code class="language-sql">SELECT
+    msbf_ctl.deterministic_normal(
+        &#39;MERCHANT-000001&#39;,
+        &#39;MSBF_BASE_SEED&#39;
+    ) AS first_call,
+    msbf_ctl.deterministic_normal(
+        &#39;MERCHANT-000001&#39;,
+        &#39;MSBF_BASE_SEED&#39;
+    ) AS second_call;
+</code></pre>
+<p>The values must match exactly.</p>
+<hr>
+<h1>Revised Step 24 — View compilation</h1>
+<p>Run:</p>
+<pre><code class="language-sql">SELECT * FROM msbf_ctl.v_active_parameter_values LIMIT 10;
+
+SELECT * FROM msbf_m1.v_module1_application_risk_contract_v1 LIMIT 10;
+
+SELECT * FROM msbf_m1.v_module1_latest_accepted LIMIT 10;
+
+SELECT * FROM msbf_m1.v_module1_feature_lineage LIMIT 10;
+
+SELECT * FROM msbf_m1.v_module1_run_reconciliation LIMIT 10;
+</code></pre>
+<p>Expected at this point:</p>
+<ul>
+<li>The views compile.</li>
+<li>Some may return zero rows.</li>
+<li>No missing-relation, missing-column, ambiguous-reference, or casting errors occur.</li>
+</ul>
+<hr>
+<h1>Revised Step 25 — Contract-function empty-state test</h1>
+<p>First inspect the signature:</p>
+<pre><code class="language-sql">SELECT
+    n.nspname AS schema_name,
+    p.proname AS function_name,
+    pg_get_function_identity_arguments(p.oid) AS arguments,
+    pg_get_function_result(p.oid) AS return_type
+FROM pg_proc p
+JOIN pg_namespace n
+    ON n.oid = p.pronamespace
+WHERE n.nspname = &#39;msbf_m1&#39;
+  AND p.proname = &#39;validate_module1_contract&#39;;
+</code></pre>
+<p>Then call it with a nonexistent run:</p>
+<pre><code class="language-sql">SELECT *
+FROM msbf_m1.validate_module1_contract(-1);
+</code></pre>
+<p>Expected behavior:</p>
+<ul>
+<li>The function executes.</li>
+<li>It returns structured validation results.</li>
+<li><code>RUN_EXISTS</code> fails.</li>
+<li>It does not throw an unhandled SQL error.</li>
+</ul>
+<hr>
+<h1>Canonical foundation-QA summary query</h1>
+<p>You can run this as one compact block:</p>
+<pre><code class="language-sql">WITH
+designed_tables AS (
+    SELECT c.oid
+    FROM pg_class c
+    JOIN pg_namespace n
+        ON n.oid = c.relnamespace
+    WHERE n.nspname LIKE &#39;msbf_%&#39;
+      AND c.relkind IN (&#39;r&#39;, &#39;p&#39;)
+      AND NOT EXISTS (
+          SELECT 1
+          FROM pg_inherits i
+          WHERE i.inhrelid = c.oid
+      )
+),
+child_partitions AS (
+    SELECT c.oid
+    FROM pg_class c
+    JOIN pg_namespace n
+        ON n.oid = c.relnamespace
+    WHERE n.nspname LIKE &#39;msbf_%&#39;
+      AND EXISTS (
+          SELECT 1
+          FROM pg_inherits i
+          WHERE i.inhrelid = c.oid
+      )
+),
+project_views AS (
+    SELECT c.oid
+    FROM pg_class c
+    JOIN pg_namespace n
+        ON n.oid = c.relnamespace
+    WHERE n.nspname LIKE &#39;msbf_%&#39;
+      AND c.relkind = &#39;v&#39;
+)
+SELECT
+    (SELECT COUNT(*) FROM information_schema.schemata
+     WHERE schema_name LIKE &#39;msbf_%&#39;) AS schema_count,
+
+    (SELECT COUNT(*) FROM designed_tables) AS designed_table_count,
+
+    (SELECT COUNT(*) FROM child_partitions) AS child_partition_count,
+
+    (SELECT COUNT(*)
+     FROM information_schema.tables
+     WHERE table_schema LIKE &#39;msbf_%&#39;
+       AND table_type = &#39;BASE TABLE&#39;) AS all_base_table_relations,
+
+    (SELECT COUNT(*)
+     FROM pg_attribute a
+     WHERE a.attrelid IN (SELECT oid FROM designed_tables)
+       AND a.attnum &gt; 0
+       AND NOT a.attisdropped) AS designed_table_columns,
+
+    (SELECT COUNT(*)
+     FROM pg_attribute a
+     WHERE a.attrelid IN (SELECT oid FROM child_partitions)
+       AND a.attnum &gt; 0
+       AND NOT a.attisdropped) AS child_partition_columns,
+
+    (SELECT COUNT(*)
+     FROM pg_attribute a
+     WHERE a.attrelid IN (SELECT oid FROM project_views)
+       AND a.attnum &gt; 0
+       AND NOT a.attisdropped) AS view_columns,
+
+    (SELECT COUNT(*) FROM project_views) AS view_count,
+
+    (SELECT COUNT(*)
+     FROM pg_proc p
+     JOIN pg_namespace n
+         ON n.oid = p.pronamespace
+     WHERE n.nspname LIKE &#39;msbf_%&#39;
+       AND p.prokind = &#39;f&#39;) AS function_count,
+
+    (SELECT COUNT(*)
+     FROM pg_constraint con
+     WHERE con.conrelid IN (SELECT oid FROM designed_tables)
+       AND con.contype = &#39;f&#39;) AS designed_foreign_key_count;
+</code></pre>
+<p>Expected row:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th align="right">Expected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>schema_count</code></td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td><code>designed_table_count</code></td>
+<td align="right">70</td>
+</tr>
+<tr>
+<td><code>child_partition_count</code></td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td><code>all_base_table_relations</code></td>
+<td align="right">74</td>
+</tr>
+<tr>
+<td><code>designed_table_columns</code></td>
+<td align="right">1,041</td>
+</tr>
+<tr>
+<td><code>child_partition_columns</code></td>
+<td align="right">80</td>
+</tr>
+<tr>
+<td><code>view_columns</code></td>
+<td align="right">92</td>
+</tr>
+<tr>
+<td><code>view_count</code></td>
+<td align="right">5</td>
+</tr>
+<tr>
+<td><code>function_count</code></td>
+<td align="right">3</td>
+</tr>
+<tr>
+<td><code>designed_foreign_key_count</code></td>
+<td align="right">141</td>
+</tr>
+</tbody></table>
+<p>So your results are currently consistent with the intended build:</p>
+<pre><code class="language-text">74 base-table relations
+1,213 information-schema columns
+</code></pre>
+<p>Those are correct live PostgreSQL totals. For design-catalog QA, use:</p>
+<pre><code class="language-text">70 designed tables
+1,041 designed-table columns
+141 designed-table foreign keys
+</code></pre>
+</div></article><article id="m-a32c07fc-cf90-4b68-8b78-6b0d5aa0bba9" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00036 · 2026-07-23T19:30:53.552000-04:00 · active path</p><div class="bubble"><p>when I run things like: SELECT
+    n.nspname AS table_schema,
+    c.relname AS table_name,
+    con.conname AS constraint_name,
+    pg_get_constraintdef(con.oid) AS constraint_definition
+FROM pg_constraint con
+JOIN pg_class c
+    ON c.oid = con.conrelid
+JOIN pg_namespace n
+    ON n.oid = c.relnamespace
+WHERE n.nspname LIKE &#39;msbf_%&#39;
+  AND con.contype = &#39;c&#39;
+  AND NOT EXISTS (
+      SELECT 1
+      FROM pg_inherits i
+      WHERE i.inhrelid = c.oid
+  )
+ORDER BY n.nspname, c.relname, con.conname;     I see detail, but when I look at any of the tables in my schemas, they all seem to have no rows. any idea why?</p>
+</div></article><article id="m-663a78ed-29a4-473f-a98c-dded4ddd5cbe" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00037 · 2026-07-23T19:30:56.037789-04:00 · active path</p><div class="bubble"><p>That is expected for most tables at this stage—but <strong>not for the seeded reference and parameter tables</strong>.</p>
+<p>The query you ran reads PostgreSQL’s <strong>system catalog metadata</strong>:</p>
+<pre><code class="language-sql">pg_constraint
+pg_class
+pg_namespace
+</code></pre>
+<p>Those catalogs describe the database structure—tables, constraints, indexes, and relationships. They do not prove that the user tables contain business rows.</p>
+<p>The physical schema script primarily creates empty structures. Data appear only after:</p>
+<ol>
+<li>the reference/parameter seed runs successfully; and  </li>
+<li>later analytical scripts generate merchants, applications, POS history, features, risk outputs, and archives.</li>
+</ol>
+<h1>What should contain rows now</h1>
+<p>After executing and committing:</p>
+<pre><code class="language-text">01_msbf_reference_parameter_seed_v0_2.sql
+</code></pre>
+<p>these tables should contain data:</p>
+<pre><code class="language-text">msbf_ref.acceptance_gate_catalog
+msbf_ref.cashflow_archetype
+msbf_ref.feature_family
+msbf_ref.geography_region
+msbf_ref.industry
+msbf_ref.risk_component_code
+msbf_ref.source_code
+msbf_ref.verification_check_code
+
+msbf_ctl.parameter_definition
+msbf_ctl.parameter_set
+msbf_ctl.parameter_value
+msbf_ctl.contract_registry
+msbf_ctl.reason_code_catalog
+msbf_ctl.source_reference
+msbf_ctl.source_contract
+...
+
+msbf_m1.feature_definition
+</code></pre>
+<p>Most operational Module 1 tables should still be empty, including:</p>
+<pre><code class="language-text">msbf_m1.merchant_master
+msbf_m1.merchant_application
+msbf_m1.merchant_pos_daily_base
+msbf_m1.merchant_deposit_daily_base
+msbf_m1.merchant_feature_snapshot
+msbf_m1.merchant_risk_snapshot
+msbf_m1.ead_path_snapshot
+msbf_m1.module1_latest
+msbf_m1.module1_archive
+</code></pre>
+<p>Those will not populate until we build and run stages <code>M1.2–M1.18</code>.</p>
+<hr>
+<h1>Step 1 — Confirm which database and session you are using</h1>
+<p>Run:</p>
+<pre><code class="language-sql">SELECT
+    current_database() AS database_name,
+    current_user AS user_name,
+    current_schema() AS current_schema,
+    pg_backend_pid() AS session_pid;
+</code></pre>
+<p>Confirm:</p>
+<pre><code class="language-text">database_name = msbf_strategy
+</code></pre>
+<p>It is easy in DBeaver to open a new editor against the default <code>postgres</code> database rather than the intended project database.</p>
+<hr>
+<h1>Step 2 — Check whether the seed tables actually have rows</h1>
+<p>Run this exact diagnostic:</p>
+<pre><code class="language-sql">SELECT
+    &#39;msbf_ref.industry&#39; AS table_name,
+    COUNT(*) AS row_count
+FROM msbf_ref.industry
+
+UNION ALL
+
+SELECT
+    &#39;msbf_ref.feature_family&#39;,
+    COUNT(*)
+FROM msbf_ref.feature_family
+
+UNION ALL
+
+SELECT
+    &#39;msbf_ctl.parameter_definition&#39;,
+    COUNT(*)
+FROM msbf_ctl.parameter_definition
+
+UNION ALL
+
+SELECT
+    &#39;msbf_ctl.parameter_set&#39;,
+    COUNT(*)
+FROM msbf_ctl.parameter_set
+
+UNION ALL
+
+SELECT
+    &#39;msbf_ctl.parameter_value&#39;,
+    COUNT(*)
+FROM msbf_ctl.parameter_value
+
+UNION ALL
+
+SELECT
+    &#39;msbf_m1.feature_definition&#39;,
+    COUNT(*)
+FROM msbf_m1.feature_definition
+
+ORDER BY table_name;
+</code></pre>
+<p>The critical expected counts are:</p>
+<table>
+<thead>
+<tr>
+<th>Table</th>
+<th align="right">Expected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>msbf_ref.industry</code></td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td><code>msbf_ctl.parameter_definition</code></td>
+<td align="right">155</td>
+</tr>
+<tr>
+<td><code>msbf_ctl.parameter_value</code></td>
+<td align="right">397</td>
+</tr>
+<tr>
+<td><code>msbf_m1.feature_definition</code></td>
+<td align="right">32</td>
+</tr>
+</tbody></table>
+<p>If these are zero, the seed did not become committed data.</p>
+<hr>
+<h1>Most likely causes</h1>
+<h2>Cause 1 — Only the schema script was executed</h2>
+<p>The schema file:</p>
+<pre><code class="language-text">00_msbf_physical_schema_v0_2.sql
+</code></pre>
+<p>creates tables, functions, views, constraints, and indexes.</p>
+<p>It does <strong>not</strong> generate the seeded parameter and reference rows.</p>
+<p>You must separately execute:</p>
+<pre><code class="language-text">01_msbf_reference_parameter_seed_v0_2.sql
+</code></pre>
+<p>against the same <code>msbf_strategy</code> database.</p>
+<hr>
+<h2>Cause 2 — The seed ran but was not committed</h2>
+<p>Earlier, I recommended manual transaction mode. If DBeaver still shows manual commit, the inserted records may remain uncommitted.</p>
+<p>Look at the transaction control near the top of DBeaver.</p>
+<p>If a transaction is pending, click:</p>
+<pre><code class="language-text">Commit
+</code></pre>
+<p>Then refresh the tables and rerun the count query.</p>
+<p>A key clue is this:</p>
+<ul>
+<li>The same SQL editor may see uncommitted rows.</li>
+<li>Another editor or connection may see zero rows.</li>
+<li>After closing the connection without committing, DBeaver may roll the inserts back.</li>
+</ul>
+<p>You can inspect transaction state with:</p>
+<pre><code class="language-sql">SELECT
+    txid_current_if_assigned() AS current_transaction_id;
+</code></pre>
+<p>A transaction ID alone does not prove pending changes, but it can help confirm that you are working in a transactional session.</p>
+<hr>
+<h2>Cause 3 — The seed script encountered an error and the transaction was rolled back</h2>
+<p>Review DBeaver’s execution output for errors such as:</p>
+<pre><code class="language-text">duplicate key value violates unique constraint
+insert or update violates foreign key constraint
+relation does not exist
+column does not exist
+current transaction is aborted
+</code></pre>
+<p>A common PostgreSQL sequence is:</p>
+<pre><code class="language-text">Initial statement fails
+→ transaction becomes aborted
+→ subsequent inserts are ignored
+→ rollback occurs
+→ tables remain empty
+</code></pre>
+<p>If you see:</p>
+<pre><code class="language-text">current transaction is aborted, commands ignored until end of transaction block
+</code></pre>
+<p>then one earlier error caused the entire transaction to fail.</p>
+<hr>
+<h2>Cause 4 — The seed was run against another database</h2>
+<p>You may have created the schemas in <code>msbf_strategy</code> but run the seed against:</p>
+<pre><code class="language-text">postgres
+</code></pre>
+<p>or another existing project database.</p>
+<p>Check each SQL editor’s active connection independently. DBeaver allows different tabs to point to different databases.</p>
+<p>Run:</p>
+<pre><code class="language-sql">SELECT current_database();
+</code></pre>
+<p>inside the seed-script tab itself.</p>
+<hr>
+<h2>Cause 5 — DBeaver’s table viewer has not refreshed</h2>
+<p>DBeaver’s visual interface can display stale metadata or cached row-count estimates.</p>
+<p>Do not rely on the number shown beside a table or in the Properties tab.</p>
+<p>Use:</p>
+<pre><code class="language-sql">SELECT COUNT(*)
+FROM msbf_ctl.parameter_definition;
+</code></pre>
+<p>as the source of truth.</p>
+<p>Then refresh:</p>
+<ol>
+<li>Right-click the table.</li>
+<li>Select <strong>Refresh</strong>.</li>
+<li>Right-click again.</li>
+<li>Select <strong>View Data → All Rows</strong>.</li>
+</ol>
+<hr>
+<h1>Step 3 — Determine whether any project table contains data</h1>
+<p>Run:</p>
+<pre><code class="language-sql">SELECT
+    schemaname,
+    relname AS table_name,
+    n_live_tup AS estimated_live_rows
+FROM pg_stat_user_tables
+WHERE schemaname LIKE &#39;msbf_%&#39;
+ORDER BY schemaname, relname;
+</code></pre>
+<p>This uses PostgreSQL statistics and may be approximate, but it quickly shows whether any project tables have activity.</p>
+<p>For exact counts across the likely seeded tables, use the earlier <code>UNION ALL</code> query.</p>
+<hr>
+<h1>Step 4 — Verify that the seed script was executed</h1>
+<p>Check the main seed control tables directly:</p>
+<pre><code class="language-sql">SELECT *
+FROM msbf_ctl.parameter_set
+ORDER BY created_at;
+</code></pre>
+<pre><code class="language-sql">SELECT *
+FROM msbf_ctl.contract_registry
+ORDER BY created_at;
+</code></pre>
+<pre><code class="language-sql">SELECT *
+FROM msbf_ref.industry
+ORDER BY industry_code;
+</code></pre>
+<p>If all three are empty, the seed has not successfully committed.</p>
+<hr>
+<h1>Step 5 — Safely rerun the seed</h1>
+<p>Because the seed was designed to be idempotent, the safest next action is:</p>
+<ol>
+<li>Confirm the SQL editor is connected to <code>msbf_strategy</code>.</li>
+<li>Roll back any failed or abandoned transaction.</li>
+<li>Open <code>01_msbf_reference_parameter_seed_v0_2.sql</code>.</li>
+<li>Execute the <strong>entire script</strong>.</li>
+<li>Inspect the first error, if any.</li>
+<li>Commit only if execution finishes cleanly.</li>
+<li>Run the seed-count diagnostic.</li>
+</ol>
+<p>Before rerunning, execute:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>PostgreSQL may respond that there is no transaction in progress; that is harmless.</p>
+<p>Then execute the full seed.</p>
+<hr>
+<h1>Step 6 — Verify immediately after the seed</h1>
+<p>Run:</p>
+<pre><code class="language-sql">SELECT
+    (SELECT COUNT(*) FROM msbf_ref.industry)
+        AS industries,
+
+    (SELECT COUNT(*) FROM msbf_ctl.parameter_definition)
+        AS parameter_definitions,
+
+    (SELECT COUNT(*) FROM msbf_ctl.parameter_value)
+        AS parameter_values,
+
+    (SELECT COUNT(*) FROM msbf_m1.feature_definition)
+        AS feature_definitions;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">industries | parameter_definitions | parameter_values | feature_definitions
+-----------+-----------------------+------------------+--------------------
+8          | 155                   | 397              | 32
+</code></pre>
+<p>Then commit:</p>
+<pre><code class="language-sql">COMMIT;
+</code></pre>
+<p>Open a <strong>new SQL editor or connection</strong> and run the same query again. This proves the data are visible outside the original transaction.</p>
+<hr>
+<h1>Why most Module 1 tables are still empty</h1>
+<p>The current delivery establishes the <strong>physical foundation</strong>, not the analytical population.</p>
+<p>The build sequence is:</p>
+<pre><code class="language-text">Physical schema
+→ Reference and parameter seed
+→ Run/profile configuration
+→ Merchant population generation
+→ Application generation
+→ POS and deposit history
+→ Feature construction
+→ Risk translation
+→ EAD/LGD/Expected Loss
+→ Latest and archive outputs
+→ Validation and acceptance
+</code></pre>
+<p>We have currently implemented the first two layers only.</p>
+<p>So after a successful seed, the expected state is:</p>
+<table>
+<thead>
+<tr>
+<th>Object family</th>
+<th>Expected now</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Reference catalogs</td>
+<td>Populated</td>
+</tr>
+<tr>
+<td>Parameter governance</td>
+<td>Populated</td>
+</tr>
+<tr>
+<td>Feature definitions</td>
+<td>Populated</td>
+</tr>
+<tr>
+<td>Contract/governance foundations</td>
+<td>Partially populated</td>
+</tr>
+<tr>
+<td>Merchant population</td>
+<td>Empty</td>
+</tr>
+<tr>
+<td>Applications</td>
+<td>Empty</td>
+</tr>
+<tr>
+<td>Daily POS/deposit facts</td>
+<td>Empty</td>
+</tr>
+<tr>
+<td>Features and risk snapshots</td>
+<td>Empty</td>
+</tr>
+<tr>
+<td>EAD paths</td>
+<td>Empty</td>
+</tr>
+<tr>
+<td>Latest/archive outputs</td>
+<td>Empty</td>
+</tr>
+<tr>
+<td>Acceptance evidence</td>
+<td>Empty until a run exists</td>
+</tr>
+</tbody></table>
+<p>The empty operational tables are therefore not a defect. They are waiting for the analytical-stage SQL that we have not built yet.</p>
+<p>The decisive check is whether the seeded tables return <code>8 / 155 / 397 / 32</code>. If they do, your database is exactly where it should be.</p>
+</div></article><article id="m-ac8b3c10-aa6f-4e39-a00a-1ff8d644e4a3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00038 · 2026-07-23T19:53:23.239000-04:00 · active path</p><p class="note">Attachment references: msbf_postgresql_live_execution_evidence_20260723.zip</p><div class="bubble"><p>all code executed correctly and QA aligns with your values. evaluate attached evidence.</p>
+</div></article><article id="m-4d3b6189-35d7-4709-97f5-648837bac91f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00039 · 2026-07-23T19:53:54.882637-04:00 · active path</p><div class="bubble"><h2>Evidence assessment: <strong>PASS, with one documented count reconciliation</strong></h2>
+<p>I reviewed the ZIP contents. The evidence confirms that the physical PostgreSQL foundation executed successfully in the intended database.</p>
+<h3>Confirmed results</h3>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th align="right">Observed</th>
+<th align="right">Expected</th>
+<th>Assessment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Database</td>
+<td align="right"><code>msbf_strategy</code></td>
+<td align="right"><code>msbf_strategy</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>User</td>
+<td align="right"><code>postgres</code></td>
+<td align="right">Authorized build user</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>PostgreSQL version</td>
+<td align="right">17.9, 64-bit Windows</td>
+<td align="right">PostgreSQL 14+</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Project schemas</td>
+<td align="right">8</td>
+<td align="right">8</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Base-table relations</td>
+<td align="right">74</td>
+<td align="right">74</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td><code>information_schema</code> columns</td>
+<td align="right">1,213</td>
+<td align="right">1,213</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Functions</td>
+<td align="right">3</td>
+<td align="right">3</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Views</td>
+<td align="right">5</td>
+<td align="right">5</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Foreign-key rows reported</td>
+<td align="right">161</td>
+<td align="right">161 including partition children</td>
+<td>Pass with reconciliation</td>
+</tr>
+</tbody></table>
+<p>The PostgreSQL version is newer than the original PostgreSQL 15 target, but successful execution on PostgreSQL 17.9 is a positive compatibility result.</p>
+<h1>Foreign-key reconciliation</h1>
+<p>The evidence reports:</p>
+<pre><code class="language-text">161 foreign keys
+</code></pre>
+<p>That is consistent with PostgreSQL reporting foreign-key constraints associated with the four physical child partitions.</p>
+<p>The design-catalog count remains:</p>
+<pre><code class="language-text">141 foreign keys on the 70 designed parent/non-child tables
+</code></pre>
+<p>The physical database count is:</p>
+<pre><code class="language-text">141 designed-table foreign keys
++ 20 partition-child foreign keys
+= 161 catalog foreign-key rows
+</code></pre>
+<p>This is analogous to the table and column reconciliation already identified:</p>
+<pre><code class="language-text">70 designed tables
++ 4 child partitions
+= 74 base-table relations
+</code></pre>
+<p>and:</p>
+<pre><code class="language-text">1,041 designed-table columns
++ 80 child-partition columns
++ 92 view columns
+= 1,213 information-schema columns
+</code></pre>
+<p>Therefore, the attached foreign-key count is not an error.</p>
+<h2>Recommended confirming query</h2>
+<p>Run and retain this breakdown:</p>
+<pre><code class="language-sql">WITH designed_tables AS (
+    SELECT c.oid
+    FROM pg_class c
+    JOIN pg_namespace n
+        ON n.oid = c.relnamespace
+    WHERE n.nspname LIKE &#39;msbf_%&#39;
+      AND c.relkind IN (&#39;r&#39;, &#39;p&#39;)
+      AND NOT EXISTS (
+          SELECT 1
+          FROM pg_inherits i
+          WHERE i.inhrelid = c.oid
+      )
+),
+child_partitions AS (
+    SELECT c.oid
+    FROM pg_class c
+    JOIN pg_namespace n
+        ON n.oid = c.relnamespace
+    WHERE n.nspname LIKE &#39;msbf_%&#39;
+      AND EXISTS (
+          SELECT 1
+          FROM pg_inherits i
+          WHERE i.inhrelid = c.oid
+      )
+)
+SELECT
+    (
+        SELECT COUNT(*)
+        FROM pg_constraint
+        WHERE contype = &#39;f&#39;
+          AND conrelid IN (SELECT oid FROM designed_tables)
+    ) AS designed_table_foreign_keys,
+
+    (
+        SELECT COUNT(*)
+        FROM pg_constraint
+        WHERE contype = &#39;f&#39;
+          AND conrelid IN (SELECT oid FROM child_partitions)
+    ) AS child_partition_foreign_keys,
+
+    (
+        SELECT COUNT(*)
+        FROM pg_constraint con
+        JOIN pg_class c
+            ON c.oid = con.conrelid
+        JOIN pg_namespace n
+            ON n.oid = c.relnamespace
+        WHERE n.nspname LIKE &#39;msbf_%&#39;
+          AND con.contype = &#39;f&#39;
+    ) AS total_foreign_keys;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">designed_table_foreign_keys | child_partition_foreign_keys | total_foreign_keys
+----------------------------+------------------------------+-------------------
+141                         | 20                           | 161
+</code></pre>
+<h1>What the attached ZIP proves</h1>
+<p>The supplied evidence establishes that:</p>
+<ul>
+<li>the scripts were executed against the correct database;</li>
+<li>the schema objects compiled under PostgreSQL 17.9;</li>
+<li>all eight project schemas exist;</li>
+<li>all 74 physical table relations exist;</li>
+<li>all five views were created;</li>
+<li>all three functions were created;</li>
+<li>PostgreSQL sees the expected physical column total;</li>
+<li>foreign-key creation completed, including partition-related constraints.</li>
+</ul>
+<p>That is sufficient to conclude:</p>
+<blockquote>
+<p><strong>The physical PostgreSQL schema passed the primary live compilation and structural inventory gate.</strong></p>
+</blockquote>
+<h1>Evidence not present in this particular ZIP</h1>
+<p>The ZIP contains summary counts, but it does not independently document the following tests:</p>
+<ul>
+<li>70 designed-table count excluding child partitions;</li>
+<li>1,041 designed-table column count;</li>
+<li>141 designed-table foreign-key count;</li>
+<li>four partition parents and four child partitions;</li>
+<li>seed counts of <code>155 / 397 / 32 / 8</code>;</li>
+<li>second-run seed idempotence;</li>
+<li>deterministic function same-input tests;</li>
+<li>individual view query results;</li>
+<li>contract-validation function empty-state result;</li>
+<li>execution logs showing zero SQL errors;</li>
+<li>transaction commit evidence.</li>
+</ul>
+<p>You stated that all code executed correctly and that the remaining QA aligned. I have no reason to doubt that, but those results are not contained in the attached ZIP itself.</p>
+<p>For a fully audit-ready execution package, I recommend adding exports for:</p>
+<pre><code class="language-text">designed_table_count = 70
+child_partition_count = 4
+designed_table_columns = 1,041
+child_partition_columns = 80
+view_columns = 92
+designed_foreign_keys = 141
+child_partition_foreign_keys = 20
+parameter_definitions = 155
+parameter_values = 397
+feature_definitions = 32
+industries = 8
+</code></pre>
+<p>along with the deterministic-function and idempotence results.</p>
+<h2>Final disposition</h2>
+<h3>Physical schema execution gate</h3>
+<p><strong>PASS</strong></p>
+<h3>Structural inventory gate</h3>
+<p><strong>PASS</strong></p>
+<h3>PostgreSQL compatibility gate</h3>
+<p><strong>PASS — PostgreSQL 17.9</strong></p>
+<h3>Seed and functional QA evidence</h3>
+<p><strong>Reported as passed, but not fully represented in the attached ZIP</strong></p>
+<h3>Overall status</h3>
+<blockquote>
+<p><strong>G0 Physical Foundation: conditionally accepted, pending consolidation of the remaining live QA outputs into the formal evidence package.</strong></p>
+</blockquote>
+<p>There is no structural issue requiring SQL remediation. The next technical workstream can proceed, while the remaining evidence exports are assembled in parallel.</p>
+</div></article><article id="m-cd646e2f-924b-4eb8-b62b-02ba0e2c6554" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00040 · 2026-07-23T19:57:37.078000-04:00 · active path</p><div class="bubble"><p>that expected result of the additional query matches. if you also want exports for those additional fields, add a comprehensive one block copy paste query for me to add that evidence.</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

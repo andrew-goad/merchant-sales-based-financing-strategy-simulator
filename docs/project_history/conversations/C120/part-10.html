@@ -1,0 +1,704 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 4 — part 10 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 4 — part 10</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-09.html">Previous part</a><a href="part-11.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-9346b645-fb08-4ee0-bcf9-4fe495906cb7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C120-M00202 · 2026-09-09T12:41:59.032000-04:00 · active path</p><p class="note">Attachment references: Pasted text(20260909-164137).txt; isolated_55432.normalized.schema.sql; isolated_55432.schema.sql; normalized_schema.diff; SCHEMA_DIFF_SUMMARY.json; SHA256SUMS(6).txt; source_5432.normalized.schema.sql; source_5432.schema.sql</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-6f7c1bc6-f377-435b-af5d-67fb41daddf5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00203 · 2026-09-09T12:42:22.151865-04:00 · active path</p><div class="bubble"><h2>Diagnosis: benign PostgreSQL deparser difference — not schema drift</h2>
+<p>I reviewed the exact normalized schema files and the diff. <strong>The restored source is semantically equivalent to the original for the only differing object.</strong></p>
+<p>The entire 577 KB normalized schema comparison reduces to <strong>two removed lines and two added lines</strong>, all inside one view:</p>
+<pre><code class="language-text">msbf_m12r1e.v_m2_4_physical_semantics_control
+</code></pre>
+<p>[export reference: filecite | turn86file0 | L5-L18]</p>
+<p>The difference is <strong>parenthesis nesting only</strong>. For example, PostgreSQL&#39;s original stored/deparsed view contains constructions like:</p>
+<pre><code class="language-text">((((A OR B) OR C) OR D) ...)
+</code></pre>
+<p>whereas the dump/restore/deparse cycle emits:</p>
+<pre><code class="language-text">((A OR B OR C OR D ...) ...)
+</code></pre>
+<p>The predicates, operands, casts, <code>AND</code>/<code>OR</code> ordering, column names, table names, constraint names, and terminal conditions are unchanged. The second changed line has the same property. [export reference: filecite | turn86file0 | L23-L29]</p>
+<p>I additionally compared the <strong>complete differing view definition</strong> after removing only whitespace and syntactically redundant parentheses outside SQL string literals. The resulting expressions are <strong>exactly equal</strong>, character-for-character.</p>
+<p>That is strong evidence that this is a <strong>PostgreSQL dump/restore deparser canonicalization artifact</strong>, not structural drift.</p>
+<p>This conclusion is reinforced by the independent physical controls already captured:</p>
+<ul>
+<li>all source-control/business identities match exactly;</li>
+<li>the retained checkpoint registry/status/validation hashes match exactly;</li>
+<li>the G3-v2 successor schema remains absent from the checkpoint;</li>
+<li>only this schema-text fingerprint failed. [export reference: filecite | turn85file1 | L2-L10] [export reference: filecite | turn85file3 | L2-L10]</li>
+</ul>
+<p>The diagnostic hashes also reconcile to the files you supplied. [export reference: filecite | turn86file2 | L1-L6]</p>
+<h3>Important disposition</h3>
+<p>I would record the first Phase-2 result as:</p>
+<blockquote>
+<p><strong>CONTROLLED STOP — comparator false positive caused by PostgreSQL view-deparser parenthesis canonicalization after portable dump/restore.</strong></p>
+</blockquote>
+<p>We should <strong>not erase that failure or claim the original Phase 2 passed</strong>.</p>
+<p>Instead, we should add a bounded supplemental comparator that:</p>
+<ol>
+<li>preserves the original strict schema-hash result;</li>
+<li>permits canonicalization <strong>only for redundant parentheses/whitespace in parsed/deparsed view expressions</strong>;</li>
+<li>requires exact equality of the normalized semantic token stream;</li>
+<li>requires the existing source-control and checkpoint identities to remain exact;</li>
+<li>fails closed on any changed identifier, literal, operator, cast, clause, object, constraint, or other schema statement.</li>
+</ol>
+<p>That gives Audit the complete chronology: strict comparator stopped → diagnostic isolated two view lines → semantic comparator proved equivalent → qualification continued.</p>
+<p>I will <strong>not</strong> recommend globally stripping parentheses from every SQL schema line. The correction should be scoped to this demonstrated PostgreSQL view-deparser phenomenon.</p>
+<h3>One more thing before Phase 3</h3>
+<p>Do <strong>not</strong> run Phase 3 yet.</p>
+<p>The next deliverable should be a small <strong>Phase 2B comparator-correction package</strong> that runs against the preserved qualification state, produces a formal receipt documenting this exact exception, and only then releases Phase 3.</p>
+<p>Your isolated server and qualification root should remain exactly as they are. No rerestore is necessary if the supplemental comparator confirms the preserved state.</p>
+<p>The evidence currently supports continuing the qualification; it does <strong>not</strong> support discarding or restarting it.</p>
+</div></article><article id="m-b950d66f-614c-4857-b3d0-0ae6af88b2ab" class="message user"><p class="meta"><strong>Andrew / user</strong> · C120-M00204 · 2026-09-09T12:45:28.535000-04:00 · active path</p><div class="bubble"><p>Produce a small <strong>Phase 2B comparator-correction package</strong> that runs against the preserved qualification state, produces a formal receipt documenting this exact exception, and only then releases Phase 3.</p>
+<p>Your isolated server and qualification root should remain exactly as they are. No rerestore is necessary if the supplemental comparator confirms the preserved state.</p>
+<p>The evidence currently supports continuing the qualification; it does <strong>not</strong> support discarding or restarting it.</p>
+</div></article><article id="m-fe04a5e6-9728-4b60-a57f-8674feecf12e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00205 · 2026-09-09T12:46:36.723078-04:00 · active path</p><div class="bubble"><p>I’ll package this as a <strong>non-destructive Phase 2B addendum</strong>: it will preserve the original strict Phase-2 STOP, rerun only read-only comparisons against the existing 5432/55432 state, issue a superseding Phase-2 receipt only if the bounded exception proves out, and create a release marker that the Phase-3 wrapper requires. No rerestore or database mutation is included.</p>
+</div></article><article id="m-fabdcf0d-f0df-4dd4-b387-40cc03812353" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00206 · 2026-09-09T12:49:10.307302-04:00 · active path</p><div class="bubble"><p>Built the <strong>Phase 2B comparator-correction package</strong> as a bounded addendum to the preserved qualification state.</p>
+<p><strong>Download Phase 2B Comparator Correction R1</strong> (historical reference: <code>sandbox:[session]/MSBF_PUBRUN001_PHASE2B_COMPARATOR_CORRECTION_R1_20260909.zip</code>; referenced bytes not established here)<br><strong>SHA-256 sidecar</strong> (historical reference: <code>sandbox:[session]/MSBF_PUBRUN001_PHASE2B_COMPARATOR_CORRECTION_R1_20260909.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Package SHA-256:</p>
+<pre><code class="language-text">38c1b818298afae656de0ab07d68f801b8fcbd86c8cb2c0a68c753a0d04bcd09
+</code></pre>
+<p>This package does <strong>not</strong> rerestore anything. It expects the preserved qualification root and the existing isolated PostgreSQL instance on port <code>55432</code>.</p>
+<p>It preserves the original strict Phase-2 outcome as a <strong>CONTROLLED STOP</strong>, then checks the exact documented exception only:</p>
+<ul>
+<li>the strict source and isolated schema hashes must remain the two already-observed values;</li>
+<li>the original source-control identities must still match exactly;</li>
+<li>the checkpoint stable identities must still match exactly;</li>
+<li>the G3-v2 successor schema must still be absent;</li>
+<li>the full schema delta must remain exactly <strong>2 removed / 2 added lines</strong>;</li>
+<li>all changed lines must remain confined to <code>msbf_m12r1e.v_m2_4_physical_semantics_control</code>;</li>
+<li>each old/new line pair must retain an identical non-parenthesis/non-whitespace token stream;</li>
+<li>the complete target view must retain that same bounded equivalence;</li>
+<li>a fresh read-only schema capture must reproduce the same strict hashes;</li>
+<li>the actual control-view result rows must match between port 5432 and the isolated restore.</li>
+</ul>
+<p>Only if all of those pass does it write:</p>
+<pre><code class="language-text">PHASE2B_COMPARATOR_CORRECTION_RECEIPT.json
+PHASE2B_COMPARATOR_CORRECTION_RECEIPT.md
+PHASE2_RECEIPT.json
+PHASE3_RELEASE_AUTHORIZATION.json
+</code></pre>
+<p>The new <code>PHASE2_RECEIPT.json</code> is explicitly a <strong>superseding receipt based on Phase 2B</strong>; it does not falsely claim the original strict hash comparator passed.</p>
+<h2>Run Phase 2B</h2>
+<p>Extract the package, for example to:</p>
+<pre><code class="language-powershell">$P2B = &quot;D:\MSBF_PUBRUN001_PHASE2B_COMPARATOR_CORRECTION_R1_20260909&quot;
+$Q   = &quot;D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1&quot;
+</code></pre>
+<p>Then run:</p>
+<pre><code class="language-powershell">python -B &quot;$P2B\scripts\05_Phase2B_Comparator_Correction.py&quot; `
+  --qualification-root &quot;$Q&quot;
+</code></pre>
+<p>It will prompt once for the original port-5432 PostgreSQL password for read-only schema/view checks.</p>
+<p>Expected success:</p>
+<pre><code class="language-text">PHASE 2B PASS
+Original strict Phase-2 STOP preserved.
+Bounded comparator exception: PASS.
+Phase 3 release: RELEASED.
+</code></pre>
+<p>If any <code>STOP</code> occurs, preserve the qualification root and do not rerun in place.</p>
+<h2>Phase 3 is gated</h2>
+<p>After PASS, inspect:</p>
+<pre><code class="language-powershell">Get-Content &quot;$Q\evidence\PHASE3_RELEASE_AUTHORIZATION.json&quot;
+</code></pre>
+<p>Proceed only if it shows:</p>
+<pre><code class="language-text">&quot;status&quot;: &quot;RELEASED&quot;
+</code></pre>
+<p>Then use the supplied wrapper rather than calling the original Phase-3 script directly:</p>
+<pre><code class="language-powershell">$K = &quot;D:\MSBF_PUBRUN001_ROUTE_B_QUALIFICATION_R1_20260909&quot;
+
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+
+Unblock-File -LiteralPath `
+  &quot;$P2B\scripts\06_Run_Phase3_After_Release.ps1&quot;
+
+&amp; &quot;$P2B\scripts\06_Run_Phase3_After_Release.ps1&quot; `
+  -QualificationRoot &quot;$Q&quot; `
+  -QualificationKitRoot &quot;$K&quot; `
+  -RepoRoot &quot;D:\x\m&quot;
+</code></pre>
+<p>That wrapper verifies the Phase-2 and Phase-2B receipts and their hashes before invoking the existing Phase-3 script.</p>
+<p>The isolated server, restored databases, original databases, and Git repository remain untouched by Phase 2B except for read-only queries; only qualification evidence files are added.</p>
+</div></article><article id="m-43856c98-94f3-4b44-9057-7f682402fa84" class="message user"><p class="meta"><strong>Andrew / user</strong> · C120-M00207 · 2026-09-09T13:34:18.963000-04:00 · active path</p><div class="bubble"><p>PostgreSQL password for ORIGINAL source server postgres (read-only Phase 2B; not stored):</p>
+<p>PHASE 2B PASS
+Original strict Phase-2 STOP preserved.
+Bounded comparator exception: PASS.
+Phase 3 release: RELEASED.
+Phase-2B receipt: D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1\evidence\PHASE2B_COMPARATOR_CORRECTION_RECEIPT.json
+Phase-2 receipt:  D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1\evidence\PHASE2_RECEIPT.json
+Release marker:   D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1\evidence\PHASE3_RELEASE_AUTHORIZATION.json</p>
+<p>Do not rerestore. Run Phase 3 only through the supplied release-check wrapper.
+PS D:\x\m&gt; Get-Content &quot;$Q\evidence\PHASE3_RELEASE_AUTHORIZATION.json&quot;
+{
+  &quot;status&quot;: &quot;RELEASED&quot;,
+  &quot;control_id&quot;: &quot;PUB-RUN-001-PHASE3-RELEASE-R1&quot;,
+  &quot;phase2_receipt&quot;: &quot;PHASE2_RECEIPT.json&quot;,
+  &quot;phase2_receipt_sha256&quot;: &quot;a8539c786cce2b47ff614b1487ef095d262e7c0d0fe1e7482083438f7ef20d15&quot;,
+  &quot;phase2b_receipt&quot;: &quot;PHASE2B_COMPARATOR_CORRECTION_RECEIPT.json&quot;,
+  &quot;phase2b_receipt_sha256&quot;: &quot;c971fe47c9db51d39c334ebb5486788ec002e0c0d79931527c871a8b2b2bf8bc&quot;,
+  &quot;authorized_next_step&quot;: &quot;RUN_EXISTING_PHASE3_SCRIPT_AGAINST_PRESERVED_ISOLATED_RESTORED_CLUSTER_ONLY&quot;,
+  &quot;not_authorized&quot;: [
+    &quot;rerestore&quot;,
+    &quot;cold-start Route D claim&quot;,
+    &quot;write to original port-5432 databases&quot;,
+    &quot;Git mutation&quot;
+  ]
+}
+PS D:\x\m&gt; $K = &quot;D:\MSBF_PUBRUN001_ROUTE_B_QUALIFICATION_R1_20260909&quot;</p>
+<blockquote>
+<blockquote>
+<p>Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force</p>
+<p>Unblock-File -LiteralPath `
+  &quot;$P2B\scripts\06_Run_Phase3_After_Release.ps1&quot;</p>
+<p>&amp; &quot;$P2B\scripts\06_Run_Phase3_After_Release.ps1&quot; <code>  -QualificationRoot &quot;$Q&quot;</code>
+  -QualificationKitRoot &quot;$K&quot; `
+  -RepoRoot &quot;D:\x\m&quot;</p>
+</blockquote>
+</blockquote>
+<p>PHASE 3 RELEASE CHECK PASS
+Original strict Phase-2 STOP remains preserved.
+Executing the EXISTING Phase-3 script against the preserved isolated restore.</p>
+<p>PASS: D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1\evidence\07_runtime_pristine_pre.json
+PostgreSQL password for ORIGINAL source server postgres (for read-only nonmutation identity only; not stored): ********
+D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1\evidence\08_original_identity_immediate_prerun.json
+Type QUALIFY to execute M2.11/M2.12/G3-v2 ONLY on the isolated restored cluster: QUALIFY
+MSBF_R26_R3_RETAINED_FINAL_IDENTITY_CORRECTION_G3V2_RESUME starting
+R26 retained-final resume finished: PASS
+R6 source modified: False
+Retained R2 final modified: False
+Resume clone retained: msbf_r1_r26_resume_g3v2_20260909_133102
+Last stage: COMPLETE
+Results: D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1\runtime_pristine\R26_R3_RESUME\results\msbf_r1_r26_resume_20260909_133102_M2_11_M2_12_G3V2_RESULTS.zip
+SHA-256: 70e812fb9989d91b74aacebf905a6b578844c56902d9b293ffa8ec77291391b5
+C:\Python314\python.exe: can&#39;t open file &#39;D:\x\m\2591923614920\tools\runbook_checks.py&#39;: [Errno 2] No such file or directory
+Exception: D:\MSBF_PUBRUN001_ROUTE_B_QUALIFICATION_R1_20260909\scripts\03_Execute_And_Reconcile_R26.ps1:57
+Line |
+  57 |  … TEXITCODE -ne 0){throw &#39;STOP: post-run runtime source check failed.&#39;}
+     |                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | STOP: post-run runtime source check failed.</p>
+</div></article><article id="m-fcc779f9-3e41-486d-979a-5f35ef0c6467" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00208 · 2026-09-09T13:36:44.981934-04:00 · active path</p><div class="bubble"><p>Phase 3 itself <strong>did execute successfully on the isolated restored cluster</strong>; the failure happened afterward in the harness. The error path <code>D:\x\m\2591923614920\tools\runbook_checks.py</code> exposes the bug: PowerShell variable names are case-insensitive, so the script’s <code>$b</code> BSTR pointer overwrote the earlier <code>$B</code> runbook-root variable. The post-run checker then tried to resolve <code>runbook_checks.py</code> under that numeric pointer value.</p>
+<p>I’m treating this as a <strong>Phase 3 harness continuation defect</strong>, not as an R26 execution failure. We should not rerun M2.11/M2.12/G3-v2. I’ll give you a continuation package that starts exactly after the successful isolated execution, performs the missed post-run source check, accepted-reference reconciliation, original-database nonmutation check, repository nonmutation check, then stops the isolated cluster and writes the formal Phase-3 receipt.</p>
+</div></article><article id="m-75e256aa-3031-4a6c-80ec-3234f277886a" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00209 · 2026-09-09T13:38:51.697920-04:00 · active path</p><div class="bubble"><p>The R26 execution itself succeeded. The failure was in the <strong>post-run harness</strong>, not in M2.11/M2.12/G3-v2.</p>
+<p>The defect is deterministic: the original Phase-3 script used <code>$B</code> for the runbook root and later <code>$b</code> for the SecureString BSTR pointer. PowerShell variable names are case-insensitive, so <code>$b</code> overwrote <code>$B</code>. That is why the subsequent path became:</p>
+<pre><code class="language-text">D:\x\m\2591923614920\tools\runbook_checks.py
+</code></pre>
+<p>instead of the actual runbook path.</p>
+<p>I built a continuation package that <strong>does not rerun R26 and does not rerestore anything</strong>.</p>
+<p>Download Phase 3 Harness Continuation R1 (historical reference: <code>sandbox:[session]/MSBF_PUBRUN001_PHASE3_HARNESS_CONTINUATION_R1_20260909.zip</code>; referenced bytes not established here)<br>SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_PUBRUN001_PHASE3_HARNESS_CONTINUATION_R1_20260909.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Package SHA-256:</p>
+<pre><code class="language-text">f9e11545815ae442b68ed5c6909967f981623fd3e745a4082cef7a2dbb8b049a
+</code></pre>
+<p>The continuation starts exactly after the already-successful isolated execution. It performs only the missing controls: post-run runtime/source pristine verification, accepted-reference reconciliation of the generated result, final read-only nonmutation check of the original port-5432 databases, Git nonmutation check, isolated-cluster shutdown, and formal Phase-3 receipts.</p>
+<p>Your accepted R26 technical baseline is still the retained-final resume result under <code>IA-D-R15-M12-001</code>, with 70/70 G3-v2 controls and no further runtime cycle required by that earlier audit; this current exercise is specifically qualification of the portable checkpoint/replay route. [export reference: filecite | turn83file0 | L20-L32] [export reference: filecite | turn83file0 | L43-L63]</p>
+<p>Extract the new package, then run:</p>
+<pre><code class="language-powershell">$Q   = &quot;D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1&quot;
+$K   = &quot;D:\MSBF_PUBRUN001_ROUTE_B_QUALIFICATION_R1_20260909&quot;
+$P3C = &quot;D:\MSBF_PUBRUN001_PHASE3_HARNESS_CONTINUATION_R1_20260909&quot;
+
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+
+Unblock-File -LiteralPath `
+  &quot;$P3C\scripts\07_Continue_Phase3_After_Harness_Defect.ps1&quot;
+
+&amp; &quot;$P3C\scripts\07_Continue_Phase3_After_Harness_Defect.ps1&quot; `
+  -QualificationRoot &quot;$Q&quot; `
+  -QualificationKitRoot &quot;$K&quot; `
+  -RepoRoot &quot;D:\x\m&quot;
+</code></pre>
+<p>It will ask once for the original PostgreSQL password for the final <strong>read-only</strong> nonmutation check.</p>
+<p>Expected success:</p>
+<pre><code class="language-text">PHASE 3 CONTINUATION PASS
+R26 execution was NOT rerun.
+Accepted-reference reconciliation: PASS
+Original source/checkpoint nonmutation: PASS
+Git nonmutation: PASS
+Isolated cluster stopped and retained.
+</code></pre>
+<p>If it stops, preserve the qualification root and send me the output. Do <strong>not</strong> rerun Phase 3 itself.</p>
+<p>One important point for the audit chronology: the generated result you already produced has its own new timestamp/hash, which is expected for a fresh qualification run. What matters next is whether the accepted-reference reconciler confirms the locked business outputs and canonical identities. The runbook explicitly distinguishes this checkpoint replay route from an empty-database build. [export reference: filecite | turn83file6 | L289-L295]</p>
+</div></article><article id="m-33fc327f-f31b-487a-a6ef-67456435c558" class="message user"><p class="meta"><strong>Andrew / user</strong> · C120-M00210 · 2026-09-09T13:42:11.491000-04:00 · active path</p><div class="bubble"><p>PASS: D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1\evidence\09_runtime_pristine_post.json
+PASS: D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1\evidence\10_result_reconciliation.json
+PostgreSQL password for ORIGINAL source server postgres (final read-only nonmutation identity; not stored): ********
+D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1\evidence\11_original_identity_postrun.json
+waiting for server to shut down....... done
+server stopped</p>
+<p>PHASE 3 CONTINUATION PASS
+R26 execution was NOT rerun.
+Generated result: D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1\runtime_pristine\R26_R3_RESUME\results\msbf_r1_r26_resume_20260909_133102_M2_11_M2_12_G3V2_RESULTS.zip
+SHA-256: 70e812fb9989d91b74aacebf905a6b578844c56902d9b293ffa8ec77291391b5
+Accepted-reference reconciliation: PASS
+Original source/checkpoint nonmutation: PASS
+Git nonmutation: PASS
+Isolated cluster stopped and retained.
+Phase-3 receipt: D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1\evidence\PHASE3_RECEIPT.json</p>
+</div></article><article id="m-ba7a3e00-bffb-4bda-b4d1-f2198ed4b51b" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00211 · 2026-09-09T13:42:20.880898-04:00 · active path</p><div class="bubble"><p>Excellent. <strong>Phase 3 is now closed PASS.</strong></p>
+<p>The qualification has now demonstrated the thing we needed for Independent Audit: the accepted R26 retained-final logic can be re-executed from the preserved checkpoint route on an isolated restored PostgreSQL 17 environment, with the resulting output reconciling to the accepted reference, while leaving the original source/checkpoint databases and Git repository unchanged.</p>
+<p>The important evidence now established is:</p>
+<ul>
+<li>the restored portable checkpoint route was accepted through the bounded Phase 2B comparator correction;</li>
+<li>the original strict Phase-2 STOP remains preserved rather than rewritten;</li>
+<li>R26 execution ran once on the isolated cluster and completed PASS;</li>
+<li>the generated result was <code>msbf_r1_r26_resume_20260909_133102_M2_11_M2_12_G3V2_RESULTS.zip</code>, SHA-256 <code>70e812fb9989d91b74aacebf905a6b578844c56902d9b293ffa8ec77291391b5</code>;</li>
+<li>post-run runtime/pristine verification passed;</li>
+<li>accepted-reference reconciliation passed;</li>
+<li>original source/checkpoint nonmutation passed;</li>
+<li>Git nonmutation passed;</li>
+<li>the isolated cluster was shut down and retained.</li>
+</ul>
+<p>This materially closes the open <strong>checkpoint-based <code>PUB-RUN-001</code> route</strong>. It still does <strong>not</strong> claim a G0→G3-v2 empty-database cold start; the qualified statement is narrower and stronger because it is true: <strong>portable checkpoint restore + retained-final M2.11/M2.12/G3-v2 replay is independently reproducible in an isolated Windows/PostgreSQL environment.</strong></p>
+<h3>What I need next</h3>
+<p>Do <strong>not</strong> delete anything from:</p>
+<pre><code class="language-text">D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1
+</code></pre>
+<p>The large backup carriers, isolated data directory, runtime, generated result, and evidence directory should remain intact until final Audit disposition and release closure.</p>
+<p>The next step should be to <strong>seal Phase 4 evidence</strong> using the existing qualification package’s <code>04_Seal_Qualification_Evidence.ps1</code>. That will give us the bounded, portable evidence ZIP we can incorporate into the final integrated Independent Audit submission.</p>
+<p>Run:</p>
+<pre><code class="language-powershell">$Q = &quot;D:\MSBF_PUBRUN001_ROUTE_B_QUAL_20260909_R1&quot;
+$K = &quot;D:\MSBF_PUBRUN001_ROUTE_B_QUALIFICATION_R1_20260909&quot;
+
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+Unblock-File -LiteralPath &quot;$K\scripts\04_Seal_Qualification_Evidence.ps1&quot;
+
+&amp; &quot;$K\scripts\04_Seal_Qualification_Evidence.ps1&quot; `
+  -QualificationRoot &quot;$Q&quot;
+</code></pre>
+<p>Expected output should identify:</p>
+<pre><code class="language-text">MSBF_PUBRUN001_ROUTE_B_QUALIFICATION_EVIDENCE_R1.zip
+MSBF_PUBRUN001_ROUTE_B_QUALIFICATION_EVIDENCE_R1.zip.sha256
+</code></pre>
+<p>Once it completes, upload those two files here.</p>
+<p>After that, I can build the <strong>actual final Independent Audit submission package</strong>, incorporating:</p>
+<ul>
+<li>the pre-audit integrated repository candidate,</li>
+<li>R26 authority and change control,</li>
+<li>Power BI final publication authority,</li>
+<li>cohort accepted public edition,</li>
+<li>approved visual package,</li>
+<li>project history pre-audit chronology,</li>
+<li>the sealed <code>PUB-RUN-001</code> qualification evidence,</li>
+<li>the exact open/closed gate matrix,</li>
+<li>the bounded supersession/publication decision request.</li>
+</ul>
+<p>Then we can put the complete package in front of Independent Audit for its final determination.</p>
+</div></article><article id="m-0fbf88ae-6df3-47bb-a5be-655b5e0af221" class="message user"><p class="meta"><strong>Andrew / user</strong> · C120-M00212 · 2026-09-09T13:43:35.065000-04:00 · active path</p><p class="note">Attachment references: MSBF_PUBRUN001_ROUTE_B_QUALIFICATION_EVIDENCE_R1.zip</p><div class="bubble"><p>[No text body in export; see attachment/non-text note above.]</p>
+</div></article><article id="m-606c696d-f525-4fbc-87a2-d425f2e62c94" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00213 · 2026-09-09T13:52:56.443446-04:00 · active path</p><div class="bubble"><p>We are now at the <strong>final Independent Audit submission boundary</strong>.</p>
+<p>I inspected the sealed Route-B qualification evidence and incorporated it into the publication state rather than treating it as a side exercise. The final candidate now records the complete controlled chronology: strict Phase-2 STOP, bounded Phase-2B comparator correction, successful isolated R26 execution, post-execution PowerShell harness correction without rerunning R26, 90/90 accepted-reference reconciliation, original-database nonmutation, Git nonmutation, and isolated-cluster shutdown. Route B is presented as Windows-qualified; Route D remains explicitly unqualified.</p>
+<h3>Final Independent Audit submission set</h3>
+<p>Attach <strong>these three files together</strong> to the Independent Audit chat:</p>
+<ol>
+<li><p><strong>Final Independent Audit Control R1</strong> (historical reference: <code>sandbox:[session]/MSBF_FINAL_INDEPENDENT_AUDIT_CONTROL_R1_20260909.zip</code>; referenced bytes not established here)<br>SHA-256: <code>b118216253e30fc4838d14e9a341580610abef8e92d3c9c90b2fb6ab39b5ed78</code><br>Sidecar (historical reference: <code>sandbox:[session]/MSBF_FINAL_INDEPENDENT_AUDIT_CONTROL_R1_20260909.zip.sha256</code>; referenced bytes not established here)</p>
+</li>
+<li><p><strong>Final Integrated Publication Candidate R1</strong> (historical reference: <code>sandbox:[session]/MSBF_FINAL_INTEGRATED_PUBLICATION_CANDIDATE_R1_20260909_DELIVERY.zip</code>; referenced bytes not established here)<br>SHA-256: <code>fd23eac99db5f240e49e2c54e950dca053bfe354b75ebfebeb6dfcd2f2813a35</code><br>Sidecar (historical reference: <code>sandbox:[session]/MSBF_FINAL_INTEGRATED_PUBLICATION_CANDIDATE_R1_20260909_DELIVERY.zip.sha256</code>; referenced bytes not established here)</p>
+</li>
+<li><p><strong>Pre-Audit Source / Control Carrier R1</strong> (historical reference: <code>sandbox:[session]/MSBF_FINAL_INTEGRATION_PREAUDIT_R1_20260909.zip</code>; referenced bytes not established here)<br>SHA-256: <code>d7fd220dbfb1ef724d4470fdd42fd621196adc0e7e7a492457580ec42b007eb8</code><br>Sidecar (historical reference: <code>sandbox:[session]/MSBF_FINAL_INTEGRATION_PREAUDIT_R1_20260909.zip.sha256</code>; referenced bytes not established here)</p>
+</li>
+</ol>
+<p>You do <strong>not</strong> need to separately attach the 6.6 MB Route-B qualification evidence ZIP; it is nested and hash-bound inside the final Audit control carrier.</p>
+<h3>What changed from the earlier reference candidate</h3>
+<p>The new final candidate is not merely the earlier <code>8011c6...</code> reference candidate renamed.</p>
+<p>It now synchronizes the repository&#39;s current-release surfaces to the completed qualification state, adds the public-safe Route-B qualification summary, adds the Part 4 pre-audit continuation/history record, updates authority/gate metadata, and records the exact final pre-audit boundary. Accepted R26, Power BI, cohort and visual bytes were not reopened merely to make those documentation changes.</p>
+<p>The key public statement is now deliberately precise:</p>
+<blockquote>
+<p><strong>Route B:</strong> Windows-qualified portable checkpoint restore + isolated M2.11/M2.12/G3-v2 replay.<br><strong>Route D:</strong> empty-database G0→G3-v2 build is not qualified and is not claimed.</p>
+</blockquote>
+<h3>The Audit control package is ready to paste directly</h3>
+<p>Inside the first ZIP is:</p>
+<pre><code class="language-text">audit/
+  00_COPY_PASTE_FINAL_AUDIT_PROMPT.md
+  01_FINAL_AUDIT_DECISION_REQUEST.md
+  02_FINAL_AUDIT_GATE_MATRIX.csv
+</code></pre>
+<p>The prompt asks Independent Audit for the full determination we actually need—not another intermediate opinion:</p>
+<ul>
+<li><code>ACCEPT</code>, <code>ACCEPT_WITH_OBSERVATIONS</code>, or <code>HOLD</code>;</li>
+<li>explicit authorization or rejection of v2.0.0 → v2.1-family public supersession;</li>
+<li>publication authority tied to the exact candidate/release-asset identities;</li>
+<li>adjudication of the Route-B reproducibility claim while preserving the Route-D limitation;</li>
+<li>confirmation whether the recommended stable tag <strong><code>module-2-g3-v2.1.0</code></strong> is acceptable rather than inferring a tag from the PBIX <code>rc2</code> filename;</li>
+<li>authorization for the <strong>bounded post-decision history-only append/freeze</strong>.</li>
+</ul>
+<p>That last point is important. It resolves the circular history problem correctly: Independent Audit cannot already be in the history before it makes its decision. If Audit accepts the package, we are asking it to authorize us to append <strong>that exact Audit interaction and decision</strong>, rebuild the history indexes/manifests/current-release metadata, and proceed without reopening the technical audit provided no technical/Power BI/cohort/visual bytes change.</p>
+<h3>Where we stand</h3>
+<p>We have now done the work that needed to occur <strong>before</strong> the final Independent Audit determination. I would not perform another R26 execution, PBIX cycle, database restore, visual revision, or Git mutation at this point unless Audit identifies a concrete defect.</p>
+<p>Your next action is therefore to open the Independent Audit chat, attach those <strong>three files</strong>, and paste <code>00_COPY_PASTE_FINAL_AUDIT_PROMPT.md</code>.</p>
+<p>When Audit returns its decision, bring the complete response/package back here. Then we will do exactly what you proposed: <strong>finalize the Audit decision into the program record, finalize this Part 4 + Audit chat history, freeze the post-audit publication tree, and prepare the controlled PowerShell Git publication sequence.</strong></p>
+</div></article><article id="m-a1f86888-6de5-4c25-be98-261994ca5b14" class="message user"><p class="meta"><strong>Andrew / user</strong> · C120-M00214 · 2026-09-09T14:42:23.413000-04:00 · active path</p><p class="note">Attachment references: MSBF_IA_FINAL_INTEGRATION_PUBLICATION_AUDIT_R18_20260909(1).zip; 01_FINAL_INTEGRATION_RELEASE_AUDIT_REPORT(1).md; 02_MACHINE_READABLE_DECISION(1).json; 03_FOCUSED_PUBLIC_PROJECTION_CORRECTION_AUTHORIZATION(1).md; 04_HISTORY_APPEND_AND_PUBLICATION_GATE_PROTOCOL(1).md; 05_PRIVATE_R22_EXCLUSION_REGISTER(1).csv; 07_INDEPENDENT_CONTROL_RESULTS(1).csv; MSBF_IA_FINAL_INTEGRATION_PUBLICATION_AUDIT_R18_20260909_ZIP_VALIDATION_REPORT(1).md</p><div class="bubble"><p>Worked for 33m 20s</p>
+<p>Final combined MSBF integration / publication audit</p>
+<p>Decision ID: IA-D-R18-INT-001
+Governing operating model: IA-GOV-20260822-001
+Overall disposition: HOLD — public Git-tree cleanup only</p>
+<p>R26, the accepted Power BI release candidate, Cohort R3 PATCH1, the frozen visual family, and the Route-B qualification do not require another technical cycle. The hold concerns what is included in the proposed public repository, not the analytical results.</p>
+<p>The exact staged tree contains 11 R22 Desktop evidence files previously designated private. The repository’s existing release validator also identifies two session-local paths and one broken relocated documentation link. These issues can be resolved together in one bounded packaging correction.</p>
+<p>Recalibration determination</p>
+<p>Question	Determination</p>
+<p>Immediate gate	Publication and supersession readiness of the exact integrated candidate
+Accepted R26 or Power BI work reopened?	No
+Material blocker	Explicitly private Desktop evidence included in the public Git-tree projection
+Minimum remedy	Exclude the private files; correct localized public metadata/link defects; regenerate affected manifests
+Another database execution, Desktop refresh, cohort calculation, or visual rebuild?	Not required
+Next audit scope	Focused packaging closure—not another technical audit</p>
+<p>Component decisions</p>
+<p>Component	Independent disposition</p>
+<p>Three outer carriers and their physical manifests/checksums	PASS
+R26 technical locks and version-separated source projection	PASS — prior acceptance preserved
+Power BI R3 support package, PBIX, and DataModel	PASS — R17 acceptance preserved
+Cohort R3 PATCH1 editorial/publication successor	PASS_WITH_OBSERVATIONS
+Visual Publication Candidate R1 family	PASS_WITH_OBSERVATIONS
+Public predecessor technical-byte preservation	PASS
+PUB-RUN-001 Route-B qualification	PASS_WITH_OBSERVATIONS
+Route D empty-database G0→G3-v2 build	NOT_QUALIFIED
+Public/private boundary of the combined Git tree	HOLD
+Exact combined prepublication candidate	HOLD
+Actual publication or public supersession	NOT AUTHORIZED THROUGH THIS DECISION</p>
+<ol>
+<li>The publication blocker</li>
+</ol>
+<p>INT-PUB-F-001 — private R22 evidence included in the public projection</p>
+<p>The final integrated tree contains 11 files totaling 1,081,911 bytes beneath:</p>
+<p>successor_candidates/m2-g3-v2.1.0-rc2/power_bi/evidence/r22/</p>
+<p>These are the Desktop environment record, pre/post Desktop validations, source/working diff, owner attestation and evidence manifest, and five P05/P06/refresh/reopen captures.</p>
+<p>The prior republication authority expressly required exclusion of private R22 Desktop evidence and stated: “Do not publish private Desktop evidence.” Placing those files in a historical candidate directory does not change that classification. </p>
+<p>The material consequence is straightforward: publishing the current Git tree would distribute evidence whose publication was expressly withheld. I am not alleging credential compromise, real-customer exposure, or an actual external disclosure.</p>
+<p>Importantly, these files are not part of the accepted public v2.0.0 predecessor. They arrived through the subsequently added R23 overlay. Excluding them from the new public projection therefore does not rewrite an existing public release or alter accepted Module 1/2 technical history.</p>
+<p>Minimum correction</p>
+<p>Omit those eleven files from the public derivative, retain their originals unchanged in private audit storage, and update the affected public-projection and root manifests.</p>
+<p>The exact exclusion register identifies every path, size, and SHA-256. No source, model, report, cohort, or visual redesign is required.</p>
+<p>Related packaging housekeeping</p>
+<p>The repository’s own tools/validate_public_release.py returned FAIL for:</p>
+<p>Item	Required treatment</p>
+<p>runbook/validation/POWER_BI_COMPONENT_INTAKE.json	Remove/redact only the session-local extraction-directory field in a labeled public derivative.
+runbook/validation/RUNTIME_COMPONENT_INTAKE.json	Same treatment; preserve the original receipt privately.
+runbook/source_references/S09_REPRODUCIBILITY_AND_EXECUTION.md	Correct the relocated relative link to the existing Campaign README.</p>
+<p>The current final-candidate summary also reports 2,774 manifest entries while the physical CSV/JSON manifests and inventory correctly contain 2,775. Regenerate that current summary from the corrected final bytes.</p>
+<p>These are minor public-packaging defects to address in the same pass. They are not separate reasons to restart technical assurance. The exact validator output is retained in the audit package.</p>
+<ol start="2">
+<li>Physical submission verification</li>
+</ol>
+<p>All three carriers passed full ZIP CRC/readability, path safety, duplicate and case-fold checks, clean extraction, extracted-byte comparison, and manifest/checksum reconciliation.</p>
+<p>Carrier	Bytes	ZIP entries	Manifest rows</p>
+<p>Independent Audit Control R1	6,941,831	35	33
+Integrated Candidate Delivery R1	273,373,772	2,779	2,775
+Integration Preaudit R1	220,793,463	74	71</p>
+<p>Exact SHA-256 identities:</p>
+<p>Independent Audit Control R1
+b118216253e30fc4838d14e9a341580610abef8e92d3c9c90b2fb6ab39b5ed78</p>
+<p>Integrated Candidate Delivery R1
+fd23eac99db5f240e49e2c54e950dca053bfe354b75ebfebeb6dfcd2f2813a35</p>
+<p>Integration Preaudit R1
+d7fd220dbfb1ef724d4470fdd42fd621196adc0e7e7a492457580ec42b007eb8</p>
+<p>The delivery and preaudit identities match the values in your request. The control-carrier identity is independently computed; no unsupplied external sidecar comparison is implied.</p>
+<p>Proposed release assets</p>
+<p>All four proposed release-asset ZIPs match their exact registered bytes and SHA-256 values:</p>
+<p>Release asset	SHA-256</p>
+<p>R26 retained-final runtime	b17d0292180adf2bf49725be63b6c12f297d4ff64e0eba52c648045884497746
+Power BI publication-support R3	1fe42707eabfb53512729581ded0dc2d1addf7ca4f6e4d4de594f3f3ea37551a
+Visual Publication Candidate R1	c2122d0c47cd1bd604dd372bb4aa662a61be86af0578c23ed768629cccd855b5
+Cohort R3 Editorial PATCH1	aadcb403b662fc5e53280fd92357e53db4f4c9bcad6b1111ba286d61f9f2bcc3</p>
+<p>Those four asset ZIPs should remain unchanged during the repository cleanup.</p>
+<ol start="3">
+<li>Accepted authority and historical preservation</li>
+</ol>
+<p>R26 remains the accepted technical successor under IA-D-R15-M12-001. Its prior decision expressly separated technical acceptance from subsequent integration and public supersession; this review respects that distinction. </p>
+<p>R23 at 58b4dbda229d7176431cb09eecd1e3e3ec1feeee is retained only as the pre-R26 integration predecessor.</p>
+<p>Against the owner-supplied public-base Git-tree capture at:</p>
+<p>46fb1f9198475678edc9cabdeefd2f91a59e49c2</p>
+<p>I independently recomputed the Git blob identities for all 1,934 predecessor files:</p>
+<p>Unchanged                              1,920
+Changed root navigation/metadata           14
+Missing                                    0
+Changed Module_0/Module_1/Module_2 files     0</p>
+<p>The current source projections, change-control records, and navigation distinguish accepted R26 content from historical candidate material.</p>
+<p>The staged delivery does not contain .git, and this audit did not query live remote refs. Accordingly, historical-tag preservation must also be checked immediately before any later authorized push. Do not repoint an old tag to make it agree with the current main-branch HEAD.</p>
+<ol start="4">
+<li>Power BI, cohort, and visual-family decisions</li>
+</ol>
+<p>Power BI — accepted bytes preserved</p>
+<p>The current Power BI public projection is 53/53 files byte-identical to the accepted R3 package.</p>
+<p>PBIX bytes
+27,635,305</p>
+<p>PBIX SHA-256
+ca46e8551860836a0cf4ff9239c42fcf8df02f1705596b9f8ca1bd047b5294e4</p>
+<p>Embedded DataModel SHA-256
+24396d02c0fbcb782cc9918e842886711146b8ff9455c8822d2aeaf009b96061</p>
+<p>These are the exact identities accepted by R17. </p>
+<p>Direct PBIX inspection confirms four visible P01–P04 pages, hidden P02-DIAG, 96 visual containers, and no current P05/P06 pages. The previously corrected predecessor-fact references do not reappear.</p>
+<p>No Power BI refresh, screenshot cycle, or QA rerun is required.</p>
+<p>Cohort R3 PATCH1 — accepted with observations</p>
+<p>This audit accepts PATCH1 as a bounded editorial/publication successor. That acceptance is not attributed to R17.</p>
+<p>The central matched-scenario calculation independently reproduces from the physical accepted decision population:</p>
+<p>Application-scenario rows                  1,500
+Complete Baseline/Recession Energy pairs     750
+Changed decision outcomes                   236
+Unchanged decision outcomes                 514
+Changed proportion, rounded                31.5%
+Reported nonzero transition cells matched     19</p>
+<p>The four documented editorial pages—2, 3, 14, and 31—were reviewed with their patch records. The exact patched PPTX/PDF and public projections reconcile.</p>
+<p>One limitation remains explicit: the complete original unpatched R3 carrier was not supplied in this set. Therefore, the reported 49-page pixel nonregression is retained as source-owner evidence, not represented as an independently repeated comparison. This does not warrant another cohort cycle.</p>
+<p>Visual Publication Candidate R1 — accepted with observations</p>
+<p>All 83 projected files match the frozen public family. The corrected posters, pitch, teaching material, architecture, and patched cohort edition are the retained versions.</p>
+<p>The rendering/claim review covered 27 selected PDF pages: all pitch, architecture, and poster pages, plus targeted teaching and changed cohort pages. This was a proportionate sample supported by full asset-identity reconciliation—not an assertion of exhaustive platform or screen-reader certification.</p>
+<p>The private editing masters and standalone font files are absent from this current visual-publication projection. The separate historical R22 evidence problem remains confined to the Git-tree packaging described above.</p>
+<ol start="5">
+<li>PUB-RUN-001 Route-B qualification</li>
+</ol>
+<p>Disposition: PASS_WITH_OBSERVATIONS for the exact stated route.</p>
+<p>The fresh qualification result independently matches:</p>
+<p>70e812fb9989d91b74aacebf905a6b578844c56902d9b293ffa8ec77291391b5</p>
+<p>I reran the file-only accepted-reference reconciler against that physical result:</p>
+<p>Checks        90
+PASS          90
+FAIL           0</p>
+<p>This is an independent reconciliation of submitted execution outputs—not a claim that I reran PostgreSQL.</p>
+<p>Chronology accepted</p>
+<p>The preserved evidence supports the read-only Windows preflight, hash-locked portable checkpoint preparation, and isolated PostgreSQL 17 restore/execution on 127.0.0.1:55432.</p>
+<p>The original strict Phase-2 schema comparator stop remains correctly preserved. Independent source comparison confirms that the bounded Phase-2B difference is confined to redundant parenthesis/deparse behavior in:</p>
+<p>msbf_m12r1e.v_m2_4_physical_semantics_control</p>
+<p>Bytes outside that view are identical, and the retained expression terms and control results agree. This does not authorize a general rule that arbitrary SQL parentheses can be ignored.</p>
+<p>The post-execution $B/$b harness collision is also preserved. The inspected continuation consumes the existing result and completes reconciliation, nonmutation checks, and shutdown; it contains no executable invocation of resume_r26.py. Repeating the successful database execution to fix that harness problem would be unnecessary.</p>
+<p>Original source/checkpoint identity records compare equal before and after. Git nonmutation, isolated-cluster shutdown, and data retention are supported by the submitted scripts and terminal receipts.</p>
+<p>Exact reproducibility claim</p>
+<p>The supported statement is:</p>
+<blockquote>
+<p>Route B was qualified as portable checkpoint restore plus isolated retained-final M2.11/M2.12/G3-v2 replay, with 90/90 accepted-reference checks passing.</p>
+</blockquote>
+<p>The original backup dump bytes remain privately retained by the owner and were not supplied here for independent rehashing or restore.</p>
+<p>Consequently, this does not establish a checkpoint-free public rebuild or an empty-database G0→G3-v2 build.</p>
+<p>Route D remains NOT_QUALIFIED.</p>
+<ol start="6">
+<li>Requested release and history decisions</li>
+</ol>
+<p>Requested determination	Decision</p>
+<p>May public Module 2/G3 v2.0.0 now be superseded?	Not yet. The corrected public projection requires focused acceptance.
+Is module-2-g3-v2.1.0 an acceptable stable release identity?	Yes, as the naming choice. No tag is created or authorized for creation under this hold.
+Should the accepted PBIX be renamed or resaved to remove rc2?	No. Preserve its accepted filename and bytes.
+Is the bounded post-decision history procedure acceptable?	Yes. The procedure is authorized without creating a circular pre-decision requirement.
+Does a conforming history-only append require another full technical audit?	No.
+Are commit/tag/push/release or hosted-download checks complete?	No. None was performed by this audit.</p>
+<p>The proposed stable name is also consistent with the prior distinction between technical payload identity and an administrative stable-release label. </p>
+<p>History treatment</p>
+<p>The deciding interaction could not already exist in the preaudit history. Its absence is not a defect.</p>
+<p>You may append this actual audit event truthfully as a HOLD. After focused packaging acceptance, append the actual final accepting decision once and freeze the sanitized public history.</p>
+<p>The authorized history-only procedure permits new history, indexes, manifests, and current-release metadata. It requires a deterministic allowlisted diff and unchanged protected technical, Power BI, cohort, and visual hashes. It does not permit relabeling this hold as acceptance or inventing future publication/hosted-verification events.</p>
+<ol start="7">
+<li>Pre-push conditions versus post-publication closure</li>
+</ol>
+<p>Before push: exclude the private R22 files; resolve the localized release-validator issues; regenerate affected public-projection manifests and current counters; pass the focused packaging check; append the actual final acceptance; validate the history-only diff; and freshly verify the intended Git base and unchanged historical tag identities.</p>
+<p>After separately authorized publication: download the actual hosted assets, verify their filenames, sizes, and hashes, perform Windows-native clean extraction, check anonymous links/navigation, and append the genuine hosted-verification record.</p>
+<p>Local Linux extraction and the Windows Route-B qualification are not substitutes for verification of the actual hosted downloads.</p>
+<p>Exact permitted next action</p>
+<blockquote>
+<p>Prepare one public-sanitized derivative of candidate SHA-256 fd23eac99db5f240e49e2c54e950dca053bfe354b75ebfebeb6dfcd2f2813a35. Exclude the eleven listed private R22 evidence files; correct the two session-local intake fields, relocated documentation link, and stale current counts; regenerate affected projection/root manifests; preserve all four release ZIPs and every accepted technical, Power BI, cohort, and visual payload byte-for-byte; and return the revised candidate hash, allowlisted diff, and deterministic validation for focused packaging closure. Do not rerun technical work or publish through this correction action.</p>
+</blockquote>
+<p>Campaign Scale and Module 3 receive no runtime or database authority through this decision. Production, causal, CECL, audited-realized-profitability, autonomous, regulatory-approval, real-merchant, and real-funds claims remain prohibited.</p>
+<p>Independent Audit return</p>
+<p>Package
+MSBF_IA_FINAL_INTEGRATION_PUBLICATION_AUDIT_R18_20260909.zip</p>
+<p>Bytes
+55,141</p>
+<p>SHA-256
+e5b785f1ba67db28ff1f24ddbe8c8059807f32d601c5068b4b950d0c3331a482</p>
+<p>Audit controls
+47 — 33 PASS / 12 PASS_WITH_OBSERVATIONS / 2 FAIL</p>
+<p>Audit-package CRC / paths / manifests / clean extraction
+PASS</p>
+<p>The two failed control rows are the private-evidence exclusion and the existing publication validator. Only the private-evidence finding is classified blocking; the validator housekeeping belongs in the same packaging correction.</p>
+<p>Deliverable	File</p>
+<p>Complete audit package	Download ZIP
+SHA-256 sidecar	Download sidecar
+Formal audit report	Read report
+Machine-readable decision	Open JSON
+Exact packaging-correction authority	Read authorization
+Eleven-file exclusion register	Open CSV
+History and publication-gate protocol	Read protocol
+Independent control results	Open CSV
+Audit-package validation	Read validation</p>
+<p>The substantive release work is accepted. The remaining gate is a narrowly defined public-packaging correction—not another MSBF development cycle.</p>
+<p>Also, as we go to publish, I want to ensure our readme&#39;s etc are top notch. This needs to be highly marketable and easy to follow and represent me/the work well to hiring managers and users.</p>
+</div></article><article id="m-67694ae0-1db4-465c-aac0-112d558115f2" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00215 · 2026-09-09T14:43:10.087693-04:00 · active path</p><div class="bubble"><p>I’ll execute the bounded R18 packaging cleanup and verify protected hashes, manifests, links, and exclusions. I’ll separately assess README/navigation improvements for stronger hiring-manager appeal without exceeding audit authority.</p>
+</div></article><article id="m-e90a0b37-dc6b-4557-8dc0-572e2a9755b0" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00216 · 2026-09-09T14:55:15.066598-04:00 · active path</p><div class="bubble"><p><strong>Yes—the final README and navigation should receive a deliberate editorial review before publication. Passing the packaging audit is necessary, but it is not the same as presenting the work persuasively to a hiring manager.</strong></p>
+<p>R18 leaves us in a strong substantive position: the technical successor, Power BI, cohort, visual family, and scoped Route-B qualification retain their passing dispositions. The exact repository remains <strong>HOLD for public-packaging correction</strong>, with no further technical or visual cycle required. [export reference: filecite | turn87file0 | L8-L14]</p>
+<p>The private R22 files should have been excluded when I incorporated the R23 overlay. That was my integration error. Their historical folder location did not change their private classification. Audit’s correction is specific and appropriate. [export reference: filecite | turn87file0 | L94-L110]</p>
+<h2>Two distinct tasks—not another development cycle</h2>
+<h3>1. Close the exact R18 packaging findings</h3>
+<p>The correction must derive from the held candidate ending in <code>…2813a35</code>, preserve that original, and make only the authorized changes:</p>
+<table>
+<thead>
+<tr>
+<th>Required correction</th>
+<th>Preservation boundary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Exclude the <strong>11 registered R22 files</strong> from the public derivative.</td>
+<td>Retain their exact originals privately; do not delete historical evidence.</td>
+</tr>
+<tr>
+<td>Redact the extraction-directory field in the <strong>two runbook intake receipts</strong>.</td>
+<td>Preserve component hashes, dates, results, and extraction-method limitations; label the public derivatives.</td>
+</tr>
+<tr>
+<td>Correct the relocated <strong>Campaign README link</strong>.</td>
+<td>Change the reference location—not Campaign scope or authority.</td>
+</tr>
+<tr>
+<td>Rebuild affected manifests, checksums, and current counts.</td>
+<td>Generate counts from the final file population; preserve superseded records as provenance.</td>
+</tr>
+</tbody></table>
+<p>The return must include the corrected candidate, exact allowlisted diff, explicit exclusion check, protected-file equality results, and a passing result from the repository’s <strong>existing</strong> <code>tools/validate_public_release.py</code>. A generic integration-validator PASS is insufficient. All four registered release ZIPs remain unchanged. [export reference: filecite | turn87file2 | L9-L25]</p>
+<h3>2. Prepare the public-facing editorial finish separately</h3>
+<p><strong>I would not quietly include a broad README rewrite in that narrowly authorized sanitation delta.</strong> Instead, the editorial changes should be separately identified and reviewed as documentation/navigation changes. That keeps the packaging closure straightforward and prevents a marketing improvement from becoming an unexplained change to Audit’s candidate.</p>
+<p>R18 permits a later controlled history/current-navigation update, subject to an explicit allowed-path diff and unchanged protected payloads. A substantive editorial refresh should be identified clearly within that process—not disguised as a typo correction. [export reference: filecite | turn87file3 | L12-L20]</p>
+<h2>What the README should accomplish</h2>
+<p>The first screen should answer three questions:</p>
+<p><strong>What business problem does this solve? What makes the approach distinctive? Where should I look next?</strong></p>
+<p>It should not require a reader to understand R23, R26, canonical roots, or release-control identifiers before discovering the value of the work. Those details belong in accessible supporting sections, not in place of the opening proposition.</p>
+<p>A proposed opening direction—not yet a replacement for the physical README—is:</p>
+<blockquote>
+<h1>Merchant Sales-Based Financing Strategy Simulator</h1>
+<h2>Understand the merchant. Structure the opportunity. Govern the decision.</h2>
+<p><strong>Built by Andrew R. Goad</strong></p>
+<p>A merchant’s sales volume can signal opportunity. It does not, by itself, establish financing capacity—or permission to fund.</p>
+<p>This portfolio connects merchant operating evidence, cash-flow capacity, counteroffer strategy, decision authority, synthetic account operations, and portfolio analytics. It makes the reasoning inspectable: what the business brings, which conditions constrain the request, what alternatives remain supportable, and what happens after an authorized path is funded.</p>
+<p><strong>The goal is more than producing an answer. It is making that answer explainable, traceable, and useful to the people responsible for acting on it.</strong></p>
+<p><em>Deterministic synthetic demonstration · Non-production · No real funds</em></p>
+</blockquote>
+<p>This wording would need its final claim-to-source check against the actual entry documents. It introduces no client adoption, realized-return, production, or regulatory-assurance claim.</p>
+<h3>Preserve the richness—but give it a reading order</h3>
+<p>Your earlier direction remains right: <strong>a substantial visual landing page, not a lightweight README with one image and a folder list.</strong> Both Module 1 and Module 2 deserve visible treatment.</p>
+<table>
+<thead>
+<tr>
+<th>README section</th>
+<th>Job for the reader</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Business proposition and enterprise architecture</strong></td>
+<td>Understand the merchant-finance problem and the breadth of the system.</td>
+</tr>
+<tr>
+<td><strong>Executive visual story</strong></td>
+<td>See a small selection of the approved pitch pages that demonstrate the mechanism, judgment, evidence, and direction.</td>
+</tr>
+<tr>
+<td><strong>Selected evidence</strong></td>
+<td>Understand a few meaningful KPIs with their denominators and scope—not a wall of control counts.</td>
+</tr>
+<tr>
+<td><strong>Module 1 and Module 2 lineage</strong></td>
+<td>See both the evidence foundation and the decision/operating system, with full-size links.</td>
+</tr>
+<tr>
+<td><strong>Choose a deeper path</strong></td>
+<td>Find the pitch, masterclass, cohort report, Power BI, source, or validation material without navigating through historical candidates.</td>
+</tr>
+<tr>
+<td><strong>Reproducibility, release status, and roadmap</strong></td>
+<td>Understand what is reproducible, what requires retained checkpoints, what is current, and what remains future work.</td>
+</tr>
+<tr>
+<td><strong>Author and professional connection</strong></td>
+<td>Connect the demonstrated work to you, with restrained attribution and the approved professional contact route.</td>
+</tr>
+</tbody></table>
+<p>The root README should provide the narrative. The artifact map should provide the detailed navigation. Governance and reproducibility documents should provide the evidence and operating boundaries. <strong>Those documents should complement one another rather than repeat the same long release explanation.</strong></p>
+<p>For the hiring-manager path, the sequence should make your contribution apparent naturally:</p>
+<blockquote>
+<p><strong>Business judgment → system design → executable implementation → analytical evidence → clear explanation.</strong></p>
+</blockquote>
+<p>That is the package’s differentiator. We should demonstrate it through the approved artifacts rather than repeatedly describe the work as “enterprise-grade” or “sophisticated.”</p>
+<h2>What I would check before calling that editorial work finished</h2>
+<p>The review needs to cover the <strong>actual current files</strong>, not just proposed copy: opening hierarchy, correct images, both lineage exhibits, descriptive links, audience routes, conflicting historical status prose, mobile reading order, and the distinction between browsing evidence and executing a supported route.</p>
+<p>In particular, the reproducibility wording must retain Audit’s exact limitation: Route B was qualified using portable checkpoints and isolated M2.11/M2.12/G3-v2 replay; the checkpoint backups remain privately retained, and a checkpoint-free public rebuild or empty-database Route D is <strong>not</strong> established. That qualification should be easy to find without dominating the introduction. [export reference: filecite | turn87file0 | L60-L86]</p>
+<h2>Execution status in this turn</h2>
+<p><strong>I have read the R18 decision, correction authority, history protocol, and exact exclusion register. I have not yet produced the sanitized candidate or a verified README revision.</strong></p>
+<p>The file-execution environment is currently timing out, including attempts to open and hash the uploaded archives. Consequently, I cannot honestly report a rebuilt ZIP, protected-byte comparison, or validator PASS from this turn. The archive also does not expose readable contents through the file-reading tool, so I have not substituted an older README and called it the current one.</p>
+<p><strong>No candidate files, databases, or Git state were changed. No additional PowerShell or PostgreSQL commands are needed from you now.</strong> The next deliverables remain the R18-compliant corrected candidate and a separately reviewable README/navigation editorial package; final accepting Audit and history closure follow those actual, verified changes.</p>
+</div></article><article id="m-e24b1d64-4ad7-470d-b0f4-18382821bb82" class="message user"><p class="meta"><strong>Andrew / user</strong> · C120-M00217 · 2026-09-09T15:00:03.568000-04:00 · active path</p><div class="bubble"><p>Produce the R18-compliant corrected candidate.</p>
+</div></article><article id="m-99865deb-8cc6-44fe-9bb9-ab458ca8865e" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00218 · 2026-09-09T15:00:44.976473-04:00 · active path</p><div class="bubble"><p>I’ll derive the sanitized candidate from R18’s exact reviewed baseline, limiting changes to authorized exclusions and packaging corrections, with allowlisted diff and validation evidence.</p>
+</div></article><article id="m-548c9969-2287-4560-8c56-50d1ae71c05f" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00219 · 2026-09-09T15:03:55.533904-04:00 · active path</p><div class="bubble"><p>I’ll also rerun the repository’s existing publication validator; README editorial work and the final history append remain outside this bounded correction.</p>
+</div></article><article id="m-bf0092b9-a88a-42ec-a107-615c3c218173" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00220 · 2026-09-09T15:12:02.635358-04:00 · active path</p><div class="bubble"><p><strong>I have not produced the corrected candidate.</strong> The execution service is still failing: both Python and shell commands—including a simple shell probe—returned <code>TransportTimeoutError</code>. I therefore could not open, modify, rebuild, or validate the ZIP.</p>
+<p>The correction scope is fully established. I retrieved the exact eleven-file exclusion register and R18’s authority; there is no missing decision or clarification needed from you. The authorized work remains the eleven exclusions, two receipt-field redactions, one relocated-link repair, and regeneration of affected manifests and current counts. [export reference: filecite | turn88file0 | L10-L21] [export reference: filecite | turn88file1 | L39-L55]</p>
+<p><strong>No build or mutation completed in this attempt. There is no new candidate hash or publication-validator PASS to report, and the original R1 remains on HOLD.</strong></p>
+<p>A fresh execution session is the practical next attempt. Start a new chat with the <strong>held R1 candidate ZIP and the R18 audit-return ZIP</strong>, and paste the following bounded instruction; this does not require restarting the broader project:</p>
+<pre><code class="language-text">R18 PACKAGING CORRECTION — EXECUTE, NOT REPLAN
+
+Produce the corrected candidate under IA-INT-R18-PACKAGING-001.
+
+Inputs:
+1. MSBF_FINAL_INTEGRATED_PUBLICATION_CANDIDATE_R1_20260909_DELIVERY.zip
+   SHA-256:
+   fd23eac99db5f240e49e2c54e950dca053bfe354b75ebfebeb6dfcd2f2813a35
+
+2. MSBF_IA_FINAL_INTEGRATION_PUBLICATION_AUDIT_R18_20260909.zip
+   The uploaded filename may include (1).
+   SHA-256:
+   e5b785f1ba67db28ff1f24ddbe8c8059807f32d601c5068b4b950d0c3331a482
+
+First confirm that file execution works. The previous session failed
+with TransportTimeoutError and produced NO corrected candidate.
+
+Read the audit&#39;s exact correction authorization and exclusion register.
+Preserve both input ZIPs unchanged.
+
+Make only the authorized public-projection changes:
+- Exclude exactly the 11 registered private R22 evidence files.
+- Retain those originals and superseded metadata privately.
+- Redact only details.extraction.directory in the two specified
+  runbook intake receipts; label the public derivatives.
+- Correct the specified relocated Campaign README link.
+- Regenerate affected projection/runbook/root manifests, checksums,
+  and current validation counts from the actual final population.
+- Add the authorized exclusion/provenance record.
+
+Preserve every other technical, Power BI, cohort, visual, and historical
+payload byte. No broad README rewrite, history finalization, database
+execution, Desktop refresh, Git mutation, or publication.
+
+Run the existing tools/validate_public_release.py without weakening it.
+Also verify exact exclusions, absence of relocated/embedded copies of
+the excluded payloads, protected-byte equality, the allowlisted diff,
+manifest/checksum reconciliation, ZIP CRC/path safety, and clean extraction.
+
+Deliver the corrected candidate ZIP and SHA-256, plus a separate focused
+packaging-closure evidence package and copy/paste audit-return prompt.
+Report only checks actually performed. Do not claim final Independent
+Audit acceptance or publication authority.
+</code></pre>
+<p><strong>No further PowerShell, PostgreSQL, or Git action is needed on your machine for this correction.</strong></p>
+</div></article><article id="m-f0c64651-370d-4d41-b39d-d2225bdd4b5b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C120-M00221 · 2026-09-09T15:22:34.750000-04:00 · active path</p><div class="bubble"><p>I named the new chat &#39;MSBF — Module 1/2 Strategy Correction, Remediation &amp; Republishing Part 5&#39; and gave it that first task. We will use that return to close audit then I&#39;ll have you help drive the the new chat to publication conclusion.</p>
+</div></article><article id="m-18113e06-7e89-4b2b-8b4d-ead550b30eb9" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00222 · 2026-09-09T15:22:38.180468-04:00 · active path</p><div class="bubble"><p>That is the right division of work.</p>
+<p><strong>Part 5 now owns execution of the R18 packaging correction.</strong> This Part 4 chat should preserve the chronology and authority that led to it rather than competing with Part 5 to mutate the candidate.</p>
+<p>When Part 5 returns, the critical items I want brought back into this workstream are the <strong>corrected candidate ZIP and hash</strong>, the focused packaging-closure evidence package, its allowlisted baseline→corrected diff, the <code>validate_public_release.py</code> PASS evidence, exact 11-file exclusion proof, protected-payload equality results, and the copy/paste Independent Audit closure request. R18 specifically requires those items and no new technical run. [export reference: filecite | turn89file2 | L21-L29]</p>
+<p>Then our sequence should be:</p>
+<p><strong>Part 5 corrected candidate → focused Independent Audit closure → final accepting decision → finalize Part 4 + applicable Part 5 + Audit history → final README/navigation/marketing-quality editorial pass under the authorized documentation boundary → deterministic final freeze → fresh Git/tag preflight → I direct your PowerShell Git publication → hosted download/hash/Windows-native extraction/link verification → genuine release-closure record.</strong></p>
+<p>Two points will matter particularly after Audit accepts the corrected candidate.</p>
+<p>First, <strong>history closure must record both R18 decisions truthfully</strong>: this current <code>IA-D-R18-INT-001</code> HOLD and the later focused accepting decision. The protocol expressly requires that sequence and prohibits rewriting this HOLD into acceptance. [export reference: filecite | turn89file3 | L6-L18]</p>
+<p>Second, I agree with your earlier concern about the public-facing presentation. Before the final push, we should perform a serious <strong>README/navigation editorial review</strong>. The repository should not merely be technically correct; it should make an excellent first impression on a hiring manager, technical leader, or interested user. That means a strong business proposition, clear reading paths, carefully selected visuals/KPIs, concise explanation of what you built and why it matters, both Module 1 and Module 2 visibly represented, easy access to the pitch/masterclass/cohort/Power BI/architecture/source evidence, and technical governance available without overwhelming the opening experience.</p>
+<p>We will do that without weakening the claim boundaries Audit has preserved—for example, Route B is the qualified portable-checkpoint replay route, while Route D remains unqualified. [export reference: filecite | turn89file0 | L60-L86]</p>
+<p>And we will <strong>not publish from Part 5 merely because the sanitation succeeds</strong>. R18 explicitly withholds supersession until focused corrected-candidate acceptance. [export reference: filecite | turn89file0 | L114-L132]</p>
+<p>So for now, continue with <strong>Part 5</strong>. Once it produces its R18 correction return, bring that result to Independent Audit for focused closure. After the accepting Audit decision exists, bring the complete decision back here. At that point we can close this history correctly and I can help you direct Part 5 through the final repository presentation and PowerShell/Git publication sequence.</p>
+</div></article><article id="m-aedf723f-312d-41e0-9fd2-977ad693dde3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C120-M00223 · 2026-09-09T16:41:35.093000-04:00 · active path</p><div class="bubble"><p>Confirming that we have not overlooked the run procedure documentation. That is included, correct?</p>
+</div></article><article id="m-e52996b0-b0f0-4016-af1e-05422fb8c65d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00224 · 2026-09-09T16:41:44.574944-04:00 · active path</p><div class="bubble"><p>Yes. <strong>The run procedure / reproducibility documentation is included and has not been overlooked.</strong></p>
+<p>It exists in two complementary layers:</p>
+<ul>
+<li>The detailed control-party execution runbook for <code>PUB-RUN-001</code>, including Route A and the conditional Route B checkpoint replay procedure. The runbook explicitly distinguishes offline reproduction from checkpoint replay and makes clear that Route B is not an empty-database build. [export reference: filecite | turn83file6 | L251-L287] [export reference: filecite | turn83file6 | L289-L295]</li>
+<li>The integrated repository’s current reproducibility/publication documentation, which now reflects the actual qualification result: <strong>Route B qualified as portable checkpoint restore + isolated retained-final M2.11/M2.12/G3-v2 replay</strong>, while <strong>Route D remains not qualified</strong>. Independent Audit expressly accepted that scope and said no further technical cycle is required. [export reference: filecite | turn89file0 | L58-L86]</li>
+</ul>
+<p>The R18 packaging correction does <strong>not</strong> remove the run procedure. Its only runbook-related changes are narrowly authorized public-packaging edits: redact the two session-local extraction-directory values, fix one relocated Campaign README link, and regenerate affected manifests/checksums. The underlying run procedure and its technical meaning are to remain intact. [export reference: filecite | turn89file2 | L13-L18]</p>
+<p>For publication, I want to make sure we preserve all three reader needs:</p>
+<ol>
+<li><strong>A concise README/reproducibility summary</strong> explaining what can be reproduced and what prerequisites exist.</li>
+<li><strong>The detailed run procedure</strong> for a technical/control-party user.</li>
+<li><strong>The exact qualification evidence</strong> showing that Route B was actually exercised on Windows/PostgreSQL and reconciled 90/90, rather than being documentation-only. [export reference: filecite | turn89file0 | L60-L84]</li>
+</ol>
+<p>One important nuance: the public repo should explain that the <strong>checkpoint backups themselves are privately retained prerequisites</strong>, not pretend that a public user can perform a clean G0→G3-v2 build from nothing. Audit specifically retained that limitation. [export reference: filecite | turn89file0 | L64-L86]</p>
+<p>So yes: <strong>run procedure documentation is part of the publication scope and remains a required component of the final repository.</strong> When we do the final README/navigation pass, I’ll make sure it is easy to find rather than buried in governance material.</p>
+</div></article><article id="m-7a36f5fc-d842-4124-93fe-2bd49244d46f" class="message user"><p class="meta"><strong>Andrew / user</strong> · C120-M00225 · 2026-09-09T16:43:14.679000-04:00 · active path</p><div class="bubble"><p>What do you mean a user can not perform a run from scratch?</p>
+</div></article><article id="m-3c32599c-06aa-4691-9681-0c4334f9dde8" class="message assistant"><p class="meta"><strong>Assistant</strong> · C120-M00226 · 2026-09-09T16:43:26.646511-04:00 · active path</p><div class="bubble"><p>I mean <strong>the currently qualified public run path is not a true clean-room build from zero</strong>.</p>
+<p>The procedure we have actually demonstrated and that Independent Audit accepted is <strong>Route B</strong>: start from retained checkpoint databases, restore them into an isolated PostgreSQL 17 environment, then rerun the retained-final M2.11/M2.12/G3-v2 portion and reconcile the result 90/90. That is why Audit describes the supported claim as “portable checkpoint restore plus isolated retained-final M2.11/M2.12/G3-v2 replay.” [export reference: filecite | turn89file0 | L58-L86]</p>
+<p>A <strong>from-scratch run</strong>, in the strict sense, would mean a new user could take only the public repository and public inputs, start with an empty PostgreSQL instance, execute Module 1 and Module 2 end-to-end, rebuild all intermediate stages, then arrive at the same accepted R26/G3-v2 outputs without relying on retained private checkpoints. That route is what our documentation calls <strong>Route D</strong>, and Audit explicitly says it remains <strong>NOT_QUALIFIED</strong>. [export reference: filecite | turn89file0 | L84-L86]</p>
+<p>So the distinction is:</p>
+<ul>
+<li><strong>What is qualified now:</strong> restore the retained checkpoints, then independently rerun the accepted downstream retained-final logic in isolation.</li>
+<li><strong>What is not yet qualified:</strong> rebuild the entire stack from an empty database using only public materials.</li>
+</ul>
+<p>That does <strong>not</strong> mean the project is non-reproducible. It means the reproducibility statement has to be precise about the starting state. The runbook itself already makes that distinction between the offline/replay route and the conditional checkpoint-replay route. [export reference: filecite | turn83file6 | L285-L295]</p>
+<p>And importantly, this is not necessarily a problem for the portfolio. Many governed analytical systems use controlled checkpoints for reproducibility. The risk would be claiming “anyone can rebuild the whole system from scratch from GitHub today” when we have not actually qualified that path.</p>
+<p>If your publication goal is for a technical reviewer to be able to do a <strong>true public clean-start run</strong>, then that is a separate enhancement we could design later. It would require packaging every necessary upstream input and executable stage, then qualifying a full empty-database G0→G3-v2 build under controlled conditions.</p>
+</div></article><article id="m-786f7cd0-e809-4b85-a67d-ac0a7dd8a291" class="message user"><p class="meta"><strong>Andrew / user</strong> · C120-M00227 · 2026-09-09T16:45:32.130000-04:00 · active path</p><div class="bubble"><p>I&#39;m saying a user should be able to build a new campaign of their own and know how to do that. Not necessarily reproduce my campaign but build whatever campaigns they wish. Is that not possible?</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

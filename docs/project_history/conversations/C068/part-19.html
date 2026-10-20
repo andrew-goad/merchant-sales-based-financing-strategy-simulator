@@ -1,0 +1,1434 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Merchant POS Lending Simulator — part 19 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>Merchant POS Lending Simulator — part 19</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-18.html">Previous part</a><a href="part-20.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-a674338b-788b-4d82-b101-f92bcfaef469" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00259 · 2026-07-26T08:51:51.531547-04:00 · active path</p><div class="bubble"><p>You are correct on both points.</p>
+<h2>Why my query failed</h2>
+<p><code>msbf_ctl.run_evidence</code> does <strong>not</strong> contain columns named:</p>
+<pre><code class="language-sql">observed_value
+threshold_value
+</code></pre>
+<p>Those exist only in the temporary validation table <code>_m1_9_validation</code>.</p>
+<p>Script 63 persists the temporary <code>observed_value</code> into:</p>
+<pre><code class="language-sql">metric_value_text
+</code></pre>
+<p>The actual persistent insert is:</p>
+<pre><code class="language-sql">INSERT INTO msbf_ctl.run_evidence
+(
+    run_id,
+    evidence_code,
+    segment_key,
+    metric_name,
+    metric_value_text,
+    unit_code,
+    status,
+    interpretation
+)
+</code></pre>
+<p>I gave you the wrong persistent column names.</p>
+<h2>Correct query to recover the persisted validation results</h2>
+<pre><code class="language-sql">SELECT
+    evidence_code,
+    metric_name,
+    metric_value_text AS observed_value,
+    unit_code,
+    status,
+    interpretation
+FROM msbf_ctl.run_evidence
+WHERE run_id = (
+    SELECT run_id
+    FROM msbf_ctl.run_registry
+    WHERE run_code = &#39;M1_V0_2_BASELINE_BUILD&#39;
+      AND run_version = 1
+)
+  AND evidence_code LIKE &#39;M1_9_POS_%&#39;
+ORDER BY evidence_code;
+</code></pre>
+<p>To see failures only:</p>
+<pre><code class="language-sql">SELECT
+    evidence_code,
+    metric_name,
+    metric_value_text AS observed_value,
+    unit_code,
+    status,
+    interpretation
+FROM msbf_ctl.run_evidence
+WHERE run_id = (
+    SELECT run_id
+    FROM msbf_ctl.run_registry
+    WHERE run_code = &#39;M1_V0_2_BASELINE_BUILD&#39;
+      AND run_version = 1
+)
+  AND evidence_code LIKE &#39;M1_9_POS_%&#39;
+  AND status &lt;&gt; &#39;PASS&#39;
+ORDER BY evidence_code;
+</code></pre>
+<p>And a compact validation summary:</p>
+<pre><code class="language-sql">SELECT
+    COUNT(*) AS total_checks,
+    COUNT(*) FILTER (WHERE status = &#39;PASS&#39;) AS pass_checks,
+    COUNT(*) FILTER (WHERE status = &#39;FAIL&#39;) AS fail_checks
+FROM msbf_ctl.run_evidence
+WHERE run_id = (
+    SELECT run_id
+    FROM msbf_ctl.run_registry
+    WHERE run_code = &#39;M1_V0_2_BASELINE_BUILD&#39;
+      AND run_version = 1
+)
+  AND evidence_code LIKE &#39;M1_9_POS_%&#39;;
+</code></pre>
+<p>Expected:</p>
+<pre><code class="language-text">total_checks = 66
+pass_checks  = 66
+fail_checks  = 0
+</code></pre>
+<p><code>threshold_value</code> was <strong>not persisted</strong> to <code>run_evidence</code>, so it cannot be recovered directly from that table. The observed result, status, metric name, and interpretation were preserved.</p>
+<h1>Correcting program 63 for filterable results</h1>
+<p>I agree that the current design is undesirable for an interactive validation report.</p>
+<p>The problem is:</p>
+<pre><code class="language-sql">CREATE TEMP TABLE _m1_9_validation
+ON COMMIT DROP
+</code></pre>
+<p>Then the script:</p>
+<pre><code class="language-sql">SELECT ...
+FROM _m1_9_validation;
+
+COMMIT;
+</code></pre>
+<p>DBeaver initially displays the returned rows, but after commit PostgreSQL drops the source table. When DBeaver applies a grid filter, it reissues a query against that source and fails.</p>
+<h2>Recommended correction</h2>
+<p>Use a session-scoped temporary table that survives commit:</p>
+<pre><code class="language-sql">DROP TABLE IF EXISTS _m1_9_validation;
+
+CREATE TEMP TABLE _m1_9_validation
+ON COMMIT PRESERVE ROWS
+(
+    evidence_code   text PRIMARY KEY,
+    metric_name     text NOT NULL,
+    observed_value  text,
+    threshold_value text,
+    status          text NOT NULL,
+    interpretation  text
+);
+</code></pre>
+<p><code>ON COMMIT PRESERVE ROWS</code> is also PostgreSQL’s default, so this would work:</p>
+<pre><code class="language-sql">CREATE TEMP TABLE _m1_9_validation
+(
+    ...
+);
+</code></pre>
+<p>Then retain the final query:</p>
+<pre><code class="language-sql">SELECT
+    evidence_code,
+    metric_name,
+    observed_value,
+    threshold_value,
+    status,
+    interpretation
+FROM _m1_9_validation
+ORDER BY evidence_code;
+</code></pre>
+<p>The table will remain available:</p>
+<ul>
+<li>after the script commits;</li>
+<li>while the same DBeaver database session remains open;</li>
+<li>for sorting and filtering in the result grid;</li>
+<li>until the session ends or the table is explicitly dropped.</li>
+</ul>
+<p>The opening:</p>
+<pre><code class="language-sql">DROP TABLE IF EXISTS _m1_9_validation;
+</code></pre>
+<p>ensures that rerunning the validation in the same session does not fail because the temporary table already exists.</p>
+<h2>More durable design</h2>
+<p>For maximum reliability, the final post-commit result should come from the persistent evidence table rather than the temp table. But that requires preserving <code>threshold_value</code> persistently.</p>
+<p>The clean long-term design would be to add a threshold field to <code>msbf_ctl.run_evidence</code>, such as:</p>
+<pre><code class="language-sql">threshold_value_text text
+</code></pre>
+<p>Then program 63 could:</p>
+<ol>
+<li>create and populate its temporary validation table;</li>
+<li>persist all six reporting fields;</li>
+<li>commit;</li>
+<li>run the final display query against <code>msbf_ctl.run_evidence</code>.</li>
+</ol>
+<p>That would remain filterable even after reconnecting to PostgreSQL.</p>
+<p>However, adding a column to the enterprise evidence table is broader than necessary for resolving M1.9. For the current module, the appropriate low-impact correction is:</p>
+<blockquote>
+<p>Change <code>_m1_9_validation</code> from <code>ON COMMIT DROP</code> to <code>ON COMMIT PRESERVE ROWS</code>, and explicitly drop it at the beginning of program 63.</p>
+</blockquote>
+<h2>Current execution status</h2>
+<p>The execution log shows program 63 committed its 66 evidence records and run-status update successfully. Do not rerun it solely because the temporary result disappeared.</p>
+<p>Run the corrected persistent query above. If it returns:</p>
+<pre><code class="language-text">66 total
+66 PASS
+0 FAIL
+</code></pre>
+<p>and this returns <code>M1_9_VALIDATED</code>:</p>
+<pre><code class="language-sql">SELECT run_status
+FROM msbf_ctl.run_registry
+WHERE run_code = &#39;M1_V0_2_BASELINE_BUILD&#39;
+  AND run_version = 1;
+</code></pre>
+<p>continue with program 64.</p>
+</div></article><article id="m-a658cc4c-aae8-433d-9ec6-34e67f20062a" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00260 · 2026-07-26T09:00:48.813000-04:00 · active path</p><p class="note">Attachment references: 63_msbf_m1_9_asof_cashflow_feature_validation_v0_2R4_results_20260726.csv; 60E_msbf_m1_9_failed_validation_filter_syntax_recovery_check_v0_2R4_results_20260726.csv</p><div class="bubble"><p>there is a failed test in 63_msbf_m1_9_asof_cashflow_feature_validation_v0_2R4: M1_9_POS_38_ANNUALIZED_SALES_IDENTITY. When you deliver the hotfix, ensure that we are using a session-scoped temporary table that survives commit for the output results.</p>
+</div></article><article id="m-42af09ed-fc10-4e94-b5fb-d8b01af5fd18" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00261 · 2026-07-26T09:20:38.757768-04:00 · active path</p><div class="bubble"><h2>Diagnosis</h2>
+<p><code>M1_9_POS_38_ANNUALIZED_SALES_IDENTITY</code> is a genuine generation-logic defect, and the validation correctly identified it.</p>
+<p>M1.9 persisted:</p>
+<pre><code class="language-text">avg_daily_eligible_sales_90d = round(unrounded 90-day average, 2)
+</code></pre>
+<p>but calculated:</p>
+<pre><code class="language-text">annualized_eligible_sales
+=
+round(unrounded 90-day average × 365, 2)
+</code></pre>
+<p>Program 63 then tested the visible, persisted identity:</p>
+<pre><code class="language-text">annualized_eligible_sales
+=
+round(avg_daily_eligible_sales_90d × 365, 2)
+</code></pre>
+<p>Because one side used the unrounded average and the other used the persisted two-decimal average, <strong>856 snapshots</strong> differed by more than the permitted tolerance.</p>
+<p>The governed definition is now:</p>
+<pre><code class="language-text">Annualized Eligible Sales
+=
+round(
+    Persisted Avg Daily Eligible Sales — 90 Day
+    × Governed Annualization Days,
+    2
+)
+</code></pre>
+<p>If the 90-day average is unavailable, annualized sales also remains unavailable.</p>
+<p>This is not being addressed by weakening the validation. The persisted wide and long-form features, their row hashes, and all three M1.9 set hashes must be corrected.</p>
+<h1>M1.9 v0.2R5 hotfix</h1>
+<p>Download the complete M1.9 v0.2R5 Annualized-Sales Identity Hotfix (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_Annualized_Sales_Identity_Hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download the ZIP SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_Annualized_Sales_Identity_Hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+107d41fc5ca4d6a04a854a8326f979aab3365e368e05a0168e02c78cd6d5c6af
+</code></pre>
+<p>Canonical long-form copy:</p>
+<p>Download the canonical R5 hotfix package (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m1_9_v0_2R5_annualized_sales_identity_hotfix.zip</code>; referenced bytes not established here)</p>
+<p>The archive contains 21 files and passed CRC, complete-extraction, and file-hash reconciliation.</p>
+<h2>Key files</h2>
+<ul>
+<li>60F — failed-validation recovery diagnosis (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_Annualized_Sales_Identity_Hotfix/tests/60F_msbf_m1_9_failed_annualized_sales_identity_recovery_check_v0_2R5.sql</code>; referenced bytes not established here)</li>
+<li>62B — controlled annualized-sales remediation (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_Annualized_Sales_Identity_Hotfix/sql/62B_msbf_m1_9_annualized_sales_identity_remediation_v0_2R5.sql</code>; referenced bytes not established here)</li>
+<li>63 — revised positive validation (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_Annualized_Sales_Identity_Hotfix/sql/63_msbf_m1_9_asof_cashflow_feature_validation_v0_2R5.sql</code>; referenced bytes not established here)</li>
+<li>64 — revised negative controls (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_Annualized_Sales_Identity_Hotfix/sql/64_msbf_m1_9_negative_control_tests_v0_2R5.sql</code>; referenced bytes not established here)</li>
+<li>65 — revised acceptance finalizer (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_Annualized_Sales_Identity_Hotfix/sql/65_msbf_m1_9_acceptance_finalize_v0_2R5.sql</code>; referenced bytes not established here)</li>
+<li>66 — revised master report (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_Annualized_Sales_Identity_Hotfix/tests/66_MSBF_M1_9_As_Of_Cash_Flow_Feature_Master_Report_v0_2R5.sql</code>; referenced bytes not established here)</li>
+<li>67 — revised detailed report (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_Annualized_Sales_Identity_Hotfix/tests/67_MSBF_M1_9_As_Of_Cash_Flow_Feature_Detail_Report_v0_2R5.sql</code>; referenced bytes not established here)</li>
+<li>Execution guide (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_Annualized_Sales_Identity_Hotfix/docs/M1_9_v0_2R5_EXECUTION_GUIDE.md</code>; referenced bytes not established here)</li>
+<li>Technical correction notes (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_Annualized_Sales_Identity_Hotfix/HOTFIX_NOTES_v0_2R5.md</code>; referenced bytes not established here)</li>
+<li>Package-validation report (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_Annualized_Sales_Identity_Hotfix/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+</ul>
+<h1>What program 62B changes</h1>
+<p>The remediation preserves the existing M1.9 population:</p>
+<pre><code class="language-text">1,500 wide feature snapshots
+54,000 long feature values
+55,500 canonical entities
+</code></pre>
+<p>It does not regenerate the scenario histories or the full feature-engineering population.</p>
+<p>It:</p>
+<ol>
+<li>Confirms that the only failed control is <code>M1_9_POS_38</code>.</li>
+<li>Preserves the original 856-row finding as governed audit evidence.</li>
+<li>Adds the explicit policy basis:</li>
+</ol>
+<pre><code class="language-text">PERSISTED_ROUNDED_90D_AVERAGE
+</code></pre>
+<ol start="4">
+<li>Corrects affected <code>annualized_eligible_sales</code> wide fields.</li>
+<li>Corrects the corresponding <code>ANNUALIZED_ELIGIBLE_SALES</code> long-form values and availability states.</li>
+<li>Recomputes affected wide snapshot hashes.</li>
+<li>Recomputes affected long feature-value hashes.</li>
+<li>Rebuilds the snapshot, feature-value, and combined set hashes.</li>
+<li>Confirms zero independent row-hash mismatches.</li>
+<li>Confirms zero remaining annualized-sales identity violations.</li>
+<li>Deletes the stale positive-validation results while preserving the original finding separately.</li>
+<li>Returns the run to:</li>
+</ol>
+<pre><code class="language-text">M1_9_GENERATED
+</code></pre>
+<p>for clean validation.</p>
+<p>The new set hashes will legitimately differ from the original script-62 hashes.</p>
+<h1>Filterable DBeaver results after commit</h1>
+<p>The revised program 63 now uses:</p>
+<pre><code class="language-sql">DROP TABLE IF EXISTS _m1_9_validation;
+
+CREATE TEMP TABLE _m1_9_validation
+(
+    ...
+)
+ON COMMIT PRESERVE ROWS;
+</code></pre>
+<p>The script commits first and then executes:</p>
+<pre><code class="language-sql">SELECT
+    evidence_code,
+    metric_name,
+    observed_value,
+    threshold_value,
+    status,
+    interpretation
+FROM _m1_9_validation
+ORDER BY evidence_code;
+</code></pre>
+<p>Therefore, the result source remains available for sorting and filtering after commit <strong>within the same DBeaver database session</strong>.</p>
+<p>Program 64 uses the same pattern for <code>_m1_9_negative</code>.</p>
+<p>The detailed-report working tables are also preserved for the current session, improving filterability of its result sets. Reconnecting ends the PostgreSQL session and removes session-scoped temporary tables; the governed evidence remains permanently stored in <code>msbf_ctl.run_evidence</code>.</p>
+<h1>Exact recovery sequence</h1>
+<p>Do <strong>not</strong> rerun:</p>
+<pre><code class="language-text">60 — schema/policy extension
+61 — preflight
+62 — feature generation
+</code></pre>
+<p>The committed feature population is valid except for the annualized-sales identity.</p>
+<h2>1. Run the recovery diagnosis</h2>
+<pre><code class="language-text">60F_msbf_m1_9_failed_annualized_sales_identity_recovery_check_v0_2R5.sql
+</code></pre>
+<p>Required result:</p>
+<pre><code class="language-text">run_status                    M1_9_FAILED
+positive checks               66
+positive passes               65
+positive failures              1
+failed code                   M1_9_POS_38_ANNUALIZED_SALES_IDENTITY
+reported POS38 violations     856
+calculated POS38 violations   856
+snapshot rows               1,500
+feature-value rows         54,000
+canonical rows             55,500
+stored hashes = recomputed hashes
+recovery_state_status         PASS
+</code></pre>
+<p>Stop if it does not return <code>PASS</code>.</p>
+<h2>2. Apply the controlled remediation</h2>
+<pre><code class="language-text">62B_msbf_m1_9_annualized_sales_identity_remediation_v0_2R5.sql
+</code></pre>
+<p>Required final fields:</p>
+<pre><code class="language-text">run_status                     M1_9_GENERATED
+original_pos38_violations      856
+changed_snapshot_rows          positive count
+changed_feature_rows           same corresponding count
+remaining_identity_violations  0
+wide_long_mismatches           0
+row_hash_mismatches            0
+snapshot_hash                  non-null
+feature_value_hash             non-null
+combined_hash                  non-null
+remediation_status             PASS
+</code></pre>
+<p>The remediation also aligns availability: an unavailable 90-day average cannot produce an available annualized-sales value.</p>
+<h2>3. Run revised positive validation</h2>
+<pre><code class="language-text">63_msbf_m1_9_asof_cashflow_feature_validation_v0_2R5.sql
+</code></pre>
+<p>Required:</p>
+<pre><code class="language-text">66 checks
+66 PASS
+0 FAIL
+run_status = M1_9_VALIDATED
+</code></pre>
+<p>Control 38 must report:</p>
+<pre><code class="language-text">observed_value = 0
+status         = PASS
+</code></pre>
+<p>You can now filter the result grid after commit in the same session.</p>
+<h2>4. Run revised negative controls</h2>
+<pre><code class="language-text">64_msbf_m1_9_negative_control_tests_v0_2R5.sql
+</code></pre>
+<p>Required:</p>
+<pre><code class="language-text">6 / 6 PASS
+run_status = M1_9_VALIDATED
+</code></pre>
+<p>Its result grid also remains filterable after commit.</p>
+<h2>5. Finalize acceptance</h2>
+<pre><code class="language-text">65_msbf_m1_9_acceptance_finalize_v0_2R5.sql
+</code></pre>
+<p>Acceptance explicitly requires:</p>
+<pre><code class="language-text">66 / 66 positive PASS
+6 / 6 negative PASS
+0 annualized-sales identity violations
+annualization days = 365
+annualized-sales basis = PERSISTED_ROUNDED_90D_AVERAGE
+1,500 wide snapshots
+54,000 long feature values
+55,500 canonical entities
+exact reconstructed hashes
+0 downstream rows
+0 blocking errors
+</code></pre>
+<p>Required final state:</p>
+<pre><code class="language-text">gate_id        M1_9_ASOF_CASHFLOW_FEATURES
+result_status  PASS
+run_status     M1_9_ACCEPTED
+</code></pre>
+<h2>6. Run final reports</h2>
+<pre><code class="language-text">66_MSBF_M1_9_As_Of_Cash_Flow_Feature_Master_Report_v0_2R5.sql
+
+67_MSBF_M1_9_As_Of_Cash_Flow_Feature_Detail_Report_v0_2R5.sql
+</code></pre>
+<p>Required master result:</p>
+<pre><code class="language-text">overall_m1_9_status = PASS
+</code></pre>
+<p>The detailed report retains 20 result sets. These must contain headers and zero data rows:</p>
+<pre><code class="language-text">19 — Row-Level Deterministic Mismatches
+20 — Blocking Resolution Errors
+</code></pre>
+<p>Revenue-Level Diagnostics now also reports annualized-sales identity violations by scenario; each scenario must show zero.</p>
+<h1>Contingency file</h1>
+<p>62C — read-only remediation reconstruction (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_Annualized_Sales_Identity_Hotfix/tests/62C_msbf_m1_9_annualized_sales_remediation_reconstructed_v0_2R5.sql</code>; referenced bytes not established here) is not part of the normal execution order.</p>
+<p>Run it only if program 62B commits successfully but DBeaver loses or closes its result tab.</p>
+<h1>Clean-build prevention</h1>
+<p>The package includes corrected clean-build replacements for:</p>
+<pre><code class="language-text">60 — schema/policy extension
+61 — preflight
+62 — generation
+63 — validation
+</code></pre>
+<p>The clean generation now calculates:</p>
+<pre><code class="language-sql">round(
+    round(p.avg_sales_90, 2)
+    * c.annualization_days,
+    2
+)
+</code></pre>
+<p>and applies the same availability condition to the 90-day average and its annualized derivative.</p>
+<p>The package passed static QA:</p>
+<pre><code class="language-text">SQL files checked                       12
+Positive controls                       66
+Negative controls                        6
+Governed annualization parameter       PASS
+Session-preserved validation output    PASS
+Session-preserved negative output      PASS
+Clean-build annualization formula      PASS
+Static errors                            0
+Static warnings                          0
+ZIP integrity                          PASS
+</code></pre>
+<p>Live PostgreSQL execution remains the final authority.</p>
+</div></article><article id="m-86a9c033-3f44-4275-96ad-31ec574e9501" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00262 · 2026-07-26T09:46:43.626000-04:00 · active path</p><p class="note">Attachment references: 63_msbf_m1_9_asof_cashflow_feature_validation_v0_2R5_results_20260726.csv; 62B_msbf_m1_9_annualized_sales_identity_remediation_v0_2R5_results_20260726.csv; 60F_msbf_m1_9_failed_annualized_sales_identity_recovery_check_v0_2R5_results_20260726.csv; 63_msbf_m1_9_asof_cashflow_feature_validation_v0_2R4_results_20260726(1).csv; 60E_msbf_m1_9_failed_validation_filter_syntax_recovery_check_v0_2R4_results_20260726(1).csv; 62_msbf_m1_9_asof_cashflow_feature_generation_v0_2R3_results_20260726(1).csv; 61_msbf_m1_9_preflight_validation_v0_2R3_results_20260726(1).csv; 60D_msbf_m1_9_failed_canonical_scale_recovery_check_v0_2R3_results_20260726(1).csv; 61_msbf_m1_9_preflight_validation_v0_2R2_results_20260726(1).csv; 60C_msbf_m1_9_failed_ctas_projection_recovery_check_v0_2R2_results_20260726(1).csv; 61_msbf_m1_9_preflight_validation_v0_2R1_results_20260726(1).csv; 60B_msbf_m1_9_failed_scenario_scope_recovery_check_v0_2R1_results_20260726(1).csv; 61_msbf_m1_9_preflight_validation_v0_2_results_20260726(1).csv; 60_msbf_m1_9_schema_policy_extension_v0_2_results_20260726(1).csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Master_Report_v0_2R5_20260726.csv; 65_msbf_m1_9_acceptance_finalize_v0_2R5_results_20260726.csv; 64_msbf_m1_9_negative_control_tests_v0_2R5_results_20260726.csv</p><div class="bubble"><p>Here is the batch 1 of 2 for M1.9 execution evidence. Do not do anything but intake at this point until after I issue batch 2 of 2 and further instructions.</p>
+</div></article><article id="m-2987f07f-a358-4ee1-a540-cce408137821" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00263 · 2026-07-26T09:47:33.338550-04:00 · active path</p><div class="bubble"><p>Received batch 1 of 2 for the M1.9 execution evidence, including:</p>
+<ul>
+<li>Original schema extension and failed initial preflight history</li>
+<li>R1 scenario-scope recovery and corrected preflight</li>
+<li>R2 CTAS-projection recovery and corrected preflight</li>
+<li>R3 canonical-scale recovery, preflight, and successful generation</li>
+<li>R4 validation-syntax recovery and original validation result</li>
+<li>R5 annualized-sales recovery, remediation, and revised validation</li>
+<li>R5 negative controls</li>
+<li>R5 acceptance finalizer</li>
+<li>R5 master report</li>
+</ul>
+<p>I will not analyze the evidence, determine acceptance, or update the repository until you provide batch 2 of 2 and further instructions.</p>
+</div></article><article id="m-11baa7f4-3a39-4460-b978-5fd1323a3fd3" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00264 · 2026-07-26T09:50:17.712000-04:00 · active path</p><p class="note">Attachment references: MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Partner_Channel_Diagnostics_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Relationship_Stage_Diagnostics_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Merchant_Size_Diagnostics_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Industry_Diagnostics_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Matched_Scenario_Delta_Summary_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Processor_Continuity_Diagnostics_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Liquidity_Diagnostics_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Transaction_Quality_Diagnostics_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Trend_Volatility_And_Seasonality_Diagnostics_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Revenue_Level_Diagnostics_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_POS_And_Deposit_Quality_Diagnostics_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Source_Confidence_And_Data_Confidence_Tiers_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Feature_Completeness_And_Routing_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Entity_And_Stage_Boundary_Row_Counts_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Run_And_Acceptance_State_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Blocking_Resolution_Errors_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Row_Level_Deterministic_Mismatches_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_M1_9_Evidence_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Sample_Matched_Application_Profiles_20260726.csv; MSBF_M1_9_As_of_Cash_Flow_Feature_Engineering_Detail_Report_v0_2R5_Feature_Availability_By_Feature_And_Scenario_20260726.csv</p><div class="bubble"><p>Remainder of M1.9 evidence. Validate M1.9 is a success. If it is approved, sign off M1.9 and update full project zip.</p>
+</div></article><article id="m-a105d0e8-893d-4388-866d-388e5186c5f3" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00265 · 2026-07-26T10:08:38.548963-04:00 · active path</p><div class="bubble"><h1>M1.9 final determination: <strong>Passed and accepted</strong></h1>
+<p>I reviewed the complete M1.9 evidence set, including:</p>
+<ul>
+<li>schema and policy extension;</li>
+<li>the original scenario-scope preflight finding;</li>
+<li>R1 scenario-scope recovery;</li>
+<li>R2 CTAS-projection recovery;</li>
+<li>R3 canonical-scale recovery and successful feature generation;</li>
+<li>R4 validation-syntax recovery;</li>
+<li>the initial 65-of-66 validation result;</li>
+<li>R5 annualized-sales remediation;</li>
+<li>final 66-row positive validation;</li>
+<li>six negative controls;</li>
+<li>acceptance finalizer;</li>
+<li>master report;</li>
+<li>all 20 detailed-report exports;</li>
+<li>the empty deterministic-mismatch and blocking-error outputs.</li>
+</ul>
+<p>The evidence supports formal acceptance of:</p>
+<blockquote>
+<p><strong>M1.9 — As-of Cash-Flow Feature Engineering</strong><br><strong>Accepted revision:</strong> <code>v0.2R5</code><br><strong>Accepted methodology:</strong> <code>M1_9_METHOD_V1</code><br><strong>Annualized-sales basis:</strong> <code>PERSISTED_ROUNDED_90D_AVERAGE × 365</code></p>
+</blockquote>
+<h2>Acceptance results</h2>
+<table>
+<thead>
+<tr>
+<th>Validation area</th>
+<th align="right">Final result</th>
+<th>Disposition</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Final run status</td>
+<td align="right"><code>M1_9_ACCEPTED</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Acceptance gate</td>
+<td align="right"><code>M1_9_ASOF_CASHFLOW_FEATURES — PASS</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Applications</td>
+<td align="right">750</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Matched scenarios</td>
+<td align="right">2</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Governed features</td>
+<td align="right">36</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Wide feature snapshots</td>
+<td align="right">1,500</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Long-form feature values</td>
+<td align="right">54,000</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Canonical entities</td>
+<td align="right">55,500</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Positive validations</td>
+<td align="right">66 of 66 PASS</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Negative controls</td>
+<td align="right">6 of 6 PASS</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Row-level deterministic mismatches</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Annualized-sales identity violations</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Failed final evidence records</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Blocking resolution errors</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Downstream analytical rows</td>
+<td align="right">0</td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Master-report result</td>
+<td align="right"><code>overall_m1_9_status = PASS</code></td>
+<td>Pass</td>
+</tr>
+<tr>
+<td>Detailed-report result sets</td>
+<td align="right">20 complete</td>
+<td>Pass</td>
+</tr>
+</tbody></table>
+<p>The final mismatch and blocking-error files contain their expected headers and zero data rows.</p>
+<h2>Deterministic reconciliation</h2>
+<p>The stored and independently reconstructed M1.9 hashes match exactly:</p>
+<pre><code class="language-text">Wide snapshot set
+28f285be33ee78b5251ab5fd06fe7536
+
+Long feature-value set
+ad08ae9f31b8d491792f4752b34aa178
+
+Combined M1.9 set
+7c25acac533179f42789a6daa79d0cc3
+</code></pre>
+<p>All accepted predecessor identities also remained unchanged through M1.9.</p>
+<h2>Controlled correction closure</h2>
+<p>The repository preserves the complete audit trail rather than presenting only the final passing result:</p>
+<ol>
+<li><strong>Scenario scope:</strong> M1.9 was corrected to use the two scenario IDs represented in the accepted M1.6 physical panels rather than assuming scenario codes were globally unique.</li>
+<li><strong>CTAS projection:</strong> the duplicate <code>merchant_application_id</code> output was replaced with an explicit projection.</li>
+<li><strong>Canonical numeric scale:</strong> long-form numeric hash inputs were normalized to the physical <code>numeric(24,10)</code> type.</li>
+<li><strong>Aggregate <code>FILTER</code> syntax:</strong> filtering was correctly attached to <code>string_agg()</code> before applying scalar <code>md5()</code>.</li>
+<li><strong>Annualized-sales identity:</strong> the governed identity now uses the persisted rounded 90-day average:</li>
+</ol>
+<pre><code class="language-text">Annualized Eligible Sales
+=
+round(
+    Persisted Rounded 90-Day Average
+    × 365,
+    2
+)
+</code></pre>
+<p>The R5 remediation corrected 1,472 wide snapshot values and their corresponding 1,472 long-form values, then rebuilt the relevant row and set hashes. Final results show:</p>
+<pre><code class="language-text">Remaining identity violations    0
+Wide-versus-long mismatches       0
+Row-hash mismatches               0
+</code></pre>
+<h2>Accepted feature evidence</h2>
+<pre><code class="language-text">Available feature values       48,812
+Unavailable feature values      5,188
+
+Complete snapshots              1,216
+Partial snapshots                  50
+Blocked snapshots                 234
+
+Downstream-ready snapshots      1,266
+Manual-review flags               936
+
+Average source confidence     0.914717
+</code></pre>
+<p>The matched stress features also behave directionally as intended:</p>
+<pre><code class="language-text">Average 30-day sales delta           -13.87%
+Average 90-day sales delta            -9.78%
+Average deposit delta                 -9.56%
+Average withdrawal delta             +20.00%
+Average available-balance delta      -80.45%
+Negative-balance-rate delta           +31.16 pts
+Average NSF-count delta                +0.2948
+</code></pre>
+<p>Baseline scenario deltas remain zero.</p>
+<h2>Stage-boundary confirmation</h2>
+<p>M1.9 did not create:</p>
+<ul>
+<li>obligation or residual-cash-flow outputs;</li>
+<li>merchant credit-risk components;</li>
+<li>EAD or LGD;</li>
+<li>Expected Loss;</li>
+<li>pricing or offer decisions;</li>
+<li>approval, counteroffer, review, or decline outcomes;</li>
+<li>Module 1 latest or archive contract rows.</li>
+</ul>
+<blockquote>
+<p><strong>M1.9 is formally passed and accepted. M1.10 — Obligations, Liquidity &amp; Residual Cash Flow is authorized.</strong></p>
+</blockquote>
+<p>Open the formal M1.9 evidence review and sign-off (historical reference: <code>sandbox:[session]/M1_9_LIVE_EXECUTION_EVIDENCE_REVIEW_AND_SIGNOFF.md</code>; referenced bytes not established here)</p>
+<p>Open the completed M1.9 acceptance milestone (historical reference: <code>sandbox:[session]/MSBF_M1_9_As_Of_Cash_Flow_Feature_Build_Acceptance_Milestone_v0_2R5.txt</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Updated full project repository</h1>
+<h2>Recommended Windows-compatible project ZIP</h2>
+<p>Download MSBF Project v0.2 — M1.9 Complete FINAL (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_9_COMPLETE_FINAL_Windows.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_9_COMPLETE_FINAL_Windows.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+108dd842a30d9b9cc8490616ec23efc518752934b42afebbae815494df918de6
+
+Archive size
+7,128,375 bytes
+
+Files
+916
+
+Longest internal path
+190 characters
+</code></pre>
+<p>The full repository passed:</p>
+<pre><code class="language-text">CRC validation                       PASS
+Complete extraction                  PASS
+Source / ZIP inventory match         916 / 916
+Missing or extra entries             0
+In-archive SHA-256 mismatches        0
+Extracted-file SHA-256 mismatches    0
+Windows/DOS ZIP metadata             PASS
+ZIP64                                Not used
+</code></pre>
+<p>Extract near the drive root, preferably:</p>
+<pre><code class="language-text">C:\MSBF\
+</code></pre>
+<h2>Canonical long-form project ZIP</h2>
+<p>Download the canonical M1.9-complete project delivery (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_9_COMPLETE_FINAL.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_9_COMPLETE_FINAL.zip.sha256</code>; referenced bytes not established here)</p>
+<p>The Windows-compatible and canonical project ZIPs contain identical content and have the same SHA-256 hash.</p>
+<h2>Standalone accepted M1.9 package</h2>
+<p>Download the standalone M1.9 v0.2R5 Complete package (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_COMPLETE_FINAL.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_9_v0_2R5_COMPLETE_FINAL.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+f650ad343d5d0ce3507eb27eec3f3668f91f6324be9044bad375c91564a1cb33
+
+Files
+220
+</code></pre>
+<p>The accepted package includes:</p>
+<ul>
+<li>final clean-build v0.2R5 SQL;</li>
+<li>v0.2 through v0.2R5 source history;</li>
+<li>all recovery and remediation utilities;</li>
+<li>complete structured live evidence;</li>
+<li>failed-control history and error captures;</li>
+<li>filterable session-preserved validation design;</li>
+<li>formal sign-off and milestone;</li>
+<li>accepted execution order and expected-results catalogs;</li>
+<li>manifests and SHA-256 inventories.</li>
+</ul>
+<h2>Key records</h2>
+<ul>
+<li>Machine-readable M1.9 validation summary (historical reference: <code>sandbox:[session]/M1_9_LIVE_EXECUTION_VALIDATION_SUMMARY_v0_2R5.json</code>; referenced bytes not established here)</li>
+<li>M1.9 evidence index (historical reference: <code>sandbox:[session]/M1_9_EVIDENCE_INDEX.md</code>; referenced bytes not established here)</li>
+<li>M1.9 validation and correction history (historical reference: <code>sandbox:[session]/M1_9_VALIDATION_HISTORY.md</code>; referenced bytes not established here)</li>
+<li>Updated project status (historical reference: <code>sandbox:[session]/PROJECT_STATUS_M1_9_COMPLETE.md</code>; referenced bytes not established here)</li>
+<li>M1.10 next-stage handoff (historical reference: <code>sandbox:[session]/CURRENT_NEXT_STEP_M1_10_OBLIGATIONS_LIQUIDITY_RESIDUAL_CASHFLOW.md</code>; referenced bytes not established here)</li>
+<li>Final package build report (historical reference: <code>sandbox:[session]/MSBF_M1_9_COMPLETE_BUILD_REPORT.json</code>; referenced bytes not established here)</li>
+</ul>
+<p>The accepted progression is now:</p>
+<pre><code class="language-text">G0 Physical Foundation
+PASS
+
+→
+
+G1 Governed Run Control
+PASS
+
+→
+
+M1.2 Deterministic Merchant Population
+PASS
+
+→
+
+M1.3 Application &amp; Requested Structure
+PASS
+
+→
+
+M1.4 Enterprise Merchant Ecosystem
+PASS
+
+→
+
+M1.5 Daily Deposit &amp; Liquidity History
+PASS
+
+→
+
+M1.6 Matched Scenario Overlays
+PASS
+
+→
+
+M1.7 Source Quality &amp; Data Confidence
+PASS
+
+→
+
+M1.8 Verification, Fraud &amp; Processor Continuity
+PASS
+
+→
+
+M1.9 As-of Cash-Flow Feature Engineering
+PASS
+
+→
+
+M1.10 Obligations, Liquidity &amp; Residual Cash Flow
+AUTHORIZED
+</code></pre>
+</div></article><article id="m-f3eaf9eb-446c-4e4f-b89a-f791a930f01c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00266 · 2026-07-26T10:13:56.575000-04:00 · active path</p><div class="bubble"><p>Build M1.10 — Obligations, Liquidity &amp; Residual Cash Flow as a complete governed module. Use the accepted M1.9 repository as the baseline. Produce architecture, schema changes, parameter dictionary, preflight, generation, validation, negative controls, acceptance, master report, detail reports, documentation, manifest, SHA-256, and updated full-project ZIP. Apply the error resolution lessons and performance lessons from prior modules proactively: no unnecessary blueprint regeneration, materialize expensive intermediates once, avoid self-joins where window functions suffice, index and ANALYZE before downstream joins, separate persisted generation from read-only validation, and include recovery behavior. Do not stop for interim design approval unless a material ambiguity would change the module’s business purpose.</p>
+</div></article><article id="m-2902efe7-35c3-43b5-a19b-0affce1b21ab" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00267 · 2026-07-26T11:17:44.202722-04:00 · active path</p><div class="bubble"><h1>M1.10 — Obligations, Liquidity &amp; Residual Cash Flow</h1>
+<p>The complete <strong>M1.10 v0.2 governed module</strong> is built, statically validated, integrated into the accepted M1.9 repository, and ready for controlled PostgreSQL execution.</p>
+<p>M1.10 is <strong>not yet live-executed or accepted</strong>. Formal acceptance requires successful execution, structured evidence export, and independent evidence review.</p>
+<h2>Primary deliveries</h2>
+<h3>Standalone M1.10 package</h3>
+<p>Download MSBF M1.10 v0.2 (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2.zip</code>; referenced bytes not established here)</p>
+<p>Download the standalone ZIP SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+6502656cbd3c79be7857216d74ecbc5a28a2d3bc0ead30ee6a5e72aaf756d967
+
+Archive size
+125,509 bytes
+
+Files
+41
+</code></pre>
+<p>Canonical long-form copy:</p>
+<p>Download the canonical M1.10 package (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m1_10_obligations_liquidity_residual_cash_flow_v0_2.zip</code>; referenced bytes not established here)</p>
+<p>Download the canonical ZIP SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m1_10_obligations_liquidity_residual_cash_flow_v0_2.zip.sha256</code>; referenced bytes not established here)</p>
+<h3>Updated full project repository</h3>
+<p>This repository preserves every accepted artifact through M1.9 and adds M1.10 under <code>12_M1_10</code> in <strong>Ready for Live Execution</strong> status.</p>
+<p>Download MSBF Project v0.2 — M1.10 Ready for Execution (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_10_READY_FOR_EXECUTION_Windows.zip</code>; referenced bytes not established here)</p>
+<p>Download the full-project ZIP SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_Project_v0_2_M1_10_READY_FOR_EXECUTION_Windows.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+799f16a4f420797c99ffb10f8d19dfc5241d0a7709ee4e84cc94e334180de1d9
+
+Archive size
+7,299,886 bytes
+
+Files
+959
+</code></pre>
+<p>Canonical long-form copy:</p>
+<p>Download the canonical M1.10-ready project repository (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_10_READY_FOR_EXECUTION.zip</code>; referenced bytes not established here)</p>
+<p>Download its SHA-256 file (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_project_delivery_v0_2_M1_10_READY_FOR_EXECUTION.zip.sha256</code>; referenced bytes not established here)</p>
+<p>The Windows-compatible and canonical project ZIPs contain identical content and share the same hash. Extract near the drive root, preferably:</p>
+<pre><code class="language-text">C:\MSBF\
+</code></pre>
+<hr>
+<h1>What M1.10 does</h1>
+<p>M1.10 combines the accepted M1.9 operating features with:</p>
+<ul>
+<li>M1.7 obligation-source confidence;</li>
+<li>M1.8 verification and fraud routing;</li>
+<li>M1.3 requested sales-linked financing terms;</li>
+<li>M1.2 relationship and prior-advance history.</li>
+</ul>
+<p>It then creates two distinct evidence layers.</p>
+<h2>1. Atomic application-obligation evidence</h2>
+<p>M1.10 generates deterministic application-level obligations once, independent of scenario.</p>
+<p>Supported synthetic obligation types are:</p>
+<pre><code class="language-text">SALES_BASED_ADVANCE
+TERM_LOAN
+LINE_OF_CREDIT
+EQUIPMENT_FINANCE
+BUSINESS_CREDIT_CARD
+LEASE
+</code></pre>
+<p>The obligation evidence preserves:</p>
+<ul>
+<li>outstanding balance;</li>
+<li>payment frequency;</li>
+<li>daily and monthly burden;</li>
+<li>sales-linked remittance rate;</li>
+<li>lien position;</li>
+<li>secured status;</li>
+<li>maturity date;</li>
+<li>short-term-financing indicator;</li>
+<li>stacking sequence;</li>
+<li>source-snapshot lineage;</li>
+<li>obligation quality and confidence;</li>
+<li>deterministic row hash.</li>
+</ul>
+<p>A merchant may have zero to three generated obligations, subject to the governed distribution and prior-advance history.</p>
+<p>Critically:</p>
+<blockquote>
+<p><strong>Unavailable obligation evidence does not become “no obligations.”</strong></p>
+</blockquote>
+<p>Applications with unavailable obligation evidence receive an explicit insufficient-evidence capacity treatment and controlled manual-review route.</p>
+<h2>2. Scenario-aware liquidity and capacity evidence</h2>
+<p>For each of the 750 applications under both accepted scenarios:</p>
+<pre><code class="language-text">750 applications
+×
+2 scenarios
+=
+1,500 capacity snapshots
+</code></pre>
+<p>The module calculates:</p>
+<ul>
+<li>existing fixed daily obligation payments;</li>
+<li>existing sales-linked remittance burden;</li>
+<li>requested rate-based daily remittance;</li>
+<li>requested payoff-horizon daily requirement;</li>
+<li>governed requested daily remittance;</li>
+<li>total daily and monthly obligation burden;</li>
+<li>estimated daily operating cash flow;</li>
+<li>existing- and total-obligation-to-sales rates;</li>
+<li>payment coverage;</li>
+<li>residual daily and monthly operating cash flow;</li>
+<li>current liquidity buffer;</li>
+<li>post-financing liquidity buffer;</li>
+<li>post-financing buffer days;</li>
+<li>obligation concentration;</li>
+<li>stacking depth;</li>
+<li>independent and final capacity tiers;</li>
+<li>affordability status;</li>
+<li>fallback and review routing;</li>
+<li>deterministic row hashes.</li>
+</ul>
+<hr>
+<h1>Core capacity methodology</h1>
+<h2>Requested daily burden</h2>
+<p>M1.10 uses the more conservative of the two requested-payment paths:</p>
+<pre><code class="language-text">Requested Rate-Based Remittance
+=
+Average Daily Eligible Sales
+×
+Requested Remittance Rate
+</code></pre>
+<pre><code class="language-text">Payoff-Horizon Requirement
+=
+Requested Total Repayment
+÷
+Requested Expected Payoff Days
+</code></pre>
+<pre><code class="language-text">Governed Requested Daily Remittance
+=
+maximum(
+    Rate-Based Remittance,
+    Payoff-Horizon Requirement
+)
+</code></pre>
+<p>This prevents an application from appearing affordable merely because its requested remittance percentage would not repay the requested amount within the stated horizon.</p>
+<h2>Operating cash-flow proxy</h2>
+<pre><code class="language-text">Estimated Daily Operating Cash Flow
+=
+Average Daily Eligible Sales
+×
+Governed Industry Operating-Cash Margin
+</code></pre>
+<p>The margin assumptions are synthetic and industry-specific.</p>
+<h2>Payment coverage</h2>
+<pre><code class="language-text">Sales-Linked Payment Coverage
+=
+Estimated Daily Operating Cash Flow
+÷
+Total Daily Obligation Burden
+</code></pre>
+<h2>Residual operating cash flow</h2>
+<pre><code class="language-text">Residual Daily Operating Cash Flow
+=
+Estimated Daily Operating Cash Flow
+−
+Total Daily Obligation Burden
+</code></pre>
+<h2>Post-financing liquidity</h2>
+<pre><code class="language-text">Post-Financing Liquidity Buffer
+=
+Current Average Available Balance
++
+Residual Daily Operating Cash Flow
+×
+30-Day Projection Horizon
+</code></pre>
+<pre><code class="language-text">Post-Financing Buffer Days
+=
+Post-Financing Liquidity Buffer
+÷
+Total Daily Obligation Burden
+</code></pre>
+<h2>Capacity tiers</h2>
+<p>The governed capacity tier combines:</p>
+<ul>
+<li>payment coverage;</li>
+<li>total burden-to-sales rate;</li>
+<li>residual cash-flow direction;</li>
+<li>post-financing buffer days;</li>
+<li>stacking depth;</li>
+<li>evidence completeness.</li>
+</ul>
+<pre><code class="language-text">Tier 1 — Strong
+Tier 2 — Adequate
+Tier 3 — Marginal
+Tier 4 — Unaffordable
+Tier 5 — Insufficient Evidence
+</code></pre>
+<p>The adverse scenario applies a non-improvement floor:</p>
+<pre><code class="language-text">Final Stress Capacity Tier
+=
+greatest(
+    Baseline Capacity Tier,
+    Independently Calculated Stress Tier
+)
+</code></pre>
+<p>The recession sensitivity may leave capacity unchanged or worsen it, but it cannot improve the interpreted capacity tier.</p>
+<hr>
+<h1>Physical schema changes</h1>
+<p>M1.10 extends the existing:</p>
+<pre><code class="language-text">msbf_m1.application_obligation_snapshot
+</code></pre>
+<p>with nine governed columns covering:</p>
+<ul>
+<li>obligation status;</li>
+<li>payment frequency;</li>
+<li>maturity;</li>
+<li>secured status;</li>
+<li>confidence;</li>
+<li>quality status;</li>
+<li>reason code;</li>
+<li>canonical hash;</li>
+<li>creation timestamp.</li>
+</ul>
+<p>It also creates:</p>
+<pre><code class="language-text">msbf_m1.application_liquidity_capacity_snapshot
+</code></pre>
+<p>at the grain:</p>
+<pre><code class="language-text">module1_run_id
++ scenario_id
++ merchant_application_id
+</code></pre>
+<p>A governed lineage view is also included:</p>
+<pre><code class="language-text">msbf_m1.v_m1_10_capacity_lineage
+</code></pre>
+<h2>Projected physical-design totals after migration</h2>
+<pre><code class="language-text">74 designed parent/non-child tables
+1,217 designed table columns
+</code></pre>
+<p>The historical G0 milestone remains unchanged:</p>
+<pre><code class="language-text">G0 accepted foundation
+70 physical parent tables
+1,041 designed columns
+</code></pre>
+<p>M1.10 represents a controlled post-G0 schema extension, not a rewrite of the original acceptance evidence.</p>
+<p>Download script 68 — schema and policy extension (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/sql/68_msbf_m1_10_schema_policy_extension_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Open the schema-extension table catalog (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/catalogs/M1_10_SCHEMA_EXTENSION_TABLES.csv</code>; referenced bytes not established here)</p>
+<p>Open the schema-extension column catalog (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/catalogs/M1_10_SCHEMA_EXTENSION_COLUMNS.csv</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Performance and error-resolution controls</h1>
+<p>The prior-module lessons were incorporated before release.</p>
+<h2>No large upstream regeneration</h2>
+<p>M1.10 does not rebuild:</p>
+<pre><code class="language-text">M1.4 POS histories
+M1.5 liquidity histories
+M1.6 scenario blueprints
+M1.7 source-quality logic
+M1.8 verification/fraud logic
+M1.9 feature-engineering logic
+</code></pre>
+<p>It consumes the accepted persisted M1.9 feature snapshots directly.</p>
+<h2>Bounded processing path</h2>
+<pre><code class="language-text">750 accepted applications
+→ materialized application/source/relationship inputs
+→ deterministic atomic obligations generated once
+→ 1,500 matched scenario capacity rows
+→ one expected canonical snapshot
+→ one actual physical-field reconstruction
+→ one reconciliation and acceptance path
+</code></pre>
+<h2>Query-plan controls</h2>
+<p>Generation uses:</p>
+<pre><code class="language-sql">SET LOCAL work_mem = &#39;64MB&#39;;
+SET LOCAL jit = off;
+SET LOCAL lock_timeout = &#39;10s&#39;;
+SET LOCAL statement_timeout = &#39;15min&#39;;
+</code></pre>
+<p>Intermediate inputs are materialized once and indexed. Persistent outputs are analyzed before downstream reconciliation.</p>
+<h2>Hashing safeguards</h2>
+<p>To avoid the canonical-scale defects encountered previously:</p>
+<ul>
+<li>expected obligation and capacity tables have explicit physical data types;</li>
+<li>values are cast to target numeric precision before hashing;</li>
+<li>expected hashes are created before insertion;</li>
+<li>actual hashes are independently recomputed from persisted physical fields;</li>
+<li>generation fails before commit unless expected and actual counts match and mismatches equal zero.</li>
+</ul>
+<h2>CTAS and projection safeguards</h2>
+<p>The build avoids broad <code>alias.*</code> projections in combined CTAS operations where duplicate identifiers could emerge. Main persistent INSERT/SELECT shapes were statically reconciled:</p>
+<pre><code class="language-text">Obligation expected insert       22 / 22
+Obligation physical insert       22 / 22
+Capacity expected insert         53 / 53
+Capacity physical insert         53 / 53
+</code></pre>
+<h2>Filterable DBeaver evidence</h2>
+<p>Scripts 71, 72, and 75 use session-scoped temporary tables with:</p>
+<pre><code class="language-sql">ON COMMIT PRESERVE ROWS
+</code></pre>
+<p>Their result sources remain available for sorting and filtering after commit within the same DBeaver session.</p>
+<p>Validation helper functions are called with <code>PERFORM</code>, not standalone <code>SELECT</code>, preventing dozens of one-row null result tabs.</p>
+<hr>
+<h1>Exact execution order</h1>
+<p>Run these scripts in DBeaver against the accepted <code>msbf_strategy</code> database.</p>
+<table>
+<thead>
+<tr>
+<th align="right">Order</th>
+<th>Script</th>
+<th>Required checkpoint</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td>68 — Schema and policy extension (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/sql/68_msbf_m1_10_schema_policy_extension_v0_2.sql</code>; referenced bytes not established here)</td>
+<td><code>schema_policy_extension_status = PASS</code></td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td>69 — Preflight validation (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/tests/69_msbf_m1_10_preflight_validation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td><code>preflight_status = PASS</code></td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td>70 — Obligation and capacity generation (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/sql/70_msbf_m1_10_obligations_liquidity_capacity_generation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>1,500 capacity rows; zero mismatches; <code>PASS</code></td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td>71 — Positive validation (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/sql/71_msbf_m1_10_obligations_liquidity_capacity_validation_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>70 of 70 <code>PASS</code></td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td>72 — Negative controls (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/sql/72_msbf_m1_10_negative_control_tests_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>6 of 6 <code>PASS</code></td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td>73 — Acceptance finalizer (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/sql/73_msbf_m1_10_acceptance_finalize_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>Gate <code>PASS</code>; run <code>M1_10_ACCEPTED</code></td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td>74 — Master report (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/tests/74_MSBF_M1_10_Obligations_Liquidity_Capacity_Master_Report_v0_2.sql</code>; referenced bytes not established here)</td>
+<td><code>overall_m1_10_status = PASS</code></td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td>75 — Detailed report (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/tests/75_MSBF_M1_10_Obligations_Liquidity_Capacity_Detail_Report_v0_2.sql</code>; referenced bytes not established here)</td>
+<td>18 result sets; mismatch/error sets empty</td>
+</tr>
+</tbody></table>
+<p>Open the complete execution and validation guide (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/docs/M1_10_EXECUTION_AND_VALIDATION_GUIDE.md</code>; referenced bytes not established here)</p>
+<h2>Required generation checkpoint</h2>
+<pre><code class="language-text">run_status               M1_10_GENERATED
+capacity rows            1,500
+applications             750
+scenarios                2
+canonical mismatch rows  0
+obligation set hash      non-null
+capacity set hash        non-null
+combined set hash        non-null
+generation_status        PASS
+</code></pre>
+<p>The obligation-row count is intentionally not hard-coded because it depends on the governed distribution, source availability, and prior-advance history.</p>
+<p>After script 70 commits successfully, do not rerun it.</p>
+<hr>
+<h1>Contingency scripts</h1>
+<p>These are not part of the normal sequence.</p>
+<h2>Failed-generation recovery</h2>
+<p>Download script 68A (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/tests/68A_msbf_m1_10_failed_generation_recovery_check_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Use only after script 70 fails or is cancelled and after executing:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>Required:</p>
+<pre><code class="language-text">run_status             M1_9_ACCEPTED
+obligation rows        0
+capacity rows          0
+M1.10 evidence rows    0
+M1.10 gate rows        0
+blocking errors        0
+recovery_state_status  PASS
+</code></pre>
+<h2>Lost generation-result reconstruction</h2>
+<p>Download script 70A (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/tests/70A_msbf_m1_10_generation_reconciliation_reconstructed_v0_2.sql</code>; referenced bytes not established here)</p>
+<p>Use only when script 70 committed successfully but the DBeaver result tab was lost or closed.</p>
+<p>Required:</p>
+<pre><code class="language-text">generation_reconciliation_status = PASS
+</code></pre>
+<hr>
+<h1>Validation framework</h1>
+<p>M1.10 includes:</p>
+<pre><code class="language-text">70 positive controls
+6 negative controls
+18 detailed evidence result sets
+</code></pre>
+<p>Positive controls cover:</p>
+<ul>
+<li>accepted predecessor gates and hashes;</li>
+<li>exact application/scenario cardinality;</li>
+<li>unique physical grains;</li>
+<li>obligation domains, balances, payment identities, source lineage, and hashes;</li>
+<li>requested rate-versus-horizon burden;</li>
+<li>existing and total burden identities;</li>
+<li>operating cash and payment-coverage identities;</li>
+<li>residual cash-flow identities;</li>
+<li>post-financing liquidity identities;</li>
+<li>obligation concentration and stacking;</li>
+<li>independent, baseline, and final capacity tiers;</li>
+<li>stress non-improvement;</li>
+<li>affordability mapping;</li>
+<li>fallback and manual-review logic;</li>
+<li>matched scenario coverage;</li>
+<li>feature and source lineage;</li>
+<li>no-future-data controls;</li>
+<li>canonical set hashes;</li>
+<li>strict stage boundaries;</li>
+<li>blocking configuration errors.</li>
+</ul>
+<p>Negative controls prove fail-closed rejection of:</p>
+<pre><code class="language-text">Disabled generation policy
+Invalid methodology version
+Invalid requested-burden basis
+Unapproved accepted stress scenario
+Prerequisite run-status drift
+Attempted post-generation rerun
+</code></pre>
+<p>Open the validation matrix (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/docs/M1_10_VALIDATION_MATRIX.md</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Evidence to retain</h1>
+<p>Structured CSV exports are sufficient. Execution logs are optional unless diagnosing a defect.</p>
+<p>Retain:</p>
+<pre><code class="language-text">68 schema/policy checkpoint
+69 preflight result
+70 generation checkpoint
+71 positive-validation result
+72 negative-control result
+73 acceptance-finalizer result
+74 master report
+75 all eighteen detailed-report result sets
+completed M1.10 acceptance milestone
+</code></pre>
+<p>Detailed result sets:</p>
+<pre><code class="language-text">17 — Row-Level Deterministic Mismatches
+18 — Blocking Resolution Errors
+</code></pre>
+<p>must retain their headers and contain zero data rows.</p>
+<p>Open the evidence instructions (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/evidence/README.md</code>; referenced bytes not established here)</p>
+<p>Open the acceptance-milestone template (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/evidence/templates/MSBF_M1_10_Obligations_Liquidity_Capacity_Build_Acceptance_Milestone_v0_2_template.txt</code>; referenced bytes not established here)</p>
+<hr>
+<h1>Documentation and catalogs</h1>
+<ul>
+<li>Architecture diagram (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/diagrams/M1_10_ARCHITECTURE.png</code>; referenced bytes not established here)</li>
+<li>Architecture specification (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/docs/M1_10_ARCHITECTURE.md</code>; referenced bytes not established here)</li>
+<li>Design and generation specification (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/docs/M1_10_DESIGN_AND_GENERATION_SPECIFICATION.md</code>; referenced bytes not established here)</li>
+<li>Parameter dictionary — Markdown (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/docs/M1_10_PARAMETER_DICTIONARY.md</code>; referenced bytes not established here)</li>
+<li>Parameter dictionary — CSV (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/catalogs/M1_10_PARAMETER_DICTIONARY.csv</code>; referenced bytes not established here)</li>
+<li>Governed parameter values (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/catalogs/M1_10_PARAMETER_VALUES.csv</code>; referenced bytes not established here)</li>
+<li>Obligation-type matrix (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/catalogs/M1_10_OBLIGATION_TYPE_MATRIX.csv</code>; referenced bytes not established here)</li>
+<li>Field dictionary (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/catalogs/M1_10_FIELD_DICTIONARY.csv</code>; referenced bytes not established here)</li>
+<li>Expected results (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/catalogs/M1_10_EXPECTED_RESULTS.json</code>; referenced bytes not established here)</li>
+<li>Run configuration (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/catalogs/M1_10_RUN_CONFIGURATION.json</code>; referenced bytes not established here)</li>
+<li>Execution order (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/catalogs/M1_10_EXECUTION_ORDER.csv</code>; referenced bytes not established here)</li>
+<li>Physical dependency catalog (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/catalogs/M1_10_PHYSICAL_DEPENDENCY_COLUMNS.csv</code>; referenced bytes not established here)</li>
+<li>Release notes (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/RELEASE_NOTES.md</code>; referenced bytes not established here)</li>
+<li>Package-validation report (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/PACKAGE_VALIDATION_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Machine-readable static validation (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/catalogs/M1_10_STATIC_VALIDATION.json</code>; referenced bytes not established here)</li>
+<li>Final module build report (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/M1_10_FINAL_BUILD_REPORT.json</code>; referenced bytes not established here)</li>
+<li>Full package build report (historical reference: <code>sandbox:[session]/MSBF_M1_10_PACKAGE_BUILD_REPORT.json</code>; referenced bytes not established here)</li>
+</ul>
+<hr>
+<h1>Static package validation</h1>
+<p>The completed package passed all defined static controls:</p>
+<pre><code class="language-text">Controlled SQL files                          10
+SQL source lines                           1,868
+Positive validation controls                  70
+Negative controls                               6
+Detailed-report result sets                    18
+
+Obligation expected INSERT/SELECT           22/22
+Obligation physical INSERT/SELECT           22/22
+Capacity expected INSERT/SELECT             53/53
+Capacity physical INSERT/SELECT             53/53
+
+SQL lexical-balance errors                      0
+Session-level random() calls                     0
+Destructive accepted-table deletes               0
+Upstream blueprint-regeneration paths            0
+Standalone validation-helper SELECT calls        0
+CSV/JSON parsing errors                          0
+Static errors                                    0
+Static warnings                                  0
+</code></pre>
+<h2>ZIP validation</h2>
+<h3>Standalone module</h3>
+<pre><code class="language-text">Entries                         41
+CRC validation                  PASS
+Complete extraction             PASS
+Hash reconciliation             PASS
+ZIP64                           Not used
+Maximum internal path          121 characters
+</code></pre>
+<h3>Full project repository</h3>
+<pre><code class="language-text">Entries                        959
+CRC validation                  PASS
+Complete extraction             PASS
+Hash reconciliation             PASS
+ZIP64                           Not used
+Maximum internal path          210 characters
+</code></pre>
+<p>A live PostgreSQL server was not available in the artifact-build environment. Static validation cannot establish live runtime, planner behavior, transactional execution, actual obligation distributions, capacity distributions, or formal acceptance.</p>
+<hr>
+<h1>Stage boundary and next module</h1>
+<p>M1.10 does not create:</p>
+<ul>
+<li>a merchant credit-risk proxy;</li>
+<li>calibrated PD;</li>
+<li>EAD or LGD;</li>
+<li>Expected Loss;</li>
+<li>pricing;</li>
+<li>an approved offer;</li>
+<li>approval, counteroffer, manual-review, or decline decisions;</li>
+<li>Module 1 latest or archive contract rows.</li>
+</ul>
+<p>After M1.10 live acceptance, the planned next module is:</p>
+<blockquote>
+<p><strong>M1.11 — Cash-Flow Archetypes &amp; Operating Resilience</strong></p>
+</blockquote>
+<p>Open the M1.11 handoff plan (historical reference: <code>sandbox:[session]/build_m1_10/module/MSBF_M1_10_Obligations_Liquidity_Residual_Cash_Flow_v0_2/NEXT_STEP_M1_11_CASH_FLOW_ARCHETYPES_OPERATING_RESILIENCE.md</code>; referenced bytes not established here)</p>
+<p>The controlled progression is now:</p>
+<pre><code class="language-text">G0 Physical Foundation
+PASS
+
+→
+
+G1 Governed Run Control
+PASS
+
+→
+
+M1.2–M1.9
+PASS
+
+→
+
+M1.10 Obligations, Liquidity &amp; Residual Cash Flow
+READY FOR LIVE EXECUTION
+
+→
+
+M1.11 Cash-Flow Archetypes &amp; Operating Resilience
+PENDING M1.10 ACCEPTANCE
+</code></pre>
+</div></article><article id="m-c6ec19ac-dcfb-4ef1-9265-e3de842a4c10" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00268 · 2026-07-26T11:35:57.638000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(157).png; 69_msbf_m1_10_preflight_validation_v0_2_results_20260726.csv; 68_msbf_m1_10_schema_policy_extension_v0_2_results_20260726.csv</p><div class="bubble"><p>warning popped up while trying to run 70_msbf... what should I do? if this requires a hotfix, please proceed.</p>
+</div></article><article id="m-a4b3d08d-c302-4e45-9bad-9547f6f12090" class="message assistant"><p class="meta"><strong>Assistant</strong> · C068-M00269 · 2026-07-26T11:44:59.162125-04:00 · active path</p><div class="bubble"><h2>Stop this execution and use the R1 correction</h2>
+<p>In the current DBeaver dialog, click <strong>Cancel</strong>—not <strong>OK</strong> or <strong>Yes to All</strong>—and do not select <strong>Do not ask me again</strong>.</p>
+<p>Then execute:</p>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>The warning itself is a DBeaver safety prompt triggered by this statement:</p>
+<pre><code class="language-sql">UPDATE _m1_10_obligation_expected o
+SET row_hash = ...
+</code></pre>
+<p>The target is a session-temporary expected-results table, and the intent is to calculate a hash for every row. There is a second analogous update for <code>_m1_10_capacity_expected</code>. Those updates are not destructive to accepted project data. DBeaver is conservatively flagging an <code>UPDATE</code> without a <code>WHERE</code> clause; retaining confirmation for modification statements is the safer configuration. [export reference: cite | turn312276search0]</p>
+<p>However, you should <strong>not simply approve the warning</strong>, because the attached preflight result exposed a separate governed defect.</p>
+<h1>The preflight actually failed</h1>
+<p>Your preflight output shows:</p>
+<pre><code class="language-text">run_status       = M1_9_ACCEPTED
+passed_gates     = 9
+scenario_count   = 2
+baseline_count   = 1
+stress_count     = 1
+feature rows     = 1,500
+applications     = 750
+blocking_errors  = 0
+
+m12_hash         = NULL / blank
+preflight_status = FAIL
+</code></pre>
+<p>Open the submitted M1.10 preflight evidence (historical reference: <code>sandbox:[session]/69_msbf_m1_10_preflight_validation_v0_2_results_20260726.csv</code>; referenced bytes not established here)</p>
+<p>The original preflight incorrectly searched <code>msbf_ctl.run_evidence</code> for:</p>
+<pre><code class="language-text">M1_2_POPULATION_SET_HASH
+</code></pre>
+<p>That evidence code does not exist. M1.2 stores the accepted population identity in:</p>
+<pre><code class="language-text">msbf_m1.population_registry.population_hash
+</code></pre>
+<p>with the accepted value:</p>
+<pre><code class="language-text">9b706c926260a3ef1ae8ac95eed5d0bf
+</code></pre>
+<p>The same nonexistent evidence-code reference also appeared in positive validation control:</p>
+<pre><code class="language-text">M1_10_POS_06_POPULATION_HASH
+</code></pre>
+<p>Therefore, bypassing the DBeaver warning would have allowed generation to continue after a failed preflight and would have caused a later false failure in program 71.</p>
+<p>The schema and policy extension itself passed:</p>
+<pre><code class="language-text">schema_policy_extension_status = PASS
+methodology_version            = M1_10_METHOD_V1
+capacity table                 = present
+lineage view                   = present
+obligation extension columns   = 9
+</code></pre>
+<p>Open the submitted schema-extension evidence (historical reference: <code>sandbox:[session]/68_msbf_m1_10_schema_policy_extension_v0_2_results_20260726.csv</code>; referenced bytes not established here)</p>
+<p>You do <strong>not</strong> need to rerun program 68.</p>
+<h1>Consolidated M1.10 v0.2R1 hotfix</h1>
+<p>Download the complete M1.10 v0.2R1 hotfix (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R1_Preflight_Hash_DBeaver_Safety_Hotfix.zip</code>; referenced bytes not established here)</p>
+<p>Download the ZIP SHA-256 file (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R1_Preflight_Hash_DBeaver_Safety_Hotfix.zip.sha256</code>; referenced bytes not established here)</p>
+<pre><code class="language-text">SHA-256
+a79d8e205576faa5df7c0a877d4cd5ede26a299850289a758b8b4aed1a839916
+
+Files
+21
+</code></pre>
+<p>Canonical long-form copy:</p>
+<p>Download the canonical R1 hotfix package (historical reference: <code>sandbox:[session]/merchant_sales_based_financing_m1_10_v0_2R1_preflight_hash_dbeaver_safety_hotfix.zip</code>; referenced bytes not established here)</p>
+<h2>Corrections included</h2>
+<h3>1. Correct M1.2 population-hash source</h3>
+<p>Programs 69 and 71 now read:</p>
+<pre><code class="language-sql">msbf_m1.population_registry.population_hash
+</code></pre>
+<p>rather than querying a nonexistent run-evidence code.</p>
+<h3>2. Bound the two full-table temporary updates</h3>
+<p>Program 70 now uses:</p>
+<pre><code class="language-sql">UPDATE _m1_10_obligation_expected o
+SET row_hash =
+    msbf_m1.m1_10_hash_jsonb(
+        to_jsonb(o) - &#39;row_hash&#39; - &#39;created_at&#39;
+    )
+WHERE o.row_hash IS NULL;
+</code></pre>
+<p>and:</p>
+<pre><code class="language-sql">UPDATE _m1_10_capacity_expected c
+SET row_hash =
+    msbf_m1.m1_10_hash_jsonb(
+        to_jsonb(c) - &#39;row_hash&#39; - &#39;created_at&#39;
+    )
+WHERE c.row_hash IS NULL;
+</code></pre>
+<p>This preserves the same intended all-row hash calculation while making the scope explicit. DBeaver should no longer display the dangerous-query warning for these statements.</p>
+<h3>3. Audit the downstream path</h3>
+<p>The R1 package includes version-aligned programs 69–75 and confirms:</p>
+<pre><code class="language-text">Positive controls                 70
+Negative controls                  6
+Detailed-report result sets       18
+Legacy M1.2 evidence reference     0 in operational scripts
+Unbounded expected-table updates   0
+Static status                    PASS
+</code></pre>
+<p>No obligation formula, capacity formula, scenario treatment, parameter, expected row count, validation threshold, or stage boundary changed.</p>
+<h1>Exact recovery sequence</h1>
+<h2>1. Cancel and roll back the current v0.2 attempt</h2>
+<pre><code class="language-sql">ROLLBACK;
+</code></pre>
+<p>The warning occurred before the first persistent obligation insert, and the enclosing transaction has not committed. Rollback should remove the temporary work and preserve the accepted M1.9 state.</p>
+<h2>2. Run the R1 recovery check</h2>
+<p>Download program 68B (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R1_Preflight_Hash_DBeaver_Safety_Hotfix/tests/68B_msbf_m1_10_pre_generation_recovery_check_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>Required result:</p>
+<pre><code class="language-text">run_status                  M1_9_ACCEPTED
+obligation_rows             0
+capacity_rows               0
+m1_10_evidence_rows         0
+m1_10_gate_rows             0
+blocking_errors             0
+
+population_registry_hash
+9b706c926260a3ef1ae8ac95eed5d0bf
+
+legacy_evidence_code_rows   0
+capacity_table_exists       true
+lineage_view_exists         true
+recovery_state_status       PASS
+</code></pre>
+<p>Stop if this does not return <code>PASS</code>.</p>
+<h2>3. Run the corrected preflight</h2>
+<p>Download corrected program 69 (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R1_Preflight_Hash_DBeaver_Safety_Hotfix/tests/69_msbf_m1_10_preflight_validation_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>Required:</p>
+<pre><code class="language-text">m12_hash
+9b706c926260a3ef1ae8ac95eed5d0bf
+
+preflight_status
+PASS
+</code></pre>
+<h2>4. Run corrected generation</h2>
+<p>Download corrected program 70 (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R1_Preflight_Hash_DBeaver_Safety_Hotfix/sql/70_msbf_m1_10_obligations_liquidity_capacity_generation_v0_2R1.sql</code>; referenced bytes not established here)</p>
+<p>Required checkpoint:</p>
+<pre><code class="language-text">run_status               M1_10_GENERATED
+capacity_rows            1,500
+applications             750
+scenarios                2
+row_level_mismatches     0
+generation_status        PASS
+</code></pre>
+<p>The obligation count is governed and variable, so it is not expected to equal a fixed hard-coded number.</p>
+<p>After program 70 commits successfully, do not rerun it.</p>
+<h2>5. Complete the R1 sequence</h2>
+<pre><code class="language-text">71_msbf_m1_10_obligations_liquidity_capacity_validation_v0_2R1.sql
+72_msbf_m1_10_negative_control_tests_v0_2R1.sql
+73_msbf_m1_10_acceptance_finalize_v0_2R1.sql
+74_MSBF_M1_10_Obligations_Liquidity_Capacity_Master_Report_v0_2R1.sql
+75_MSBF_M1_10_Obligations_Liquidity_Capacity_Detail_Report_v0_2R1.sql
+</code></pre>
+<p>Direct links:</p>
+<ul>
+<li>Program 71 — positive validation (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R1_Preflight_Hash_DBeaver_Safety_Hotfix/sql/71_msbf_m1_10_obligations_liquidity_capacity_validation_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>Program 72 — negative controls (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R1_Preflight_Hash_DBeaver_Safety_Hotfix/sql/72_msbf_m1_10_negative_control_tests_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>Program 73 — acceptance finalizer (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R1_Preflight_Hash_DBeaver_Safety_Hotfix/sql/73_msbf_m1_10_acceptance_finalize_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>Program 74 — master report (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R1_Preflight_Hash_DBeaver_Safety_Hotfix/tests/74_MSBF_M1_10_Obligations_Liquidity_Capacity_Master_Report_v0_2R1.sql</code>; referenced bytes not established here)</li>
+<li>Program 75 — detail report (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R1_Preflight_Hash_DBeaver_Safety_Hotfix/tests/75_MSBF_M1_10_Obligations_Liquidity_Capacity_Detail_Report_v0_2R1.sql</code>; referenced bytes not established here)</li>
+</ul>
+<p>Expected final state:</p>
+<pre><code class="language-text">Positive controls       70 / 70 PASS
+Negative controls        6 / 6 PASS
+Deterministic mismatches       0
+Blocking errors                0
+Gate status                  PASS
+Run status          M1_10_ACCEPTED
+Master report                 PASS
+</code></pre>
+<p>Open the complete R1 execution guide (historical reference: <code>sandbox:[session]/MSBF_M1_10_v0_2R1_Preflight_Hash_DBeaver_Safety_Hotfix/docs/M1_10_v0_2R1_EXECUTION_GUIDE.md</code>; referenced bytes not established here)</p>
+<p><code>70A_msbf_m1_10_generation_reconciliation_reconstructed_v0_2R1.sql</code> remains contingency-only and should be used only if program 70 commits but its DBeaver result tab is lost.</p>
+</div></article><article id="m-96018a38-cd24-4a82-b7ad-a32acf15f7ab" class="message user"><p class="meta"><strong>Andrew / user</strong> · C068-M00270 · 2026-07-26T12:22:18.640000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: image(158).png; 69_msbf_m1_10_preflight_validation_v0_2R1_results_20260726.csv; 68B_msbf_m1_10_pre_generation_recovery_check_v0_2R1_results_20260726.csv; 70_msbf_m1_10_obligations_liquidity_capacity_generation_v0_2R1_results_20260726.csv</p><div class="bubble"><p>error in program 71_msbf_m1_10_obligations_liquidity_capacity_validation_v0_2R1.sql: </p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>

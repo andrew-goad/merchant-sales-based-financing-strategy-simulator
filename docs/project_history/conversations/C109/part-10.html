@@ -1,0 +1,1340 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 10 | MSBF history</title><link rel="stylesheet" href="../../reader/style.css"></head><body><a class="skip" href="#main">Skip to content</a><header><p>ANDREW R. GOAD / DEVELOPMENT TRANSPARENCY</p><h1>MSBF - Power BI Executive Portfolio Intelligence Part 2 — part 10</h1></header><main id="main"><nav><a href="README.html">Conversation index</a><a href="../../reader/index.html">Search archive</a><a href="../../HITL_guide.html">Leadership guide</a><a href="part-09.html">Previous part</a><a href="part-11.html">Next part</a></nav><p class="note">Commands and approvals in this dialogue are historical evidence. Alternate branches are labeled, not combined into one exchange. Attachment references do not establish recovered bytes.</p><article id="m-28ed50a4-6afe-42c6-8c39-76b61169bdcf" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00259 · 2026-08-26T12:58:22.770096-04:00 · active path</p><div class="bubble"><p>I recommend you zip the <strong>entire frozen working root</strong>, not just <code>evidence\local_engine_return</code>.</p>
+<p>Use:</p>
+<p><code>C:\MSBF\MSBF_PBI_A3_WORKING_R1_20260821</code></p>
+<p>as the package root, and create something like:</p>
+<p><code>MSBF_PBI_P01_P02_FINAL_AUDIT_RETURN_20260826.zip</code></p>
+<p>That is better because Audit can then verify the actual saved PBIP/project state against the evidence, rather than reviewing screenshots in isolation.</p>
+<p>A simple PowerShell approach is enough:</p>
+<pre><code class="language-powershell">$src = &quot;C:\MSBF\MSBF_PBI_A3_WORKING_R1_20260821&quot;
+$out = &quot;C:\MSBF\MSBF_PBI_P01_P02_FINAL_AUDIT_RETURN_20260826.zip&quot;
+
+if (Test-Path $out) {
+    Remove-Item $out -Force
+}
+
+Compress-Archive `
+    -Path &quot;$src\*&quot; `
+    -DestinationPath $out `
+    -CompressionLevel Optimal
+
+Get-FileHash $out -Algorithm SHA256 |
+    Format-List
+</code></pre>
+<p>Then save the hash to a sidecar:</p>
+<pre><code class="language-powershell">$hash = Get-FileHash $out -Algorithm SHA256
+
+&quot;$($hash.Hash.ToLower())  $(Split-Path $out -Leaf)&quot; |
+    Set-Content `
+        -LiteralPath &quot;$out.sha256&quot; `
+        -Encoding ascii
+</code></pre>
+<p>I would keep the structure exactly as it exists under the working root. <strong>Do not reorganize, rename, normalize, or delete anything from the project just for the ZIP</strong>, except that Performance Analyzer files you already intentionally removed can remain excluded.</p>
+<p>Then attach these three things to the Audit chat:</p>
+<ol>
+<li><code>MSBF_PBI_P01_P02_FINAL_AUDIT_RETURN_20260826.zip</code></li>
+<li><code>MSBF_PBI_P01_P02_FINAL_AUDIT_RETURN_20260826.zip.sha256</code></li>
+<li>The smaller audit-submission ZIP I already prepared, which contains the submission prompt and curated evidence narrative.</li>
+</ol>
+<p>That gives Audit both the <strong>physical frozen project</strong> and the <strong>curated review instructions/evidence map</strong>.</p>
+<p>One caution: make sure Power BI Desktop is <strong>saved and closed before you zip the root</strong>. That avoids capturing files while Desktop is still serializing or holding transient state.</p>
+<p>If you want, after you create the ZIP, upload it here and I can verify its internal structure and SHA-256 before you send it to Audit.</p>
+</div></article><article id="m-571894ca-e485-4cdd-9c73-8715ddffad98" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00260 · 2026-08-26T13:00:54.442000-04:00 · active path</p><div class="bubble"><p>there was a command we had been using at the start of every powershell session. what was that?</p>
+</div></article><article id="m-45b60a86-c640-466b-beda-79ad7ed046ea" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00261 · 2026-08-26T13:00:56.742098-04:00 · active path</p><div class="bubble"><p>Yes — the command we were routinely using at the beginning of the controlled PowerShell sessions was:</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+</code></pre>
+<p>That makes PowerShell treat non-terminating errors as terminating errors, which is useful for our controlled execution because a command failure stops the sequence instead of allowing subsequent steps to continue against a potentially invalid state.</p>
+<p>For sessions where we needed to execute the supplied <code>.ps1</code> tooling, we also commonly used:</p>
+<pre><code class="language-powershell">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+</code></pre>
+<p>The A3 runbook specifically starts its PowerShell 7 initialization with that execution-policy command before unblocking and running the project scripts. [export reference: filecite | turn32file6 | L250-L261]</p>
+<p>So for what you&#39;re about to do, I&#39;d start with:</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+</code></pre>
+<p>Then run the packaging commands.</p>
+</div></article><article id="m-f9aa2afb-fd78-4e12-8bb3-b60709e8503d" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00262 · 2026-08-26T13:10:21.687000-04:00 · active path</p><p class="note">Attachment references: MSBF_PBI_P01_P02_FINAL_AUDIT_RETURN_20260826.zip</p><div class="bubble"><p>it looks like some responses in my chatGPT app from this morning (in this chat) were lost. I had asked this chat to do two things earlier: 1) Fully scope out the future ideas we had (tab by tab) for the remainder of this Power BI. Not necessarily mapping details like where does this chat belong on the page, but the general story we want to tell on each tab and what we&#39;ll use to accomplish that (at a high level) ; 2) The second thing I had asked chatGPT in this chat was to give Audit updated instructions to streamline this build, noting the excellent working relationship we established on this current Power BI build. We need Audit to understand that we are finding issues faster and solving problems better by digging in vs trying to solve every minute detail prior to beginning construction. We want to produce this as quickly and as awesome as possible, without going back and forth to audit over things we could catch 100x faster by digging in. Please evaluate these two asks and then update our audit prompt/package. here is the zip&#39;s I just created:</p>
+</div></article><article id="m-185df978-500c-40b8-a0cd-c59011c955b5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00263 · 2026-08-26T13:39:23.216091-04:00 · active path</p><div class="bubble"><p>Both asks are well founded, and I incorporated them into a substantially stronger R2 audit package.</p>
+<p>The original frozen report architecture already contemplated Merchant Relationship 360, Application &amp; Account Servicing 360, Portfolio Focus &amp; Next-Month Action, Strategy &amp; Scenario Laboratory, and Governance &amp; Reconciliation. [export reference: filecite | turn33file1 | L47-L56] The revised roadmap preserves those core experiences while incorporating what the physical P01/P02 build taught us: cohort snapshot, cohort lifecycle, eventual multi-cohort comparison, and a separate current-portfolio lens.</p>
+<p>The audit-streamlining request is also appropriate. The original P01 authorization was highly constrained—one page, exactly 14 native containers, and zero semantic changes. [export reference: filecite | turn30file4 | L131-L154] That rigor helped establish the boundary, but the physical build demonstrated that native Power BI behavior, point-versus-range context, endpoint gating, sorting, executive labeling, and cohort semantics were discovered and resolved much more effectively by constructing and testing the report. The R2 prompt does <strong>not</strong> ask Audit to relinquish control. It asks Audit to focus on material semantic, temporal, denominator, claim, security, and release risks while allowing ordinary report design to proceed until a coherent evidence-backed construction wave is ready.</p>
+<h2>Future tab roadmap now documented</h2>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>Intended story</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>P01 — Cohort Command Center</strong></td>
+<td>What cohort did we originate, and what does it look like on the selected date?</td>
+</tr>
+<tr>
+<td><strong>P02 — Cohort Lifecycle</strong></td>
+<td>How did that fixed cohort progress through funding, performance, servicing, and payoff?</td>
+</tr>
+<tr>
+<td><strong>P03 — Cohort Comparison</strong></td>
+<td>How do multiple cohorts compare at the same cohort age?</td>
+</tr>
+<tr>
+<td><strong>P04 — Current Portfolio Command Center</strong></td>
+<td>What does the entire replenishing book look like on one calendar date?</td>
+</tr>
+<tr>
+<td><strong>P05 — Merchant Relationship 360</strong></td>
+<td>What is the complete acquisition, application, advance, performance, and servicing history for one merchant?</td>
+</tr>
+<tr>
+<td><strong>P06 — Application &amp; Account Journey</strong></td>
+<td>How did one scenario-qualified path move from request through decision, activation, servicing, and reconciliation?</td>
+</tr>
+<tr>
+<td><strong>P07 — Servicing &amp; Exceptions</strong></td>
+<td>Where is operational attention required, why, for how long, and against what exposure?</td>
+</tr>
+<tr>
+<td><strong>P08 — Risk, Economics &amp; Concentration</strong></td>
+<td>Where do comparative risk, economic value, and concentrations reside?</td>
+</tr>
+<tr>
+<td><strong>P09 — Portfolio Focus &amp; Next-Month Action</strong></td>
+<td>Which transparent focus families warrant management review next month?</td>
+</tr>
+<tr>
+<td><strong>P10 — Strategy &amp; Scenario Laboratory</strong></td>
+<td>What matched synthetic tradeoffs arise across governed scenarios and strategies?</td>
+</tr>
+<tr>
+<td><strong>P11 — Governance &amp; Reconciliation</strong></td>
+<td>Can every result be traced, recomputed, reconciled, and bounded?</td>
+</tr>
+</tbody></table>
+<p>The roadmap separates immediate current-model-supported construction from future data- or method-dependent pages. In particular, multi-cohort comparison and the true current-portfolio page require multiple accepted cohorts, while Focus/Action and Strategy Laboratory remain method-gated.</p>
+<h2>Important carrier finding</h2>
+<p>My review found a <strong>blocking mismatch inside the ZIP you just created</strong>.</p>
+<p>The ZIP contains the final screenshot/UAT evidence, but its embedded <code>project/</code> directory still contains:</p>
+<pre><code class="language-text">Report pages       1
+Page display name  A1A_TECHNICAL_SHELL_NO_VISUALS
+Visual definitions 0
+Tables             33
+Relationships      33
+Measures           60
+P01/P02 adapters   Not present
+</code></pre>
+<p>In other words, the evidence shows the constructed two-page report, but the physical project bundled in the ZIP is still the predecessor technical shell. The project and screenshots are not the same saved physical state.</p>
+<p>That ZIP should <strong>not</strong> be sent to Audit as the final P01/P02 project carrier. Doing so would almost certainly produce a carrier-integrity HOLD.</p>
+<p>I documented this openly and included a fail-closed PowerShell packaging tool that will refuse to create the final audit carrier until it finds:</p>
+<ul>
+<li>both cohort pages;</li>
+<li>populated visual definitions;</li>
+<li>the accepted 33-table / 33-relationship base;</li>
+<li>the final P01/P02 adapter measures and presentation column;</li>
+<li>the required screenshot evidence; and</li>
+<li>no Performance Analyzer files.</li>
+</ul>
+<h2>Updated R2 package</h2>
+<p>Download the updated Audit Prompt and Roadmap R2 package (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_AUDIT_PROMPT_ROADMAP_R2_20260826.zip</code>; referenced bytes not established here)</p>
+<p>Download the R2 SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_AUDIT_PROMPT_ROADMAP_R2_20260826.zip.sha256</code>; referenced bytes not established here)</p>
+<p><strong>R2 package SHA-256</strong></p>
+<pre><code class="language-text">f2516d1452805eac514cde6f3bede411c4609a94bd46e96d0a41dc41abf7919f
+</code></pre>
+<p>Key files:</p>
+<ul>
+<li>Read First and packaging sequence (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_AUDIT_PROMPT_ROADMAP_R2_20260826/00_READ_FIRST.md</code>; referenced bytes not established here)</li>
+<li>Updated Independent Audit prompt (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_AUDIT_PROMPT_ROADMAP_R2_20260826/01_INDEPENDENT_AUDIT_SUBMISSION_PROMPT_R2.md</code>; referenced bytes not established here)</li>
+<li>Complete tab-by-tab future roadmap (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_AUDIT_PROMPT_ROADMAP_R2_20260826/02_FUTURE_REPORT_ROADMAP.md</code>; referenced bytes not established here)</li>
+<li>Streamlined build-and-audit operating model (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_AUDIT_PROMPT_ROADMAP_R2_20260826/03_STREAMLINED_BUILD_AND_AUDIT_OPERATING_MODEL.md</code>; referenced bytes not established here)</li>
+<li>Source-owner decision and known-delta register (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_AUDIT_PROMPT_ROADMAP_R2_20260826/04_SOURCE_OWNER_DECISION_AND_DELTA_REGISTER.md</code>; referenced bytes not established here)</li>
+<li>Carrier preflight finding (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_AUDIT_PROMPT_ROADMAP_R2_20260826/05_CARRIER_PREFLIGHT_REPORT.md</code>; referenced bytes not established here)</li>
+<li>Fail-closed final-carrier PowerShell builder (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_AUDIT_PROMPT_ROADMAP_R2_20260826/tools/Build-MSBF-PBI-FinalAuditCarrier-R2.ps1</code>; referenced bytes not established here)</li>
+</ul>
+<h2>Exact next sequence</h2>
+<p>First locate or save the <strong>actual two-page report as a Power BI Project</strong>. The current <code>C:\MSBF\MSBF_PBI_A3_WORKING_R1_20260821\project</code> directory, as represented in your ZIP, is not that final project. The two-page report may have been saved as a PBIX, saved into another PBIP location, or not serialized back into this particular project tree.</p>
+<p>After the correct project is in the working root and Power BI Desktop is closed, extract the R2 package and run:</p>
+<pre><code class="language-powershell">$ErrorActionPreference = &quot;Stop&quot;
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+
+&amp; &quot;C:\MSBF\MSBF_PBI_P01_P02_AUDIT_PROMPT_ROADMAP_R2_20260826\tools\Build-MSBF-PBI-FinalAuditCarrier-R2.ps1&quot; `
+    -WorkingRoot &quot;C:\MSBF\MSBF_PBI_A3_WORKING_R1_20260821&quot; `
+    -AuditAddendumRoot &quot;C:\MSBF\MSBF_PBI_P01_P02_AUDIT_PROMPT_ROADMAP_R2_20260826&quot; `
+    -OutputDirectory &quot;C:\MSBF&quot;
+</code></pre>
+<p>The script will stop rather than package the technical shell. Once it passes, it will create:</p>
+<pre><code class="language-text">C:\MSBF\MSBF_PBI_P01_P02_FINAL_AUDIT_RETURN_R2_20260826.zip
+C:\MSBF\MSBF_PBI_P01_P02_FINAL_AUDIT_RETURN_R2_20260826.zip.sha256
+</code></pre>
+<p>That resulting full carrier—not the current <code>911367...</code> ZIP—should be submitted with the updated R2 prompt. After the script passes, upload the generated ZIP and sidecar here for final carrier/hash verification before sending them to Independent Audit.</p>
+</div></article><article id="m-3bf51a6d-78d6-4850-979f-49cbb4e40d17" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00264 · 2026-08-26T13:50:17.078000-04:00 · active path</p><p class="note">Attachment references: PBI_WP3_P01_CONSTRUCTION_R1.zip</p><div class="bubble"><p>it was saved here: C:\MSBF\PBI_WP3_P01_CONSTRUCTION_R1\project. please package everything I need to send to audit.</p>
+</div></article><article id="m-c11b3279-6ce4-4d3b-a724-564bc1a7630d" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00265 · 2026-08-26T14:18:33.342362-04:00 · active path</p><div class="bubble"><h2>Final Audit package completed</h2>
+<p>I used the correct saved construction carrier, <code>PBI_WP3_P01_CONSTRUCTION_R1.zip</code>, originating from:</p>
+<pre><code class="language-text">C:\MSBF\PBI_WP3_P01_CONSTRUCTION_R1\project
+</code></pre>
+<p>The resulting package is self-contained. It includes the actual two-page Power BI Project, the accepted A3 comparison authority, the controlling R12 audit decision, final P01/P02 evidence, exact semantic and report inventories, the updated streamlined-audit request, and the complete future tab-by-tab roadmap.</p>
+<h3>Files to send to Independent Audit</h3>
+<ol>
+<li><p>Download the final Independent Audit return ZIP (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_FINAL_INDEPENDENT_AUDIT_RETURN_R3_20260826.zip</code>; referenced bytes not established here)</p>
+</li>
+<li><p>Download the ZIP SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_FINAL_INDEPENDENT_AUDIT_RETURN_R3_20260826.zip.sha256</code>; referenced bytes not established here)</p>
+</li>
+<li><p>Download the ZIP validation report (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_FINAL_INDEPENDENT_AUDIT_RETURN_R3_20260826_ZIP_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+</li>
+</ol>
+<p>Then paste this into the Audit chat:</p>
+<p>Open the copy/paste Independent Audit prompt (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_FINAL_INDEPENDENT_AUDIT_RETURN_R3_20260826/COPY_PASTE_AUDIT_PROMPT.txt</code>; referenced bytes not established here)</p>
+<p>You do <strong>not</strong> need to attach the original construction ZIP, the prior R2 prompt package, or the individual screenshots separately. They are incorporated into the final carrier.</p>
+<h2>Final physical identities</h2>
+<pre><code class="language-text">Final Audit ZIP SHA-256
+e2134ffb9ea75411014d0e097966e30d421c6685b0dc2fb8c4ea8333789fa2e8
+
+Original construction ZIP SHA-256
+69e4095f9b7d69e25fb4bacb30f6768a95bbfd3be938d9df1c930b949af8b58e
+
+Current project manifest root
+b07e48ed781e732ab53a9258c683ea246ecf3bd88cb31251b568842baf952678
+
+Current report-definition root
+ff40270d8cbd40014fe059e65e63be2a07fd3ad655babe0f974d5f56b4508682
+
+Current model.bim SHA-256
+4e13d2118c15ff1d1547d98a4c40f304301d3427c534e3f0eb05050000672f6f
+</code></pre>
+<h2>Validated implementation state</h2>
+<pre><code class="language-text">Tables                         33
+Relationships                  33
+Power Query objects            81
+Measures                       76
+Columns                        871
+Substantive pages               2
+Physical visual containers     44
+</code></pre>
+<p>The comparison against the accepted A3 model established:</p>
+<ul>
+<li>no tables added, removed, or changed;</li>
+<li>no relationships added, removed, or changed;</li>
+<li>no Power Query expressions or partitions added, removed, or changed;</li>
+<li>none of the accepted 60 measure formulas changed;</li>
+<li>16 explicitly prefixed P01/P02 report-adapter measures were added;</li>
+<li>one calculated presentation column was added;</li>
+<li>all submitted visual field references resolve to current model objects.</li>
+</ul>
+<p>The outer ZIP validation passed with:</p>
+<pre><code class="language-text">ZIP entries                 166
+Manifest rows               164
+Manifest mismatches           0
+Unsafe paths                  0
+Duplicate paths               0
+Casefold duplicates           0
+Symlinks                      0
+Encrypted entries             0
+CRC failures                  0
+Result                     PASS
+</code></pre>
+<p>No Performance Analyzer <strong>capture JSONs</strong> are included. The untouched source carrier still contains the inherited performance-budget/template/empty-scaffold control files, but they are expressly identified as historical scaffolding—not submitted performance evidence. The audit prompt excludes quantitative performance from the requested scope.</p>
+<h2>Updated strategic materials</h2>
+<p>The package contains both requested lost-response deliverables:</p>
+<ul>
+<li>Future report roadmap, tab by tab (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_FINAL_INDEPENDENT_AUDIT_RETURN_R3_20260826/05_FUTURE_REPORT_ROADMAP.md</code>; referenced bytes not established here)</li>
+<li>Streamlined build-and-audit operating model (historical reference: <code>sandbox:[session]/MSBF_PBI_P01_P02_FINAL_INDEPENDENT_AUDIT_RETURN_R3_20260826/04_STREAMLINED_BUILD_AND_AUDIT_OPERATING_MODEL.md</code>; referenced bytes not established here)</li>
+</ul>
+<p>The roadmap now covers:</p>
+<pre><code class="language-text">P01  Cohort Command Center
+P02  Cohort Lifecycle
+P03  Cohort Comparison
+P04  Current Portfolio Command Center
+P05  Merchant Relationship 360
+P06  Application &amp; Account Journey
+P07  Servicing &amp; Exceptions
+P08  Risk, Economics &amp; Concentration
+P09  Portfolio Focus &amp; Next-Month Action
+P10  Strategy &amp; Scenario Laboratory
+P11  Governance &amp; Reconciliation
+</code></pre>
+<p>The Audit request asks for authorization to build the next current-model-supported wave as one coherent construction effort—Merchant Relationship 360, Application &amp; Account Journey, Servicing &amp; Exceptions, Risk/Economics/Concentration, and Governance/Reconciliation—then return at a meaningful freeze rather than repeatedly stopping for title, geometry, native-visual, and formatting decisions.</p>
+<h2>Disclosed observations</h2>
+<p>I did not silently modify the Power BI project to conceal four minor physical observations:</p>
+<ol>
+<li><code>report.json</code> retains the predecessor technical-shell boundary annotation.</li>
+<li>The two title text boxes retain inherited old-title alt text, although the substantive analytical visuals contain the updated alt text.</li>
+<li>P02 Scenario carries redundant Select All metadata alongside strict single-select behavior.</li>
+<li>An exhaustive chart-to-chart interaction-isolation matrix was not separately evidenced beyond the physical page definitions and the two intentional P02 interaction exceptions.</li>
+</ol>
+<p>The prompt asks Audit to classify those by materiality and require only the smallest concrete correction, rather than reopening the two-page architecture.</p>
+</div></article><article id="m-e55b1f4f-0a22-4584-ac9b-43f770c5770b" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00266 · 2026-08-26T15:07:17.801000-04:00 · active path</p><div class="bubble"><p>summarize these future tabs in 1-3 sentences for a brief linkedin message: </p>
+<table>
+<thead>
+<tr>
+<th><strong>P03 — Cohort Comparison</strong></th>
+<th>How do multiple cohorts compare at the same cohort age?</th>
+</tr>
+</thead>
+</table>
+<table>
+<thead>
+<tr>
+<th><strong>P04 — Current Portfolio Command Center</strong></th>
+<th>What does the entire replenishing book look like on one calendar date?</th>
+</tr>
+</thead>
+</table>
+<table>
+<thead>
+<tr>
+<th><strong>P05 — Merchant Relationship 360</strong></th>
+<th>What is the complete acquisition, application, advance, performance, and servicing history for one merchant?</th>
+</tr>
+</thead>
+</table>
+<table>
+<thead>
+<tr>
+<th><strong>P06 — Application &amp; Account Journey</strong></th>
+<th>How did one scenario-qualified path move from request through decision, activation, servicing, and reconciliation?</th>
+</tr>
+</thead>
+</table>
+<table>
+<thead>
+<tr>
+<th><strong>P07 — Servicing &amp; Exceptions</strong></th>
+<th>Where is operational attention required, why, for how long, and against what exposure?</th>
+</tr>
+</thead>
+</table>
+<table>
+<thead>
+<tr>
+<th><strong>P08 — Risk, Economics &amp; Concentration</strong></th>
+<th>Where do comparative risk, economic value, and concentrations reside?</th>
+</tr>
+</thead>
+</table>
+<table>
+<thead>
+<tr>
+<th><strong>P09 — Portfolio Focus &amp; Next-Month Action</strong></th>
+<th>Which transparent focus families warrant management review next month?</th>
+</tr>
+</thead>
+</table>
+<table>
+<thead>
+<tr>
+<th><strong>P10 — Strategy &amp; Scenario Laboratory</strong></th>
+<th>What matched synthetic tradeoffs arise across governed scenarios and strategies?</th>
+</tr>
+</thead>
+</table>
+<table>
+<thead>
+<tr>
+<th><strong>P11 — Governance &amp; Reconciliation</strong></th>
+<th>Can every result be traced, recomputed, reconciled, and bounded?</th>
+</tr>
+</thead>
+</table>
+</div></article><article id="m-4c59384b-3570-4b39-9dce-58648d6e4ed5" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00267 · 2026-08-26T15:07:21.925763-04:00 · active path</p><div class="bubble"><p>The next tabs expand from cohort monitoring into <strong>cohort comparisons, a current portfolio view, merchant and account-level journeys, servicing/exceptions, and deeper risk/economic analysis</strong>. From there, the tool moves into <strong>next-month portfolio focus, strategy/scenario testing, and full governance and reconciliation</strong>, creating an executive-to-account view of the financing lifecycle.</p>
+</div></article><article id="m-0e0fac75-7707-487a-a334-f6ec2835d621" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00268 · 2026-08-26T15:25:50.366000-04:00 · active path</p><p class="note">Attachment references: 04_CURRENT_MODEL_REPORT_DEPTH_WAVE_AUTHORIZATION(1).md; 03_POWER_BI_STREAMLINED_OPERATING_MODEL_DECISION(1).md; INDEPENDENT_AUDIT_STATUS_DASHBOARD(20260826-192239)(1).md; 02_IA_WP2H_MACHINE_SUMMARY(1).json; 01_IA_WP2H_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_REPORT(1).md; MSBF_IA_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_R13_20260826_ZIP_VALIDATION_REPORT(1).md; MSBF_IA_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_R13_20260826(1).zip; FINDINGS_AND_REMEDIATION_REGISTER(20260826-192250)(1).csv; 09_POWER_BI_CURRENT_MODEL_REPORT_DEPTH_WAVE_PROMPT(1).md</p><div class="bubble"><h1>P01/P02 acceptance and Power BI operating-model recalibration completed</h1>
+<p><strong>Decision ID:</strong> <code>IA-D-R13-PBI-001</code>
+<strong>Governing mandate:</strong> <code>IA-GOV-20260822-001</code></p>
+<h2>Recalibration determination</h2>
+<pre><code class="language-text">Immediate gate
+Accept the physically constructed P01/P02 experiences and establish
+the fastest materially safe path toward a publishable Power BI product.
+
+Empirical construction preferable to further preapproval
+YES
+
+Additional semantic-design cycle required
+NO
+
+Page-by-page minute audit preapproval required
+NO
+
+Audit burden proportionality
+SATISFIED
+</code></pre>
+<p>The source-owner package correctly demonstrated why physical construction should precede detailed report audit: implementation exposed Power BI-specific issues involving native visuals, implicit-measure restrictions, sorting, fixed-cohort semantics, temporal labeling, endpoint back-casting and range-versus-point context that were difficult to resolve through static preapproval alone.</p>
+<h2>Governing dispositions</h2>
+<table>
+<thead>
+<tr>
+<th>DecisionIndependent disposition</th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Outer carrier and manifests</td>
+<td><strong><code>PASS</code></strong></td>
+</tr>
+<tr>
+<td>Accepted A3 predecessor authority</td>
+<td><strong><code>PASS</code></strong></td>
+</tr>
+<tr>
+<td>Exact accepted-core model nonregression</td>
+<td><strong><code>PASS</code></strong></td>
+</tr>
+<tr>
+<td>Sixteen report-owned measures</td>
+<td><strong><code>PASS_WITH_OBSERVATIONS</code></strong></td>
+</tr>
+<tr>
+<td>One report-owned calculated column</td>
+<td><strong><code>PASS_WITH_OBSERVATIONS</code></strong></td>
+</tr>
+<tr>
+<td><strong>P01 — Cohort Command Center</strong></td>
+<td><strong><code>PASS_WITH_OBSERVATIONS</code></strong></td>
+</tr>
+<tr>
+<td><strong>P02 — Cohort Lifecycle</strong></td>
+<td><strong><code>PASS_WITH_OBSERVATIONS</code></strong></td>
+</tr>
+<tr>
+<td>Streamlined build-first audit model</td>
+<td><strong><code>PASS_WITH_OBSERVATIONS — RATIFIED</code></strong></td>
+</tr>
+<tr>
+<td>Current-model-supported report-depth wave</td>
+<td><strong><code>AUTHORIZED</code></strong></td>
+</tr>
+<tr>
+<td>Quantitative performance</td>
+<td><code>NOT_AUDITED — DEFERRED</code></td>
+</tr>
+<tr>
+<td><code>PBI-WP2</code></td>
+<td><strong><code>HOLD</code></strong></td>
+</tr>
+<tr>
+<td>Publication and deployment</td>
+<td><strong><code>NOT_AUTHORIZED</code></strong></td>
+</tr>
+<tr>
+<td>Public Power BI milestone claim</td>
+<td><strong><code>NOT_AUTHORIZED</code></strong></td>
+</tr>
+</tbody></table>
+<p>There is <strong>no blocking Power BI finding</strong> from this review.</p>
+<h1>Physical carrier and implementation authority</h1>
+<p>The outer package independently reconciles to the submitted carrier identity:</p>
+<pre><code class="language-text">Package
+MSBF_PBI_P01_P02_FINAL_INDEPENDENT_AUDIT_RETURN_R3_20260826.zip
+
+Bytes
+9,231,314
+
+SHA-256
+e2134ffb9ea75411014d0e097966e30d421c6685b0dc2fb8c4ea8333789fa2e8
+
+ZIP entries
+166
+
+Manifest rows
+164 / 164 PASS
+
+Unsafe paths
+0
+
+Duplicate paths
+0
+
+Case-fold duplicates
+0
+
+CRC failures
+0
+</code></pre>
+<p>The source-owner validation also correctly disclosed that no Performance Analyzer JSON was supplied and that the inherited performance files were scaffolds rather than execution evidence.</p>
+<p>The nested implementation and final project identities independently reproduce:</p>
+<pre><code class="language-text">Implementation ZIP SHA-256
+69e4095f9b7d69e25fb4bacb30f6768a95bbfd3be938d9df1c930b949af8b58e
+
+Current project manifest root
+b07e48ed781e732ab53a9258c683ea246ecf3bd88cb31251b568842baf952678
+
+Current report-definition root
+ff40270d8cbd40014fe059e65e63be2a07fd3ad655babe0f974d5f56b4508682
+
+Current semantic-model root
+e6055c7ec23212a302932e5f0019b941987dc1317a847af5d487ea27ef567a3f
+
+Current model.bim
+4e13d2118c15ff1d1547d98a4c40f304301d3427c534e3f0eb05050000672f6f
+</code></pre>
+<p>The nested ZIP and extracted implementation tree reconcile byte-for-byte across all 116 files.</p>
+<h2>Accepted current physical state</h2>
+<pre><code class="language-text">Tables                                33
+Relationships                         33
+Power Query objects                   81
+Measures                              76
+Columns                               871
+
+Accepted-core measures                60
+Added report-owned measures           16
+Added presentation columns             1
+
+Substantive pages                       2
+Native visual containers              44
+Bookmarks                              0
+Tooltip pages                           0
+Drillthrough targets                    0
+Mobile layouts                          0
+Custom visuals                          0
+</code></pre>
+<p>The accepted core remains unchanged:</p>
+<ul>
+<li>no table change;</li>
+<li>no relationship change;</li>
+<li>no partition change;</li>
+<li>no Power Query expression change;</li>
+<li>no source-root change; and</li>
+<li>no formula change to any of the accepted 60 measures.</li>
+</ul>
+<h1>Report-owned semantic adapter decision</h1>
+<p>All seventeen added objects are accepted as <strong>report-owned presentation or context adapters</strong>.</p>
+<p>The accepted population consists of:</p>
+<ul>
+<li>four P01 endpoint-reconciliation adapters;</li>
+<li>report-status and provenance display measures;</li>
+<li>one decision-outcome sort helper;</li>
+<li>three P02 fixed-cohort profile measures; and</li>
+<li>one calculated presentation label column.</li>
+</ul>
+<p>The endpoint adapters return blank unless the accepted endpoint gate is open. The P02 cohort-profile measures remove only Observation-period context while retaining Scenario, Industry and Acquisition-source context. The calculated column maps accepted outcome codes to executive-friendly labels while preserving the accepted ranking.</p>
+<p>None of the adapters:</p>
+<ul>
+<li>changes a governed denominator;</li>
+<li>introduces a new risk or expected-loss method;</li>
+<li>redefines economic contribution;</li>
+<li>adds a recommendation method;</li>
+<li>adds strategy-comparison semantics; or</li>
+<li>overwrites accepted source truth.</li>
+</ul>
+<p><strong>Adapter-layer disposition:</strong> <code>PASS_WITH_OBSERVATIONS</code>.</p>
+<h1>P01 acceptance</h1>
+<p>P01 is accepted as a truthful executive view of a <strong>fixed selected-run cohort at one selected observation date</strong>.</p>
+<p>It correctly separates:</p>
+<ul>
+<li>origination and decision profile;</li>
+<li>funding and acquisition-source profile;</li>
+<li>selected-date exposure and remittance condition;</li>
+<li>alerts and servicing;</li>
+<li>payoff slippage;</li>
+<li>endpoint-only reconciliation; and</li>
+<li>visible evidence-gate and provenance state.</li>
+</ul>
+<p>The four reconciliation adapters remain blank before the November 22, 2026 evidence endpoint and therefore do not historically back-cast endpoint facts.</p>
+<p>Application-scenario rates remain distinct from account-path balances and counts. The visible language and analytical alt text preserve the deterministic-synthetic, non-production, non-CECL and non-audited-profitability boundaries.</p>
+<p><strong>P01 disposition:</strong> <code>PASS_WITH_OBSERVATIONS</code>.</p>
+<h1>P02 acceptance</h1>
+<p>P02 is accepted as the longitudinal complement to P01.</p>
+<p>The physical behavior supports the intended contract:</p>
+<ul>
+<li>Scenario, Industry and Acquisition source define the cohort slice.</li>
+<li>Observation period defines the visible lifecycle window.</li>
+<li>Cohort Profile ignores only the Observation-period selection.</li>
+<li>Exposure intentionally retains both Baseline and Recession Energy.</li>
+<li>Other lifecycle charts follow the selected Scenario.</li>
+<li>Industry and Acquisition source affect both profile and lifecycle views.</li>
+<li>Exactly two <code>NoFilter</code> exceptions implement the stated design.</li>
+<li>The page presents a fixed cohort; it does not imply that new originations enter as time progresses.</li>
+</ul>
+<p><strong>P02 disposition:</strong> <code>PASS_WITH_OBSERVATIONS</code>.</p>
+<h1>Disclosed observations</h1>
+<p>The four disclosed issues were evaluated according to material consequence rather than literal catalog conformity.</p>
+<table>
+<thead>
+<tr>
+<th>FindingClassificationDecision</th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Stale report-level technical-shell annotation</td>
+<td><code>MINOR / OPEN_NONBLOCKING</code></td>
+<td>Correct during the next construction wave.</td>
+</tr>
+<tr>
+<td>Two title text boxes retain old title alt text</td>
+<td><code>MODERATE / OPEN_NONBLOCKING</code></td>
+<td>Correct during the next wave and before publication.</td>
+</tr>
+<tr>
+<td>P02 single-select Scenario slicer retains redundant select-all metadata</td>
+<td><code>MINOR / OPEN_NONBLOCKING</code></td>
+<td>Remove/disable it or prove it is not exposed before the next wave freeze.</td>
+</tr>
+<tr>
+<td>No exhaustive chart-to-chart interaction matrix</td>
+<td><code>OBSERVATION</code></td>
+<td>No exhaustive matrix is required; representative material UAT is sufficient.</td>
+</tr>
+</tbody></table>
+<p>These do <strong>not</strong> justify another P01/P02 remediation cycle or an interim re-audit.</p>
+<h1>Performance decision</h1>
+<p>Performance remains <code>NOT_AUDITED</code>.</p>
+<p>That is not a blocker because no concrete performance defect was evidenced. The recalibrated operating model permits performance benchmarking to be deferred until a release gate or until a real user-experience problem appears.</p>
+<p>Before publication, the workstream should perform a lightweight responsiveness smoke test on the intended target hardware. Full Performance Analyzer benchmarking is necessary only if a material performance issue is observed.</p>
+<h1>Streamlined audit operating model ratified</h1>
+<p><strong>Authority:</strong> <code>IA-PBI-OM-20260826-001</code></p>
+<p>The following cadence is now governing for Power BI:</p>
+<pre><code class="language-text">Accepted source/model boundary
+        ↓
+Source owner builds and physically UATs one coherent report wave
+        ↓
+Immediate stop only for a material hard-stop condition
+        ↓
+Freeze project, adapter delta, representative evidence and manifests
+        ↓
+Independent Audit performs one bounded wave-acceptance review
+</code></pre>
+<p>This reflects the submitted division of responsibility: the construction workstream owns report usability, native visual choices, geometry, formatting, ordinary interactions, accessibility and report-only corrections; Independent Audit retains source/model/method, scenario/grain/as-of, claim, privacy, carrier and final acceptance authority.</p>
+<h2>Preauthorized source-owner discretion</h2>
+<p>Within an accepted source/model boundary, the Power BI workstream may proceed without individual audit preapproval for:</p>
+<ul>
+<li>report-page names and tab order;</li>
+<li>native visual selection and substitution;</li>
+<li>geometry, formatting and typography;</li>
+<li>chart/card orientation and presentation splitting or consolidation;</li>
+<li>local labels and sort helpers;</li>
+<li>built-in tooltips;</li>
+<li>ordinary slicer and visual interactions;</li>
+<li>native navigation and drillthrough using accepted keys;</li>
+<li>accessibility alt text and tab order;</li>
+<li>static limitation text; and</li>
+<li>report-owned adapters satisfying the accepted rules.</li>
+</ul>
+<p>Those adapter rules—accepted source or measure, presentation/context purpose, no method or denominator redefinition, fail-closed behavior and logged final diff—are materially appropriate.</p>
+<h2>Hard stops retained</h2>
+<p>Construction must stop only when work requires a materially different:</p>
+<ul>
+<li>source or connector;</li>
+<li>Power Query business transformation;</li>
+<li>table, relationship or accepted-measure formula;</li>
+<li>grain, scenario, cohort or as-of interpretation;</li>
+<li>business method or denominator;</li>
+<li>endpoint behavior;</li>
+<li>privacy/security boundary;</li>
+<li>custom visual or external executable;</li>
+<li>unsupported public claim; or</li>
+<li>carrier/evidence state.</li>
+</ul>
+<h1>Next current-model report wave authorized</h1>
+<p><strong>Authorization ID:</strong> <code>IA-PBI-RD-WAVE-001</code></p>
+<p>The source owner may now build and UAT one coherent current-model-supported wave covering:</p>
+<ul>
+<li><strong>Merchant Relationship 360</strong></li>
+<li><strong>Application &amp; Account Journey</strong></li>
+<li><strong>Servicing &amp; Exceptions</strong></li>
+<li><strong>Risk, Economics &amp; Concentration</strong></li>
+<li><strong>Governance &amp; Reconciliation</strong></li>
+</ul>
+<p>The source owner may consolidate or split those experiences after physical UAT. Return to Independent Audit <strong>once at the coherent wave freeze</strong>, not after each individual page.</p>
+<p>These are the report experiences identified in the roadmap as substantially or currently supported by the accepted model. The source-owner roadmap also groups these five experiences into the next current-model-supported implementation wave.</p>
+<h2>Still held</h2>
+<table>
+<thead>
+<tr>
+<th>ExperienceReason</th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Cohort Comparison</td>
+<td>Requires multiple accepted cohorts/runs and cohort-age alignment.</td>
+</tr>
+<tr>
+<td>Current Portfolio Command Center</td>
+<td>Requires a governed multi-cohort current-portfolio boundary.</td>
+</tr>
+<tr>
+<td>Portfolio Focus &amp; Next-Month Action</td>
+<td>Requires separate recommendation-method acceptance.</td>
+</tr>
+<tr>
+<td>Strategy &amp; Scenario Laboratory</td>
+<td>Requires matched strategy/scenario semantic and method acceptance.</td>
+</tr>
+</tbody></table>
+<p>Those dependencies are genuine business/data-method boundaries rather than ordinary report-design constraints.</p>
+<h1>Residual governance boundaries</h1>
+<pre><code class="language-text">PBI-WP2                                  HOLD
+Publication                              NOT AUTHORIZED
+Deployment                               NOT AUTHORIZED
+Production readiness                     NOT CLAIMED
+Public Power BI milestone                NOT AUTHORIZED
+Causal claims                            NOT AUTHORIZED
+CECL claims                              NOT AUTHORIZED
+Audited-profitability claims             NOT AUTHORIZED
+Autonomous recommendations               NOT AUTHORIZED
+Real-merchant / real-funds claims        NOT AUTHORIZED
+</code></pre>
+<p>The permitted internal wording is:</p>
+<blockquote>
+<p><strong>The P01 Cohort Command Center and P02 Cohort Lifecycle experiences were independently accepted with observations, and the current-model-supported report-depth wave is authorized for construction under the streamlined Power BI audit model.</strong></p>
+</blockquote>
+<p>That wording is internal only until the later publication gate.</p>
+<h1>Exact permitted next action</h1>
+<blockquote>
+<p><strong>Build and physically UAT the authorized current-model report-depth wave under</strong> <strong><code>IA-PBI-OM-20260826-001</code></strong> <strong>and</strong> <strong><code>IA-PBI-RD-WAVE-001</code>****. Correct the stale report annotation, two title alt-text values and P02 Scenario select-all metadata during that work. Preserve the accepted source/model and all governed-measure formulas; add report-owned adapters only under the accepted adapter rules; stop only for a material hard-stop condition; freeze the coherent wave and return once for combined wave acceptance and the minimum release/publication-readiness decision. Do not publish or deploy through construction.</strong></p>
+</blockquote>
+<h1>Independent Audit package</h1>
+<pre><code class="language-text">Package
+MSBF_IA_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_R13_20260826.zip
+
+Bytes
+9,552,840
+
+SHA-256
+5bef4b893d69336f283013a6fde1899c58bdf52d74c0197f8aa059cca7381109
+
+ZIP entries
+33
+
+Payload manifest rows
+30
+
+Package inventory rows
+31
+
+SHA256SUMS rows
+32
+
+Audit controls
+57
+
+Control results
+45 PASS
+8 PASS_WITH_OBSERVATIONS
+3 HOLD
+1 NOT_AUDITED
+
+ZIP / clean extraction / manifests / JSON / CSV
+PASS
+</code></pre>
+<h2>Primary deliverables</h2>
+<p>Download the complete Independent Audit package (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_R13_20260826.zip</code>; referenced bytes not established here)</p>
+<p>Download the SHA-256 sidecar (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_R13_20260826.zip.sha256</code>; referenced bytes not established here)</p>
+<p>Open the ZIP-validation report (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_R13_20260826_ZIP_VALIDATION_REPORT.md</code>; referenced bytes not established here)</p>
+<p>Open the formal P01/P02 audit report (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_R13_20260826/01_IA_WP2H_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_REPORT.md</code>; referenced bytes not established here)</p>
+<p>Open the machine-readable audit summary (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_R13_20260826/02_IA_WP2H_MACHINE_SUMMARY.json</code>; referenced bytes not established here)</p>
+<p>Open the updated audit dashboard (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_R13_20260826/INDEPENDENT_AUDIT_STATUS_DASHBOARD.md</code>; referenced bytes not established here)</p>
+<h2>Governing next-wave authority</h2>
+<p>Open the streamlined Power BI operating-model decision (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_R13_20260826/03_POWER_BI_STREAMLINED_OPERATING_MODEL_DECISION.md</code>; referenced bytes not established here)</p>
+<p>Open the current-model report-depth wave authorization (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_R13_20260826/04_CURRENT_MODEL_REPORT_DEPTH_WAVE_AUTHORIZATION.md</code>; referenced bytes not established here)</p>
+<p>Open the copy/paste next-wave construction prompt (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_R13_20260826/09_POWER_BI_CURRENT_MODEL_REPORT_DEPTH_WAVE_PROMPT.md</code>; referenced bytes not established here)</p>
+<p>Open the findings and remediation register (historical reference: <code>sandbox:[session]/MSBF_IA_POWER_BI_P01_P02_ACCEPTANCE_RECALIBRATION_R13_20260826/registers/FINDINGS_AND_REMEDIATION_REGISTER.csv</code>; referenced bytes not established here)</p>
+</div></article><article id="m-7e213e47-fbdf-4d80-8f92-4ec50cdac045" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00269 · 2026-08-26T15:29:30.830102-04:00 · active path</p><div class="bubble"><p>This is an excellent outcome. <strong>P01 and P02 are independently accepted, the build-first operating model is now governing, and the next report-depth wave is authorized with no blocking finding.</strong> Audit expressly retired minute visual preapproval and exhaustive interaction matrices, while preserving the substantive controls around source/model integrity, grain, scenario, temporal behavior, business methods, claims, privacy and release authority. [export reference: filecite | turn34file4 | L6-L37]</p>
+<h2>What changes for this workstream</h2>
+<p>We no longer need to design every title, visual type, layout choice, tooltip and ordinary interaction in advance and send it to Audit before construction. Within the accepted model boundary, we may build and physically test a coherent experience, resolve ordinary Power BI issues as they emerge, and return once at a meaningful wave freeze. Audit specifically preauthorized page naming and ordering, native visual substitutions, geometry, formatting, local presentation labels, tooltips, ordinary interactions, native navigation and drillthrough, accessibility controls, and bounded report-owned adapters. [export reference: filecite | turn34file1 | L21-L50]</p>
+<p>The controlling physical boundary is now:</p>
+<pre><code class="language-text">33 tables
+33 relationships
+81 Power Query objects
+76 measures
+871 columns
+2 accepted substantive pages
+44 native visual containers
+</code></pre>
+<p>The accepted 60 core measures remain unchanged; the 16 report-owned measures and one presentation column are accepted with observations. [export reference: filecite | turn34file2 | L20-L40]</p>
+<h2>Authorized next wave</h2>
+<p>We may now build one coherent wave covering:</p>
+<ol>
+<li><strong>Merchant Relationship 360</strong></li>
+<li><strong>Application &amp; Account Journey</strong></li>
+<li><strong>Servicing &amp; Exceptions</strong></li>
+<li><strong>Risk, Economics &amp; Concentration</strong></li>
+<li><strong>Governance &amp; Reconciliation</strong></li>
+</ol>
+<p>We may consolidate or divide those stories into the number of pages that works best after physical UAT. Native navigation and drillthrough using the accepted merchant, application, account, run and scenario-qualified keys are expressly authorized. [export reference: filecite | turn34file0 | L6-L35]</p>
+<p>My recommended build sequence is:</p>
+<h3>1. Close the three nonblocking hygiene items</h3>
+<p>Before adding substantive new pages:</p>
+<ul>
+<li>replace the stale technical-shell report annotation;</li>
+<li>correct the P01 and P02 title-text-box alt text;</li>
+<li>remove or disable the redundant P02 Scenario select-all metadata.</li>
+</ul>
+<p>These corrections are authorized during the wave and do not require an interim return to Audit. [export reference: filecite | turn34file3 | L33-L68]</p>
+<h3>2. Establish the detail-navigation spine</h3>
+<p>Build <strong>Merchant Relationship 360</strong> and <strong>Application &amp; Account Journey</strong> first.</p>
+<p>These two pages should establish the core movement through the product:</p>
+<pre><code class="language-text">Cohort / portfolio context
+        ↓
+Merchant
+        ↓
+Application-scenario path
+        ↓
+Funded account / advance
+        ↓
+Performance, servicing and reconciliation
+</code></pre>
+<p>That gives the later Servicing, Risk and Governance pages stable identities and drill paths to work from.</p>
+<h3>3. Build the operational and analytical depth</h3>
+<p>Next construct:</p>
+<ul>
+<li><strong>Servicing &amp; Exceptions</strong>, answering where operational attention is needed and why;</li>
+<li><strong>Risk, Economics &amp; Concentration</strong>, explaining where comparative risk, contribution and concentrations reside;</li>
+<li><strong>Governance &amp; Reconciliation</strong>, providing traceability, evidence gates, source/model status and reconciliation support.</li>
+</ul>
+<h3>4. Perform one integrated wave UAT</h3>
+<p>The final wave evidence should emphasize material behavior rather than exhaustive documentation:</p>
+<ul>
+<li>default and alternate states;</li>
+<li>merchant → application/account drillthrough;</li>
+<li>scenario-qualified identity;</li>
+<li>point-in-time and endpoint behavior;</li>
+<li>material slicer and navigation behavior;</li>
+<li>fail-closed states;</li>
+<li>adapter register and expressions;</li>
+<li>alt text and tab order;</li>
+<li>visible claim boundaries;</li>
+<li>final project/model/report inventories and hashes.</li>
+</ul>
+<p>Audit explicitly says exact preconstruction geometry and exhaustive pairwise interaction matrices are unnecessary; representative material UAT is sufficient. [export reference: filecite | turn34file1 | L67-L73]</p>
+<h2>What remains held</h2>
+<p>We should not begin these yet:</p>
+<ul>
+<li><strong>Cohort Comparison</strong> — requires multiple accepted cohorts and cohort-age alignment.</li>
+<li><strong>Current Portfolio Command Center</strong> — requires a governed multi-cohort current-book boundary.</li>
+<li><strong>Portfolio Focus &amp; Next-Month Action</strong> — requires separate recommendation-method acceptance.</li>
+<li><strong>Strategy &amp; Scenario Laboratory</strong> — requires accepted matched strategy/scenario method semantics.</li>
+</ul>
+<p>Publication, deployment, public milestone claims, real-merchant/real-funds claims, CECL claims, audited-profitability claims and autonomous recommendations also remain unauthorized. [export reference: filecite | turn34file4 | L169-L189]</p>
+<h2>Governing next action</h2>
+<p>I will treat the following as the controlling authority from this point forward:</p>
+<pre><code class="language-text">IA-D-R13-PBI-001
+IA-PBI-OM-20260826-001
+IA-PBI-RD-WAVE-001
+</code></pre>
+<p>The immediate construction objective is now:</p>
+<blockquote>
+<p><strong>Build and physically UAT the complete current-model-supported report-depth wave, solving ordinary report-design issues directly as they emerge, and return to Independent Audit once at the coherent wave freeze.</strong></p>
+</blockquote>
+<p>That is exactly the faster, more productive working model we wanted, and Audit has now formally ratified it.</p>
+</div></article><article id="m-72d06c93-0ad4-4aee-a8aa-99ad5a5bf1b7" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00270 · 2026-08-26T15:31:59.095000-04:00 · active path</p><div class="bubble"><p>I agree with the above. So what is the next step?</p>
+</div></article><article id="m-9004dbab-2be3-466b-8a5c-5a2cef4f5252" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00271 · 2026-08-26T15:32:02.408172-04:00 · active path</p><div class="bubble"><p>The next step is to <strong>start construction of Merchant Relationship 360</strong>, but with one short setup pass first. Audit has authorized the five-story wave and specifically says we should build/UAT it as a coherent wave rather than return page-by-page. [export reference: filecite | turn34file0 | L6-L16]</p>
+<h3>1. First, make the three housekeeping corrections</h3>
+<p>Before creating the next page, I recommend we spend a few minutes closing the three known nonblocking findings:</p>
+<ol>
+<li>Correct the stale report-level technical-shell annotation.</li>
+<li>Correct the P01 and P02 <strong>title text-box</strong> alt text.</li>
+<li>Remove/disable P02 Scenario&#39;s redundant <strong>Select all</strong> metadata.</li>
+</ol>
+<p>Audit explicitly authorized all three during this wave without another review. [export reference: filecite | turn34file3 | L35-L58]</p>
+<p>We can do these together, step-by-step, starting with the two easy Desktop changes and then addressing the report annotation.</p>
+<h3>2. Then build <strong>Merchant Relationship 360</strong></h3>
+<p>This should be our first new experience because it establishes the detail-navigation architecture that the rest of the wave can reuse.</p>
+<p>Before touching the canvas, I want to inspect the physical model/catalog—not create another elaborate preapproval package—and answer a few practical questions:</p>
+<blockquote>
+<p>What merchant-level information do we actually have?<br>What is genuinely longitudinal versus run-snapshot?<br>How do merchant → application → account identities connect?<br>What useful economics, acquisition, funding, performance and servicing evidence can we expose?<br>What happens when a merchant has multiple applications/accounts?</p>
+</blockquote>
+<p>Then we&#39;ll translate that directly into a page concept and <strong>start building it</strong>.</p>
+<p>The earlier design envisioned Merchant 360 as the merchant&#39;s acquisition source, relationship history, applications, advances, cumulative remittances, exposure, economics, servicing history and current posture. But we are no longer obligated to mechanically reproduce that old specification. Audit has explicitly given us discretion to select native visuals, consolidate/split presentation, alter layout, configure tooltips/interactions, and add bounded presentation adapters while physically discovering the best experience. [export reference: filecite | turn34file1 | L21-L50]</p>
+<h3>3. Establish drillthrough while building Merchant 360</h3>
+<p>This is important.</p>
+<p>Instead of creating five disconnected dashboard tabs, we should start creating an actual analytical application:</p>
+<p><strong>Cohort Command Center / Lifecycle</strong><br>→ <strong>Merchant Relationship 360</strong><br>→ <strong>Application &amp; Account Journey</strong></p>
+<p>Then:</p>
+<p><strong>Servicing &amp; Exceptions</strong> and <strong>Risk, Economics &amp; Concentration</strong><br>→ drill into the same Merchant/Application/Account experiences.</p>
+<p>Audit specifically authorized native navigation and drillthrough using the accepted merchant, application, account, run and scenario-qualified keys. [export reference: filecite | turn34file0 | L30-L35]</p>
+<p>That will make the final Power BI product considerably stronger than a collection of static pages.</p>
+<h3>4. Build the rest organically</h3>
+<p>Once Merchant 360 works physically, I&#39;d proceed:</p>
+<p><strong>Merchant Relationship 360</strong><br>↓<br><strong>Application &amp; Account Journey</strong><br>↓<br><strong>Servicing &amp; Exceptions</strong><br>↓<br><strong>Risk, Economics &amp; Concentration</strong><br>↓<br><strong>Governance &amp; Reconciliation</strong></p>
+<p>If physical construction shows that two stories belong together or one needs two pages, we&#39;re authorized to change the page structure. [export reference: filecite | turn34file0 | L10-L16]</p>
+<p>We do <strong>not</strong> stop for Audit between them.</p>
+<h3>5. Return only at wave freeze</h3>
+<p>At the end we&#39;ll capture representative UAT, accessibility, material interaction/drillthrough tests, adapter changes, claims and physical hashes. Audit expressly eliminated the requirement for exhaustive interaction matrices and minute design evidence. [export reference: filecite | turn34file1 | L67-L73]</p>
+<p>Then the next Audit return becomes particularly meaningful: <strong>combined wave acceptance plus the minimum release/publication-readiness decision.</strong></p>
+<p>So the immediate practical next action is:</p>
+<blockquote>
+<p><strong>Close the three housekeeping findings, then inspect the physical model for Merchant Relationship 360 and start P03 construction.</strong></p>
+</blockquote>
+<p>I recommend we begin with the housekeeping fixes now; they should be quick.</p>
+</div></article><article id="m-99087664-ff23-4dd4-a4be-4b4a8efe35c0" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00272 · 2026-08-26T15:32:49.091000-04:00 · active path</p><div class="bubble"><p>Help me, step by step, close the three housekeeping findings, then inspect the physical model for Merchant Relationship 360 and start P03 construction.  </p>
+</div></article><article id="m-589687e9-1cf4-4683-a46f-90736500f61c" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00273 · 2026-08-26T15:34:28.313759-04:00 · active path</p><div class="bubble"><p>We can move directly into construction. Audit has authorized the five-story wave and explicitly permits us to solve ordinary Power BI design questions while building rather than pre-clearing them. [export reference: filecite | turn34file0 | L6-L16] [export reference: filecite | turn34file1 | L21-L50]</p>
+<p>I also inspected the <strong>actual accepted physical model in <code>PBI_WP3_P01_CONSTRUCTION_R1.zip</code></strong> before giving you the P03 direction below. There is enough merchant/application/account data to make Merchant Relationship 360 a substantive page rather than a dressed-up summary.</p>
+<h2>Part 1 — Close the three housekeeping findings</h2>
+<h3>Finding 1 — P01 and P02 title alt text</h3>
+<p>Audit specifically found that the <strong>title text boxes themselves</strong> still carry the inherited “Executive Portfolio Command Center” alt text. [export reference: filecite | turn34file3 | L44-L50]</p>
+<p>Do P01 first.</p>
+<ol>
+<li>Go to <strong>P01 — Cohort Command Center</strong>.</li>
+<li>Click the large title text box containing <strong>Merchant Financing Cohort Command Center</strong>.</li>
+<li>Open <strong>Format → General → Properties → Alt text</strong>.</li>
+<li>Replace the old text with:</li>
+</ol>
+<blockquote>
+<p><strong>Merchant Financing Cohort Command Center. Fixed selected-run cohort viewed at the selected observation date using governed deterministic synthetic evidence.</strong></p>
+</blockquote>
+<ol start="5">
+<li>Click elsewhere and save.</li>
+</ol>
+<p>Then P02:</p>
+<ol>
+<li>Go to <strong>P02 — Cohort Lifecycle</strong>.</li>
+<li>Select the large <strong>Merchant Financing Cohort Lifecycle</strong> title text box.</li>
+<li>Go to <strong>Format → General → Properties → Alt text</strong>.</li>
+<li>Replace the old text with:</li>
+</ol>
+<blockquote>
+<p><strong>Merchant Financing Cohort Lifecycle. Fixed selected-run cohort tracked across the selected observation period using governed deterministic synthetic evidence.</strong></p>
+</blockquote>
+<ol start="5">
+<li>Save.</li>
+</ol>
+<p>That closes <code>PBI-F-014</code>.</p>
+<hr>
+<h2>Part 2 — Remove P02 Scenario “Select all” metadata</h2>
+<p>I inspected the physical visual definition and confirmed exactly what Audit found.</p>
+<p>The P02 Scenario slicer is physically:</p>
+<pre><code class="language-text">DimScenario[ScenarioLabel]
+</code></pre>
+<p>and currently contains both:</p>
+<pre><code class="language-text">strictSingleSelect = true
+selectAllCheckboxEnabled = true
+</code></pre>
+<p>Those are logically redundant.</p>
+<h3>Fix it through Power BI Desktop</h3>
+<ol>
+<li><p>Go to <strong>P02 — Cohort Lifecycle</strong>.</p>
+</li>
+<li><p>Select the <strong>Scenario</strong> slicer.</p>
+</li>
+<li><p>Open <strong>Format visual</strong>.</p>
+</li>
+<li><p>Expand <strong>Slicer settings</strong>.</p>
+</li>
+<li><p>Find <strong>Selection</strong> or <strong>Selection controls</strong>.</p>
+</li>
+<li><p>Keep:</p>
+<p><strong>Single select = On</strong></p>
+</li>
+<li><p>Set:</p>
+<p><strong>Show “Select all” option = Off</strong></p>
+</li>
+</ol>
+<p>Your Power BI version may phrase this slightly differently.</p>
+<p>Then click elsewhere and save.</p>
+<h3>Verify</h3>
+<p>Open the Scenario dropdown.</p>
+<p>You should see only the actual scenario choices, e.g.:</p>
+<pre><code class="language-text">Baseline
+Recession Energy
+</code></pre>
+<p>There should be <strong>no Select all option</strong>, and only one scenario should be selectable at a time.</p>
+<p>That closes <code>PBI-F-015</code>. Audit explicitly allows us to fix it without another interim audit. [export reference: filecite | turn34file0 | L32-L36]</p>
+<hr>
+<h1>Part 3 — Correct the stale report-level annotation</h1>
+<p>This one is different. It isn&#39;t something you can usefully fix on the canvas.</p>
+<p>I physically confirmed the stale annotation in:</p>
+<pre><code class="language-text">MSBF_PBI_A1A_Local_Construction_R1.Report
+\definition
+\report.json
+</code></pre>
+<p>It currently says:</p>
+<pre><code class="language-text">MSBF_A1aBoundary =
+ONE_PHYSICAL_TECHNICAL_SHELL_ZERO_SUBSTANTIVE_REPORT_PAGES_ZERO_VISUALS
+</code></pre>
+<p>Obviously that is no longer true.</p>
+<h3>Important timing point</h3>
+<p>Since we&#39;re about to add P03 and more pages, I <strong>would not replace it with “two pages / 44 visuals.”</strong> That would become stale again almost immediately.</p>
+<p>Instead, let&#39;s correct the semantic problem once by changing it from a historical shell-count statement into a current report-state classification.</p>
+<h3>Do this with Power BI closed</h3>
+<p>After you&#39;ve saved the two Desktop changes above:</p>
+<ol>
+<li><strong>Close Power BI Desktop completely.</strong></li>
+<li>Open this file in Notepad or VS Code:</li>
+</ol>
+<pre><code class="language-text">C:\MSBF\PBI_WP3_P01_CONSTRUCTION_R1\project\
+MSBF_PBI_A1A_Local_Construction_R1.Report\
+definition\
+report.json
+</code></pre>
+<ol start="3">
+<li>Find:</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;MSBF_A1aBoundary&quot;,
+  &quot;value&quot;: &quot;ONE_PHYSICAL_TECHNICAL_SHELL_ZERO_SUBSTANTIVE_REPORT_PAGES_ZERO_VISUALS&quot;
+}
+</code></pre>
+<ol start="4">
+<li>I recommend changing <strong>only the value</strong>, preserving the annotation name, to:</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;MSBF_A1aBoundary&quot;,
+  &quot;value&quot;: &quot;SUBSTANTIVE_REPORT_EXPERIENCE_ACTIVE_UNDER_GOVERNED_POWER_BI_WAVE&quot;
+}
+</code></pre>
+<p>Why not encode <code>2 pages / 44 visuals</code>? Because the annotation&#39;s real defect is that it claims the report is still merely a technical shell. The replacement should remain truthful while this authorized wave grows.</p>
+<ol start="5">
+<li>Save <code>report.json</code>.</li>
+<li>Reopen the <code>.pbip</code>.</li>
+<li>Confirm P01 and P02 still load normally.</li>
+</ol>
+<p>No other JSON should be touched.</p>
+<p>This closes <code>PBI-F-013</code> without building another stale count into the project. The streamlined operating model explicitly permits report-only corrections while retaining the model boundary. [export reference: filecite | turn34file1 | L25-L50]</p>
+<hr>
+<h1>Part 4 — Save, and we are clean to begin P03</h1>
+<p>Once those three are done, save again.</p>
+<p>At that point:</p>
+<pre><code class="language-text">PBI-F-013  CLOSED source-owner correction
+PBI-F-014  CLOSED source-owner correction
+PBI-F-015  CLOSED source-owner correction
+</code></pre>
+<p>We do <strong>not</strong> need screenshots or an Audit package right now. We&#39;ll document them in the wave-freeze evidence.</p>
+<hr>
+<h1>Part 5 — What I found in the physical model for Merchant Relationship 360</h1>
+<p>This is the important part.</p>
+<p>The current model has a genuine merchant spine:</p>
+<pre><code class="language-text">DimMerchant
+    ↓ MerchantKey
+DimApplication
+    ↓ ApplicationKey
+DimAccountAdvance
+    ↓ AccountKey
+daily monitoring / servicing / intervention /
+exceptions / certification / reconciliation
+</code></pre>
+<p>So this can be a real <strong>merchant-to-account longitudinal experience</strong>.</p>
+<h3>Merchant identity/profile</h3>
+<p><code>DimMerchant</code> contains, among other things:</p>
+<pre><code class="language-text">synthetic_business_name
+legal_entity_type
+region_code
+merchant_size_tier
+annual_sales_band
+industry_code
+
+relationship_stage
+prior_advance_count
+completed_advance_count
+prior_default_flag
+prior_payment_interruption_flag
+total_prior_funded_amount
+total_prior_repaid_amount
+
+deposit_relationship_flag
+merchant_services_relationship_flag
+wallet_share_proxy
+relationship_quality_tier
+</code></pre>
+<p>That is considerably richer than P01/P02.</p>
+<h3>Application and acquisition history</h3>
+<p><code>DimApplication</code> gives us:</p>
+<pre><code class="language-text">application_date
+requested_funding_amount
+requested_remittance_rate
+requested_expected_payoff_days
+requested_total_repayment_amount
+requested_finance_charge_amount
+requested_use_of_proceeds
+
+application_channel
+application_status
+
+primary_source_code
+accepted_channel_type
+accepted_application_channel
+
+attribution_confidence_score
+attribution_confidence_tier
+attribution_evidence_status
+</code></pre>
+<h3>Scenario-level underwriting/economics</h3>
+<p><code>FactApplicationScenario</code> provides:</p>
+<pre><code class="language-text">capacity / affordability
+sales-linked payment coverage
+liquidity buffer
+operating resilience
+integrated risk
+comparative expected loss
+gross finance revenue
+non-loss costs
+risk-adjusted contribution
+economic surplus
+risk/economic tiers
+review/hard-stop signals
+</code></pre>
+<p>So Merchant 360 can connect relationship context to underwriting and economics.</p>
+<h3>Final decision</h3>
+<p><code>FactFinalDecision</code> gives us:</p>
+<pre><code class="language-text">final decision outcome
+final offer authorization
+counteroffer review
+manual review
+decline
+
+final offer amount
+remittance rate
+payback multiple
+collection horizon
+finance charge
+implied payoff days
+
+decision reasons
+</code></pre>
+<h3>Funded account</h3>
+<p><code>DimAccountAdvance</code> carries:</p>
+<pre><code class="language-text">funded amount
+booking date
+funding date
+activation remittance rate
+activation payback multiple
+activation collection horizon
+initial exposure
+portfolio status
+</code></pre>
+<h3>Lifecycle performance</h3>
+<p><code>FactAccountDaily</code> is rich:</p>
+<pre><code class="language-text">monitoring date
+actual and expected remittance
+cumulative remittance
+shortfall
+pace ratio
+receivable balance
+exposure
+days since last remittance
+zero-sales streak
+7-day / 30-day remittance
+monitoring status
+alert flags
+paid-off flag
+reason codes
+</code></pre>
+<h3>Servicing and endpoint</h3>
+<p>We also have:</p>
+<pre><code class="language-text">FactIntervention
+FactServicingExecution
+FactPaymentException
+FactAccountCertification
+FactAccountReconciliation
+</code></pre>
+<p>all connected through the accepted account/application/scenario keys.</p>
+<p>This strongly supports the Merchant 360 story we had envisioned.</p>
+<hr>
+<h1>Part 6 — What P03 should answer</h1>
+<p>I would make the visible page title:</p>
+<h1><strong>Merchant Relationship 360</strong></h1>
+<p>Subtitle:</p>
+<blockquote>
+<p><strong>Follow one synthetic merchant from relationship and acquisition through applications, funding, performance and servicing.</strong></p>
+</blockquote>
+<p>The page should answer, in order:</p>
+<blockquote>
+<p><strong>Who is this merchant?</strong></p>
+</blockquote>
+<blockquote>
+<p><strong>What relationship did we already have with them?</strong></p>
+</blockquote>
+<blockquote>
+<p><strong>How did they enter the funnel?</strong></p>
+</blockquote>
+<blockquote>
+<p><strong>What did they request and what decision did we make?</strong></p>
+</blockquote>
+<blockquote>
+<p><strong>What did we fund?</strong></p>
+</blockquote>
+<blockquote>
+<p><strong>How has the funded relationship performed?</strong></p>
+</blockquote>
+<blockquote>
+<p><strong>What servicing or exception activity has occurred?</strong></p>
+</blockquote>
+<p>That is a very natural story.</p>
+<hr>
+<h1>Part 7 — Start P03 construction</h1>
+<p>Do <strong>not</strong> start by inventing every visual.</p>
+<p>Start with the page and its context controls.</p>
+<h3>A. Duplicate the visual style, not the analytical content</h3>
+<p>Create a new blank page.</p>
+<p>Rename the tab:</p>
+<p><strong>P03 - Merchant Relationship 360</strong></p>
+<p>Canvas:</p>
+<p><strong>1280 × 720</strong></p>
+<p>Keep the same white/navy/teal visual language as P01/P02.</p>
+<h3>B. Add the title</h3>
+<p><strong>Merchant Relationship 360</strong></p>
+<p>Subtitle:</p>
+<blockquote>
+<p><strong>Follow one synthetic merchant from relationship and acquisition through applications, funding, performance and servicing.</strong></p>
+</blockquote>
+<h3>C. First slicer — Merchant</h3>
+<p>This is the defining control for the page.</p>
+<p>Use:</p>
+<pre><code class="language-text">DimMerchant[synthetic_business_name]
+</code></pre>
+<p>Make it a dropdown.</p>
+<p>Set:</p>
+<p><strong>Single select = On</strong></p>
+<p><strong>Select all = Off</strong></p>
+<p>This is the first time in the report where the user selects a specific merchant rather than a portfolio/cohort slice.</p>
+<h3>D. Scenario remains required</h3>
+<p>Add:</p>
+<pre><code class="language-text">DimScenario[ScenarioLabel]
+</code></pre>
+<p>Dropdown.</p>
+<p><strong>Single select = On</strong><br><strong>Select all = Off</strong></p>
+<p>This is important because the same merchant/application can have different scenario-qualified outcomes.</p>
+<h3>E. Observation date</h3>
+<p>Use:</p>
+<pre><code class="language-text">DimAsOfDate[AsOfDate]
+</code></pre>
+<p>For Merchant 360 I recommend a <strong>single observation date</strong>, not a Between range.</p>
+<p>Why?</p>
+<p>Because this page is primarily:</p>
+<blockquote>
+<p>relationship history + current merchant posture at X date.</p>
+</blockquote>
+<p>The full longitudinal charts can show history through the selected date.</p>
+<p>That mirrors P01&#39;s point-in-time semantics and gives us a clean drillthrough destination.</p>
+<p>So top controls become:</p>
+<pre><code class="language-text">Merchant | Scenario | Observation date
+</code></pre>
+<p>I would <strong>not add Industry or Acquisition source slicers here initially</strong>. Those are properties of the selected merchant/application and should be displayed as context rather than requiring the user to filter an already-selected individual merchant.</p>
+<hr>
+<h1>Part 8 — First visual: Merchant Profile</h1>
+<p>Before anything else, build a <strong>Merchant Profile</strong> card.</p>
+<p>I would start with these existing columns:</p>
+<pre><code class="language-text">DimMerchant[synthetic_business_name]
+DimIndustry[industry_name]
+DimRegion[region_name]          ← verify exact visible field name in your Fields pane
+DimMerchant[merchant_size_tier]
+DimMerchant[annual_sales_band]
+DimMerchant[relationship_stage]
+DimMerchant[relationship_quality_tier]
+</code></pre>
+<p>Then relationship-history attributes:</p>
+<pre><code class="language-text">DimMerchant[prior_advance_count]
+DimMerchant[completed_advance_count]
+DimMerchant[total_prior_funded_amount]
+DimMerchant[total_prior_repaid_amount]
+</code></pre>
+<p>And two useful relationship flags:</p>
+<pre><code class="language-text">DimMerchant[deposit_relationship_flag]
+DimMerchant[merchant_services_relationship_flag]
+</code></pre>
+<p>Do not worry yet about squeezing all of that into one box.</p>
+<p>Create the visual, put the fields in, and <strong>send me a screenshot</strong>.</p>
+<p>We will decide physically whether it should become:</p>
+<ul>
+<li>one multi-row profile card;</li>
+<li>a header plus four KPIs;</li>
+<li>two compact cards;</li>
+<li>or a profile card plus relationship-history strip.</li>
+</ul>
+<p>That is exactly the build-first behavior Audit just authorized.</p>
+<hr>
+<h1>Part 9 — Where I expect the rest of P03 to go</h1>
+<p>I would expect the eventual page to develop approximately like this:</p>
+<pre><code class="language-text">┌────────────────────────────────────────────────────────────────────┐
+│ MERCHANT RELATIONSHIP 360                                         │
+│ Merchant ▼            Scenario ▼            Observation date ▼     │
+├──────────────────┬─────────────────────────────────────────────────┤
+│                  │                                                 │
+│ MERCHANT         │ APPLICATION / RELATIONSHIP HISTORY              │
+│ PROFILE          │                                                 │
+│                  │  applications → decisions → funded advances     │
+│ relationship     │                                                 │
+│ history          ├─────────────────────────────────────────────────┤
+│                  │                                                 │
+│                  │ PERFORMANCE / REMITTANCE                        │
+│                  │                                                 │
+│                  │   lifecycle trend through selected date         │
+├──────────────────┴────────────────────────┬────────────────────────┤
+│ DECISION / ECONOMICS                     │ SERVICING / EXCEPTIONS │
+└───────────────────────────────────────────┴────────────────────────┘
+</code></pre>
+<p>But <strong>do not build that entire layout yet</strong>.</p>
+<p>Our next empirical checkpoint should be after:</p>
+<ol>
+<li>all three housekeeping fixes;</li>
+<li>new P03 page;</li>
+<li>title/subtitle;</li>
+<li>Merchant, Scenario and Observation-date slicers;</li>
+<li>initial Merchant Profile visual.</li>
+</ol>
+<p>Then show me the page.</p>
+<p>From there we can use what the visual actually looks like—and what happens when you select different merchants—to determine whether application history should be a timeline, table, matrix, or another construction. We now have explicit Audit authority to work exactly this way. [export reference: filecite | turn34file4 | L148-L167]</p>
+<p><strong>Start with the three housekeeping corrections. If any Power BI menu differs from what I described, send me the screen at that point rather than fighting it.</strong></p>
+</div></article><article id="m-268ef6e4-d1e1-4685-9e11-1598c53ec5be" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00274 · 2026-08-26T16:02:42.154000-04:00 · active path</p><p class="note">1 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: 16014e1a-fa86-49df-8c97-b6566a8302a1.png</p><div class="bubble"><p>trying to add industry_name or synthetic business name to the card I get that response</p>
+</div></article><article id="m-7876fb8e-56ff-49fe-a871-0aa6d7243924" class="message assistant"><p class="meta"><strong>Assistant</strong> · C109-M00275 · 2026-08-26T16:02:51.616697-04:00 · active path</p><div class="bubble"><p>Yes — that error is expected with this model. <code>DiscourageImplicitMeasures</code> is enabled, so Power BI will not let a raw column such as <code>industry_name</code> or <code>synthetic_business_name</code> be dropped directly into a Card if the visual needs a scalar measure.</p>
+<p>The clean fix is to create <strong>report-owned display measures</strong> for the selected merchant context. Audit explicitly allows presentation/context adapters like this as long as they use accepted columns, do not redefine business logic, and fail closed when context is ambiguous. [export reference: filecite | turn34file1 | L40-L50]</p>
+<p>Create these in <code>ModelParameters</code>:</p>
+<pre><code class="language-DAX">P03 Merchant Name =
+SELECTEDVALUE (
+    &#39;DimMerchant&#39;[synthetic_business_name],
+    &quot;MULTIPLE / NOT SELECTED&quot;
+)
+</code></pre>
+<pre><code class="language-DAX">P03 Industry =
+SELECTEDVALUE (
+    &#39;DimIndustry&#39;[industry_name],
+    &quot;MULTIPLE / NOT SELECTED&quot;
+)
+</code></pre>
+<p>For the merchant page, because the Merchant slicer is single-select, these should normally return one clean value.</p>
+<p>I would actually use a slightly more polished fail-closed wording:</p>
+<pre><code class="language-DAX">P03 Merchant Name =
+SELECTEDVALUE (
+    &#39;DimMerchant&#39;[synthetic_business_name],
+    &quot;SELECT ONE MERCHANT&quot;
+)
+</code></pre>
+<pre><code class="language-DAX">P03 Industry =
+SELECTEDVALUE (
+    &#39;DimIndustry&#39;[industry_name],
+    &quot;NOT AVAILABLE&quot;
+)
+</code></pre>
+<p>Then drag the <strong>measures</strong>, not the source columns, into the Card.</p>
+<p>You will likely need the same treatment for most text attributes we want in the Merchant Profile, for example:</p>
+<pre><code class="language-DAX">P03 Merchant Size Tier =
+SELECTEDVALUE (
+    &#39;DimMerchant&#39;[merchant_size_tier],
+    &quot;NOT AVAILABLE&quot;
+)
+</code></pre>
+<pre><code class="language-DAX">P03 Annual Sales Band =
+SELECTEDVALUE (
+    &#39;DimMerchant&#39;[annual_sales_band],
+    &quot;NOT AVAILABLE&quot;
+)
+</code></pre>
+<pre><code class="language-DAX">P03 Relationship Stage =
+SELECTEDVALUE (
+    &#39;DimMerchant&#39;[relationship_stage],
+    &quot;NOT AVAILABLE&quot;
+)
+</code></pre>
+<pre><code class="language-DAX">P03 Relationship Quality =
+SELECTEDVALUE (
+    &#39;DimMerchant&#39;[relationship_quality_tier],
+    &quot;NOT AVAILABLE&quot;
+)
+</code></pre>
+<p>For numeric merchant attributes such as prior-advance count or total prior funded amount, we should also use explicit measures rather than implicit aggregation. For example:</p>
+<pre><code class="language-DAX">P03 Prior Advance Count =
+SELECTEDVALUE (
+    &#39;DimMerchant&#39;[prior_advance_count]
+)
+</code></pre>
+<p>and:</p>
+<pre><code class="language-DAX">P03 Prior Funded Amount =
+SELECTEDVALUE (
+    &#39;DimMerchant&#39;[total_prior_funded_amount]
+)
+</code></pre>
+<p>So the pattern for P03 is:</p>
+<blockquote>
+<p><strong>raw columns define slicers/axes/categories; explicit <code>P03</code> measures feed Cards and scalar displays.</strong></p>
+</blockquote>
+<p>That is the same model behavior we encountered on P01 with the reconciliation fields. It is not a model problem.</p>
+<p>For now, create just <strong><code>P03 Merchant Name</code></strong> and <strong><code>P03 Industry</code></strong>, put those two into the Merchant Profile card, and send me a screenshot. We can then decide the best physical structure before creating a dozen profile measures unnecessarily.</p>
+</div></article><article id="m-f8be9d63-c3d3-468f-89c5-6503aa40775c" class="message user"><p class="meta"><strong>Andrew / user</strong> · C109-M00276 · 2026-08-26T16:28:18.584000-04:00 · active path</p><p class="note">2 non-text part(s) referenced; image bytes are not included in this transcript. Attachment references: dd7d1f04-bfd3-465e-aa1c-5137351a1d63.png; dc2c512f-2d31-4eea-bd6d-8c98f893bdd2.png</p><div class="bubble"><p>all were created. now pick the step by step back up from the point of creating the merchant card. I&#39;ve established the title and slicers (unless you&#39;d like me to revise any of those).</p>
+</div></article><footer>Historical evidence • Independent synthetic demonstration • No new technical acceptance</footer></main></body></html>
