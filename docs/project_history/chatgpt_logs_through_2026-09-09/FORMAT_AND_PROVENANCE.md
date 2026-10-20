@@ -1,9 +1,0 @@
-# Format and provenance
-
-Markdown and JSONL are generated from one canonical record population. Every Markdown BEGIN_RECORD/END_RECORD span contains exactly the JSONL text at the same position; record IDs, roles, order and SHA-256 are indexed. Existing conversation IDs and filenames are carried forward. Part4/Part5 use explicitly local IDs, not fabricated platform IDs.
-
-New image-only PDFs are recorded as page/role fragments. A fragment is not an asserted full platform message. Source references identify the raw PDF SHA-256 and physical page; normalized-page character offsets locate the segment before final sanitation. Original page renders and raw OCR are private. Two manually transcribed small-code pages replace defective OCR; the correction ledger identifies their raw and output digests. Other pages are OCR-assisted normalized transcriptions checked against page images, not certified character-perfect copies. Broken images, clipped code/table regions, collapsed attachments and uncertain antecedents are disclosed in PAGE_COVERAGE and record annotations.
-
-The legacy 19-conversation population contains 3,040 structured visible records, 27 PDF-derived blocks and one active-session summary. The 45-record Part3 continuation remains mixed fidelity. Inferred earlier PDF times are retained as inherited values, while the current message timestamp is null. Genuine structured-source timestamps remain exact. Literal Today/Yesterday/daypart labels are kept separately, never resolved using the export creation time or duration labels.
-
-No hidden reasoning is reconstructed. Audit JSON documents are documentary authority events in AUTHORITY_EVENTS, not fabricated missing assistant messages. Each actual audit decision has one decision-index entry; relays remain dialogue context or an explicit duplicate-body reference. No broad analytical acceptance is re-performed by this archive.

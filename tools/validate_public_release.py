@@ -78,8 +78,12 @@ required=[
  'docs/executive_strategy/From_First_Advance_to_Intelligent_Portfolio_v2.pdf',
  'docs/campaign_scale/README.md',
  'docs/campaign_scale/CAMPAIGN_SCALE_GOVERNANCE_BOUNDARY.md',
- 'docs/project_history/chatgpt_logs_through_2026-08-12/README.md',
- 'docs/project_history/chatgpt_logs_through_2026-08-12/CONVERSATION_INDEX.csv',
+ 'docs/project_history/README.md',
+ 'docs/project_history/CONVERSATIONS.md',
+ 'docs/project_history/indexes/messages.csv',
+ 'docs/project_history/indexes/conversations.csv',
+ 'docs/project_history/HITL_guide.md',
+ 'docs/project_history/reader/index.html',
 ]
 for rel in required:
     if not (root/rel).is_file(): errors.append(f'Required publication artifact missing: {rel}')

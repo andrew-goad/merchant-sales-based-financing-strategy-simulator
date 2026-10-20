@@ -12,9 +12,9 @@ Shared ancestors link to one canonical body. This saves repeated reading while p
 
 Download the repository or retain the complete `docs/project_history` folder, then open `reader/index.html` in a browser. No server, account, network access or external JavaScript library is needed. GitHub displays HTML source; it does not automatically host this reader.
 
-Search matches phrases case-insensitively across canonical native-message text. The conversation filter also recognizes inherited occurrences. Results link to the canonical full message; branch occurrence locations remain in the conversation indexes. Up to 60 results appear at once; refine the phrase for a smaller set. Search does not include the unchanged legacy archives or unavailable attachment bytes.
+Search matches phrases case-insensitively across canonical native-message text. The conversation filter also recognizes inherited occurrences. Results link to the canonical full message; branch occurrence locations remain in the conversation indexes. Up to 60 results appear at once; refine the phrase for a smaller set. Search covers the current native transcript collection. Retired historical compilations are accessible only through the Git snapshot links in the archive transition note; unavailable attachment bytes are not searchable.
 
-For exact machine-readable inspection, use `indexes/messages.csv`, `indexes/conversations.csv`, `indexes/legacy_reconciliation.csv`, and `records/*.jsonl`. All selected occurrences carry full public text in JSONL. The reader escapes raw source HTML, does not load historical images, and renders code/tables without executing historical commands.
+For exact machine-readable inspection, use `indexes/messages.csv`, `indexes/conversations.csv`, and `records/*.jsonl`. All selected occurrences carry full public text in JSONL. The reader escapes raw source HTML, does not load historical images, and renders code/tables without executing historical commands.
 
 ## What a link means
 

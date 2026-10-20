@@ -20,7 +20,7 @@ No Git mutation, publication, supersession, database/engine execution, Desktop r
 
 # Current R20 / local history-freeze overlay
 
-IA-D-R20-INT-001 ACCEPT_WITH_OBSERVATIONS governs the exact accepted pre-history R3. R18-PKG-CLOSURE-F001 and INT-PUB-F-001 are closed; INT-PUB-O-002 remains closed/no regression. The separately constructed history derivative freezes the supplied visible corpus with disclosed fidelity limitations. [History and coverage](../../project_history/chatgpt_logs_through_2026-09-09/README.md).
+IA-D-R20-INT-001 ACCEPT_WITH_OBSERVATIONS governs the exact accepted pre-history R3. R18-PKG-CLOSURE-F001 and INT-PUB-F-001 are closed; INT-PUB-O-002 remains closed/no regression. The separately constructed history derivative freezes the supplied visible corpus with disclosed fidelity limitations. [Historical transcript compilation and coverage](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/tree/4502b11bb2b040a65a26546bc479e9c8c11a3a22/docs/project_history/chatgpt_logs_through_2026-09-09).
 
 IA-PUB-R20-INTEGRATED-001 is conditional authority for a later controlled release. No Git/publication/supersession has occurred here. Four carrier rehashes, fresh owner Git/tag preflight, final commit binding and later hosted/Windows verification remain separate. The accepted PBIX and all technical/public asset bytes remain unchanged.
 

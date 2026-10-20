@@ -1,6 +1,6 @@
 # Coverage and provenance
 
-[History home](README.md) · [Full directory](CONVERSATIONS.md) · [Legacy reconciliation](LEGACY_RECONCILIATION.md)
+[History home](README.md) · [Full directory](CONVERSATIONS.md) · [Archive transition](LEGACY_RECONCILIATION.md)
 
 ## Defined source boundary
 
@@ -17,8 +17,6 @@ The raw account-wide export, its HTML representation and unrestricted asset-name
 | Alternate-path occurrences | 59 |
 | Attachment metadata references | 6,255; inherited references can repeat |
 | Occurrences with non-text parts | 720; original image bytes are not included |
-| Historical August records | 1,344 retained, byte-identical |
-| Historical September records/page fragments | 3,453 retained, byte-identical |
 
 Project conversations contain explicit omissions of unrelated recruitment correspondence and private contact/background details. Mixed-purpose passages include the original project launch, reporting visual refinements, substantial report-production spans and later project-specific discussion. They are not complete reproductions of the unrelated conversations. Literal excerpt offsets and detailed account-wide classification remain private.
 
@@ -38,6 +36,10 @@ Original report screenshots are not reconstructed. The supplied 35-page HITL PDF
 
 The full project workstreams reach October 16; selected later portfolio-use excerpts reach October 17, 2026. Exact first/last visible-message times are in the conversation directory. An update timestamp, export filename or upload date does not establish a message cutoff. This candidate does not include the October 20 failed-attempt conversation beyond the separate supplied work instruction.
 
-“Retained record” means the reconciled union of this native layer and the unchanged August/September/preaudit evidence. Unmatched historical records remain available. Candidate fuzzy alignments are not treated as exact matches or proof of missing native messages. No claim of universally complete attachment recovery or zero missing messages is made.
+The current retained record is the public-safe MSBF selection from the supplied native export. The owner identifies that export as the complete account-history source at its export boundary. The four files reattached on October 20 are byte-identical to the files used to build this layer; no second ingestion or duplicate conversation set is added.
 
-Prepared against repository commit `ebffbf94789c14e64d22fe93551c206f29f0d64d`. Simulator source, accepted artifacts, report PDFs, Tableau, Power BI, releases and tags are outside this documentation change.
+The earlier August/September PDF, OCR, copy/paste and summary compilations are retired from the current tree. Their failed record-level text matches do not establish missing native messages: derivative records can fragment, combine, omit or alter source dialogue. They are not merged back into the native transcript. All 21 named September workstreams, including all five August workstreams, have native counterparts here; this is thread coverage, not a claim of exact equality for every old fragment. See the [archive transition note](LEGACY_RECONCILIATION.md).
+
+The native export avoids the manual transcription errors introduced by those older compilations. It does not make historical assistant statements correct or recover unavailable attachment/image bytes. Historical errors remain attributed source dialogue; accepted technical artifacts continue to govern results.
+
+The initial native presentation was published in commit `4502b11bb2b040a65a26546bc479e9c8c11a3a22`; this cleanup is prepared against that commit. Native messages, anchors, branch records, source/public hashes and the HITL guide remain unchanged. Simulator source, analytical artifacts, report PDFs, Tableau, Power BI, release identities and tags are unchanged. Supporting documentation links and the validator’s required history paths follow the current native presentation.

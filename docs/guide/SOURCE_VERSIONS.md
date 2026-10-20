@@ -33,7 +33,7 @@ R4 adds the finite, sanitized history freeze. This editorial candidate adds curr
 
 ### Development and project assurance
 
-The development process is documented and AI-assisted. **Independent Audit** is the named project assurance workstream, not a claim of an external audit-firm or regulatory engagement. [Read the development and fidelity record](../project_history/chatgpt_logs_through_2026-09-09/README.md).
+The development process is documented and AI-assisted. **Independent Audit** is the named project assurance workstream, not a claim of an external audit-firm or regulatory engagement. [Read the native development record](../project_history/README.md).
 
 ## The original program classes are not a universal launcher
 
@@ -53,9 +53,9 @@ R26's successful retained-final resume is bound to checkpoint evidence and exact
 
 ## Frozen history and current use
 
-The history corpus ends at its recorded source-specific cutoffs. It contains source-text/page-image transcriptions, normalized records, summaries and explicit limitations; it is not falsely described as a complete verbatim platform export. This editorial action is recorded separately rather than recursively rebuilding history to include its own delivery.
+The current conversation corpus is selected from the supplied native ChatGPT export and ends at its recorded message cutoffs. Original roles, branches and messages are retained with disclosed privacy omissions and mixed-purpose excerpts. Earlier PDF, OCR, copy/paste and summary compilations are retired to Git history. Attachment references do not establish recovered attachment bytes. Documentation updates are recorded in Git rather than recursively added to their own transcript.
 
-[Read the frozen history and fidelity record](../project_history/chatgpt_logs_through_2026-09-09/README.md) · [Use the concise current-use guide](CURRENT_USE.md).
+[Read history coverage and provenance](../project_history/COVERAGE_AND_PROVENANCE.md) · [Use the concise current-use guide](CURRENT_USE.md).
 
 ## Separate release continuation
 

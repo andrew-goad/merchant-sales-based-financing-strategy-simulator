@@ -144,6 +144,6 @@ For cross-stage changes, consult the [detailed reconciliation report](release_ch
 
 [Campaign Scale boundaries](campaign_scale/CAMPAIGN_SCALE_GOVERNANCE_BOUNDARY.md) retain separately gated progression toward 2,500 and 25,000. Module 3 portfolio intelligence is preparation/development, not an executed capability granted here. A generalized campaign runner remains future maturation work.
 
-[Current use and prerequisites](guide/CURRENT_USE.md) · [Detailed qualification runbook](reproducibility/m2_v2_1/runbook/REPRODUCIBILITY_AND_EXECUTION.md) · [Current acceptance and release gates](release_integration/module_2_g3_v2_1/CURRENT_STATE.md) · [Frozen history and fidelity](project_history/chatgpt_logs_through_2026-09-09/README.md)
+[Current use and prerequisites](guide/CURRENT_USE.md) · [Detailed qualification runbook](reproducibility/m2_v2_1/runbook/REPRODUCIBILITY_AND_EXECUTION.md) · [Current acceptance and release gates](release_integration/module_2_g3_v2_1/CURRENT_STATE.md) · [Native history and provenance](project_history/COVERAGE_AND_PROVENANCE.md)
 
 *All results are deterministic synthetic demonstration evidence. Current companions explain; preserved sources and actual accepting decisions govern.*

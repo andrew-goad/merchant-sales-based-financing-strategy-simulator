@@ -1,26 +1,19 @@
-# Legacy-to-native reconciliation
+# Archive transition: one native conversation history
 
-[History home](README.md) · [Coverage](COVERAGE_AND_PROVENANCE.md) · [Record-by-record crosswalk](indexes/legacy_reconciliation.csv)
+[History home](README.md) · [Conversation directory](CONVERSATIONS.md) · [Coverage and provenance](COVERAGE_AND_PROVENANCE.md)
 
-The supplied project-history ZIP matches the current remote history folder byte-for-byte. The new reader is additive: the older archives and their destinations remain intact.
+The current MSBF conversation history is derived from the supplied native ChatGPT JSON export. The HTML export contains the same 166 conversation objects. The owner confirmed this as the account-history source and directed removal of unnecessary earlier history uploads.
 
-| Earlier archive | Exact original/published-text hash | Normalized text equality | Candidate alignment only | Unresolved native mapping |
-|---|---:|---:|---:|---:|
-| [chatgpt_logs_through_2026-08-12](chatgpt_logs_through_2026-08-12/README.md) | 965 | 115 | 124 | 140 |
-| [chatgpt_logs_through_2026-09-09](chatgpt_logs_through_2026-09-09/README.md) | 2243 | 263 | 270 | 677 |
+The August and September compilations used older exports plus manual PDF, OCR and copy/paste continuations. The pre-audit files were interim summaries. These derivatives have been removed from the current repository tree, along with their comparison index. They are not needed as parallel reading collections or as authority for the current transcript. The previously published native conversation pages, branches, message anchors, reader and 35-page HITL evidence guide are retained.
 
-Exact matches compare supplied text hashes and actual retained text. Normalized equality removes export citation markers, formatting punctuation and whitespace before comparison; it is separately labeled and is not byte equality. Sparse five-word shingles nominate possible OCR/page-fragment alignments; these are **candidate mappings only**, not accepted equivalence. The CSV retains source class, historical identity/file/line and native destinations so a reviewer can inspect both sides.
+All 21 named September workstreams, including all five August workstreams, are represented in the native collection. Matching old fragments is not the test of native completeness: OCR artifacts, summaries and split or merged passages can fail text equality even when the original exchange is present. No unverified derivative is inserted to fill an apparent gap.
 
-The September archive contains 3,040 structured-export records, 329 OCR-assisted page transcriptions, 45 retained visible continuations, 27 image-PDF continuations, 10 text-extracted records, one active-chat-context record and one boundary summary. These classes are not collapsed into native-message counts. One historical record can combine or fragment multiple messages.
+## Historical publication record
 
-## Material additions
+Git retains the earlier state at commit `4502b11bb2b040a65a26546bc479e9c8c11a3a22`. These links are explicitly historical:
 
-- Campaign Scale Part 2 is now represented as its own native conversation, with September performance investigation and later lessons; it is absent as a separate conversation from the September archive, whose cutoff predates that continuation.
-- Remediation Part 5 now includes later campaign support, HITL report review, Tableau development and October 16 publication discussion.
-- Mixed-purpose production conversations retain the substantial September 24–25 report-development sequence, including human-carried feedback and final title revisions.
-- Native branch paths preserve alternatives and shared ancestors explicitly. September titles and local `conv_` record codes are not assumed to equal platform identities.
-- The report's Power BI return / remediation uptake is recoverable as two distinct native messages. R23's response timestamp is also recoverable; the approved report is not edited.
+- [August compilation at the earlier commit](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/tree/4502b11bb2b040a65a26546bc479e9c8c11a3a22/docs/project_history/chatgpt_logs_through_2026-08-12)
+- [September compilation at the earlier commit](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/tree/4502b11bb2b040a65a26546bc479e9c8c11a3a22/docs/project_history/chatgpt_logs_through_2026-09-09)
+- [Pre-audit summaries at the earlier commit](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/tree/4502b11bb2b040a65a26546bc479e9c8c11a3a22/docs/project_history/preaudit)
 
-## What remains supplemental
-
-Unresolved mappings can reflect OCR, sanitation, missing attachment text, summary/relay events, differing export cutoffs or a genuinely absent source. They are not automatically called omissions or duplicates. All earlier records remain retained; no old fragment is discarded because the new export does not match it. `preaudit/` remains historical evidence and is not silently promoted to accepted authority.
+Historical dialogue and integration records may mention those former paths. They describe earlier events; use the snapshot links above when investigating that publication history. This cleanup does not rewrite Git history or remove prior commits. It creates no analytical release, version or tag.

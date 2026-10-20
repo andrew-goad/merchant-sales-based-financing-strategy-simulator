@@ -9,7 +9,7 @@ Follow the questions, decisions, corrections and handoffs behind the project. Th
 | How did the project develop? | [Development story and chronology](CHRONOLOGY.md) |
 | How did human judgment change the work? | [Human-in-the-Loop evidence guide](HITL_guide.md) · [35-page case study](https://github.com/andrew-goad/andrew-goad/blob/main/Human_in_the_Loop_Analytical_Leadership/Human_in_the_Loop_Analytical_Leadership.pdf) |
 | Where is the original dialogue? | [Conversation directory](CONVERSATIONS.md) · [Search and reading instructions](SEARCH_AND_READING.md) |
-| What is covered, and what remains uncertain? | [Coverage and provenance](COVERAGE_AND_PROVENANCE.md) · [Legacy reconciliation](LEGACY_RECONCILIATION.md) |
+| What is covered, and what remains uncertain? | [Coverage and provenance](COVERAGE_AND_PROVENANCE.md) · [Archive transition](LEGACY_RECONCILIATION.md) |
 
 ## A readable retained record
 
@@ -23,8 +23,8 @@ The project workstreams reach October 16, 2026, including Tableau development an
 - **Question and correct:** Power BI exposes missing explanations; the owner redirects counteroffer strategy, then reopens monitoring after acceptance.
 - **Explain and teach:** report production, public narrative refinement, and Tableau presentation make the method and results inspectable.
 
-## Earlier evidence remains available
+## One current conversation source
 
-The [August archive](chatgpt_logs_through_2026-08-12/README.md), [September archive](chatgpt_logs_through_2026-09-09/README.md), and `preaudit/` records remain unchanged. Their historical “prepublication” wording describes their original preparation state, not the status of this navigation update. Older OCR, summaries, relays and page fragments remain supplemental evidence even when native text is now available.
+The supplied native ChatGPT export governs this history. The earlier August/September compilations and pre-audit summaries have been retired from the current repository tree. Their manual PDF, OCR and copy/paste derivatives are not supplemental authority for the current transcript. Prior published snapshots remain accessible in Git history; see the [archive transition note](LEGACY_RECONCILIATION.md).
 
 [Project overview](../../README.md) · [Documentation portal](../README.md) · [Current accepted state](../release_integration/module_2_g3_v2_1/CURRENT_STATE.md) · [Tableau companion](../tableau/README.md)

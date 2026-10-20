@@ -66,8 +66,7 @@ The v2.1-family publication candidate is organized across technical successor so
 - [Project history](docs/project_history/README.md)
 - [HITL report-to-message evidence guide](docs/project_history/HITL_guide.md)
 - [Native conversation directory and retained branches](docs/project_history/CONVERSATIONS.md)
-- [Source coverage and legacy reconciliation](docs/project_history/COVERAGE_AND_PROVENANCE.md)
-- [ChatGPT development record through 2026-08-12](docs/project_history/chatgpt_logs_through_2026-08-12/README.md)
+- [Source coverage and archive transition](docs/project_history/COVERAGE_AND_PROVENANCE.md)
 - [Project lineage](docs/project_lineage/)
 - [Synthetic data snapshot documentation](docs/data_snapshot/README.md)
 
