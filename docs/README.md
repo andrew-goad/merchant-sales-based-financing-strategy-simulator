@@ -6,13 +6,15 @@
 
 ## Start with your question
 
-**Evaluating the portfolio?** Begin with the [executive brief](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/From_First_Advance_to_Intelligent_Portfolio.pdf), [enterprise map](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/architecture/pdf/Enterprise_Merchant_Sales_Based_Financing_Platform_v2_1.pdf) and [cohort report](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/cohort/MSBF_Merchant_Credit_Intelligence_Initial_750_Cohort_Overview_R3_PATCH1_20260908_REVIEW.pdf). Together they explain the proposition, system and results.
+**Evaluating the portfolio?** Start with the [3:48 narrated presentation](presentation/README.md) to see Power BI and Tableau explain the same SQL decisions through portfolio, merchant and account views. Continue with the [executive brief](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/From_First_Advance_to_Intelligent_Portfolio.pdf), [enterprise map](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/architecture/pdf/Enterprise_Merchant_Sales_Based_Financing_Platform_v2_1.pdf) and [cohort report](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/cohort/MSBF_Merchant_Credit_Intelligence_Initial_750_Cohort_Overview_R3_PATCH1_20260908_REVIEW.pdf). Together they explain the proposition, system and results.
 
 **Reviewing the logic?** Use the stage map below, then open the source README, requirements, implementation and validation. The new companions explain the hard boundaries without rewriting accepted records.
 
 **Learning or using the files?** Open the [masterclass learning guide](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/teaching/companion/LEARNING_GUIDE.md), [exercise answers](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/teaching/companion/EXERCISE_ANSWER_KEY.md) or [Current Use Guide](guide/CURRENT_USE.md). Viewing evidence and executing a qualified replay have different prerequisites.
 
 ## Current reading hubs
+
+[Narrated presentation, chapters and transcript](presentation/README.md)
 
 [Module 0 · foundations](guide/MODULE_0.md) · [Module 1 · evidence](guide/MODULE_1.md) · [Module 2 · decisions and accounts](guide/MODULE_2.md)
 

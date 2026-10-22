@@ -1,3 +1,9 @@
+# Narrated presentation · no new release
+
+The [Merchant Credit Intelligence presentation](docs/presentation/README.md) is an additive portfolio companion under `docs/presentation/`. It demonstrates existing SQL decision logic through Power BI and Tableau. It creates no simulator version, module, GitHub Release, tag or supersession event.
+
+---
+
 # Tableau companion · no new release
 
 The [Tableau Risk Decision & Scenario Review](docs/tableau/README.md) is an additive analytical/documentation product. Its workbook is retained under `docs/tableau/release/` using the owner's directory convention; this is not a GitHub Release, a new module, a version increment or a supersession event.

@@ -4,6 +4,10 @@
 
 Use the portfolio view to find a question, the application journey to understand its reasons, and the account evidence to inspect what followed. The cohort report adds deeper source-grounded interpretation.
 
+## Watch the analytical journey
+
+The [3:48 narrated presentation](../presentation/README.md) connects the portfolio and Strategic Partner channel, matched Tableau scenarios, merchant 098 and 258, lifecycle tooltips and servicing evidence. Both tools present the same SQL decision logic; Tableau makes the scenario alternatives visible side by side. [Read the transcript](../presentation/TRANSCRIPT.md).
+
 ## Four accepted analytical experiences
 
 **P01 · Cohort Command Center**

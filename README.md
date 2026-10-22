@@ -6,11 +6,13 @@
 
 A merchant's sales can be strong while its requested financing is unsupportable. MSBF connects cash-flow evidence, permissible financing structures, explicit decision authority and account-level results—so a reviewer can understand not only the outcome, but the reasoning and records behind it.
 
-[![Executive brief: understand the merchant business, find permissible terms, follow the funded account and explain the portfolio.](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/pages/01_Cover.png)](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/pages/01_Cover.png)
+[![Watch Merchant Credit Intelligence: a 3-minute-48-second narrated demonstration of SQL decision logic, Power BI account journeys and Tableau scenario comparison.](docs/presentation/assets/MCI_Opening_Card.png)](docs/presentation/README.md)
 
-**Start with the business story.** The frozen ten-page executive brief introduces financing for the merchant business—not credit for its shoppers.
+**Start with the narrated presentation.** In 3:48, follow a portfolio question into merchant financing decisions, compare Baseline with Recession Energy stress, and inspect the account and servicing evidence. Power BI and Tableau present the same SQL decision logic; Tableau adds side-by-side scenario comparison.
 
-[Read the ten-page executive brief](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/From_First_Advance_to_Intelligent_Portfolio.pdf) · [Explore the documentation](docs/README.md) · [What you can use now](docs/guide/CURRENT_USE.md) · [Explore Tableau](docs/tableau/README.md)
+Then read the frozen ten-page executive brief for the broader business story: financing for the merchant business—not credit for its shoppers.
+
+**[Watch the 3:48 presentation](docs/presentation/README.md)** · [Explore Power BI](docs/guide/CURRENT_USE.md#view-power-bi) · [Explore Tableau](docs/tableau/README.md) · [Read the executive brief](docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/From_First_Advance_to_Intelligent_Portfolio.pdf) · [Documentation](docs/README.md) · [Current use](docs/guide/CURRENT_USE.md)
 
 > **Scope:** deterministic synthetic demonstration · non-production · no real funds. Technical acceptance is documented at its recorded scope; [publication and supersession remain separate release actions](docs/release_integration/module_2_g3_v2_1/CURRENT_STATE.md).
 

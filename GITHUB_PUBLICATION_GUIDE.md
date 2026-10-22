@@ -1,3 +1,15 @@
+# Owner-directed presentation update · 22 October 2026
+
+Publish the final [Merchant Credit Intelligence narrated presentation](docs/presentation/README.md) as a bounded MSBF documentation/portfolio commit. The owner will manually commit and push using Git. Scope: `docs/presentation/`, the root README and current documentation navigation, this publication note, the artifact/release indexes, media attributes and the four current root file inventories.
+
+Retain accepted source, Power BI and Tableau package bytes and all historical audit and release records. Keep `release_metadata.json`, `RELEASE_NOTES.md`, `CHANGELOG.md`, citation version fields and historical overlay indexes unchanged. This presentation update does not create or replace a release tag, publish a GitHub Release or grant technical supersession.
+
+Before committing, run the unchanged `tools/validate_public_release.py`, verify the four root inventories, run `git diff --check`, inspect the bounded diff and stage only the supplied changed-path list. The prepared owner handoff includes an exact-baseline, hash-checked application helper and manual Git commands; it does not push automatically.
+
+The earlier Tableau and release instructions below remain historical guidance.
+
+---
+
 # Owner-directed Tableau documentation update · no release
 
 For the owner's 16 October 2026 request, add the [Tableau analytical companion](docs/tableau/README.md), its existing authored workbook/carousel/page images and related navigation. This instruction is limited to a documentation/portfolio commit and ordinary branch publication. It does not authorize a simulator version bump, new GitHub Release, tag creation/replacement, technical supersession, source-data changes or database execution.

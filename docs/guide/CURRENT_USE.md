@@ -12,6 +12,7 @@ This guide points to existing tools and procedures; it does not replace them or 
 
 | Activity | Availability / prerequisite |
 | --- | --- |
+| Watch the narrated presentation | [3:48 MP4, transcript and optional captions](../presentation/README.md); no BI software or database required. |
 | Read the code, guides, cohort and visuals | Available in this repository snapshot; no database needed. |
 | Check retained repository files | Complete local tree, Python and its existing manifests/validators. |
 | Read the Tableau scenario-review companion | PDF and PNGs are available without Tableau; the authoring `.twb` needs its original data or a separately packaged workbook. |
@@ -21,6 +22,8 @@ This guide points to existing tools and procedures; it does not replace them or 
 | Route D / arbitrary fresh campaign | **Not qualified here.** No general run-all-programs procedure is supplied. |
 
 ## Inspect and browse
+
+[Watch Merchant Credit Intelligence](../presentation/README.md) for the connected Power BI and Tableau demonstration, with chapters, a transcript and direct links to the underlying work.
 
 The [documentation portal](../README.md) maps G0/G1, Module 1 and Module 2 to their original packages. Start with [cash capacity](stages/M1_10.md), [structure search](stages/M2_02.md) or [operational setup](stages/M2_07.md) to follow a business question into requirements, implementation and evidence.
 

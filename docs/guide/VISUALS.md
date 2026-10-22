@@ -6,6 +6,10 @@ Architecture explains ownership; the pitch makes the proposition; the masterclas
 
 ## Same system, different reading tasks
 
+**Narrated demonstration**
+
+**Its job:** Connect portfolio questions to individual decisions and the account that follows, with detailed tooltips and side-by-side Tableau comparison. **Strong entry point:** [Merchant Credit Intelligence · 3:48 video, chapters and transcript](../presentation/README.md)
+
 **Executive pitch**
 
 **Its job:** Explain the proposition and why the connected system matters. **Strong entry point:** [Ten-page frozen executive brief](../portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/From_First_Advance_to_Intelligent_Portfolio.pdf)

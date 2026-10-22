@@ -1,3 +1,18 @@
+# Narrated presentation · portfolio companion
+
+[Merchant Credit Intelligence · 3:48](docs/presentation/README.md) connects SQL decision logic, Power BI merchant/account journeys and Tableau scenario comparison.
+
+| Artifact | Purpose |
+| --- | --- |
+| [Presentation landing page](docs/presentation/README.md) | Viewing, chapters, scope and next steps. |
+| [Narrated MP4](docs/presentation/Merchant_Credit_Intelligence.mp4) | Final 1080p presentation with branded closing destinations. |
+| [Timed captions](docs/presentation/Merchant_Credit_Intelligence.srt) | Optional subtitles, separate from the dashboard picture. |
+| [Transcript](docs/presentation/TRANSCRIPT.md) | Accessible, searchable narration. |
+
+This addition does not alter accepted source/report/workbook bytes or release authority.
+
+---
+
 # Tableau analytical companion · documentation addition
 
 [Merchant Credit Intelligence in Tableau](docs/tableau/README.md) adds a matched-scenario investigation dashboard alongside the existing Power BI, cohort and teaching material.
