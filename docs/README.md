@@ -2,11 +2,13 @@
 
 [Portfolio home](../README.md) · [Current Use Guide](guide/CURRENT_USE.md) · [Visual reading paths](guide/VISUALS.md)
 
-**Find the explanation, then inspect the record.** This portal separates current reading companions from preserved stage packages, technical-successor evidence and historical release records. It is a map of the repository—not a universal execution order.
+Follow a business question into the numbered module that implements it. Each stage entry links its requirements, source and validation records so a reviewer can trace what the next stage received.
 
 ## Start with your question
 
-**Evaluating the portfolio?** Start with the [3:48 narrated presentation](presentation/README.md) to see Power BI and Tableau explain the same SQL decisions through portfolio, merchant and account views. Continue with the [executive brief](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/From_First_Advance_to_Intelligent_Portfolio.pdf), [enterprise map](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/architecture/pdf/Enterprise_Merchant_Sales_Based_Financing_Platform_v2_1.pdf) and [cohort report](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/cohort/MSBF_Merchant_Credit_Intelligence_Initial_750_Cohort_Overview_R3_PATCH1_20260908_REVIEW.pdf). Together they explain the proposition, system and results.
+**Comparing financing strategies?** Start with the [five completed studies](../README.md#compare-five-completed-studies). Follow the [project guide](../research-site/PROJECT_GUIDE.md) from a campaign setting to a numbered stage, then to a merchant’s daily payment.
+
+**Evaluating the financing product?** The [executive brief](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/From_First_Advance_to_Intelligent_Portfolio.pdf) lays out the proposition. The [enterprise map](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/architecture/pdf/Enterprise_Merchant_Sales_Based_Financing_Platform_v2_1.pdf) traces its design. The [original 750-merchant cohort report](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/cohort/MSBF_Merchant_Credit_Intelligence_Initial_750_Cohort_Overview_R3_PATCH1_20260908_REVIEW.pdf) presents the evidence.
 
 **Reviewing the logic?** Use the stage map below, then open the source README, requirements, implementation and validation. The new companions explain the hard boundaries without rewriting accepted records.
 
@@ -14,7 +16,7 @@
 
 ## Current reading hubs
 
-[Narrated presentation, chapters and transcript](presentation/README.md)
+For an earlier demonstration, watch Andrew follow merchant 098 from its financing offer to its account history in Tableau and Power BI. [Original 750 study · narrated presentation, 3:48](presentation/README.md)
 
 [Module 0 · foundations](guide/MODULE_0.md) · [Module 1 · evidence](guide/MODULE_1.md) · [Module 2 · decisions and accounts](guide/MODULE_2.md)
 

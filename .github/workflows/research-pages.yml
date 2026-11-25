@@ -1,0 +1,67 @@
+name: Publish MSBF research
+
+on:
+  pull_request:
+    paths:
+      - README.md
+      - research-site/**
+      - tools/check_pages.py
+      - tools/register_research_reports.py
+      - tools/render_research_guides.py
+      - .github/workflows/research-pages.yml
+  push:
+    branches: ['**']
+    paths:
+      - README.md
+      - research-site/**
+      - tools/check_pages.py
+      - tools/register_research_reports.py
+      - tools/render_research_guides.py
+      - .github/workflows/research-pages.yml
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  validate:
+    name: Check research and repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Reconcile the five cohort exhibits
+        run: python3 -B research-site/evidence/verify_studies.py
+      - name: Compare repository table with cohort evidence
+        run: python3 -B research-site/evidence/check_readme_table.py
+      - name: Match the web guides to their Markdown sources
+        run: python3 -B tools/render_research_guides.py --check
+      - name: Check Pages links and report catalog
+        run: python3 -B tools/check_pages.py
+      - name: Verify repository inventory before publishing
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        run: python3 -B tools/validate_public_release.py
+      - name: Package the research site
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: research-site/
+
+  deploy:
+    name: Deploy GitHub Pages
+    needs: validate
+    if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+    concurrency:
+      group: msbf-research-pages
+      cancel-in-progress: false
+    steps:
+      - name: Publish verified artifact
+        uses: actions/deploy-pages@v4
