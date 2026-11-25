@@ -26,11 +26,11 @@ Read each pair **Baseline → Recession Energy**. *Supportable* includes applica
 
 | Study | Supportable | Funded | Open / funded at day 120 | Daily monitoring records |
 | --- | ---: | ---: | --- | ---: |
-| [750 · Local DBeaver](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750a/repayment) | 300 → 80 | 103 → 27 | 4/103 → 0/27 | 15,600 |
-| [750 · Local GUI](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750b/repayment) | 321 → 94 | 115 → 35 | 5/115 → 1/35 | 18,000 |
-| [750 · AWS GUI](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750c/repayment) | 318 → 72 | 110 → 26 | 5/110 → 1/26 | 16,320 |
-| [2,500 · AWS PowerShell](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#2500/repayment) | 1,055 → 269 | 329 → 100 | 22/329 → 7/100 | 51,480 |
-| [25,000 · AWS GUI](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#25000/repayment) | 10,564 → 2,836 | 3,337 → 1,005 | 176/3,337 → 43/1,005 | 521,040 |
+| [750 · Local DBeaver](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750a/repayment) · [Explore in Tableau](https://public.tableau.com/app/profile/andrew.goad/viz/MSBF-750-Local-DBeaver/RiskDecisionScenarioReview) | 300 → 80 | 103 → 27 | 4/103 → 0/27 | 15,600 |
+| [750 · Local GUI](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750b/repayment) · [Explore in Tableau](https://public.tableau.com/app/profile/andrew.goad/viz/MSBF-750-Local-GUI/RiskDecisionScenarioReview) | 321 → 94 | 115 → 35 | 5/115 → 1/35 | 18,000 |
+| [750 · AWS GUI](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750c/repayment) · [Explore in Tableau](https://public.tableau.com/app/profile/andrew.goad/viz/MSBF-750-AWS-GUI/RiskDecisionScenarioReview) | 318 → 72 | 110 → 26 | 5/110 → 1/26 | 16,320 |
+| [2,500 · AWS PowerShell](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#2500/repayment) · [Explore in Tableau](https://public.tableau.com/app/profile/andrew.goad/viz/MSBF-2500-AWS-PowerShell/RiskDecisionScenarioReview) | 1,055 → 269 | 329 → 100 | 22/329 → 7/100 | 51,480 |
+| [25,000 · AWS GUI](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#25000/repayment) · [Explore in Tableau](https://public.tableau.com/app/profile/andrew.goad/viz/MSBF-25000-AWS-GUI/RiskDecisionScenarioReview) | 10,564 → 2,836 | 3,337 → 1,005 | 176/3,337 → 43/1,005 | 521,040 |
 
 **Where can a bank keep lending in a recession, and what risk remains?** In the 750 · AWS GUI study, the same policy evaluated the same 750 simulated businesses. In Baseline, 110 received funding. Under Recession Energy, 26 received funding and 25 of them paid off by day 120. Merchant 000225 received the same $150,000 inventory advance in both scenarios. It still owed **$20,062.18 in Baseline and $21,410.48 under stress**. [Explore the AWS study](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750c/repayment)
 

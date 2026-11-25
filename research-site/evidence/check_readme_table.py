@@ -76,7 +76,9 @@ def check(markdown, records=None):
     for row, (name, route, _, pair) in zip(table, records or studies(), strict=True):
         endpoint = "Not reported" if all(c.opened is None for c in pair) else " → ".join(
             f"{c.opened:,}/{c.funded:,}" for c in pair)
-        expected = [f"[{name}]({SITE}#{route}/repayment)", " → ".join(f"{c.supportable:,}" for c in pair),
+        slug = name.replace(" · ", "-").replace(",", "").replace(" ", "-")
+        viz = f"https://public.tableau.com/app/profile/andrew.goad/viz/MSBF-{slug}/RiskDecisionScenarioReview"
+        expected = [f"[{name}]({SITE}#{route}/repayment) · [Explore in Tableau]({viz})", " → ".join(f"{c.supportable:,}" for c in pair),
                     " → ".join(f"{c.funded:,}" for c in pair), endpoint, f"{sum(c.daily for c in pair):,}"]
         observed = [cell.strip() for cell in row]
         if observed != expected:
