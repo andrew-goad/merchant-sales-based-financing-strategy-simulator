@@ -1,3 +1,7 @@
+# Research publication · November 25, 2026
+
+The research exhibit compares five completed synthetic campaigns and follows financing decisions through daily repayment. The repository comparison links each cohort to the corresponding interactive view. The publication adds study extracts, reconciliation commands, a Windows operator walkthrough and a two-minute Local GUI case film. Historical software releases and numbered stage records retain their original identities. [Explore the studies](README.md) · [Trace design and evidence](research-site/PROJECT_GUIDE.md)
+
 # Current change-control overlay
 
 Final pre-audit integration adds the bounded Route-B Windows qualification and Part 4 pre-audit continuation without changing accepted R26/PBIX business bytes. Qualification chronology preserves the strict Phase-2 comparator STOP, bounded PostgreSQL deparser comparator correction, successful isolated R26 execution, post-execution PowerShell harness correction, 90/90 reconciliation, and original-source/Git nonmutation.

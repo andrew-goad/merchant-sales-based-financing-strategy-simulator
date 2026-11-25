@@ -1,3 +1,28 @@
+# Maintaining the five-study research publication
+
+The [research exhibit](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/) and the [repository comparison](README.md#compare-five-completed-studies) report the same experiments. Edit them on a local Git branch. Every public number belongs to a named study, a scenario and an explicit denominator.
+
+1. **Update the study evidence first.** Record the origin, unit and definition in the [study sources](research-site/evidence/STUDY_SOURCES.md). For account-level comparisons, distinguish all funded accounts from the merchants funded in both scenarios. For a new experiment, identify its population and policy.
+2. **Follow the reader’s route.** Check the README row, the matching Pages selection, the relevant requirements and the source extract. Give any chart, video or workbook a cohort label. Review the five selectors at desktop and phone widths. Confirm that changing cohorts updates counts, dates, cases and links together.
+3. **Review public files.** Stage the selected edits with Git. Review the staged paths and diff. For workbook downloads, associate each file with a study, check its saved opening view and verify the release asset against the source SHA-256. For operator downloads, verify the release asset against the A3 identity printed in the run procedure. The site shows the downloads registered for that release.
+4. **Regenerate the inventories.** From a clean publication checkout with the intended changes staged, run the commands below. When updating `research-site/PROJECT_GUIDE.md` or `research-site/evidence/STUDY_SOURCES.md`, use `python -B tools/render_research_guides.py --write` with Pandoc installed, then stage the paired HTML. The original release validator examines every physical file in the repository, so keep working downloads, recordings and local notes outside this checkout.
+5. **Test the public result.** Push the reviewed branch. The pull request runs the research and repository checks. On the default branch the Pages workflow publishes the contents of `research-site/`. Use **Settings → Pages → GitHub Actions** for this repository. After deployment, open the site from the repository README, switch between all five studies and test the source and download links from the public site.
+
+```powershell
+python -B tools/public_inventory.py --write
+git add -- MANIFEST.csv manifest.json SHA256SUMS.txt PACKAGE_INVENTORY.csv
+python -B tools/public_inventory.py --check
+python -B research-site/evidence/verify_studies.py
+python -B research-site/evidence/check_readme_table.py
+python -B tools/render_research_guides.py --check
+python -B tools/check_pages.py
+python -B tools/validate_public_release.py
+```
+
+The November research publication presents synthetic experiments. Stage acceptance records document their named software revision. Subsequent changes to financing strategy belong to a new experiment or release with its own evidence. [Change log](CHANGELOG.md)
+
+---
+
 # Owner-directed presentation update · 22 October 2026
 
 Publish the final [Merchant Credit Intelligence narrated presentation](docs/presentation/README.md) as a bounded MSBF documentation/portfolio commit. The owner will manually commit and push using Git. Scope: `docs/presentation/`, the root README and current documentation navigation, this publication note, the artifact/release indexes, media attributes and the four current root file inventories.

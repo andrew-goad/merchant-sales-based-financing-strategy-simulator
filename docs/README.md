@@ -6,6 +6,8 @@
 
 ## Start with your question
 
+**Comparing financing strategies?** Start with the [five completed studies](../README.md#compare-five-completed-studies). Follow the [project guide](../research-site/PROJECT_GUIDE.md) from a campaign setting to a numbered stage, then to a merchant’s daily payment.
+
 **Evaluating the portfolio?** Start with the [3:48 narrated presentation](presentation/README.md) to see Power BI and Tableau explain the same SQL decisions through portfolio, merchant and account views. Continue with the [executive brief](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/pitch/From_First_Advance_to_Intelligent_Portfolio.pdf), [enterprise map](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/architecture/pdf/Enterprise_Merchant_Sales_Based_Financing_Platform_v2_1.pdf) and [cohort report](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/cohort/MSBF_Merchant_Credit_Intelligence_Initial_750_Cohort_Overview_R3_PATCH1_20260908_REVIEW.pdf). Together they explain the proposition, system and results.
 
 **Reviewing the logic?** Use the stage map below, then open the source README, requirements, implementation and validation. The new companions explain the hard boundaries without rewriting accepted records.
