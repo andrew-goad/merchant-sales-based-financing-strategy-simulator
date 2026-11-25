@@ -4,6 +4,10 @@
 
 Andrew Goad’s Merchant Sales-Based Financing (MSBF) Strategy Simulator follows a financing request from sales and bank deposits through underwriting, counteroffers, funding and repayment. It evaluates the same synthetic applicants under Baseline and Recession Energy. The lender can change its offer under stress. Once it funds an advance, the business pays a fixed share of eligible daily sales. A slow day means a smaller payment. A day without eligible sales means no collection.
 
+**What this work establishes**
+
+MSBF is a working decision engine tested on synthetic merchants. These studies show who received financing and how repayment unfolded under the modeled conditions. How well the strategy would serve real businesses, and what would improve it, remain open questions for future versions. Use this edition for policy research. Validate the strategy against observed merchant outcomes before using it for live lending.
+
 **[Explore the interactive studies](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/)** · [Read the project guide](research-site/PROJECT_GUIDE.md) · [Design an experiment in the GUI](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750b/experiment)
 
 ## One equipment repair, two repayment paths
@@ -41,7 +45,7 @@ This first version lets an analyst test how a policy choice changes offers and s
 | Reader’s question | Where to go |
 | --- | --- |
 | What evidence and U.S. rules inform this product? | [Watch the research introduction and read the sources](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750b/sources) |
-| How is the product designed, and which requirements govern it? | [Project guide](research-site/PROJECT_GUIDE.md) · [Module 2 business requirements and validation](docs/BRD_AND_VALIDATION_INDEX.md) |
+| How is the product designed, and which requirements govern it? | [Watch the architecture and audit film](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750b/project) · [Project guide](research-site/PROJECT_GUIDE.md) · [Module 2 business requirements and validation](docs/BRD_AND_VALIDATION_INDEX.md) |
 | Where does the code turn sales into a payment? | [Numbered stage map](docs/README.md#stage-map) · [M2.5 daily monitoring](docs/guide/stages/M2_05.md) · [SQL that caps the payment at the remaining balance](Module_2/2.05_Daily_Remittance_Exposure_and_Portfolio_Monitoring/v0.2R5_ACCEPTED/src/current/03_166_generation.sql#L872) |
 | How can I run a challenger or inspect a completed campaign? | [Windows setup and GUI walkthrough](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750b/experiment) · [Reports by study](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750b/reports) · [Andrew Goad’s Tableau Public collection](https://public.tableau.com/app/profile/andrew.goad/vizzes) |
 | Can I reproduce the published figures? | [Evidence and reproduction commands](research-site/evidence/STUDY_SOURCES.md) · [Historical M2.5 stage acceptance](Module_2/2.05_Daily_Remittance_Exposure_and_Portfolio_Monitoring/v0.2R5_ACCEPTED/docs/VALIDATION_AND_ACCEPTANCE.md) · [Repository change log](CHANGELOG.md) |

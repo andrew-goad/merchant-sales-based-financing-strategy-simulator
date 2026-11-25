@@ -1,0 +1,35 @@
+When does a decision become a funded account?
+
+Inside the code and controls of Merchant Sales-Based Financing
+
+Spoken transcript
+
+The engine proposes two counteroffers. One offer is authorized. The other needs an underwriter’s review. How would you check that only the authorized offer became a funded account?
+
+On Windows, PowerShell starts the local console. The HTML form collects the experiment settings. JavaScript sends them to Python, which checks the request and starts a worker. That worker coordinates the stages. PostgreSQL runs the SQL rules and records the results. Power BI and Tableau let us inspect them.
+
+The folders follow the work. Module 0 establishes the run and its inputs. Module 1 builds the evidence for each application. Module 2 takes that evidence through underwriting, booking and repayment monitoring.
+
+Open the booking stage, Module 2.4. Its business requirement says funding starts with an authorized offer. The SQL reads the previous stage’s decision and sends a counteroffer awaiting review down a separate path.
+
+The stage test tries to put $1,000 on an inactive record in a temporary table. The database rejects the row. That rejection is what earns a pass. You can inspect both the test and the saved result.
+
+I checked the decisions against the funding records in the local campaign. 750 merchants, two scenarios each. All 150 authorized decisions led to funding. 265 decisions went to review. None produced an advance.
+
+That tells me the engine honored the funding rule in this run. Was the rule a good one? Next I’d compare referrals with underwriters’ reasons, and funded offers with actual sales, operating expenses and repayments. Could merchants repay and still make payroll?
+
+On-screen sources and figures
+
+0:00 – The audit trail. The engine proposes two counteroffers that follow different routes. The title asks when a decision becomes a funded account. The example follows the decision in Module 2.3 into booking in Module 2.4.
+
+0:11 – The technology. The Windows launcher START_CONSOLE.ps1 opens the local console. The HTML form and JavaScript send the selected settings to the local /api/jobs endpoint, shown in web/app.js line 385. Python receives and checks the request and starts a worker that coordinates the stages for the submitted job. Python hands the accepted Module 1 output to the Module 2 controller. Sources include console_app/server.py line 186, console_app/jobs.py lines 272–283, and continuous/runner.py lines 12–24. PostgreSQL executes the SQL and stores the campaign results. Power BI and Tableau present exported campaign data. The workbooks read results prepared for this run.
+
+0:35 – Code folders. Module_0 contains two foundation stages. Module_1 contains 17 stages including sales, liquidity, risk and economics. Module_2 contains 12 stages from eligibility and authorizing an offer to servicing and monitoring.
+
+0:50 – The written requirement and its implementation. M2_4_DESIGN_AND_GENERATION_SPECIFICATION.md, line 8, maps COUNTEROFFER_REVIEW_REQUIRED to ACTIVATION_REVIEW_REQUIRED. The operational objects field reads “None”. The displayed CASE statement in Module 2.4’s 03_158_generation.sql, lines 478–482, sends FINAL_OFFER_AUTHORIZED to BOOKED_FUNDED_PORTFOLIO_ACTIVATED. It sends COUNTEROFFER_REVIEW_REQUIRED to ACTIVATION_REVIEW_REQUIRED.
+
+1:05 – The deliberate invalid insert. The 011 negative control in 05_160_negative_controls.sql, lines 494 and 501–502, inserts a false activation with an amount of 1000.00 in a temporary table and catches a check_violation. In the separately archived M2.4 test result for M2_4_NEG_011_NONACTIVATED_WITH_AMOUNT, the database rejected the invalid row and the control’s status was PASS.
+
+1:21 – The Local GUI 750 campaign. In an independent comparison of decision and funding records, 750 synthetic applications across two scenarios generated 1,500 decision rows. The table shows 150 authorized and 150 funded, 265 review-required and 0 funded, and 1,085 declined and 0 funded.
+
+1:39 – Interpretation. Only authorized decisions became funded accounts in this synthetic campaign. Two next research comparisons appear on screen. For referrals, compare the decision with underwriters’ reasons. For funded offers, compare with observed sales, expenses and repayments. “Could merchants repay and still make payroll?”
