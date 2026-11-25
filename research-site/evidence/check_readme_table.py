@@ -62,7 +62,7 @@ def studies():
         ("750 · Local DBeaver", "750a", "750", summary_counts("official_750_r26_summary.csv")),
         ("750 · Local GUI", "750b", "take4", ledger_counts(750)),
         ("750 · AWS GUI", "750c", "aws750", summary_counts("aws_750_take1_summary.csv")),
-        ("2,500 · AWS GUI", "2500", "2500", ledger_counts(2500)),
+        ("2,500 · AWS PowerShell", "2500", "2500", ledger_counts(2500)),
         ("25,000 · AWS GUI", "25000", "25000", ledger_counts(25000)),
     ]
 
@@ -88,6 +88,8 @@ class StudyPage(HTMLParser):
     def __init__(self):
         super().__init__()
         self.captions = {}
+        self.selector_labels = {}
+        self.selected_input = None
         self.tables = {}
         self.default_studies = []
         self.mastheads = []
@@ -98,7 +100,12 @@ class StudyPage(HTMLParser):
 
     def handle_starttag(self, tag, attributes):
         attrs = dict(attributes)
-        if tag == "article" and "data-study" in attrs:
+        if tag == "input" and attrs.get("name") == "study" and attrs.get("type") == "radio":
+            self.selected_input = attrs["value"]
+            if self.selected_input in self.selector_labels:
+                raise ValueError(f"Duplicate study selector {self.selected_input}")
+            self.selector_labels[self.selected_input] = []
+        elif tag == "article" and "data-study" in attrs:
             self.study = attrs["data-study"]
             if self.study in self.captions:
                 raise ValueError(f"Duplicate Pages study {self.study}")
@@ -121,12 +128,16 @@ class StudyPage(HTMLParser):
             self.cell = []
 
     def handle_data(self, text):
+        if self.selected_input is not None and text.strip():
+            self.selector_labels[self.selected_input].append(text.strip())
         if self.in_masthead:
             self.mastheads[-1] += text
         if self.cell is not None:
             self.cell.append(text)
 
     def handle_endtag(self, tag):
+        if tag == "label":
+            self.selected_input = None
         if self.in_table and tag in ("td", "th"):
             self.row.append(" ".join("".join(self.cell).split()))
             self.cell = None
@@ -159,6 +170,10 @@ def check_pages(html, records=None):
     page.feed(html)
     page.close()
     records = records or studies()
+    labels = {key: " ".join(parts) for key, parts in page.selector_labels.items()}
+    expected_labels = {key: name.replace(" · ", " ") for name, _, key, _ in records}
+    if labels != expected_labels:
+        raise ValueError(f"Study selector labels differ\nExpected {expected_labels}\nObserved {labels}")
     expected_studies = {key for _, _, key, _ in records}
     if set(page.tables) != expected_studies or set(page.captions) != expected_studies:
         raise ValueError("Pages must have a funding table and a selectable caption for each of the five studies")
@@ -180,4 +195,4 @@ if __name__ == "__main__":
     records = studies()
     check(README.read_text(encoding="utf-8"), records)
     check_pages((ROOT / "research-site/index.html").read_text(encoding="utf-8"), records)
-    print("PASS five README study rows, ten Pages scenario columns, five selectable mastheads and the default masthead")
+    print("PASS five README study rows, five selector labels, ten Pages scenario columns, five selectable mastheads and the default masthead")

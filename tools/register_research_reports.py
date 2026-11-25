@@ -16,7 +16,7 @@ RUNS = {
     '750': '750 · Local DBeaver',
     'take4': '750 · Local GUI',
     'aws750': '750 · AWS GUI',
-    '2500': '2,500 · AWS GUI',
+    '2500': '2,500 · AWS PowerShell',
     '25000': '25,000 · AWS GUI',
 }
 

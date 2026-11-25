@@ -153,14 +153,14 @@ def verify_official_750():
 def verify_aws_750():
     records = rows('aws_750_take1_summary.csv')
     expected = {
-        'BASELINE': ((94, 16, 166, 42, 41, 293, 98), Decimal('1570500.00'), 13200),
-        'RECESSION_ENERGY': ((23, 3, 35, 11, 201, 379, 98), Decimal('491300.00'), 3120),
+        'BASELINE': ((94, 16, 166, 42, 41, 293, 98), Decimal('1570500.00'), 13200, 105),
+        'RECESSION_ENERGY': ((23, 3, 35, 11, 201, 379, 98), Decimal('491300.00'), 3120, 25),
     }
     fields = ('approved_as_requested', 'counteroffer_authorized', 'counteroffer_review', 'underwriting_review',
               'evidence_decline', 'no_feasible_structure', 'policy_hard_stop')
     require(Counter(r['scenario'] for r in records) == Counter(expected.keys()), 'AWS 750: scenarios')
     for r in records:
-        outcomes, principal, daily = expected[r['scenario']]
+        outcomes, principal, daily, paid = expected[r['scenario']]
         require(r['study'] == '750C_AWS_TAKE_1' and r['native_run'] == '20261123T182238Z_35ed811a',
                 'AWS 750: campaign identity')
         require(tuple(int(r[k]) for k in fields) == outcomes and sum(outcomes) == int(r['applications']) == 750,
@@ -168,6 +168,8 @@ def verify_aws_750():
         funded, review, declined = sum(outcomes[:2]), sum(outcomes[2:4]), sum(outcomes[4:])
         require(tuple(int(r[k]) for k in ('funded','review_only','declined','supportable')) ==
                 (funded, review, declined, funded + review), 'AWS 750: grouped decisions')
+        require((int(r['paid_off']), int(r['open_accounts'])) == (paid, funded - paid),
+                'AWS 750: endpoint payoff and open counts from Power BI P04')
         require(Decimal(r['funded_principal_usd']) == principal and int(r['daily_monitoring_rows']) == daily,
                 'AWS 750: reported dollars and daily records')
         require((r['monitoring_start'], r['monitoring_end']) == ('2026-07-26', '2026-11-22') and
@@ -175,7 +177,7 @@ def verify_aws_750():
                 == daily // funded and daily == funded * 120, 'AWS 750: monitoring interval')
         require(int(r['cohort_matched_applications_with_changed_decision']) == 254,
                 'AWS 750: reported cohort-wide count of changed decisions')
-    print('PASS 750C AWS Take 1: 1,500 decisions, both scenario portfolios and 16,320 daily records')
+    print('PASS 750C AWS Take 1: 1,500 decisions, Power BI endpoint counts for both portfolios and 16,320 daily records')
 
 def verify_decision_transitions(counts):
     groups = ('Authorized', 'Review only', 'Declined')
