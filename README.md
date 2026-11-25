@@ -22,7 +22,7 @@ Baseline paid off on day 111. Under Recession Energy, **$3,743.44** remained at 
 
 The tool began in DBeaver. Each SQL stage started with a business requirement, checked its inputs, applied the rule and tested the result. Under the **No Cold Handoffs** approach, the next stage received both the result and a summary of the checks behind it. For 2,500 merchants, the operator launched two modules from PowerShell on AWS. For 25,000, the operator opened an early AWS campaign console from PowerShell and used the browser to submit and monitor the run. Today, the Windows campaign console lets an analyst choose a policy on a local desktop or AWS, review and adjust experiment parameters and resolve conflicting choices before submitting the experiment.
 
-Read each pair **Baseline → Recession Energy**. *Supportable* includes applications authorized for funding and those referred for review. *Open / funded* counts accounts with a positive ending balance among all accounts funded in that scenario. Each row follows its own synthetic population.
+Read each pair **Baseline → Recession Energy**. *Supportable* includes applications authorized for funding and those referred for review. *Open / funded* counts accounts with a positive ending balance among all accounts funded in that scenario. Each row follows its own synthetic population. Select a study and open its campaign film to see how it ran and follow a merchant through the decision.
 
 | Study | Supportable | Funded | Open / funded at day 120 | Daily monitoring records |
 | --- | ---: | ---: | --- | ---: |
