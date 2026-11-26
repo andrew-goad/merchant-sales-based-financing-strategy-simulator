@@ -2,6 +2,14 @@
 
 A business needs working capital now and can commit part of its future daily sales to repayment. How much can it receive? How much cash would the agreement collect if sales slow? The simulator follows both decisions for the same synthetic merchant. The operator chooses the population and policy, the engine evaluates the request, and the reports trace each result back to a decision or an account-day.
 
+## Current edition and capabilities
+
+The **November 2026 research edition** pairs five completed studies with their decision counts, merchant ledgers, narrated films and saved workbooks. Start with the paper to understand how an advance works, then choose a study. [Read the paper from the beginning](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/) · [Check the published findings](evidence/STUDY_SOURCES.md#recalculate-the-exhibits)
+
+To **run a new experiment**, use the RC21 A3 Windows campaign console. The parameter guide explains the available settings, and preflight checks flag incompatible choices before submission. The release contains the operator ZIP, saved Tableau and Power BI workbooks, and checksums. [Windows setup and experiment walkthrough](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750b/experiment) · [Download the research release](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/releases/tag/msbf-research-assets-2026-11)
+
+To **audit an earlier implementation**, use the original stage requirements, SQL and acceptance records. The historical replay guide describes restoring a retained database checkpoint to reproduce a specific earlier result. [Stage and source index](../docs/README.md#stage-map) · [Historical checkpoint replay](../docs/guide/CURRENT_USE.md)
+
 ## Follow one experiment
 
 | What the operator does | What the engine does | What a reviewer can inspect |
@@ -14,14 +22,20 @@ A business needs working capital now and can commit part of its future daily sal
 
 ## Trace one requirement to one payment
 
-In the **750 · Local GUI** study, merchant 000462 owed **$1,486.49** when day 111 began in Baseline. Eligible sales of $31,024.48 would have produced about $3,030 at the contracted 9.7672% remittance rate. The balance cap reduced the actual collection to $1,486.49 and closed the account. Under Recession Energy, that day’s eligible sales were $21,447.95, the collection was $2,094.86, and $14,894.22 remained. The same rule produced different payments because the sales and opening balances differed. [Inspect days 110–111 in the ledger](evidence/merchant_000462.csv) · [Read the balance cap in SQL](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/blob/b34fbc1c35a743628b6ae5018ad08a174d536137/Module_2/2.05_Daily_Remittance_Exposure_and_Portfolio_Monitoring/v0.2R5_ACCEPTED/src/current/03_166_generation.sql#L872)
+In the **750 · Local GUI** study, merchant 000462 owed **$1,486.49** when day 111 began in Baseline. Eligible sales of $31,024.48 would have produced $3,030.22 at the contracted 9.7672% remittance rate. The balance cap reduced the actual collection to $1,486.49 and closed the account. Under Recession Energy, that day’s eligible sales were $21,447.95, the collection was $2,094.86, and $14,894.22 remained. The same rule produced different payments because the sales and opening balances differed. [Inspect days 110–111 in the ledger](evidence/merchant_000462.csv) · [Read the balance cap in SQL](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/blob/b34fbc1c35a743628b6ae5018ad08a174d536137/Module_2/2.05_Daily_Remittance_Exposure_and_Portfolio_Monitoring/v0.2R5_ACCEPTED/src/current/03_166_generation.sql#L872)
 
 ## Test an offer policy
 
-A borrower requesting $20,000 could receive a counteroffer as small as $8,000 under a 40% floor. Raising the floor to 60% makes the smallest permitted offer $12,000. In the 25,000 Baseline study, 190 of 522 authorized counteroffers were below that proposed floor. That count identifies cases to examine. To measure the actual change in funding, rerun with the same population and the linked maximum reduction set to 40%. Then compare replacement offers, referrals and declines for the affected applications. [Selected counteroffers by study](evidence/counteroffer_floor_sensitivity.csv)
+A business requesting $20,000 could receive an $8,000 counteroffer under a 40% minimum. Raising that minimum to 60% makes the smallest permitted offer $12,000. In the **750 Local GUI** study, 45 of 190 selected Baseline counteroffers and 10 of 48 under stress fell below 60%. These counts include offers sent for review. In the **separate 25,000 study**, 190 of 522 authorized Baseline counteroffers fell below the proposed minimum. These historical counts identify cases for investigation. To test the policy, generate a new reference, save its population and reuse it for the challenger. Raise the minimum offer from 40% to 60% and lower the linked maximum reduction from 60% to 40%. Hold all other settings fixed. Compare replacement offers, referrals, declines and outstanding balances in the two runs. [Selected counteroffers by study](evidence/counteroffer_floor_sensitivity.csv)
 
 ## Read the validation at the right level
 
 - **Requirements and architecture.** The historical charter maps business requirements to data and controls. The stage documentation gives the implementation and acceptance evidence for the named revision. [Requirements traceability](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/blob/b34fbc1c35a743628b6ae5018ad08a174d536137/Module_1/1.01_Charter_Architecture_and_Requirements/v0.1R1_DOCUMENTATION/docs/12_REQUIREMENTS_TO_ARCHITECTURE_TRACEABILITY.md) · [Architecture diagrams](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/blob/b34fbc1c35a743628b6ae5018ad08a174d536137/docs/portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/architecture/MSBF_Architecture_Trio_v2_1.pdf)
 - **Campaign findings.** Each study has its own population, funding totals and monitoring records. Reconcile the scenario totals, then restrict both sides to merchants funded in both scenarios when comparing like borrowers. The five-study verifier also replays the daily paths for the featured Local GUI, 2,500 and 25,000 merchants. [Sources, denominators and reproduction command](evidence/STUDY_SOURCES.md)
 - **Open research question.** The model can show when a smaller offer preserves access and when a balance remains at day 120. Determining whether the arrangement leaves a real merchant enough cash for payroll requires evidence on operating outflows, balances and sales across payment channels. [Research behind the comparison](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750b/sources)
+
+## Cite this work
+
+**For the five studies, merchant cases or workbook results**, cite Andrew R. Goad (November 2026), *When repayment follows sales*, Merchant Sales-Based Financing Strategy Simulator, November research edition. Include the study name and scenario with the figure. [Research release](https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/releases/tag/msbf-research-assets-2026-11)
+
+**For the August 2026 software edition**, cite Andrew R. Goad (2026), *Merchant Sales-Based Financing Strategy Simulator*, version 2.0.0. The citation file records that edition’s version and release date. [Software citation](../CITATION.cff)

@@ -1,6 +1,6 @@
 # Documentation · MSBF Merchant Credit Intelligence
 
-[Portfolio home](../README.md) · [Current Use Guide](guide/CURRENT_USE.md) · [Visual reading paths](guide/VISUALS.md)
+[Portfolio home](../README.md) · [Project Guide and current edition](../research-site/PROJECT_GUIDE.md#current-edition-and-capabilities) · [Historical checkpoint replay](guide/CURRENT_USE.md) · [Visual reading paths](guide/VISUALS.md)
 
 Follow a business question into the numbered module that implements it. Each stage entry links its requirements, source and validation records so a reviewer can trace what the next stage received.
 
@@ -12,7 +12,7 @@ Follow a business question into the numbered module that implements it. Each sta
 
 **Reviewing the logic?** Use the stage map below, then open the source README, requirements, implementation and validation. The new companions explain the hard boundaries without rewriting accepted records.
 
-**Learning or using the files?** Open the [masterclass learning guide](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/teaching/companion/LEARNING_GUIDE.md), [exercise answers](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/teaching/companion/EXERCISE_ANSWER_KEY.md) or [Current Use Guide](guide/CURRENT_USE.md). Viewing evidence and executing a qualified replay have different prerequisites.
+**Learning or using the files?** Open the [masterclass learning guide](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/teaching/companion/LEARNING_GUIDE.md), [exercise answers](portfolio_visuals/MSBF_VISUAL_PUBLIC_R1/assets/teaching/companion/EXERCISE_ANSWER_KEY.md) or [historical checkpoint replay guide](guide/CURRENT_USE.md). Viewing evidence and executing a qualified replay have different prerequisites.
 
 ## Current reading hubs
 
@@ -22,7 +22,7 @@ For an earlier demonstration, watch Andrew follow merchant 098 from its financin
 
 [Explainability and P03 cases](guide/EXPLAINABILITY.md) · [Power BI, Tableau and cohort analysis](guide/ANALYTICS.md) · [Tableau scenario review](tableau/README.md) · [Visual portfolio](guide/VISUALS.md) · [Learn the mechanism](guide/LEARNING.md)
 
-[Requirements and validation](guide/REQUIREMENTS_AND_VALIDATION.md) · [Source versions and provenance](guide/SOURCE_VERSIONS.md) · [Current use](guide/CURRENT_USE.md)
+[Requirements and validation](guide/REQUIREMENTS_AND_VALIDATION.md) · [Source versions and provenance](guide/SOURCE_VERSIONS.md) · [Historical checkpoint replay](guide/CURRENT_USE.md)
 
 **The short mechanism routes are deliberate.** The [decision-engine poster](guide/LEARNING.md#how-the-governed-decision-engine-works) explains evidence → search → authority. The [after-decision poster](guide/LEARNING.md#what-happens-after-the-decision) explains monitoring → permissions → servicing → certification. Each has its own full-resolution reading path.
 

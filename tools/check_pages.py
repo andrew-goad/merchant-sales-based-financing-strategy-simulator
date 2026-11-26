@@ -1,9 +1,13 @@
 """Check the published HTML's local dependencies and registered report downloads."""
 
+import csv
+import io
 import json
+import re
 from base64 import b64decode
 from hashlib import sha256
 from html.parser import HTMLParser
+from operator import itemgetter
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -15,6 +19,15 @@ ROUTES = {
     "750c": "aws750",
     "2500": "2500",
     "25000": "25000",
+}
+# Byte lengths of the saved workbooks on the November research release.
+# Keep the displayed MiB values tied to the same assets as the static URLs.
+WORKBOOK_ASSETS = {
+    "750": ("MSBF-750-Local-DBeaver", 368319, 27605824),
+    "take4": ("MSBF-750-Local-GUI", 372287, 29423307),
+    "aws750": ("MSBF-750-AWS-GUI", 367746, 29101487),
+    "2500": ("MSBF-2500-AWS-PowerShell", 988984, 94845642),
+    "25000": ("MSBF-25000-AWS-GUI", 8293317, 922390240),
 }
 
 
@@ -30,6 +43,9 @@ class ResearchPage(HTMLParser):
         self.current_player = None
         self.template_study = None
         self.film_transcripts = {}
+        self.anchors = []
+        self.current_anchor = None
+        self.operator_steps = {}
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
@@ -41,6 +57,11 @@ class ResearchPage(HTMLParser):
         if tag == "article" and "data-study" in attrs:
             self.studies.add(attrs["data-study"])
             self.current_study = attrs["data-study"]
+        if tag == "details" and "data-operator-step" in attrs:
+            self.operator_steps.setdefault(self.current_study, []).append(attrs["data-operator-step"])
+        if tag == "a" and attrs.get("href"):
+            self.current_anchor = (self.current_study, attrs, [])
+            self.anchors.append(self.current_anchor)
         if tag == "template" and "data-spoken" in attrs:
             self.template_study = self.current_study
             self.film_transcripts[self.template_study] = []
@@ -60,10 +81,14 @@ class ResearchPage(HTMLParser):
                 self.links.append(attrs[attr])
 
     def handle_data(self, data):
+        if self.current_anchor is not None:
+            self.current_anchor[2].append(data)
         if self.template_study is not None:
             self.film_transcripts[self.template_study].append(data)
 
     def handle_endtag(self, tag):
+        if tag == "a":
+            self.current_anchor = None
         if tag == "template":
             self.template_study = None
         if tag == "article":
@@ -122,11 +147,71 @@ def check_local_reference(value, origin, pages):
             return
         cohort, sep, section = fragment.partition("/")
         if target == SITE / "index.html" and cohort in ROUTES:
+            if cohort == "750b" and section == "trace" and "payment-trace" in page.ids:
+                return
             if not sep or (section == "film" and cohort in page.film_links) or (section in {"top", "main", "project", "sources"} and section in page.ids):
                 return
             if f"{section}-{ROUTES[cohort]}" in page.ids:
                 return
         raise ValueError(f"Unknown cohort or section in link: {value}")
+
+
+def check_reader_downloads(index):
+    tag_source = (SITE / "operator-release.js").read_text(encoding="utf-8")
+    tag = re.search(r'''MSBF_OPERATOR_RELEASE_TAG\s*=\s*['"]([^'"]+)['"]''', tag_source)
+    if not tag:
+        raise ValueError("Missing Windows operator release tag")
+    releases = "https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/releases/download"
+    prefix = f"{releases}/{tag[1]}/"
+    operator = prefix + "MSBF_Portable_Windows_RC21_A3.zip"
+    for cohort, (name, tableau_bytes, powerbi_bytes) in WORKBOOK_ASSETS.items():
+        # Use markup as served, before report or operator enhancements run.
+        anchors = [(attrs, " ".join("".join(label).split())) for study, attrs, label in index.anchors if study == cohort]
+        urls = [attrs["href"] for attrs, _ in anchors]
+        experiment = "trend" if cohort == "aws750" else "counteroffer"
+        expected_steps = ["install", "launch", "parameters", experiment, "tableau", "power-bi"]
+        if index.operator_steps.get(cohort) != expected_steps:
+            raise ValueError(f"{cohort}: expected these inline Windows steps in order: {expected_steps}")
+        viz = f"https://public.tableau.com/app/profile/andrew.goad/viz/{name}/RiskDecisionScenarioReview"
+        if not {operator, operator + ".sha256", viz}.issubset(urls):
+            raise ValueError(f"{cohort}: missing inline operator, checksum or Tableau Public link")
+        if any(urlsplit(url).path == "experiment.html" for url in urls):
+            raise ValueError(f"{cohort}: an experiment link still directs the reader to a separate setup page")
+        for ext, nbytes in ((".twbx", tableau_bytes), (".pbix", powerbi_bytes)):
+            wanted = prefix + name + ext
+            matches = [(attrs, label) for attrs, label in anchors if attrs.get("data-workbook") == ext]
+            if len(matches) != 1:
+                raise ValueError(f"{cohort}: expected one static workbook link for {name + ext}")
+            attrs, label = matches[0]
+            if (attrs["href"] != wanted or attrs.get("data-bytes") != str(nbytes)
+                    or f"{nbytes / 1048576:.2f} MiB" not in label):
+                raise ValueError(f"{cohort}: incorrect static URL, byte length or displayed MiB for {name + ext}")
+
+    populations = {"take4": 750, "2500": 2500, "25000": 25000}
+    categories = {"Authorized", "Review only", "Declined"}
+    matrices = [(study, attrs, "".join(label)) for study, attrs, label in index.anchors
+                if (attrs.get("download") or "").startswith("decision_transitions_")]
+    if len(matrices) != 3 or {study for study, _, _ in matrices} != set(populations):
+        raise ValueError("Expected one downloadable transition table for each of three studies")
+    # The full transition extract is independently reconciled to the decision margins
+    # in verify_studies.py. Compare every exported field, including within-group changes.
+    with (SITE / "evidence/governed_decision_transitions.csv").open(encoding="utf-8-sig", newline="") as source:
+        governed = list(csv.DictReader(source))
+    for study, attrs, label in matrices:
+        encoding, data = attrs["href"].split(",", 1)
+        text = b64decode(data, validate=True).decode() if ";base64" in encoding else unquote(data)
+        rows = list(csv.DictReader(io.StringIO(text)))
+        key = itemgetter("baseline_disposition", "recession_energy_disposition")
+        transitions = {key(row) for row in rows}
+        expected = [row for row in governed if int(row["cohort_merchants"]) == populations[study]]
+        if sorted(rows, key=key) != sorted(expected, key=key):
+            raise ValueError(f"{study}: the downloaded CSV differs from the governed decision transitions")
+        label_terms = ("3 × 3", "decision-transition", "counts", "csv")
+        if (not all(word in label.casefold() for word in label_terms) or len(rows) != 9
+                or transitions != {(base, stress) for base in categories for stress in categories}
+                or sum(int(row["matched_applications"]) for row in rows) != populations[study]):
+            raise ValueError(f"{study}: decision-transition download label, cells or total differ")
+    print("PASS five inline operator and checksum routes, five Tableau Public links, ten static workbook downloads and sizes, and all fields of three 3 × 3 CSVs")
 
 
 def check_site():
@@ -140,6 +225,7 @@ def check_site():
     if pages[index].studies != set(ROUTES.values()):
         raise ValueError("The site and the five cohort routes disagree")
     check_narrated_films(pages[index])
+    check_reader_downloads(pages[index])
     for file, page in pages.items():
         for link in sorted(set(page.links)):
             check_local_reference(link, file, pages)

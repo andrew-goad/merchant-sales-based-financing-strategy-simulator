@@ -93,10 +93,12 @@ class StudyPage(HTMLParser):
         self.selector_labels = {}
         self.selected_input = None
         self.tables = {}
+        self.balance_tables = {}
+        self.active_table = None
         self.default_studies = []
         self.mastheads = []
         self.study = None
-        self.funding = self.in_table = self.in_masthead = False
+        self.funding = self.in_masthead = False
         self.cell = None
         self.row = []
 
@@ -119,14 +121,18 @@ class StudyPage(HTMLParser):
             self.mastheads.append("")
         elif tag == "section" and self.study:
             self.funding = attrs.get("data-place") == "funding"
+        elif tag == "table" and "data-portfolio-study" in attrs:
+            location = (self.study, attrs["data-portfolio-study"])
+            if location in self.balance_tables:
+                raise ValueError(f"Duplicate day-120 comparison for {location}")
+            self.active_table = self.balance_tables[location] = []
         elif tag == "table" and self.funding and "metric-table" in attrs.get("class", "").split():
             if self.study in self.tables:
                 raise ValueError(f"Duplicate policy table for {self.study}")
-            self.tables[self.study] = []
-            self.in_table = True
-        elif self.in_table and tag == "tr":
+            self.active_table = self.tables[self.study] = []
+        elif self.active_table is not None and tag == "tr":
             self.row = []
-        elif self.in_table and tag in ("td", "th"):
+        elif self.active_table is not None and tag in ("td", "th"):
             self.cell = []
 
     def handle_data(self, text):
@@ -140,13 +146,13 @@ class StudyPage(HTMLParser):
     def handle_endtag(self, tag):
         if tag == "label":
             self.selected_input = None
-        if self.in_table and tag in ("td", "th"):
-            self.row.append(" ".join("".join(self.cell).split()))
+        if self.active_table is not None and tag in ("td", "th"):
+            self.row.append(" ".join(" ".join(self.cell).split()))
             self.cell = None
-        elif self.in_table and tag == "tr":
-            self.tables[self.study].append(self.row)
+        elif self.active_table is not None and tag == "tr":
+            self.active_table.append(self.row)
         elif tag == "table":
-            self.in_table = False
+            self.active_table = None
         elif tag == "section":
             self.funding = False
         elif tag == "article":
@@ -167,11 +173,52 @@ def policy_table(pair, funded_label):
     ]
 
 
+def matched_counts(study):
+    if study == "aws750":
+        return None  # The saved AWS summary provides scenario totals only.
+    if study == "750":
+        # Published DBeaver cohort validation, pp. 13, 19, 22–24 (matched 27).
+        return [(1, 27), (0, 27)]
+    if study == "take4":
+        records = rows("application_paths.csv")
+        suffix = "day_120_balance_usd"
+    else:
+        records = rows(f"funded_paths_{study}.csv")
+        suffix = "day120_receivable_usd"
+    columns = [f"{scenario.lower()}_{suffix}" for scenario in SCENARIOS]
+    matched = [record for record in records if all(record[column] != "" for column in columns)]
+    return [(sum(Decimal(record[column]) > 0 for record in matched), len(matched)) for column in columns]
+
+
+def check_balance_tables(page, records):
+    expected = {(key, key) for _, _, key, _ in records} | {("take4", "25000")}
+    if set(page.balance_tables) != expected:
+        raise ValueError("Day-120 comparisons must belong to their study, plus the separate 25,000 exhibit in Local GUI 750")
+    groups = {}
+    for _, _, key, counts in records:
+        groups[key] = [("All funded in each scenario", [(scenario.opened, scenario.funded) for scenario in counts])]
+        matched = matched_counts(key)
+        if matched:
+            groups[key].append((f"Same {matched[0][1]:,} funded in both", matched))
+    for (article, study), table in page.balance_tables.items():
+        context = f"{article} article, {study} day-120 exhibit"
+        if table[0][1:] != ["Baseline", "Recession Energy"]:
+            raise ValueError(f"{context}: missing or misordered scenarios")
+        for row, (label, group) in zip(table[1:], groups[study], strict=True):
+            cells = [label]
+            for owed, funded in group:
+                percent = f"{owed / funded:.2%}" if owed else "0%"
+                cells.append(f"{owed:,} / {funded:,} {percent}")
+            if row != cells:
+                raise ValueError(f"{context}: expected {cells}, observed {row}")
+
+
 def check_pages(html, records=None):
     page = StudyPage()
     page.feed(html)
     page.close()
     records = records or studies()
+    check_balance_tables(page, records)
     labels = {key: " ".join(parts) for key, parts in page.selector_labels.items()}
     expected_labels = {key: name.replace(" · ", " ") for name, _, key, _ in records}
     if labels != expected_labels:
@@ -179,7 +226,7 @@ def check_pages(html, records=None):
     expected_studies = {key for _, _, key, _ in records}
     if set(page.tables) != expected_studies or set(page.captions) != expected_studies:
         raise ValueError("Pages must have a funding table and a selectable caption for each of the five studies")
-    if len(page.default_studies) != 1 or len(page.mastheads) != 1:
+    if page.default_studies != ["take4"] or len(page.mastheads) != 1:
         raise ValueError("Expected one default study and one visible study-summary masthead")
     for name, _, key, pair in records:
         funded_label = "Authorized and funded" if key in ("750", "aws750") else "Funded"
@@ -199,4 +246,5 @@ if __name__ == "__main__":
     records = studies()
     check(README.read_text(encoding="utf-8"), records)
     check_pages((ROOT / "research-site/index.html").read_text(encoding="utf-8"), records)
+    print("PASS day-120 funded and matched counts, denominators and rates in six portfolio exhibits")
     print("PASS five README study rows, five selector labels, ten Pages scenario columns, five selectable mastheads and the default masthead")
