@@ -1,3 +1,5 @@
+Saved results from five synthetic research campaigns. Research use only.
+
 ## Explore the paper or open a saved workbook
 
 Start with the **750 Local GUI** equipment-repair study to follow one advance from a daily sale to repayment. The paper and Tableau dashboards open in a browser. [Read *When repayment follows sales* from the beginning](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/)
