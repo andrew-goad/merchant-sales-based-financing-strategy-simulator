@@ -1,7 +1,5 @@
 # Current roadmap overlay
 
-> **November 2026 reader note.** This roadmap records the audit and publication gates in place before the five studies were published. For the five completed studies and the RC21 A3 Windows operator, see [Current edition and capabilities](research-site/PROJECT_GUIDE.md#current-edition-and-capabilities).
-
 Immediate boundary: final combined Independent Audit → append/freeze final history → owner-assisted Git publication only if authorized → hosted-download/hash/Windows extraction closure. Campaign Scale and Module 3 remain separate downstream authorities. No additional R26 or Power BI development is a prerequisite absent a concrete regression.
 
 ---

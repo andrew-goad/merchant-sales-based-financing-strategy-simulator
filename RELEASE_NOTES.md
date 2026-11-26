@@ -1,7 +1,5 @@
 # Current release overlay
 
-> **November 2026 reader note.** These notes describe the earlier integrated candidate and its prepublication checks. For the five completed studies and the RC21 A3 Windows operator, see [Current edition and capabilities](research-site/PROJECT_GUIDE.md#current-edition-and-capabilities).
-
 The v2.1-family integrated candidate now includes the accepted R26 successor, accepted Power BI R3, owner-approved cohort/visual publication components, synchronized repository surfaces and a Windows-qualified checkpoint restore/replay procedure. The release remains **prepublication** pending final Independent Audit. Empty-database Route D remains unqualified and is not advertised.
 
 ---

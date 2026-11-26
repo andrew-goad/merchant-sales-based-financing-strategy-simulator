@@ -1,7 +1,5 @@
 # Tableau viewing companion
 
-> **November 2026 reader note.** These instructions document the historical replay routes and their prerequisites. For the five completed studies and the RC21 A3 Windows operator, see [Current edition and capabilities](research-site/PROJECT_GUIDE.md#current-edition-and-capabilities).
-
 The [Tableau companion](docs/tableau/README.md) adds read-only analytical exploration of existing matched-scenario outputs. The PDF/PNGs can be read without Tableau or a database. The authored `.twb` depends on a local CSV and temporary extract not bundled with the supplied folder; it is not a self-contained runtime package.
 
 [Workbook dependencies and reference checks](docs/tableau/docs/WORKBOOK_AND_EVIDENCE_NOTES.md) are distinct from the existing qualified database/replay routes. No SQL execution, new campaign, version, release or new qualification claim is introduced here.

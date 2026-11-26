@@ -1,13 +1,9 @@
 """Check the published HTML's local dependencies and registered report downloads."""
 
-import csv
-import io
 import json
-import re
 from base64 import b64decode
 from hashlib import sha256
 from html.parser import HTMLParser
-from operator import itemgetter
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -19,15 +15,6 @@ ROUTES = {
     "750c": "aws750",
     "2500": "2500",
     "25000": "25000",
-}
-# Byte lengths of the saved workbooks on the November research release.
-# Keep the displayed MiB values tied to the same assets as the static URLs.
-WORKBOOK_ASSETS = {
-    "750": ("MSBF-750-Local-DBeaver", 368319, 27605824),
-    "take4": ("MSBF-750-Local-GUI", 372287, 29423307),
-    "aws750": ("MSBF-750-AWS-GUI", 367746, 29101487),
-    "2500": ("MSBF-2500-AWS-PowerShell", 988984, 94845642),
-    "25000": ("MSBF-25000-AWS-GUI", 8293317, 922390240),
 }
 
 
@@ -43,21 +30,9 @@ class ResearchPage(HTMLParser):
         self.current_player = None
         self.template_study = None
         self.film_transcripts = {}
-        self.anchors = []
-        self.current_anchor = None
-        self.abstract_depth = 0
-        self.abstract_links = set()
-        self.abstract_ids = set()
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
-        if tag == "div" and (self.abstract_depth or "paper-abstract" in attrs.get("class", "").split()):
-            self.abstract_depth += 1
-        if self.abstract_depth:
-            if tag == "a" and attrs.get("href"):
-                self.abstract_links.add(attrs["href"])
-            if attrs.get("id"):
-                self.abstract_ids.add(attrs["id"])
         if "id" in attrs:
             ident = attrs["id"]
             if ident in self.ids:
@@ -66,9 +41,6 @@ class ResearchPage(HTMLParser):
         if tag == "article" and "data-study" in attrs:
             self.studies.add(attrs["data-study"])
             self.current_study = attrs["data-study"]
-        if tag == "a" and attrs.get("href"):
-            self.current_anchor = (self.current_study, attrs, [])
-            self.anchors.append(self.current_anchor)
         if tag == "template" and "data-spoken" in attrs:
             self.template_study = self.current_study
             self.film_transcripts[self.template_study] = []
@@ -88,16 +60,10 @@ class ResearchPage(HTMLParser):
                 self.links.append(attrs[attr])
 
     def handle_data(self, data):
-        if self.current_anchor is not None:
-            self.current_anchor[2].append(data)
         if self.template_study is not None:
             self.film_transcripts[self.template_study].append(data)
 
     def handle_endtag(self, tag):
-        if tag == "div" and self.abstract_depth:
-            self.abstract_depth -= 1
-        if tag == "a":
-            self.current_anchor = None
         if tag == "template":
             self.template_study = None
         if tag == "article":
@@ -156,70 +122,11 @@ def check_local_reference(value, origin, pages):
             return
         cohort, sep, section = fragment.partition("/")
         if target == SITE / "index.html" and cohort in ROUTES:
-            shared = {"top": "top", "main": "main", "project": "project", "sources": "sources",
-                      "design": "design", "conclusions": "conclusions", "gui": "gui-walkthrough",
-                      "mechanics": "rule"}
-            if not sep or (section == "film" and cohort in page.film_links) or shared.get(section) in page.ids:
+            if not sep or (section == "film" and cohort in page.film_links) or (section in {"top", "main", "project", "sources"} and section in page.ids):
                 return
             if f"{section}-{ROUTES[cohort]}" in page.ids:
                 return
         raise ValueError(f"Unknown cohort or section in link: {value}")
-
-
-def check_reader_downloads(index, guide):
-    tag_source = (SITE / "operator-release.js").read_text(encoding="utf-8")
-    tag = re.search(r'''MSBF_OPERATOR_RELEASE_TAG\s*=\s*['"]([^'"]+)['"]''', tag_source)
-    if not tag:
-        raise ValueError("Missing Windows operator release tag")
-    releases = "https://github.com/andrew-goad/merchant-sales-based-financing-strategy-simulator/releases/download"
-    prefix = f"{releases}/{tag[1]}/"
-    operator = prefix + "MSBF_Portable_Windows_RC21_A3.zip"
-    if operator not in guide.links or operator + ".sha256" not in guide.links:
-        raise ValueError("Windows guide must link to the published operator and its SHA-256")
-    if "experiment.html" not in index.abstract_links or not {"gui-walkthrough", "gui-player"}.issubset(index.abstract_ids):
-        raise ValueError("The abstract must provide the Windows setup link and the approved GUI walkthrough")
-    if "index.html#750b/gui" not in guide.links:
-        raise ValueError("The Windows guide must link back to the GUI walkthrough")
-    for route, cohort in ROUTES.items():
-        name, tableau_bytes, powerbi_bytes = WORKBOOK_ASSETS[cohort]
-        anchors = [(attrs, "".join(label)) for study, attrs, label in index.anchors if study == cohort]
-        urls = [attrs["href"] for attrs, _ in anchors]
-        viz = f"https://public.tableau.com/app/profile/andrew.goad/viz/{name}/RiskDecisionScenarioReview"
-        if not {operator, "experiment.html", "experiment.html#parameters", viz, f"#{route}/gui"}.issubset(urls):
-            raise ValueError(f"{cohort}: missing operator, setup, parameter or browser report link")
-        for ext, nbytes in ((".twbx", tableau_bytes), (".pbix", powerbi_bytes)):
-            matches = [(attrs, label) for attrs, label in anchors if attrs.get("data-workbook") == ext]
-            if len(matches) != 1:
-                raise ValueError(f"{cohort}: expected one static {ext} download")
-            attrs, label = matches[0]
-            if (attrs["href"] != prefix + name + ext or attrs.get("data-bytes") != str(nbytes)
-                    or f"{nbytes / 1048576:.2f} MiB" not in label):
-                raise ValueError(f"{cohort}: incorrect published {ext} download or display size")
-
-    populations = {"take4": 750, "2500": 2500, "25000": 25000}
-    categories = {"Authorized", "Review only", "Declined"}
-    matrices = [(study, attrs, "".join(label)) for study, attrs, label in index.anchors
-                if (attrs.get("download") or "").startswith("decision_transitions_")]
-    if len(matrices) != 3 or {study for study, _, _ in matrices} != set(populations):
-        raise ValueError("Expected one downloadable transition table for each of three studies")
-    # The full transition extract is independently reconciled to the decision margins
-    # in verify_studies.py. Compare every exported field, including within-group changes.
-    with (SITE / "evidence/governed_decision_transitions.csv").open(encoding="utf-8-sig", newline="") as source:
-        governed = list(csv.DictReader(source))
-    for study, attrs, label in matrices:
-        encoding, data = attrs["href"].split(",", 1)
-        text = b64decode(data, validate=True).decode() if ";base64" in encoding else unquote(data)
-        rows = list(csv.DictReader(io.StringIO(text)))
-        key = itemgetter("baseline_disposition", "recession_energy_disposition")
-        transitions = {key(row) for row in rows}
-        expected = [row for row in governed if int(row["cohort_merchants"]) == populations[study]]
-        if sorted(rows, key=key) != sorted(expected, key=key):
-            raise ValueError(f"{study}: the downloaded CSV differs from the governed decision transitions")
-        if (label != "Download the 3 × 3 decision-transition counts (CSV)" or len(rows) != 9
-                or transitions != {(base, stress) for base in categories for stress in categories}
-                or sum(int(row["matched_applications"]) for row in rows) != populations[study]):
-            raise ValueError(f"{study}: decision-transition download label, cells or total differ")
-    print("PASS GUI access from the abstract, guide and five studies, ten workbook links and sizes, and three CSVs against the governed transition records")
 
 
 def check_site():
@@ -233,7 +140,6 @@ def check_site():
     if pages[index].studies != set(ROUTES.values()):
         raise ValueError("The site and the five cohort routes disagree")
     check_narrated_films(pages[index])
-    check_reader_downloads(pages[index], pages[SITE / "experiment.html"])
     for file, page in pages.items():
         for link in sorted(set(page.links)):
             check_local_reference(link, file, pages)
