@@ -2,9 +2,9 @@
 
 A business receives working capital and repays a share of eligible daily sales. Five synthetic campaigns follow those agreements from the financing decision to the balance remaining on day 120. The simulator demonstrates how lending rules work under modeled conditions. Its effectiveness for real businesses remains an open question.
 
-[Read *When repayment follows sales*](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/)
+Use the paper to explore the five completed studies, or use the Windows GUI to run a new campaign with your own settings. [Read *When repayment follows sales*](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/) · [Run your own experiment](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/experiment.html)
 
-In the **750 · Local GUI** study, a merchant received a $146,600 advance for equipment repair. On the same terms, Baseline paid off on day 111 and Recession Energy finished day 120 with $3,743.44 outstanding. The **25,000** study shows why the share still owing changes depending on which funded merchants you compare. [Follow the merchant](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750b/repayment) · [Inspect the portfolio comparison](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#25000/outcomes)
+In the **750 · Local GUI** study, a merchant received a $146,600 advance for equipment repair. On the same terms, Baseline paid off on day 111 and Recession Energy finished day 120 with $3,743.44 outstanding. In the **25,000** study, the share still owing fell from 5.27% to 4.28% across the two funded portfolios. Among the same 1,005 merchants, 36 still owed money in Baseline and 43 under stress. [Follow the merchant](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#750b/repayment) · [Inspect the portfolio comparison](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#25000/outcomes)
 
 ## Open a saved study
 

@@ -2,17 +2,19 @@
 
 A small business needs to repair its equipment. It can take an advance today and repay it from a share of each day’s sales. How much financing can the business support, and what happens to repayment if sales weaken?
 
+**Run your own campaign.** In the Windows GUI, choose a merchant population and run the reference policy. Then change one lending rule and rerun the saved population to see whose offer, funded amount or day-120 balance changes. [Run your own experiment in the GUI](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/experiment.html) · [Read the interactive paper](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/)
+
 ## Research abstract
 
 The Merchant Sales-Based Financing (MSBF) Strategy Simulator follows a request from sales and deposit evidence through underwriting, funding and daily repayment. Five synthetic studies evaluated the same applicants under Baseline and Recession Energy **within each study**. The engine could change the offer before funding. Once funded, the agreed share of eligible sales determined daily payments.
 
-In the 25,000-merchant study, **176 of 3,337** funded businesses still owed money on day 120 in Baseline (5.27%). Under stress, **43 of 1,005** still owed money (4.28%). The smaller portfolio appears to repay better. Follow the **same 1,005 businesses funded in both scenarios**, however, and the number still owing *rose* from **36 to 43** (3.58% to 4.28%). Of those matched businesses, 61 received different advance amounts. [Inspect the portfolio comparison](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#25000/outcomes)
+In the 25,000-merchant study, **176 of 3,337** funded businesses still owed money on day 120 in Baseline (5.27%). Under stress, **43 of 1,005** still owed money (4.28%). Among the **same 1,005 businesses funded in both scenarios**, the number still owing *rose* from **36 to 43** (3.58% to 4.28%). Of those matched businesses, 61 received different advance amounts. [Inspect the portfolio comparison](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/#25000/outcomes)
 
 **Scope.** These studies establish a working synthetic decision engine. An open account still has a balance on the observation date. Judging underwriting quality, actual losses and suitability for live lending requires observed merchant outcomes.
 
-**[Read the interactive paper](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/)** · **[Verify the numbers](research-site/evidence/STUDY_SOURCES.md#recalculate-the-exhibits)** · **[Run a Windows experiment](https://andrew-goad.github.io/merchant-sales-based-financing-strategy-simulator/experiment.html)**
+[Verify the figures against the campaign records](research-site/evidence/STUDY_SOURCES.md#recalculate-the-exhibits)
 
-## One equipment repair, two repayment paths
+## Repayment on a $146,600 equipment-repair advance
 
 In the **750 · Local GUI** study, merchant 000462 received a **$146,600** equipment-repair advance on identical terms in both scenarios. The agreement called for **$184,463.41** in total repayment from **9.7672% of eligible daily sales**. Both paths used the same sales history for 60 collection days. Day 61 was the first collection based on a date affected by the modeled shock.
 
@@ -38,7 +40,7 @@ The original DBeaver study reports certified ending balances after servicing. Th
 
 The original 750 ran in DBeaver. Each stage checked its inputs, applied a financing rule and passed its result and acceptance checks to the next stage. PowerShell automated the two-module run for 2,500 merchants. For 25,000, the operator launched the early AWS console from PowerShell, then submitted and monitored the campaign in the browser. Today’s Windows console lets an analyst review and adjust parameters and resolve conflicting choices before submitting a run.
 
-Later 750-merchant runs provide a timing guide for the original study. Computation took about **2 h locally** (Windows desktop, 8 GB RAM, Core i5-2500K at 3.30 GHz) and **45 min on AWS EC2 Windows** (m7i-flex.4xlarge). The 2,500 study took **2 h 24 min** across two module runs (m7i.4xlarge reference configuration). The 25,000 study took **15 h 26 min** on AWS EC2 Windows (m7i-flex.4xlarge). [Timing records and measurement scope](research-site/evidence/execution_records.csv)
+The **750 · Local GUI** campaign took about **2 h** of computation on a Windows desktop (8 GB RAM, Core i5-2500K at 3.30 GHz). The operator estimated **45 min** of computation for **750 · AWS GUI** on EC2 Windows (m7i-flex.4xlarge). The 2,500 study took **2 h 24 min** across two module runs (m7i.4xlarge reference configuration). The 25,000 study took **15 h 26 min** on AWS EC2 Windows (m7i-flex.4xlarge). [Timing records and measurement scope](research-site/evidence/execution_records.csv)
 
 ## Inspect the design
 

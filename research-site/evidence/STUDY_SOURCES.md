@@ -50,6 +50,6 @@ The suggested GUI experiment raises the minimum counteroffer amount. The [standa
 
 ## Interpreting computation time
 
-The Local 750 clock covers native financial execution. The 45-minute AWS timing comes from a separate 750 rehearsal. Both are timing guides for the original DBeaver workflow. For 2,500, the 2 h 24 min sums two module receipts from different executions. The displayed m7i.4xlarge is the reference configuration. The Module 1 receipt identifies m7i-flex.large, and the Module 2 receipt leaves the instance type unspecified. The 25,000 campaign recorded 15 h 26 min of computation. Study sizes, releases and execution procedures differ. [Execution records, platforms and clock scope](execution_records.csv)
+The 750 · Local GUI campaign recorded 1 h 59 min 33 s of financial computation. For the separate 750 · AWS GUI campaign, the operator estimated about 45 minutes of computation. For 2,500, the 2 h 24 min sums two module receipts from different executions. The displayed m7i.4xlarge is the reference configuration. The Module 1 receipt identifies m7i-flex.large, and the Module 2 receipt leaves the instance type unspecified. The 25,000 campaign recorded 15 h 26 min of computation. Study sizes, releases and execution procedures differ. [Execution records, platforms and clock scope](execution_records.csv)
 
 [Project license](../source-notices/MSBF_PROJECT_LICENSE.txt)
