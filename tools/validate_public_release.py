@@ -36,7 +36,10 @@ for p in governed_files():
     try: t=p.read_text(encoding='utf-8-sig')
     except Exception: continue
     rel=p.relative_to(root)
-    if not (len(rel.parts)>=2 and rel.parts[0]=='docs' and rel.parts[1]=='project_history') and re.search(r'\{\{[^}]+\}\}',t): errors.append(f'Unresolved placeholder: {rel}')
+    placeholder_text = t
+    if rel.parent == Path('.github/workflows') and rel.suffix in {'.yml', '.yaml'}:
+        placeholder_text = re.sub(r'(?m)^(\s*GH_TOKEN: )\$\{\{ github\.token \}\}$', r'\1', t)
+    if not (len(rel.parts)>=2 and rel.parts[0]=='docs' and rel.parts[1]=='project_history') and re.search(r'\{\{[^}]+\}\}',placeholder_text): errors.append(f'Unresolved placeholder: {rel}')
     if '/mnt/data/' in t or '/home/oai/' in t or re.search(r'(?i)C:\\Users\\',t): errors.append(f'Local/session path leakage: {rel}')
     if '"content_type":"thoughts"' in t or '"content_type": "thoughts"' in t: errors.append(f'Internal reasoning record published: {rel}')
     for pat in secret_patterns:

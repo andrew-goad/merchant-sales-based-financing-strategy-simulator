@@ -2,6 +2,8 @@
 
 # Current Use Guide
 
+> **November 2026 reader note.** This guide covers the earlier checkpoint-based replay procedure. For the five completed studies and the RC21 A3 Windows operator, see [Current edition and capabilities](../../research-site/PROJECT_GUIDE.md#current-edition-and-capabilities).
+
 ### Choose a supported activity before choosing an execution route.
 
 You can inspect the documentation, exact source, analytical report and frozen visual assets directly. Database replay is a different activity: the qualified route requires **specific retained checkpoints**, not an empty database or an arbitrary new campaign.

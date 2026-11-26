@@ -1,5 +1,7 @@
 # Narrated presentation · no new release
 
+> **November 2026 reader note.** This index records earlier module editions, qualification milestones and presentation companions. For the five completed studies and the RC21 A3 Windows operator, see [Current edition and capabilities](research-site/PROJECT_GUIDE.md#current-edition-and-capabilities).
+
 The [Merchant Credit Intelligence presentation](docs/presentation/README.md) is an additive portfolio companion under `docs/presentation/`. It demonstrates existing SQL decision logic through Power BI and Tableau. It creates no simulator version, module, GitHub Release, tag or supersession event.
 
 ---

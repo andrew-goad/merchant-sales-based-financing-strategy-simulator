@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - README.md
+      - docs/research-publication/RELEASE.md
       - research-site/**
       - tools/check_pages.py
       - tools/register_research_reports.py
@@ -13,6 +14,7 @@ on:
     branches: ['**']
     paths:
       - README.md
+      - docs/research-publication/RELEASE.md
       - research-site/**
       - tools/check_pages.py
       - tools/register_research_reports.py
@@ -65,3 +67,36 @@ jobs:
     steps:
       - name: Publish verified artifact
         uses: actions/deploy-pages@v4
+
+  release-notes:
+    name: Update the research release description
+    needs: deploy
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && github.repository == 'andrew-goad/merchant-sales-based-financing-strategy-simulator'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: msbf-research-release-notes
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Sync the November release description
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag=msbf-research-assets-2026-11
+          notes=docs/research-publication/RELEASE.md
+          releases="repos/$GITHUB_REPOSITORY/releases"
+          record="$RUNNER_TEMP/msbf-release.json"
+          gh api "$releases/tags/$tag" > "$record"
+          id=$(jq -er --arg tag "$tag" 'select(.tag_name == $tag and .draft == false) | .id' "$record")
+          if jq -e --rawfile notes "$notes" '.body == $notes' "$record" > /dev/null; then
+            echo "The release description already matches."
+            exit 0
+          fi
+          jq -Rs '{body: .}' "$notes" | gh api --method PATCH "$releases/$id" --input - > "$record"
+          jq -e --rawfile notes "$notes" '.body == $notes' "$record" > /dev/null
